@@ -1,0 +1,21 @@
+{
+  "thinkingLevel": "off",
+  "model": {
+    "provider": "p",
+    "modelId": "m"
+  },
+  "messages": [
+    {
+      "role": "user",
+      "text": "look"
+    },
+    {
+      "role": "user",
+      "text": "part one part two"
+    },
+    {
+      "role": "assistant",
+      "text": "seen"
+    }
+  ]
+}

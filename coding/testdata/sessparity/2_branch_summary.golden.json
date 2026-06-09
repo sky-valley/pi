@@ -1,0 +1,21 @@
+{
+  "thinkingLevel": "off",
+  "model": {
+    "provider": "p",
+    "modelId": "m"
+  },
+  "messages": [
+    {
+      "role": "user",
+      "text": "start"
+    },
+    {
+      "role": "user",
+      "text": "The following is a summary of a branch that this conversation came back from:\n\n<summary>\nwe explored option X</summary>"
+    },
+    {
+      "role": "assistant",
+      "text": "ok"
+    }
+  ]
+}

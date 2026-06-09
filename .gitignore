@@ -1,0 +1,12 @@
+# Built binaries
+/pi
+/cmd/pi/pi
+
+# Test + coverage artifacts
+*.test
+*.out
+coverage.*
+
+# OS / editor junk
+.DS_Store
+*.swp
