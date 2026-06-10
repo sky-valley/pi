@@ -55,7 +55,9 @@ func BuildSystemPrompt(opts BuildSystemPromptOptions) string {
 		b.WriteString("\n\n<project_context>\n\n")
 		b.WriteString("Project-specific instructions and guidelines:\n\n")
 		for _, cf := range opts.ContextFiles {
-			b.WriteString(fmt.Sprintf("<project_instructions path=%q>\n%s\n</project_instructions>\n\n", cf.Path, cf.Content))
+			// pi interpolates the raw path into the attribute (system-prompt.ts:66
+			// `path="${filePath}"`) — no quoting/escaping, byte-for-byte.
+			b.WriteString(fmt.Sprintf("<project_instructions path=\"%s\">\n%s\n</project_instructions>\n\n", cf.Path, cf.Content))
 		}
 		b.WriteString("</project_context>\n")
 		return b.String()

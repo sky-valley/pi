@@ -3,6 +3,7 @@ package providers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -493,5 +494,294 @@ func TestGoogleDuplicateAndEmptyToolCallIDs(t *testing.T) {
 	// The first kept-as-provided "dup" must survive; the second must be regenerated.
 	if ids[2] != "dup" {
 		t.Fatalf("first provided id should be kept: %v", ids)
+	}
+}
+
+// googleServe streams a fixed SSE body and runs StreamGoogle against it.
+func googleServe(t *testing.T, modelID, sse string) *ai.AssistantMessageEventStream {
+	t.Helper()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("content-type", "text/event-stream")
+		io.WriteString(w, sse)
+	}))
+	t.Cleanup(server.Close)
+	model := &ai.Model{ID: modelID, Api: ai.APIGoogleGenerativeAI, Provider: "google", BaseURL: server.URL}
+	req := ai.Context{Messages: []ai.Message{ai.NewUserText("hi", 1)}}
+	return StreamGoogle(context.Background(), model, req, &GoogleOptions{StreamOptions: ai.StreamOptions{APIKey: "k"}})
+}
+
+// --- F1: gemma-4 thinkingLevel map ---
+
+func TestGoogleThinkingLevelMaps(t *testing.T) {
+	cases := []struct {
+		id     string
+		effort string
+		want   string
+	}{
+		// gemma-4 (pi google.ts:441-450): minimal/low -> MINIMAL, medium/high -> HIGH.
+		{"gemma-4-12b", "minimal", "MINIMAL"},
+		{"gemma-4-12b", "low", "MINIMAL"},
+		{"gemma-4-12b", "medium", "HIGH"},
+		{"gemma-4-12b", "high", "HIGH"},
+		// gemini-3-pro mapping kept: minimal/low -> LOW, medium/high -> HIGH.
+		{"gemini-3-pro-preview", "minimal", "LOW"},
+		{"gemini-3-pro-preview", "low", "LOW"},
+		{"gemini-3-pro-preview", "medium", "HIGH"},
+		{"gemini-3-pro-preview", "high", "HIGH"},
+		// gemini-3-flash falls to the generic 1:1 map.
+		{"gemini-3-flash-preview", "minimal", "MINIMAL"},
+		{"gemini-3-flash-preview", "low", "LOW"},
+		{"gemini-3-flash-preview", "medium", "MEDIUM"},
+		{"gemini-3-flash-preview", "high", "HIGH"},
+		// xhigh matches no case anywhere -> "" (pi returns undefined).
+		{"gemma-4-12b", "xhigh", ""},
+		{"gemini-3-pro-preview", "xhigh", ""},
+		{"gemini-3-flash-preview", "xhigh", ""},
+	}
+	for _, tc := range cases {
+		if got := googleThinkingLevel(tc.effort, tc.id); got != tc.want {
+			t.Errorf("googleThinkingLevel(%q,%q) = %q, want %q", tc.effort, tc.id, got, tc.want)
+		}
+	}
+}
+
+// --- F2: text-part presence semantics ---
+
+func TestGoogleSignatureOnlyPartProducesNothing(t *testing.T) {
+	// A part with only thoughtSignature (no text, no functionCall) matches
+	// neither of pi's independent checks (google.ts:97,158) -> no block, no event.
+	sse := "data: {\"candidates\":[{\"content\":{\"parts\":[{\"thoughtSignature\":\"YWJjZA==\"}]}}]}\n\n" +
+		"data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"hello\"}]},\"finishReason\":\"STOP\"}]}\n\n"
+	stream := googleServe(t, "gemini-2.5-flash", sse)
+	var types []ai.EventType
+	for ev := range stream.Events() {
+		types = append(types, ev.Type)
+	}
+	final := stream.Result()
+	if final.StopReason != ai.StopStop {
+		t.Fatalf("stream failed: %s (%s)", final.StopReason, final.ErrorMessage)
+	}
+	if len(final.Content) != 1 {
+		t.Fatalf("signature-only part must produce no content block: %#v", final.Content)
+	}
+	text, ok := final.Content[0].(ai.TextContent)
+	if !ok || text.Text != "hello" {
+		t.Fatalf("expected single text block: %#v", final.Content[0])
+	}
+	for _, et := range types {
+		if et == ai.EventThinkingStart {
+			t.Fatalf("signature-only part must not start a thinking block: %v", types)
+		}
+	}
+	// Exactly one text_start (no phantom empty block before it).
+	starts := 0
+	for _, et := range types {
+		if et == ai.EventTextStart {
+			starts++
+		}
+	}
+	if starts != 1 {
+		t.Fatalf("expected exactly 1 text_start, got %d (%v)", starts, types)
+	}
+}
+
+func TestGoogleTextAndFunctionCallSamePart(t *testing.T) {
+	// pi's checks are independent: a part with BOTH text and functionCall
+	// processes both, in that order.
+	sse := "data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"before\",\"functionCall\":{\"name\":\"f\",\"args\":{\"a\":1}}}]},\"finishReason\":\"STOP\"}]}\n\n"
+	final := googleServe(t, "gemini-2.5-flash", sse).Result()
+	if final.StopReason != ai.StopToolUse {
+		t.Fatalf("stream failed: %s (%s)", final.StopReason, final.ErrorMessage)
+	}
+	if len(final.Content) != 2 {
+		t.Fatalf("expected text + toolCall blocks, got %#v", final.Content)
+	}
+	text, ok := final.Content[0].(ai.TextContent)
+	if !ok || text.Text != "before" {
+		t.Fatalf("text block wrong: %#v", final.Content[0])
+	}
+	tc, ok := final.Content[1].(ai.ToolCall)
+	if !ok || tc.Name != "f" {
+		t.Fatalf("toolCall block wrong: %#v", final.Content[1])
+	}
+}
+
+func TestGoogleEmptyStringTextPartIsPresent(t *testing.T) {
+	// `"text":""` is present (not undefined) in pi -> it opens a block.
+	sse := "data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"\"}]},\"finishReason\":\"STOP\"}]}\n\n"
+	final := googleServe(t, "gemini-2.5-flash", sse).Result()
+	if final.StopReason != ai.StopStop {
+		t.Fatalf("stream failed: %s (%s)", final.StopReason, final.ErrorMessage)
+	}
+	if len(final.Content) != 1 {
+		t.Fatalf("empty-string text part must still open a block: %#v", final.Content)
+	}
+	if text, ok := final.Content[0].(ai.TextContent); !ok || text.Text != "" {
+		t.Fatalf("expected empty text block: %#v", final.Content[0])
+	}
+}
+
+// --- F3: mid-stream error chunks + truncated streams ---
+
+func TestGoogleErrorChunkFailsStream(t *testing.T) {
+	errJSON := `{"error":{"code":429,"message":"quota exceeded","status":"RESOURCE_EXHAUSTED"}}`
+	sse := "data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"partial\"}]}}]}\n\n" +
+		"data: " + errJSON + "\n\n"
+	stream := googleServe(t, "gemini-2.5-flash", sse)
+	sawDone := false
+	for ev := range stream.Events() {
+		if ev.Type == ai.EventDone {
+			sawDone = true
+		}
+	}
+	final := stream.Result()
+	if sawDone {
+		t.Fatalf("error chunk must not produce a clean done event")
+	}
+	if final.StopReason != ai.StopError {
+		t.Fatalf("expected error stop, got %s", final.StopReason)
+	}
+	// genai SDK ApiError surface: "got status: ${status}. ${JSON.stringify(chunk)}".
+	want := "got status: RESOURCE_EXHAUSTED. " + errJSON
+	if final.ErrorMessage != want {
+		t.Fatalf("error message wrong:\n got %q\nwant %q", final.ErrorMessage, want)
+	}
+}
+
+func TestGoogleBareJSONErrorChunkFailsStream(t *testing.T) {
+	// Google emits mid-stream errors as bare JSON (no data: prefix); the SDK
+	// detects these before SSE parsing and throws an ApiError.
+	errJSON := `{"error":{"code":500,"message":"internal","status":"INTERNAL"}}`
+	sse := "data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"x\"}]}}]}\n\n" + errJSON
+	final := googleServe(t, "gemini-2.5-flash", sse).Result()
+	if final.StopReason != ai.StopError {
+		t.Fatalf("expected error stop, got %s", final.StopReason)
+	}
+	if final.ErrorMessage != "got status: INTERNAL. "+errJSON {
+		t.Fatalf("error message wrong: %q", final.ErrorMessage)
+	}
+}
+
+func TestGoogleTruncatedStreamFails(t *testing.T) {
+	// Stream ends with an unconsumed partial segment (no trailing delimiter):
+	// the SDK throws "Incomplete JSON segment at the end".
+	sse := "data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"x\"}]}}]}\n\n" +
+		"data: {\"candidates\":[{\"content\":{\"par"
+	final := googleServe(t, "gemini-2.5-flash", sse).Result()
+	if final.StopReason != ai.StopError {
+		t.Fatalf("truncated stream must fail, got %s", final.StopReason)
+	}
+	if final.ErrorMessage != "Incomplete JSON segment at the end" {
+		t.Fatalf("error message wrong: %q", final.ErrorMessage)
+	}
+}
+
+// --- F4a: toolCall thoughtSignature present from toolcall_start on ---
+
+func TestGoogleToolCallSignatureOnStartPartial(t *testing.T) {
+	sse := "data: {\"candidates\":[{\"content\":{\"parts\":[{\"functionCall\":{\"name\":\"f\",\"args\":{}},\"thoughtSignature\":\"YWJjZA==\"}]},\"finishReason\":\"STOP\"}]}\n\n"
+	stream := googleServe(t, "gemini-2.5-flash", sse)
+	checked := false
+	for ev := range stream.Events() {
+		if ev.Type != ai.EventToolCallStart {
+			continue
+		}
+		checked = true
+		tc, ok := ev.Partial.Content[ev.ContentIndex].(ai.ToolCall)
+		if !ok {
+			t.Fatalf("toolcall_start partial has no ToolCall at index %d: %#v", ev.ContentIndex, ev.Partial.Content)
+		}
+		// pi builds the ToolCall WITH thoughtSignature before pushing
+		// toolcall_start (google.ts:186-195).
+		if tc.ThoughtSignature != "YWJjZA==" {
+			t.Fatalf("thoughtSignature missing on toolcall_start partial: %#v", tc)
+		}
+	}
+	if !checked {
+		t.Fatalf("no toolcall_start event observed")
+	}
+	final := stream.Result()
+	tc := final.Content[0].(ai.ToolCall)
+	if tc.ThoughtSignature != "YWJjZA==" {
+		t.Fatalf("thoughtSignature missing on final ToolCall: %#v", tc)
+	}
+}
+
+// --- F4b: generationConfig always sent ---
+
+func TestGoogleGenerationConfigAlwaysSent(t *testing.T) {
+	model := &ai.Model{ID: "gemini-2.5-flash", Api: ai.APIGoogleGenerativeAI, Provider: "google"}
+	// No temperature, no maxTokens, no thinking: SDK still sends generationConfig {}.
+	body := roundtripBody(t, buildGoogleParams(model, ai.Context{}, &GoogleOptions{}))
+	gen, ok := body["generationConfig"].(map[string]any)
+	if !ok {
+		t.Fatalf("generationConfig must always be sent (SDK setValueByPath is unconditional): %v", body)
+	}
+	if len(gen) != 0 {
+		t.Fatalf("expected empty generationConfig, got %v", gen)
+	}
+}
+
+// --- F4c: xhigh passes through with no level and no budget ---
+
+func TestGoogleXHighNoLevelNoBudget(t *testing.T) {
+	var gotBody map[string]any
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		b, _ := io.ReadAll(r.Body)
+		_ = json.Unmarshal(b, &gotBody)
+		w.Header().Set("content-type", "text/event-stream")
+		io.WriteString(w, "data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"x\"}]},\"finishReason\":\"STOP\"}]}\n\n")
+	}))
+	defer server.Close()
+	// Model advertises xhigh (thinkingLevelMap presence makes it a supported
+	// level) so clampThinkingLevel keeps it instead of clamping to high.
+	xhigh := "xhigh"
+	model := &ai.Model{
+		ID: "gemini-3-pro-preview", Api: ai.APIGoogleGenerativeAI, Provider: "google",
+		BaseURL: server.URL, Reasoning: true,
+		ThinkingLevelMap: ai.ThinkingLevelMap{"xhigh": &xhigh},
+	}
+	req := ai.Context{Messages: []ai.Message{ai.NewUserText("hi", 1)}}
+	StreamSimpleGoogle(context.Background(), model, req, &ai.SimpleStreamOptions{
+		StreamOptions: ai.StreamOptions{APIKey: "k"}, Reasoning: ai.ThinkingXHigh,
+	}).Result()
+	gen, _ := gotBody["generationConfig"].(map[string]any)
+	tc, _ := gen["thinkingConfig"].(map[string]any)
+	if tc == nil {
+		t.Fatalf("thinkingConfig missing: %v", gen)
+	}
+	if tc["includeThoughts"] != true {
+		t.Fatalf("includeThoughts must be set: %v", tc)
+	}
+	// pi: xhigh falls through getThinkingLevel/getGoogleBudget -> neither key.
+	if _, has := tc["thinkingLevel"]; has {
+		t.Fatalf("xhigh must not map to a thinkingLevel: %v", tc)
+	}
+	if _, has := tc["thinkingBudget"]; has {
+		t.Fatalf("xhigh must not map to a thinkingBudget: %v", tc)
+	}
+}
+
+func TestGoogleOnPayloadErrorFailsStream(t *testing.T) {
+	model := &ai.Model{ID: "gemini-2.5-flash", Api: ai.APIGoogleGenerativeAI, Provider: "google", Input: []string{"text"}}
+	req := ai.Context{Messages: []ai.Message{ai.NewUserText("hi", 1)}}
+	requested := false
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requested = true
+	}))
+	defer server.Close()
+	model.BaseURL = server.URL
+	opts := &GoogleOptions{StreamOptions: ai.StreamOptions{
+		APIKey: "k",
+		OnPayload: func(payload any, m *ai.Model) (any, error) {
+			return nil, errors.New("payload veto")
+		},
+	}}
+	final := StreamGoogle(context.Background(), model, req, opts).Result()
+	if final.StopReason != ai.StopError || final.ErrorMessage != "payload veto" {
+		t.Fatalf("onPayload error must fail the stream: %s / %q", final.StopReason, final.ErrorMessage)
+	}
+	if requested {
+		t.Fatalf("request must not be sent when onPayload errors")
 	}
 }

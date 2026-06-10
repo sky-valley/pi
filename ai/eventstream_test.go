@@ -86,6 +86,20 @@ func TestEventStreamEndResultIdempotent(t *testing.T) {
 	}
 }
 
+// TestEventStreamEndThenEndResultSurfaces asserts End() followed by
+// End(result) still surfaces the result (pi event-stream.ts:38-42 has no
+// done-guard on result resolution; only the resolve-once promise semantics
+// apply, which the hasResult guard preserves).
+func TestEventStreamEndThenEndResultSurfaces(t *testing.T) {
+	s := NewAssistantMessageEventStream()
+	final := &AssistantMessage{Model: "m", StopReason: StopStop}
+	s.End()
+	s.End(final)
+	if got := s.Result(); got != final {
+		t.Fatalf("End() then End(result) dropped result: got %v, want final", got)
+	}
+}
+
 // TestEventStreamEndNoResultIsZero asserts End() with no result leaves a zero
 // result (Go's finite behavior; pi would hang awaiting the promise).
 func TestEventStreamEndNoResultIsZero(t *testing.T) {

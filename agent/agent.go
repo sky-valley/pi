@@ -72,11 +72,16 @@ type AgentOptions struct {
 	MaxRetryDelayMs  *int
 	MaxRetries       int
 	TimeoutMs        int
-	Temperature      *float64
-	MaxTokens        *int
-	CacheRetention   ai.CacheRetention
-	Headers          map[string]string
-	ToolExecution    ToolExecutionMode
+	// WebSocketConnectTimeoutMs is forwarded to the stream options
+	// (pi AgentLoopConfig extends SimpleStreamOptions).
+	WebSocketConnectTimeoutMs int
+	Temperature               *float64
+	MaxTokens                 *int
+	CacheRetention            ai.CacheRetention
+	Headers                   map[string]string
+	// Metadata is optional request metadata forwarded to providers.
+	Metadata      map[string]any
+	ToolExecution ToolExecutionMode
 }
 
 type activeRun struct {
@@ -106,17 +111,19 @@ type Agent struct {
 	AfterToolCall    func(ctx context.Context, c AfterToolCallContext) *AfterToolCallResult
 	PrepareNextTurn  func(c ShouldStopAfterTurnContext) *AgentLoopTurnUpdate
 
-	SessionID       string
-	ThinkingBudgets *ai.ThinkingBudgets
-	Transport       ai.Transport
-	MaxRetryDelayMs *int
-	MaxRetries      int
-	TimeoutMs       int
-	Temperature     *float64
-	MaxTokens       *int
-	CacheRetention  ai.CacheRetention
-	Headers         map[string]string
-	ToolExecution   ToolExecutionMode
+	SessionID                 string
+	ThinkingBudgets           *ai.ThinkingBudgets
+	Transport                 ai.Transport
+	MaxRetryDelayMs           *int
+	MaxRetries                int
+	TimeoutMs                 int
+	WebSocketConnectTimeoutMs int
+	Temperature               *float64
+	MaxTokens                 *int
+	CacheRetention            ai.CacheRetention
+	Headers                   map[string]string
+	Metadata                  map[string]any
+	ToolExecution             ToolExecutionMode
 
 	active *activeRun
 }
@@ -143,27 +150,29 @@ func NewAgent(opts AgentOptions) *Agent {
 		st.Messages = append([]AgentMessage(nil), in.Messages...)
 	}
 	a := &Agent{
-		state:            st,
-		ConvertToLlm:     opts.ConvertToLlm,
-		TransformContext: opts.TransformContext,
-		StreamFn:         opts.StreamFn,
-		GetApiKey:        opts.GetApiKey,
-		OnPayload:        opts.OnPayload,
-		OnResponse:       opts.OnResponse,
-		BeforeToolCall:   opts.BeforeToolCall,
-		AfterToolCall:    opts.AfterToolCall,
-		PrepareNextTurn:  opts.PrepareNextTurn,
-		SessionID:        opts.SessionID,
-		ThinkingBudgets:  opts.ThinkingBudgets,
-		Transport:        opts.Transport,
-		MaxRetryDelayMs:  opts.MaxRetryDelayMs,
-		MaxRetries:       opts.MaxRetries,
-		TimeoutMs:        opts.TimeoutMs,
-		Temperature:      opts.Temperature,
-		MaxTokens:        opts.MaxTokens,
-		CacheRetention:   opts.CacheRetention,
-		Headers:          opts.Headers,
-		ToolExecution:    opts.ToolExecution,
+		state:                     st,
+		ConvertToLlm:              opts.ConvertToLlm,
+		TransformContext:          opts.TransformContext,
+		StreamFn:                  opts.StreamFn,
+		GetApiKey:                 opts.GetApiKey,
+		OnPayload:                 opts.OnPayload,
+		OnResponse:                opts.OnResponse,
+		BeforeToolCall:            opts.BeforeToolCall,
+		AfterToolCall:             opts.AfterToolCall,
+		PrepareNextTurn:           opts.PrepareNextTurn,
+		SessionID:                 opts.SessionID,
+		ThinkingBudgets:           opts.ThinkingBudgets,
+		Transport:                 opts.Transport,
+		MaxRetryDelayMs:           opts.MaxRetryDelayMs,
+		MaxRetries:                opts.MaxRetries,
+		TimeoutMs:                 opts.TimeoutMs,
+		WebSocketConnectTimeoutMs: opts.WebSocketConnectTimeoutMs,
+		Temperature:               opts.Temperature,
+		MaxTokens:                 opts.MaxTokens,
+		CacheRetention:            opts.CacheRetention,
+		Headers:                   opts.Headers,
+		Metadata:                  opts.Metadata,
+		ToolExecution:             opts.ToolExecution,
 	}
 	if a.ConvertToLlm == nil {
 		a.ConvertToLlm = defaultConvertToLlm
@@ -205,7 +214,9 @@ func (a *Agent) Subscribe(l Listener) func() {
 }
 
 // State returns a snapshot view of the agent state. The returned struct is a
-// shallow copy; slices/maps share backing storage and should be treated read-only.
+// shallow copy; slices share backing storage and should be treated read-only.
+// PendingToolCalls is copy-on-write (pi agent.ts:524-535), so the returned map
+// is an immutable snapshot that is safe to iterate while tools run.
 func (a *Agent) State() AgentState {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -337,19 +348,29 @@ func (a *Agent) Continue(ctx context.Context) error {
 	a.mu.Unlock()
 
 	if last.MessageRole() == ai.RoleAssistant {
-		a.mu.Lock()
-		steering := a.steeringQueue.drain()
-		a.mu.Unlock()
-		if len(steering) > 0 {
-			return a.runPromptMessages(ctx, steering, true)
+		// Claim the run slot BEFORE draining, atomically under one lock, so a
+		// concurrent Prompt cannot win the slot after we drained (the drained
+		// messages would be lost). If the claim fails, the queues are untouched.
+		var drained []AgentMessage
+		skipInitialSteeringPoll := false
+		run, err := a.claimRun(ctx, func() {
+			if steering := a.steeringQueue.drain(); len(steering) > 0 {
+				drained = steering
+				skipInitialSteeringPoll = true
+				return
+			}
+			drained = a.followUpQueue.drain()
+		})
+		if err != nil {
+			return errors.New("Agent is already processing. Wait for completion before continuing.")
 		}
-		a.mu.Lock()
-		followUps := a.followUpQueue.drain()
-		a.mu.Unlock()
-		if len(followUps) > 0 {
-			return a.runPromptMessages(ctx, followUps, false)
+		if len(drained) == 0 {
+			a.releaseRun(run)
+			return errors.New("Cannot continue from message role: assistant")
 		}
-		return errors.New("Cannot continue from message role: assistant")
+		return a.executeClaimedRun(run, func(runCtx context.Context) {
+			runAgentLoop(runCtx, drained, a.contextSnapshot(), a.loopConfig(skipInitialSteeringPoll), a.processEvent(runCtx), a.StreamFn)
+		})
 	}
 	return a.runContinuation(ctx)
 }
@@ -375,7 +396,12 @@ var emptyUsage = ai.Usage{
 // unwound the loop), synthesize a terminal assistant message and emit the full
 // failure sequence (message_start → message_end → turn_end → agent_end) so the
 // lifecycle is always complete and state.errorMessage is set.
-func (a *Agent) handleRunFailure(ctx context.Context, msg string, aborted bool) {
+//
+// pi awaits each failure-event emit: a listener rejection stops the remaining
+// failure events and rejects prompt(), while the finally still finishes the
+// run. The returned error mirrors that rejection (state cleanup happens in
+// executeClaimedRun).
+func (a *Agent) handleRunFailure(ctx context.Context, msg string, aborted bool) error {
 	a.mu.Lock()
 	model := a.state.Model
 	a.mu.Unlock()
@@ -394,13 +420,18 @@ func (a *Agent) handleRunFailure(ctx context.Context, msg string, aborted bool) 
 		ErrorMessage: msg,
 		Timestamp:    nowMillis(),
 	}
-	// During failure handling the run has already failed; a listener error here
-	// cannot fail it further, so ignore emit errors (pi lets the finally run).
 	emit := a.processEvent(ctx)
-	_ = emit(AgentEvent{Type: EvMessageStart, Message: failure})
-	_ = emit(AgentEvent{Type: EvMessageEnd, Message: failure})
-	_ = emit(AgentEvent{Type: EvTurnEnd, Message: failure, ToolResults: []ai.ToolResultMessage{}})
-	_ = emit(AgentEvent{Type: EvAgentEnd, Messages: []AgentMessage{failure}})
+	for _, e := range []AgentEvent{
+		{Type: EvMessageStart, Message: failure},
+		{Type: EvMessageEnd, Message: failure},
+		{Type: EvTurnEnd, Message: failure, ToolResults: []ai.ToolResultMessage{}},
+		{Type: EvAgentEnd, Messages: []AgentMessage{failure}},
+	} {
+		if err := emit(e); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (a *Agent) contextSnapshot() AgentContext {
@@ -421,27 +452,29 @@ func (a *Agent) loopConfig(skipInitialSteeringPoll bool) AgentLoopConfig {
 
 	skip := skipInitialSteeringPoll
 	cfg := AgentLoopConfig{
-		Model:            model,
-		Reasoning:        reasoning,
-		SessionID:        a.SessionID,
-		Transport:        a.Transport,
-		ThinkingBudgets:  a.ThinkingBudgets,
-		MaxRetryDelayMs:  a.MaxRetryDelayMs,
-		MaxRetries:       a.MaxRetries,
-		TimeoutMs:        a.TimeoutMs,
-		Temperature:      a.Temperature,
-		MaxTokens:        a.MaxTokens,
-		CacheRetention:   a.CacheRetention,
-		Headers:          a.Headers,
-		ToolExecution:    a.ToolExecution,
-		OnPayload:        a.OnPayload,
-		OnResponse:       a.OnResponse,
-		ConvertToLlm:     a.ConvertToLlm,
-		TransformContext: a.TransformContext,
-		GetApiKey:        a.GetApiKey,
-		BeforeToolCall:   a.BeforeToolCall,
-		AfterToolCall:    a.AfterToolCall,
-		PrepareNextTurn:  a.PrepareNextTurn,
+		Model:                     model,
+		Reasoning:                 reasoning,
+		SessionID:                 a.SessionID,
+		Transport:                 a.Transport,
+		ThinkingBudgets:           a.ThinkingBudgets,
+		MaxRetryDelayMs:           a.MaxRetryDelayMs,
+		MaxRetries:                a.MaxRetries,
+		TimeoutMs:                 a.TimeoutMs,
+		WebSocketConnectTimeoutMs: a.WebSocketConnectTimeoutMs,
+		Temperature:               a.Temperature,
+		MaxTokens:                 a.MaxTokens,
+		CacheRetention:            a.CacheRetention,
+		Headers:                   a.Headers,
+		Metadata:                  a.Metadata,
+		ToolExecution:             a.ToolExecution,
+		OnPayload:                 a.OnPayload,
+		OnResponse:                a.OnResponse,
+		ConvertToLlm:              a.ConvertToLlm,
+		TransformContext:          a.TransformContext,
+		GetApiKey:                 a.GetApiKey,
+		BeforeToolCall:            a.BeforeToolCall,
+		AfterToolCall:             a.AfterToolCall,
+		PrepareNextTurn:           a.PrepareNextTurn,
 		GetSteeringMessages: func() []AgentMessage {
 			a.mu.Lock()
 			defer a.mu.Unlock()
@@ -464,6 +497,18 @@ func (a *Agent) loopConfig(skipInitialSteeringPoll bool) AgentLoopConfig {
 }
 
 func (a *Agent) runWithLifecycle(parent context.Context, executor func(ctx context.Context)) error {
+	run, err := a.claimRun(parent, nil)
+	if err != nil {
+		return err
+	}
+	return a.executeClaimedRun(run, executor)
+}
+
+// claimRun atomically claims the run slot, returning pi's "Agent is already
+// processing." error when a run is active. onClaimed (optional) runs under the
+// same lock immediately after a successful claim, so callers can drain queues
+// without a concurrent Prompt/Continue stealing the slot in between (B3).
+func (a *Agent) claimRun(parent context.Context, onClaimed func()) (*activeRun, error) {
 	if parent == nil {
 		parent = context.Background()
 	}
@@ -474,9 +519,32 @@ func (a *Agent) runWithLifecycle(parent context.Context, executor func(ctx conte
 	if a.active != nil {
 		a.mu.Unlock()
 		cancel()
-		return errors.New("Agent is already processing.")
+		return nil, errors.New("Agent is already processing.")
 	}
 	a.active = run
+	if onClaimed != nil {
+		onClaimed()
+	}
+	a.mu.Unlock()
+	return run, nil
+}
+
+// releaseRun abandons a claimed run that never executed (e.g. Continue claimed
+// the slot but found nothing to drain). State that claimRun did not touch is
+// left intact, matching pi where continue() throws before any run starts.
+func (a *Agent) releaseRun(run *activeRun) {
+	a.mu.Lock()
+	a.active = nil
+	a.mu.Unlock()
+	run.cancel()
+	close(run.done)
+}
+
+// executeClaimedRun runs the executor for an already-claimed run slot.
+func (a *Agent) executeClaimedRun(run *activeRun, executor func(ctx context.Context)) error {
+	ctx := run.ctx
+
+	a.mu.Lock()
 	a.state.IsStreaming = true
 	a.state.StreamingMessage = nil
 	a.state.ErrorMessage = ""
@@ -486,6 +554,10 @@ func (a *Agent) runWithLifecycle(parent context.Context, executor func(ctx conte
 	// In Go the failure surfaces as a panic: an emitPanic (a listener returned
 	// an error and unwound the loop) or any other panic from streamFn /
 	// convertToLlm / transformContext. Either way we synthesize the failure turn.
+	// If a failure-event listener itself errors, that error is returned from the
+	// run (pi: the rejection propagates out of prompt()) while the finally-style
+	// state cleanup below still happens.
+	var runErr error
 	func() {
 		defer func() {
 			if r := recover(); r != nil {
@@ -495,7 +567,7 @@ func (a *Agent) runWithLifecycle(parent context.Context, executor func(ctx conte
 				} else {
 					msg = panicMessage(r)
 				}
-				a.handleRunFailure(ctx, msg, ctx.Err() != nil)
+				runErr = a.handleRunFailure(ctx, msg, ctx.Err() != nil)
 			}
 		}()
 		executor(ctx)
@@ -507,9 +579,9 @@ func (a *Agent) runWithLifecycle(parent context.Context, executor func(ctx conte
 	a.state.PendingToolCalls = map[string]bool{}
 	a.active = nil
 	a.mu.Unlock()
-	cancel()
+	run.cancel()
 	close(run.done)
-	return nil
+	return runErr
 }
 
 // processEvent reduces internal state for a loop event, then notifies listeners.
@@ -523,9 +595,23 @@ func (a *Agent) processEvent(ctx context.Context) EventSink {
 			a.state.StreamingMessage = nil
 			a.state.Messages = append(a.state.Messages, event.Message)
 		case EvToolExecutionStart:
-			a.state.PendingToolCalls[event.ToolCallID] = true
+			// Copy-on-write (pi agent.ts:524-529, `new Set(...)`): State()'s
+			// shallow copy hands out an immutable snapshot, never the live map.
+			next := make(map[string]bool, len(a.state.PendingToolCalls)+1)
+			for k, v := range a.state.PendingToolCalls {
+				next[k] = v
+			}
+			next[event.ToolCallID] = true
+			a.state.PendingToolCalls = next
 		case EvToolExecutionEnd:
-			delete(a.state.PendingToolCalls, event.ToolCallID)
+			// Copy-on-write (pi agent.ts:531-535).
+			next := make(map[string]bool, len(a.state.PendingToolCalls))
+			for k, v := range a.state.PendingToolCalls {
+				if k != event.ToolCallID {
+					next[k] = v
+				}
+			}
+			a.state.PendingToolCalls = next
 		case EvTurnEnd:
 			if am, ok := asAssistant(event.Message); ok && am.ErrorMessage != "" {
 				a.state.ErrorMessage = am.ErrorMessage

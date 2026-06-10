@@ -129,8 +129,7 @@ func completePartialJSON(s string) (string, bool) {
 	var stack []byte
 	inString := false
 	escaped := false
-	// trailing tracks whether we're mid-token (after a colon/comma) where a value
-	// is expected but missing.
+	stringStart := -1
 	for i := 0; i < len(s); i++ {
 		ch := s[i]
 		if inString {
@@ -150,6 +149,7 @@ func completePartialJSON(s string) (string, bool) {
 		switch ch {
 		case '"':
 			inString = true
+			stringStart = i
 		case '{':
 			stack = append(stack, '}')
 		case '[':
@@ -161,19 +161,26 @@ func completePartialJSON(s string) (string, bool) {
 		}
 	}
 
-	b := strings.Builder{}
-	b.WriteString(strings.TrimRight(s, " \t\r\n"))
-	completed := b.String()
-
-	// Drop a dangling token that can't be completed (trailing comma, colon, or a
-	// key with no value). Strip trailing comma.
-	completed = strings.TrimRight(completed, ",")
-
-	if inString {
+	// partial-json trims the whole input first (jsonString.trim()), even when
+	// it ends inside an open string.
+	completed := strings.TrimRight(s, " \t\r\n")
+	if inString && isDanglingObjectKey(s, stack, stringStart) {
+		// An open string in object-KEY position can't be completed into a
+		// member; partial-json drops the incomplete key entirely.
+		completed = strings.TrimRight(s[:stringStart], " \t\r\n")
+		completed = strings.TrimRight(completed, ",")
+		completed = trimDanglingColon(completed)
+	} else if inString {
+		// A trailing comma inside an open string is string CONTENT, not a
+		// dangling token — close the string without stripping it.
 		completed += "\""
+	} else {
+		// Drop a dangling token that can't be completed (trailing comma, colon,
+		// or a key with no value). Strip trailing comma.
+		completed = strings.TrimRight(completed, ",")
+		// Trim a dangling "key": with no value or trailing colon.
+		completed = trimDanglingColon(completed)
 	}
-	// Trim a dangling "key": with no value or trailing colon.
-	completed = trimDanglingColon(completed)
 
 	for i := len(stack) - 1; i >= 0; i-- {
 		completed += string(stack[i])
@@ -182,6 +189,25 @@ func completePartialJSON(s string) (string, bool) {
 		return "", false
 	}
 	return completed, true
+}
+
+// isDanglingObjectKey reports whether the open string starting at stringStart
+// sits in object-key position (directly after '{' or ',' inside an object).
+func isDanglingObjectKey(s string, stack []byte, stringStart int) bool {
+	if stringStart < 0 || len(stack) == 0 || stack[len(stack)-1] != '}' {
+		return false
+	}
+	for j := stringStart - 1; j >= 0; j-- {
+		switch s[j] {
+		case ' ', '\t', '\r', '\n':
+			continue
+		case '{', ',':
+			return true
+		default:
+			return false
+		}
+	}
+	return false
 }
 
 func trimDanglingColon(s string) string {
@@ -196,29 +222,54 @@ func trimDanglingColon(s string) string {
 	return s
 }
 
-// sanitizeSurrogates removes unpaired UTF-16 surrogate code units that would
-// otherwise corrupt JSON encoding (port of sanitizeSurrogates).
+// sanitizeSurrogates removes unpaired UTF-16 surrogate code units (port of
+// sanitizeSurrogates): pi replaces them with "" — they are DELETED, not
+// substituted with U+FFFD. In Go strings, surrogate code units can only occur
+// as WTF-8 byte triples (0xED 0xA0..0xBF 0x80..0xBF); a high+low pair is the
+// JS-valid case and decodes to the astral character, while a lone surrogate
+// is dropped. Valid UTF-8 (including real U+FFFD characters) passes through.
 func sanitizeSurrogates(s string) string {
-	if !strings.ContainsRune(s, '�') && isValidUTF16(s) {
+	if !containsWTF8Surrogate(s) {
 		return s
 	}
-	runes := []rune(s)
 	var b strings.Builder
-	for _, r := range runes {
-		if utf16.IsSurrogate(r) {
-			b.WriteRune('�')
+	b.Grow(len(s))
+	for i := 0; i < len(s); {
+		hi, ok := decodeWTF8Surrogate(s[i:])
+		if !ok {
+			b.WriteByte(s[i])
+			i++
 			continue
 		}
-		b.WriteRune(r)
+		if hi <= 0xDBFF { // high surrogate: pair it with a following low surrogate
+			if lo, ok2 := decodeWTF8Surrogate(s[i+3:]); ok2 && lo >= 0xDC00 {
+				// Properly paired surrogates form a valid astral character in
+				// JS and are preserved.
+				b.WriteRune(utf16.DecodeRune(hi, lo))
+				i += 6
+				continue
+			}
+		}
+		// Unpaired surrogate: deleted (pi replaces with "").
+		i += 3
 	}
 	return b.String()
 }
 
-func isValidUTF16(s string) bool {
-	for _, r := range s {
-		if utf16.IsSurrogate(r) {
-			return false
+// decodeWTF8Surrogate decodes a UTF-16 surrogate code unit encoded as a WTF-8
+// byte triple at the start of s.
+func decodeWTF8Surrogate(s string) (rune, bool) {
+	if len(s) >= 3 && s[0] == 0xED && s[1] >= 0xA0 && s[1] <= 0xBF && s[2] >= 0x80 && s[2] <= 0xBF {
+		return 0xD000 | rune(s[1]&0x3F)<<6 | rune(s[2]&0x3F), true
+	}
+	return 0, false
+}
+
+func containsWTF8Surrogate(s string) bool {
+	for i := 0; i+2 < len(s); i++ {
+		if s[i] == 0xED && s[i+1] >= 0xA0 && s[i+1] <= 0xBF {
+			return true
 		}
 	}
-	return true
+	return false
 }

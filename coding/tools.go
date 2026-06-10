@@ -1,11 +1,14 @@
 package coding
 
 import (
-	"bufio"
 	"bytes"
 	"context"
+	"crypto/rand"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
+	"io/fs"
 	"net/url"
 	"os"
 	"os/exec"
@@ -13,12 +16,16 @@ import (
 	"regexp"
 	"runtime"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/sky-valley/pi/agent"
 	"github.com/sky-valley/pi/ai"
+	"golang.org/x/text/collate"
+	"golang.org/x/text/language"
 	"golang.org/x/text/unicode/norm"
 )
 
@@ -244,7 +251,12 @@ func detectSupportedImageMimeTypeFromFile(path string) string {
 	}
 	defer f.Close()
 	buf := make([]byte, imageTypeSniffBytes)
-	n, _ := f.Read(buf)
+	// io.ReadFull so a short first Read (pipes, network FS) cannot truncate the
+	// sniff window; EOF/ErrUnexpectedEOF just mean the file is small.
+	n, err := io.ReadFull(f, buf)
+	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
+		return ""
+	}
 	return detectSupportedImageMimeType(buf[:n])
 }
 
@@ -311,6 +323,9 @@ func readTool(cwd string) agent.AgentTool {
 		Name:        "read",
 		Label:       "read",
 		Description: fmt.Sprintf("Read the contents of a file. Supports text files and images (jpg, png, gif, webp). Images are sent as attachments. For text files, output is truncated to %d lines or %dKB (whichever is hit first). Use offset/limit for large files. When you need the full file, continue with offset until complete.", DefaultMaxLines, DefaultMaxBytes/1024),
+		PromptGuidelines: []string{
+			"Use read to examine files instead of cat or sed.",
+		},
 		Parameters: ai.Object(
 			ai.Prop("path", ai.String("Path to the file to read (relative or absolute)")),
 			ai.Opt("offset", ai.Integer("Line number to start reading from (1-indexed)")),
@@ -324,7 +339,8 @@ func readTool(cwd string) agent.AgentTool {
 				return agent.AgentToolResult{}, err
 			}
 			if info.IsDir() {
-				return agent.AgentToolResult{}, fmt.Errorf("%s is a directory, not a file", path)
+				// pi's fs.readFile on a directory raises Node's EISDIR error text.
+				return agent.AgentToolResult{}, fmt.Errorf("EISDIR: illegal operation on a directory, read")
 			}
 			if mime := detectSupportedImageMimeTypeFromFile(abs); mime != "" {
 				data, err := os.ReadFile(abs)
@@ -366,14 +382,32 @@ func readTool(cwd string) agent.AgentTool {
 				return agent.AgentToolResult{}, fmt.Errorf("Offset %d is beyond end of file (%d lines total)", offset, len(allLines))
 			}
 			var selected string
-			userLimitedLines := -1
+			hasLimit := false
+			userLimitedLines := 0
 			if limit, ok := argInt(params, "limit"); ok {
-				end := startLine + limit
-				if end > len(allLines) {
-					end = len(allLines)
+				hasLimit = true
+				// pi: endLine = Math.min(startLine + limit, allLines.length), then
+				// allLines.slice(startLine, endLine) with JS slice semantics: a
+				// negative end counts back from the array end, and an end before
+				// start yields an empty slice (never a panic).
+				endLine := startLine + limit
+				if endLine > len(allLines) {
+					endLine = len(allLines)
 				}
-				selected = strings.Join(allLines[startLine:end], "\n")
-				userLimitedLines = end - startLine
+				effEnd := endLine
+				if effEnd < 0 {
+					effEnd = len(allLines) + effEnd
+					if effEnd < 0 {
+						effEnd = 0
+					}
+				}
+				if effEnd < startLine {
+					effEnd = startLine
+				}
+				selected = strings.Join(allLines[startLine:effEnd], "\n")
+				// pi keeps the raw arithmetic value (may be zero or negative) for
+				// the continuation-footer math.
+				userLimitedLines = endLine - startLine
 			} else {
 				selected = strings.Join(allLines[startLine:], "\n")
 			}
@@ -394,14 +428,18 @@ func readTool(cwd string) agent.AgentTool {
 				} else {
 					out += fmt.Sprintf("\n\n[Showing lines %d-%d of %d (%s limit). Use offset=%d to continue.]", startLineDisplay, endLineDisplay, totalFileLines, FormatSize(DefaultMaxBytes), nextOffset)
 				}
-			case userLimitedLines >= 0 && startLine+userLimitedLines < len(allLines):
+			case hasLimit && startLine+userLimitedLines < len(allLines):
 				remaining := len(allLines) - (startLine + userLimitedLines)
 				nextOffset := startLine + userLimitedLines + 1
 				out = fmt.Sprintf("%s\n\n[%d more lines in file. Use offset=%d to continue.]", tr.Content, remaining, nextOffset)
 			default:
 				out = tr.Content
 			}
-			return textResult(out), nil
+			res := textResult(out)
+			if tr.Truncated {
+				res.Details = map[string]any{"truncation": tr}
+			}
+			return res, nil
 		},
 	}
 }
@@ -415,6 +453,9 @@ func writeTool(cwd string) agent.AgentTool {
 		Name:        "write",
 		Label:       "write",
 		Description: "Write content to a file. Creates the file if it doesn't exist, overwrites if it does. Automatically creates parent directories.",
+		PromptGuidelines: []string{
+			"Use write only for new files or complete rewrites.",
+		},
 		Parameters: ai.Object(
 			ai.Prop("path", ai.String("Path to the file to write (relative or absolute)")),
 			ai.Prop("content", ai.String("Content to write to the file")),
@@ -451,12 +492,20 @@ func editTool(cwd string) agent.AgentTool {
 		Name:        "edit",
 		Label:       "edit",
 		Description: "Edit a single file using exact text replacement. Every edits[].oldText must match a unique, non-overlapping region of the original file. If two changes affect the same block or nearby lines, merge them into one edit instead of emitting overlapping edits. Do not include large unchanged regions just to connect distant changes.",
+		PromptGuidelines: []string{
+			"Use edit for precise changes (edits[].oldText must match exactly)",
+			"When changing multiple separate locations in one file, use one edit call with multiple entries in edits[] instead of multiple edit calls",
+			"Each edits[].oldText is matched against the original file, not after earlier edits are applied. Do not emit overlapping or nested edits. Merge nearby changes into one edit.",
+			"Keep edits[].oldText as small as possible while still being unique in the file. Do not pad with large unchanged regions.",
+		},
 		Parameters: ai.Object(
 			ai.Prop("path", ai.String("Path to the file to edit (relative or absolute)")),
 			ai.Prop("edits", ai.ArrayOf(editObjSchema, "One or more targeted replacements. Each edit is matched against the original file, not incrementally. Do not include overlapping or nested edits. If two changes touch the same block or nearby lines, merge them into one edit instead.")),
 		),
+		// The harness runs PrepareArguments before schema validation (loop.go),
+		// matching pi's prepareArguments hook (edit.ts:307).
+		PrepareArguments: prepareEditArguments,
 		Execute: func(ctx context.Context, id string, params map[string]any, onUpdate agent.ToolUpdateFunc) (agent.AgentToolResult, error) {
-			params = prepareEditArguments(params)
 			path := argStr(params, "path")
 			rawEdits, _ := params["edits"].([]any)
 			if len(rawEdits) == 0 {
@@ -472,7 +521,7 @@ func editTool(cwd string) agent.AgentTool {
 			return withFileMutationQueue(abs, func() (agent.AgentToolResult, error) {
 				data, err := os.ReadFile(abs)
 				if err != nil {
-					return agent.AgentToolResult{}, fmt.Errorf("Could not edit file: %s. %v.", path, err)
+					return agent.AgentToolResult{}, fmt.Errorf("Could not edit file: %s. %s.", path, fsErrorCode(err))
 				}
 				// Strip a leading BOM before matching (the model won't include it).
 				bom, raw := stripBOM(string(data))
@@ -491,6 +540,20 @@ func editTool(cwd string) agent.AgentTool {
 			})
 		},
 	}
+}
+
+// fsErrorCode renders a filesystem error like pi's `Error code: ${error.code}`
+// (Node errno codes), falling back to the raw error text like pi's String(error).
+func fsErrorCode(err error) string {
+	switch {
+	case errors.Is(err, fs.ErrNotExist):
+		return "Error code: ENOENT"
+	case errors.Is(err, fs.ErrPermission):
+		return "Error code: EACCES"
+	case errors.Is(err, syscall.EISDIR):
+		return "Error code: EISDIR"
+	}
+	return err.Error()
 }
 
 // prepareEditArguments ports pi's prepareEditArguments (edit.ts:94-118): when a
@@ -577,86 +640,67 @@ func bashTool(cwd string) agent.AgentTool {
 		),
 		Execute: func(ctx context.Context, id string, params map[string]any, onUpdate agent.ToolUpdateFunc) (agent.AgentToolResult, error) {
 			command := argStr(params, "command")
+			shell, shellArgs, err := getShellConfig()
+			if err != nil {
+				return agent.AgentToolResult{}, err
+			}
 			if _, err := os.Stat(cwd); err != nil {
 				return agent.AgentToolResult{}, fmt.Errorf("Working directory does not exist: %s\nCannot execute bash commands.", cwd)
 			}
 			runCtx := ctx
 			var cancel context.CancelFunc
-			timedOut := false
-			if t, ok := argInt(params, "timeout"); ok && t > 0 {
-				runCtx, cancel = context.WithTimeout(ctx, time.Duration(t)*time.Second)
+			timeout, hasTimeout := argFloat(params, "timeout")
+			if hasTimeout && timeout > 0 {
+				runCtx, cancel = context.WithTimeout(ctx, time.Duration(timeout*float64(time.Second)))
 				defer cancel()
 			}
-			shell, shellArgs := shellConfig()
 			cmd := exec.CommandContext(runCtx, shell, append(shellArgs, command)...)
 			cmd.Dir = cwd
 			// Run in its own process group and, on cancel/timeout, kill the whole
 			// tree so backgrounded grandchildren don't survive (port of pi).
 			setProcessGroup(cmd)
 			cmd.Cancel = func() error { return killProcessTree(cmd) }
-			cmd.WaitDelay = 2 * time.Second
+			// EXIT_STDIO_GRACE_MS: stop waiting on inherited stdio 100ms after the
+			// process exits (child-process.ts).
+			cmd.WaitDelay = 100 * time.Millisecond
 
-			// Stream stdout+stderr incrementally, emitting throttled partial output
-			// via onUpdate so long-running commands surface progress (port of pi's
-			// throttled OutputAccumulator).
-			var outMu sync.Mutex
-			var buf bytes.Buffer
-			var lastEmit time.Time
-			emit := func() {
-				if onUpdate == nil {
-					return
-				}
-				outMu.Lock()
-				snapshot := buf.String()
-				outMu.Unlock()
-				tr := TruncateTail(snapshot, 0, 0)
-				onUpdate(agent.AgentToolResult{Content: ai.ContentList{ai.TextContent{Text: tr.Content}}, Details: map[string]any{}})
+			// Stream output through the rolling OutputAccumulator (bounded memory,
+			// incremental temp-file writes) with throttled partial onUpdate emits
+			// including a trailing-edge flush (port of bash.ts:291-348).
+			u := newBashUpdater(onUpdate, newOutputAccumulator(0, 0, "pi-bash"))
+			if onUpdate != nil {
+				// pi emits an initial empty update before spawning (bash.ts:332-334).
+				onUpdate(agent.AgentToolResult{Content: ai.ContentList{}, Details: nil})
 			}
-			w := writerFunc(func(p []byte) (int, error) {
-				outMu.Lock()
-				n, _ := buf.Write(p)
-				now := time.Now()
-				should := now.Sub(lastEmit) >= bashUpdateThrottle
-				if should {
-					lastEmit = now
-				}
-				outMu.Unlock()
-				if should {
-					emit()
-				}
-				return n, nil
-			})
-			cmd.Stdout = w
-			cmd.Stderr = w
-			err := cmd.Run()
-			if runCtx.Err() == context.DeadlineExceeded {
-				timedOut = true
-			}
-			emit() // flush final partial
+			// The same writer pointer for stdout+stderr keeps os/exec on a single
+			// pipe (2>&1-style interleaving) like pi's shared onData handler.
+			cmd.Stdout = u
+			cmd.Stderr = u
+			runErr := cmd.Run()
 
-			outMu.Lock()
-			full := buf.String()
-			outMu.Unlock()
-			tr := TruncateTail(full, 0, 0)
-			text := tr.Content
-			if tr.Truncated {
-				startLine := tr.TotalLines - tr.OutputLines + 1
-				endLine := tr.TotalLines
-				path, werr := writeTempOutput(full)
-				fullOutput := ""
-				if werr == nil {
-					fullOutput = path
+			snap := u.finish()
+			formatOutput := func(emptyText string) (string, map[string]any) {
+				text := snap.content
+				if text == "" {
+					text = emptyText
 				}
-				if tr.LastLinePartial {
-					// Byte length of the full (untruncated) last line of output.
-					lastLineSize := FormatSize(lastLineBytes(full))
-					text += fmt.Sprintf("\n\n[Showing last %s of line %d (line is %s). Full output: %s]",
-						FormatSize(tr.OutputBytes), endLine, lastLineSize, fullOutput)
-				} else if tr.TruncatedBy == "lines" {
-					text += fmt.Sprintf("\n\n[Showing lines %d-%d of %d. Full output: %s]", startLine, endLine, tr.TotalLines, fullOutput)
-				} else {
-					text += fmt.Sprintf("\n\n[Showing lines %d-%d of %d (%s limit). Full output: %s]", startLine, endLine, tr.TotalLines, FormatSize(DefaultMaxBytes), fullOutput)
+				var details map[string]any
+				if snap.truncation.Truncated {
+					details = map[string]any{"truncation": snap.truncation, "fullOutputPath": snap.fullOutputPath}
+					tr := snap.truncation
+					startLine := tr.TotalLines - tr.OutputLines + 1
+					endLine := tr.TotalLines
+					if tr.LastLinePartial {
+						lastLineSize := FormatSize(u.acc.getLastLineBytes())
+						text += fmt.Sprintf("\n\n[Showing last %s of line %d (line is %s). Full output: %s]",
+							FormatSize(tr.OutputBytes), endLine, lastLineSize, snap.fullOutputPath)
+					} else if tr.TruncatedBy == "lines" {
+						text += fmt.Sprintf("\n\n[Showing lines %d-%d of %d. Full output: %s]", startLine, endLine, tr.TotalLines, snap.fullOutputPath)
+					} else {
+						text += fmt.Sprintf("\n\n[Showing lines %d-%d of %d (%s limit). Full output: %s]", startLine, endLine, tr.TotalLines, FormatSize(DefaultMaxBytes), snap.fullOutputPath)
+					}
 				}
+				return text, details
 			}
 			appendStatus := func(t, status string) string {
 				if t != "" {
@@ -664,73 +708,369 @@ func bashTool(cwd string) agent.AgentTool {
 				}
 				return status
 			}
-			if timedOut {
-				t := argMustInt(params, "timeout")
-				return agent.AgentToolResult{}, fmt.Errorf("%s", appendStatus(text, fmt.Sprintf("Command timed out after %d seconds", t)))
-			}
+			// Abort wins over timeout when both fired (bash.ts:112-117).
 			if ctx.Err() != nil {
+				text, _ := formatOutput("")
 				return agent.AgentToolResult{}, fmt.Errorf("%s", appendStatus(text, "Command aborted"))
 			}
-			if err != nil {
-				if exitErr, ok := err.(*exec.ExitError); ok {
-					return agent.AgentToolResult{}, fmt.Errorf("%s", appendStatus(text, fmt.Sprintf("Command exited with code %d", exitErr.ExitCode())))
+			if runCtx.Err() == context.DeadlineExceeded {
+				text, _ := formatOutput("")
+				// pi prints the raw timeout value (`timeout:${timeout}`), so 0.5
+				// renders "0.5" and 2 renders "2".
+				return agent.AgentToolResult{}, fmt.Errorf("%s", appendStatus(text, fmt.Sprintf("Command timed out after %s seconds", strconv.FormatFloat(timeout, 'g', -1, 64))))
+			}
+			if runErr != nil {
+				exitErr, ok := runErr.(*exec.ExitError)
+				if !ok {
+					return agent.AgentToolResult{}, runErr
 				}
-				return agent.AgentToolResult{}, err
+				// A signal-killed child has no exit code (pi: exitCode === null) and
+				// is treated as success with whatever output was produced
+				// (bash.ts:397 `exitCode !== 0 && exitCode !== null`).
+				if code := exitErr.ExitCode(); code != -1 {
+					text, _ := formatOutput("(no output)")
+					return agent.AgentToolResult{}, fmt.Errorf("%s", appendStatus(text, fmt.Sprintf("Command exited with code %d", code)))
+				}
 			}
-			if text == "" {
-				text = "(no output)"
+			text, details := formatOutput("(no output)")
+			res := textResult(text)
+			if details != nil {
+				res.Details = details
 			}
-			return textResult(text), nil
+			return res, nil
 		},
 	}
 }
 
 const bashUpdateThrottle = 100 * time.Millisecond
 
-// writerFunc adapts a function to io.Writer.
-type writerFunc func([]byte) (int, error)
-
-func (f writerFunc) Write(p []byte) (int, error) { return f(p) }
-
-func argMustInt(params map[string]any, key string) int {
-	v, _ := argInt(params, key)
-	return v
+func argFloat(params map[string]any, key string) (float64, bool) {
+	switch v := params[key].(type) {
+	case float64:
+		return v, true
+	case int:
+		return float64(v), true
+	}
+	return 0, false
 }
 
-func shellConfig() (string, []string) {
+// getShellConfig ports pi's getShellConfig (shell.ts:57-110). pi never uses
+// $SHELL or cmd: Unix resolves /bin/bash, then bash on PATH, then sh; Windows
+// resolves Git Bash in known locations, then bash.exe on PATH, else errors.
+var shellExists = pathExistsFS
+
+func getShellConfig() (string, []string, error) {
 	if runtime.GOOS == "windows" {
-		return "cmd", []string{"/c"}
+		var paths []string
+		if pf := os.Getenv("ProgramFiles"); pf != "" {
+			paths = append(paths, pf+`\Git\bin\bash.exe`)
+		}
+		if pf86 := os.Getenv("ProgramFiles(x86)"); pf86 != "" {
+			paths = append(paths, pf86+`\Git\bin\bash.exe`)
+		}
+		for _, p := range paths {
+			if shellExists(p) {
+				return p, []string{"-c"}, nil
+			}
+		}
+		if p, err := exec.LookPath("bash.exe"); err == nil && p != "" {
+			return p, []string{"-c"}, nil
+		}
+		var b strings.Builder
+		b.WriteString("No bash shell found. Options:\n")
+		b.WriteString("  1. Install Git for Windows: https://git-scm.com/download/win\n")
+		b.WriteString("  2. Add your bash to PATH (Cygwin, MSYS2, etc.)\n")
+		b.WriteString("  3. Set shellPath in settings.json\n\n")
+		b.WriteString("Searched Git Bash in:\n")
+		for i, p := range paths {
+			if i > 0 {
+				b.WriteString("\n")
+			}
+			b.WriteString("  " + p)
+		}
+		return "", nil, errors.New(b.String())
 	}
-	shell := os.Getenv("SHELL")
-	if shell == "" {
-		shell = "/bin/bash"
+
+	// Unix: try /bin/bash, then bash on PATH, then fall back to sh.
+	if shellExists("/bin/bash") {
+		return "/bin/bash", []string{"-c"}, nil
 	}
-	return shell, []string{"-c"}
+	if p, err := exec.LookPath("bash"); err == nil && p != "" {
+		return p, []string{"-c"}, nil
+	}
+	return "sh", []string{"-c"}, nil
 }
 
-// lastLineBytes returns the byte length of the full last line of content,
-// dropping a single trailing newline (mirrors OutputAccumulator.getLastLineBytes).
-func lastLineBytes(content string) int {
-	s := content
-	if strings.HasSuffix(s, "\n") {
-		s = s[:len(s)-1]
-	}
-	if idx := strings.LastIndex(s, "\n"); idx != -1 {
-		return len(s) - idx - 1
-	}
-	return len(s)
+// ---------------------------------------------------------------------------
+// bash output accumulator (port of output-accumulator.ts)
+// ---------------------------------------------------------------------------
+
+type outputSnapshot struct {
+	content        string
+	truncation     TruncationResult
+	fullOutputPath string
 }
 
-func writeTempOutput(content string) (string, error) {
-	f, err := os.CreateTemp("", "pi-bash-*.txt")
+// outputAccumulator incrementally tracks streaming output with bounded memory:
+// it keeps only a rolling tail (≤ 2× maxRollingBytes) for display snapshots
+// and streams raw chunks to a temp file once the output exceeds the limits.
+type outputAccumulator struct {
+	maxLines        int
+	maxBytes        int
+	maxRollingBytes int
+	prefix          string
+
+	rawChunks             [][]byte
+	tail                  []byte
+	tailStartsAtLineBound bool
+	totalBytes            int
+	completedLines        int
+	totalLines            int
+	currentLineBytes      int
+	hasOpenLine           bool
+	finished              bool
+
+	tempFilePath string
+	tempFile     *os.File
+}
+
+func newOutputAccumulator(maxLines, maxBytes int, prefix string) *outputAccumulator {
+	if maxLines == 0 {
+		maxLines = DefaultMaxLines
+	}
+	if maxBytes == 0 {
+		maxBytes = DefaultMaxBytes
+	}
+	rolling := maxBytes * 2
+	if rolling < 1 {
+		rolling = 1
+	}
+	if prefix == "" {
+		prefix = "pi-output"
+	}
+	return &outputAccumulator{
+		maxLines:              maxLines,
+		maxBytes:              maxBytes,
+		maxRollingBytes:       rolling,
+		prefix:                prefix,
+		tailStartsAtLineBound: true,
+	}
+}
+
+func (a *outputAccumulator) append(data []byte) {
+	if a.finished || len(data) == 0 {
+		return
+	}
+	a.appendText(data)
+	if a.tempFile != nil || a.shouldUseTempFile() {
+		a.ensureTempFile()
+		if a.tempFile != nil {
+			_, _ = a.tempFile.Write(data)
+		}
+	} else {
+		// Copy: os/exec reuses the write buffer.
+		a.rawChunks = append(a.rawChunks, append([]byte(nil), data...))
+	}
+}
+
+func (a *outputAccumulator) finish() {
+	if a.finished {
+		return
+	}
+	a.finished = true
+	if a.shouldUseTempFile() {
+		a.ensureTempFile()
+	}
+}
+
+func (a *outputAccumulator) appendText(data []byte) {
+	a.totalBytes += len(data)
+	a.tail = append(a.tail, data...)
+	if len(a.tail) > a.maxRollingBytes*2 {
+		a.trimTail()
+	}
+
+	newlines := bytes.Count(data, []byte{'\n'})
+	if newlines == 0 {
+		a.currentLineBytes += len(data)
+		a.hasOpenLine = true
+	} else {
+		a.completedLines += newlines
+		lastNL := bytes.LastIndexByte(data, '\n')
+		tailLen := len(data) - lastNL - 1
+		a.currentLineBytes = tailLen
+		a.hasOpenLine = tailLen > 0
+	}
+	a.totalLines = a.completedLines
+	if a.hasOpenLine {
+		a.totalLines++
+	}
+}
+
+func (a *outputAccumulator) trimTail() {
+	if len(a.tail) <= a.maxRollingBytes {
+		return
+	}
+	start := len(a.tail) - a.maxRollingBytes
+	for start < len(a.tail) && (a.tail[start]&0xc0) == 0x80 {
+		start++
+	}
+	if start > 0 {
+		a.tailStartsAtLineBound = a.tail[start-1] == '\n'
+	}
+	a.tail = append([]byte(nil), a.tail[start:]...)
+}
+
+func (a *outputAccumulator) snapshotText() string {
+	if a.tailStartsAtLineBound {
+		return string(a.tail)
+	}
+	if i := bytes.IndexByte(a.tail, '\n'); i != -1 {
+		return string(a.tail[i+1:])
+	}
+	return string(a.tail)
+}
+
+func (a *outputAccumulator) snapshot(persistIfTruncated bool) outputSnapshot {
+	tr := TruncateTail(a.snapshotText(), a.maxLines, a.maxBytes)
+	truncated := a.totalLines > a.maxLines || a.totalBytes > a.maxBytes
+	truncatedBy := ""
+	if truncated {
+		truncatedBy = tr.TruncatedBy
+		if truncatedBy == "" {
+			if a.totalBytes > a.maxBytes {
+				truncatedBy = "bytes"
+			} else {
+				truncatedBy = "lines"
+			}
+		}
+	}
+	tr.Truncated = truncated
+	tr.TruncatedBy = truncatedBy
+	tr.TotalLines = a.totalLines
+	tr.TotalBytes = a.totalBytes
+	tr.MaxLines = a.maxLines
+	tr.MaxBytes = a.maxBytes
+
+	if persistIfTruncated && truncated {
+		a.ensureTempFile()
+	}
+	return outputSnapshot{content: tr.Content, truncation: tr, fullOutputPath: a.tempFilePath}
+}
+
+func (a *outputAccumulator) closeTempFile() {
+	if a.tempFile == nil {
+		return
+	}
+	_ = a.tempFile.Close()
+	a.tempFile = nil
+}
+
+func (a *outputAccumulator) getLastLineBytes() int { return a.currentLineBytes }
+
+func (a *outputAccumulator) shouldUseTempFile() bool {
+	return a.totalBytes > a.maxBytes || a.totalLines > a.maxLines
+}
+
+func (a *outputAccumulator) ensureTempFile() {
+	if a.tempFilePath != "" {
+		return
+	}
+	var rb [8]byte
+	_, _ = rand.Read(rb[:])
+	// pi: `${prefix}-${16 hex chars}.log` in the OS temp dir.
+	a.tempFilePath = filepath.Join(os.TempDir(), fmt.Sprintf("%s-%x.log", a.prefix, rb))
+	f, err := os.Create(a.tempFilePath)
 	if err != nil {
-		return "", err
+		return
 	}
-	defer f.Close()
-	if _, err := f.WriteString(content); err != nil {
-		return "", err
+	a.tempFile = f
+	for _, chunk := range a.rawChunks {
+		_, _ = f.Write(chunk)
 	}
-	return f.Name(), nil
+	a.rawChunks = nil
+}
+
+// bashUpdater throttles partial onUpdate emits (leading + trailing edge) and
+// serializes accumulator access across the exec pipe goroutines.
+type bashUpdater struct {
+	mu         sync.Mutex
+	onUpdate   agent.ToolUpdateFunc
+	acc        *outputAccumulator
+	dirty      bool
+	lastUpdate time.Time
+	timer      *time.Timer
+}
+
+func newBashUpdater(onUpdate agent.ToolUpdateFunc, acc *outputAccumulator) *bashUpdater {
+	return &bashUpdater{onUpdate: onUpdate, acc: acc}
+}
+
+// Write implements io.Writer for the child's stdout/stderr.
+func (u *bashUpdater) Write(p []byte) (int, error) {
+	u.mu.Lock()
+	defer u.mu.Unlock()
+	u.acc.append(p)
+	u.scheduleLocked()
+	return len(p), nil
+}
+
+func (u *bashUpdater) emitLocked() {
+	if u.onUpdate == nil || !u.dirty {
+		return
+	}
+	u.dirty = false
+	u.lastUpdate = time.Now()
+	snap := u.acc.snapshot(true)
+	details := map[string]any{}
+	if snap.truncation.Truncated {
+		details["truncation"] = snap.truncation
+	}
+	if snap.fullOutputPath != "" {
+		details["fullOutputPath"] = snap.fullOutputPath
+	}
+	u.onUpdate(agent.AgentToolResult{Content: ai.ContentList{ai.TextContent{Text: snap.content}}, Details: details})
+}
+
+func (u *bashUpdater) scheduleLocked() {
+	if u.onUpdate == nil {
+		return
+	}
+	u.dirty = true
+	delay := bashUpdateThrottle - time.Since(u.lastUpdate)
+	if delay <= 0 {
+		u.clearTimerLocked()
+		u.emitLocked()
+		return
+	}
+	if u.timer == nil {
+		u.timer = time.AfterFunc(delay, func() {
+			u.mu.Lock()
+			defer u.mu.Unlock()
+			u.timer = nil
+			u.emitLocked()
+		})
+	}
+}
+
+func (u *bashUpdater) clearTimerLocked() {
+	if u.timer != nil {
+		u.timer.Stop()
+		u.timer = nil
+	}
+}
+
+// finish flushes the trailing-edge update, finalizes the accumulator, and
+// returns the final snapshot (port of bash.ts finishOutput).
+func (u *bashUpdater) finish() outputSnapshot {
+	u.mu.Lock()
+	defer u.mu.Unlock()
+	u.acc.finish()
+	u.clearTimerLocked()
+	u.emitLocked()
+	snap := u.acc.snapshot(true)
+	u.acc.closeTempFile()
+	return snap
 }
 
 // ---------------------------------------------------------------------------
@@ -771,8 +1111,12 @@ func lsTool(cwd string) agent.AgentTool {
 			for _, e := range entries {
 				names = append(names, e.Name())
 			}
+			// pi sorts with a.toLowerCase().localeCompare(b.toLowerCase());
+			// approximate localeCompare with a root-locale UCA collator so
+			// punctuation/underscore order matches (e.g. _x < .gitignore < ax).
+			coll := collate.New(language.Und)
 			sort.SliceStable(names, func(a, b int) bool {
-				return strings.ToLower(names[a]) < strings.ToLower(names[b])
+				return coll.CompareString(strings.ToLower(names[a]), strings.ToLower(names[b])) < 0
 			})
 
 			var results []string
@@ -801,17 +1145,24 @@ func lsTool(cwd string) agent.AgentTool {
 			rawOutput := strings.Join(results, "\n")
 			tr := TruncateHead(rawOutput, maxInt, 0)
 			output := tr.Content
+			details := map[string]any{}
 			var notices []string
 			if entryLimitReached {
 				notices = append(notices, fmt.Sprintf("%d entries limit reached. Use limit=%d for more", limit, limit*2))
+				details["entryLimitReached"] = limit
 			}
 			if tr.Truncated {
 				notices = append(notices, fmt.Sprintf("%s limit reached", FormatSize(DefaultMaxBytes)))
+				details["truncation"] = tr
 			}
 			if len(notices) > 0 {
 				output += "\n\n[" + strings.Join(notices, ". ") + "]"
 			}
-			return textResult(output), nil
+			res := textResult(output)
+			if len(details) > 0 {
+				res.Details = details
+			}
+			return res, nil
 		},
 	}
 }
@@ -840,10 +1191,14 @@ func findTool(cwd string) agent.AgentTool {
 			if l, ok := argInt(params, "limit"); ok {
 				limit = l
 			}
+			// fd --max-results treats 0 as unlimited; never slice with a
+			// non-positive limit.
+			unlimited := limit <= 0
 			if _, err := os.Stat(root); err != nil {
 				return agent.AgentToolResult{}, fmt.Errorf("Path not found: %s", root)
 			}
-			ig := newIgnoreStack(root)
+			// fd --no-require-git: gitignore applies whether or not we are in a repo.
+			ig := newIgnoreStack(root, false)
 			var results []string
 			err := filepath.WalkDir(root, func(p string, d os.DirEntry, walkErr error) error {
 				if walkErr != nil {
@@ -859,10 +1214,11 @@ func findTool(cwd string) agent.AgentTool {
 					}
 					return nil
 				}
-				if d.IsDir() {
-					return nil
+				if !unlimited && len(results) >= limit {
+					return filepath.SkipAll
 				}
-				if matchFdGlob(pattern, rel) {
+				// fd matches directories as well as files.
+				if matchFdGlob(pattern, rel, p) {
 					results = append(results, filepath.ToSlash(rel))
 				}
 				return nil
@@ -873,27 +1229,33 @@ func findTool(cwd string) agent.AgentTool {
 			// Deterministic, documented ordering: sort lexicographically. fd's native
 			// traversal order is unspecified; we keep a stable sort for reproducible output.
 			sort.Strings(results)
-			resultLimitReached := len(results) >= limit
-			if len(results) > limit {
-				results = results[:limit]
-			}
+			// pi: resultLimitReached = relativized.length >= effectiveLimit (so a
+			// limit of 0 still reports the notice, matching fd's 0-is-unlimited).
+			resultLimitReached := limit >= 0 && len(results) >= limit
 			if len(results) == 0 {
 				return textResult("No files found matching pattern"), nil
 			}
 			rawOutput := strings.Join(results, "\n")
 			tr := TruncateHead(rawOutput, maxInt, 0)
 			output := tr.Content
+			details := map[string]any{}
 			var notices []string
 			if resultLimitReached {
 				notices = append(notices, fmt.Sprintf("%d results limit reached. Use limit=%d for more, or refine pattern", limit, limit*2))
+				details["resultLimitReached"] = limit
 			}
 			if tr.Truncated {
 				notices = append(notices, fmt.Sprintf("%s limit reached", FormatSize(DefaultMaxBytes)))
+				details["truncation"] = tr
 			}
 			if len(notices) > 0 {
 				output += "\n\n[" + strings.Join(notices, ". ") + "]"
 			}
-			return textResult(output), nil
+			res := textResult(output)
+			if len(details) > 0 {
+				res.Details = details
+			}
+			return res, nil
 		},
 	}
 }
@@ -923,9 +1285,14 @@ func grepTool(cwd string) agent.AgentTool {
 				root = resolveToCwd(p, cwd)
 			}
 			globPat := argStr(params, "glob")
+			// pi: Math.max(1, limit ?? 100) — non-positive limits clamp to 1
+			// (grep.ts:189).
 			limit := grepDefaultLimit
-			if l, ok := argInt(params, "limit"); ok && l > 0 {
+			if l, ok := argInt(params, "limit"); ok {
 				limit = l
+			}
+			if limit < 1 {
+				limit = 1
 			}
 			ctxLines := 0
 			if c, ok := argInt(params, "context"); ok {
@@ -956,18 +1323,29 @@ func grepTool(cwd string) agent.AgentTool {
 			matchLimitReached := false
 			linesTruncated := false
 
-			searchFile := func(path, rel string) bool {
-				f, err := os.Open(path)
+			// searchFile scans one file; skipBinary mirrors rg's NUL sniff (a NUL
+			// byte in the first 8KB marks the file binary; only applies during
+			// directory traversal — explicitly-given files are always searched).
+			searchFile := func(path, rel string, skipBinary bool) bool {
+				data, err := os.ReadFile(path)
 				if err != nil {
 					return true
 				}
-				defer f.Close()
-				var lines []string
-				scanner := bufio.NewScanner(f)
-				scanner.Buffer(make([]byte, 0, 64*1024), 8*1024*1024)
-				for scanner.Scan() {
-					lines = append(lines, scanner.Text())
+				if skipBinary {
+					window := data
+					if len(window) > 8*1024 {
+						window = window[:8*1024]
+					}
+					if bytes.IndexByte(window, 0) != -1 {
+						return true
+					}
 				}
+				// pi normalizes \r\n and bare \r to \n before splitting
+				// (grep.ts getFileLines). Reading the whole file also avoids any
+				// per-line length cap (rg has none).
+				content := strings.ReplaceAll(string(data), "\r\n", "\n")
+				content = strings.ReplaceAll(content, "\r", "\n")
+				lines := strings.Split(content, "\n")
 				for i, line := range lines {
 					if matchCount >= limit {
 						matchLimitReached = true
@@ -1009,9 +1387,10 @@ func grepTool(cwd string) agent.AgentTool {
 			}
 
 			if !isDir {
-				_ = searchFile(root, filepath.Base(root))
+				_ = searchFile(root, filepath.Base(root), false)
 			} else {
-				ig := newIgnoreStack(root)
+				// rg semantics: gitignore applies only inside a git repository.
+				ig := newIgnoreStack(root, true)
 				err = filepath.WalkDir(root, func(p string, d os.DirEntry, walkErr error) error {
 					if walkErr != nil {
 						return nil
@@ -1029,14 +1408,14 @@ func grepTool(cwd string) agent.AgentTool {
 					if d.IsDir() {
 						return nil
 					}
-					if globPat != "" && !matchFdGlob(globPat, rel) {
+					if globPat != "" && !matchRgGlob(globPat, rel) {
 						return nil
 					}
 					if matchCount >= limit {
 						matchLimitReached = true
 						return filepath.SkipAll
 					}
-					if !searchFile(p, rel) {
+					if !searchFile(p, rel, true) {
 						return filepath.SkipAll
 					}
 					return nil
@@ -1053,20 +1432,28 @@ func grepTool(cwd string) agent.AgentTool {
 			rawOutput := strings.Join(matchLines, "\n")
 			tr := TruncateHead(rawOutput, maxInt, 0)
 			output := tr.Content
+			details := map[string]any{}
 			var notices []string
 			if matchLimitReached {
 				notices = append(notices, fmt.Sprintf("%d matches limit reached. Use limit=%d for more, or refine pattern", limit, limit*2))
+				details["matchLimitReached"] = limit
 			}
 			if tr.Truncated {
 				notices = append(notices, fmt.Sprintf("%s limit reached", FormatSize(DefaultMaxBytes)))
+				details["truncation"] = tr
 			}
 			if linesTruncated {
 				notices = append(notices, fmt.Sprintf("Some lines truncated to %d chars. Use read tool to see full lines", GrepMaxLineLength))
+				details["linesTruncated"] = true
 			}
 			if len(notices) > 0 {
 				output += "\n\n[" + strings.Join(notices, ". ") + "]"
 			}
-			return textResult(output), nil
+			res := textResult(output)
+			if len(details) > 0 {
+				res.Details = details
+			}
+			return res, nil
 		},
 	}
 }

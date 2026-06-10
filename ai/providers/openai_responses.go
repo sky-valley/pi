@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"regexp"
 	"strings"
+	"unicode/utf16"
 
 	"github.com/sky-valley/pi/ai"
 )
@@ -97,29 +97,55 @@ func parseTextSignature(signature string) (id, phase string, ok bool) {
 	return signature, "", true
 }
 
-var responsesIDPartCleaner = regexp.MustCompile(`[^a-zA-Z0-9_-]`)
-var responsesTrailingUnderscore = regexp.MustCompile(`_+$`)
-
+// normalizeResponsesIDPart ports pi's normalizeIdPart (shared :98-102). The JS
+// regex [^a-zA-Z0-9_-] (no /u flag) operates per UTF-16 code unit, so an astral
+// character (a surrogate pair) becomes TWO underscores, and .length/.slice are
+// UTF-16-unit based — the sanitized string is pure ASCII, so byte ops match.
 func normalizeResponsesIDPart(part string) string {
-	sanitized := responsesIDPartCleaner.ReplaceAllString(part, "_")
-	if len(sanitized) > 64 {
-		sanitized = sanitized[:64]
+	units := utf16.Encode([]rune(part))
+	sanitized := make([]byte, len(units))
+	for i, u := range units {
+		switch {
+		case u >= 'a' && u <= 'z', u >= 'A' && u <= 'Z', u >= '0' && u <= '9', u == '_', u == '-':
+			sanitized[i] = byte(u)
+		default:
+			sanitized[i] = '_'
+		}
 	}
-	return responsesTrailingUnderscore.ReplaceAllString(sanitized, "")
+	s := string(sanitized)
+	if len(s) > 64 {
+		s = s[:64]
+	}
+	return strings.TrimRight(s, "_")
 }
 
-// shortHash is a fast deterministic hash to shorten long strings (port of shortHash).
+// shortHash is a fast deterministic hash to shorten long strings (port of
+// shortHash). JS charCodeAt iterates UTF-16 code units, so astral characters
+// feed two surrogate halves into the hash — utf16.Encode matches that.
 func shortHash(str string) string {
 	var h1 uint32 = 0xdeadbeef
 	var h2 uint32 = 0x41c6ce57
-	for _, r := range str {
-		ch := uint32(r)
+	for _, u := range utf16.Encode([]rune(str)) {
+		ch := uint32(u)
 		h1 = imul(h1^ch, 2654435761)
 		h2 = imul(h2^ch, 1597334677)
 	}
 	h1 = imul(h1^(h1>>16), 2246822507) ^ imul(h2^(h2>>13), 3266489909)
 	h2 = imul(h2^(h2>>16), 2246822507) ^ imul(h1^(h1>>13), 3266489909)
 	return base36(h2) + base36(h1)
+}
+
+// utf16Length is JS String.prototype.length (UTF-16 code units).
+func utf16Length(s string) int {
+	n := 0
+	for _, r := range s {
+		if r > 0xFFFF {
+			n += 2
+		} else {
+			n++
+		}
+	}
+	return n
 }
 
 func imul(a, b uint32) uint32 { return a * b }
@@ -152,6 +178,9 @@ type OpenAIResponsesOptions struct {
 	ai.StreamOptions
 	ReasoningEffort  string
 	ReasoningSummary string
+	// ServiceTier is OpenAI's service_tier request param ("auto", "default",
+	// "flex", "priority"); it also scales cost (flex ×0.5, priority ×2).
+	ServiceTier string
 }
 
 // StreamSimpleOpenAIResponses maps unified reasoning to Responses options.
@@ -197,20 +226,42 @@ func StreamOpenAIResponses(ctx context.Context, model *ai.Model, req ai.Context,
 			return
 		}
 
-		body := buildResponsesParams(model, req, opts)
-		if opts.OnPayload != nil {
-			if next, err := opts.OnPayload(body, model); err == nil && next != nil {
-				if m, ok := next.(map[string]any); ok {
-					body = m
-				}
-			}
-		}
-		payload, _ := json.Marshal(body)
-
+		// pi createClient runs before onPayload: Cloudflare providers resolve
+		// {VAR} placeholders in baseUrl from the environment, failing the
+		// stream when a variable is unset (openai-responses.ts:212-223).
 		baseURL := model.BaseURL
 		if baseURL == "" {
 			baseURL = "https://api.openai.com/v1"
 		}
+		if isCloudflareProvider(model.Provider) {
+			resolved, cfErr := resolveCloudflareBaseURL(model)
+			if cfErr != nil {
+				fail(cfErr)
+				return
+			}
+			baseURL = resolved
+		}
+
+		params, err := buildResponsesParams(model, req, opts)
+		if err != nil {
+			fail(err)
+			return
+		}
+		var body any = params
+		if opts.OnPayload != nil {
+			next, err := opts.OnPayload(body, model)
+			if err != nil {
+				// pi: a throw from onPayload propagates and fails the stream.
+				fail(err)
+				return
+			}
+			// pi: any `!== undefined` return replaces the params wholesale.
+			if next != nil {
+				body = next
+			}
+		}
+		payload, _ := json.Marshal(body)
+
 		url := strings.TrimRight(baseURL, "/") + "/responses"
 		build := func() (*http.Request, error) {
 			r, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(payload))
@@ -219,12 +270,36 @@ func StreamOpenAIResponses(ctx context.Context, model *ai.Model, req ai.Context,
 			}
 			r.Header.Set("content-type", "application/json")
 			r.Header.Set("accept", "text/event-stream")
-			r.Header.Set("authorization", "Bearer "+opts.APIKey)
+			// pi cloudflare-ai-gateway: Authorization defaults to null (the SDK
+			// auth header is suppressed) unless headers explicitly provide one;
+			// the API key rides in cf-aig-authorization instead.
+			if model.Provider != "cloudflare-ai-gateway" {
+				r.Header.Set("authorization", "Bearer "+opts.APIKey)
+			}
+			// pi createClient header precedence (openai-responses.ts:189-219):
+			// model.headers, copilot dynamic headers, session cache headers,
+			// then options.headers merged last so they can override defaults.
 			for k, v := range model.Headers {
 				r.Header.Set(k, v)
 			}
+			if model.Provider == "github-copilot" {
+				for k, v := range buildCopilotDynamicHeaders(req.Messages, hasCopilotVisionInput(req.Messages)) {
+					r.Header.Set(k, v)
+				}
+			}
+			// Session cache headers (pi openai-responses.ts:200-205); the
+			// sessionId is zeroed when cacheRetention is "none" (:115).
+			if opts.SessionID != "" && resolveCacheRetention(opts.CacheRetention) != ai.CacheNone {
+				if getResponsesCompat(model).SendSessionIDHeader {
+					r.Header.Set("session_id", opts.SessionID)
+				}
+				r.Header.Set("x-client-request-id", opts.SessionID)
+			}
 			for k, v := range opts.Headers {
 				r.Header.Set(k, v)
+			}
+			if model.Provider == "cloudflare-ai-gateway" {
+				r.Header.Set("cf-aig-authorization", "Bearer "+opts.APIKey)
 			}
 			return r, nil
 		}
@@ -235,11 +310,15 @@ func StreamOpenAIResponses(ctx context.Context, model *ai.Model, req ai.Context,
 		}
 		defer resp.Body.Close()
 		if opts.OnResponse != nil {
-			_ = opts.OnResponse(ai.ProviderResponse{Status: resp.StatusCode, Headers: flattenHeaders(resp.Header)}, model)
+			// pi awaits onResponse; a throw propagates and fails the stream.
+			if err := opts.OnResponse(ai.ProviderResponse{Status: resp.StatusCode, Headers: flattenHeaders(resp.Header)}, model); err != nil {
+				fail(err)
+				return
+			}
 		}
 		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 			data, _ := io.ReadAll(resp.Body)
-			fail(formatProviderError("OpenAI", resp.StatusCode, data))
+			fail(formatResponsesHTTPError(resp.StatusCode, data))
 			return
 		}
 
@@ -369,11 +448,14 @@ func StreamOpenAIResponses(ctx context.Context, model *ai.Model, req ai.Context,
 					}
 				}
 			case "response.output_item.done":
-				if current == nil || ev.Item == nil {
+				if ev.Item == nil {
 					return nil
 				}
-				switch current.kind {
-				case "thinking":
+				// pi branches on the ITEM type (shared :443-492); the
+				// function_call branch runs even without a matching current
+				// block, and currentBlock is cleared only in matched branches.
+				switch {
+				case ev.Item.Type == "reasoning" && current != nil && current.kind == "thinking":
 					summaryText := joinPartsText(ev.Item.Summary, "\n\n")
 					contentText := joinPartsText(ev.Item.Content, "\n\n")
 					rebuilt := summaryText
@@ -390,7 +472,8 @@ func StreamOpenAIResponses(ctx context.Context, model *ai.Model, req ai.Context,
 					}
 					materialize()
 					stream.Push(ai.AssistantMessageEvent{Type: ai.EventThinkingEnd, ContentIndex: idx(), Content: current.thinking.String(), Partial: output.Clone()})
-				case "text":
+					current = nil
+				case ev.Item.Type == "message" && current != nil && current.kind == "text":
 					// Rebuild final text from item.content (output_text or refusal).
 					var sb strings.Builder
 					for _, p := range ev.Item.Content {
@@ -405,18 +488,34 @@ func StreamOpenAIResponses(ctx context.Context, model *ai.Model, req ai.Context,
 					textSigs[idx()] = encodeTextSignatureV1(ev.Item.ID, ev.Item.Phase)
 					materialize()
 					stream.Push(ai.AssistantMessageEvent{Type: ai.EventTextEnd, ContentIndex: idx(), Content: current.text.String(), Partial: output.Clone()})
-				case "toolCall":
-					if current.partialJSON.Len() > 0 {
-						current.args = parseStreamingJSON(current.partialJSON.String())
+					current = nil
+				case ev.Item.Type == "function_call":
+					var tc ai.ToolCall
+					if current != nil && current.kind == "toolCall" {
+						if current.partialJSON.Len() > 0 {
+							current.args = parseStreamingJSON(current.partialJSON.String())
+						} else {
+							current.args = parseStreamingJSON(orEmptyJSON(ev.Item.Arguments))
+						}
+						materialize()
+						tc = current.toContent().(ai.ToolCall)
 					} else {
-						current.args = parseStreamingJSON(orEmptyJSON(ev.Item.Arguments))
+						// pi shared :481-491: a done without a prior added still
+						// constructs the toolCall and emits toolcall_end (the
+						// block is NOT appended to content — replicated as-is).
+						tc = ai.ToolCall{
+							ID:        ev.Item.CallID + "|" + ev.Item.ID,
+							Name:      ev.Item.Name,
+							Arguments: parseStreamingJSON(orEmptyJSON(ev.Item.Arguments)),
+						}
 					}
-					materialize()
-					tc := current.toContent().(ai.ToolCall)
+					current = nil
 					stream.Push(ai.AssistantMessageEvent{Type: ai.EventToolCallEnd, ContentIndex: idx(), ToolCall: &tc, Partial: output.Clone()})
 				}
-				current = nil
 			case "response.completed":
+				// pi runs the usage/stop-reason block even when response is
+				// null (shared :493-521): cost calc, service-tier pricing,
+				// mapStopReason(undefined), and toolUse promotion all apply.
 				if ev.Response != nil {
 					if ev.Response.ID != "" {
 						output.ResponseID = ev.Response.ID
@@ -429,17 +528,28 @@ func StreamOpenAIResponses(ctx context.Context, model *ai.Model, req ai.Context,
 							CacheRead:   cached,
 							TotalTokens: ev.Response.Usage.TotalTokens,
 						}
-						ai.CalculateCost(model, &output.Usage)
 					}
-					reason, statusErr := mapResponsesStatus(ev.Response.Status)
-					if statusErr != nil {
-						return statusErr
-					}
-					output.StopReason = reason
-					for _, b := range builders {
-						if b.kind == "toolCall" && output.StopReason == ai.StopStop {
-							output.StopReason = ai.StopToolUse
-						}
+				}
+				ai.CalculateCost(model, &output.Usage)
+				// Service-tier pricing: the response-reported tier wins over the
+				// requested one (shared :511-516 `response?.service_tier ?? options.serviceTier`).
+				serviceTier := opts.ServiceTier
+				if ev.Response != nil && ev.Response.ServiceTier != "" {
+					serviceTier = ev.Response.ServiceTier
+				}
+				applyResponsesServiceTierPricing(&output.Usage, serviceTier, model)
+				status := ""
+				if ev.Response != nil {
+					status = ev.Response.Status
+				}
+				reason, statusErr := mapResponsesStatus(status)
+				if statusErr != nil {
+					return statusErr
+				}
+				output.StopReason = reason
+				for _, b := range builders {
+					if b.kind == "toolCall" && output.StopReason == ai.StopStop {
+						output.StopReason = ai.StopToolUse
 					}
 				}
 			case "error":
@@ -458,6 +568,13 @@ func StreamOpenAIResponses(ctx context.Context, model *ai.Model, req ai.Context,
 			fail(fmt.Errorf("Request was aborted"))
 			return
 		}
+		// pi openai-responses.ts:140-142: a stream that ended with an error or
+		// aborted stop reason (e.g. response.completed status "cancelled")
+		// must fail, never emit done.
+		if output.StopReason == ai.StopAborted || output.StopReason == ai.StopError {
+			fail(fmt.Errorf("An unknown error occurred"))
+			return
+		}
 		materialize()
 		stream.Push(ai.AssistantMessageEvent{Type: ai.EventDone, Reason: output.StopReason, Message: output})
 		stream.End()
@@ -466,26 +583,36 @@ func StreamOpenAIResponses(ctx context.Context, model *ai.Model, req ai.Context,
 	return stream
 }
 
-func buildResponsesParams(model *ai.Model, req ai.Context, opts *OpenAIResponsesOptions) map[string]any {
+func buildResponsesParams(model *ai.Model, req ai.Context, opts *OpenAIResponsesOptions) (map[string]any, error) {
+	input, err := responsesInput(model, req)
+	if err != nil {
+		return nil, err
+	}
 	params := map[string]any{
 		"model":  model.ID,
-		"input":  responsesInput(model, req),
+		"input":  input,
 		"stream": true,
 		"store":  false,
 	}
+	retention := resolveCacheRetention(opts.CacheRetention)
 	// Prompt caching: route same-session requests to a stable cache key so OpenAI
 	// can reuse the cached system-prompt + tool prefix (latency/cost win).
-	if retention := resolveCacheRetention(opts.CacheRetention); retention != ai.CacheNone && opts.SessionID != "" {
+	if retention != ai.CacheNone && opts.SessionID != "" {
 		params["prompt_cache_key"] = clampPromptCacheKey(opts.SessionID)
-		if retention == ai.CacheLong && getResponsesCompat(model).SupportsLongCacheRetention {
-			params["prompt_cache_retention"] = "24h"
-		}
 	}
-	if opts.MaxTokens != nil {
+	// pi sets prompt_cache_retention independent of sessionId (openai-responses.ts:239).
+	if retention == ai.CacheLong && getResponsesCompat(model).SupportsLongCacheRetention {
+		params["prompt_cache_retention"] = "24h"
+	}
+	// pi `if (options?.maxTokens)` — JS truthiness, so 0 is omitted.
+	if opts.MaxTokens != nil && *opts.MaxTokens != 0 {
 		params["max_output_tokens"] = *opts.MaxTokens
 	}
 	if opts.Temperature != nil {
 		params["temperature"] = *opts.Temperature
+	}
+	if opts.ServiceTier != "" {
+		params["service_tier"] = opts.ServiceTier
 	}
 	if len(req.Tools) > 0 {
 		var tools []map[string]any
@@ -527,12 +654,73 @@ func buildResponsesParams(model *ai.Model, req ai.Context, opts *OpenAIResponses
 			}
 		}
 	}
-	return params
+	return params, nil
+}
+
+// normalizeResponsesToolCallID ports pi's normalizeToolCallId closure
+// (openai-responses.ts:109-121): non-allowed providers sanitize the WHOLE raw
+// id (pipes become underscores, so the later split yields no item id); allowed
+// providers normalize the callId|itemId halves, hashing foreign item ids and
+// enforcing the fc_ prefix.
+func normalizeResponsesToolCallID(model *ai.Model, id string, isForeign bool) string {
+	if !openaiToolCallProviders[model.Provider] {
+		return normalizeResponsesIDPart(id)
+	}
+	if !strings.Contains(id, "|") {
+		return normalizeResponsesIDPart(id)
+	}
+	callID, itemID := splitToolCallID(id)
+	normalizedCallID := normalizeResponsesIDPart(callID)
+	var normalizedItemID string
+	if isForeign {
+		normalizedItemID = buildForeignResponsesItemID(itemID)
+	} else {
+		normalizedItemID = normalizeResponsesIDPart(itemID)
+	}
+	// OpenAI Responses API requires item id to start with "fc"
+	if !strings.HasPrefix(normalizedItemID, "fc_") {
+		normalizedItemID = normalizeResponsesIDPart("fc_" + normalizedItemID)
+	}
+	return normalizedCallID + "|" + normalizedItemID
+}
+
+// buildResponsesToolCallIDNormalizer pre-computes normalized tool-call ids per
+// source assistant message. pi's normalizeToolCallId receives the SOURCE
+// message (needed for the foreign/cross-provider distinction), which the Go
+// transformMessages callback signature lacks — so results are keyed by raw id
+// here. transformMessages only consults the normalizer for !isSameModel
+// messages (transform-messages.ts:133), so same-model raw ids (450+ chars,
+// raw callId|itemId) replay verbatim; the map mirrors that gating.
+func buildResponsesToolCallIDNormalizer(model *ai.Model, messages []ai.Message) func(string) string {
+	normalized := map[string]string{}
+	for _, m := range messages {
+		am, ok := asAssistantMsg(m)
+		if !ok {
+			continue
+		}
+		if am.Provider == model.Provider && am.Api == model.Api && am.Model == model.ID {
+			continue // same model: ids are never normalized
+		}
+		isForeign := am.Provider != model.Provider || am.Api != model.Api
+		for _, c := range am.Content {
+			if tc, ok := c.(ai.ToolCall); ok {
+				normalized[tc.ID] = normalizeResponsesToolCallID(model, tc.ID, isForeign)
+			}
+		}
+	}
+	return func(id string) string {
+		if n, ok := normalized[id]; ok {
+			return n
+		}
+		return id
+	}
 }
 
 // responsesInput converts unified messages into Responses API input items
-// (port of convertResponsesMessages).
-func responsesInput(model *ai.Model, req ai.Context) []any {
+// (port of convertResponsesMessages). It errors when an assistant thinking
+// block carries an unparseable thinkingSignature (pi's JSON.parse throws and
+// fails the stream).
+func responsesInput(model *ai.Model, req ai.Context) ([]any, error) {
 	var items []any
 
 	compat := getResponsesCompat(model)
@@ -544,12 +732,10 @@ func responsesInput(model *ai.Model, req ai.Context) []any {
 		items = append(items, map[string]any{"role": role, "content": sanitizeSurrogates(req.SystemPrompt)})
 	}
 
-	// normalizeToolCallID mirrors pi's closure: it only touches ids for
-	// providers that carry the `callId|itemId` shape, enforcing the `fc_`
-	// item-id prefix and hashing foreign ids. The source-aware foreign/cross-
-	// model distinction is applied below in the assistant branch (which still
-	// has the source provider/api), so here we pass nil and normalize inline.
-	transformed := transformMessages(req.Messages, model, nil)
+	// Tool-call id normalization happens inside transformMessages (gated on
+	// !isSameModel there), so the toolCallId map also rewrites tool results
+	// and synthetic orphan results, exactly like pi.
+	transformed := transformMessages(req.Messages, model, buildResponsesToolCallIDNormalizer(model, req.Messages))
 	imageInput := modelSupportsImages(model)
 
 	msgIndex := 0
@@ -571,17 +757,20 @@ func responsesInput(model *ai.Model, req ai.Context) []any {
 		} else if am, ok := asAssistantMsg(m); ok {
 			var output []any
 			isDifferentModel := am.Model != model.ID && am.Provider == model.Provider && am.Api == model.Api
-			isForeign := am.Provider != model.Provider || am.Api != model.Api
-			handleToolCalls := openaiToolCallProviders[model.Provider]
 			textBlockIndex := 0
 			for _, c := range am.Content {
 				switch v := c.(type) {
 				case ai.ThinkingContent:
 					if v.ThinkingSignature != "" {
 						var item any
-						if json.Unmarshal([]byte(v.ThinkingSignature), &item) == nil {
-							output = append(output, item)
+						// pi: JSON.parse throws on an invalid signature and the
+						// throw fails the stream with the bare parse error —
+						// propagate, don't drop (Go's json error stands in for
+						// the V8 SyntaxError message).
+						if err := json.Unmarshal([]byte(v.ThinkingSignature), &item); err != nil {
+							return nil, err
 						}
+						output = append(output, item)
 					}
 				case ai.TextContent:
 					id, phase, _ := parseTextSignature(v.TextSignature)
@@ -592,10 +781,12 @@ func responsesInput(model *ai.Model, req ai.Context) []any {
 						fallback = fmt.Sprintf("msg_pi_%d_%d", msgIndex, textBlockIndex)
 					}
 					textBlockIndex++
+					// OpenAI requires id to be max 64 characters (UTF-16 units,
+					// matching JS .length).
 					msgID := id
 					if msgID == "" {
 						msgID = fallback
-					} else if len(msgID) > 64 {
+					} else if utf16Length(msgID) > 64 {
 						msgID = "msg_" + shortHash(msgID)
 					}
 					msgItem := map[string]any{
@@ -608,26 +799,14 @@ func responsesInput(model *ai.Model, req ai.Context) []any {
 					}
 					output = append(output, msgItem)
 				case ai.ToolCall:
-					callIDRaw, itemIDRaw := splitToolCallID(v.ID)
-					callID := callIDRaw
-					itemID := itemIDRaw
-					if handleToolCalls && itemIDRaw != "" {
-						callID = normalizeResponsesIDPart(callIDRaw)
-						if isForeign {
-							itemID = buildForeignResponsesItemID(itemIDRaw)
-						} else {
-							itemID = normalizeResponsesIDPart(itemIDRaw)
-						}
-						if !strings.HasPrefix(itemID, "fc_") {
-							itemID = normalizeResponsesIDPart("fc_" + itemID)
-						}
-						// For different-model messages, drop the fc_ item id to
-						// avoid pairing validation against reasoning items.
-						if isDifferentModel && strings.HasPrefix(itemID, "fc_") {
-							itemID = ""
-						}
-					} else if handleToolCalls {
-						callID = normalizeResponsesIDPart(callIDRaw)
+					// Ids were already normalized inside transformMessages for
+					// !isSameModel messages; pi splits the (raw or normalized)
+					// id here without further touching it (shared :201-217).
+					callID, itemID := splitToolCallID(v.ID)
+					// For different-model messages, drop the fc_ item id to
+					// avoid pairing validation against reasoning items.
+					if isDifferentModel && strings.HasPrefix(itemID, "fc_") {
+						itemID = ""
 					}
 					args, _ := json.Marshal(orEmptyMap(v.Arguments))
 					fc := map[string]any{"type": "function_call", "call_id": callID, "name": v.Name, "arguments": string(args)}
@@ -642,11 +821,9 @@ func responsesInput(model *ai.Model, req ai.Context) []any {
 			}
 			items = append(items, output...)
 		} else if tr, ok := asToolResultMsg(m); ok {
-			callIDRaw, _ := splitToolCallID(tr.ToolCallID)
-			callID := callIDRaw
-			if openaiToolCallProviders[model.Provider] {
-				callID = normalizeResponsesIDPart(callIDRaw)
-			}
+			// pi takes the raw first split segment (shared :229); any
+			// normalization already flowed through the toolCallId map.
+			callID, _ := splitToolCallID(tr.ToolCallID)
 			var texts []string
 			hasImages := false
 			for _, c := range tr.Content {
@@ -684,7 +861,38 @@ func responsesInput(model *ai.Model, req ai.Context) []any {
 		}
 		msgIndex++
 	}
-	return items
+	return items, nil
+}
+
+// serviceTierCostMultiplier ports getServiceTierCostMultiplier
+// (openai-responses.ts:279-291): flex halves cost, priority doubles it
+// (×2.5 for the exact model id "gpt-5.5").
+func serviceTierCostMultiplier(model *ai.Model, serviceTier string) float64 {
+	switch serviceTier {
+	case "flex":
+		return 0.5
+	case "priority":
+		if model.ID == "gpt-5.5" {
+			return 2.5
+		}
+		return 2
+	default:
+		return 1
+	}
+}
+
+// applyResponsesServiceTierPricing ports applyServiceTierPricing
+// (openai-responses.ts:293-306).
+func applyResponsesServiceTierPricing(usage *ai.Usage, serviceTier string, model *ai.Model) {
+	multiplier := serviceTierCostMultiplier(model, serviceTier)
+	if multiplier == 1 {
+		return
+	}
+	usage.Cost.Input *= multiplier
+	usage.Cost.Output *= multiplier
+	usage.Cost.CacheRead *= multiplier
+	usage.Cost.CacheWrite *= multiplier
+	usage.Cost.Total = usage.Cost.Input + usage.Cost.Output + usage.Cost.CacheRead + usage.Cost.CacheWrite
 }
 
 // clampPromptCacheKey keeps the cache key within OpenAI's accepted length,
@@ -697,9 +905,13 @@ func clampPromptCacheKey(key string) string {
 	return key
 }
 
+// splitToolCallID mirrors JS `const [callId, itemId] = id.split("|")`: the
+// item id is the SECOND segment only (later pipes are discarded), and it is
+// empty when the id has no pipe.
 func splitToolCallID(id string) (callID, itemID string) {
-	if i := strings.Index(id, "|"); i >= 0 {
-		return id[:i], id[i+1:]
+	parts := strings.SplitN(id, "|", 3)
+	if len(parts) > 1 {
+		return parts[0], parts[1]
 	}
 	return id, ""
 }
@@ -795,9 +1007,10 @@ type responsesEvent struct {
 	} `json:"item"`
 	RawItem  json.RawMessage `json:"-"`
 	Response *struct {
-		ID     string `json:"id"`
-		Status string `json:"status"`
-		Usage  *struct {
+		ID          string `json:"id"`
+		Status      string `json:"status"`
+		ServiceTier string `json:"service_tier"`
+		Usage       *struct {
 			InputTokens        int `json:"input_tokens"`
 			OutputTokens       int `json:"output_tokens"`
 			TotalTokens        int `json:"total_tokens"`

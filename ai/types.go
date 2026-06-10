@@ -257,12 +257,26 @@ type Message interface {
 type UserMessage struct {
 	Content   ContentList `json:"content"` // TextContent | ImageContent
 	Timestamp int64       `json:"timestamp"`
+	// contentWasString records that the source JSON carried content as a plain
+	// string (pi: content is string | array and is passed through untouched), so
+	// MarshalJSON can re-emit the string form on round-trip.
+	contentWasString bool
 }
 
 func (UserMessage) MessageRole() Role { return RoleUser }
 
-// MarshalJSON adds the role discriminator.
+// MarshalJSON adds the role discriminator. Content that was decoded from the
+// string form is re-emitted as a string (pi leaves string content untouched).
 func (m UserMessage) MarshalJSON() ([]byte, error) {
+	if m.contentWasString && len(m.Content) == 1 {
+		if t, ok := m.Content[0].(TextContent); ok {
+			return json.Marshal(struct {
+				Role      Role   `json:"role"`
+				Content   string `json:"content"`
+				Timestamp int64  `json:"timestamp"`
+			}{Role: RoleUser, Content: t.Text, Timestamp: m.Timestamp})
+		}
+	}
 	type alias UserMessage
 	return json.Marshal(struct {
 		Role Role `json:"role"`
@@ -271,6 +285,8 @@ func (m UserMessage) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON accepts content as either a string or a discriminated array.
+// A missing or null content key yields empty content (JSON.parse tolerance),
+// not an error.
 func (m *UserMessage) UnmarshalJSON(data []byte) error {
 	var probe struct {
 		Content   json.RawMessage `json:"content"`
@@ -280,20 +296,40 @@ func (m *UserMessage) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	m.Timestamp = probe.Timestamp
-	if len(probe.Content) > 0 && probe.Content[0] == '"' {
+	m.contentWasString = false
+	if len(probe.Content) == 0 || string(probe.Content) == "null" {
+		m.Content = nil
+		return nil
+	}
+	if probe.Content[0] == '"' {
 		var s string
 		if err := json.Unmarshal(probe.Content, &s); err != nil {
 			return err
 		}
 		m.Content = ContentList{TextContent{Text: s}}
+		m.contentWasString = true
 		return nil
 	}
 	return json.Unmarshal(probe.Content, &m.Content)
 }
 
-// NewUserText builds a user message from plain text.
+// StringContent reports whether the message's content was the plain-string
+// form (pi: content is string | array), returning that string. Providers use
+// this to mirror pi's string-vs-parts request shapes.
+func (m UserMessage) StringContent() (string, bool) {
+	if m.contentWasString && len(m.Content) == 1 {
+		if t, ok := m.Content[0].(TextContent); ok {
+			return t.Text, true
+		}
+	}
+	return "", false
+}
+
+// NewUserText builds a user message from plain text. The content is marked as
+// string-form, matching pi where prompt-created user messages carry `content`
+// as a plain string (on the wire and in session files).
 func NewUserText(text string, timestamp int64) UserMessage {
-	return UserMessage{Content: ContentList{TextContent{Text: text}}, Timestamp: timestamp}
+	return UserMessage{Content: ContentList{TextContent{Text: text}}, Timestamp: timestamp, contentWasString: true}
 }
 
 // AssistantMessage is a message authored by the model.

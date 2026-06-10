@@ -20,19 +20,21 @@ const (
 	maxInt = int(^uint(0) >> 1)
 )
 
-// TruncationResult describes the outcome of a truncation operation.
+// TruncationResult describes the outcome of a truncation operation. The JSON
+// field names match pi's TruncationResult shape (truncate.ts) so it can be
+// embedded in tool details payloads.
 type TruncationResult struct {
-	Content               string
-	Truncated             bool
-	TruncatedBy           string // "lines" | "bytes" | ""
-	TotalLines            int
-	TotalBytes            int
-	OutputLines           int
-	OutputBytes           int
-	LastLinePartial       bool
-	FirstLineExceedsLimit bool
-	MaxLines              int
-	MaxBytes              int
+	Content               string `json:"content"`
+	Truncated             bool   `json:"truncated"`
+	TruncatedBy           string `json:"truncatedBy"` // "lines" | "bytes" | "" (pi: null)
+	TotalLines            int    `json:"totalLines"`
+	TotalBytes            int    `json:"totalBytes"`
+	OutputLines           int    `json:"outputLines"`
+	OutputBytes           int    `json:"outputBytes"`
+	LastLinePartial       bool   `json:"lastLinePartial"`
+	FirstLineExceedsLimit bool   `json:"firstLineExceedsLimit"`
+	MaxLines              int    `json:"maxLines"`
+	MaxBytes              int    `json:"maxBytes"`
 }
 
 // FormatSize renders a byte count as a human-readable size.
@@ -163,13 +165,35 @@ func truncateStringToBytesFromEnd(s string, maxBytes int) string {
 }
 
 // TruncateLine truncates a single line to maxChars, appending a marker.
+// maxChars counts UTF-16 code units like pi's `line.length`/`line.slice`
+// (astral characters count as 2). A slice that would split a surrogate pair
+// yields a lone high surrogate in JS, which serializes as U+FFFD.
 func TruncateLine(line string, maxChars int) (string, bool) {
 	if maxChars == 0 {
 		maxChars = GrepMaxLineLength
 	}
-	r := []rune(line)
-	if len(r) <= maxChars {
+	if utf16Len(line) <= maxChars {
 		return line, false
 	}
-	return string(r[:maxChars]) + "... [truncated]", true
+	var b strings.Builder
+	n := 0
+	for _, r := range line {
+		units := 1
+		if r > 0xFFFF {
+			units = 2
+		}
+		if n+units > maxChars {
+			if units == 2 && n+1 == maxChars {
+				// JS slice cuts mid-pair, leaving a lone high surrogate.
+				b.WriteRune('�')
+			}
+			break
+		}
+		b.WriteRune(r)
+		n += units
+		if n == maxChars {
+			break
+		}
+	}
+	return b.String() + "... [truncated]", true
 }

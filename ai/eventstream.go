@@ -54,19 +54,19 @@ func (s *EventStream[T, R]) Push(event T) {
 	s.cond.Broadcast()
 }
 
-// End terminates the stream. If a non-nil result is supplied it becomes the
-// final result (when one was not already captured). Waiting consumers are woken.
+// End terminates the stream. If a result is supplied it becomes the final
+// result unless one was already captured (a terminal event's result wins,
+// mirroring pi's resolve-once promise). Like pi's end (event-stream.ts:38-48),
+// there is no done-guard: End() followed by End(result) still surfaces the
+// result. Waiting consumers are woken.
 func (s *EventStream[T, R]) End(result ...R) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if s.done {
-		return
-	}
-	s.done = true
 	if len(result) > 0 && !s.hasResult {
 		s.result = result[0]
 		s.hasResult = true
 	}
+	s.done = true
 	s.cond.Broadcast()
 }
 

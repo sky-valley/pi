@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 	"strings"
 
 	"github.com/sky-valley/pi/ai"
@@ -65,20 +66,37 @@ func StreamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Contex
 			return
 		}
 
-		body := buildOpenAIParams(model, req, opts)
-		if opts.OnPayload != nil {
-			if next, err := opts.OnPayload(body, model); err == nil && next != nil {
-				if m, ok := next.(map[string]any); ok {
-					body = m
-				}
-			}
-		}
-		payload, _ := json.Marshal(body)
-
+		// pi createClient runs before onPayload: Cloudflare providers resolve
+		// {VAR} placeholders in baseUrl from the environment, failing the stream
+		// when a variable is unset (openai-completions.ts:490).
 		baseURL := model.BaseURL
 		if baseURL == "" {
 			baseURL = "https://api.openai.com/v1"
 		}
+		if isCloudflareProvider(model.Provider) {
+			resolved, cfErr := resolveCloudflareBaseURL(model)
+			if cfErr != nil {
+				fail(cfErr)
+				return
+			}
+			baseURL = resolved
+		}
+
+		var body any = buildOpenAIParams(model, req, opts)
+		if opts.OnPayload != nil {
+			next, err := opts.OnPayload(body, model)
+			if err != nil {
+				// pi: a throw from onPayload propagates and fails the stream.
+				fail(err)
+				return
+			}
+			// pi: any `!== undefined` return replaces the params wholesale.
+			if next != nil {
+				body = next
+			}
+		}
+		payload, _ := json.Marshal(body)
+
 		url := strings.TrimRight(baseURL, "/") + "/chat/completions"
 		build := func() (*http.Request, error) {
 			r, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(payload))
@@ -87,26 +105,35 @@ func StreamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Contex
 			}
 			r.Header.Set("content-type", "application/json")
 			r.Header.Set("accept", "text/event-stream")
-			// Cloudflare AI Gateway carries the API key in cf-aig-authorization and
-			// leaves the upstream Authorization to model.headers (pi createClient).
-			if model.Provider == "cloudflare-ai-gateway" {
-				r.Header.Set("cf-aig-authorization", "Bearer "+opts.APIKey)
-			} else {
+			if model.Provider != "cloudflare-ai-gateway" {
 				r.Header.Set("authorization", "Bearer "+opts.APIKey)
 			}
+			// pi createClient header precedence (openai-completions.ts:458-477):
+			// model.headers first, then copilot dynamic headers, then session
+			// affinity (overrides model headers), with options.headers merged last.
+			for k, v := range model.Headers {
+				r.Header.Set(k, v)
+			}
+			if model.Provider == "github-copilot" {
+				for k, v := range buildCopilotDynamicHeaders(req.Messages, hasCopilotVisionInput(req.Messages)) {
+					r.Header.Set(k, v)
+				}
+			}
 			// Session-affinity headers for cache-routing providers (e.g. Fireworks).
-			// Set before model/options headers so explicit values override.
 			if opts.SessionID != "" && resolveCacheRetention(opts.CacheRetention) != ai.CacheNone &&
 				getOpenAICompat(model).SendSessionAffinityHeaders {
 				r.Header.Set("session_id", opts.SessionID)
 				r.Header.Set("x-client-request-id", opts.SessionID)
 				r.Header.Set("x-session-affinity", opts.SessionID)
 			}
-			for k, v := range model.Headers {
-				r.Header.Set(k, v)
-			}
 			for k, v := range opts.Headers {
 				r.Header.Set(k, v)
+			}
+			// Cloudflare AI Gateway carries the API key in cf-aig-authorization
+			// (set after all merges, like pi's defaultHeaders construction) and
+			// leaves the upstream Authorization to model.headers.
+			if model.Provider == "cloudflare-ai-gateway" {
+				r.Header.Set("cf-aig-authorization", "Bearer "+opts.APIKey)
 			}
 			return r, nil
 		}
@@ -121,21 +148,42 @@ func StreamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Contex
 		}
 		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 			data, _ := io.ReadAll(resp.Body)
-			fail(formatProviderError("OpenAI", resp.StatusCode, data))
+			err := formatProviderError("OpenAI", resp.StatusCode, data)
+			// Some providers via OpenRouter give additional information in
+			// error.metadata.raw; pi appends it to the error message
+			// (openai-completions.ts:417-419).
+			if raw := openRouterErrorRaw(data); raw != "" {
+				err = fmt.Errorf("%s\n%s", err.Error(), raw)
+			}
+			fail(err)
 			return
 		}
 
 		stream.Push(ai.AssistantMessageEvent{Type: ai.EventStart, Partial: output.Clone()})
 
-		// Builders: index 0 reserved for streamed reasoning, then text, then tool calls.
 		var textBuilder *blockBuilder
 		var thinkBuilder *blockBuilder
-		toolBuilders := map[int]*blockBuilder{}
+		// pi ensureToolCallBlock keeps BOTH maps (openai-completions.ts:229-265):
+		// lookup by stream index when the delta carries one, falling back to id,
+		// and registers blocks under both keys.
+		toolBuildersByIndex := map[int]*blockBuilder{}
+		toolBuildersByID := map[string]*blockBuilder{}
+		builderHasIndex := map[*blockBuilder]bool{}
+		// thoughtSignature captured from streamed reasoning_details, keyed by
+		// builder (blockBuilder itself has no thoughtSignature field).
+		toolThoughtSigs := map[*blockBuilder]string{}
 		var order []*blockBuilder
 		materialize := func() {
 			content := make(ai.ContentList, len(order))
 			for i, b := range order {
-				content[i] = b.toContent()
+				c := b.toContent()
+				if tc, ok := c.(ai.ToolCall); ok {
+					if sig := toolThoughtSigs[b]; sig != "" {
+						tc.ThoughtSignature = sig
+						c = tc
+					}
+				}
+				content[i] = c
 			}
 			output.Content = content
 		}
@@ -147,9 +195,41 @@ func StreamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Contex
 			}
 			return -1
 		}
+		ensureToolCallBlock := func(tcDelta openAIToolCallDelta) *blockBuilder {
+			var b *blockBuilder
+			if tcDelta.Index != nil {
+				b = toolBuildersByIndex[*tcDelta.Index]
+			}
+			if b == nil && tcDelta.ID != "" {
+				b = toolBuildersByID[tcDelta.ID]
+			}
+			if b == nil {
+				b = &blockBuilder{kind: "toolCall", toolID: tcDelta.ID, args: map[string]any{}}
+				if tcDelta.Function != nil {
+					b.toolName = tcDelta.Function.Name
+				}
+				if tcDelta.Index != nil {
+					toolBuildersByIndex[*tcDelta.Index] = b
+					builderHasIndex[b] = true
+				}
+				if tcDelta.ID != "" {
+					toolBuildersByID[tcDelta.ID] = b
+				}
+				order = append(order, b)
+				materialize()
+				stream.Push(ai.AssistantMessageEvent{Type: ai.EventToolCallStart, ContentIndex: indexOf(b), Partial: output.Clone()})
+			}
+			if tcDelta.Index != nil && !builderHasIndex[b] {
+				builderHasIndex[b] = true
+				toolBuildersByIndex[*tcDelta.Index] = b
+			}
+			if tcDelta.ID != "" {
+				toolBuildersByID[tcDelta.ID] = b
+			}
+			return b
+		}
 
 		hasFinishReason := false
-		sawChoice := false
 		err = iterateOpenAISSE(resp.Body, ctx, func(chunk openAIChunk) error {
 			// OpenAI documents ChatCompletionChunk.id as the unique chat completion
 			// identifier shared by every chunk in a streamed completion.
@@ -165,7 +245,6 @@ func StreamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Contex
 			if len(chunk.Choices) == 0 {
 				return nil
 			}
-			sawChoice = true
 			choice := chunk.Choices[0]
 			d := choice.Delta
 
@@ -182,6 +261,20 @@ func StreamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Contex
 					output.ErrorMessage = errMsg
 				}
 				hasFinishReason = true
+			}
+
+			// pi processes delta fields in order: content first, then reasoning,
+			// then tool_calls, then reasoning_details (openai-completions.ts:299-385).
+			if d.Content != "" {
+				if textBuilder == nil {
+					textBuilder = &blockBuilder{kind: "text"}
+					order = append(order, textBuilder)
+					materialize()
+					stream.Push(ai.AssistantMessageEvent{Type: ai.EventTextStart, ContentIndex: indexOf(textBuilder), Partial: output.Clone()})
+				}
+				textBuilder.text.WriteString(d.Content)
+				materialize()
+				stream.Push(ai.AssistantMessageEvent{Type: ai.EventTextDelta, ContentIndex: indexOf(textBuilder), Delta: d.Content, Partial: output.Clone()})
 			}
 
 			// Reasoning may arrive in reasoning_content (llama.cpp), reasoning, or
@@ -218,59 +311,55 @@ func StreamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Contex
 				materialize()
 				stream.Push(ai.AssistantMessageEvent{Type: ai.EventThinkingDelta, ContentIndex: indexOf(thinkBuilder), Delta: reasoningDelta, Partial: output.Clone()})
 			}
-			if d.Content != "" {
-				if textBuilder == nil {
-					textBuilder = &blockBuilder{kind: "text"}
-					order = append(order, textBuilder)
-					materialize()
-					stream.Push(ai.AssistantMessageEvent{Type: ai.EventTextStart, ContentIndex: indexOf(textBuilder), Partial: output.Clone()})
-				}
-				textBuilder.text.WriteString(d.Content)
-				materialize()
-				stream.Push(ai.AssistantMessageEvent{Type: ai.EventTextDelta, ContentIndex: indexOf(textBuilder), Delta: d.Content, Partial: output.Clone()})
-			}
+
 			for _, tcDelta := range d.ToolCalls {
-				b := toolBuilders[tcDelta.Index]
-				if b == nil {
-					b = &blockBuilder{kind: "toolCall", toolID: tcDelta.ID, args: map[string]any{}}
-					if tcDelta.Function != nil {
-						b.toolName = tcDelta.Function.Name
-					}
-					toolBuilders[tcDelta.Index] = b
-					order = append(order, b)
-					materialize()
-					stream.Push(ai.AssistantMessageEvent{Type: ai.EventToolCallStart, ContentIndex: indexOf(b), Partial: output.Clone()})
-				}
-				if tcDelta.ID != "" {
+				b := ensureToolCallBlock(tcDelta)
+				// id and name are first-wins, never overwritten (pi :350-356).
+				if b.toolID == "" && tcDelta.ID != "" {
 					b.toolID = tcDelta.ID
+					toolBuildersByID[tcDelta.ID] = b
 				}
-				if tcDelta.Function != nil {
-					if tcDelta.Function.Name != "" {
-						b.toolName = tcDelta.Function.Name
-					}
-					if tcDelta.Function.Arguments != "" {
-						b.partialJSON.WriteString(tcDelta.Function.Arguments)
-						b.args = parseStreamingJSON(b.partialJSON.String())
-						materialize()
-						stream.Push(ai.AssistantMessageEvent{Type: ai.EventToolCallDelta, ContentIndex: indexOf(b), Delta: tcDelta.Function.Arguments, Partial: output.Clone()})
-					}
+				if b.toolName == "" && tcDelta.Function != nil && tcDelta.Function.Name != "" {
+					b.toolName = tcDelta.Function.Name
 				}
+
+				// pi pushes a toolcall_delta for EVERY delta entry, with an empty
+				// delta string when no arguments arrived (pi :358-369).
+				delta := ""
+				if tcDelta.Function != nil && tcDelta.Function.Arguments != "" {
+					delta = tcDelta.Function.Arguments
+					b.partialJSON.WriteString(delta)
+					b.args = parseStreamingJSON(b.partialJSON.String())
+				}
+				materialize()
+				stream.Push(ai.AssistantMessageEvent{Type: ai.EventToolCallDelta, ContentIndex: indexOf(b), Delta: delta, Partial: output.Clone()})
 			}
 
-			if choice.FinishReason != "" {
-				// Finalize open blocks.
-				if thinkBuilder != nil {
-					stream.Push(ai.AssistantMessageEvent{Type: ai.EventThinkingEnd, ContentIndex: indexOf(thinkBuilder), Content: thinkBuilder.thinking.String(), Partial: output.Clone()})
+			// reasoning_details: OpenRouter-style encrypted reasoning attached to a
+			// tool call by id (pi :373-385). The matching tool call's
+			// thoughtSignature becomes the serialized detail object.
+			for _, rawDetail := range d.ReasoningDetails {
+				var detail struct {
+					Type string          `json:"type"`
+					ID   string          `json:"id"`
+					Data json.RawMessage `json:"data"`
 				}
-				if textBuilder != nil {
-					stream.Push(ai.AssistantMessageEvent{Type: ai.EventTextEnd, ContentIndex: indexOf(textBuilder), Content: textBuilder.text.String(), Partial: output.Clone()})
+				if json.Unmarshal(rawDetail, &detail) != nil {
+					continue
+				}
+				if detail.Type != "reasoning.encrypted" || detail.ID == "" || !jsonValueTruthy(detail.Data) {
+					continue
 				}
 				for _, b := range order {
-					if b.kind == "toolCall" {
-						b.args = parseStreamingJSON(b.partialJSON.String())
-						materialize()
-						tc := b.toContent().(ai.ToolCall)
-						stream.Push(ai.AssistantMessageEvent{Type: ai.EventToolCallEnd, ContentIndex: indexOf(b), ToolCall: &tc, Partial: output.Clone()})
+					if b.kind == "toolCall" && b.toolID == detail.ID {
+						// pi stores JSON.stringify(detail); compacting the raw entry
+						// preserves field order and unknown fields.
+						var buf bytes.Buffer
+						if json.Compact(&buf, []byte(rawDetail)) == nil {
+							toolThoughtSigs[b] = buf.String()
+							materialize()
+						}
+						break
 					}
 				}
 			}
@@ -278,15 +367,42 @@ func StreamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Contex
 		})
 
 		if err != nil {
+			// A mid-stream read/handler failure throws past pi's finalization
+			// loop straight into the catch block; do the same here.
 			fail(err)
 			return
 		}
+
+		// pi finalizes every block ONCE, in content order, after the entire SSE
+		// loop (openai-completions.ts:389-391) — even when the stream ended
+		// without a finish_reason — so consumers always see *_end events (with
+		// final usage in the Partial snapshots) before any error below.
+		materialize()
+		for _, b := range order {
+			switch b.kind {
+			case "text":
+				stream.Push(ai.AssistantMessageEvent{Type: ai.EventTextEnd, ContentIndex: indexOf(b), Content: b.text.String(), Partial: output.Clone()})
+			case "thinking":
+				stream.Push(ai.AssistantMessageEvent{Type: ai.EventThinkingEnd, ContentIndex: indexOf(b), Content: b.thinking.String(), Partial: output.Clone()})
+			case "toolCall":
+				b.args = parseStreamingJSON(b.partialJSON.String())
+				materialize()
+				tc := b.toContent().(ai.ToolCall)
+				if sig := toolThoughtSigs[b]; sig != "" {
+					tc.ThoughtSignature = sig
+				}
+				stream.Push(ai.AssistantMessageEvent{Type: ai.EventToolCallEnd, ContentIndex: indexOf(b), ToolCall: &tc, Partial: output.Clone()})
+			}
+		}
+
 		if ctx != nil && ctx.Err() != nil {
 			fail(fmt.Errorf("Request was aborted"))
 			return
 		}
-		// Match pi: surface error stop reasons, and require a finish_reason once a
-		// choice has streamed (otherwise the stream ended prematurely).
+		if output.StopReason == ai.StopAborted {
+			fail(fmt.Errorf("Request was aborted"))
+			return
+		}
 		if output.StopReason == ai.StopError {
 			msg := output.ErrorMessage
 			if msg == "" {
@@ -295,16 +411,43 @@ func StreamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Contex
 			fail(fmt.Errorf("%s", msg))
 			return
 		}
-		if sawChoice && !hasFinishReason {
+		// pi throws unconditionally when no finish_reason arrived (:402-404),
+		// including for zero-choice streams that only carried [DONE].
+		if !hasFinishReason {
 			fail(fmt.Errorf("Stream ended without finish_reason"))
 			return
 		}
-		materialize()
 		stream.Push(ai.AssistantMessageEvent{Type: ai.EventDone, Reason: output.StopReason, Message: output})
 		stream.End()
 	}()
 
 	return stream
+}
+
+// openRouterErrorRaw extracts error.metadata.raw from a provider error body
+// (pi appends it to errorMessage; some OpenRouter upstreams put detail there).
+func openRouterErrorRaw(body []byte) string {
+	var parsed struct {
+		Error struct {
+			Metadata struct {
+				Raw string `json:"raw"`
+			} `json:"metadata"`
+		} `json:"error"`
+	}
+	if json.Unmarshal(body, &parsed) != nil {
+		return ""
+	}
+	return parsed.Error.Metadata.Raw
+}
+
+// jsonValueTruthy reports JS truthiness for a raw JSON value (used for the
+// reasoning_details `detail.data` check, which pi gates on truthiness).
+func jsonValueTruthy(raw json.RawMessage) bool {
+	switch strings.TrimSpace(string(raw)) {
+	case "", "null", "false", "0", `""`:
+		return false
+	}
+	return true
 }
 
 func buildOpenAIParams(model *ai.Model, req ai.Context, opts *OpenAIOptions) map[string]any {
@@ -318,7 +461,9 @@ func buildOpenAIParams(model *ai.Model, req ai.Context, opts *OpenAIOptions) map
 		}
 		messages = append(messages, map[string]any{"role": role, "content": sanitizeSurrogates(req.SystemPrompt)})
 	}
-	transformed := transformMessages(req.Messages, model, nil)
+	transformed := transformMessages(req.Messages, model, func(id string) string {
+		return normalizeOpenAIToolCallID(model, id)
+	})
 	modelHasImageInput := false
 	for _, in := range model.Input {
 		if in == "image" {
@@ -340,7 +485,19 @@ func buildOpenAIParams(model *ai.Model, req ai.Context, opts *OpenAIOptions) map
 		}
 
 		if um, ok := asUserMsg(m); ok {
-			messages = append(messages, map[string]any{"role": "user", "content": openAIUserContent(um.Content)})
+			// pi (openai-completions.ts:789-816): string-form content is sent as
+			// a plain string; array content maps to an array of parts — even a
+			// single text block — and an empty array skips the message entirely.
+			if s, isString := um.StringContent(); isString {
+				messages = append(messages, map[string]any{"role": "user", "content": sanitizeSurrogates(s)})
+				lastRole = "user"
+				continue
+			}
+			content := openAIUserContent(um.Content)
+			if len(content) == 0 {
+				continue // skipped without updating lastRole, like pi's `continue`
+			}
+			messages = append(messages, map[string]any{"role": "user", "content": content})
 			lastRole = "user"
 		} else if am, ok := asAssistantMsg(m); ok {
 			msg := map[string]any{"role": "assistant"}
@@ -527,13 +684,16 @@ func buildOpenAIParams(model *ai.Model, req ai.Context, opts *OpenAIOptions) map
 	}
 
 	// Prompt caching (OpenAI native, and long-retention compatible providers).
-	if retention := resolveCacheRetention(opts.CacheRetention); opts.SessionID != "" &&
+	// pi (openai-completions.ts:510-515): prompt_cache_key needs a sessionId,
+	// but prompt_cache_retention is sent independently of any sessionId.
+	retention := resolveCacheRetention(opts.CacheRetention)
+	if opts.SessionID != "" &&
 		((strings.Contains(model.BaseURL, "api.openai.com") && retention != ai.CacheNone) ||
 			(retention == ai.CacheLong && compat.SupportsLongCacheRetention)) {
 		params["prompt_cache_key"] = clampPromptCacheKey(opts.SessionID)
-		if retention == ai.CacheLong && compat.SupportsLongCacheRetention {
-			params["prompt_cache_retention"] = "24h"
-		}
+	}
+	if retention == ai.CacheLong && compat.SupportsLongCacheRetention {
+		params["prompt_cache_retention"] = "24h"
 	}
 
 	// Match pi: only send a max-token field when the caller explicitly sets one;
@@ -583,8 +743,10 @@ func buildOpenAIParams(model *ai.Model, req ai.Context, opts *OpenAIOptions) map
 
 	applyReasoningFormat(params, model, compat, opts.ReasoningEffort)
 
-	// OpenRouter provider routing preferences.
-	if len(compat.OpenRouterRouting) > 0 {
+	// OpenRouter provider routing preferences. pi checks
+	// model.compat?.openRouterRouting for truthiness (:613), so an explicit
+	// empty object {} is still sent (JS: {} is truthy); only absent/null is not.
+	if compat.HasOpenRouterRouting {
 		params["provider"] = compat.OpenRouterRouting
 	}
 
@@ -686,18 +848,20 @@ func addCacheControlToTextContent(m map[string]any, cc map[string]any) bool {
 }
 
 // applyReasoningFormat sets reasoning fields per the provider's thinking format,
-// mirroring pi's openai-completions reasoning dispatch.
+// mirroring pi's openai-completions reasoning dispatch (:556-610). The switch
+// replicates pi's else-if chain exactly: note that "ant-ling" only matches when
+// an effort was requested, so ant-ling with no effort falls through to the
+// generic reasoning_effort branches at the bottom.
 func applyReasoningFormat(params map[string]any, model *ai.Model, compat openAICompletionsCompat, level string) {
-	if !model.Reasoning {
-		return
-	}
 	enabled := level != ""
-	switch compat.ThinkingFormat {
-	case "zai", "qwen":
+	switch {
+	case compat.ThinkingFormat == "zai" && model.Reasoning:
 		params["enable_thinking"] = enabled
-	case "qwen-chat-template":
+	case compat.ThinkingFormat == "qwen" && model.Reasoning:
+		params["enable_thinking"] = enabled
+	case compat.ThinkingFormat == "qwen-chat-template" && model.Reasoning:
 		params["chat_template_kwargs"] = map[string]any{"enable_thinking": enabled, "preserve_thinking": true}
-	case "deepseek":
+	case compat.ThinkingFormat == "deepseek" && model.Reasoning:
 		t := "disabled"
 		if enabled {
 			t = "enabled"
@@ -706,36 +870,33 @@ func applyReasoningFormat(params map[string]any, model *ai.Model, compat openAIC
 		if enabled && compat.SupportsReasoningEffort {
 			params["reasoning_effort"] = effortValue(model, level)
 		}
-	case "openrouter":
+	case compat.ThinkingFormat == "openrouter" && model.Reasoning:
 		if enabled {
 			params["reasoning"] = map[string]any{"effort": effortValue(model, level)}
 		} else if off, send := offEffortOrDefault(model, "none"); send {
 			params["reasoning"] = map[string]any{"effort": off}
 		}
-	case "ant-ling":
-		if enabled {
-			if v, ok := offOrMapped(model, level); ok {
-				params["reasoning"] = map[string]any{"effort": v}
-			}
+	case compat.ThinkingFormat == "ant-ling" && model.Reasoning && enabled:
+		if v, ok := offOrMapped(model, level); ok {
+			params["reasoning"] = map[string]any{"effort": v}
 		}
-	case "together":
+	case compat.ThinkingFormat == "together" && model.Reasoning:
 		params["reasoning"] = map[string]any{"enabled": enabled}
 		if enabled && compat.SupportsReasoningEffort {
 			params["reasoning_effort"] = effortValue(model, level)
 		}
-	case "string-thinking":
+	case compat.ThinkingFormat == "string-thinking" && model.Reasoning:
 		if enabled {
 			params["thinking"] = effortValue(model, level)
 		} else if off, send := offEffortOrDefault(model, "none"); send {
 			params["thinking"] = off
 		}
-	default: // "openai"
-		if enabled && compat.SupportsReasoningEffort {
-			params["reasoning_effort"] = effortValue(model, level)
-		} else if !enabled && compat.SupportsReasoningEffort {
-			if off, ok := offEffortValue(model); ok {
-				params["reasoning_effort"] = off
-			}
+	case enabled && model.Reasoning && compat.SupportsReasoningEffort:
+		// OpenAI-style reasoning_effort.
+		params["reasoning_effort"] = effortValue(model, level)
+	case !enabled && model.Reasoning && compat.SupportsReasoningEffort:
+		if off, ok := offEffortValue(model); ok {
+			params["reasoning_effort"] = off
 		}
 	}
 }
@@ -751,22 +912,10 @@ func offOrMapped(model *ai.Model, level string) (string, bool) {
 	return "", false
 }
 
-func openAIUserContent(content ai.ContentList) any {
-	hasImage := false
-	for _, c := range content {
-		if _, ok := c.(ai.ImageContent); ok {
-			hasImage = true
-		}
-	}
-	if !hasImage {
-		var texts []string
-		for _, c := range content {
-			if tc, ok := c.(ai.TextContent); ok {
-				texts = append(texts, tc.Text)
-			}
-		}
-		return sanitizeSurrogates(strings.Join(texts, "\n"))
-	}
+// openAIUserContent maps user content to OpenAI parts. pi always emits
+// array-of-parts for array content — never joins multi-text with "\n"
+// (openai-completions.ts:796-810).
+func openAIUserContent(content ai.ContentList) []any {
 	var parts []any
 	for _, c := range content {
 		switch v := c.(type) {
@@ -782,19 +931,45 @@ func openAIUserContent(content ai.ContentList) any {
 	return parts
 }
 
+// openAIToolCallIDSanitizeRe matches pi's /[^a-zA-Z0-9_-]/g.
+var openAIToolCallIDSanitizeRe = regexp.MustCompile(`[^a-zA-Z0-9_-]`)
+
+// normalizeOpenAIToolCallID ports pi's normalizeToolCallId
+// (openai-completions.ts:753-766): pipe-separated ids from the Responses API
+// ({call_id}|{encrypted}, e.g. github-copilot / openai-codex / opencode) keep
+// only the call_id, sanitized and clamped to 40 chars. Non-pipe ids longer
+// than 40 chars are truncated only for provider "openai".
+func normalizeOpenAIToolCallID(model *ai.Model, id string) string {
+	if strings.Contains(id, "|") {
+		callID := strings.SplitN(id, "|", 2)[0]
+		callID = openAIToolCallIDSanitizeRe.ReplaceAllString(callID, "_")
+		if r := []rune(callID); len(r) > 40 {
+			return string(r[:40])
+		}
+		return callID
+	}
+	if model.Provider == "openai" {
+		if r := []rune(id); len(r) > 40 {
+			return string(r[:40])
+		}
+	}
+	return id
+}
+
 // parseChunkUsage converts raw chunk usage into our Usage, matching pi's
 // parseChunkUsage: input excludes cache-read and cache-write tokens, and total
 // is the sum of all four buckets.
 func parseChunkUsage(raw *openAIChunkUsage, model *ai.Model) ai.Usage {
 	promptTokens := raw.PromptTokens
-	cacheReadTokens := 0
 	cacheWriteTokens := 0
 	if raw.PromptTokensDetails != nil {
-		cacheReadTokens = raw.PromptTokensDetails.CachedTokens
 		cacheWriteTokens = raw.PromptTokensDetails.CacheWriteTokens
 	}
-	if cacheReadTokens == 0 {
-		cacheReadTokens = raw.PromptCacheHitTokens
+	// pi: `cached_tokens ?? prompt_cache_hit_tokens ?? 0` — an explicit
+	// cached_tokens of 0 must NOT fall back to prompt_cache_hit_tokens.
+	cacheReadTokens := raw.PromptCacheHitTokens
+	if raw.PromptTokensDetails != nil && raw.PromptTokensDetails.CachedTokens != nil {
+		cacheReadTokens = *raw.PromptTokensDetails.CachedTokens
 	}
 	input := promptTokens - cacheReadTokens - cacheWriteTokens
 	if input < 0 {
@@ -837,9 +1012,22 @@ type openAIChunkUsage struct {
 	CompletionTokens     int `json:"completion_tokens"`
 	PromptCacheHitTokens int `json:"prompt_cache_hit_tokens"`
 	PromptTokensDetails  *struct {
-		CachedTokens     int `json:"cached_tokens"`
-		CacheWriteTokens int `json:"cache_write_tokens"`
+		// CachedTokens is a pointer so an explicit 0 beats the
+		// prompt_cache_hit_tokens fallback (pi `??` nullish semantics).
+		CachedTokens     *int `json:"cached_tokens"`
+		CacheWriteTokens int  `json:"cache_write_tokens"`
 	} `json:"prompt_tokens_details"`
+}
+
+// openAIToolCallDelta is one entry of choice.delta.tool_calls. Index is a
+// pointer so an absent index (id-keyed streams) is distinguishable from 0.
+type openAIToolCallDelta struct {
+	Index    *int   `json:"index"`
+	ID       string `json:"id"`
+	Function *struct {
+		Name      string `json:"name"`
+		Arguments string `json:"arguments"`
+	} `json:"function"`
 }
 
 type openAIChunk struct {
@@ -847,18 +1035,14 @@ type openAIChunk struct {
 	Model   string `json:"model"`
 	Choices []struct {
 		Delta struct {
-			Content          string `json:"content"`
-			ReasoningContent string `json:"reasoning_content"`
-			Reasoning        string `json:"reasoning"`
-			ReasoningText    string `json:"reasoning_text"`
-			ToolCalls        []struct {
-				Index    int    `json:"index"`
-				ID       string `json:"id"`
-				Function *struct {
-					Name      string `json:"name"`
-					Arguments string `json:"arguments"`
-				} `json:"function"`
-			} `json:"tool_calls"`
+			Content          string                `json:"content"`
+			ReasoningContent string                `json:"reasoning_content"`
+			Reasoning        string                `json:"reasoning"`
+			ReasoningText    string                `json:"reasoning_text"`
+			ToolCalls        []openAIToolCallDelta `json:"tool_calls"`
+			// ReasoningDetails entries stay raw so the stored thoughtSignature
+			// preserves the provider's field order and unknown fields.
+			ReasoningDetails []json.RawMessage `json:"reasoning_details"`
 		} `json:"delta"`
 		FinishReason string            `json:"finish_reason"`
 		Usage        *openAIChunkUsage `json:"usage"`
@@ -883,6 +1067,8 @@ func iterateOpenAISSE(body io.Reader, ctx context.Context, handle func(openAIChu
 		}
 		var chunk openAIChunk
 		if err := parseJSONWithRepair(data, &chunk); err != nil {
+			// Deliberate leniency: unparseable SSE data lines are skipped rather
+			// than failing the stream (some providers interleave junk/keepalives).
 			continue
 		}
 		if err := handle(chunk); err != nil {
@@ -893,6 +1079,12 @@ func iterateOpenAISSE(body io.Reader, ctx context.Context, handle func(openAIChu
 }
 
 // RegisterOpenAICompletions registers the openai-completions api provider.
+//
+// Note: the registry Stream entry point takes the unified ai.StreamOptions, so
+// provider-native options (ToolChoice, ReasoningEffort) are not reachable
+// through it. This is the documented Go API shape (callers needing native
+// options use StreamOpenAICompletions directly) and intentionally diverges
+// from pi's structurally-typed options object.
 func RegisterOpenAICompletions() {
 	ai.RegisterApiProvider(ai.ApiProvider{
 		Api: ai.APIOpenAICompletions,

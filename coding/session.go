@@ -85,34 +85,149 @@ type SessionOptions struct {
 
 var defaultActiveToolNames = []string{"read", "bash", "edit", "write"}
 
-// resolveTools builds the tool set from the name-based selection fields.
+// resolveTools builds the active tool set, porting pi's allow/exclude semantics:
+// sdk.ts:245 computes allowedToolNames = options.tools ?? (noTools === "all" ?
+// [] : undefined), and agent-session.ts _refreshToolRegistry (2285-2298) passes
+// EVERY tool — built-in and custom — through isAllowedTool (allowlist check,
+// then excludeTools denylist). Consequences: NoTools "all" disables custom
+// tools too; a ToolNames allowlist constrains custom tools; ExcludeTools
+// applies to custom tools.
 func resolveTools(cwd string, opts SessionOptions) []agent.AgentTool {
-	if opts.Tools != nil {
-		return append(append([]agent.AgentTool(nil), opts.Tools...), opts.CustomTools...)
+	// allowlist: nil = everything allowed (pi: undefined); empty = nothing.
+	var allowed map[string]bool
+	if opts.ToolNames != nil {
+		allowed = make(map[string]bool, len(opts.ToolNames))
+		for _, n := range opts.ToolNames {
+			allowed[n] = true
+		}
+	} else if opts.NoTools == NoToolsAll {
+		allowed = map[string]bool{}
 	}
-	var names []string
-	switch {
-	case opts.ToolNames != nil:
-		names = opts.ToolNames
-	case opts.NoTools != NoToolsOff:
-		names = nil
-	default:
-		names = defaultActiveToolNames
-	}
-	excluded := map[string]bool{}
+	excluded := make(map[string]bool, len(opts.ExcludeTools))
 	for _, e := range opts.ExcludeTools {
 		excluded[e] = true
 	}
-	var tools []agent.AgentTool
-	for _, name := range names {
-		if excluded[name] {
-			continue
+	isAllowed := func(name string) bool {
+		return (allowed == nil || allowed[name]) && !excluded[name]
+	}
+
+	// Registry: base definitions (the verbatim Tools override, like pi's
+	// baseToolsOverride, or the built-in factory set) then custom tools, all
+	// filtered through isAllowedTool. Custom tools override same-named built-ins
+	// (pi sets them into the registry after the built-ins).
+	registry := map[string]agent.AgentTool{}
+	var registryOrder []string
+	addReg := func(t agent.AgentTool) {
+		if _, ok := registry[t.Name]; !ok {
+			registryOrder = append(registryOrder, t.Name)
 		}
-		if t, err := CreateTool(name, cwd); err == nil {
-			tools = append(tools, t)
+		registry[t.Name] = t
+	}
+	var baseNames []string
+	if opts.Tools != nil {
+		for _, t := range opts.Tools {
+			baseNames = append(baseNames, t.Name)
+			if isAllowed(t.Name) {
+				addReg(t)
+			}
+		}
+	} else {
+		for _, name := range ToolNames {
+			if !isAllowed(name) {
+				continue
+			}
+			if t, err := CreateTool(name, cwd); err == nil {
+				addReg(t)
+			}
+		}
+		// Extra built-ins beyond pi's core set (e.g. web_fetch) are opt-in via
+		// ToolNames; admit allowlisted names CreateTool knows.
+		for _, name := range opts.ToolNames {
+			if _, ok := registry[name]; ok || !isAllowed(name) {
+				continue
+			}
+			if t, err := CreateTool(name, cwd); err == nil {
+				addReg(t)
+			}
 		}
 	}
-	return append(tools, opts.CustomTools...)
+	var customNames []string
+	for _, t := range opts.CustomTools {
+		if !isAllowed(t.Name) {
+			continue
+		}
+		addReg(t)
+		customNames = append(customNames, t.Name)
+	}
+
+	// Initial active names (sdk.ts:248-250): tools ?? (noTools ? [] : default),
+	// filtered by excludeTools. The Tools override plays pi's baseToolsOverride
+	// role: its keys become the default active set (agent-session.ts:2419-2421).
+	var initial []string
+	switch {
+	case opts.ToolNames != nil:
+		initial = opts.ToolNames
+	case opts.NoTools != NoToolsOff:
+		initial = nil
+	case opts.Tools != nil:
+		initial = baseNames
+	default:
+		initial = defaultActiveToolNames
+	}
+
+	// _refreshToolRegistry: start from the initial names (filtered through
+	// isAllowedTool); with an allowlist, every registry tool in the allowlist is
+	// activated; without one, all custom tools are activated
+	// (includeAllExtensionTools on session construction). Dedupe keeps first.
+	seen := map[string]bool{}
+	var active []agent.AgentTool
+	push := func(name string) {
+		if seen[name] || !isAllowed(name) {
+			return
+		}
+		t, ok := registry[name]
+		if !ok {
+			return
+		}
+		seen[name] = true
+		active = append(active, t)
+	}
+	for _, n := range initial {
+		push(n)
+	}
+	if allowed != nil {
+		for _, n := range registryOrder {
+			if allowed[n] {
+				push(n)
+			}
+		}
+	} else {
+		for _, n := range customNames {
+			push(n)
+		}
+	}
+	return active
+}
+
+// collectPromptGuidelines gathers per-tool prompt guidelines in active-tool
+// order, mirroring agent-session.ts _rebuildSystemPrompt (896-929): each tool's
+// guidelines are normalized (_normalizePromptGuidelines: trimmed, empties
+// dropped, deduped within the tool) and concatenated in tool order. Cross-tool
+// dedupe happens in BuildSystemPrompt's addGuideline, like pi.
+func collectPromptGuidelines(tools []agent.AgentTool) []string {
+	var out []string
+	for _, t := range tools {
+		seen := map[string]bool{}
+		for _, g := range t.PromptGuidelines {
+			g = strings.TrimSpace(g)
+			if g == "" || seen[g] {
+				continue
+			}
+			seen[g] = true
+			out = append(out, g)
+		}
+	}
+	return out
 }
 
 // Session is a coding-agent session: an Agent wired with a model, tools, and the
@@ -182,20 +297,26 @@ func NewSession(opts SessionOptions) *Session {
 		cwd, _ = os.Getwd()
 	}
 	tools := resolveTools(cwd, opts)
-	systemPrompt := opts.SystemPrompt
-	if systemPrompt == "" {
-		var names []string
-		for _, t := range tools {
-			names = append(names, t.Name)
-		}
-		systemPrompt = BuildSystemPrompt(BuildSystemPromptOptions{
-			SelectedTools: names,
-			ToolSnippets:  ToolSnippets,
-			Cwd:           cwd,
-			ContextFiles:  LoadProjectContextFiles(cwd),
-			Skills:        LoadSkills(cwd),
-		})
+	// A custom SystemPrompt still goes through buildSystemPrompt with discovery:
+	// pi appends project context files, skills, date, and cwd to custom prompts
+	// too (system-prompt.ts:53-80 custom branch; only the docs block and the
+	// Guidelines section are exclusive to the default prompt).
+	// names is non-nil even when empty: pi passes the concrete (possibly empty)
+	// active-tool list, never undefined, so the builder must not fall back to
+	// its [read,bash,edit,write] default.
+	names := make([]string, 0, len(tools))
+	for _, t := range tools {
+		names = append(names, t.Name)
 	}
+	systemPrompt := BuildSystemPrompt(BuildSystemPromptOptions{
+		CustomPrompt:     opts.SystemPrompt,
+		SelectedTools:    names,
+		ToolSnippets:     ToolSnippets,
+		PromptGuidelines: collectPromptGuidelines(tools),
+		Cwd:              cwd,
+		ContextFiles:     LoadProjectContextFiles(cwd),
+		Skills:           LoadSkills(cwd),
+	})
 	thinking := opts.ThinkingLevel
 	if thinking == "" {
 		// pi defaults.ts: DEFAULT_THINKING_LEVEL = "medium" (then clamped to the

@@ -1,7 +1,6 @@
 package providers
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -61,8 +60,12 @@ func StreamSimpleGoogle(ctx context.Context, model *ai.Model, req ai.Context, op
 		return StreamGoogle(ctx, model, req, g)
 	}
 	clamped := ai.ClampThinkingLevel(model, ai.ModelThinkingLevel(reasoning))
+	// pi google.ts:296 only coerces "off" → "high". An "xhigh" that survives
+	// clamping falls through both getThinkingLevel and getGoogleBudget's
+	// per-family tables, yielding thinkingConfig:{includeThoughts:true} with
+	// neither thinkingLevel nor thinkingBudget.
 	effort := string(clamped)
-	if effort == "off" || effort == "xhigh" {
+	if effort == "off" {
 		effort = "high"
 	}
 	g.ThinkingProvided = true
@@ -74,8 +77,7 @@ func StreamSimpleGoogle(ctx context.Context, model *ai.Model, req ai.Context, op
 		if opts != nil {
 			custom = opts.ThinkingBudgets
 		}
-		b := googleBudget(model.ID, effort, custom)
-		g.ThinkingBudget = &b
+		g.ThinkingBudget = googleBudget(model.ID, effort, custom)
 	}
 	return StreamGoogle(ctx, model, req, g)
 }
@@ -109,12 +111,23 @@ func getDisabledThinkingConfig(modelID string) map[string]any {
 	}
 }
 
+// googleThinkingLevel mirrors pi getThinkingLevel (google.ts:430-461). The empty
+// string means "no thinkingLevel" (pi returns undefined for an unmatched effort
+// such as xhigh).
 func googleThinkingLevel(effort, id string) string {
-	if gemini3ProRe.MatchString(strings.ToLower(id)) {
+	if isGemini3Pro(id) {
 		switch effort {
 		case "minimal", "low":
 			return "LOW"
-		default:
+		case "medium", "high":
+			return "HIGH"
+		}
+	}
+	if isGemma4(id) {
+		switch effort {
+		case "minimal", "low":
+			return "MINIMAL"
+		case "medium", "high":
 			return "HIGH"
 		}
 	}
@@ -125,15 +138,20 @@ func googleThinkingLevel(effort, id string) string {
 		return "LOW"
 	case "medium":
 		return "MEDIUM"
-	default:
+	case "high":
 		return "HIGH"
 	}
+	return ""
 }
 
-func googleBudget(id, effort string, custom *ai.ThinkingBudgets) int {
+// googleBudget mirrors pi getGoogleBudget (google.ts:463-503). A nil return means
+// "no thinkingBudget" (pi's per-family tables have no xhigh key, so budgets[effort]
+// is undefined); the final default of -1 applies to unmatched model families for
+// ANY effort, xhigh included.
+func googleBudget(id, effort string, custom *ai.ThinkingBudgets) *int {
 	if custom != nil {
 		if b := budgetForEffort(custom, effort); b != nil {
-			return *b
+			return b
 		}
 	}
 	switch {
@@ -144,7 +162,8 @@ func googleBudget(id, effort string, custom *ai.ThinkingBudgets) int {
 	case strings.Contains(id, "2.5-flash"):
 		return pick(effort, 128, 2048, 8192, 24576)
 	default:
-		return -1
+		v := -1
+		return &v
 	}
 }
 
@@ -162,17 +181,18 @@ func budgetForEffort(b *ai.ThinkingBudgets, effort string) *int {
 	return nil
 }
 
-func pick(effort string, minimal, low, medium, high int) int {
+func pick(effort string, minimal, low, medium, high int) *int {
 	switch effort {
 	case "minimal":
-		return minimal
+		return &minimal
 	case "low":
-		return low
+		return &low
 	case "medium":
-		return medium
-	default:
-		return high
+		return &medium
+	case "high":
+		return &high
 	}
+	return nil
 }
 
 func requiresToolCallID(modelID string) bool {
@@ -266,10 +286,14 @@ func StreamGoogle(ctx context.Context, model *ai.Model, req ai.Context, opts *Go
 
 		body := buildGoogleParams(model, req, opts)
 		if opts.OnPayload != nil {
-			if next, err := opts.OnPayload(body, model); err == nil && next != nil {
-				if m, ok := next.(map[string]any); ok {
-					body = m
-				}
+			next, perr := opts.OnPayload(body, model)
+			if perr != nil {
+				// pi: a throw from onPayload propagates and fails the stream.
+				fail(perr)
+				return
+			}
+			if m, ok := next.(map[string]any); ok && m != nil {
+				body = m
 			}
 		}
 		payload, _ := json.Marshal(body)
@@ -358,6 +382,48 @@ func StreamGoogle(ctx context.Context, model *ai.Model, req ai.Context, opts *Go
 			if len(chunk.Candidates) > 0 {
 				cand := chunk.Candidates[0]
 				for _, part := range cand.Content.Parts {
+					// pi runs INDEPENDENT checks (google.ts:97,158): `text !== undefined`
+					// first, then `functionCall` — a part carrying both processes both;
+					// a part with neither (signature-only, inlineData-only) produces
+					// nothing at all.
+					if part.Text != nil {
+						text := *part.Text
+						isThinking := part.Thought
+						want := "text"
+						if isThinking {
+							want = "thinking"
+						}
+						if current == nil || current.kind != want {
+							endCurrent()
+							current = &blockBuilder{kind: want}
+							builders = append(builders, current)
+							idx := len(builders) - 1
+							materialize()
+							if isThinking {
+								stream.Push(ai.AssistantMessageEvent{Type: ai.EventThinkingStart, ContentIndex: idx, Partial: output.Clone()})
+							} else {
+								stream.Push(ai.AssistantMessageEvent{Type: ai.EventTextStart, ContentIndex: idx, Partial: output.Clone()})
+							}
+						}
+						idx := len(builders) - 1
+						if isThinking {
+							current.thinking.WriteString(text)
+							if part.ThoughtSignature != "" {
+								current.thinkingSig = part.ThoughtSignature
+							}
+							materialize()
+							stream.Push(ai.AssistantMessageEvent{Type: ai.EventThinkingDelta, ContentIndex: idx, Delta: text, Partial: output.Clone()})
+						} else {
+							current.text.WriteString(text)
+							// A thoughtSignature can appear on a text part (pi: textSignature via
+							// retainThoughtSignature — keep last non-empty for the block).
+							if part.ThoughtSignature != "" {
+								textSigs[idx] = part.ThoughtSignature
+							}
+							materialize()
+							stream.Push(ai.AssistantMessageEvent{Type: ai.EventTextDelta, ContentIndex: idx, Delta: text, Partial: output.Clone()})
+						}
+					}
 					if part.FunctionCall != nil {
 						endCurrent()
 						// Regenerate the ID when it is empty OR a duplicate of one already
@@ -383,55 +449,20 @@ func StreamGoogle(ctx context.Context, model *ai.Model, req ai.Context, opts *Go
 						b := &blockBuilder{kind: "toolCall", toolID: id, toolName: part.FunctionCall.Name, args: args}
 						builders = append(builders, b)
 						idx := len(builders) - 1
+						// pi sets thoughtSignature on the ToolCall object BEFORE pushing
+						// toolcall_start (google.ts:186-195), so partials already carry it.
+						if part.ThoughtSignature != "" {
+							toolCallSigs[idx] = part.ThoughtSignature
+						}
 						materialize()
 						stream.Push(ai.AssistantMessageEvent{Type: ai.EventToolCallStart, ContentIndex: idx, Partial: output.Clone()})
 						argsJSON, _ := json.Marshal(args)
 						stream.Push(ai.AssistantMessageEvent{Type: ai.EventToolCallDelta, ContentIndex: idx, Delta: string(argsJSON), Partial: output.Clone()})
 						tc := b.toContent().(ai.ToolCall)
-						// A thoughtSignature can ride on a functionCall part (pi attaches it
-						// to the ToolCall). Carry it through.
 						if part.ThoughtSignature != "" {
 							tc.ThoughtSignature = part.ThoughtSignature
-							toolCallSigs[idx] = part.ThoughtSignature
 						}
 						stream.Push(ai.AssistantMessageEvent{Type: ai.EventToolCallEnd, ContentIndex: idx, ToolCall: &tc, Partial: output.Clone()})
-						continue
-					}
-					// text or thinking
-					isThinking := part.Thought
-					want := "text"
-					if isThinking {
-						want = "thinking"
-					}
-					if current == nil || current.kind != want {
-						endCurrent()
-						current = &blockBuilder{kind: want}
-						builders = append(builders, current)
-						idx := len(builders) - 1
-						materialize()
-						if isThinking {
-							stream.Push(ai.AssistantMessageEvent{Type: ai.EventThinkingStart, ContentIndex: idx, Partial: output.Clone()})
-						} else {
-							stream.Push(ai.AssistantMessageEvent{Type: ai.EventTextStart, ContentIndex: idx, Partial: output.Clone()})
-						}
-					}
-					idx := len(builders) - 1
-					if isThinking {
-						current.thinking.WriteString(part.Text)
-						if part.ThoughtSignature != "" {
-							current.thinkingSig = part.ThoughtSignature
-						}
-						materialize()
-						stream.Push(ai.AssistantMessageEvent{Type: ai.EventThinkingDelta, ContentIndex: idx, Delta: part.Text, Partial: output.Clone()})
-					} else {
-						current.text.WriteString(part.Text)
-						// A thoughtSignature can appear on a text part (pi: textSignature via
-						// retainThoughtSignature — keep last non-empty for the block).
-						if part.ThoughtSignature != "" {
-							textSigs[idx] = part.ThoughtSignature
-						}
-						materialize()
-						stream.Push(ai.AssistantMessageEvent{Type: ai.EventTextDelta, ContentIndex: idx, Delta: part.Text, Partial: output.Clone()})
 					}
 				}
 				if cand.FinishReason != "" {
@@ -517,9 +548,9 @@ func buildGoogleParams(model *ai.Model, req ai.Context, opts *GoogleOptions) map
 		gen["thinkingConfig"] = getDisabledThinkingConfig(model.ID)
 	}
 
-	if len(gen) > 0 {
-		params["generationConfig"] = gen
-	}
+	// The genai SDK always sends generationConfig (unconditional setValueByPath),
+	// even as an empty {} when no generation params are set.
+	params["generationConfig"] = gen
 
 	// systemInstruction / tools / toolConfig are lifted to the top level by the SDK.
 	if req.SystemPrompt != "" {
@@ -821,6 +852,12 @@ func mapGoogleStopReason(reason string) (ai.StopReason, error) {
 
 // ---- SSE chunk types ----
 
+type googleChunkError struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	Status  string `json:"status"`
+}
+
 type googleChunk struct {
 	ResponseID string `json:"responseId"`
 	Candidates []struct {
@@ -836,12 +873,15 @@ type googleChunk struct {
 		ThoughtsTokenCount      int `json:"thoughtsTokenCount"`
 		TotalTokenCount         int `json:"totalTokenCount"`
 	} `json:"usageMetadata"`
+	Error *googleChunkError `json:"error"`
 }
 
 type googlePart struct {
-	Text             string `json:"text"`
-	Thought          bool   `json:"thought"`
-	ThoughtSignature string `json:"thoughtSignature"`
+	// Text is a pointer so presence ("" included) is distinguishable from
+	// absence, mirroring pi's `part.text !== undefined` check (google.ts:97).
+	Text             *string `json:"text"`
+	Thought          bool    `json:"thought"`
+	ThoughtSignature string  `json:"thoughtSignature"`
 	FunctionCall     *struct {
 		ID   string         `json:"id"`
 		Name string         `json:"name"`
@@ -849,30 +889,102 @@ type googlePart struct {
 	} `json:"functionCall"`
 }
 
+// googleAPIError formats a {code,message,status} error payload the way the
+// @google/genai SDK does (api_client processStreamResponse → ApiError:
+// "got status: ${status}. ${JSON.stringify(chunkJson)}"). It returns nil when
+// the code is outside the SDK's 400..599 throw range.
+func googleAPIError(e *googleChunkError, rawChunk string) error {
+	if e == nil || e.Code < 400 || e.Code >= 600 {
+		return nil
+	}
+	return fmt.Errorf("got status: %s. %s", e.Status, rawChunk)
+}
+
+// iterateGoogleSSE consumes the alt=sse stream the way the @google/genai SDK
+// does (processStreamResponse): events are split on \n\n, \r\r, or \r\n\r\n;
+// only "data:"-prefixed events are decoded; a chunk carrying an error payload
+// fails the stream like the SDK's ApiError; and a trailing unconsumed segment
+// fails with the SDK's "Incomplete JSON segment at the end".
 func iterateGoogleSSE(body io.Reader, ctx context.Context, handle func(googleChunk) error) error {
-	scanner := bufio.NewScanner(body)
-	scanner.Buffer(make([]byte, 0, 64*1024), 16*1024*1024)
-	for scanner.Scan() {
-		if ctx != nil && ctx.Err() != nil {
-			return fmt.Errorf("Request was aborted")
+	delimiters := []string{"\n\n", "\r\r", "\r\n\r\n"}
+	buf := make([]byte, 32*1024)
+	var pending string
+
+	processEvent := func(event string) error {
+		trimmed := strings.TrimSpace(event)
+		if !strings.HasPrefix(trimmed, "data:") {
+			// The SDK detects bare (non-SSE) JSON error chunks before buffering;
+			// a 4xx/5xx error payload fails the stream as an ApiError.
+			if trimmed != "" {
+				var chunk googleChunk
+				if json.Unmarshal([]byte(trimmed), &chunk) == nil {
+					if err := googleAPIError(chunk.Error, trimmed); err != nil {
+						return err
+					}
+				}
+			}
+			return nil
 		}
-		line := strings.TrimRight(scanner.Text(), "\r")
-		if !strings.HasPrefix(line, "data:") {
-			continue
-		}
-		data := strings.TrimSpace(strings.TrimPrefix(line, "data:"))
+		data := strings.TrimSpace(strings.TrimPrefix(trimmed, "data:"))
 		if data == "" {
-			continue
+			return nil
 		}
 		var chunk googleChunk
 		if err := parseJSONWithRepair(data, &chunk); err != nil {
-			continue
+			return nil
 		}
-		if err := handle(chunk); err != nil {
+		if err := googleAPIError(chunk.Error, data); err != nil {
 			return err
 		}
+		return handle(chunk)
 	}
-	return scanner.Err()
+
+	for {
+		if ctx != nil && ctx.Err() != nil {
+			return fmt.Errorf("Request was aborted")
+		}
+		n, readErr := body.Read(buf)
+		if n > 0 {
+			pending += string(buf[:n])
+			for {
+				// Earliest delimiter wins (SDK keeps the smallest index).
+				delimIdx, delimLen := -1, 0
+				for _, d := range delimiters {
+					if i := strings.Index(pending, d); i != -1 && (delimIdx == -1 || i < delimIdx) {
+						delimIdx, delimLen = i, len(d)
+					}
+				}
+				if delimIdx == -1 {
+					break
+				}
+				event := pending[:delimIdx]
+				pending = pending[delimIdx+delimLen:]
+				if err := processEvent(event); err != nil {
+					return err
+				}
+			}
+		}
+		if readErr == io.EOF {
+			break
+		}
+		if readErr != nil {
+			return readErr
+		}
+	}
+
+	if strings.TrimSpace(pending) != "" {
+		trimmed := strings.TrimSpace(pending)
+		// A bare JSON error payload arriving without a trailing delimiter still
+		// fails as an ApiError (the SDK checks chunks before buffering them).
+		var chunk googleChunk
+		if json.Unmarshal([]byte(trimmed), &chunk) == nil {
+			if err := googleAPIError(chunk.Error, trimmed); err != nil {
+				return err
+			}
+		}
+		return fmt.Errorf("Incomplete JSON segment at the end")
+	}
+	return nil
 }
 
 // RegisterGoogle registers the google-generative-ai api provider.

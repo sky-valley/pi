@@ -59,6 +59,11 @@ func fromClaudeCodeName(name string, tools []ai.Tool) string {
 // AnthropicOptions are the provider-native options for streamAnthropic.
 type AnthropicOptions struct {
 	ai.StreamOptions
+	// ThinkingProvided mirrors pi's tri-state `thinkingEnabled?: boolean`
+	// (anthropic.ts:951,975-977): when false (the zero value, pi `undefined`)
+	// the `thinking` key is omitted entirely; when true, ThinkingEnabled
+	// selects enabled/adaptive vs an explicit {type:"disabled"}.
+	ThinkingProvided     bool
 	ThinkingEnabled      bool
 	ThinkingBudgetTokens int
 	Effort               string // low|medium|high|xhigh|max
@@ -166,6 +171,9 @@ func StreamSimpleAnthropic(ctx context.Context, model *ai.Model, req ai.Context,
 	if opts != nil {
 		reasoning = opts.Reasoning
 	}
+	// pi streamSimpleAnthropic always passes thinkingEnabled explicitly
+	// (false for no reasoning, true otherwise) — so Provided is always set here.
+	aopts.ThinkingProvided = true
 	if reasoning == "" {
 		aopts.ThinkingEnabled = false
 		return StreamAnthropic(ctx, model, req, &aopts)
@@ -288,11 +296,24 @@ func StreamAnthropic(ctx context.Context, model *ai.Model, req ai.Context, opts 
 			fail(fmt.Errorf("No API key for provider: %s", model.Provider))
 			return
 		}
-		oauth := isOAuthToken(apiKey)
+		// pi createClient checks the cloudflare-ai-gateway and github-copilot
+		// provider branches BEFORE sniffing the key for an OAuth token
+		// (anthropic.ts:802,826,848) — those branches always report
+		// isOAuthToken=false even for sk-ant-oat keys.
+		oauth := model.Provider != "cloudflare-ai-gateway" &&
+			model.Provider != "github-copilot" &&
+			isOAuthToken(apiKey)
 
 		body := buildAnthropicParams(model, req, oauth, opts)
 		if opts.OnPayload != nil {
-			if next, err := opts.OnPayload(body, model); err == nil && next != nil {
+			next, perr := opts.OnPayload(body, model)
+			if perr != nil {
+				// pi: a throw from onPayload propagates and fails the stream.
+				fail(perr)
+				return
+			}
+			// pi: any `!== undefined` return replaces the params wholesale.
+			if next != nil {
 				if m, ok := next.(map[string]any); ok {
 					body = m
 				}
@@ -305,6 +326,16 @@ func StreamAnthropic(ctx context.Context, model *ai.Model, req ai.Context, opts 
 		}
 
 		baseURL := model.BaseURL
+		if model.Provider == "cloudflare-ai-gateway" {
+			// pi: resolveCloudflareBaseUrl(model) throws on a missing env var,
+			// which surfaces as a failed stream.
+			resolved, rerr := resolveCloudflareBaseURL(model)
+			if rerr != nil {
+				fail(rerr)
+				return
+			}
+			baseURL = resolved
+		}
 		if baseURL == "" {
 			baseURL = anthropicDefaultBaseURL
 		}
@@ -314,7 +345,7 @@ func StreamAnthropic(ctx context.Context, model *ai.Model, req ai.Context, opts 
 			if err != nil {
 				return nil, err
 			}
-			applyAnthropicHeaders(r, model, opts, oauth, apiKey, len(req.Tools) > 0)
+			applyAnthropicHeaders(r, model, opts, oauth, apiKey, len(req.Tools) > 0, req.Messages)
 			return r, nil
 		}
 		resp, err := sendWithRetry(ctx, build, retryFromOptions(opts.StreamOptions))
@@ -392,21 +423,35 @@ func StreamAnthropic(ctx context.Context, model *ai.Model, req ai.Context, opts 
 					return nil
 				}
 				b := builders[idx]
+				// pi only applies a delta when the indexed block has the matching
+				// type (anthropic.ts:586-627); mismatches are dropped silently.
 				switch ev.Delta.Type {
 				case "text_delta":
+					if b.kind != "text" {
+						return nil
+					}
 					b.text.WriteString(ev.Delta.Text)
 					materialize()
 					stream.Push(ai.AssistantMessageEvent{Type: ai.EventTextDelta, ContentIndex: idx, Delta: ev.Delta.Text, Partial: output.Clone()})
 				case "thinking_delta":
+					if b.kind != "thinking" {
+						return nil
+					}
 					b.thinking.WriteString(ev.Delta.Thinking)
 					materialize()
 					stream.Push(ai.AssistantMessageEvent{Type: ai.EventThinkingDelta, ContentIndex: idx, Delta: ev.Delta.Thinking, Partial: output.Clone()})
 				case "input_json_delta":
+					if b.kind != "toolCall" {
+						return nil
+					}
 					b.partialJSON.WriteString(ev.Delta.PartialJSON)
 					b.args = parseStreamingJSON(b.partialJSON.String())
 					materialize()
 					stream.Push(ai.AssistantMessageEvent{Type: ai.EventToolCallDelta, ContentIndex: idx, Delta: ev.Delta.PartialJSON, Partial: output.Clone()})
 				case "signature_delta":
+					if b.kind != "thinking" {
+						return nil
+					}
 					b.thinkingSig += ev.Delta.Signature
 				}
 			case "content_block_stop":
@@ -537,7 +582,10 @@ func buildAnthropicParams(model *ai.Model, req ai.Context, oauth bool, opts *Ant
 		params["system"] = []any{textBlock(req.SystemPrompt)}
 	}
 
-	if opts != nil && opts.Temperature != nil && !opts.ThinkingEnabled && compat.supportsTemperature {
+	// pi: `!options?.thinkingEnabled` — only an explicit thinkingEnabled:true
+	// suppresses temperature; unset (not Provided) behaves like false.
+	thinkingOn := opts != nil && opts.ThinkingProvided && opts.ThinkingEnabled
+	if opts != nil && opts.Temperature != nil && !thinkingOn && compat.supportsTemperature {
 		params["temperature"] = *opts.Temperature
 	}
 
@@ -549,7 +597,10 @@ func buildAnthropicParams(model *ai.Model, req ai.Context, oauth bool, opts *Ant
 		params["tools"] = convertAnthropicTools(req.Tools, oauth, compat.supportsEagerToolInputStreaming, toolCC)
 	}
 
-	if model.Reasoning && opts != nil {
+	// pi tri-state (anthropic.ts:950-978): thinkingEnabled undefined omits the
+	// thinking key entirely; explicit true enables; explicit false sends
+	// {type:"disabled"}.
+	if model.Reasoning && opts != nil && opts.ThinkingProvided {
 		if opts.ThinkingEnabled {
 			display := opts.ThinkingDisplay
 			if display == "" {
@@ -794,7 +845,7 @@ func convertContentBlocks(content ai.ContentList) any {
 	return blocks
 }
 
-func applyAnthropicHeaders(r *http.Request, model *ai.Model, opts *AnthropicOptions, oauth bool, apiKey string, hasTools bool) {
+func applyAnthropicHeaders(r *http.Request, model *ai.Model, opts *AnthropicOptions, oauth bool, apiKey string, hasTools bool, messages []ai.Message) {
 	r.Header.Set("content-type", "application/json")
 	r.Header.Set("accept", "application/json")
 	r.Header.Set("anthropic-version", anthropicVersion)
@@ -813,30 +864,50 @@ func applyAnthropicHeaders(r *http.Request, model *ai.Model, opts *AnthropicOpti
 		betas = append(betas, interleavedThinkingBeta)
 	}
 
+	// Branch order mirrors pi createClient (anthropic.ts:802,826,848,870):
+	// cloudflare-ai-gateway, then github-copilot, then the OAuth sniff, then
+	// plain api-key auth.
 	switch {
+	case model.Provider == "cloudflare-ai-gateway":
+		// pi: cf-aig-authorization carries the key; x-api-key and
+		// Authorization are explicitly nulled (anthropic.ts:812-814).
+		r.Header.Set("cf-aig-authorization", "Bearer "+apiKey)
+		if len(betas) > 0 {
+			r.Header.Set("anthropic-beta", strings.Join(betas, ","))
+		}
+	case model.Provider == "github-copilot":
+		r.Header.Set("authorization", "Bearer "+apiKey)
+		if len(betas) > 0 {
+			r.Header.Set("anthropic-beta", strings.Join(betas, ","))
+		}
 	case oauth:
 		r.Header.Set("authorization", "Bearer "+apiKey)
 		r.Header.Set("user-agent", "claude-cli/"+claudeCodeVersion)
 		r.Header.Set("x-app", "cli")
 		oauthBetas := append([]string{"claude-code-20250219", "oauth-2025-04-20"}, betas...)
 		r.Header.Set("anthropic-beta", strings.Join(oauthBetas, ","))
-	case model.Provider == "github-copilot":
-		r.Header.Set("authorization", "Bearer "+apiKey)
-		if len(betas) > 0 {
-			r.Header.Set("anthropic-beta", strings.Join(betas, ","))
-		}
 	default:
 		r.Header.Set("x-api-key", apiKey)
 		if len(betas) > 0 {
 			r.Header.Set("anthropic-beta", strings.Join(betas, ","))
 		}
-		if opts.SessionID != "" && compat.sendSessionAffinityHeaders {
+		// pi anthropic.ts:496-497: cacheSessionId is dropped when the effective
+		// cacheRetention is "none", so no session-affinity header is sent.
+		if opts.SessionID != "" && compat.sendSessionAffinityHeaders &&
+			resolveCacheRetention(opts.CacheRetention) != ai.CacheNone {
 			r.Header.Set("x-session-affinity", opts.SessionID)
 		}
 	}
 
 	for k, v := range model.Headers {
 		r.Header.Set(k, v)
+	}
+	// pi merges copilotDynamicHeaders after model.headers, before options
+	// headers (anthropic.ts:832-841).
+	if model.Provider == "github-copilot" {
+		for k, v := range buildCopilotDynamicHeaders(messages, hasCopilotVisionInput(messages)) {
+			r.Header.Set(k, v)
+		}
 	}
 	for k, v := range opts.Headers {
 		r.Header.Set(k, v)
@@ -900,10 +971,38 @@ var anthropicMessageEvents = map[string]bool{
 	"content_block_start": true, "content_block_delta": true, "content_block_stop": true,
 }
 
+// scanSSELines is a bufio.SplitFunc that treats \r, \n, and \r\n all as line
+// breaks, mirroring pi's SSE decoder (anthropic.ts consumeLine/nextLineBreakIndex).
+func scanSSELines(data []byte, atEOF bool) (advance int, token []byte, err error) {
+	for i := 0; i < len(data); i++ {
+		switch data[i] {
+		case '\n':
+			return i + 1, data[:i], nil
+		case '\r':
+			if i+1 < len(data) {
+				if data[i+1] == '\n' {
+					return i + 2, data[:i], nil
+				}
+				return i + 1, data[:i], nil
+			}
+			if atEOF {
+				return i + 1, data[:i], nil
+			}
+			// A trailing \r might be half of a \r\n pair; wait for more data.
+			return 0, nil, nil
+		}
+	}
+	if atEOF && len(data) > 0 {
+		return len(data), data, nil
+	}
+	return 0, nil, nil
+}
+
 // iterateAnthropicSSE parses the SSE body and invokes handle for each known event.
 func iterateAnthropicSSE(body io.Reader, ctx context.Context, handle func(anthropicStreamEvent) error) error {
 	scanner := bufio.NewScanner(body)
 	scanner.Buffer(make([]byte, 0, 64*1024), 16*1024*1024)
+	scanner.Split(scanSSELines)
 
 	var eventName string
 	var dataLines []string
@@ -934,7 +1033,7 @@ func iterateAnthropicSSE(body io.Reader, ctx context.Context, handle func(anthro
 		if ctx != nil && ctx.Err() != nil {
 			return fmt.Errorf("Request was aborted")
 		}
-		line := strings.TrimRight(scanner.Text(), "\r")
+		line := scanner.Text()
 		if line == "" {
 			if err := flush(); err != nil {
 				return err

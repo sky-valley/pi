@@ -3,6 +3,7 @@ package providers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -434,5 +435,344 @@ func TestAnthropicForceAdaptiveThinkingRequestShape(t *testing.T) {
 	// Adaptive models skip the interleaved-thinking beta header (pi anthropic.ts:793).
 	if strings.Contains(gotHeaders.Get("anthropic-beta"), interleavedThinkingBeta) {
 		t.Fatalf("adaptive model must not send interleaved beta: %q", gotHeaders.Get("anthropic-beta"))
+	}
+}
+
+// --- E1: cloudflare-ai-gateway branch ---
+
+func TestAnthropicCloudflareAIGateway(t *testing.T) {
+	t.Setenv("CLOUDFLARE_ACCOUNT_ID", "acct123")
+	t.Setenv("CLOUDFLARE_GATEWAY_ID", "gw456")
+	var gotHeaders http.Header
+	var gotPath string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotHeaders = r.Header.Clone()
+		gotPath = r.URL.Path
+		w.Header().Set("content-type", "text/event-stream")
+		io.WriteString(w, anthropicSSE)
+	}))
+	defer server.Close()
+	model := &ai.Model{
+		ID: "claude-test", Api: ai.APIAnthropicMessages, Provider: "cloudflare-ai-gateway",
+		BaseURL: server.URL + "/{CLOUDFLARE_ACCOUNT_ID}/{CLOUDFLARE_GATEWAY_ID}/anthropic",
+		Input:   []string{"text"}, MaxTokens: 4096,
+	}
+	req := ai.Context{Messages: []ai.Message{ai.NewUserText("hi", 1)}}
+	// Use an sk-ant-oat key: pi checks the cloudflare branch BEFORE the OAuth
+	// sniff (anthropic.ts:802 vs :848), so no OAuth identity must leak through.
+	final := StreamAnthropic(context.Background(), model, req,
+		&AnthropicOptions{StreamOptions: ai.StreamOptions{APIKey: "sk-ant-oat-cfkey"}}).Result()
+	if final.StopReason == ai.StopError {
+		t.Fatalf("stream failed: %s", final.ErrorMessage)
+	}
+	// URL placeholders substituted from env.
+	if gotPath != "/acct123/gw456/anthropic/v1/messages" {
+		t.Fatalf("cloudflare base url not resolved: %q", gotPath)
+	}
+	if got := gotHeaders.Get("cf-aig-authorization"); got != "Bearer sk-ant-oat-cfkey" {
+		t.Fatalf("cf-aig-authorization wrong: %q", got)
+	}
+	// x-api-key and Authorization explicitly NOT set (pi sends null for both).
+	if got := gotHeaders.Get("x-api-key"); got != "" {
+		t.Fatalf("x-api-key must not be set for cloudflare-ai-gateway: %q", got)
+	}
+	if got := gotHeaders.Get("authorization"); got != "" {
+		t.Fatalf("authorization must not be set for cloudflare-ai-gateway: %q", got)
+	}
+	// OAuth sniff must not have fired: no Claude Code identity headers/betas.
+	if strings.Contains(gotHeaders.Get("anthropic-beta"), "oauth-2025-04-20") {
+		t.Fatalf("oauth betas must not be sent for cloudflare provider: %q", gotHeaders.Get("anthropic-beta"))
+	}
+	if gotHeaders.Get("x-app") != "" {
+		t.Fatalf("x-app must not be set for cloudflare provider")
+	}
+}
+
+func TestAnthropicCloudflareMissingEnvFailsStream(t *testing.T) {
+	t.Setenv("CLOUDFLARE_ACCOUNT_ID", "")
+	model := &ai.Model{
+		ID: "claude-test", Api: ai.APIAnthropicMessages, Provider: "cloudflare-ai-gateway",
+		BaseURL:   "https://gateway.ai.cloudflare.com/v1/{CLOUDFLARE_ACCOUNT_ID}/gw/anthropic",
+		MaxTokens: 4096,
+	}
+	req := ai.Context{Messages: []ai.Message{ai.NewUserText("hi", 1)}}
+	final := StreamAnthropic(context.Background(), model, req,
+		&AnthropicOptions{StreamOptions: ai.StreamOptions{APIKey: "k"}}).Result()
+	if final.StopReason != ai.StopError {
+		t.Fatalf("expected error stop, got %s", final.StopReason)
+	}
+	want := "CLOUDFLARE_ACCOUNT_ID is required for provider cloudflare-ai-gateway but is not set."
+	if final.ErrorMessage != want {
+		t.Fatalf("error message wrong: %q", final.ErrorMessage)
+	}
+}
+
+// --- E2: github-copilot dynamic headers ---
+
+func TestAnthropicCopilotDynamicHeaders(t *testing.T) {
+	model := &ai.Model{
+		ID: "claude-test", Api: ai.APIAnthropicMessages, Provider: "github-copilot",
+		Input: []string{"text", "image"}, MaxTokens: 4096,
+	}
+	// Last message is an assistant turn -> X-Initiator agent; include an image
+	// in a user message -> Copilot-Vision-Request true.
+	req := ai.Context{Messages: []ai.Message{
+		ai.UserMessage{Content: ai.ContentList{
+			ai.TextContent{Text: "look"},
+			ai.ImageContent{MimeType: "image/png", Data: "AAAA"},
+		}},
+		&ai.AssistantMessage{Api: ai.APIAnthropicMessages, Provider: "github-copilot", Model: "claude-test",
+			Content: ai.ContentList{ai.TextContent{Text: "ok"}}},
+	}}
+	opts := &AnthropicOptions{StreamOptions: ai.StreamOptions{APIKey: "sk-ant-oat-copilot"}}
+	headers, _ := anthropicCapture(t, model, req, opts, anthropicSSE)
+
+	if got := headers.Get("X-Initiator"); got != "agent" {
+		t.Fatalf("X-Initiator wrong: %q", got)
+	}
+	if got := headers.Get("Openai-Intent"); got != "conversation-edits" {
+		t.Fatalf("Openai-Intent wrong: %q", got)
+	}
+	if got := headers.Get("Copilot-Vision-Request"); got != "true" {
+		t.Fatalf("Copilot-Vision-Request wrong: %q", got)
+	}
+	// Copilot branch precedes the OAuth sniff: bearer auth, no Claude Code identity.
+	if got := headers.Get("authorization"); got != "Bearer sk-ant-oat-copilot" {
+		t.Fatalf("authorization wrong: %q", got)
+	}
+	if strings.Contains(headers.Get("anthropic-beta"), "oauth-2025-04-20") {
+		t.Fatalf("oauth betas must not leak into copilot branch: %q", headers.Get("anthropic-beta"))
+	}
+	if headers.Get("x-api-key") != "" {
+		t.Fatalf("x-api-key must not be set for copilot")
+	}
+}
+
+// --- E3: thinking tri-state ---
+
+func TestAnthropicThinkingOmittedWhenNotProvided(t *testing.T) {
+	model := &ai.Model{
+		ID: "claude-test", Api: ai.APIAnthropicMessages, Provider: "anthropic",
+		Input: []string{"text"}, MaxTokens: 4096, Reasoning: true,
+	}
+	req := ai.Context{Messages: []ai.Message{ai.NewUserText("hi", 1)}}
+	// Generic registry path: plain StreamOptions -> ThinkingProvided stays false.
+	opts := &AnthropicOptions{StreamOptions: ai.StreamOptions{APIKey: "k"}}
+	_, body := anthropicCapture(t, model, req, opts, anthropicSSE)
+	if _, ok := body["thinking"]; ok {
+		t.Fatalf("thinking key must be OMITTED when not provided (pi undefined), got %v", body["thinking"])
+	}
+}
+
+func TestAnthropicThinkingExplicitFalseSendsDisabled(t *testing.T) {
+	model := &ai.Model{
+		ID: "claude-test", Api: ai.APIAnthropicMessages, Provider: "anthropic",
+		Input: []string{"text"}, MaxTokens: 4096, Reasoning: true,
+	}
+	req := ai.Context{Messages: []ai.Message{ai.NewUserText("hi", 1)}}
+	opts := &AnthropicOptions{StreamOptions: ai.StreamOptions{APIKey: "k"}, ThinkingProvided: true, ThinkingEnabled: false}
+	_, body := anthropicCapture(t, model, req, opts, anthropicSSE)
+	thinking, ok := body["thinking"].(map[string]any)
+	if !ok || thinking["type"] != "disabled" {
+		t.Fatalf("explicit false must send {type:disabled}, got %v", body["thinking"])
+	}
+}
+
+func TestAnthropicThinkingEnabledSendsBudget(t *testing.T) {
+	model := &ai.Model{
+		ID: "claude-test", Api: ai.APIAnthropicMessages, Provider: "anthropic",
+		Input: []string{"text"}, MaxTokens: 4096, Reasoning: true,
+	}
+	req := ai.Context{Messages: []ai.Message{ai.NewUserText("hi", 1)}}
+	opts := &AnthropicOptions{
+		StreamOptions:    ai.StreamOptions{APIKey: "k"},
+		ThinkingProvided: true, ThinkingEnabled: true, ThinkingBudgetTokens: 2048,
+	}
+	_, body := anthropicCapture(t, model, req, opts, anthropicSSE)
+	thinking, ok := body["thinking"].(map[string]any)
+	if !ok || thinking["type"] != "enabled" || thinking["budget_tokens"] != float64(2048) {
+		t.Fatalf("enabled thinking shape wrong: %v", body["thinking"])
+	}
+	if thinking["display"] != "summarized" {
+		t.Fatalf("default display wrong: %v", thinking)
+	}
+}
+
+func TestAnthropicStreamSimpleNoReasoningDisablesThinking(t *testing.T) {
+	// pi streamSimpleAnthropic passes thinkingEnabled:false when no reasoning is
+	// requested -> explicit {type:disabled} (NOT omitted).
+	model := &ai.Model{
+		ID: "claude-test", Api: ai.APIAnthropicMessages, Provider: "anthropic",
+		Input: []string{"text"}, MaxTokens: 4096, Reasoning: true,
+	}
+	req := ai.Context{Messages: []ai.Message{ai.NewUserText("hi", 1)}}
+	var gotBody map[string]any
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		b, _ := io.ReadAll(r.Body)
+		_ = json.Unmarshal(b, &gotBody)
+		w.Header().Set("content-type", "text/event-stream")
+		io.WriteString(w, anthropicSSE)
+	}))
+	defer server.Close()
+	model.BaseURL = server.URL
+	StreamSimpleAnthropic(context.Background(), model, req,
+		&ai.SimpleStreamOptions{StreamOptions: ai.StreamOptions{APIKey: "k"}}).Result()
+	thinking, ok := gotBody["thinking"].(map[string]any)
+	if !ok || thinking["type"] != "disabled" {
+		t.Fatalf("streamSimple without reasoning must send {type:disabled}, got %v", gotBody["thinking"])
+	}
+}
+
+// --- E4: session affinity suppressed when cacheRetention is none ---
+
+func TestAnthropicSessionAffinityRetention(t *testing.T) {
+	// fireworks auto-enables sendSessionAffinityHeaders.
+	mk := func(retention ai.CacheRetention) http.Header {
+		model := &ai.Model{
+			ID: "claude-test", Api: ai.APIAnthropicMessages, Provider: "fireworks",
+			Input: []string{"text"}, MaxTokens: 4096,
+		}
+		req := ai.Context{Messages: []ai.Message{ai.NewUserText("hi", 1)}}
+		opts := &AnthropicOptions{StreamOptions: ai.StreamOptions{
+			APIKey: "k", SessionID: "sess-1", CacheRetention: retention,
+		}}
+		headers, _ := anthropicCapture(t, model, req, opts, anthropicSSE)
+		return headers
+	}
+	if got := mk(ai.CacheShort).Get("x-session-affinity"); got != "sess-1" {
+		t.Fatalf("x-session-affinity missing with short retention: %q", got)
+	}
+	if got := mk(ai.CacheNone).Get("x-session-affinity"); got != "" {
+		t.Fatalf("x-session-affinity must be suppressed when retention=none (pi anthropic.ts:497): %q", got)
+	}
+}
+
+// --- E5a: delta-vs-block-type guards ---
+
+func TestAnthropicMismatchedDeltaDroppedSilently(t *testing.T) {
+	// text_delta aimed at a tool_use block and thinking_delta aimed at a text
+	// block must be dropped without corrupting state (pi anthropic.ts:586-620).
+	sse := `event: message_start
+data: {"type":"message_start","message":{"id":"msg_1","usage":{"input_tokens":1,"output_tokens":1}}}
+
+event: content_block_start
+data: {"type":"content_block_start","index":0,"content_block":{"type":"tool_use","id":"t1","name":"f","input":{}}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"BAD"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"{\"a\":1}"}}
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":0}
+
+event: content_block_start
+data: {"type":"content_block_start","index":1,"content_block":{"type":"text","text":""}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"thinking_delta","thinking":"NOPE"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":"ok"}}
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":1}
+
+event: message_delta
+data: {"type":"message_delta","delta":{"stop_reason":"tool_use"},"usage":{"output_tokens":2}}
+
+event: message_stop
+data: {"type":"message_stop"}
+
+`
+	model := &ai.Model{ID: "m", Api: ai.APIAnthropicMessages, Provider: "anthropic", Input: []string{"text"}, MaxTokens: 100}
+	req := ai.Context{Messages: []ai.Message{ai.NewUserText("hi", 1)}}
+	opts := &AnthropicOptions{StreamOptions: ai.StreamOptions{APIKey: "k"}}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("content-type", "text/event-stream")
+		io.WriteString(w, sse)
+	}))
+	defer server.Close()
+	model.BaseURL = server.URL
+	final := StreamAnthropic(context.Background(), model, req, opts).Result()
+	if final.StopReason != ai.StopToolUse {
+		t.Fatalf("stream should complete cleanly: %s (%s)", final.StopReason, final.ErrorMessage)
+	}
+	tc, ok := final.Content[0].(ai.ToolCall)
+	if !ok || tc.Arguments["a"] != float64(1) {
+		t.Fatalf("tool args corrupted by mismatched delta: %#v", final.Content[0])
+	}
+	text, ok := final.Content[1].(ai.TextContent)
+	if !ok || text.Text != "ok" {
+		t.Fatalf("text corrupted by mismatched thinking_delta: %#v", final.Content[1])
+	}
+}
+
+// --- E5b: bare-CR SSE line breaks ---
+
+func TestAnthropicBareCRSSE(t *testing.T) {
+	// pi's decoder treats \r, \n, and \r\n all as line breaks.
+	sse := strings.ReplaceAll(`event: message_start
+data: {"type":"message_start","message":{"id":"msg_cr","usage":{"input_tokens":1,"output_tokens":1}}}
+
+event: content_block_start
+data: {"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"crlf-free"}}
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":0}
+
+event: message_delta
+data: {"type":"message_delta","delta":{"stop_reason":"end_turn"},"usage":{"output_tokens":2}}
+
+event: message_stop
+data: {"type":"message_stop"}
+
+`, "\n", "\r")
+	model := &ai.Model{ID: "m", Api: ai.APIAnthropicMessages, Provider: "anthropic", Input: []string{"text"}, MaxTokens: 100}
+	req := ai.Context{Messages: []ai.Message{ai.NewUserText("hi", 1)}}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("content-type", "text/event-stream")
+		io.WriteString(w, sse)
+	}))
+	defer server.Close()
+	model.BaseURL = server.URL
+	final := StreamAnthropic(context.Background(), model, req,
+		&AnthropicOptions{StreamOptions: ai.StreamOptions{APIKey: "k"}}).Result()
+	if final.StopReason != ai.StopStop {
+		t.Fatalf("bare-CR SSE not parsed: %s (%s)", final.StopReason, final.ErrorMessage)
+	}
+	text, ok := final.Content[0].(ai.TextContent)
+	if !ok || text.Text != "crlf-free" {
+		t.Fatalf("text wrong: %#v", final.Content)
+	}
+}
+
+// --- E5c: onPayload error fails the stream ---
+
+func TestAnthropicOnPayloadErrorFailsStream(t *testing.T) {
+	model := &ai.Model{ID: "m", Api: ai.APIAnthropicMessages, Provider: "anthropic", Input: []string{"text"}, MaxTokens: 100}
+	req := ai.Context{Messages: []ai.Message{ai.NewUserText("hi", 1)}}
+	requested := false
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requested = true
+	}))
+	defer server.Close()
+	model.BaseURL = server.URL
+	opts := &AnthropicOptions{StreamOptions: ai.StreamOptions{
+		APIKey: "k",
+		OnPayload: func(payload any, m *ai.Model) (any, error) {
+			return nil, errors.New("payload veto")
+		},
+	}}
+	final := StreamAnthropic(context.Background(), model, req, opts).Result()
+	if final.StopReason != ai.StopError || final.ErrorMessage != "payload veto" {
+		t.Fatalf("onPayload error must fail the stream: %s / %q", final.StopReason, final.ErrorMessage)
+	}
+	if requested {
+		t.Fatalf("request must not be sent when onPayload errors")
 	}
 }

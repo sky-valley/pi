@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 )
 
@@ -153,11 +152,13 @@ func LoadSkillsWithDiagnostics(cwd string) ([]Skill, []SkillDiagnostic) {
 			skills = append(skills, s)
 		}
 	}
+	// pi preserves discovery order (skills.ts loadSkills: a name-keyed Map in
+	// insertion order — user dir first, then project, filesystem order within
+	// each). No sorting.
 	s1, d1 := loadSkillsFromDir(filepath.Join(AgentDir(), "skills"))
 	add(s1, d1)
 	s2, d2 := loadSkillsFromDir(filepath.Join(cwd, ConfigDirName, "skills"))
 	add(s2, d2)
-	sort.Slice(skills, func(i, j int) bool { return skills[i].Name < skills[j].Name })
 	return skills, diags
 }
 
@@ -267,12 +268,12 @@ func loadSkillFromFile(filePath string) (*Skill, []SkillDiagnostic) {
 	fm, _ := parseFrontmatter(string(data))
 	skillDir := filepath.Dir(filePath)
 
-	desc := fm["description"]
+	desc := fm["description"].value
 	for _, e := range validateDescription(desc) {
 		diags = append(diags, SkillDiagnostic{Type: "warning", Message: e, Path: filePath})
 	}
 
-	name := fm["name"]
+	name := fm["name"].value
 	if name == "" {
 		name = filepath.Base(skillDir)
 	}
@@ -284,19 +285,23 @@ func loadSkillFromFile(filePath string) (*Skill, []SkillDiagnostic) {
 		return nil, diags
 	}
 	return &Skill{
-		Name:                   name,
-		Description:            desc,
-		FilePath:               filePath,
-		BaseDir:                skillDir,
-		DisableModelInvocation: fm["disable-model-invocation"] == "true",
+		Name:        name,
+		Description: desc,
+		FilePath:    filePath,
+		BaseDir:     skillDir,
+		// pi: frontmatter["disable-model-invocation"] === true after a real YAML
+		// parse — only the YAML boolean enables it. A quoted "true" parses to a
+		// string and does NOT (skills.ts:316).
+		DisableModelInvocation: fm["disable-model-invocation"].isBoolTrue(),
 	}, diags
 }
 
-// validateName ports pi's validateName (skills.ts:92-112).
+// validateName ports pi's validateName (skills.ts:92-112). Lengths are JS
+// String.length — UTF-16 code units — not bytes.
 func validateName(name string) []string {
 	var errs []string
-	if len(name) > maxSkillNameLength {
-		errs = append(errs, fmt.Sprintf("name exceeds %d characters (%d)", maxSkillNameLength, len(name)))
+	if n := utf16Len(name); n > maxSkillNameLength {
+		errs = append(errs, fmt.Sprintf("name exceeds %d characters (%d)", maxSkillNameLength, n))
 	}
 	if !isValidSkillName(name) {
 		errs = append(errs, "name contains invalid characters (must be lowercase a-z, 0-9, hyphens only)")
@@ -327,8 +332,9 @@ func validateDescription(desc string) []string {
 	var errs []string
 	if strings.TrimSpace(desc) == "" {
 		errs = append(errs, "description is required")
-	} else if len(desc) > maxSkillDescriptionLength {
-		errs = append(errs, fmt.Sprintf("description exceeds %d characters (%d)", maxSkillDescriptionLength, len(desc)))
+	} else if n := utf16Len(desc); n > maxSkillDescriptionLength {
+		// JS String.length (UTF-16 code units), like pi.
+		errs = append(errs, fmt.Sprintf("description exceeds %d characters (%d)", maxSkillDescriptionLength, n))
 	}
 	return errs
 }
@@ -378,12 +384,44 @@ func statIsDirFile(full string, e os.DirEntry) (isDir, isFile bool) {
 	return e.IsDir(), e.Type().IsRegular()
 }
 
-// parseFrontmatter extracts a YAML-ish `--- ... ---` header into a flat string
-// map and returns the remaining body. It handles the simple scalar key: value
-// frontmatter used by skills without a YAML dependency.
-func parseFrontmatter(content string) (map[string]string, string) {
+// fmValue is a parsed frontmatter scalar. kind distinguishes plain scalars
+// (which can carry YAML booleans) from quoted strings and block scalars.
+type fmValue struct {
+	value string
+	kind  fmKind
+}
+
+type fmKind int
+
+const (
+	fmPlain  fmKind = iota // unquoted scalar (may be a YAML bool)
+	fmQuoted               // single/double-quoted string
+	fmBlock                // block scalar (| or >)
+)
+
+// isBoolTrue reports whether the value is the YAML boolean true: a plain
+// (unquoted) scalar parsing to true under the YAML core schema, as pi's `yaml`
+// package produces for `=== true` checks. Quoted "true" is a string.
+func (v fmValue) isBoolTrue() bool {
+	return v.kind == fmPlain && (v.value == "true" || v.value == "True" || v.value == "TRUE")
+}
+
+// parseFrontmatter extracts a `--- ... ---` YAML header into a flat scalar map
+// and returns the remaining body (port of utils/frontmatter.ts, which uses the
+// real `yaml` parser; this is a minimal-but-correct subset for the flat
+// key/scalar frontmatter skills use).
+//
+// Supported: `key: value` plain scalars (with ` #` comment stripping), single/
+// double-quoted strings (with \\ \" \n \t escapes in double quotes), block
+// scalars (|, >, with -/+ chomping) including multi-line folded descriptions
+// (`description: >-`), and multi-line plain scalars folded across continuation
+// lines. NOT supported (out of scope for skill frontmatter): nested mappings,
+// sequences/lists, flow collections ({}/[]), anchors/aliases/tags, explicit
+// block-scalar indentation indicators, and more-indented literal lines inside
+// folded scalars (folded with spaces like regular lines).
+func parseFrontmatter(content string) (map[string]fmValue, string) {
 	normalized := strings.ReplaceAll(strings.ReplaceAll(content, "\r\n", "\n"), "\r", "\n")
-	fm := map[string]string{}
+	fm := map[string]fmValue{}
 	if !strings.HasPrefix(normalized, "---") {
 		return fm, normalized
 	}
@@ -393,21 +431,169 @@ func parseFrontmatter(content string) (map[string]string, string) {
 	}
 	yamlPart := normalized[4 : 3+end]
 	body := strings.TrimSpace(normalized[3+end+4:])
-	for _, line := range strings.Split(yamlPart, "\n") {
-		line = strings.TrimRight(line, " \t")
-		if line == "" || strings.HasPrefix(strings.TrimSpace(line), "#") {
+
+	lines := strings.Split(yamlPart, "\n")
+	for i := 0; i < len(lines); i++ {
+		line := lines[i]
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" || strings.HasPrefix(trimmed, "#") {
 			continue
+		}
+		if line[0] == ' ' || line[0] == '\t' {
+			continue // continuation lines are consumed by their key below
 		}
 		idx := strings.Index(line, ":")
 		if idx == -1 {
 			continue
 		}
 		key := strings.TrimSpace(line[:idx])
-		val := strings.TrimSpace(line[idx+1:])
-		val = strings.Trim(val, `"'`)
-		fm[key] = val
+		rest := strings.TrimSpace(line[idx+1:])
+
+		// Block scalar: | or > with optional chomping indicator.
+		if isBlockIndicator(rest) {
+			val, next := parseBlockScalar(rest, lines, i+1)
+			fm[key] = fmValue{value: val, kind: fmBlock}
+			i = next - 1
+			continue
+		}
+
+		// Quoted scalar.
+		if v, ok := parseQuotedScalar(rest); ok {
+			fm[key] = fmValue{value: v, kind: fmQuoted}
+			continue
+		}
+
+		// Plain scalar: strip trailing comment, fold continuation lines.
+		val := stripPlainComment(rest)
+		j := i + 1
+		for ; j < len(lines); j++ {
+			cont := lines[j]
+			if cont == "" || (cont[0] != ' ' && cont[0] != '\t') {
+				break
+			}
+			contTrimmed := strings.TrimSpace(cont)
+			if contTrimmed == "" || strings.HasPrefix(contTrimmed, "#") {
+				break
+			}
+			if val != "" {
+				val += " "
+			}
+			val += stripPlainComment(contTrimmed)
+		}
+		i = j - 1
+		fm[key] = fmValue{value: val, kind: fmPlain}
 	}
 	return fm, body
+}
+
+// isBlockIndicator reports whether a value is a YAML block scalar header:
+// | or > optionally followed by a chomping indicator (- or +).
+func isBlockIndicator(s string) bool {
+	if s == "" || (s[0] != '|' && s[0] != '>') {
+		return false
+	}
+	rest := s[1:]
+	return rest == "" || rest == "-" || rest == "+"
+}
+
+// parseBlockScalar consumes the indented block following a | / > header,
+// returning the scalar value and the index of the first unconsumed line.
+func parseBlockScalar(header string, lines []string, start int) (string, int) {
+	folded := header[0] == '>'
+	chomp := byte(0) // 0 = clip (single trailing \n), '-' = strip, '+' = keep
+	if len(header) > 1 {
+		chomp = header[1]
+	}
+
+	// Collect the block: lines more indented than the key (or blank).
+	var block []string
+	indent := -1
+	i := start
+	for ; i < len(lines); i++ {
+		line := lines[i]
+		if strings.TrimSpace(line) == "" {
+			block = append(block, "")
+			continue
+		}
+		lineIndent := len(line) - len(strings.TrimLeft(line, " "))
+		if lineIndent == 0 {
+			break
+		}
+		if indent == -1 {
+			indent = lineIndent
+		}
+		if lineIndent < indent {
+			break
+		}
+		block = append(block, line[indent:])
+	}
+	// Drop trailing blank lines from the block (they belong to chomping).
+	trailingBlanks := 0
+	for len(block) > 0 && block[len(block)-1] == "" {
+		block = block[:len(block)-1]
+		trailingBlanks++
+	}
+
+	var val string
+	if folded {
+		// Fold: newlines between lines become spaces; blank lines become \n.
+		var b strings.Builder
+		prevBlank := true // suppress leading separator
+		for _, l := range block {
+			if l == "" {
+				b.WriteString("\n")
+				prevBlank = true
+				continue
+			}
+			if !prevBlank {
+				b.WriteString(" ")
+			}
+			b.WriteString(l)
+			prevBlank = false
+		}
+		val = b.String()
+	} else {
+		val = strings.Join(block, "\n")
+	}
+
+	switch chomp {
+	case '-':
+		// strip: no trailing newline
+	case '+':
+		val += strings.Repeat("\n", trailingBlanks+1)
+	default:
+		if len(block) > 0 {
+			val += "\n"
+		}
+	}
+	return val, i
+}
+
+// parseQuotedScalar parses a fully single- or double-quoted scalar.
+func parseQuotedScalar(s string) (string, bool) {
+	if len(s) < 2 {
+		return "", false
+	}
+	q := s[0]
+	if (q != '"' && q != '\'') || s[len(s)-1] != q {
+		return "", false
+	}
+	inner := s[1 : len(s)-1]
+	if q == '\'' {
+		return strings.ReplaceAll(inner, "''", "'"), true
+	}
+	// Double quotes: minimal escape handling.
+	r := strings.NewReplacer(`\\`, "\\", `\"`, `"`, `\n`, "\n", `\t`, "\t")
+	return r.Replace(inner), true
+}
+
+// stripPlainComment removes a trailing ` #comment` from a plain scalar (YAML
+// treats space-then-# as a comment in plain context).
+func stripPlainComment(s string) string {
+	if idx := strings.Index(s, " #"); idx >= 0 {
+		return strings.TrimRight(s[:idx], " \t")
+	}
+	return s
 }
 
 // skillIgnore accumulates gitignore-style rules from .gitignore/.ignore/.fdignore

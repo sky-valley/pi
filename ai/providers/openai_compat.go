@@ -33,6 +33,9 @@ type openAICompletionsCompat struct {
 	CacheControlFormat                          string // "" | "anthropic"
 	// OpenRouterRouting is an arbitrary provider-routing object sent as `provider`.
 	OpenRouterRouting map[string]any
+	// HasOpenRouterRouting records that model.compat carried a non-null
+	// openRouterRouting (pi sends `provider` for any truthy object, even {}).
+	HasOpenRouterRouting bool
 	// VercelGatewayRouting carries only/order routing for the Vercel AI Gateway.
 	VercelGatewayRouting vercelGatewayRouting
 }
@@ -182,9 +185,11 @@ func getOpenAICompat(model *ai.Model) openAICompletionsCompat {
 	if raw.CacheControlFormat != nil {
 		c.CacheControlFormat = *raw.CacheControlFormat
 	}
-	// pi: openRouterRouting falls back to {} (override always replaces).
+	// pi: openRouterRouting falls back to {} (override always replaces). An
+	// explicit {} in model.compat is truthy in JS, so record its presence.
 	if raw.OpenRouterRouting != nil {
 		c.OpenRouterRouting = raw.OpenRouterRouting
+		c.HasOpenRouterRouting = true
 	}
 	if raw.VercelGatewayRouting != nil {
 		c.VercelGatewayRouting = *raw.VercelGatewayRouting

@@ -141,13 +141,15 @@ func runLoop(ctx context.Context, current *AgentContext, newMessages *[]AgentMes
 			*newMessages = append(*newMessages, message)
 
 			if message.StopReason == ai.StopError || message.StopReason == ai.StopAborted {
-				mustEmit(emit, AgentEvent{Type: EvTurnEnd, Message: message, ToolResults: nil})
+				// pi emits toolResults: [] here (agent-loop.ts:197), never null.
+				mustEmit(emit, AgentEvent{Type: EvTurnEnd, Message: message, ToolResults: []ai.ToolResultMessage{}})
 				mustEmit(emit, AgentEvent{Type: EvAgentEnd, Messages: *newMessages})
 				return
 			}
 
 			toolCalls := filterToolCalls(message)
-			var toolResults []ai.ToolResultMessage
+			// Non-nil so a no-tool turn_end carries [] like pi (agent-loop.ts:205).
+			toolResults := []ai.ToolResultMessage{}
 			hasMoreToolCalls = false
 			if len(toolCalls) > 0 {
 				batch := executeToolCalls(ctx, current, message, config, emit)
@@ -252,20 +254,25 @@ func streamAssistantResponse(ctx context.Context, agentCtx *AgentContext, config
 		}
 	}
 
+	// pi spreads the whole config into the stream options (agent-loop.ts:304-308;
+	// AgentLoopConfig extends SimpleStreamOptions), so every StreamOptions field
+	// must be forwarded here.
 	opts := &ai.SimpleStreamOptions{
 		StreamOptions: ai.StreamOptions{
-			APIKey:          apiKey,
-			Transport:       config.Transport,
-			SessionID:       config.SessionID,
-			OnPayload:       config.OnPayload,
-			OnResponse:      config.OnResponse,
-			MaxRetryDelayMs: config.MaxRetryDelayMs,
-			MaxRetries:      config.MaxRetries,
-			TimeoutMs:       config.TimeoutMs,
-			Temperature:     config.Temperature,
-			MaxTokens:       config.MaxTokens,
-			CacheRetention:  config.CacheRetention,
-			Headers:         config.Headers,
+			APIKey:                    apiKey,
+			Transport:                 config.Transport,
+			SessionID:                 config.SessionID,
+			OnPayload:                 config.OnPayload,
+			OnResponse:                config.OnResponse,
+			MaxRetryDelayMs:           config.MaxRetryDelayMs,
+			MaxRetries:                config.MaxRetries,
+			TimeoutMs:                 config.TimeoutMs,
+			WebSocketConnectTimeoutMs: config.WebSocketConnectTimeoutMs,
+			Temperature:               config.Temperature,
+			MaxTokens:                 config.MaxTokens,
+			CacheRetention:            config.CacheRetention,
+			Headers:                   config.Headers,
+			Metadata:                  config.Metadata,
 		},
 		ThinkingBudgets: config.ThinkingBudgets,
 	}
@@ -464,17 +471,25 @@ func executeToolCallsParallel(ctx context.Context, current *AgentContext, msg *a
 			// Tool execution runs in parallel, OUTSIDE the lock (pi's Promise.all).
 			executed := executePreparedToolCall(ctx, prepared, safeEmit)
 			// Finalization runs the AfterToolCall hook and reads/writes shared
-			// context; serialize it so hook bodies cannot interleave (pi single-thread).
-			serialMu.Lock()
-			fo := finalizeExecutedToolCall(ctx, current, msg, prepared, executed, config)
-			emitErr := emit(AgentEvent{
-				Type:       EvToolExecutionEnd,
-				ToolCallID: fo.toolCall.ID,
-				ToolName:   fo.toolCall.Name,
-				Result:     fo.result,
-				IsError:    fo.isError,
-			})
-			serialMu.Unlock()
+			// context; serialize it so hook bodies cannot interleave (pi
+			// single-thread). The critical section is func-scoped with a deferred
+			// unlock so a PANICKING listener (or hook) cannot leak the mutex and
+			// deadlock the other tool goroutines at wg.Wait. A listener ERROR
+			// (non-panic) still propagates as emitPanic AFTER the unlock.
+			var fo finalizedOutcome
+			var emitErr error
+			func() {
+				serialMu.Lock()
+				defer serialMu.Unlock()
+				fo = finalizeExecutedToolCall(ctx, current, msg, prepared, executed, config)
+				emitErr = emit(AgentEvent{
+					Type:       EvToolExecutionEnd,
+					ToolCallID: fo.toolCall.ID,
+					ToolName:   fo.toolCall.Name,
+					Result:     fo.result,
+					IsError:    fo.isError,
+				})
+			}()
 			if emitErr != nil {
 				panic(emitPanic{err: emitErr})
 			}
@@ -593,19 +608,60 @@ func prepareToolCall(ctx context.Context, current *AgentContext, msg *ai.Assista
 }
 
 func executePreparedToolCall(ctx context.Context, prepared preparedToolCall, emit EventSink) immediateOutcome {
-	result, err := prepared.tool.Execute(ctx, prepared.toolCall.ID, prepared.args, func(partial AgentToolResult) {
-		mustEmit(emit, AgentEvent{
+	// pi buffers tool_execution_update emit promises and awaits them only after
+	// execute settles (agent-loop.ts:633-654): a listener error never interrupts
+	// the tool mid-flight; it surfaces afterwards and rejects the run. We mirror
+	// that by recording the first onUpdate emit error and re-raising it (as
+	// emitPanic) once Execute has finished.
+	var updateMu sync.Mutex
+	var updateEmitErr error
+	onUpdate := func(partial AgentToolResult) {
+		err := emit(AgentEvent{
 			Type:          EvToolExecutionUpdate,
 			ToolCallID:    prepared.toolCall.ID,
 			ToolName:      prepared.toolCall.Name,
 			Args:          prepared.toolCall.Arguments,
 			PartialResult: partial,
 		})
-	})
-	if err != nil {
-		return immediateOutcome{result: errorToolResult(err.Error()), isError: true}
+		if err != nil {
+			updateMu.Lock()
+			if updateEmitErr == nil {
+				updateEmitErr = err
+			}
+			updateMu.Unlock()
+		}
 	}
-	return immediateOutcome{result: result, isError: false}
+
+	// pi wraps execute in try/catch (agent-loop.ts:635-663): a throwing tool
+	// yields an error tool result (text = the thrown error's message, matching
+	// createErrorToolResult) and the loop CONTINUES. An emitPanic (listener
+	// error) must still unwind to the run boundary, like the recovers in
+	// prepareToolCall/finalizeExecutedToolCall.
+	outcome := func() (out immediateOutcome) {
+		defer func() {
+			if r := recover(); r != nil {
+				if ep, ok := r.(emitPanic); ok {
+					panic(ep)
+				}
+				out = immediateOutcome{result: errorToolResult(panicMessage(r)), isError: true}
+			}
+		}()
+		result, err := prepared.tool.Execute(ctx, prepared.toolCall.ID, prepared.args, onUpdate)
+		if err != nil {
+			return immediateOutcome{result: errorToolResult(err.Error()), isError: true}
+		}
+		return immediateOutcome{result: result, isError: false}
+	}()
+
+	// pi's `await Promise.all(updateEvents)` runs in both the try and catch
+	// paths, so a listener rejection wins over the tool outcome either way.
+	updateMu.Lock()
+	emitErr := updateEmitErr
+	updateMu.Unlock()
+	if emitErr != nil {
+		panic(emitPanic{err: emitErr})
+	}
+	return outcome
 }
 
 func finalizeExecutedToolCall(ctx context.Context, current *AgentContext, msg *ai.AssistantMessage, prepared preparedToolCall, executed immediateOutcome, config AgentLoopConfig) finalizedOutcome {

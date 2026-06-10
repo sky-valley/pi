@@ -1,5 +1,7 @@
 package ai
 
+import "encoding/json"
+
 // EventType is the discriminator for AssistantMessageEvent.
 type EventType string
 
@@ -48,6 +50,73 @@ type AssistantMessageEvent struct {
 	Message *AssistantMessage `json:"message,omitempty"`
 	// Error is the final assistant message for "error" events.
 	Error *AssistantMessage `json:"error,omitempty"`
+}
+
+// MarshalJSON serializes the event with exactly the fields pi's corresponding
+// union variant carries (types.ts AssistantMessageEvent):
+//
+//	start                                  {type, partial}
+//	text_start/thinking_start/toolcall_start {type, contentIndex, partial}
+//	text_delta/thinking_delta/toolcall_delta {type, contentIndex, delta, partial}
+//	text_end/thinking_end                  {type, contentIndex, content, partial}
+//	toolcall_end                           {type, contentIndex, toolCall, partial}
+//	done                                   {type, reason, message}
+//	error                                  {type, reason, error}
+//
+// Fields a variant requires are always emitted (contentIndex:0 included);
+// fields the variant lacks are never emitted (no spurious "reason":"" on
+// start, no "contentIndex":0 on done, ...).
+func (e AssistantMessageEvent) MarshalJSON() ([]byte, error) {
+	switch e.Type {
+	case EventStart:
+		return json.Marshal(struct {
+			Type    EventType         `json:"type"`
+			Partial *AssistantMessage `json:"partial"`
+		}{e.Type, e.Partial})
+	case EventTextStart, EventThinkingStart, EventToolCallStart:
+		return json.Marshal(struct {
+			Type         EventType         `json:"type"`
+			ContentIndex int               `json:"contentIndex"`
+			Partial      *AssistantMessage `json:"partial"`
+		}{e.Type, e.ContentIndex, e.Partial})
+	case EventTextDelta, EventThinkingDelta, EventToolCallDelta:
+		return json.Marshal(struct {
+			Type         EventType         `json:"type"`
+			ContentIndex int               `json:"contentIndex"`
+			Delta        string            `json:"delta"`
+			Partial      *AssistantMessage `json:"partial"`
+		}{e.Type, e.ContentIndex, e.Delta, e.Partial})
+	case EventTextEnd, EventThinkingEnd:
+		return json.Marshal(struct {
+			Type         EventType         `json:"type"`
+			ContentIndex int               `json:"contentIndex"`
+			Content      string            `json:"content"`
+			Partial      *AssistantMessage `json:"partial"`
+		}{e.Type, e.ContentIndex, e.Content, e.Partial})
+	case EventToolCallEnd:
+		return json.Marshal(struct {
+			Type         EventType         `json:"type"`
+			ContentIndex int               `json:"contentIndex"`
+			ToolCall     *ToolCall         `json:"toolCall"`
+			Partial      *AssistantMessage `json:"partial"`
+		}{e.Type, e.ContentIndex, e.ToolCall, e.Partial})
+	case EventDone:
+		return json.Marshal(struct {
+			Type    EventType         `json:"type"`
+			Reason  StopReason        `json:"reason"`
+			Message *AssistantMessage `json:"message"`
+		}{e.Type, e.Reason, e.Message})
+	case EventError:
+		return json.Marshal(struct {
+			Type   EventType         `json:"type"`
+			Reason StopReason        `json:"reason"`
+			Error  *AssistantMessage `json:"error"`
+		}{e.Type, e.Reason, e.Error})
+	default:
+		// Unknown discriminator: fall back to the flat struct form.
+		type alias AssistantMessageEvent
+		return json.Marshal(alias(e))
+	}
 }
 
 // AssistantMessageEventStream is an EventStream specialized for the assistant

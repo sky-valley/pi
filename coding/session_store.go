@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
@@ -139,7 +140,13 @@ type SessionRecorder struct {
 // StartSession creates a new session for cwd and buffers the header plus an
 // initial model entry. The session file is created lazily on the first recorded
 // assistant message.
-func StartSession(cwd string, model *ai.Model) (*SessionRecorder, error) {
+//
+// When thinkingLevel is given, a thinking_level_change entry is recorded after
+// the model_change, matching pi's createAgentSession for new sessions
+// (sdk.ts:362-373: appendModelChange then appendThinkingLevelChange; the
+// thinking entry is written even when there is no model). The variadic
+// parameter keeps existing callers source-compatible.
+func StartSession(cwd string, model *ai.Model, thinkingLevel ...string) (*SessionRecorder, error) {
 	dir := DefaultSessionDir(cwd)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return nil, err
@@ -154,7 +161,9 @@ func StartSession(cwd string, model *ai.Model) (*SessionRecorder, error) {
 		id:   id,
 		byID: map[string]bool{},
 		createFn: func() (*os.File, error) {
-			return os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
+			// pi opens the first flush with "wx" (O_EXCL): never clobber an
+			// existing file (session-manager.ts _persist).
+			return os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY|os.O_APPEND, 0o644)
 		},
 	}
 	r.buffer(map[string]any{
@@ -165,7 +174,63 @@ func StartSession(cwd string, model *ai.Model) (*SessionRecorder, error) {
 			"type": "model_change", "provider": model.Provider, "modelId": model.ID,
 		})
 	}
+	if len(thinkingLevel) > 0 && thinkingLevel[0] != "" {
+		r.appendEntry(map[string]any{
+			"type": "thinking_level_change", "thinkingLevel": thinkingLevel[0],
+		})
+	}
 	return r, nil
+}
+
+// ResumeSession opens an existing session file for appending, porting pi's
+// SessionManager.setSessionFile resume semantics (session-manager.ts:792-822):
+// entries load from the file, the leaf is the file's last entry (new entries
+// branch from it), and the manager is marked flushed so every subsequent entry
+// appends to the file immediately (no withhold-until-assistant buffering).
+func ResumeSession(path string) (*SessionRecorder, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var id, lastID string
+	byID := map[string]bool{}
+	for _, line := range strings.Split(string(data), "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		var head struct {
+			Type string `json:"type"`
+			ID   string `json:"id"`
+		}
+		if json.Unmarshal([]byte(line), &head) != nil {
+			continue
+		}
+		if head.Type == "session" {
+			id = head.ID
+			continue
+		}
+		if head.ID != "" {
+			byID[head.ID] = true
+			lastID = head.ID
+		}
+	}
+	if id == "" {
+		return nil, fmt.Errorf("not a pi session file (no session header): %s", path)
+	}
+	f, err := os.OpenFile(path, os.O_WRONLY|os.O_APPEND, 0o644)
+	if err != nil {
+		return nil, err
+	}
+	return &SessionRecorder{
+		path:    path,
+		id:      id,
+		lastID:  lastID,
+		file:    f,
+		byID:    byID,
+		flushed: true,
+		hasAsst: true, // resumed sessions append immediately (pi flushed=true)
+	}, nil
 }
 
 // Path returns the session file path.

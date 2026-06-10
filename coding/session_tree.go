@@ -2,6 +2,7 @@ package coding
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -93,7 +94,7 @@ func LoadSessionTree(path string) (*SessionTree, error) {
 			e.Content = parseCustomContent(head.Content)
 		}
 		if head.Type == "message" && len(head.Message) > 0 {
-			if m, err := ai.UnmarshalMessage(head.Message); err == nil {
+			if m, ok := unmarshalSessionMessage(head.Message); ok {
 				e.Message = m
 				if e.Type == "message" {
 					t.Header.Messages++
@@ -238,6 +239,96 @@ func (t *SessionTree) BuildContext(leafID ...string) BranchContext {
 		}
 	}
 	return ctx
+}
+
+// unmarshalSessionMessage decodes a message entry's message field. Standard LLM
+// roles go through ai.UnmarshalMessage; pi's extended AgentMessage roles
+// (messages.ts: bashExecution, custom, branchSummary, compactionSummary) are
+// converted to the user message pi's convertToLlm would send, so sessions
+// written by pi reconstruct identically instead of dropping those entries.
+// Returns ok=false for undecodable messages and for bashExecution messages
+// excluded from context (the "!!" prefix), which convertToLlm skips.
+func unmarshalSessionMessage(raw json.RawMessage) (ai.Message, bool) {
+	var head struct {
+		Role string `json:"role"`
+	}
+	if json.Unmarshal(raw, &head) != nil {
+		return nil, false
+	}
+	switch head.Role {
+	case "bashExecution":
+		var m struct {
+			Command            string `json:"command"`
+			Output             string `json:"output"`
+			ExitCode           *int   `json:"exitCode"`
+			Cancelled          bool   `json:"cancelled"`
+			Truncated          bool   `json:"truncated"`
+			FullOutputPath     string `json:"fullOutputPath"`
+			Timestamp          int64  `json:"timestamp"`
+			ExcludeFromContext bool   `json:"excludeFromContext"`
+		}
+		if json.Unmarshal(raw, &m) != nil {
+			return nil, false
+		}
+		if m.ExcludeFromContext {
+			return nil, false
+		}
+		text := bashExecutionToText(m.Command, m.Output, m.ExitCode, m.Cancelled, m.Truncated, m.FullOutputPath)
+		return ai.UserMessage{Content: ai.ContentList{ai.TextContent{Text: text}}, Timestamp: m.Timestamp}, true
+	case "custom":
+		var m struct {
+			Content   json.RawMessage `json:"content"`
+			Timestamp int64           `json:"timestamp"`
+		}
+		if json.Unmarshal(raw, &m) != nil {
+			return nil, false
+		}
+		return ai.UserMessage{Content: parseCustomContent(m.Content), Timestamp: m.Timestamp}, true
+	case "branchSummary":
+		var m struct {
+			Summary   string `json:"summary"`
+			Timestamp int64  `json:"timestamp"`
+		}
+		if json.Unmarshal(raw, &m) != nil {
+			return nil, false
+		}
+		return branchSummaryMessage(m.Summary, m.Timestamp), true
+	case "compactionSummary":
+		var m struct {
+			Summary   string `json:"summary"`
+			Timestamp int64  `json:"timestamp"`
+		}
+		if json.Unmarshal(raw, &m) != nil {
+			return nil, false
+		}
+		return compactionSummaryMessage(m.Summary, m.Timestamp), true
+	default:
+		m, err := ai.UnmarshalMessage(raw)
+		if err != nil {
+			return nil, false
+		}
+		return m, true
+	}
+}
+
+// bashExecutionToText ports pi's bashExecutionToText (messages.ts:148-167):
+// the user-facing text a bashExecution message renders to in LLM context.
+func bashExecutionToText(command, output string, exitCode *int, cancelled, truncated bool, fullOutputPath string) string {
+	text := "Ran `" + command + "`\n"
+	if output != "" {
+		text += "```\n" + output + "\n```"
+	} else {
+		text += "(no output)"
+	}
+	if cancelled {
+		text += "\n\n(command cancelled)"
+	} else if exitCode != nil && *exitCode != 0 {
+		text += fmt.Sprintf("\n\nCommand exited with code %d", *exitCode)
+	}
+	if truncated && fullOutputPath != "" {
+		text += "\n\n[Output truncated. Full output: " + fullOutputPath + "]"
+	}
+	return text
 }
 
 // parseCustomContent decodes a custom_message content field (string or block array).

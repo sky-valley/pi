@@ -3,6 +3,7 @@ package ai
 import (
 	"context"
 	"fmt"
+	"sort"
 	"sync"
 )
 
@@ -76,6 +77,20 @@ func GetApiProvider(api Api) (ApiProvider, bool) {
 	defer registryMu.RUnlock()
 	r, ok := registry[api]
 	return r.provider, ok
+}
+
+// GetApiProviders returns all registered providers (port of api-registry.ts
+// getApiProviders). pi returns Map insertion order; Go maps are unordered, so
+// the result is sorted by Api for determinism.
+func GetApiProviders() []ApiProvider {
+	registryMu.RLock()
+	defer registryMu.RUnlock()
+	out := make([]ApiProvider, 0, len(registry))
+	for _, entry := range registry {
+		out = append(out, entry.provider)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Api < out[j].Api })
+	return out
 }
 
 // UnregisterApiProviders removes all providers registered with sourceID.

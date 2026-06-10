@@ -84,13 +84,63 @@ func main() {
 		cwd, _ = os.Getwd()
 	}
 
-	model, err := coding.ResolveModel(modelSpec)
-	if err != nil {
-		fatal(err)
+	// Load the resumed session (if any) before resolving the model so the
+	// session's saved model/thinking level can be restored (pi createAgentSession
+	// restores both from the session context).
+	if resumePath == "" && continueLatest {
+		if latest, ok := coding.LatestSession(cwd); ok {
+			resumePath = latest.Path
+		}
+	}
+	var resumeCtx *coding.BranchContext
+	var resumeHasThinkingEntry bool
+	if resumePath != "" {
+		tree, err := coding.LoadSessionTree(resumePath)
+		if err != nil {
+			fatal(err)
+		}
+		ctx := tree.BuildContext()
+		resumeCtx = &ctx
+		for _, e := range tree.Entries {
+			if e.Type == "thinking_level_change" {
+				resumeHasThinkingEntry = true
+				break
+			}
+		}
+	}
+
+	var model *ai.Model
+	parsedThink := ""
+	if modelSpec == "" && resumeCtx != nil && resumeCtx.Provider != "" && resumeCtx.ModelID != "" {
+		// Restore the session's model when no -m flag is given.
+		model = ai.GetModel(resumeCtx.Provider, resumeCtx.ModelID)
+		if model == nil {
+			fmt.Fprintf(os.Stderr, "\033[33mWarning: Could not restore model %s/%s\033[0m\n", resumeCtx.Provider, resumeCtx.ModelID)
+		}
+	}
+	if model == nil {
+		resolved, err := coding.ResolveModelPattern(modelSpec)
+		if err != nil {
+			fatal(err)
+		}
+		if resolved.Warning != "" {
+			fmt.Fprintf(os.Stderr, "\033[33mWarning: %s\033[0m\n", resolved.Warning)
+		}
+		model = resolved.Model
+		parsedThink = resolved.ThinkingLevel
 	}
 	apiKey := ai.GetEnvApiKey(model.Provider)
 	if apiKey == "" {
 		fatal(fmt.Errorf("no API key found for provider %q (set the appropriate *_API_KEY env var)", model.Provider))
+	}
+
+	// Thinking level priority: --think flag, then a ":level" suffix on -m, then
+	// the resumed session's recorded level (when one was recorded).
+	if think == "" {
+		think = parsedThink
+	}
+	if think == "" && resumeCtx != nil && resumeHasThinkingEntry {
+		think = resumeCtx.ThinkingLevel
 	}
 
 	sess := coding.NewSession(coding.SessionOptions{
@@ -99,27 +149,31 @@ func main() {
 		SystemPrompt:  system,
 		ThinkingLevel: agent.ThinkingLevel(think),
 		APIKey:        apiKey,
+		// pi enables compaction by default (settings compaction.enabled ?? true).
+		Compaction: &coding.DefaultCompactionSettings,
 	})
 
-	// Resume prior history if requested.
-	if resumePath == "" && continueLatest {
-		if latest, ok := coding.LatestSession(cwd); ok {
-			resumePath = latest.Path
-		}
-	}
 	if resumePath != "" {
-		history, err := coding.LoadSessionMessages(resumePath)
-		if err != nil {
-			fatal(err)
+		sess.LoadHistory(resumeCtx.Messages)
+		fmt.Fprintf(os.Stderr, "\033[2mresumed %d messages from %s\033[0m\n", len(resumeCtx.Messages), resumePath)
+		// Resume APPENDS to the existing session file (pi setSessionFile), never
+		// forks a new one.
+		if rec, err := coding.ResumeSession(resumePath); err == nil {
+			if !resumeHasThinkingEntry {
+				// pi appends a thinking_level_change when the resumed session
+				// lacks one (sdk.ts:359-361).
+				rec.RecordThinkingLevel(string(sess.Agent.State().ThinkingLevel))
+			}
+			sess.Record(rec)
+			defer rec.Close()
 		}
-		sess.LoadHistory(history)
-		fmt.Fprintf(os.Stderr, "\033[2mresumed %d messages from %s\033[0m\n", len(history), resumePath)
-	}
-
-	// Record this session to disk.
-	if rec, err := coding.StartSession(cwd, model); err == nil {
-		sess.Record(rec)
-		defer rec.Close()
+	} else {
+		// Record this session to disk (model_change + thinking_level_change,
+		// like pi's createAgentSession for new sessions).
+		if rec, err := coding.StartSession(cwd, model, string(sess.Agent.State().ThinkingLevel)); err == nil {
+			sess.Record(rec)
+			defer rec.Close()
+		}
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)

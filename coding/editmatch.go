@@ -15,15 +15,27 @@ type editEntry struct {
 	newText string
 }
 
+// isJSWhitespace reports whether r is in JS String.prototype.trimEnd's trim set
+// (ECMAScript WhiteSpace ∪ LineTerminator): TAB VT FF SP NBSP ZWNBSP(U+FEFF),
+// any Zs, LF CR LS PS. Unlike Go's unicode.IsSpace it includes U+FEFF and
+// excludes U+0085 (NEL).
+func isJSWhitespace(r rune) bool {
+	switch r {
+	case '\t', '\n', '\v', '\f', '\r', ' ', '\u00a0', '\ufeff', '\u2028', '\u2029':
+		return true
+	}
+	return unicode.Is(unicode.Zs, r)
+}
+
 // normalizeForFuzzyMatch normalizes text for whitespace/Unicode-tolerant matching
 // (port of pi's normalizeForFuzzyMatch, edit-diff.ts:34). It applies Unicode NFKC,
-// strips trailing per-line whitespace, and folds smart quotes, dashes, and exotic
-// spaces to ASCII.
+// strips trailing per-line whitespace (JS trimEnd set), and folds smart quotes,
+// dashes, and exotic spaces to ASCII.
 func normalizeForFuzzyMatch(text string) string {
 	text = norm.NFKC.String(text)
 	lines := strings.Split(text, "\n")
 	for i, line := range lines {
-		lines[i] = strings.TrimRightFunc(line, unicode.IsSpace)
+		lines[i] = strings.TrimRightFunc(line, isJSWhitespace)
 	}
 	joined := strings.Join(lines, "\n")
 	return strings.Map(func(r rune) rune {

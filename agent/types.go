@@ -77,6 +77,9 @@ type AgentTool struct {
 	// PrepareArguments is an optional shim applied to raw arguments before schema
 	// validation. Return the same map to indicate no change.
 	PrepareArguments func(raw map[string]any) map[string]any
+	// PromptGuidelines are optional bullet lines the system prompt builder folds
+	// into its Guidelines section (port of pi's tool promptGuidelines).
+	PromptGuidelines []string
 	// Execute runs the tool. Return an error on failure (the loop converts it to
 	// an error tool result) rather than encoding errors in Content.
 	Execute func(ctx context.Context, toolCallID string, params map[string]any, onUpdate ToolUpdateFunc) (AgentToolResult, error)
@@ -154,19 +157,21 @@ type AgentLoopConfig struct {
 	Model     *ai.Model
 	Reasoning ThinkingLevel // "" or "off" disables reasoning
 
-	SessionID       string
-	Transport       ai.Transport
-	ThinkingBudgets *ai.ThinkingBudgets
-	MaxRetryDelayMs *int
-	MaxRetries      int
-	TimeoutMs       int
-	Temperature     *float64
-	MaxTokens       *int
-	CacheRetention  ai.CacheRetention
-	Headers         map[string]string
-	APIKey          string
-	OnPayload       func(payload any, model *ai.Model) (any, error)
-	OnResponse      func(resp ai.ProviderResponse, model *ai.Model) error
+	SessionID                 string
+	Transport                 ai.Transport
+	ThinkingBudgets           *ai.ThinkingBudgets
+	MaxRetryDelayMs           *int
+	MaxRetries                int
+	TimeoutMs                 int
+	WebSocketConnectTimeoutMs int
+	Temperature               *float64
+	MaxTokens                 *int
+	CacheRetention            ai.CacheRetention
+	Headers                   map[string]string
+	Metadata                  map[string]any
+	APIKey                    string
+	OnPayload                 func(payload any, model *ai.Model) (any, error)
+	OnResponse                func(resp ai.ProviderResponse, model *ai.Model) error
 
 	ToolExecution ToolExecutionMode
 

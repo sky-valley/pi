@@ -75,6 +75,64 @@ Use this EXACT format:
 
 Keep each section concise. Preserve exact file paths, function names, and error messages.`
 
+// updateSummarizationPrompt is pi's UPDATE_SUMMARIZATION_PROMPT (compaction.ts:487),
+// used when a previous compaction summary exists. Byte-for-byte from the npm build.
+const updateSummarizationPrompt = `The messages above are NEW conversation messages to incorporate into the existing summary provided in <previous-summary> tags.
+
+Update the existing structured summary with new information. RULES:
+- PRESERVE all existing information from the previous summary
+- ADD new progress, decisions, and context from the new messages
+- UPDATE the Progress section: move items from "In Progress" to "Done" when completed
+- UPDATE "Next Steps" based on what was accomplished
+- PRESERVE exact file paths, function names, and error messages
+- If something is no longer relevant, you may remove it
+
+Use this EXACT format:
+
+## Goal
+[Preserve existing goals, add new ones if the task expanded]
+
+## Constraints & Preferences
+- [Preserve existing, add new ones discovered]
+
+## Progress
+### Done
+- [x] [Include previously done items AND newly completed items]
+
+### In Progress
+- [ ] [Current work - update based on progress]
+
+### Blocked
+- [Current blockers - remove if resolved]
+
+## Key Decisions
+- **[Decision]**: [Brief rationale] (preserve all previous, add new)
+
+## Next Steps
+1. [Update based on current state]
+
+## Critical Context
+- [Preserve important context, add new if needed]
+
+Keep each section concise. Preserve exact file paths, function names, and error messages.`
+
+// turnPrefixSummarizationPrompt is pi's TURN_PREFIX_SUMMARIZATION_PROMPT
+// (compaction.ts:725), used for the prefix of a split turn. Byte-for-byte.
+const turnPrefixSummarizationPrompt = `This is the PREFIX of a turn that was too large to keep. The SUFFIX (recent work) is retained.
+
+Summarize the prefix to provide context for the retained suffix:
+
+## Original Request
+[What did the user ask for in this turn?]
+
+## Early Progress
+- [Key decisions and work done in the prefix]
+
+## Context for Suffix
+- [Information needed to understand the retained recent work]
+
+Be concise. Focus on what's needed to understand the kept suffix.`
+
 // EstimateMessageTokens estimates the token cost of a message (port of
 // estimateTokens: char count / 4, rounded up).
 func EstimateMessageTokens(m agent.AgentMessage) int {
@@ -142,6 +200,11 @@ func estimateContextTokensUsageAware(messages []agent.AgentMessage) int {
 		if !ok {
 			continue
 		}
+		// pi's getAssistantUsage (compaction.ts:143-151) skips aborted and error
+		// messages: they don't carry valid usage data.
+		if am.StopReason == ai.StopAborted || am.StopReason == ai.StopError {
+			continue
+		}
 		if contextTokensFromUsage(am.Usage) > 0 {
 			lastIdx = i
 			lastUsage = am.Usage
@@ -172,30 +235,80 @@ func shouldCompact(contextTokens, contextWindow int, s CompactionSettings) bool 
 	return contextTokens > contextWindow-s.ReserveTokens
 }
 
-// findCutIndex returns the first index to KEEP: walking from the end, accumulate
-// tokens until KeepRecentTokens is reached, then snap back so a kept run never
-// begins on a tool-result (which must stay attached to its assistant turn).
-func findCutIndex(messages []agent.AgentMessage, keepRecent int) int {
+// cutPointResult mirrors pi's CutPointResult (compaction.ts:361-368).
+type cutPointResult struct {
+	// firstKeptIndex is the index of the first message to keep.
+	firstKeptIndex int
+	// turnStartIndex is the user message starting the turn being split, or -1.
+	turnStartIndex int
+	// isSplitTurn is true when the cut lands mid-turn (not on a user message).
+	isSplitTurn bool
+}
+
+// findCutPoint ports pi's findCutPoint + findValidCutPoints (compaction.ts:380-448)
+// to a flat message list. Valid cut points are any non-tool-result message (a kept
+// run must never start on a tool result). Walking backwards from the newest
+// message, tokens accumulate until KeepRecentTokens is reached; the cut then snaps
+// FORWARD to the first valid cut point at or after the crossing index (so a
+// boundary tool-result goes into the summarized portion). If the budget is never
+// reached, the cut defaults to the first valid cut point (keep everything).
+// Only messages in [startIndex, endIndex) are considered.
+func findCutPoint(messages []agent.AgentMessage, startIndex, endIndex, keepRecentTokens int) cutPointResult {
+	var cutPoints []int
+	for i := startIndex; i < endIndex; i++ {
+		if messages[i].MessageRole() != ai.RoleToolResult {
+			cutPoints = append(cutPoints, i)
+		}
+	}
+	if len(cutPoints) == 0 {
+		return cutPointResult{firstKeptIndex: startIndex, turnStartIndex: -1}
+	}
+
+	// Walk backwards from newest, accumulating estimated message sizes.
 	acc := 0
-	cut := 0
-	for i := len(messages) - 1; i >= 0; i-- {
+	cutIndex := cutPoints[0] // default: keep from first message
+	for i := endIndex - 1; i >= startIndex; i-- {
 		acc += EstimateMessageTokens(messages[i])
-		if acc >= keepRecent {
-			cut = i
+		if acc >= keepRecentTokens {
+			// Snap to the closest valid cut point at or after this index.
+			for _, c := range cutPoints {
+				if c >= i {
+					cutIndex = c
+					break
+				}
+			}
 			break
 		}
 	}
-	for cut > 0 && messages[cut].MessageRole() == ai.RoleToolResult {
-		cut--
+
+	// Determine if this is a split turn (pi compaction.ts:438-447): a cut not on
+	// a user message splits the turn started by the nearest preceding user message.
+	isUser := messages[cutIndex].MessageRole() == ai.RoleUser
+	turnStart := -1
+	if !isUser {
+		for i := cutIndex; i >= startIndex; i-- {
+			if messages[i].MessageRole() == ai.RoleUser {
+				turnStart = i
+				break
+			}
+		}
 	}
-	return cut
+	return cutPointResult{
+		firstKeptIndex: cutIndex,
+		turnStartIndex: turnStart,
+		isSplitTurn:    !isUser && turnStart != -1,
+	}
 }
 
 type compactionState struct {
 	mu        sync.Mutex
 	settings  CompactionSettings
-	prefixLen int    // number of older messages covered by the cached summary
-	summary   string // cached summary text
+	prefixLen int    // index into the ORIGINAL message list of the first kept message
+	summary   string // cached summary text (includes the file-ops appendix, like pi)
+	// readFiles/modifiedFiles persist the previous compaction's file lists so the
+	// next compaction can merge them (pi extractFileOperations, compaction.ts:41-69).
+	readFiles     []string
+	modifiedFiles []string
 }
 
 // EnableCompaction installs an automatic compaction TransformContext on the
@@ -209,75 +322,205 @@ func (s *Session) EnableCompaction(settings CompactionSettings) {
 	}
 }
 
+// applyCheckpoint builds the compacted view: the checkpoint summary message
+// followed by the messages after prefixLen (pi: compaction entry + kept entries).
+func applyCheckpoint(summary string, messages []agent.AgentMessage, prefixLen int) []agent.AgentMessage {
+	checkpoint := compactionSummaryMessage(summary, nowMillisCoding())
+	out := make([]agent.AgentMessage, 0, 1+len(messages)-prefixLen)
+	out = append(out, checkpoint)
+	out = append(out, messages[prefixLen:]...)
+	return out
+}
+
+// compact is the per-request TransformContext. pi semantics: compaction is
+// PERMANENT — once a summary checkpoint exists it is always applied (pi persists
+// a compaction entry; dropped turns never come back). The shouldCompact check
+// only decides whether to EXTEND the compaction by summarizing a larger prefix,
+// merging via the <previous-summary> update flow (pi prepareCompaction/compact).
+//
+// state.prefixLen indexes into the ORIGINAL message list, which the agent only
+// ever grows by appending, so it stays valid across turns and re-compactions.
 func (s *Session) compact(ctx context.Context, state *compactionState, messages []agent.AgentMessage) []agent.AgentMessage {
 	window := 0
 	if s.Model != nil {
 		window = s.Model.ContextWindow
 	}
-	tokens := estimateContextTokensUsageAware(messages)
-	if !shouldCompact(tokens, window, state.settings) {
-		return messages
-	}
-	cut := findCutIndex(messages, state.settings.KeepRecentTokens)
-	if cut <= 0 {
-		return messages // nothing safely summarizable
-	}
-
-	older := messages[:cut]
-	recent := messages[cut:]
 
 	state.mu.Lock()
+	prefixLen := state.prefixLen
 	summary := state.summary
-	reuse := state.prefixLen == len(older) && summary != ""
+	prevRead := state.readFiles
+	prevModified := state.modifiedFiles
 	state.mu.Unlock()
-
-	if !reuse {
-		summary = s.summarize(ctx, older, state.settings.ReserveTokens)
-		if summary == "" {
-			return messages // summarization failed; don't drop context
-		}
-		state.mu.Lock()
-		state.prefixLen = len(older)
-		state.summary = summary
-		state.mu.Unlock()
+	if prefixLen > len(messages) {
+		prefixLen = len(messages) // defensive: transcript was replaced/shrunk
 	}
 
-	// Same wrapper text pi uses for a compaction summary (core/messages.ts).
-	checkpoint := compactionSummaryMessage(summary, nowMillisCoding())
-	out := make([]agent.AgentMessage, 0, 1+len(recent))
-	out = append(out, checkpoint)
-	out = append(out, recent...)
-	return out
+	// Always re-apply the cached checkpoint first (permanence).
+	current := messages
+	if summary != "" {
+		current = applyCheckpoint(summary, messages, prefixLen)
+	}
+
+	tokens := estimateContextTokensUsageAware(current)
+	if !shouldCompact(tokens, window, state.settings) {
+		return current
+	}
+
+	// Extend: find a new cut within the kept tail (pi boundaryStart = previous
+	// firstKeptEntryIndex; compaction.ts:660-672).
+	cp := findCutPoint(messages, prefixLen, len(messages), state.settings.KeepRecentTokens)
+	if cp.firstKeptIndex <= prefixLen {
+		return current // nothing new safely summarizable
+	}
+
+	historyEnd := cp.firstKeptIndex
+	if cp.isSplitTurn {
+		historyEnd = cp.turnStartIndex
+	}
+	history := messages[prefixLen:historyEnd]
+	var turnPrefix []agent.AgentMessage
+	if cp.isSplitTurn {
+		turnPrefix = messages[cp.turnStartIndex:cp.firstKeptIndex]
+	}
+
+	// Generate summaries (pi compact, compaction.ts:747-815). pi runs the two
+	// split-turn summaries in parallel; we run them sequentially (same output).
+	var newSummary string
+	if cp.isSplitTurn && len(turnPrefix) > 0 {
+		historyResult := "No prior history."
+		if len(history) > 0 {
+			hr, ok := s.generateSummary(ctx, history, state.settings.ReserveTokens, summary)
+			if !ok {
+				return current // summarization failed; keep current view
+			}
+			historyResult = hr
+		}
+		tp, ok := s.generateTurnPrefixSummary(ctx, turnPrefix, state.settings.ReserveTokens)
+		if !ok {
+			return current
+		}
+		newSummary = historyResult + "\n\n---\n\n**Turn Context (split turn):**\n\n" + tp
+	} else {
+		ns, ok := s.generateSummary(ctx, history, state.settings.ReserveTokens, summary)
+		if !ok {
+			return current
+		}
+		newSummary = ns
+	}
+	if newSummary == "" {
+		return current // aborted with no text produced; keep current view
+	}
+
+	// Merge file ops from the previous compaction's lists plus the newly
+	// summarized messages (pi extractFileOperations + split-turn extraction).
+	ops := newFileOps()
+	for _, f := range prevRead {
+		ops.read[f] = true
+	}
+	for _, f := range prevModified {
+		ops.edited[f] = true
+	}
+	for _, m := range history {
+		extractFileOpsFromMessage(m, ops)
+	}
+	for _, m := range turnPrefix {
+		extractFileOpsFromMessage(m, ops)
+	}
+	readFiles, modifiedFiles := ops.lists()
+	newSummary += formatFileOperations(readFiles, modifiedFiles)
+
+	state.mu.Lock()
+	state.prefixLen = cp.firstKeptIndex
+	state.summary = newSummary
+	state.readFiles = readFiles
+	state.modifiedFiles = modifiedFiles
+	state.mu.Unlock()
+
+	return applyCheckpoint(newSummary, messages, cp.firstKeptIndex)
 }
 
-// summarize asks the model to produce a structured checkpoint of older messages.
-// It builds the summarization request faithfully to pi's generateSummary
-// (compaction.ts:558-620): the conversation is serialized to text, wrapped in
-// <conversation>...</conversation>, sent with the dedicated
-// SUMMARIZATION_SYSTEM_PROMPT and a capped maxTokens, and the read/modified file
-// lists are appended to the resulting summary text.
+// summarize asks the model to produce a structured checkpoint of older messages
+// with no previous summary, appending the read/modified file lists computed from
+// those messages (pi compact, compaction.ts:803-819 for the non-split path).
 func (s *Session) summarize(ctx context.Context, older []agent.AgentMessage, reserveTokens int) string {
-	// Convert to LLM messages first (handles role filtering).
+	text, ok := s.generateSummary(ctx, older, reserveTokens, "")
+	if !ok {
+		return ""
+	}
+	readFiles, modifiedFiles := computeFileLists(older)
+	return text + formatFileOperations(readFiles, modifiedFiles)
+}
+
+// generateSummary ports pi's generateSummary (compaction.ts:558-620): the
+// conversation is serialized to text, wrapped in <conversation>...</conversation>
+// (followed by <previous-summary>...</previous-summary> and the update prompt
+// variant when a previous summary exists), and sent with the dedicated
+// SUMMARIZATION_SYSTEM_PROMPT and a capped maxTokens. Returns ok=false where pi
+// throws (stopReason "error"); an aborted response returns the text produced so
+// far, like pi (compaction.js:466 throws only on "error").
+func (s *Session) generateSummary(ctx context.Context, older []agent.AgentMessage, reserveTokens int, previousSummary string) (string, bool) {
+	conversationText := serializeConversation(messagesAsLlm(older))
+
+	promptText := "<conversation>\n" + conversationText + "\n</conversation>\n\n"
+	if previousSummary != "" {
+		promptText += "<previous-summary>\n" + previousSummary + "\n</previous-summary>\n\n"
+		promptText += updateSummarizationPrompt
+	} else {
+		promptText += summarizationPrompt
+	}
+
+	return s.completeSummarization(ctx, promptText, s.summaryMaxTokens(0.8, reserveTokens))
+}
+
+// generateTurnPrefixSummary ports pi's generateTurnPrefixSummary
+// (compaction.ts:836-876): the prefix of a split turn is summarized with the
+// dedicated turn-prefix prompt and a smaller (0.5 * reserve) token budget.
+func (s *Session) generateTurnPrefixSummary(ctx context.Context, messages []agent.AgentMessage, reserveTokens int) (string, bool) {
+	conversationText := serializeConversation(messagesAsLlm(messages))
+	promptText := "<conversation>\n" + conversationText + "\n</conversation>\n\n" + turnPrefixSummarizationPrompt
+	return s.completeSummarization(ctx, promptText, s.summaryMaxTokens(0.5, reserveTokens))
+}
+
+// summaryMaxTokens = min(floor(frac * reserveTokens), model.maxTokens if > 0).
+func (s *Session) summaryMaxTokens(frac float64, reserveTokens int) int {
+	maxTokens := int(math.Floor(frac * float64(reserveTokens)))
+	if s.Model != nil && s.Model.MaxTokens > 0 && s.Model.MaxTokens < maxTokens {
+		maxTokens = s.Model.MaxTokens
+	}
+	return maxTokens
+}
+
+// messagesAsLlm filters agent messages down to LLM roles (pi convertToLlm).
+func messagesAsLlm(messages []agent.AgentMessage) []ai.Message {
 	var llmMessages []ai.Message
-	for _, m := range older {
+	for _, m := range messages {
 		switch m.MessageRole() {
 		case ai.RoleUser, ai.RoleAssistant, ai.RoleToolResult:
 			llmMessages = append(llmMessages, m)
 		}
 	}
+	return llmMessages
+}
 
-	conversationText := serializeConversation(llmMessages)
-	promptText := "<conversation>\n" + conversationText + "\n</conversation>\n\n" + summarizationPrompt
-
+// completeSummarization sends one summarization request (pi completeSummarization
+// + createSummarizationOptions, compaction.ts:526-552): the session's API key,
+// headers, and — when the model supports reasoning and the session's thinking
+// level is set and not off — the thinking level are passed through. Returns
+// ok=false on a stream error (pi throws); aborted responses return the text
+// blocks produced so far, joined with "\n" (pi .map(c => c.text).join("\n")).
+func (s *Session) completeSummarization(ctx context.Context, promptText string, maxTokens int) (string, bool) {
 	summarizationMessages := []ai.Message{ai.NewUserText(promptText, nowMillisCoding())}
 
-	// maxTokens = min(floor(0.8 * reserveTokens), model.maxTokens if > 0).
-	maxTokens := int(math.Floor(0.8 * float64(reserveTokens)))
-	if s.Model != nil && s.Model.MaxTokens > 0 && s.Model.MaxTokens < maxTokens {
-		maxTokens = s.Model.MaxTokens
+	opts := &ai.SimpleStreamOptions{StreamOptions: ai.StreamOptions{
+		APIKey:    s.apiKey,
+		MaxTokens: &maxTokens,
+		Headers:   s.Agent.Headers,
+	}}
+	level := s.Agent.State().ThinkingLevel
+	if s.Model != nil && s.Model.Reasoning && level != "" && level != agent.ThinkOff {
+		opts.Reasoning = ai.ThinkingLevel(level)
 	}
-
-	opts := &ai.SimpleStreamOptions{StreamOptions: ai.StreamOptions{APIKey: s.apiKey, MaxTokens: &maxTokens}}
 
 	streamFn := s.Agent.StreamFn
 	if streamFn == nil {
@@ -285,22 +528,16 @@ func (s *Session) summarize(ctx context.Context, older []agent.AgentMessage, res
 	}
 	stream := streamFn(ctx, s.Model, ai.Context{SystemPrompt: summarizationSystemPrompt, Messages: summarizationMessages}, opts)
 	msg := stream.Result()
-	if msg == nil || msg.StopReason == ai.StopError || msg.StopReason == ai.StopAborted {
-		return ""
+	if msg == nil || msg.StopReason == ai.StopError {
+		return "", false
 	}
-	var b strings.Builder
+	var texts []string
 	for _, c := range msg.Content {
 		if tc, ok := c.(ai.TextContent); ok {
-			b.WriteString(tc.Text)
+			texts = append(texts, tc.Text)
 		}
 	}
-	summary := b.String()
-
-	// Compute file lists and append to the summary (compaction.ts:817-819).
-	readFiles, modifiedFiles := computeFileLists(older)
-	summary += formatFileOperations(readFiles, modifiedFiles)
-
-	return summary
+	return strings.Join(texts, "\n"), true
 }
 
 // serializeConversation serializes LLM messages to text for summarization so the
@@ -377,44 +614,85 @@ func textOf(content ai.ContentList) string {
 	return b.String()
 }
 
-// truncateForSummary truncates text to maxChars, appending a marker (utils.ts).
+// truncateForSummary truncates text to maxChars UTF-16 code units, appending a
+// marker (utils.ts truncateForSummary; JS .length/.slice count UTF-16 units).
+// Unlike JS slice, a surrogate pair on the boundary is dropped whole rather than
+// split, so the output is always valid UTF-8.
 func truncateForSummary(text string, maxChars int) string {
-	if len(text) <= maxChars {
+	length := utf16Len(text)
+	if length <= maxChars {
 		return text
 	}
-	truncated := len(text) - maxChars
-	return text[:maxChars] + fmt.Sprintf("\n\n[... %d more characters truncated]", truncated)
+	return sliceUTF16(text, maxChars) + fmt.Sprintf("\n\n[... %d more characters truncated]", length-maxChars)
 }
 
-// computeFileLists derives the read-only and modified file lists from read/edit/
-// write tool calls in the older messages (port of extractFileOpsFromMessage +
-// computeFileLists). readFiles excludes any file that was also modified.
-func computeFileLists(messages []agent.AgentMessage) (readFiles, modifiedFiles []string) {
-	read := map[string]bool{}
-	modified := map[string]bool{}
-	for _, m := range messages {
-		am, ok := messageAsAssistant(m)
+// sliceUTF16 returns the longest prefix of s holding at most n UTF-16 code
+// units without splitting a rune (an astral rune counts as 2 units and is
+// excluded entirely when it straddles the boundary).
+func sliceUTF16(s string, n int) string {
+	units := 0
+	for i, r := range s {
+		w := 1
+		if r > 0xFFFF {
+			w = 2
+		}
+		if units+w > n {
+			return s[:i]
+		}
+		units += w
+	}
+	return s
+}
+
+// fileOps mirrors pi's FileOperations (utils.ts createFileOps).
+type fileOps struct {
+	read    map[string]bool
+	written map[string]bool
+	edited  map[string]bool
+}
+
+func newFileOps() *fileOps {
+	return &fileOps{read: map[string]bool{}, written: map[string]bool{}, edited: map[string]bool{}}
+}
+
+// extractFileOpsFromMessage collects file paths from read/write/edit tool calls
+// in an assistant message (port of utils.ts extractFileOpsFromMessage).
+func extractFileOpsFromMessage(m agent.AgentMessage, ops *fileOps) {
+	am, ok := messageAsAssistant(m)
+	if !ok {
+		return
+	}
+	for _, c := range am.Content {
+		tc, ok := c.(ai.ToolCall)
 		if !ok {
 			continue
 		}
-		for _, c := range am.Content {
-			tc, ok := c.(ai.ToolCall)
-			if !ok {
-				continue
-			}
-			path, _ := tc.Arguments["path"].(string)
-			if path == "" {
-				continue
-			}
-			switch tc.Name {
-			case "read":
-				read[path] = true
-			case "write", "edit":
-				modified[path] = true
-			}
+		path, _ := tc.Arguments["path"].(string)
+		if path == "" {
+			continue
+		}
+		switch tc.Name {
+		case "read":
+			ops.read[path] = true
+		case "write":
+			ops.written[path] = true
+		case "edit":
+			ops.edited[path] = true
 		}
 	}
-	for f := range read {
+}
+
+// lists computes the final sorted file lists (port of utils.ts computeFileLists):
+// modified = edited + written; readFiles excludes any file that was also modified.
+func (ops *fileOps) lists() (readFiles, modifiedFiles []string) {
+	modified := map[string]bool{}
+	for f := range ops.edited {
+		modified[f] = true
+	}
+	for f := range ops.written {
+		modified[f] = true
+	}
+	for f := range ops.read {
 		if !modified[f] {
 			readFiles = append(readFiles, f)
 		}
@@ -425,6 +703,16 @@ func computeFileLists(messages []agent.AgentMessage) (readFiles, modifiedFiles [
 	sort.Strings(readFiles)
 	sort.Strings(modifiedFiles)
 	return readFiles, modifiedFiles
+}
+
+// computeFileLists derives the read-only and modified file lists from read/edit/
+// write tool calls in the given messages.
+func computeFileLists(messages []agent.AgentMessage) (readFiles, modifiedFiles []string) {
+	ops := newFileOps()
+	for _, m := range messages {
+		extractFileOpsFromMessage(m, ops)
+	}
+	return ops.lists()
 }
 
 // formatFileOperations formats read/modified file lists as XML tags appended to

@@ -68,3 +68,65 @@ func TestUserMessageAcceptsStringContent(t *testing.T) {
 		t.Fatalf("string content not normalized: %#v", m.Content[0])
 	}
 }
+
+// TestUserMessageStringContentRoundTrip asserts string-form content is
+// re-emitted as a string on marshal (pi: content is string | array, passed
+// through untouched), while array-form content stays an array.
+func TestUserMessageStringContentRoundTrip(t *testing.T) {
+	src := `{"role":"user","content":"plain text","timestamp":5}`
+	var m UserMessage
+	if err := json.Unmarshal([]byte(src), &m); err != nil {
+		t.Fatal(err)
+	}
+	out, err := json.Marshal(m)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(out) != src {
+		t.Fatalf("string content round-trip changed:\n got: %s\nwant: %s", out, src)
+	}
+
+	// Array-form input must stay an array.
+	arr := UserMessage{Content: ContentList{TextContent{Text: "hello"}}, Timestamp: 1}
+	raw, err := json.Marshal(arr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var probe struct {
+		Content json.RawMessage `json:"content"`
+	}
+	if err := json.Unmarshal(raw, &probe); err != nil {
+		t.Fatal(err)
+	}
+	if len(probe.Content) == 0 || probe.Content[0] != '[' {
+		t.Fatalf("array content serialized as non-array: %s", raw)
+	}
+
+	// NewUserText is string-form, like pi's prompt-created user messages
+	// (`content` is a plain string on the wire and in session files).
+	str, err := json.Marshal(NewUserText("hello", 1))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := `{"role":"user","content":"hello","timestamp":1}`; string(str) != want {
+		t.Fatalf("NewUserText must serialize string-form:\n got: %s\nwant: %s", str, want)
+	}
+}
+
+// TestUserMessageMissingContentTolerated asserts a missing or null content key
+// yields empty content rather than an error (JSON.parse tolerance in pi).
+func TestUserMessageMissingContentTolerated(t *testing.T) {
+	var m UserMessage
+	if err := json.Unmarshal([]byte(`{"role":"user","timestamp":5}`), &m); err != nil {
+		t.Fatalf("missing content key errored: %v", err)
+	}
+	if len(m.Content) != 0 || m.Timestamp != 5 {
+		t.Fatalf("missing content: got %#v ts=%d", m.Content, m.Timestamp)
+	}
+	if err := json.Unmarshal([]byte(`{"role":"user","content":null,"timestamp":5}`), &m); err != nil {
+		t.Fatalf("null content errored: %v", err)
+	}
+	if len(m.Content) != 0 {
+		t.Fatalf("null content: got %#v", m.Content)
+	}
+}

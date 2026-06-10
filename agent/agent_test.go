@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/sky-valley/pi/ai"
 )
@@ -73,8 +75,12 @@ func TestAgentRunsToolCallThenFinishes(t *testing.T) {
 	})
 
 	var events []EventType
+	var turnEndResults [][]ai.ToolResultMessage
 	a.Subscribe(func(ctx context.Context, e AgentEvent) error {
 		events = append(events, e.Type)
+		if e.Type == EvTurnEnd {
+			turnEndResults = append(turnEndResults, e.ToolResults)
+		}
 		return nil
 	})
 
@@ -105,6 +111,18 @@ func TestAgentRunsToolCallThenFinishes(t *testing.T) {
 	}
 	assertContains(t, events, EvToolExecutionStart)
 	assertContains(t, events, EvToolExecutionEnd)
+
+	// B7: tool turn carries 1 result; the final no-tool turn carries a non-nil
+	// empty slice (pi initializes toolResults = [] every turn).
+	if len(turnEndResults) != 2 {
+		t.Fatalf("expected 2 turn_end events, got %d", len(turnEndResults))
+	}
+	if len(turnEndResults[0]) != 1 {
+		t.Fatalf("expected 1 tool result on first turn_end, got %#v", turnEndResults[0])
+	}
+	if turnEndResults[1] == nil || len(turnEndResults[1]) != 0 {
+		t.Fatalf("expected non-nil empty ToolResults on no-tool turn_end, got %#v", turnEndResults[1])
+	}
 }
 
 func TestAgentErrorStopsLoop(t *testing.T) {
@@ -114,12 +132,26 @@ func TestAgentErrorStopsLoop(t *testing.T) {
 			&ai.AssistantMessage{StopReason: ai.StopError, ErrorMessage: "boom"},
 		),
 	})
+	var turnEndResults [][]ai.ToolResultMessage
+	a.Subscribe(func(ctx context.Context, e AgentEvent) error {
+		if e.Type == EvTurnEnd {
+			turnEndResults = append(turnEndResults, e.ToolResults)
+		}
+		return nil
+	})
 	if err := a.Prompt(context.Background(), "hi"); err != nil {
 		t.Fatal(err)
 	}
 	st := a.State()
 	if st.ErrorMessage != "boom" {
 		t.Fatalf("expected error message 'boom', got %q", st.ErrorMessage)
+	}
+	// B7: the error-turn turn_end must carry [] (pi agent-loop.ts:197), not nil.
+	if len(turnEndResults) != 1 {
+		t.Fatalf("expected 1 turn_end, got %d", len(turnEndResults))
+	}
+	if turnEndResults[0] == nil || len(turnEndResults[0]) != 0 {
+		t.Fatalf("expected non-nil empty ToolResults on error turn_end, got %#v", turnEndResults[0])
 	}
 }
 
@@ -646,6 +678,352 @@ func TestAgentAbortDuringToolExecution(t *testing.T) {
 	}
 	if _, ok := resultText["b"]; ok {
 		t.Fatalf("expected no result for not-reached call b, got %q", resultText["b"])
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Parity sweep 2: A2 + B1-B6
+// ---------------------------------------------------------------------------
+
+// TestAgentParallelToolsPanickingListenerDoesNotDeadlock (A2): a listener that
+// PANICS on tool_execution_end must not leak serialMu; the other tool goroutine
+// must still finalize and the run must terminate as a failure turn, not hang at
+// wg.Wait.
+func TestAgentParallelToolsPanickingListenerDoesNotDeadlock(t *testing.T) {
+	var barrier sync.WaitGroup
+	barrier.Add(2)
+	mkTool := func(name string) AgentTool {
+		return AgentTool{
+			Name: name, Parameters: ai.Object(),
+			Execute: func(ctx context.Context, id string, p map[string]any, u ToolUpdateFunc) (AgentToolResult, error) {
+				barrier.Done()
+				barrier.Wait() // both tools in-flight before either finalizes
+				return AgentToolResult{Content: ai.ContentList{ai.TextContent{Text: name}}}, nil
+			},
+		}
+	}
+	a := NewAgent(AgentOptions{
+		InitialState:  &AgentState{Model: testModel, Tools: []AgentTool{mkTool("a"), mkTool("b")}},
+		ToolExecution: ToolParallel,
+		StreamFn: scriptedStream(&ai.AssistantMessage{
+			Content: ai.ContentList{
+				ai.ToolCall{ID: "1", Name: "a", Arguments: map[string]any{}},
+				ai.ToolCall{ID: "2", Name: "b", Arguments: map[string]any{}},
+			},
+			StopReason: ai.StopToolUse,
+		}),
+	})
+
+	var panicked int32
+	a.Subscribe(func(ctx context.Context, e AgentEvent) error {
+		if e.Type == EvToolExecutionEnd && atomic.CompareAndSwapInt32(&panicked, 0, 1) {
+			panic("listener exploded")
+		}
+		return nil
+	})
+
+	done := make(chan error, 1)
+	go func() { done <- a.Prompt(context.Background(), "go") }()
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatal(err)
+		}
+	case <-time.After(10 * time.Second):
+		t.Fatal("run deadlocked after listener panic (serialMu leaked)")
+	}
+
+	st := a.State()
+	if st.ErrorMessage != "listener exploded" {
+		t.Fatalf("expected failure turn with panic message, got %q", st.ErrorMessage)
+	}
+	if st.IsStreaming {
+		t.Fatal("expected idle after failure turn")
+	}
+}
+
+// TestAgentPanickingToolYieldsErrorResultAndContinues (B1): a panicking tool
+// Execute yields an error tool result (text = the panic message, pi
+// createErrorToolResult) and the loop CONTINUES to the next LLM call, with a
+// matched tool_execution_start/end pair.
+func TestAgentPanickingToolYieldsErrorResultAndContinues(t *testing.T) {
+	for _, mode := range []ToolExecutionMode{ToolParallel, ToolSequential} {
+		t.Run(string(mode), func(t *testing.T) {
+			tool := AgentTool{
+				Name: "bomb", Parameters: ai.Object(),
+				Execute: func(ctx context.Context, id string, p map[string]any, u ToolUpdateFunc) (AgentToolResult, error) {
+					panic(errors.New("tool exploded"))
+				},
+			}
+			a := NewAgent(AgentOptions{
+				InitialState:  &AgentState{Model: testModel, Tools: []AgentTool{tool}},
+				ToolExecution: mode,
+				StreamFn: scriptedStream(
+					assistantWithToolCall("c1", "bomb", map[string]any{}),
+					&ai.AssistantMessage{Content: ai.ContentList{ai.TextContent{Text: "recovered"}}, StopReason: ai.StopStop},
+				),
+			})
+
+			var starts, ends []string
+			a.Subscribe(func(ctx context.Context, e AgentEvent) error {
+				switch e.Type {
+				case EvToolExecutionStart:
+					starts = append(starts, e.ToolCallID)
+				case EvToolExecutionEnd:
+					ends = append(ends, e.ToolCallID)
+					if !e.IsError {
+						t.Error("expected tool_execution_end IsError for panicked tool")
+					}
+				}
+				return nil
+			})
+
+			if err := a.Prompt(context.Background(), "go"); err != nil {
+				t.Fatal(err)
+			}
+
+			st := a.State()
+			if st.ErrorMessage != "" {
+				t.Fatalf("tool panic must not fail the run, got error %q", st.ErrorMessage)
+			}
+			tr, ok := st.Messages[2].(ai.ToolResultMessage)
+			if !ok || !tr.IsError {
+				t.Fatalf("expected error tool result at [2], got %#v", st.Messages[2])
+			}
+			if got := textOf(&ai.AssistantMessage{Content: tr.Content}); got != "tool exploded" {
+				t.Fatalf("expected error text 'tool exploded', got %q", got)
+			}
+			// Run continued to the next LLM call.
+			final, ok := asAssistant(st.Messages[len(st.Messages)-1])
+			if !ok || textOf(final) != "recovered" {
+				t.Fatalf("expected run to continue to final message, got %#v", st.Messages[len(st.Messages)-1])
+			}
+			if len(starts) != 1 || len(ends) != 1 || starts[0] != "c1" || ends[0] != "c1" {
+				t.Fatalf("expected matched start/end pair for c1, got starts=%v ends=%v", starts, ends)
+			}
+		})
+	}
+}
+
+// TestAgentListenerErrorOnToolUpdateDefersUntilToolCompletes (B6, and B1's
+// listener-error-inside-onUpdate case): a listener error on
+// tool_execution_update must not interrupt the tool mid-flight; the tool
+// finishes its work, then the buffered error fails the run (pi awaits the
+// update-event promises after execute settles, agent-loop.ts:633-654).
+func TestAgentListenerErrorOnToolUpdateDefersUntilToolCompletes(t *testing.T) {
+	var completed int32
+	tool := AgentTool{
+		Name: "worker", Parameters: ai.Object(),
+		Execute: func(ctx context.Context, id string, p map[string]any, u ToolUpdateFunc) (AgentToolResult, error) {
+			u(AgentToolResult{Content: ai.ContentList{ai.TextContent{Text: "partial"}}})
+			// Work after the failing update emit: must still run.
+			atomic.StoreInt32(&completed, 1)
+			return AgentToolResult{Content: ai.ContentList{ai.TextContent{Text: "finished"}}}, nil
+		},
+	}
+	a := NewAgent(AgentOptions{
+		InitialState: &AgentState{Model: testModel, Tools: []AgentTool{tool}},
+		StreamFn: scriptedStream(
+			assistantWithToolCall("c1", "worker", map[string]any{}),
+			&ai.AssistantMessage{Content: ai.ContentList{ai.TextContent{Text: "done"}}, StopReason: ai.StopStop},
+		),
+	})
+	a.Subscribe(func(ctx context.Context, e AgentEvent) error {
+		if e.Type == EvToolExecutionUpdate {
+			return errors.New("update listener err")
+		}
+		return nil
+	})
+
+	if err := a.Prompt(context.Background(), "go"); err != nil {
+		t.Fatal(err)
+	}
+
+	if atomic.LoadInt32(&completed) != 1 {
+		t.Fatal("tool must complete its work despite update-listener error")
+	}
+	st := a.State()
+	if st.ErrorMessage != "update listener err" {
+		t.Fatalf("expected run failure 'update listener err', got %q", st.ErrorMessage)
+	}
+	if st.IsStreaming {
+		t.Fatal("expected idle after failure turn")
+	}
+}
+
+// TestAgentStateSnapshotPendingToolCallsRace (B2): State().PendingToolCalls is
+// a copy-on-write snapshot; iterating it while parallel tools run must be
+// race-free under -race.
+func TestAgentStateSnapshotPendingToolCallsRace(t *testing.T) {
+	const n = 8
+	tools := make([]AgentTool, n)
+	var content ai.ContentList
+	for i := 0; i < n; i++ {
+		name := fmt.Sprintf("t%d", i)
+		tools[i] = AgentTool{
+			Name: name, Parameters: ai.Object(),
+			Execute: func(ctx context.Context, id string, p map[string]any, u ToolUpdateFunc) (AgentToolResult, error) {
+				time.Sleep(time.Millisecond)
+				return AgentToolResult{Content: ai.ContentList{ai.TextContent{Text: id}}}, nil
+			},
+		}
+		content = append(content, ai.ToolCall{ID: fmt.Sprintf("id%d", i), Name: name, Arguments: map[string]any{}})
+	}
+	a := NewAgent(AgentOptions{
+		InitialState:  &AgentState{Model: testModel, Tools: tools},
+		ToolExecution: ToolParallel,
+		StreamFn: scriptedStream(
+			&ai.AssistantMessage{Content: content, StopReason: ai.StopToolUse},
+			&ai.AssistantMessage{Content: content, StopReason: ai.StopToolUse},
+			&ai.AssistantMessage{Content: ai.ContentList{ai.TextContent{Text: "done"}}, StopReason: ai.StopStop},
+		),
+	})
+
+	stop := make(chan struct{})
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for {
+			select {
+			case <-stop:
+				return
+			default:
+				st := a.State()
+				count := 0
+				for id := range st.PendingToolCalls {
+					_ = id
+					count++
+				}
+				if count > n {
+					t.Errorf("pending tool calls exceeded %d: %d", n, count)
+					return
+				}
+			}
+		}
+	}()
+
+	if err := a.Prompt(context.Background(), "go"); err != nil {
+		t.Fatal(err)
+	}
+	close(stop)
+	wg.Wait()
+
+	if got := len(a.State().PendingToolCalls); got != 0 {
+		t.Fatalf("expected pending tool calls cleared, got %d", got)
+	}
+}
+
+// TestAgentContinueConcurrentPromptDoesNotLoseDrainedMessages (B3): Continue
+// claims the run slot before draining; if a concurrent Prompt wins the slot,
+// the steering message stays queued — it is never silently dropped.
+func TestAgentContinueConcurrentPromptDoesNotLoseDrainedMessages(t *testing.T) {
+	for i := 0; i < 25; i++ {
+		a := NewAgent(AgentOptions{
+			InitialState: &AgentState{Model: testModel, Messages: []AgentMessage{
+				ai.UserMessage{Content: ai.ContentList{ai.TextContent{Text: "hi"}}},
+				&ai.AssistantMessage{Content: ai.ContentList{ai.TextContent{Text: "hello"}}, StopReason: ai.StopStop},
+			}},
+			StreamFn: func(ctx context.Context, model *ai.Model, req ai.Context, opts *ai.SimpleStreamOptions) *ai.AssistantMessageEventStream {
+				return scriptedStream()(ctx, model, req, opts) // always a clean done turn
+			},
+		})
+		a.Steer(ai.UserMessage{Content: ai.ContentList{ai.TextContent{Text: "steer-me"}}})
+
+		var wg sync.WaitGroup
+		wg.Add(2)
+		go func() { defer wg.Done(); _ = a.Continue(context.Background()) }()
+		go func() { defer wg.Done(); _ = a.Prompt(context.Background(), "prompt") }()
+		wg.Wait()
+		a.WaitForIdle()
+
+		inTranscript := false
+		for _, m := range a.State().Messages {
+			if um, ok := m.(ai.UserMessage); ok {
+				for _, c := range um.Content {
+					if tc, ok := c.(ai.TextContent); ok && strings.Contains(tc.Text, "steer-me") {
+						inTranscript = true
+					}
+				}
+			}
+		}
+		if !inTranscript && !a.HasQueuedMessages() {
+			t.Fatalf("iteration %d: drained steering message lost (not in transcript, not queued)", i)
+		}
+	}
+}
+
+// TestAgentFailureEventListenerErrorStopsAndReturns (B4): pi awaits each
+// failure event; a listener rejection stops the remaining failure events and
+// rejects prompt(), while the finally still finishes the run.
+func TestAgentFailureEventListenerErrorStopsAndReturns(t *testing.T) {
+	a := NewAgent(AgentOptions{
+		InitialState: &AgentState{Model: testModel},
+		StreamFn: func(ctx context.Context, model *ai.Model, req ai.Context, opts *ai.SimpleStreamOptions) *ai.AssistantMessageEventStream {
+			panic(errors.New("provider exploded"))
+		},
+	})
+
+	var events []EventType
+	a.Subscribe(func(ctx context.Context, e AgentEvent) error {
+		events = append(events, e.Type)
+		// Error on the synthetic failure message_end (it carries an errorMessage).
+		if e.Type == EvMessageEnd {
+			if am, ok := asAssistant(e.Message); ok && am.ErrorMessage != "" {
+				return errors.New("failure listener err")
+			}
+		}
+		return nil
+	})
+
+	err := a.Prompt(context.Background(), "hi")
+	if err == nil || err.Error() != "failure listener err" {
+		t.Fatalf("expected prompt to return 'failure listener err', got %v", err)
+	}
+	// Remaining failure events (turn_end, agent_end) must not be emitted.
+	for _, e := range events {
+		if e == EvTurnEnd || e == EvAgentEnd {
+			t.Fatalf("expected no turn_end/agent_end after failure-listener error, got %v", events)
+		}
+	}
+	// State cleanup (finally) still happened: run finished, agent reusable.
+	st := a.State()
+	if st.IsStreaming {
+		t.Fatal("expected IsStreaming false after failure-listener error")
+	}
+	a.WaitForIdle()
+	if got := a.Prompt(context.Background(), "again"); got != nil && got.Error() == "Agent is already processing." {
+		t.Fatal("run slot leaked after failure-listener error")
+	}
+}
+
+// TestAgentForwardsMetadataAndWebSocketTimeout (B5): Metadata and
+// WebSocketConnectTimeoutMs flow from AgentOptions through AgentLoopConfig into
+// the stream options (pi AgentLoopConfig extends SimpleStreamOptions and is
+// spread into the stream call).
+func TestAgentForwardsMetadataAndWebSocketTimeout(t *testing.T) {
+	inner := scriptedStream(&ai.AssistantMessage{Content: ai.ContentList{ai.TextContent{Text: "ok"}}, StopReason: ai.StopStop})
+	var got *ai.SimpleStreamOptions
+	a := NewAgent(AgentOptions{
+		InitialState:              &AgentState{Model: testModel},
+		Metadata:                  map[string]any{"user_id": "u1"},
+		WebSocketConnectTimeoutMs: 1234,
+		StreamFn: func(ctx context.Context, model *ai.Model, req ai.Context, opts *ai.SimpleStreamOptions) *ai.AssistantMessageEventStream {
+			got = opts
+			return inner(ctx, model, req, opts)
+		},
+	})
+	if err := a.Prompt(context.Background(), "hi"); err != nil {
+		t.Fatal(err)
+	}
+	if got == nil {
+		t.Fatal("stream options not captured")
+	}
+	if got.WebSocketConnectTimeoutMs != 1234 {
+		t.Fatalf("WebSocketConnectTimeoutMs not forwarded, got %d", got.WebSocketConnectTimeoutMs)
+	}
+	if v, ok := got.Metadata["user_id"]; !ok || v != "u1" {
+		t.Fatalf("Metadata not forwarded, got %#v", got.Metadata)
 	}
 }
 

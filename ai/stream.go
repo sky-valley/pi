@@ -51,6 +51,13 @@ func resolveProvider(api Api) (ApiProvider, error) {
 }
 
 // Stream streams an assistant response using provider-native options.
+//
+// Divergence from pi (deliberate, G3): pi's stream() throws synchronously when
+// no API provider is registered for model.Api (stream.ts resolveApiProvider).
+// This Go port instead encodes the failure in the returned stream as a
+// terminal "error" event, keeping a single return value and a uniform
+// "failures live in the stream" contract for callers. Same applies to
+// StreamSimple.
 func Stream(ctx context.Context, model *Model, req Context, opts *StreamOptions) *AssistantMessageEventStream {
 	p, err := resolveProvider(model.Api)
 	if err != nil {
@@ -65,6 +72,8 @@ func Complete(ctx context.Context, model *Model, req Context, opts *StreamOption
 }
 
 // StreamSimple streams an assistant response using unified reasoning options.
+// See Stream for the deliberate unknown-api divergence from pi (errors are
+// encoded in the stream, not thrown).
 func StreamSimple(ctx context.Context, model *Model, req Context, opts *SimpleStreamOptions) *AssistantMessageEventStream {
 	p, err := resolveProvider(model.Api)
 	if err != nil {

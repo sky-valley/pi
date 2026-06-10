@@ -174,15 +174,20 @@ func TestGrepTool(t *testing.T) {
 	}
 }
 
+// Note: this previously pinned grep applying .gitignore outside a git repo;
+// that pinned a bug — rg only respects .gitignore inside a repository
+// (verified empirically; tracker H4). The repo case lives here, the non-repo
+// case in TestGrepGitignoreRequiresRepo.
 func TestGrepGitignore(t *testing.T) {
 	dir := t.TempDir()
+	os.Mkdir(filepath.Join(dir, ".git"), 0o755) // make it a repo
 	os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("ignored.txt\n"), 0o644)
 	os.WriteFile(filepath.Join(dir, "ignored.txt"), []byte("secret match\n"), 0o644)
 	os.WriteFile(filepath.Join(dir, "visible.txt"), []byte("match here\n"), 0o644)
 	r, _ := run(t, grepTool(dir), map[string]any{"pattern": "match"})
 	text := resultText(r)
 	if strings.Contains(text, "ignored.txt") {
-		t.Fatalf("grep should respect .gitignore: %q", text)
+		t.Fatalf("grep should respect .gitignore inside a repo: %q", text)
 	}
 	if !strings.Contains(text, "visible.txt") {
 		t.Fatalf("grep missed visible file: %q", text)

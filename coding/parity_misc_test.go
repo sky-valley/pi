@@ -1,11 +1,15 @@
 package coding
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/sky-valley/pi/agent"
+	"github.com/sky-valley/pi/ai"
 )
 
 // ---------------------------------------------------------------------------
@@ -50,18 +54,41 @@ func TestEditMixedEOLStaysLF(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// edit: prepareArguments — stringified edits + legacy oldText/newText
+// edit: prepareArguments — stringified edits + legacy oldText/newText.
+// Like pi, the shim runs as the harness's pre-validation PrepareArguments hook
+// (loop.go), not inside Execute, so these go through the same
+// PrepareArguments → ValidateToolArguments → Execute pipeline as the loop.
 // ---------------------------------------------------------------------------
+
+// runViaHarnessPipeline mimics agent/loop.go prepareToolCall: PrepareArguments,
+// then schema validation, then Execute.
+func runViaHarnessPipeline(t *testing.T, tool agent.AgentTool, args map[string]any) (agent.AgentToolResult, error) {
+	t.Helper()
+	prepared := args
+	if tool.PrepareArguments != nil {
+		if newArgs := tool.PrepareArguments(args); newArgs != nil {
+			prepared = newArgs
+		}
+	}
+	validated, err := ai.ValidateToolArguments(
+		ai.Tool{Name: tool.Name, Description: tool.Description, Parameters: tool.Parameters},
+		ai.ToolCall{ID: "id", Name: tool.Name, Arguments: prepared},
+	)
+	if err != nil {
+		return agent.AgentToolResult{}, err
+	}
+	return tool.Execute(context.Background(), "id", validated, func(agent.AgentToolResult) {})
+}
 
 func TestEditStringifiedEdits(t *testing.T) {
 	dir := t.TempDir()
 	os.WriteFile(filepath.Join(dir, "f.txt"), []byte("hello world\n"), 0o644)
-	_, err := run(t, editTool(dir), map[string]any{
+	_, err := runViaHarnessPipeline(t, editTool(dir), map[string]any{
 		"path":  "f.txt",
 		"edits": `[{"oldText":"world","newText":"there"}]`, // JSON string, not array
 	})
 	if err != nil {
-		t.Fatalf("stringified edits should be parsed: %v", err)
+		t.Fatalf("stringified edits should pass validation end-to-end: %v", err)
 	}
 	data, _ := os.ReadFile(filepath.Join(dir, "f.txt"))
 	if string(data) != "hello there\n" {
@@ -72,13 +99,13 @@ func TestEditStringifiedEdits(t *testing.T) {
 func TestEditLegacyOldNewText(t *testing.T) {
 	dir := t.TempDir()
 	os.WriteFile(filepath.Join(dir, "f.txt"), []byte("foo bar\n"), 0o644)
-	_, err := run(t, editTool(dir), map[string]any{
+	_, err := runViaHarnessPipeline(t, editTool(dir), map[string]any{
 		"path":    "f.txt",
 		"oldText": "bar",
 		"newText": "baz",
 	})
 	if err != nil {
-		t.Fatalf("legacy oldText/newText should fold into edits[]: %v", err)
+		t.Fatalf("legacy oldText/newText should pass validation end-to-end: %v", err)
 	}
 	data, _ := os.ReadFile(filepath.Join(dir, "f.txt"))
 	if string(data) != "foo baz\n" {
