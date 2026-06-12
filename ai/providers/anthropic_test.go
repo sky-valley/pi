@@ -578,6 +578,42 @@ func TestAnthropicThinkingExplicitFalseSendsDisabled(t *testing.T) {
 	}
 }
 
+func TestAnthropicThinkingOffNullOmitsDisabled(t *testing.T) {
+	// pi 9ccfcd7c: thinkingLevelMap off:null marks {type:"disabled"} as
+	// unsupported (Claude Fable 5) -> omit the thinking key entirely.
+	model := &ai.Model{
+		ID: "claude-fable-5", Api: ai.APIAnthropicMessages, Provider: "anthropic",
+		Input: []string{"text"}, MaxTokens: 4096, Reasoning: true,
+		ThinkingLevelMap: ai.ThinkingLevelMap{"off": nil, "xhigh": strPtr("xhigh")},
+	}
+	req := ai.Context{Messages: []ai.Message{ai.NewUserText("hi", 1)}}
+	opts := &AnthropicOptions{StreamOptions: ai.StreamOptions{APIKey: "k"}, ThinkingProvided: true, ThinkingEnabled: false}
+	_, body := anthropicCapture(t, model, req, opts, anthropicSSE)
+	if _, ok := body["thinking"]; ok {
+		t.Fatalf("off:null model must omit thinking key when off, got %v", body["thinking"])
+	}
+	if _, ok := body["output_config"]; ok {
+		t.Fatalf("off:null model must not send output_config when off, got %v", body["output_config"])
+	}
+}
+
+func TestAnthropicThinkingOffMappedStillSendsDisabled(t *testing.T) {
+	// A thinkingLevelMap whose off maps to a non-null value keeps the
+	// {type:"disabled"} payload (pi: `thinkingLevelMap?.off !== null`).
+	model := &ai.Model{
+		ID: "claude-test", Api: ai.APIAnthropicMessages, Provider: "anthropic",
+		Input: []string{"text"}, MaxTokens: 4096, Reasoning: true,
+		ThinkingLevelMap: ai.ThinkingLevelMap{"off": strPtr("none")},
+	}
+	req := ai.Context{Messages: []ai.Message{ai.NewUserText("hi", 1)}}
+	opts := &AnthropicOptions{StreamOptions: ai.StreamOptions{APIKey: "k"}, ThinkingProvided: true, ThinkingEnabled: false}
+	_, body := anthropicCapture(t, model, req, opts, anthropicSSE)
+	thinking, ok := body["thinking"].(map[string]any)
+	if !ok || thinking["type"] != "disabled" {
+		t.Fatalf("off mapped non-null must still send {type:disabled}, got %v", body["thinking"])
+	}
+}
+
 func TestAnthropicThinkingEnabledSendsBudget(t *testing.T) {
 	model := &ai.Model{
 		ID: "claude-test", Api: ai.APIAnthropicMessages, Provider: "anthropic",
@@ -774,5 +810,28 @@ func TestAnthropicOnPayloadErrorFailsStream(t *testing.T) {
 	}
 	if requested {
 		t.Fatalf("request must not be sent when onPayload errors")
+	}
+}
+
+// TestFable5DisabledThinkingGateLatency is a TRIPWIRE, not a behavior test.
+// Upstream 9ccfcd7c added both the off:null gate (anthropic.ts) and a
+// generate-models rule emitting off:null for fable-5 — but never regenerated
+// models.generated.ts, and no release ships the data yet. Our catalog (0.79.1)
+// faithfully mirrors that: fable-5 has xhigh only, so the gate is latent in
+// BOTH codebases. When a future catalog regen adds "off":null to fable-5, this
+// test fails: that's the signal the gate goes LIVE — confirm the omit behavior
+// end-to-end (TestAnthropicThinkingOffNullOmitsDisabled covers the mechanics),
+// then update this assertion to expect the off key.
+func TestFable5DisabledThinkingGateLatency(t *testing.T) {
+	m := ai.GetModel("anthropic", "claude-fable-5")
+	if m == nil {
+		t.Fatal("claude-fable-5 missing from catalog")
+	}
+	if _, present := m.ThinkingLevelMap["off"]; present {
+		t.Fatal("catalog now carries off for claude-fable-5 — the disabled-thinking gate just went live; " +
+			"verify omit behavior against the new npm build and update this tripwire")
+	}
+	if v, ok := m.ThinkingLevelMap["xhigh"]; !ok || v == nil || *v != "xhigh" {
+		t.Fatalf("fable-5 thinkingLevelMap unexpected: %v", m.ThinkingLevelMap)
 	}
 }

@@ -599,7 +599,9 @@ func buildAnthropicParams(model *ai.Model, req ai.Context, oauth bool, opts *Ant
 
 	// pi tri-state (anthropic.ts:950-978): thinkingEnabled undefined omits the
 	// thinking key entirely; explicit true enables; explicit false sends
-	// {type:"disabled"}.
+	// {type:"disabled"} — unless the model's thinkingLevelMap carries an
+	// explicit off:null (present-nil), which marks "disabled" as unsupported
+	// and omits the key too (pi 9ccfcd7c: `thinkingLevelMap?.off !== null`).
 	if model.Reasoning && opts != nil && opts.ThinkingProvided {
 		if opts.ThinkingEnabled {
 			display := opts.ThinkingDisplay
@@ -619,7 +621,7 @@ func buildAnthropicParams(model *ai.Model, req ai.Context, oauth bool, opts *Ant
 				}
 				params["thinking"] = map[string]any{"type": "enabled", "budget_tokens": budget, "display": display}
 			}
-		} else {
+		} else if off, present := model.ThinkingLevelMap["off"]; !present || off != nil {
 			params["thinking"] = map[string]any{"type": "disabled"}
 		}
 	}
