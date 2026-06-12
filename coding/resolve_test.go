@@ -97,4 +97,59 @@ func TestResolveModelCustomIDFallback(t *testing.T) {
 	if !strings.Contains(r.Warning, `Model "my-custom-model-id" not found for provider "anthropic". Using custom model id.`) {
 		t.Fatalf("fallback warning drift: %q", r.Warning)
 	}
+	if r.ThinkingLevel != "" {
+		t.Fatalf("fallback without suffix must not carry a level: %q", r.ThinkingLevel)
+	}
+}
+
+// pi 9fd75b8a (#5560): a ":<level>" suffix on a custom id is stripped in the
+// fallback path — it must NOT leak into the model id sent to the API — and is
+// surfaced as the thinking level. The warning quotes the STRIPPED id.
+func TestResolveModelCustomIDFallbackThinkingSuffix(t *testing.T) {
+	r, err := ResolveModelPattern("anthropic/my-custom-model-id:high")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(r.Model.Provider) != "anthropic" || r.Model.ID != "my-custom-model-id" {
+		t.Fatalf("suffix leaked into custom id: %s/%s", r.Model.Provider, r.Model.ID)
+	}
+	if r.ThinkingLevel != "high" {
+		t.Fatalf("fallback thinking level wrong: %q", r.ThinkingLevel)
+	}
+	if !strings.Contains(r.Warning, `Model "my-custom-model-id" not found for provider "anthropic". Using custom model id.`) {
+		t.Fatalf("fallback warning must quote the stripped id: %q", r.Warning)
+	}
+}
+
+// All valid thinking levels work in the fallback path (upstream test parity).
+func TestResolveModelCustomIDFallbackAllLevels(t *testing.T) {
+	for _, level := range []string{"off", "minimal", "low", "medium", "high", "xhigh"} {
+		r, err := ResolveModelPattern("anthropic/my-custom-model-id:" + level)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if r.Model.ID != "my-custom-model-id" {
+			t.Fatalf("level %s: suffix leaked into custom id: %s", level, r.Model.ID)
+		}
+		if r.ThinkingLevel != level {
+			t.Fatalf("level %s: fallback thinking level wrong: %q", level, r.ThinkingLevel)
+		}
+	}
+}
+
+// An invalid suffix is not a thinking level: it stays part of the custom id.
+func TestResolveModelCustomIDFallbackInvalidSuffix(t *testing.T) {
+	r, err := ResolveModelPattern("anthropic/my-custom-model-id:banana")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(r.Model.Provider) != "anthropic" || r.Model.ID != "my-custom-model-id:banana" {
+		t.Fatalf("invalid suffix must stay in the id: %s/%s", r.Model.Provider, r.Model.ID)
+	}
+	if r.ThinkingLevel != "" {
+		t.Fatalf("invalid suffix must not surface a level: %q", r.ThinkingLevel)
+	}
+	if !strings.Contains(r.Warning, `Model "my-custom-model-id:banana" not found for provider "anthropic". Using custom model id.`) {
+		t.Fatalf("fallback warning drift: %q", r.Warning)
+	}
 }

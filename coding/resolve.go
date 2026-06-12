@@ -86,7 +86,10 @@ func ResolveModel(spec string) (*ai.Model, error) {
 // (OpenRouter-style ids contain slashes). Matching is case-insensitive and a
 // ":<thinkingLevel>" suffix (off|minimal|low|medium|high|xhigh) is parsed off
 // and returned alongside. An unknown model under a known provider falls back
-// to a synthetic custom-id model with a warning (pi buildFallbackModel).
+// to a synthetic custom-id model with a warning (pi buildFallbackModel); a
+// thinking-level suffix is stripped from the custom id first (pi 9fd75b8a —
+// upstream gates that parse on --thinking being unset, and ResolveModelPattern
+// takes no thinking argument, so it always behaves as that path).
 func ResolveModelPattern(spec string) (ResolvedModel, error) {
 	if spec == "" {
 		spec = DefaultModelSpec
@@ -151,12 +154,27 @@ func ResolveModelPattern(spec string) (ResolvedModel, error) {
 	}
 
 	if provider != "" {
-		if fb := buildFallbackModel(provider, pattern, availableModels); fb != nil {
-			fbWarning := fmt.Sprintf("Model %q not found for provider %q. Using custom model id.", pattern, provider)
+		// pi 9fd75b8a (#5560): parse a thinking-level suffix from the pattern
+		// before building the fallback model, so the suffix neither leaks into
+		// the custom model id nor into the warning.
+		// e.g. "zai-org/GLM-5.1-FP8:high" → id "zai-org/GLM-5.1-FP8", level "high".
+		// Upstream only parses when --thinking was not explicitly provided;
+		// ResolveModelPattern has no thinking argument, so this is always the
+		// cliThinking-unset path and the suffix is always parsed.
+		fallbackPattern := pattern
+		fallbackThinking := ""
+		if lastColon := strings.LastIndex(pattern, ":"); lastColon != -1 {
+			if suffix := pattern[lastColon+1:]; validThinkingLevels[suffix] {
+				fallbackPattern = pattern[:lastColon]
+				fallbackThinking = suffix
+			}
+		}
+		if fb := buildFallbackModel(provider, fallbackPattern, availableModels); fb != nil {
+			fbWarning := fmt.Sprintf("Model %q not found for provider %q. Using custom model id.", fallbackPattern, provider)
 			if warning != "" {
 				fbWarning = warning + " " + fbWarning
 			}
-			return ResolvedModel{Model: fb, Warning: fbWarning}, nil
+			return ResolvedModel{Model: fb, ThinkingLevel: fallbackThinking, Warning: fbWarning}, nil
 		}
 	}
 
