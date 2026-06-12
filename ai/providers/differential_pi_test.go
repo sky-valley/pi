@@ -272,17 +272,29 @@ func TestDiffDetectZai(t *testing.T) {
 		t.Fatalf("zai maxTokensField = %q, want max_completion_tokens", c.MaxTokensField)
 	}
 
-	// Request shape: enable_thinking present (true when reasoning requested),
-	// no reasoning_effort, store omitted.
+	// Request shape (pi 64b51efb): thinking: {type:"enabled"|"disabled"} driven
+	// by whether reasoning was requested; no reasoning_effort, store omitted.
 	body := buildOpenAIParams(model, baseReq(), &OpenAIOptions{ReasoningEffort: "high"})
-	if body["enable_thinking"] != true {
-		t.Fatalf("zai should send enable_thinking:true, got %v", body["enable_thinking"])
+	if thinking, _ := body["thinking"].(map[string]any); thinking == nil || thinking["type"] != "enabled" {
+		t.Fatalf(`zai on: thinking = %v, want {"type":"enabled"}`, body["thinking"])
+	}
+	if has(body, "enable_thinking") {
+		t.Fatalf("zai must not send enable_thinking, got %v", body["enable_thinking"])
 	}
 	if has(body, "reasoning_effort") {
 		t.Fatalf("zai must not send reasoning_effort")
 	}
 	if has(body, "store") {
 		t.Fatalf("zai (supportsStore=false) must not send store")
+	}
+
+	// No reasoning effort -> thinking: {type:"disabled"}.
+	bodyOff := buildOpenAIParams(model, baseReq(), &OpenAIOptions{})
+	if thinking, _ := bodyOff["thinking"].(map[string]any); thinking == nil || thinking["type"] != "disabled" {
+		t.Fatalf(`zai off: thinking = %v, want {"type":"disabled"}`, bodyOff["thinking"])
+	}
+	if has(bodyOff, "enable_thinking") {
+		t.Fatalf("zai off must not send enable_thinking, got %v", bodyOff["enable_thinking"])
 	}
 }
 

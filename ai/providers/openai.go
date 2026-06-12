@@ -856,7 +856,13 @@ func applyReasoningFormat(params map[string]any, model *ai.Model, compat openAIC
 	enabled := level != ""
 	switch {
 	case compat.ThinkingFormat == "zai" && model.Reasoning:
-		params["enable_thinking"] = enabled
+		// pi (since 64b51efb): zai uses thinking: {type: "enabled"|"disabled"}
+		// driven by !!options.reasoningEffort, not enable_thinking: bool.
+		t := "disabled"
+		if enabled {
+			t = "enabled"
+		}
+		params["thinking"] = map[string]any{"type": t}
 	case compat.ThinkingFormat == "qwen" && model.Reasoning:
 		params["enable_thinking"] = enabled
 	case compat.ThinkingFormat == "qwen-chat-template" && model.Reasoning:
