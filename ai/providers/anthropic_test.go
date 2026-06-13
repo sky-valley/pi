@@ -813,25 +813,94 @@ func TestAnthropicOnPayloadErrorFailsStream(t *testing.T) {
 	}
 }
 
-// TestFable5DisabledThinkingGateLatency is a TRIPWIRE, not a behavior test.
-// Upstream 9ccfcd7c added both the off:null gate (anthropic.ts) and a
-// generate-models rule emitting off:null for fable-5 — but never regenerated
-// models.generated.ts, and no release ships the data yet. Our catalog (0.79.1)
-// faithfully mirrors that: fable-5 has xhigh only, so the gate is latent in
-// BOTH codebases. When a future catalog regen adds "off":null to fable-5, this
-// test fails: that's the signal the gate goes LIVE — confirm the omit behavior
-// end-to-end (TestAnthropicThinkingOffNullOmitsDisabled covers the mechanics),
-// then update this assertion to expect the off key.
-func TestFable5DisabledThinkingGateLatency(t *testing.T) {
+// TestFable5DisabledThinkingGateLive drives the 9ccfcd7c disabled-thinking gate
+// end-to-end through the CATALOG-resolved Claude Fable 5 model (not a fabricated
+// literal). The gate went live with the pi 0.79.3 catalog, which ships
+// thinkingLevelMap off:null for fable-5 — so an anthropic request with thinking
+// off must omit the thinking key entirely. If a future catalog regen drops the
+// off key, the first assertion fails and the gate silently reverts: that is the
+// signal to re-confirm upstream intent.
+func TestFable5DisabledThinkingGateLive(t *testing.T) {
 	m := ai.GetModel("anthropic", "claude-fable-5")
 	if m == nil {
 		t.Fatal("claude-fable-5 missing from catalog")
 	}
-	if _, present := m.ThinkingLevelMap["off"]; present {
-		t.Fatal("catalog now carries off for claude-fable-5 — the disabled-thinking gate just went live; " +
-			"verify omit behavior against the new npm build and update this tripwire")
+	off, present := m.ThinkingLevelMap["off"]
+	if !present || off != nil {
+		t.Fatalf("expected catalog fable-5 to carry off:null (gate live); got present=%v val=%v — "+
+			"if upstream dropped off:null, re-confirm the disabled-thinking gate before changing this", present, off)
 	}
-	if v, ok := m.ThinkingLevelMap["xhigh"]; !ok || v == nil || *v != "xhigh" {
-		t.Fatalf("fable-5 thinkingLevelMap unexpected: %v", m.ThinkingLevelMap)
+	req := ai.Context{Messages: []ai.Message{ai.NewUserText("hi", 1)}}
+	opts := &AnthropicOptions{StreamOptions: ai.StreamOptions{APIKey: "k"}, ThinkingProvided: true, ThinkingEnabled: false}
+	_, body := anthropicCapture(t, m, req, opts, anthropicSSE)
+	if _, ok := body["thinking"]; ok {
+		t.Fatalf("catalog fable-5 with thinking off must omit the thinking key, got %v", body["thinking"])
+	}
+}
+
+func TestAnthropicRefusalPreservesExplanation(t *testing.T) {
+	explanation := "This request triggered restrictions on violative cyber content and was blocked under Anthropic's Usage Policy. To learn more, provide feedback, or request an exemption based on how you use Claude, visit our help center: https://support.claude.com/en/articles/14604842-real-time-cyber-safeguards-on-claude."
+	delta, _ := json.Marshal(map[string]any{
+		"type": "message_delta",
+		"delta": map[string]any{
+			"stop_reason": "refusal",
+			"stop_details": map[string]any{
+				"type":        "refusal",
+				"category":    "cyber",
+				"explanation": explanation,
+			},
+		},
+		"usage": map[string]any{"output_tokens": 0},
+	})
+	sse := "event: message_start\n" +
+		`data: {"type":"message_start","message":{"id":"msg_1","usage":{"input_tokens":412,"output_tokens":0}}}` + "\n\n" +
+		"event: message_delta\n" +
+		"data: " + string(delta) + "\n\n" +
+		"event: message_stop\n" +
+		`data: {"type":"message_stop"}` + "\n\n"
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("content-type", "text/event-stream")
+		w.WriteHeader(200)
+		io.WriteString(w, sse)
+	}))
+	defer server.Close()
+
+	model := &ai.Model{ID: "claude-test", Api: ai.APIAnthropicMessages, Provider: "anthropic", BaseURL: server.URL, MaxTokens: 4096}
+	final := StreamAnthropic(context.Background(), model, ai.Context{Messages: []ai.Message{ai.NewUserText("blocked request", 1)}},
+		&AnthropicOptions{StreamOptions: ai.StreamOptions{APIKey: "k"}}).Result()
+
+	if final.StopReason != ai.StopError {
+		t.Fatalf("expected error stop, got %s", final.StopReason)
+	}
+	if final.ErrorMessage != explanation {
+		t.Fatalf("expected explanation as error message, got %q", final.ErrorMessage)
+	}
+}
+
+func TestAnthropicRefusalWithoutExplanationFallback(t *testing.T) {
+	sse := "event: message_start\n" +
+		`data: {"type":"message_start","message":{"id":"msg_1","usage":{"input_tokens":1,"output_tokens":0}}}` + "\n\n" +
+		"event: message_delta\n" +
+		`data: {"type":"message_delta","delta":{"stop_reason":"refusal"},"usage":{"output_tokens":0}}` + "\n\n" +
+		"event: message_stop\n" +
+		`data: {"type":"message_stop"}` + "\n\n"
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("content-type", "text/event-stream")
+		w.WriteHeader(200)
+		io.WriteString(w, sse)
+	}))
+	defer server.Close()
+
+	model := &ai.Model{ID: "claude-test", Api: ai.APIAnthropicMessages, Provider: "anthropic", BaseURL: server.URL, MaxTokens: 4096}
+	final := StreamAnthropic(context.Background(), model, ai.Context{Messages: []ai.Message{ai.NewUserText("blocked request", 1)}},
+		&AnthropicOptions{StreamOptions: ai.StreamOptions{APIKey: "k"}}).Result()
+
+	if final.StopReason != ai.StopError {
+		t.Fatalf("expected error stop, got %s", final.StopReason)
+	}
+	if final.ErrorMessage != "The model refused to complete the request" {
+		t.Fatalf("expected fallback refusal message, got %q", final.ErrorMessage)
 	}
 }

@@ -474,11 +474,14 @@ func StreamAnthropic(ctx context.Context, model *ai.Model, req ai.Context, opts 
 				}
 			case "message_delta":
 				if ev.Delta != nil && ev.Delta.StopReason != "" {
-					sr, err := mapAnthropicStopReason(ev.Delta.StopReason)
+					sr, errMsg, err := mapAnthropicStopReason(ev.Delta.StopReason, ev.Delta.StopDetails)
 					if err != nil {
 						return err
 					}
 					output.StopReason = sr
+					if errMsg != "" {
+						output.ErrorMessage = errMsg
+					}
 				}
 				if ev.Usage != nil {
 					applyUsage(&output.Usage, *ev.Usage, false)
@@ -503,7 +506,11 @@ func StreamAnthropic(ctx context.Context, model *ai.Model, req ai.Context, opts 
 			return
 		}
 		if output.StopReason == ai.StopAborted || output.StopReason == ai.StopError {
-			fail(fmt.Errorf("An unknown error occurred"))
+			msg := output.ErrorMessage
+			if msg == "" {
+				msg = "An unknown error occurred"
+			}
+			fail(fmt.Errorf("%s", msg))
 			return
 		}
 
@@ -916,20 +923,33 @@ func applyAnthropicHeaders(r *http.Request, model *ai.Model, opts *AnthropicOpti
 	}
 }
 
-func mapAnthropicStopReason(reason string) (ai.StopReason, error) {
+// mapAnthropicStopReason maps an Anthropic stop_reason to the unified
+// StopReason and, for a refusal, surfaces the stop_details explanation as an
+// error message (pi anthropic.ts mapStopReason returns {stopReason,
+// errorMessage?}).
+func mapAnthropicStopReason(reason string, stopDetails *struct {
+	Type        string `json:"type"`
+	Explanation string `json:"explanation"`
+}) (ai.StopReason, string, error) {
 	switch reason {
 	case "end_turn":
-		return ai.StopStop, nil
+		return ai.StopStop, "", nil
 	case "max_tokens":
-		return ai.StopLength, nil
+		return ai.StopLength, "", nil
 	case "tool_use":
-		return ai.StopToolUse, nil
-	case "refusal", "sensitive":
-		return ai.StopError, nil
+		return ai.StopToolUse, "", nil
+	case "refusal":
+		explanation := "The model refused to complete the request"
+		if stopDetails != nil && stopDetails.Explanation != "" {
+			explanation = stopDetails.Explanation
+		}
+		return ai.StopError, explanation, nil
 	case "pause_turn", "stop_sequence":
-		return ai.StopStop, nil
+		return ai.StopStop, "", nil
+	case "sensitive": // Content flagged by safety filters (not yet in SDK types)
+		return ai.StopError, "", nil
 	default:
-		return "", fmt.Errorf("Unhandled stop reason: %s", reason)
+		return "", "", fmt.Errorf("Unhandled stop reason: %s", reason)
 	}
 }
 
@@ -964,6 +984,10 @@ type anthropicStreamEvent struct {
 		PartialJSON string `json:"partial_json"`
 		Signature   string `json:"signature"`
 		StopReason  string `json:"stop_reason"`
+		StopDetails *struct {
+			Type        string `json:"type"`
+			Explanation string `json:"explanation"`
+		} `json:"stop_details"`
 	} `json:"delta"`
 	Usage *anthropicUsage `json:"usage"`
 }
