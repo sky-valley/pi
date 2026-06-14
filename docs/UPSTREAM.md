@@ -10,7 +10,7 @@ commit-by-commit sync pipeline that keeps it current.
 
 | What | Value |
 |---|---|
-| TS source fully reviewed/ported | `6f29450e` — "fix(ai): update adaptive thinking model expectations" (2026-06-13); previous pin `3f44d3e2` (2026-06-12) |
+| TS source fully reviewed/ported | `93b3b7c1` — "fix(tui): preserve WezTerm Kitty images on full redraw" (2026-06-14); previous pins `6f29450e` (06-13), `3f44d3e2` (06-12) |
 | npm build the byte-goldens were captured from | `@earendil-works/pi-ai` **0.79.3** (request goldens re-verified 6/6 + 2 zai scenarios against the 0.79.3 build); `pi-coding-agent` 0.78.1 (session/image goldens — unaffected by 0.79.x) |
 | Parity proofs at the pin | requests 6/6 · session tree 8/8 · image decisions 8/8 byte/decision-identical |
 | Reviewed via | initial port + parity sweep 1 + parity sweep 2 (`3be3911`), registration fix (`b09cb46`) |
@@ -32,7 +32,20 @@ agent-session-runtime (session reload + /new flow).
   `n/a` under this ruling UNLESS they change behavior of surface we ported —
   that re-escalates.
 
-## Drift at last sync check (2026-06-13)
+## Drift at last sync check (2026-06-14)
+
+**Caught up to `93b3b7c1` — no-op cycle (pin advance only, no version bump).**
+Ledger 6f29450e → 93b3b7c1: 12 main-line changes, **0 ported, 12 n/a, 0
+escalations**. Nothing touched ported behavior code (TUI, packaging/self-update,
+extension package-manager, config-migrations/settings, docs/meta/examples). No
+release tag in the window, so the npm reference build stays at `pi-ai` 0.79.3
+and all goldens are unaffected. **Deferred catalog note:** `21a904f4` flips
+`supportsLongCacheRetention:false` for 6 opencode models in generate-models —
+the *behavior* is already ported (`openai_compat.go` + `openai.go`), so it's
+pure catalog data that will land with the next release regen (no npm build ships
+it yet). No code change → no tag; v0.2.1 remains the latest release.
+
+### Prior — 3f44d3e2 → 6f29450e (2026-06-13)
 
 **Caught up to `6f29450e`.** Ledger 3f44d3e2 → 6f29450e fully processed (22
 main-line changes: 4 ported, 18 n/a, 0 escalations). Reviewed via an adversarial
@@ -174,3 +187,20 @@ the real decision.
 | `406a2214` | 2026-06-10 | fix(coding-agent): refine setup copy | likely-n/a | pending | — | |
 | `1da90398` | 2026-06-11 | fix(coding-agent): skip first-time setup for forks (#5627) | review | pending | — | |
 | `3f44d3e2` | 2026-06-12 | fix(ai): remove stale OpenRouter Kimi free model assertion (#5650) | likely-n/a | pending | — | |
+
+## Ledger — 6f29450e → 93b3b7c1 (no-op cycle)
+
+| Upstream | Date | Subject | Status | Notes |
+|---|---|---|---|---|
+| `f315d814` | 2026-06-13 | meta: update weekend policy in contributing | n/a | meta/docs |
+| `9e9fc794` | 2026-06-13 | fix(coding-agent): treat uppercase config values as literals | n/a | config-migration / settings-manager (non-ported) |
+| `21a904f4` | 2026-06-13 | fix(ai): disable OpenCode long cache retention for rejecting routes | n/a | data-only catalog flag; behavior already ported (openai_compat/openai.go); no release in window → next release regen absorbs it |
+| `5be8c31f` | 2026-06-14 | meta: add extension disclaimer to bug reporting | n/a | meta |
+| `2fbdff9d` | 2026-06-14 | fix(coding-agent): fix pnpm self-update bin-dir | n/a | self-update/packaging (non-ported) |
+| `c48f656f` | 2026-06-14 | fix(coding-agent): handle npm package semver ranges | n/a | package-manager (non-ported) |
+| `3fcfb7ab` | 2026-06-14 | docs(coding-agent): document extension resource lifecycle | n/a | docs |
+| `f0989800` | 2026-06-14 | feat: detect first-run terminal theme (#5385) | n/a | TUI + interactive theme detection (non-ported) |
+| `11b5403f` | 2026-06-14 | fix(coding-agent): exit after package commands | n/a | bun/CLI + package-manager (non-ported) |
+| `6b40c99a` | 2026-06-14 | feat(examples): wrap question extension text instead of truncating (#5708) | n/a | examples |
+| `d683a581` | 2026-06-14 | meta: update CONTRIBUTING.md for clearer language | n/a | meta/docs |
+| `93b3b7c1` | 2026-06-14 | fix(tui): preserve WezTerm Kitty images on full redraw | n/a | TUI image rendering |
