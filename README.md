@@ -52,6 +52,15 @@ The model catalog (968 models across 35 providers) is embedded from pi's generat
 catalog. API keys are resolved from the same environment variables pi uses
 (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, …).
 
+### Provider attribution
+
+Matching upstream pi, requests to OpenRouter, NVIDIA, Cloudflare, Vercel AI
+Gateway, and OpenCode carry attribution headers by default (`HTTP-Referer:
+https://pi.dev`, `X-OpenRouter-Title: pi`, `x-opencode-session`, etc.). Set
+`PI_TELEMETRY=0` to disable them, or override any of them per-request via
+`SessionOptions.Headers` / `model.Headers` (both take precedence). Other
+providers (Anthropic, OpenAI, Google) are unaffected.
+
 ## Using the library
 
 ```go
