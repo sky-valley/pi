@@ -276,6 +276,11 @@ func StreamOpenAIResponses(ctx context.Context, model *ai.Model, req ai.Context,
 			if model.Provider != "cloudflare-ai-gateway" {
 				r.Header.Set("authorization", "Bearer "+opts.APIKey)
 			}
+			// pi mergeProviderAttributionHeaders (sdk.ts) puts the attribution
+			// bundle at the bottom of the precedence stack: emit session +
+			// default attribution first so model.headers and options.headers
+			// override them.
+			applyAttributionDefaults(r.Header.Set, model, opts.SessionID)
 			// pi createClient header precedence (openai-responses.ts:189-219):
 			// model.headers, copilot dynamic headers, session cache headers,
 			// then options.headers merged last so they can override defaults.
@@ -295,6 +300,9 @@ func StreamOpenAIResponses(ctx context.Context, model *ai.Model, req ai.Context,
 				}
 				r.Header.Set("x-client-request-id", opts.SessionID)
 			}
+			// pi options.headers (consumer) are spread last and win over
+			// everything above, including model.headers and the attribution
+			// defaults.
 			for k, v := range opts.Headers {
 				r.Header.Set(k, v)
 			}
