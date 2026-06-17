@@ -587,27 +587,30 @@ func TestDiffDeepseekThinkingOffGate(t *testing.T) {
 	}
 }
 
-// TestDeepseekCatalogNoOffNull is a tripwire: until upstream ships the kimi-k2.7
-// off:null catalog data (post-0.79.4, deferred), no deepseek-format catalog model
-// should carry off:null. If a regen introduces one, this fails — the signal to
-// confirm the always-thinking data landed and add a live gate test like
-// TestFable5DisabledThinkingGateLive.
-func TestDeepseekCatalogNoOffNull(t *testing.T) {
-	for _, provider := range ai.GetProviders() {
-		for _, m := range ai.GetModels(provider) {
-			if m.Api != ai.APIOpenAICompletions {
-				continue
-			}
-			compat := getOpenAICompat(m)
-			if compat.ThinkingFormat != "deepseek" {
-				continue
-			}
-			if v, ok := m.ThinkingLevelMap["off"]; ok && v == nil {
-				t.Fatalf("deepseek-format model %s/%s carries off:null — the always-thinking "+
-					"data landed; add a live disabled-thinking gate test and re-confirm the deferred port",
-					provider, m.ID)
-			}
-		}
+// TestDeepseekDisabledThinkingGateLive drives the deepseek always-thinking gate
+// (0369bdb8 / #5760) end-to-end through the catalog-resolved Kimi K2.7 Code model.
+// The off:null data landed in npm 0.79.6 (it was deferred when the logic was
+// ported), so this replaces the former TestDeepseekCatalogNoOffNull tripwire with
+// a live gate, mirroring TestFable5DisabledThinkingGateLive. If a future regen
+// drops off:null, the first assertion fails — the signal to re-confirm intent.
+func TestDeepseekDisabledThinkingGateLive(t *testing.T) {
+	m := ai.GetModel("moonshotai", "kimi-k2.7-code")
+	if m == nil {
+		t.Fatal("moonshotai/kimi-k2.7-code missing from catalog")
+	}
+	if got := getOpenAICompat(m).ThinkingFormat; got != "deepseek" {
+		t.Fatalf("expected kimi-k2.7-code thinkingFormat=deepseek, got %q", got)
+	}
+	off, present := m.ThinkingLevelMap["off"]
+	if !present || off != nil {
+		t.Fatalf("expected catalog kimi-k2.7-code to carry off:null (gate live); got present=%v val=%v — "+
+			"if upstream dropped off:null, re-confirm the disabled-thinking gate before changing this", present, off)
+	}
+	// No effort + off:null -> omit the thinking key entirely (always-thinking model
+	// rejects a disabled payload).
+	body := buildOpenAIParams(m, baseReq(), &OpenAIOptions{})
+	if has(body, "thinking") {
+		t.Fatalf("catalog kimi-k2.7-code with thinking off must omit the thinking key, got %v", body["thinking"])
 	}
 }
 
