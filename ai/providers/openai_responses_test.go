@@ -248,6 +248,33 @@ data: {"type":"response.completed","response":{"id":"r","status":"completed"}}
 	}
 }
 
+// pi 2d597f02: a message item whose `content` is null must not crash and yields
+// empty text (pi guards with `item.content?.map(...) ?? "" `). In Go this is
+// structurally safe — ranging a nil slice is a no-op, so no guard is needed; the
+// rebuild produces "". This test locks that equivalence so a future refactor that
+// dereferences content can't regress it.
+func TestResponsesNullMessageContent(t *testing.T) {
+	sse := `data: {"type":"response.created","response":{"id":"r"}}
+
+data: {"type":"response.output_item.added","item":{"type":"message","id":"msg_1"}}
+
+data: {"type":"response.content_part.added","part":{"type":"output_text","text":""}}
+
+data: {"type":"response.output_text.delta","delta":"partial"}
+
+data: {"type":"response.output_item.done","item":{"type":"message","id":"msg_1","content":null}}
+
+data: {"type":"response.completed","response":{"id":"r","status":"completed"}}
+
+`
+	final := runResponsesSSE(t, reasoningModel(), ai.Context{Messages: []ai.Message{ai.NewUserText("hi", 1)}}, sse)
+	for _, c := range final.Content {
+		if tc, ok := c.(ai.TextContent); ok && tc.Text != "" {
+			t.Fatalf("null content must rebuild to empty text, got %q", tc.Text)
+		}
+	}
+}
+
 // A provider that emits only function_call_arguments.done (no deltas) must still
 // yield full args, and the trailing delta must be emitted.
 func TestResponsesFunctionCallArgumentsDoneOnly(t *testing.T) {
