@@ -10,18 +10,35 @@ commit-by-commit sync pipeline that keeps it current.
 
 | What | Value |
 |---|---|
-| TS source fully reviewed/ported | `f8a77f47` — "feat(coding-agent): add Vercel AI Gateway attribution" (2026-06-16); previous pins `93b3b7c1` (06-14), `6f29450e` (06-13) |
-| npm build the byte-goldens were captured from | `@earendil-works/pi-ai` **0.79.4** (request goldens re-verified 6/6 + 2 zai scenarios against the 0.79.4 build); `pi-coding-agent` 0.78.1 (session/image goldens — unaffected by 0.79.x) |
-| Parity proofs at the pin | requests 6/6 · session tree 8/8 · image decisions 8/8 byte/decision-identical |
+| TS source fully reviewed/ported | `29c1504c` — "chore: approve contributor dodiego" (2026-06-17); previous pins `f8a77f47` (06-16), `93b3b7c1` (06-14), `6f29450e` (06-13) |
+| npm build the byte-goldens were captured from | `@earendil-works/pi-ai` **0.79.6** (request goldens re-verified 12/12 — 6 standard + GLM-5.2 xhigh/off/minimal/low — against the 0.79.6 build); `pi-coding-agent` 0.78.1 (session/image goldens — unaffected by 0.79.x) |
+| Parity proofs at the pin | requests 12/12 · session tree 8/8 · image decisions 8/8 byte/decision-identical |
 | Reviewed via | initial port + parity sweep 1 + parity sweep 2 (`3be3911`), registration fix (`b09cb46`) |
 
 Deliberately not ported (out of scope for the ledger unless a commit changes
 that decision): TUI, extensions runtime, OAuth token acquisition, project-trust
 gating, Bedrock/Vertex/Mistral/Azure/Codex providers, image generation, bun/CLI
 packaging, prompt-templates, settings-manager, config migrations,
-agent-session-runtime (session reload + /new flow).
+agent-session-runtime (session reload + /new flow), and the host-side machinery
+that *populates* provider-scoped env overrides (resolve-config-value,
+model-registry, settings) — the SDK `StreamOptions.Env` field is ported but
+stays latent until a host sets it (see the 2026-06-17 ruling).
 
 ### Rulings (answers to `decide` escalations — triage must not re-ask)
+
+- **2026-06-17 — provider-scoped env overrides ported faithfully** (re:
+  `7f29e7a3`). Owner call: maximum parity. `StreamOptions.Env`
+  (`map[string]string`) is consulted ahead of `os.Getenv` (helper
+  `getProviderEnvValue`: non-empty scoped value wins, empty falls through —
+  pi's `||`) for the two ported consumers pi touches: `PI_CACHE_RETENTION` and
+  Cloudflare base-URL placeholders, across anthropic/openai-completions/
+  openai-responses. pi's `getBunSandboxEnvValue` `/proc/self/environ` fallback
+  is DELIBERATELY OMITTED — it works around oven-sh/bun#27802 (Bun compiled
+  binaries expose an empty `process.env` in Linux sandboxes), a runtime defect
+  Go does not have. The host-side population machinery stays unported (field
+  latent, matching pi SDK consumers that don't populate it). Future commits to
+  the env-override *plumbing in ported providers* are `port`; commits only to
+  the unported host-side population are `n/a`.
 
 - **2026-06-16 — provider-attribution ported faithfully** (port-it ruling); SDK
   sends pi's default attribution headers (http-referer/x-title/...) on the
@@ -36,7 +53,32 @@ agent-session-runtime (session reload + /new flow).
   `n/a` under this ruling UNLESS they change behavior of surface we ported —
   that re-escalates.
 
-## Drift at last sync check (2026-06-16)
+## Drift at last sync check (2026-06-17)
+
+**Caught up to `29c1504c`.** Ledger f8a77f47 → 29c1504c fully processed (20
+main-line changes: 3 ported, 16 n/a, 1 decide resolved). Two release tags
+crossed (v0.79.5, v0.79.6); npm reference build advanced 0.79.4 → 0.79.6.
+Reviewed via independent go-review (ship) + adversarial parity review
+(4/4 faithful; request diff regenerated from the 0.79.6 build, 12/12 — 6
+standard + the 4 new GLM-5.2 scenarios; null-content regression test
+mutation-verified non-vacuous).
+
+- Ports: `75b0d723` (Z.AI GLM-5.2 native reasoning_effort — `788c832`),
+  `2d597f02` (null Responses content — `e8f7511`, no code change: Go ranges a
+  nil slice safely; locked with a regression test), and `31bfb2f1` (catalog →
+  npm 0.79.6 — `c2221a7`, subsumes the v0.79.5 catalog + the deepseek-v4 compat
+  / cost / maxTokens data churn `2431491c`/`bd9f8773`/`7da475db`).
+- **Deferred data landed:** the 0.79.6 catalog ships `off:null` for Kimi K2.7
+  Code (`moonshotai`/`moonshotai-cn`, incl. `-highspeed`), activating the
+  deepseek disabled-thinking gate ported on 2026-06-15 (`62fa1e3`). The
+  `TestDeepseekCatalogNoOffNull` tripwire is now `TestDeepseekDisabledThinkingGateLive`,
+  driving the omit end-to-end through the catalog-resolved model.
+- **Decide → ruling:** provider-scoped env overrides **ported faithfully**
+  (`7f29e7a3` → `872c303`; owner call 2026-06-17, recorded in Rulings).
+  `StreamOptions.Env` consulted ahead of `os.Getenv`; Bun `/proc` fallback
+  omitted (no Go analog); host-side population machinery stays unported.
+
+### Prior — 93b3b7c1 → f8a77f47 (2026-06-16)
 
 **Caught up to `f8a77f47`.** Ledger 93b3b7c1 → f8a77f47 fully processed (20
 main-line changes: 6 ported, 14 n/a, 1 decide resolved). Reviewed via an
@@ -124,6 +166,31 @@ only by comparison against real pi.
 Upstream reference clone: `$PI_UPSTREAM_DIR`, default `~/.cache/pi-upstream`.
 When the delta crosses a release tag, the npm reference build is refreshed to
 that version before parity review.
+
+## Ledger — f8a77f47 → 29c1504c
+
+| Upstream | Date | Subject | Hint | Status | Go commit | Notes |
+|---|---|---|---|---|---|---|
+| `75b0d723` | 2026-06-16 | fix(ai): support Z.AI GLM-5.2 effort levels | review | ported | `788c832` | openai.go zai branch: when effort + `compat.supportsReasoningEffort`, emit `reasoning_effort` mapped via `thinkingLevelMap` alongside `thinking:{type}`. New `mappedEffortOrRaw` ports pi's undefined→raw / null→omit / string→mapped (distinct from `effortValue`, which returns raw on present-null). Catalog data via 0.79.6 regen. Golden: request body (zai). Tests: low/high/xhigh map, minimal:null omit, off, no-supportsReasoningEffort |
+| `06d8c54d` | 2026-06-16 | fix(coding-agent): avoid Windows pi update exit assertion | review | n/a | — | main.ts self-update/CLI exit (unported) |
+| `3039f3e1` | 2026-06-16 | fix(tui): restore cursorUp start-of-line jump (#5789) | likely-n/a | n/a | — | TUI editor |
+| `7f29e7a3` | 2026-06-16 | feat: add provider-scoped environment overrides (#5807) | review | ported | `872c303` | `StreamOptions.Env` + `getProviderEnvValue` (scoped non-empty wins, else os.Getenv) threaded into `PI_CACHE_RETENTION` + Cloudflare base-URL across anthropic/openai-completions/openai-responses. Bun `/proc` fallback omitted (no Go analog). Host-side population unported (field latent). Owner ruling 2026-06-17. Golden: cache-retention/cloudflare request paths (byte-identical when Env unset). Tests: env precedence, cache-retention scoped env, cloudflare scoped override + empty fall-through |
+| `8f0e9251` | 2026-06-16 | fix(coding-agent): do not open browser for device code login | likely-n/a | n/a | — | interactive login-dialog (TUI/oauth) |
+| `0680726a` | 2026-06-16 | fix: upgrade marked to 18.0.5 | likely-n/a | n/a | — | export-html vendor min.js + tui dep |
+| `91050859` | 2026-06-16 | feat(coding-agent): add settings http proxy | review | n/a | — | core/http-dispatcher: process.env HTTP(S)_PROXY + undici global-fetch host runtime config (unported; Go uses net/http) |
+| `2d597f02` | 2026-06-16 | fix(ai): tolerate null Responses message content | review | ported | `e8f7511` | NO code change — Go ranges a nil slice (what `"content":null` unmarshals to) safely, rebuilding to "" exactly as pi's `?? ""`; the JS TypeError has no Go analog. Locked with `TestResponsesNullMessageContent` (mutation-verified non-vacuous) |
+| `2431491c` | 2026-06-16 | fix(ai): avoid duplicate OpenCode DeepSeek reasoning controls | review | n/a | — | data-only generate-models.ts (deepseek-v4 compat); net no-op with `bd9f8773` (adds then reverts opencode-go); lands via 0.79.6 regen |
+| `b6b5bed9` | 2026-06-16 | docs: update unreleased changelogs | likely-n/a | n/a | — | docs/changelog |
+| `6561cb29` | 2026-06-16 | Release v0.79.5 | review | n/a | — | v0.79.5 catalog superseded by 0.79.6 (no separate regen) |
+| `0b0b9eae` | 2026-06-16 | Add [Unreleased] section for next cycle | likely-n/a | n/a | — | changelog cycle header |
+| `a78cd7cc` | 2026-06-16 | fix(coding-agent): stabilize self-update tests | likely-n/a | n/a | — | self-update test (unported) |
+| `a93f0666` | 2026-06-16 | fix(coding-agent): preserve fetch overrides | review | n/a | — | core/http-dispatcher global-fetch/undici install guard (unported runtime config) |
+| `bd9f8773` | 2026-06-16 | fix(ai): restore OpenCode Go DeepSeek thinking controls | review | n/a | — | data-only generate-models.ts (reverts the opencode-go arm of 2431491c); lands via 0.79.6 regen |
+| `7da475db` | 2026-06-16 | fix(ai): regenerate model catalog | review | n/a | — | data-only catalog (cacheRead/maxTokens); lands via 0.79.6 regen |
+| `34b6aea1` | 2026-06-16 | docs(coding-agent): add changelog entries for fetch override and DeepSeek V4 thinking-off | likely-n/a | n/a | — | docs/changelog |
+| `31bfb2f1` | 2026-06-16 | Release v0.79.6 | review | ported | `c2221a7` | ai/models_catalog.json regenerated from npm 0.79.6 (endpoint-pinned both sides: old == 0.79.4 build, new == 0.79.6 build, integrity-verified). +11/−7 ids (GLM-5.2 across zai/openrouter/vercel/cf-workers-ai; legacy gemini-1.5/2.0 vertex pruned). Subsumes 2431491c/bd9f8773/7da475db + v0.79.5. Kimi K2.7 Code `off:null` landed → tripwire converted to `TestDeepseekDisabledThinkingGateLive`. Fable-5 off:null intact |
+| `12bb8dd2` | 2026-06-16 | Add [Unreleased] section for next cycle | likely-n/a | n/a | — | changelog cycle header |
+| `29c1504c` | 2026-06-17 | chore: approve contributor dodiego | n/a | n/a | — | contributor meta |
 
 ## Ledger — 93b3b7c1 → f8a77f47
 
