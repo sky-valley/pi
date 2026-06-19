@@ -10,9 +10,9 @@ commit-by-commit sync pipeline that keeps it current.
 
 | What | Value |
 |---|---|
-| TS source fully reviewed/ported | `29c1504c` — "chore: approve contributor dodiego" (2026-06-17); previous pins `f8a77f47` (06-16), `93b3b7c1` (06-14), `6f29450e` (06-13) |
-| npm build the byte-goldens were captured from | `@earendil-works/pi-ai` **0.79.6** (request goldens re-verified 12/12 — 6 standard + GLM-5.2 xhigh/off/minimal/low — against the 0.79.6 build); `pi-coding-agent` 0.78.1 (session/image goldens — unaffected by 0.79.x) |
-| Parity proofs at the pin | requests 12/12 · session tree 8/8 · image decisions 8/8 byte/decision-identical |
+| TS source fully reviewed/ported | `56b22768` — "Add [Unreleased] section for next cycle" (2026-06-19); previous pins `29c1504c` (06-17), `f8a77f47` (06-16), `93b3b7c1` (06-14), `6f29450e` (06-13) |
+| npm build the byte-goldens were captured from | `@earendil-works/pi-ai` **0.79.8** (catalog endpoint-pinned both sides: old ≡ 0.79.6 build, new ≡ 0.79.8 build, lock integrity verified against the registry on each); `pi-coding-agent` 0.78.1 (session/image goldens — unaffected by 0.79.x) |
+| Parity proofs at the pin | catalog regen endpoint-pinned byte-identical · session tree 8/8 · image decisions 8/8 (unchanged this cycle — no provider code changed) |
 | Reviewed via | initial port + parity sweep 1 + parity sweep 2 (`3be3911`), registration fix (`b09cb46`) |
 
 Deliberately not ported (out of scope for the ledger unless a commit changes
@@ -52,6 +52,36 @@ stays latent until a host sets it (see the 2026-06-17 ruling).
   extension resource-loader; `skills.ts` untouched). Future trust commits are
   `n/a` under this ruling UNLESS they change behavior of surface we ported —
   that re-escalates.
+
+## Drift at last sync check (2026-06-19)
+
+**Caught up to `56b22768`.** Ledger 29c1504c → 56b22768 fully processed (32
+main-line changes: **0 behavior ports, 32 n/a** for code — the only ported
+surface touched is the catalog, advanced via the release regen below; 0
+decides). Two release tags crossed (v0.79.7, v0.79.8); npm reference build
+advanced 0.79.6 → **0.79.8** (v0.79.7 superseded — each regen supersedes the
+prior). Reviewed via an independent adversarial parity review (catalog
+endpoint-pinned byte-identical on both ends; authenticity, schema-drift,
+tripwire, and orphaned-id checks all passed). Build/vet/`-race` green.
+
+- **Catalog → npm 0.79.8** (`8eb9704b`, Go commit `5164314`): subsumes v0.79.7
+  + the data-only generator commits `58dd2f59` (opencode-go GLM-5.2),
+  `b09fbde0` (openrouter/fusion alias), and the Mistral prompt-caching data
+  from `651d10d9`. Net +9/−3 ids; 44 changed entries are data churn (Mistral
+  cost fields, fireworks/openrouter/vercel metadata). `off:null` gates intact
+  (claude-fable-5, kimi-k2.7-code) → `TestFable5DisabledThinkingGateLive` and
+  `TestDeepseekDisabledThinkingGateLive` green.
+- **No behavior ports.** The substantive non-release changes all landed on
+  unported surface: the compaction trio (`6b9f3f49` overflow-retry recovery,
+  `7d08c81a` empty-summary guard / event reordering, `c60f6a8a`
+  `estimatedTokensAfter`) edits the agent-session-runtime auto-compaction
+  orchestration + `CompactionResult`/`compaction_*` event lifecycle, none of
+  which the Go port has (it compacts inline via `shouldCompact`/`compact` with
+  no overflow recovery or event emission); RPC unknown-command id
+  (`51f75235`) → `modes/rpc` unported; Mistral prompt caching (`651d10d9`,
+  provider code) → Mistral provider unported; `CONFIG_DIR_NAME` / edit-diff
+  SDK exports (`008c76f9`, `2b46f388`) → no behavior change; selective pi-ai
+  entrypoints (`0d89a333`) → packaging. No new boundary questions.
 
 ## Drift at last sync check (2026-06-17)
 
@@ -166,6 +196,43 @@ only by comparison against real pi.
 Upstream reference clone: `$PI_UPSTREAM_DIR`, default `~/.cache/pi-upstream`.
 When the delta crosses a release tag, the npm reference build is refreshed to
 that version before parity review.
+
+## Ledger — 29c1504c → 56b22768
+
+| Upstream | Date | Subject | Hint | Status | Go commit | Notes |
+|---|---|---|---|---|---|---|
+| `068ab5d1` | 2026-06-17 | fix(coding-agent): horizontally pan tree selector | likely-n/a | n/a | — | TUI tree-selector + tui/index.ts |
+| `ae89286d` | 2026-06-17 | docs: update changelogs for tree panning | likely-n/a | n/a | — | docs/changelog |
+| `6d5ede31` | 2026-06-17 | fix(coding-agent): match provider-first model searches | review | n/a | — | modes/interactive model-selector/search (TUI) — unported |
+| `58dd2f59` | 2026-06-18 | feat(ai): add GLM-5.2 to OpenCode Go model catalog | review | n/a (data) | — | models.generated data; lands via 0.79.8 catalog regen (`5164314`) |
+| `008c76f9` | 2026-06-18 | feat(coding-agent): export project config dir name | review | n/a | — | `CONFIG_DIR_NAME` SDK constant export + trust-prompt/help-text string interpolation; no ported behavior (trust + interactive + SDK const only) |
+| `51f75235` | 2026-06-18 | fix(coding-agent): include RPC request id on unknown commands | review | n/a | — | `modes/rpc` unported in Go (no rpc-mode) |
+| `7a14325b` | 2026-06-18 | feat(tui): detect Warp terminal and enable Kitty image protocol (#5841) | likely-n/a | n/a | — | TUI terminal-image |
+| `20da9bc1` | 2026-06-18 | fix attribution for 008c76f9 | likely-n/a | n/a | — | changelog attribution |
+| `bc93655e` | 2026-06-18 | meta: Added report template | likely-n/a | n/a | — | .github issue template |
+| `908be616` | 2026-06-18 | ref: Remove some options from package reporting | likely-n/a | n/a | — | .github issue template |
+| `d0b46764` | 2026-06-18 | feat(coding-agent): add automatic theme mode (#5874) | review | n/a | — | TUI theme-controller + settings-manager (unported); theme is TUI |
+| `2b46f388` | 2026-06-18 | feat(coding-agent): Expose edit-diff for extensions (#5756) | review | n/a | — | comment change + SDK export (`generateDiffString`/`generateUnifiedPatch`); no behavior change |
+| `aae62dfa` | 2026-06-18 | feat(coding-agent): make bare update self-only | review | n/a | — | package-manager-cli/self-update + cli/args (unported packaging) |
+| `71749422` | 2026-06-18 | docs: audit unreleased changelogs | likely-n/a | n/a | — | changelog |
+| `c4ab61dc` | 2026-06-18 | Release v0.79.7 | review | ported (superseded) | `5164314` | catalog regen; superseded by 0.79.8 (no separate regen — final 0.79.8 build subsumes it) |
+| `788a0444` | 2026-06-18 | Add [Unreleased] section for next cycle | likely-n/a | n/a | — | changelog cycle header |
+| `6b9f3f49` | 2026-06-18 | fix(coding-agent): avoid retrying successful overflow compaction | review | n/a | — | agent-session-runtime overflow-recovery (`_runAutoCompaction` willRetry/stopReason gating) — unported; Go has no overflow-error-triggered compaction recovery |
+| `7d08c81a` | 2026-06-18 | fix(coding-agent): avoid empty compaction summaries | review | n/a | — | `prepareCompaction` empty guard + `compaction_start/end` event reordering — both unported (Go has no prepareCompaction nor the event lifecycle; compacts inline via shouldCompact/findCutPoint) |
+| `b09fbde0` | 2026-06-18 | feat(ai): add OpenRouter Fusion alias (#5866) | review | n/a (data) | — | generate-models.ts alias entry; lands via 0.79.8 catalog regen (`5164314`, id `openrouter/fusion`) |
+| `c60f6a8a` | 2026-06-18 | feat(coding-agent): expose post-compaction token estimates | review | n/a | — | `estimatedTokensAfter` on `CompactionResult` SDK type + emitted in `compaction_end` — unported event lifecycle |
+| `cab89d14` | 2026-06-18 | docs: audit unreleased changelogs | likely-n/a | n/a | — | changelog |
+| `fd1ba2c7` | 2026-06-18 | test(coding-agent): seed auto-compaction queue fixture | likely-n/a | n/a | — | test-only; auto-compaction queue (unported orchestration) |
+| `8025fdd0` | 2026-06-18 | meta: Update readmes slightly | likely-n/a | n/a | — | READMEs |
+| `651d10d9` | 2026-06-18 | feat(ai): enable Mistral prompt caching | review | n/a | — | `ai/providers/mistral.ts` — Mistral provider unported; catalog cost-field data lands via 0.79.8 regen (44 changed mistral/* entries) |
+| `9179734c` | 2026-06-18 | docs(coding-agent): audit unreleased changelog | likely-n/a | n/a | — | changelog |
+| `1a418ad2` | 2026-06-19 | chore: remove inprogress label on close | likely-n/a | n/a | — | .github workflow |
+| `0d89a333` | 2026-06-18 | feat(packages): Add selective pi-ai base entrypoints (#5348) | review | n/a | — | packaging/exports-map + test import paths + tsconfig/vitest/scripts; no behavior |
+| `ea65a51a` | 2026-06-19 | fix: update vulnerable dependencies | likely-n/a | n/a | — | lockfiles/package.json (deps) |
+| `a2f70e5f` | 2026-06-19 | fix(coding-agent): reset tool test mocks | likely-n/a | n/a | — | test-only |
+| `74677bbf` | 2026-06-19 | docs: audit unreleased changelogs | likely-n/a | n/a | — | changelog |
+| `8eb9704b` | 2026-06-19 | Release v0.79.8 | review | ported | `5164314` | ai/models_catalog.json regenerated from npm 0.79.8 (endpoint-pinned both sides, integrity-verified). +9/−3 ids (opencode-go glm-5.2, openrouter/fusion, fireworks glm-5p2, poolside/qwen/cohere/gemini-3-pro-image/liquid; −opencode-go glm-5, −raptor-mini, −xiaomi mimo). 44 changed = Mistral prompt-caching cost fields + fireworks/openrouter/vercel metadata. Subsumes v0.79.7 + 58dd2f59/b09fbde0/651d10d9 data. off:null tripwires intact (fable-5, kimi-k2.7-code). Independent parity review: faithful |
+| `56b22768` | 2026-06-19 | Add [Unreleased] section for next cycle | likely-n/a | n/a | — | changelog cycle header |
 
 ## Ledger — f8a77f47 → 29c1504c
 
