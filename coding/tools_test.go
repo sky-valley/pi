@@ -194,6 +194,44 @@ func TestGrepGitignore(t *testing.T) {
 	}
 }
 
+// upstream 756a4e8f (#5960): inside a repo, fd's git-aware traversal stops the
+// parent .gitignore at a nested repository boundary, so a checked-out sub-repo
+// is governed by its own ignore rules, not the outer repo's.
+func TestFindRespectsNestedRepoBoundaries(t *testing.T) {
+	dir := t.TempDir()
+	os.Mkdir(filepath.Join(dir, ".git"), 0o755) // outer repo
+	os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("ignored.txt\n"), 0o644)
+	os.WriteFile(filepath.Join(dir, "ignored.txt"), []byte("x\n"), 0o644)
+	os.WriteFile(filepath.Join(dir, "keep.txt"), []byte("x\n"), 0o644)
+
+	nested := filepath.Join(dir, "nested")
+	os.MkdirAll(filepath.Join(nested, ".git"), 0o755) // nested repo
+	os.WriteFile(filepath.Join(nested, ".gitignore"), []byte("secret.txt\n"), 0o644)
+	os.WriteFile(filepath.Join(nested, "ignored.txt"), []byte("x\n"), 0o644) // matches OUTER rule only
+	os.WriteFile(filepath.Join(nested, "keep.txt"), []byte("x\n"), 0o644)
+	os.WriteFile(filepath.Join(nested, "secret.txt"), []byte("x\n"), 0o644) // matches NESTED rule
+
+	r, _ := run(t, findTool(dir), map[string]any{"pattern": "**/*.txt"})
+	got := map[string]bool{}
+	for _, line := range strings.Split(resultText(r), "\n") {
+		got[strings.TrimSpace(line)] = true
+	}
+	// Outer rule applies in the outer repo but does NOT leak into the nested one.
+	if got["ignored.txt"] {
+		t.Fatalf("outer .gitignore should hide top-level ignored.txt: %v", got)
+	}
+	if !got["nested/ignored.txt"] {
+		t.Fatalf("outer .gitignore must not cross the nested-repo boundary: %v", got)
+	}
+	// Nested repo's own rule still applies; visible files surface in both.
+	if got["nested/secret.txt"] {
+		t.Fatalf("nested .gitignore should hide nested/secret.txt: %v", got)
+	}
+	if !got["keep.txt"] || !got["nested/keep.txt"] {
+		t.Fatalf("visible files missing: %v", got)
+	}
+}
+
 func TestToolSchemasValidateViaAgent(t *testing.T) {
 	// Each tool's parameters must validate a well-formed call.
 	for _, name := range ToolNames {

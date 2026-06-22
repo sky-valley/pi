@@ -184,6 +184,11 @@ type ignorePattern struct {
 type ignoreSource struct {
 	baseAbs string
 	pats    []ignorePattern
+	// boundaryExempt sources apply across nested-repo boundaries (the global
+	// core.excludesFile, which git honors in every repo). Repo-specific sources
+	// (.git/info/exclude, ancestor .gitignores) are not exempt: they belong to
+	// the outer repo and must not leak into a nested repository.
+	boundaryExempt bool
 }
 
 // ignoreStack applies hierarchical gitignore semantics in pure Go.
@@ -200,19 +205,29 @@ type ignoreStack struct {
 	root         string
 	useGitignore bool
 	repoRoot     string
-	static       []ignoreSource             // global excludes, info/exclude, ancestor .gitignores (in precedence order)
-	loaded       map[string][]ignorePattern // per root-relative dir .gitignore
+	// boundaries, when set, makes outer-repo ignore rules stop at nested
+	// repository boundaries (a descendant directory holding its own .git), so a
+	// parent .gitignore no longer leaks into a checked-out sub-repo. fd does this
+	// in its default git-aware mode; it is OFF under --no-require-git (outside any
+	// repo), so this only activates when the search root is itself inside a repo.
+	boundaries bool
+	static     []ignoreSource             // global excludes, info/exclude, ancestor .gitignores (in precedence order)
+	loaded     map[string][]ignorePattern // per root-relative dir .gitignore
+	gitDir     map[string]bool            // abs dir → contains a .git entry (cached)
 }
 
-func newIgnoreStack(root string, requireGit bool) *ignoreStack {
-	s := &ignoreStack{root: root, loaded: map[string][]ignorePattern{}}
+func newIgnoreStack(root string, requireGit bool, respectNestedRepos bool) *ignoreStack {
+	s := &ignoreStack{root: root, loaded: map[string][]ignorePattern{}, gitDir: map[string]bool{}}
 	s.repoRoot = findRepoRoot(root)
 	s.useGitignore = !requireGit || s.repoRoot != ""
+	// Nested-repo boundaries only apply in git-aware mode (search root inside a
+	// repo). Under --no-require-git outside a repo, fd ignores boundaries.
+	s.boundaries = respectNestedRepos && s.repoRoot != ""
 	if s.repoRoot != "" && s.useGitignore {
 		// Lowest precedence first; later sources win on conflicts.
 		if p := globalExcludesPath(); p != "" {
 			if data, err := os.ReadFile(p); err == nil {
-				s.static = append(s.static, ignoreSource{baseAbs: s.repoRoot, pats: parseGitignore(data)})
+				s.static = append(s.static, ignoreSource{baseAbs: s.repoRoot, pats: parseGitignore(data), boundaryExempt: true})
 			}
 		}
 		if data, err := os.ReadFile(filepath.Join(s.repoRoot, ".git", "info", "exclude")); err == nil {
@@ -294,6 +309,46 @@ func parseGitignore(data []byte) []ignorePattern {
 	return out
 }
 
+// hasGitDir reports whether the root-relative dir contains a .git entry (a
+// repository boundary). Results are cached.
+func (s *ignoreStack) hasGitDir(relDir string) bool {
+	if v, ok := s.gitDir[relDir]; ok {
+		return v
+	}
+	abs := s.root
+	if relDir != "" {
+		abs = filepath.Join(s.root, filepath.FromSlash(relDir))
+	}
+	_, err := os.Lstat(filepath.Join(abs, ".git"))
+	v := err == nil
+	s.gitDir[relDir] = v
+	return v
+}
+
+// crossesNestedBoundary reports whether a rule source rooted at root-relative
+// dir baseRel is separated from path rel by a nested repository: i.e. some
+// directory strictly below baseRel and at-or-above rel's own directory holds a
+// .git. Such a source belongs to an outer repo and must not apply to rel.
+func (s *ignoreStack) crossesNestedBoundary(baseRel, rel string) bool {
+	for _, dir := range ancestorDirs(rel) {
+		if dir == baseRel {
+			continue
+		}
+		// strict descendant of baseRel?
+		if baseRel == "" {
+			if dir == "" {
+				continue
+			}
+		} else if !strings.HasPrefix(dir, baseRel+"/") {
+			continue
+		}
+		if s.hasGitDir(dir) {
+			return true
+		}
+	}
+	return false
+}
+
 // patternsFor loads (lazily) the .gitignore in the given root-relative dir.
 func (s *ignoreStack) patternsFor(relDir string) []ignorePattern {
 	if pats, ok := s.loaded[relDir]; ok {
@@ -343,6 +398,11 @@ func (s *ignoreStack) ignored(abs, rel string, isDir bool) bool {
 
 	result := false
 	for _, src := range s.static {
+		// Repo-specific outer sources stop at a nested-repo boundary; global
+		// excludes (boundaryExempt) carry across, as git honors them everywhere.
+		if s.boundaries && !src.boundaryExempt && s.crossesNestedBoundary("", rel) {
+			continue
+		}
 		relToBase, err := filepath.Rel(src.baseAbs, abs)
 		if err != nil {
 			continue
@@ -355,6 +415,11 @@ func (s *ignoreStack) ignored(abs, rel string, isDir bool) bool {
 		}
 	}
 	for _, dir := range ancestorDirs(rel) {
+		// A .gitignore in an outer repo must not apply once a nested repository
+		// begins below it (upstream 756a4e8f).
+		if s.boundaries && s.crossesNestedBoundary(dir, rel) {
+			continue
+		}
 		// Path relative to the gitignore's directory.
 		relToDir := rel
 		if dir != "" {

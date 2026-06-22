@@ -1313,8 +1313,11 @@ func findTool(cwd string) agent.AgentTool {
 			if _, err := os.Stat(root); err != nil {
 				return agent.AgentToolResult{}, fmt.Errorf("Path not found: %s", root)
 			}
-			// fd --no-require-git: gitignore applies whether or not we are in a repo.
-			ig := newIgnoreStack(root, false)
+			// fd: gitignore applies whether or not we are in a repo (the old
+			// --no-require-git effect outside a repo). But inside a repo, fd's
+			// default git-aware traversal stops parent .gitignore rules at nested
+			// repository boundaries (upstream 756a4e8f), so request that here.
+			ig := newIgnoreStack(root, false, true)
 			var results []string
 			err := filepath.WalkDir(root, func(p string, d os.DirEntry, walkErr error) error {
 				if walkErr != nil {
@@ -1506,7 +1509,7 @@ func grepTool(cwd string) agent.AgentTool {
 				_ = searchFile(root, filepath.Base(root), false)
 			} else {
 				// rg semantics: gitignore applies only inside a git repository.
-				ig := newIgnoreStack(root, true)
+				ig := newIgnoreStack(root, true, false)
 				err = filepath.WalkDir(root, func(p string, d os.DirEntry, walkErr error) error {
 					if walkErr != nil {
 						return nil
