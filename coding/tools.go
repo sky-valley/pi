@@ -640,7 +640,7 @@ func bashTool(cwd string) agent.AgentTool {
 		),
 		Execute: func(ctx context.Context, id string, params map[string]any, onUpdate agent.ToolUpdateFunc) (agent.AgentToolResult, error) {
 			command := argStr(params, "command")
-			shell, shellArgs, err := getShellConfig()
+			shell, shellArgs, useStdin, err := getShellConfig()
 			if err != nil {
 				return agent.AgentToolResult{}, err
 			}
@@ -654,7 +654,15 @@ func bashTool(cwd string) agent.AgentTool {
 				runCtx, cancel = context.WithTimeout(ctx, time.Duration(timeout*float64(time.Second)))
 				defer cancel()
 			}
-			cmd := exec.CommandContext(runCtx, shell, append(shellArgs, command)...)
+			// Legacy WSL bash takes the command on stdin (`bash -s`); otherwise it
+			// is the final argv entry (`bash -c <command>`).
+			var cmd *exec.Cmd
+			if useStdin {
+				cmd = exec.CommandContext(runCtx, shell, shellArgs...)
+				cmd.Stdin = strings.NewReader(command)
+			} else {
+				cmd = exec.CommandContext(runCtx, shell, append(shellArgs, command)...)
+			}
 			cmd.Dir = cwd
 			// Run in its own process group and, on cancel/timeout, kill the whole
 			// tree so backgrounded grandchildren don't survive (port of pi).
@@ -841,7 +849,29 @@ func argFloat(params map[string]any, key string) (float64, bool) {
 // resolves Git Bash in known locations, then bash.exe on PATH, else errors.
 var shellExists = pathExistsFS
 
-func getShellConfig() (string, []string, error) {
+// legacyWslBashRE matches the legacy Windows-bundled WSL launcher
+// (C:\Windows\System32\bash.exe, or the WoW64 sysnative redirect) after path
+// normalization. It mishandles `-c "<cmd>"` quoting, so commands go via stdin.
+var legacyWslBashRE = regexp.MustCompile(`^[a-z]:\\windows\\(?:system32|sysnative)\\bash\.exe$`)
+
+// isLegacyWslBashPath ports pi's isLegacyWslBashPath (shell.ts).
+func isLegacyWslBashPath(path string) bool {
+	normalized := strings.ToLower(strings.ReplaceAll(path, "/", `\`))
+	return legacyWslBashRE.MatchString(normalized)
+}
+
+// getBashShellConfig ports pi's getBashShellConfig: legacy WSL bash takes the
+// command on stdin (`bash -s`); every other bash takes `bash -c <command>`.
+func getBashShellConfig(shell string) (string, []string, bool) {
+	if isLegacyWslBashPath(shell) {
+		return shell, []string{"-s"}, true
+	}
+	return shell, []string{"-c"}, false
+}
+
+// getShellConfig returns the shell, its args, and whether the command must be
+// delivered on stdin (legacy WSL bash) rather than appended to argv.
+func getShellConfig() (shell string, args []string, useStdin bool, err error) {
 	if runtime.GOOS == "windows" {
 		var paths []string
 		if pf := os.Getenv("ProgramFiles"); pf != "" {
@@ -852,11 +882,13 @@ func getShellConfig() (string, []string, error) {
 		}
 		for _, p := range paths {
 			if shellExists(p) {
-				return p, []string{"-c"}, nil
+				s, a, stdin := getBashShellConfig(p)
+				return s, a, stdin, nil
 			}
 		}
 		if p, err := exec.LookPath("bash.exe"); err == nil && p != "" {
-			return p, []string{"-c"}, nil
+			s, a, stdin := getBashShellConfig(p)
+			return s, a, stdin, nil
 		}
 		var b strings.Builder
 		b.WriteString("No bash shell found. Options:\n")
@@ -870,17 +902,19 @@ func getShellConfig() (string, []string, error) {
 			}
 			b.WriteString("  " + p)
 		}
-		return "", nil, errors.New(b.String())
+		return "", nil, false, errors.New(b.String())
 	}
 
 	// Unix: try /bin/bash, then bash on PATH, then fall back to sh.
 	if shellExists("/bin/bash") {
-		return "/bin/bash", []string{"-c"}, nil
+		s, a, stdin := getBashShellConfig("/bin/bash")
+		return s, a, stdin, nil
 	}
 	if p, err := exec.LookPath("bash"); err == nil && p != "" {
-		return p, []string{"-c"}, nil
+		s, a, stdin := getBashShellConfig(p)
+		return s, a, stdin, nil
 	}
-	return "sh", []string{"-c"}, nil
+	return "sh", []string{"-c"}, false, nil
 }
 
 // ---------------------------------------------------------------------------

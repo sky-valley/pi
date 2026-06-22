@@ -96,7 +96,7 @@ func TestGetShellConfigUnix(t *testing.T) {
 	}
 	// $SHELL must never be consulted.
 	t.Setenv("SHELL", "/bin/zsh")
-	shell, args, err := getShellConfig()
+	shell, args, _, err := getShellConfig()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -114,7 +114,7 @@ func TestGetShellConfigUnix(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Setenv("PATH", fakeBin)
-	shell, _, err = getShellConfig()
+	shell, _, _, err = getShellConfig()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -124,12 +124,50 @@ func TestGetShellConfigUnix(t *testing.T) {
 
 	// No /bin/bash, nothing on PATH → sh.
 	t.Setenv("PATH", t.TempDir())
-	shell, _, err = getShellConfig()
+	shell, _, _, err = getShellConfig()
 	if err != nil {
 		t.Fatal(err)
 	}
 	if shell != "sh" {
 		t.Fatalf("expected sh fallback, got %q", shell)
+	}
+}
+
+// TestLegacyWslBashDetection (upstream 1287b69f): only the Windows-bundled WSL
+// launcher (System32/Sysnative bash.exe) is detected, and it switches the bash
+// tool to `bash -s` + stdin transport. All other bash paths keep `bash -c`.
+func TestLegacyWslBashDetection(t *testing.T) {
+	legacy := []string{
+		`C:\Windows\System32\bash.exe`,
+		`C:/Windows/System32/bash.exe`,
+		`c:\windows\system32\bash.exe`,
+		`C:\Windows\Sysnative\bash.exe`,
+	}
+	for _, p := range legacy {
+		if !isLegacyWslBashPath(p) {
+			t.Fatalf("%q should be detected as legacy WSL bash", p)
+		}
+		shell, args, useStdin := getBashShellConfig(p)
+		if shell != p || !useStdin || !reflect.DeepEqual(args, []string{"-s"}) {
+			t.Fatalf("%q: got shell=%q args=%v stdin=%v, want -s + stdin", p, shell, args, useStdin)
+		}
+	}
+
+	normal := []string{
+		`C:\Program Files\Git\bin\bash.exe`,
+		`/bin/bash`,
+		`C:\Windows\System32\wsl.exe`,
+		`D:\tools\bash.exe`,
+		`C:\Windows\System32\drivers\bash.exe`,
+	}
+	for _, p := range normal {
+		if isLegacyWslBashPath(p) {
+			t.Fatalf("%q should NOT be detected as legacy WSL bash", p)
+		}
+		shell, args, useStdin := getBashShellConfig(p)
+		if shell != p || useStdin || !reflect.DeepEqual(args, []string{"-c"}) {
+			t.Fatalf("%q: got shell=%q args=%v stdin=%v, want -c + argv", p, shell, args, useStdin)
+		}
 	}
 }
 
