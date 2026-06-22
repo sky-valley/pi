@@ -884,6 +884,13 @@ func applyReasoningFormat(params map[string]any, model *ai.Model, compat openAIC
 		params["enable_thinking"] = enabled
 	case compat.ThinkingFormat == "qwen-chat-template" && model.Reasoning:
 		params["chat_template_kwargs"] = map[string]any{"enable_thinking": enabled, "preserve_thinking": true}
+	case compat.ThinkingFormat == "chat-template" && model.Reasoning:
+		// pi (8b97e75c): configurable chat_template_kwargs resolved from the
+		// model's compat.chatTemplateKwargs ($var/omitWhenOff/scalar). Emitted
+		// only when at least one kwarg survives resolution.
+		if kw := buildChatTemplateKwargs(model, compat, level); kw != nil {
+			params["chat_template_kwargs"] = kw
+		}
 	case compat.ThinkingFormat == "deepseek" && model.Reasoning:
 		// pi (0369bdb8 / #5760): when no effort, only send thinking:{disabled}
 		// if the model's thinkingLevelMap.off is not present-null. Kimi K2.7 Code

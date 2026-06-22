@@ -38,6 +38,9 @@ type openAICompletionsCompat struct {
 	HasOpenRouterRouting bool
 	// VercelGatewayRouting carries only/order routing for the Vercel AI Gateway.
 	VercelGatewayRouting vercelGatewayRouting
+	// ChatTemplateKwargs carries the ordered kwargs sent as `chat_template_kwargs`
+	// when ThinkingFormat is "chat-template" (pi: compat.chatTemplateKwargs).
+	ChatTemplateKwargs []chatTemplateKwarg
 }
 
 // detectOpenAICompat infers compatibility settings from provider + baseUrl,
@@ -136,6 +139,7 @@ func getOpenAICompat(model *ai.Model) openAICompletionsCompat {
 		CacheControlFormat                          *string               `json:"cacheControlFormat"`
 		OpenRouterRouting                           map[string]any        `json:"openRouterRouting"`
 		VercelGatewayRouting                        *vercelGatewayRouting `json:"vercelGatewayRouting"`
+		ChatTemplateKwargs                          json.RawMessage       `json:"chatTemplateKwargs"`
 	}
 	if json.Unmarshal(model.Compat, &raw) != nil {
 		return c
@@ -193,6 +197,10 @@ func getOpenAICompat(model *ai.Model) openAICompletionsCompat {
 	}
 	if raw.VercelGatewayRouting != nil {
 		c.VercelGatewayRouting = *raw.VercelGatewayRouting
+	}
+	// pi: chatTemplateKwargs override always replaces the detected default ({}).
+	if raw.ChatTemplateKwargs != nil {
+		c.ChatTemplateKwargs = parseChatTemplateKwargs(raw.ChatTemplateKwargs)
 	}
 	return c
 }
