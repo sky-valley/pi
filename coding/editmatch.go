@@ -94,6 +94,126 @@ type matchedEdit struct {
 	newText     string
 }
 
+// splitLinesWithEndings splits content into lines that keep their trailing "\n"
+// (port of pi's /[^\n]*\n|[^\n]+/g). A trailing "\n" yields no empty final
+// element, and "" yields no elements — unlike strings.Split on "\n".
+func splitLinesWithEndings(content string) []string {
+	var out []string
+	for i := 0; i < len(content); {
+		if j := strings.IndexByte(content[i:], '\n'); j == -1 {
+			out = append(out, content[i:])
+			break
+		} else {
+			out = append(out, content[i:i+j+1])
+			i += j + 1
+		}
+	}
+	return out
+}
+
+type lineSpan struct{ start, end int }
+
+// getLineSpans returns the byte [start,end) span of each line (with ending).
+func getLineSpans(content string) []lineSpan {
+	lines := splitLinesWithEndings(content)
+	spans := make([]lineSpan, len(lines))
+	offset := 0
+	for i, line := range lines {
+		spans[i] = lineSpan{start: offset, end: offset + len(line)}
+		offset = spans[i].end
+	}
+	return spans
+}
+
+// getReplacementLineRange widens a replacement to the [startLine,endLine) lines
+// it touches (port of pi's getReplacementLineRange). endLine is exclusive.
+func getReplacementLineRange(lines []lineSpan, m matchedEdit) (startLine, endLine int, err error) {
+	repStart, repEnd := m.matchIndex, m.matchIndex+m.matchLength
+	startLine = -1
+	for i, line := range lines {
+		if repStart >= line.start && repStart < line.end {
+			startLine = i
+			break
+		}
+	}
+	if startLine == -1 {
+		return 0, 0, fmt.Errorf("Replacement range is outside the base content.")
+	}
+	endLine = startLine
+	for endLine < len(lines) && lines[endLine].end < repEnd {
+		endLine++
+	}
+	if endLine >= len(lines) {
+		return 0, 0, fmt.Errorf("Replacement range is outside the base content.")
+	}
+	return startLine, endLine + 1, nil
+}
+
+// applyReplacements rewrites content with the given replacements, applied in
+// reverse so earlier offsets stay valid (port of pi's applyReplacements). offset
+// shifts each replacement's matchIndex into content-local coordinates.
+func applyReplacements(content string, replacements []matchedEdit, offset int) string {
+	result := content
+	for i := len(replacements) - 1; i >= 0; i-- {
+		r := replacements[i]
+		mi := r.matchIndex - offset
+		result = result[:mi] + r.newText + result[mi+r.matchLength:]
+	}
+	return result
+}
+
+// applyReplacementsPreservingUnchangedLines overlays line-level replacements
+// matched against baseContent (a normalized view) onto originalContent, copying
+// untouched lines back verbatim (port of pi's function of the same name). Touched
+// line-blocks are rewritten from baseContent; the actual replacement ranges drive
+// preservation so duplicate normalized lines can't align to the wrong occurrence.
+func applyReplacementsPreservingUnchangedLines(originalContent, baseContent string, replacements []matchedEdit) (string, error) {
+	originalLines := splitLinesWithEndings(originalContent)
+	baseLines := getLineSpans(baseContent)
+	if len(originalLines) != len(baseLines) {
+		return "", fmt.Errorf("Cannot preserve unchanged lines because the base content has a different line count.")
+	}
+
+	sorted := append([]matchedEdit(nil), replacements...)
+	sort.Slice(sorted, func(a, b int) bool { return sorted[a].matchIndex < sorted[b].matchIndex })
+
+	type group struct {
+		startLine, endLine int
+		replacements       []matchedEdit
+	}
+	var groups []group
+	for _, r := range sorted {
+		startLine, endLine, err := getReplacementLineRange(baseLines, r)
+		if err != nil {
+			return "", err
+		}
+		if n := len(groups); n > 0 && startLine < groups[n-1].endLine {
+			if endLine > groups[n-1].endLine {
+				groups[n-1].endLine = endLine
+			}
+			groups[n-1].replacements = append(groups[n-1].replacements, r)
+			continue
+		}
+		groups = append(groups, group{startLine: startLine, endLine: endLine, replacements: []matchedEdit{r}})
+	}
+
+	var b strings.Builder
+	originalLineIndex := 0
+	for _, g := range groups {
+		for _, line := range originalLines[originalLineIndex:g.startLine] {
+			b.WriteString(line)
+		}
+		groupStartOffset := baseLines[g.startLine].start
+		groupEndOffset := baseLines[g.endLine-1].end
+		b.WriteString(applyReplacements(baseContent[groupStartOffset:groupEndOffset], g.replacements, groupStartOffset))
+		originalLineIndex = g.endLine
+	}
+	for _, line := range originalLines[originalLineIndex:] {
+		b.WriteString(line)
+	}
+	return b.String(), nil
+}
+
 // applyEditsToNormalizedContent applies edits to LF-normalized content using
 // exact-then-fuzzy matching, with pi's uniqueness/overlap/no-change checks
 // (port of applyEditsToNormalizedContent). Returns the base content used for
@@ -115,18 +235,21 @@ func applyEditsToNormalizedContent(normalizedContent string, edits []editEntry, 
 			break
 		}
 	}
-	base = normalizedContent
+	// Matching runs in fuzzy-normalized space when any edit needed fuzzy matching,
+	// but unchanged lines are overlaid back from the original (pi 128330e3): the
+	// returned base is always the LF-normalized original, not the fuzzy view.
+	replacementBase := normalizedContent
 	if anyFuzzy {
-		base = normalizeForFuzzyMatch(normalizedContent)
+		replacementBase = normalizeForFuzzyMatch(normalizedContent)
 	}
 
 	matched := make([]matchedEdit, 0, n)
 	for i, e := range norm {
-		m := fuzzyFindText(base, e.oldText)
+		m := fuzzyFindText(replacementBase, e.oldText)
 		if !m.found {
 			return "", "", notFoundError(path, i, n)
 		}
-		if occ := countFuzzyOccurrences(base, e.oldText); occ > 1 {
+		if occ := countFuzzyOccurrences(replacementBase, e.oldText); occ > 1 {
 			return "", "", duplicateError(path, i, n, occ)
 		}
 		matched = append(matched, matchedEdit{editIndex: i, matchIndex: m.index, matchLength: m.matchLength, newText: e.newText})
@@ -140,10 +263,14 @@ func applyEditsToNormalizedContent(normalizedContent string, edits []editEntry, 
 		}
 	}
 
-	result = base
-	for i := len(matched) - 1; i >= 0; i-- {
-		m := matched[i]
-		result = result[:m.matchIndex] + m.newText + result[m.matchIndex+m.matchLength:]
+	base = normalizedContent
+	if anyFuzzy {
+		result, err = applyReplacementsPreservingUnchangedLines(normalizedContent, replacementBase, matched)
+		if err != nil {
+			return "", "", err
+		}
+	} else {
+		result = applyReplacements(replacementBase, matched, 0)
 	}
 	if base == result {
 		return "", "", noChangeError(path, n)

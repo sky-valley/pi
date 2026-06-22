@@ -67,6 +67,70 @@ func TestEditExactStillPreferredAndPreservesContent(t *testing.T) {
 	}
 }
 
+// TestEditFuzzyPreservesUntouchedLines (upstream 128330e3): when a fuzzy edit
+// rewrites a line, other lines keep their ORIGINAL bytes (e.g. trailing
+// whitespace) instead of being globally fuzzy-normalized. The replaced line here
+// equals a nearby line, so it also guards against aligning to the wrong one.
+func TestEditFuzzyPreservesUntouchedLines(t *testing.T) {
+	dir := t.TempDir()
+	original := "replace me   \nafter   \n"
+	os.WriteFile(filepath.Join(dir, "f.txt"), []byte(original), 0o644)
+	_, err := run(t, editTool(dir), map[string]any{
+		"path":  "f.txt",
+		"edits": []any{map[string]any{"oldText": "replace me\n", "newText": "after\n"}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, _ := os.ReadFile(filepath.Join(dir, "f.txt"))
+	// First line rewritten; the untouched second line keeps its trailing spaces.
+	if want := "after\nafter   \n"; string(data) != want {
+		t.Fatalf("fuzzy edit must preserve untouched lines: got %q, want %q", data, want)
+	}
+}
+
+// TestEditFuzzyMultiEditPreservesUntouchedLines: a multi-edit fuzzy operation
+// rewrites only its targeted line-blocks and copies every other line back
+// verbatim (trailing whitespace on the "keep" lines must survive).
+func TestEditFuzzyMultiEditPreservesUntouchedLines(t *testing.T) {
+	dir := t.TempDir()
+	original := strings.Join([]string{
+		"keep before  ",
+		"first target  ",
+		"first after",
+		"keep middle   ",
+		"second target  ",
+		"second after",
+		"keep after  ",
+		"",
+	}, "\n")
+	os.WriteFile(filepath.Join(dir, "f.txt"), []byte(original), 0o644)
+	_, err := run(t, editTool(dir), map[string]any{
+		"path": "f.txt",
+		"edits": []any{
+			map[string]any{"oldText": "first target\nfirst after", "newText": "FIRST\nFIRST2"},
+			map[string]any{"oldText": "second target\nsecond after", "newText": "SECOND\nSECOND2"},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, _ := os.ReadFile(filepath.Join(dir, "f.txt"))
+	want := strings.Join([]string{
+		"keep before  ",
+		"FIRST",
+		"FIRST2",
+		"keep middle   ",
+		"SECOND",
+		"SECOND2",
+		"keep after  ",
+		"",
+	}, "\n")
+	if string(data) != want {
+		t.Fatalf("multi fuzzy edit must preserve untouched lines:\n got %q\nwant %q", data, want)
+	}
+}
+
 func TestEditNoChangeError(t *testing.T) {
 	dir := t.TempDir()
 	os.WriteFile(filepath.Join(dir, "f.txt"), []byte("hello\n"), 0o644)
