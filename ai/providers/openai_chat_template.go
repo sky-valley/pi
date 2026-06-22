@@ -25,12 +25,15 @@ type chatTemplateKwarg struct {
 	value chatTemplateKwargValue
 }
 
-// orderedJSONObject marshals key/value pairs in slice order, mirroring
-// JSON.stringify of a JS object (insertion order) for byte-exact request bodies.
-type orderedJSONObject []struct {
+// orderedField is one key/value pair of an orderedJSONObject.
+type orderedField struct {
 	Key   string
 	Value any
 }
+
+// orderedJSONObject marshals key/value pairs in slice order, mirroring
+// JSON.stringify of a JS object (insertion order) for byte-exact request bodies.
+type orderedJSONObject []orderedField
 
 func (o orderedJSONObject) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
@@ -122,10 +125,7 @@ func buildChatTemplateKwargs(model *ai.Model, compat openAICompletionsCompat, le
 	var out orderedJSONObject
 	for _, kw := range compat.ChatTemplateKwargs {
 		if resolved, include := resolveChatTemplateKwargValue(model, level, kw.value); include {
-			out = append(out, struct {
-				Key   string
-				Value any
-			}{kw.key, resolved})
+			out = append(out, orderedField{Key: kw.key, Value: resolved})
 		}
 	}
 	if len(out) == 0 {
