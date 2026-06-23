@@ -23,7 +23,7 @@ const attrDoneSSE = "data: {\"choices\":[{\"delta\":{},\"finish_reason\":\"stop\
 // stub server and returns the request headers. The model's Provider drives
 // attribution; BaseURL is overwritten with the test server so the request is
 // actually sent (host-based detection is unit-tested separately below).
-func captureOpenAICompletionsHeaders(t *testing.T, provider ai.Provider, sessionID string, optsHeaders map[string]string) http.Header {
+func captureOpenAICompletionsHeaders(t *testing.T, provider ai.ProviderId, sessionID string, optsHeaders map[string]string) http.Header {
 	t.Helper()
 	t.Setenv("PI_TELEMETRY", "1")
 	var got http.Header
@@ -75,7 +75,7 @@ func TestAttributionNvidiaNim(t *testing.T) {
 }
 
 func TestAttributionCloudflare(t *testing.T) {
-	for _, p := range []ai.Provider{"cloudflare-workers-ai", "cloudflare-ai-gateway"} {
+	for _, p := range []ai.ProviderId{"cloudflare-workers-ai", "cloudflare-ai-gateway"} {
 		h := captureOpenAICompletionsHeaders(t, p, "", nil)
 		if got := h.Get("User-Agent"); got != "pi-coding-agent" {
 			t.Fatalf("provider %s: User-Agent = %q, want pi-coding-agent", p, got)

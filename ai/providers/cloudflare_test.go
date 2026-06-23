@@ -7,12 +7,12 @@ import (
 )
 
 func TestIsCloudflareProvider(t *testing.T) {
-	for _, p := range []ai.Provider{"cloudflare-workers-ai", "cloudflare-ai-gateway"} {
+	for _, p := range []ai.ProviderId{"cloudflare-workers-ai", "cloudflare-ai-gateway"} {
 		if !isCloudflareProvider(p) {
 			t.Fatalf("expected %q to be a cloudflare provider", p)
 		}
 	}
-	for _, p := range []ai.Provider{"openai", "anthropic", "cloudflare", ""} {
+	for _, p := range []ai.ProviderId{"openai", "anthropic", "cloudflare", ""} {
 		if isCloudflareProvider(p) {
 			t.Fatalf("expected %q to NOT be a cloudflare provider", p)
 		}

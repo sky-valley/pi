@@ -413,7 +413,7 @@ func (a *Agent) handleRunFailure(ctx context.Context, msg string, aborted bool) 
 	failure := &ai.AssistantMessage{
 		Content:      ai.ContentList{ai.TextContent{Text: ""}},
 		Api:          ai.Api(model.Api),
-		Provider:     ai.Provider(model.Provider),
+		Provider:     ai.ProviderId(model.Provider),
 		Model:        model.ID,
 		Usage:        emptyUsage,
 		StopReason:   stop,

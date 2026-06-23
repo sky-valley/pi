@@ -460,7 +460,7 @@ func TestOpenAIToolCallIDNormalization(t *testing.T) {
 			ai.NewUserText("hi", 1),
 			ai.AssistantMessage{
 				Content:  ai.ContentList{ai.ToolCall{ID: id, Name: "f", Arguments: map[string]any{}}},
-				Provider: ai.Provider(provider), Api: ai.APIOpenAICompletions, Model: modelID,
+				Provider: ai.ProviderId(provider), Api: ai.APIOpenAICompletions, Model: modelID,
 				StopReason: ai.StopToolUse,
 			},
 			ai.ToolResultMessage{ToolCallID: id, ToolName: "f", Content: ai.ContentList{ai.TextContent{Text: "ok"}}},

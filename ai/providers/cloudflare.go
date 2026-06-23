@@ -24,7 +24,7 @@ const (
 
 // isCloudflareProvider reports whether provider is one of pi's Cloudflare
 // providers (cloudflare.ts isCloudflareProvider).
-func isCloudflareProvider(provider ai.Provider) bool {
+func isCloudflareProvider(provider ai.ProviderId) bool {
 	return provider == "cloudflare-workers-ai" || provider == "cloudflare-ai-gateway"
 }
 

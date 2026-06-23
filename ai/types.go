@@ -21,8 +21,11 @@ const (
 	APIGoogleVertex          Api = "google-vertex"
 )
 
-// Provider identifies a model provider (e.g. "anthropic", "openai").
-type Provider = string
+// ProviderId identifies a model provider (e.g. "anthropic", "openai"). pi
+// renamed this from Provider to ProviderId in the model-registry merge
+// (732bb161), freeing Provider for the runtime Provider interface (see
+// models_runtime.go).
+type ProviderId = string
 
 // ThinkingLevel is a reasoning effort level understood by the unified API.
 type ThinkingLevel string
@@ -339,7 +342,7 @@ func NewUserText(text string, timestamp int64) UserMessage {
 type AssistantMessage struct {
 	Content       ContentList  `json:"content"` // TextContent | ThinkingContent | ToolCall
 	Api           Api          `json:"api"`
-	Provider      Provider     `json:"provider"`
+	Provider      ProviderId   `json:"provider"`
 	Model         string       `json:"model"`
 	ResponseModel string       `json:"responseModel,omitempty"`
 	ResponseID    string       `json:"responseId,omitempty"`
@@ -443,7 +446,7 @@ type Model struct {
 	ID               string            `json:"id"`
 	Name             string            `json:"name"`
 	Api              Api               `json:"api"`
-	Provider         Provider          `json:"provider"`
+	Provider         ProviderId        `json:"provider"`
 	BaseURL          string            `json:"baseUrl"`
 	Reasoning        bool              `json:"reasoning"`
 	ThinkingLevelMap ThinkingLevelMap  `json:"thinkingLevelMap,omitempty"`
