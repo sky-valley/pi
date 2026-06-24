@@ -16,6 +16,7 @@ captured from. The commit-by-commit triage/port ledger lives in
 
 | Version | Date | Commit | Upstream pin | npm catalog | Headline |
 |---|---|---|---|---|---|
+| [`v0.2.7`](#v027) | 2026-06-24 | `b75f5da` | `a2e3e9d8` | pi-ai 0.80.2 | Catalog 0.79.10→0.80.2; models-runtime migration complete (auth substrate + Models runtime + request-scoped auth + api_key/env credential); OpenAI Responses terminal events; anthropic compat→catalog; header-only client auth |
 | [`v0.2.6`](#v026) | 2026-06-22 | `d91f8b7` | `2417adb4` | pi-ai 0.79.9 | Catalog 0.79.9; chat-template thinking compat (latent); fuzzy-edit untouched-line preservation; legacy WSL bash stdin; session-branch linearization |
 | [`v0.2.5`](#v025) | 2026-06-19 | `d5f2c73` | `56b22768` | pi-ai 0.79.8 | Catalog 0.79.8 (GLM-5.2 opencode-go, openrouter/fusion, Mistral prompt-caching data); no behavior change vs v0.2.4 |
 | [`v0.2.4`](#v024) | 2026-06-17 | `a9b7e5c` | `29c1504c` | pi-ai 0.79.6 | GLM-5.2 reasoning_effort; null Responses content; provider-scoped env overrides; deepseek gate live |
@@ -27,6 +28,41 @@ captured from. The commit-by-commit triage/port ledger lives in
 | [`v0.1.0`](#v010) | 2026-06-10 | `1210b0a` | — | — | Initial tagged baseline |
 
 ## Notes
+
+### v0.2.7
+Rolls up **three upstream cycles** untagged since v0.2.6 (`2417adb4 → a2e3e9d8`):
+the v0.79.10 catalog cycle, the 2026-06-23 model-registry adopt (`732bb161`
+auth substrate + Models runtime + BuiltinModels), and the 2026-06-24 migration
+completion. npm reference build advanced 0.79.9 → **0.80.2** (via 0.79.10,
+0.80.0, 0.80.1, 0.80.2 — each regen supersedes the prior). The model-registry
+migration is now **complete**. Per-cycle triage/port detail is in
+[`UPSTREAM.md`](UPSTREAM.md); headline ports below.
+
+- **Catalog → 0.80.2** — endpoint-pinned, re-derived byte-identical (386,548 B),
+  integrity-verified `sha512-5GNKfdrR…uy9RQ==`. huggingface registration
+  provider + glm-5.2/glm-5v-turbo; `off:null` tripwires intact.
+- **Models-runtime migration** (`732bb161` + the 2026-06-24 follow-through) —
+  auth substrate (credential store, provider auth, OAuth-under-lock), Models
+  runtime (Provider iface, CreateModels/CreateProvider, BuiltinModels),
+  request-scoped auth resolution (`ef231c49`), and the `api-key`→`api_key` /
+  credential `metadata`→`env` alignment (`49fbe683`). Globals remain the compat
+  consumer surface.
+- **OpenAI Responses terminal events** (`cd95c274`) — `response.incomplete`
+  finalizes like `response.completed`; the stream fails when it ends with no
+  terminal event.
+- **anthropic compat → catalog** (`6184307c`) — provider/baseUrl auto-detection
+  removed; fireworks / cloudflare-ai-gateway-anthropic values come from the
+  catalog. Byte-identical for catalog models.
+- **header-only client auth + vercel routing ungate** (`129eb460`) — an
+  authorization / cf-aig-authorization header satisfies auth without an api key;
+  vercel gateway routing is no longer baseUrl-gated.
+- **Deliberate divergences** (2026-06-24 ruling): `ProviderHeaders`
+  null-suppression, cloudflare base-URL relocation, and compat
+  `shouldUseBuiltinModels` routing are not transliterated — confirmed
+  observably byte-identical through the Go compat-globals consumer path.
+
+Reviewed via independent go-review (ship) + adversarial parity review (all
+faithful; catalog re-derived byte-identical; 6/6 differential request diff).
 
 ### v0.2.6
 Upstream sync `56b22768 → 2417adb4` — 22 main-line changes (**4 behavior/perf
