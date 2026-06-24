@@ -14,7 +14,7 @@ for cancellation, goroutines for parallel tool execution).
 | Package | Mirrors | What it is |
 |---|---|---|
 | [`ai`](ai/) | `@earendil-works/pi-ai` | Unified multi-provider LLM API: message/content/tool/model types, the channel-based `EventStream`, JSON-Schema tool validation, model catalog + cost, provider registry. |
-| [`ai/providers`](ai/providers/) | `pi-ai/providers` | Concrete providers, all with real `net/http` SSE: **faux** (deterministic test double), **Anthropic** Messages, **OpenAI** Chat Completions, **OpenAI** Responses (GPT-5/o-series), **Google** Gemini. These four wire APIs cover ~789 of pi's 968 catalog models. |
+| [`ai/providers`](ai/providers/) | `pi-ai/providers` | Concrete providers, all with real `net/http` SSE: **faux** (deterministic test double), **Anthropic** Messages, **OpenAI** Chat Completions, **OpenAI** Responses (GPT-5/o-series), **Google** Gemini. These four wire APIs cover ~816 of pi's 999 catalog models. |
 | [`agent`](agent/) | `@earendil-works/pi-agent-core` | The agent runtime: low-level `AgentLoop`, the stateful `Agent` with tool calling, hooks, steering/follow-up queues, sequential + parallel tool execution. |
 | [`coding`](coding/) | `@earendil-works/pi-coding-agent` | The coding agent: the seven built-in tools (`read`, `write`, `edit`, `bash`, `ls`, `find`, `grep`), the system prompt builder (with AGENTS.md/CLAUDE.md context files + Agent Skills), model resolver, the session runner, and JSONL session persistence. |
 | [`cmd/pi`](cmd/pi/) | `pi` CLI | The `pi` command — print mode, interactive REPL with slash commands, session resume, `pi models`, `pi sessions`. |
@@ -48,7 +48,7 @@ resumes a specific file). Project context files (`AGENTS.md`/`CLAUDE.md`, discov
 the directory tree) and Agent Skills (`.pi/skills/*/SKILL.md`) are folded into the system
 prompt exactly as upstream pi does.
 
-The model catalog (968 models across 35 providers) is embedded from pi's generated
+The model catalog (999 models across 35 providers) is embedded from pi's generated
 catalog. API keys are resolved from the same environment variables pi uses
 (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, …).
 
@@ -72,7 +72,7 @@ import (
 model, _ := coding.ResolveModel("anthropic/claude-sonnet-4-5")
 sess := coding.NewSession(coding.SessionOptions{
     Model:  model,
-    APIKey: ai.GetEnvApiKey(model.Provider),
+    APIKey: ai.GetEnvApiKey(model.Provider, nil),
 })
 text, err := sess.RunPrint(ctx, os.Stdout, "list the Go files and summarize them")
 ```
@@ -94,7 +94,7 @@ model, _ := coding.ResolveModel("openai/gpt-5")            // uses the Responses
 
 sess := coding.NewSession(coding.SessionOptions{
     Model:  model,
-    APIKey: ai.GetEnvApiKey(model.Provider),               // OPENAI_API_KEY
+    APIKey: ai.GetEnvApiKey(model.Provider, nil),          // OPENAI_API_KEY
 
     // Tool selection (allow/deny/none + your own tools), mirrors createAgentSession.
     ToolNames:   []string{"read", "bash"},                 // or NoTools: coding.NoToolsAll
