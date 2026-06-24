@@ -83,20 +83,16 @@ type anthropicCompat struct {
 }
 
 func getAnthropicCompat(model *ai.Model) anthropicCompat {
+	// pi 6184307c: no provider/baseUrl auto-detection — OpenAI-standard
+	// defaults, with fireworks / cloudflare-ai-gateway-anthropic values supplied
+	// explicitly by the catalog (model.compat). sendSessionAffinityHeaders
+	// defaults to false.
 	c := anthropicCompat{
 		supportsEagerToolInputStreaming: true,
 		supportsLongCacheRetention:      true,
 		supportsCacheControlOnTools:     true,
 		supportsTemperature:             true,
 	}
-	isFireworks := model.Provider == "fireworks"
-	isCFAnthropic := model.Provider == "cloudflare-ai-gateway" && strings.Contains(model.BaseURL, "anthropic")
-	if isFireworks {
-		c.supportsEagerToolInputStreaming = false
-		c.supportsLongCacheRetention = false
-		c.supportsCacheControlOnTools = false
-	}
-	c.sendSessionAffinityHeaders = isFireworks || isCFAnthropic
 
 	// Apply explicit model.compat overrides.
 	if len(model.Compat) > 0 {

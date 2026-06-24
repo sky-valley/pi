@@ -662,11 +662,13 @@ func TestAnthropicStreamSimpleNoReasoningDisablesThinking(t *testing.T) {
 // --- E4: session affinity suppressed when cacheRetention is none ---
 
 func TestAnthropicSessionAffinityRetention(t *testing.T) {
-	// fireworks auto-enables sendSessionAffinityHeaders.
+	// pi 6184307c: sendSessionAffinityHeaders now comes from catalog compat
+	// (fireworks no longer auto-detects), so set it explicitly as the catalog does.
 	mk := func(retention ai.CacheRetention) http.Header {
 		model := &ai.Model{
 			ID: "claude-test", Api: ai.APIAnthropicMessages, Provider: "fireworks",
 			Input: []string{"text"}, MaxTokens: 4096,
+			Compat: json.RawMessage(`{"sendSessionAffinityHeaders":true}`),
 		}
 		req := ai.Context{Messages: []ai.Message{ai.NewUserText("hi", 1)}}
 		opts := &AnthropicOptions{StreamOptions: ai.StreamOptions{
