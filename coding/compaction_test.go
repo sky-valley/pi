@@ -437,6 +437,37 @@ func TestUsageEstimateSkipsAbortedAndError(t *testing.T) {
 	}
 }
 
+// TestUsageEstimateSkipsAllZeroUsage locks upstream cd95c274's calculateContextTokens
+// guard: a successful (non-aborted/non-error) assistant message whose usage is
+// all-zero (malformed/unreported usage) must NOT anchor the estimate. The earlier
+// valid usage stays the anchor; if none exists, the pure heuristic is used.
+func TestUsageEstimateSkipsAllZeroUsage(t *testing.T) {
+	valid := ai.AssistantMessage{
+		Content:    ai.ContentList{ai.TextContent{Text: "ok"}},
+		Usage:      ai.Usage{TotalTokens: 50000},
+		StopReason: ai.StopStop, Timestamp: 1,
+	}
+	// Successful turn but the provider reported all-zero usage (malformed).
+	zeroUsage := ai.AssistantMessage{
+		Content:    ai.ContentList{ai.TextContent{Text: "huge response with no usage"}},
+		Usage:      ai.Usage{}, // all zero
+		StopReason: ai.StopStop, Timestamp: 2,
+	}
+
+	// The all-zero turn must not override the earlier valid 50000 anchor.
+	got := estimateContextTokensUsageAware([]agent.AgentMessage{valid, zeroUsage})
+	if got < 50000 {
+		t.Fatalf("all-zero usage overrode the valid anchor; expected >= 50000, got %d", got)
+	}
+
+	// Only all-zero usage present => pure heuristic, never an anchor of 0.
+	got = estimateContextTokensUsageAware([]agent.AgentMessage{ai.NewUserText("short", 1), zeroUsage})
+	pure := EstimateContextTokens([]agent.AgentMessage{ai.NewUserText("short", 1), zeroUsage})
+	if got != pure {
+		t.Fatalf("all-zero usage must fall back to the pure heuristic (%d), got %d", pure, got)
+	}
+}
+
 // TestSummarizationPassesReasoningAndHeaders locks I7: the summarization request
 // carries the session's headers and — for reasoning models with a non-off
 // thinking level — the thinking level (pi compaction.ts:526-539).
