@@ -10,10 +10,10 @@ commit-by-commit sync pipeline that keeps it current.
 
 | What | Value |
 |---|---|
-| TS source fully reviewed/ported | `470a4736` — "Merge #5784 threaded-session sort" (2026-06-23); previous pins `3b561346` (06-22), `2417adb4` (06-21), `56b22768` (06-19), `29c1504c` (06-17). The `732bb161` model-registry merge is ported (auth substrate + Models runtime + BuiltinModels, Go `bf7e7bd`/`37dcff5`/`2b164b3`); its catalog-data reorg stays deferred to the next release regen (0.79.10 not re-published). |
-| npm build the byte-goldens were captured from | `@earendil-works/pi-ai` **0.79.10** (catalog endpoint-pinned both sides: old ≡ 0.79.9 build, new ≡ 0.79.10 build, lock integrity verified against the registry on each — `sha512-9jR23…ORuew==`); `pi-coding-agent` 0.78.1 (session/image goldens — unaffected by 0.79.x) |
-| Parity proofs at the pin | catalog regen endpoint-pinned byte-identical · session tree 8/8 · image decisions 8/8 (unchanged this cycle) · differential request diff 14/14 (reasoning-details change is response-parse only — request bytes unchanged) |
-| Reviewed via | initial port + parity sweep 1 + parity sweep 2 (`3be3911`), registration fix (`b09cb46`); 2026-06-22 v0.79.10 cycle independent go-review (ship) + adversarial parity review (caught a missing validation-tightening on the reasoning-details port → fixed in `62981f1`; re-verified faithful) |
+| TS source fully reviewed/ported | `a2e3e9d8` — "Merge #6004 azure-foundry-endpoints" (2026-06-24); previous pins `470a4736` (06-23), `3b561346` (06-22), `2417adb4` (06-21), `56b22768` (06-19), `29c1504c` (06-17). The models-runtime migration is now **complete**: the `732bb161` substrate (06-23) plus the 06-24 follow-through (catalog-data reorg landed via the 0.80.2 regen; request-scoped auth `ef231c49`; api_key/env credential `49fbe683`; OpenAI Responses terminal events `cd95c274`; anthropic compat→catalog `6184307c`; header-only client auth + vercel ungate `129eb460`). |
+| npm build the byte-goldens were captured from | `@earendil-works/pi-ai` **0.80.2** (catalog endpoint-pinned, re-derived byte-identical from `dist/models.generated.js`, lock integrity verified against the registry — `sha512-5GNKfdrR…uy9RQ==`; subsumes v0.80.0/v0.80.1); `pi-coding-agent` 0.78.1 (session/image goldens — unaffected by 0.80.x) |
+| Parity proofs at the pin | catalog regen endpoint-pinned byte-identical (386,548 B, independently re-derived) · session tree 8/8 · image decisions 8/8 (unchanged this cycle) · differential request diff 6/6 (re-derived from the 0.80.2 build) · in-repo differential parity 36/36 · fireworks/cf anthropic compat coupling 0 mismatches (14 fireworks + 17 cf-anthropic models carry the fields the removed auto-detect synthesized) |
+| Reviewed via | initial port + parity sweeps 1–2 (`3be3911`), registration fix (`b09cb46`); 2026-06-22 v0.79.10 cycle; 2026-06-24 v0.80.2 cycle independent go-review (ship, 3 optional LOW nits) + adversarial parity review (all 7 commits faithful, 6/6 differential, all 3 deliberate divergences confirmed observably-faithful) |
 
 Deliberately not ported (out of scope for the ledger unless a commit changes
 that decision): TUI, extensions runtime, OAuth token acquisition, project-trust
@@ -25,6 +25,43 @@ model-registry, settings) — the SDK `StreamOptions.Env` field is ported but
 stays latent until a host sets it (see the 2026-06-17 ruling).
 
 ### Rulings (answers to `decide` escalations — triage must not re-ask)
+
+- **2026-06-24 — models-runtime migration completed under the "globals stay as
+  compat" divergence** (re: the `129eb460` "complete models runtime migration"
+  consolidation). The 06-23 adopt ruling stands (maximum parity + Go idioms);
+  this records WHERE the Go port deliberately diverges in *structure* while
+  staying byte-faithful through its actual consumer path. The Go coding agent
+  streams via the **compat globals** (`ai.Stream` → `withEnvAPIKey` → raw
+  provider), NOT the Models runtime — the on-record "globals stay as compat"
+  divergence. Three pieces of `129eb460` are therefore **not transliterated**;
+  the 2026-06-24 parity review confirmed each is observably byte-identical
+  through the compat path (they "compensate precisely"):
+  1. **`ProviderHeaders` null-suppression** (`Record<string,string|null>`) — NOT
+     ported. `Headers` stays `map[string]string`. Porting it would change the
+     public Go API (`StreamOptions.Headers`/`Model.Headers`) for a **latent**
+     capability: zero 0.80.2 catalog models set a null header, and pi's only
+     real null use (cloudflare-ai-gateway suppressing `Authorization`) is
+     already handled in Go by a conditional skip, not a null marker. Revisit
+     only if a consumer needs to suppress a default header.
+  2. **Cloudflare base-URL placeholder resolution + `cf-aig-authorization`** —
+     kept **inline** in the openai providers (`resolveCloudflareBaseURL`) rather
+     than relocated to a `cloudflare-auth` layer. Verified byte-identical
+     baseURL + headers vs pi's relocated version for gateway + workers-ai.
+  3. **compat `shouldUseBuiltinModels` routing** — NOT ported. pi routes catalog
+     models through the Models runtime (empty credential store + env-only auth +
+     cloudflare-auth baseURL); Go's "raw provider + `withEnvAPIKey` + inline
+     cloudflare" path resolves to the same bytes. Divergences (1)+(3) cancel.
+  In scope and ported this cycle (all faithful): `ef231c49` (request-scoped auth
+  overrides — the named `auth/resolve.ts` boundary edge), `49fbe683`
+  (`api-key`→`api_key`, credential `metadata`→`env`), `cd95c274` (OpenAI
+  Responses terminal-event requirement + compaction zero-usage guard),
+  `6184307c` (anthropic compat now from catalog — byte-safe; the 0.80.2 catalog
+  carries the fields the removed auto-detect synthesized), `129eb460`'s
+  `getClientApiKey` "unused" sentinel + vercel routing ungate (byte-safe for the
+  catalog). The catalog-data reorg (per-provider `*.models.ts` + huggingface
+  registration provider) landed via the 0.80.2 regen. Future commits to the
+  null-`ProviderHeaders` plumbing or compat-routing in `packages/ai/src` re-open
+  this — re-judge against the compat-path equivalence above.
 
 - **2026-06-23 — adopt the SDK-side model-registry / env-resolution overhaul**
   (re: the `732bb161` "Merge model-registry into main" merge + rider
@@ -79,6 +116,71 @@ stays latent until a host sets it (see the 2026-06-17 ruling).
   extension resource-loader; `skills.ts` untouched). Future trust commits are
   `n/a` under this ruling UNLESS they change behavior of surface we ported —
   that re-escalates.
+
+## Drift at last sync check (2026-06-24) — pin advanced to a2e3e9d8
+
+**Caught up to `a2e3e9d8`.** Delta `470a4736 → a2e3e9d8` fully processed: 28
+main-line changes — **9 port-tagged (→ 7 Go commits), 19 n/a, 0 decides**.
+Three release tags crossed (v0.80.0/v0.80.1/v0.80.2); npm reference build
+advanced 0.79.10 → **0.80.2** (each regen supersedes the prior). This cycle
+**completes the models-runtime migration** (the `732bb161` follow-through);
+much of it cancels intra-cycle (`detectCompat` removed in `129eb460` then
+restored in `e1a2dc04` → net unchanged; anthropic compat toggled by `828493b3`
+then `6184307c` → net auto-detect removed). Reviewed via independent go-review
+(ship, 3 optional LOW nits) + adversarial parity review (all 7 commits
+faithful; catalog re-derived byte-identical; 6/6 differential request diff;
+all 3 deliberate divergences confirmed observably-faithful — see the 2026-06-24
+ruling). Build/vet/`-race` green.
+
+- **Catalog → npm 0.80.2** (`f08e968c`/`1c4a9ba7`/`0201806a`, Go `d2f937d`):
+  endpoint-pinned, re-derived byte-identical (386,548 B). +24 (huggingface
+  MiniMax/Qwen/GLM via the registration-only `huggingface` provider; opencode
+  glm-5.2; openrouter z-ai/glm-5v-turbo), −4 openrouter (no Go refs), 357
+  cost/metadata churn. `off:null` tripwires intact (110→111 in `ThinkingLevelMap`).
+- **OpenAI Responses terminal events** (`cd95c274`, Go `e7c69ca`):
+  `response.incomplete` finalizes like `response.completed`; stream fails with
+  "OpenAI Responses stream ended before a terminal response event" if no
+  terminal event. Response-parse only. Tests: `TestResponsesIncomplete…`,
+  `TestResponsesNoTerminalEventFailsStream`.
+- **api-key credentials → auth.json shape** (`49fbe683`, Go `fad8247`):
+  `CredentialAPIKey` "api-key"→"api_key"; `Credential.Metadata`→`Env`
+  (json `metadata`→`env`). On-disk breaking change (no shim, mirrors pi). Test:
+  `TestCredentialAPIKeyJSON`.
+- **compaction zero-usage guard** (`cd95c274`, Go `5c6c777`): usage-anchor loop
+  already enforced `>0`; comment aligned + `TestUsageEstimateSkipsAllZeroUsage`.
+  The agent-session.ts threshold/post-compaction halves are unported
+  agent-session-runtime surface (N/A).
+- **request-scoped auth overrides** (`ef231c49`, Go `b53482b`):
+  `AuthResolutionOverrides{apiKey,env}` + `overlayEnvAuthContext` into
+  `resolveProviderAuth`; `applyAuth` resolves through it; `GetAuth` stays
+  override-free. The named `auth/resolve.ts` boundary edge. Test:
+  `TestResolveProviderAuthRequestOverrides`.
+- **anthropic compat → catalog** (`6184307c`, Go `64e5022`): removed
+  fireworks/cloudflare auto-detect; defaults `?? true/true/false/true`, catalog
+  supplies the rest. Byte-identical for catalog (0 mismatches across 14
+  fireworks + 17 cf-anthropic models). `TestAnthropicSessionAffinityRetention`
+  re-pinned to supply compat explicitly.
+- **header-only client auth + vercel ungate** (`129eb460`, Go `54a254e`):
+  `clientAPIKey` "unused" sentinel for authorization/cf-aig-authorization
+  header-only auth; `vercelGatewayRouting` no longer baseUrl-gated (byte-safe —
+  no catalog model sets routing). Tests: `TestClientAPIKeySentinel`,
+  `TestDiffVercelGatewayRouting` (re-pinned).
+
+**Deliberate divergences (2026-06-24 ruling):** `ProviderHeaders`
+null-suppression not ported (latent + public-API change), cloudflare base-URL/
+cf-aig auth kept inline (not relocated), compat `shouldUseBuiltinModels` routing
+not ported (globals-stay-compat). All observably byte-identical through the Go
+compat-globals consumer path.
+
+n/a (19): docs/CHANGELOG (`15f92260`, `12ace0ba`, `2be6e670`, `526351d9`,
+`86528dd9`, `e0007435`, `9096d5f9`, `8277bd68`); CI/packaging (`2285f879`
+removed API subpath exports, `c3cfeac0`, `954ec998`, `97820276`, `ec6311be`);
+`192fcccd` (extensions-load hint, main.ts); `b3776234` (type rename
+`ExecutionEnvExecOptions`→`ShellExecOptions`, behavior-neutral); `828493b3`
+(generator/data folds to 0.80.2; bedrock unported; anthropic intermediate);
+`63386614` (TUI/benchmark timing); `a2e3e9d8` (**Azure** foundry — provider
+excluded). `e1a2dc04` (restore detectCompat) is net-neutral with `129eb460`'s
+removal → no Go change. No new boundary questions.
 
 ## Drift at last sync check (2026-06-23) — pin advanced to 470a4736
 
@@ -367,6 +469,39 @@ only by comparison against real pi.
 Upstream reference clone: `$PI_UPSTREAM_DIR`, default `~/.cache/pi-upstream`.
 When the delta crosses a release tag, the npm reference build is refreshed to
 that version before parity review.
+
+## Ledger — 470a4736 → a2e3e9d8
+
+| Upstream | Date | Subject | Hint | Status | Go commit | Notes |
+|---|---|---|---|---|---|---|
+| `129eb460` | 2026-06-23 | feat(ai): complete models runtime migration | review | **ported** | `54a254e` (+catalog `d2f937d`) | The migration consolidation. Most lands via the 0.80.2 catalog regen (per-provider `*.models.ts` reorg, huggingface registration provider). Observable Go slices: `getClientApiKey` "unused" sentinel (`clientAPIKey`, both openai providers) + vercel routing ungate. `detectCompat` removal here is reverted by `e1a2dc04` (net unchanged). ProviderHeaders null-suppression / cloudflare-auth relocation / compat builtin-routing NOT ported — deliberate divergences (2026-06-24 ruling), observably byte-identical through the compat-globals path. |
+| `15f92260` | 2026-06-23 | docs(ai): expand models migration guide | likely-n/a | n/a | — | ai/CHANGELOG.md |
+| `12ace0ba` | 2026-06-23 | docs(ai): reference README in migration guide | likely-n/a | n/a | — | ai/CHANGELOG.md |
+| `2285f879` | 2026-06-23 | fix(ai): remove legacy raw API subpaths | review | n/a | — | package.json export subpaths only (packaging) |
+| `cd95c274` | 2026-06-23 | fix(ai): require OpenAI Responses terminal events | review | **ported** | `e7c69ca` (+`5c6c777`) | openai-responses-shared: response.incomplete finalizes like completed; throw on no terminal event (Go `e7c69ca`, response-parse only). Compaction zero-usage guard (Go `5c6c777`); agent-session-runtime halves N/A. |
+| `2be6e670` | 2026-06-23 | docs(ai): document bundling behavior | likely-n/a | n/a | — | ai/README.md |
+| `192fcccd` | 2026-06-23 | fix(coding-agent): hint when extensions fail to load | review | n/a | — | main.ts extension-load-failure hint — extensions runtime unported |
+| `526351d9` | 2026-06-23 | docs: audit unreleased changelogs | likely-n/a | n/a | — | changelogs |
+| `f08e968c` | 2026-06-23 | Release v0.80.0 | review | ported (superseded) | `d2f937d` | catalog regen; superseded by 0.80.2 (final build subsumes it) |
+| `86528dd9` | 2026-06-23 | Add [Unreleased] section for next cycle | likely-n/a | n/a | — | changelog cycle header |
+| `828493b3` | 2026-06-23 | fix(ai): unblock release provider tests | review | n/a | — | generate-models `isTogetherReasoningOnly` (data → 0.80.2 regen); bedrock scoped-profile revert (unported); anthropic compat intermediate (net via `6184307c`) |
+| `1c4a9ba7` | 2026-06-23 | Release v0.80.1 | review | ported (superseded) | `d2f937d` | catalog regen; superseded by 0.80.2 |
+| `e0007435` | 2026-06-23 | Add [Unreleased] section for next cycle | likely-n/a | n/a | — | changelog cycle header |
+| `6184307c` | 2026-06-23 | fix(ai): require explicit anthropic compat metadata | review | **ported** | `64e5022` | getAnthropicCompat drops fireworks/cf auto-detect → OpenAI-standard defaults; catalog supplies the rest. Byte-identical for catalog (0 mismatches). Test re-pinned to explicit compat. |
+| `c3cfeac0` | 2026-06-23 | fix(coding-agent): make release publication transactional | review | n/a | — | .github/workflows + scripts/publish.mjs (CI) |
+| `b3776234` | 2026-06-23 | Type name change | review | n/a | — | packages/agent harness `ExecutionEnvExecOptions`→`ShellExecOptions` rename — behavior-neutral |
+| `49fbe683` | 2026-06-23 | fix(ai): align api key credentials with auth json | review | **ported** | `fad8247` | Credential type "api-key"→"api_key"; `Metadata`→`Env` (json metadata→env). On-disk breaking change (no shim, mirrors pi). Test: TestCredentialAPIKeyJSON. |
+| `04fce809` | 2026-06-23 | Merge remote-tracking branch 'origin/main' | review | n/a | — | new `legacy-api-aliases.ts` = deprecated TS re-export shims for the removed subpaths (Go compat globals already cover); compat.ts one-liner |
+| `ef231c49` | 2026-06-23 | fix(ai): resolve request-scoped auth before provider calls | review | **ported** | `b53482b` | `AuthResolutionOverrides{apiKey,env}` + `overlayEnvAuthContext` into resolveProviderAuth; applyAuth resolves through it; GetAuth override-free. The named auth/resolve.ts boundary edge. Test: TestResolveProviderAuthRequestOverrides. |
+| `e1a2dc04` | 2026-06-23 | fix(ai): restore detectCompat runtime fallback in openai-completions | review | n/a (net-neutral) | — | restores `detectCompat` removed by `129eb460` → net unchanged; Go's detectCompat stays as-is |
+| `9096d5f9` | 2026-06-23 | docs: update changelog entries | likely-n/a | n/a | — | changelogs |
+| `0201806a` | 2026-06-23 | Release v0.80.2 | review | **ported** | `d2f937d` | final catalog regen (reference build); endpoint-pinned, integrity-verified `sha512-5GNKfdrR…uy9RQ==` |
+| `8277bd68` | 2026-06-23 | Add [Unreleased] section for next cycle | likely-n/a | n/a | — | changelog cycle header |
+| `954ec998` | 2026-06-23 | fix: upload release assets from visible directory | likely-n/a | n/a | — | .github workflow (CI) |
+| `97820276` | 2026-06-23 | fix: remove OpenClaw gate | likely-n/a | n/a | — | .github workflow (CI) |
+| `ec6311be` | 2026-06-23 | fix: skip dirty check before npm publish | likely-n/a | n/a | — | .github workflow (CI) |
+| `63386614` | 2026-06-24 | fix(coding-agent): print benchmark timings after TUI stop (#6030) | review | n/a | — | main.ts startup-benchmark timing order (TUI) |
+| `a2e3e9d8` | 2026-06-24 | Merge #6004 support-azure-foundry-endpoints | review | n/a | — | azure-openai-responses.ts — Azure provider excluded |
 
 ## Ledger — 3b561346 → 470a4736
 
