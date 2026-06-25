@@ -1126,7 +1126,11 @@ data: {"type":"response.completed","response":{"id":"r","status":"completed"}}
 	stream := StreamOpenAIResponses(context.Background(), &m, ai.Context{Messages: []ai.Message{ai.NewUserText("hi", 1)}},
 		&OpenAIResponsesOptions{StreamOptions: ai.StreamOptions{APIKey: "sk"}})
 	var end *ai.ToolCall
+	var sawStart bool
 	for ev := range stream.Events() {
+		if ev.Type == ai.EventToolCallStart {
+			sawStart = true
+		}
 		if ev.Type == ai.EventToolCallEnd {
 			end = ev.ToolCall
 		}
@@ -1141,13 +1145,23 @@ data: {"type":"response.completed","response":{"id":"r","status":"completed"}}
 	if v, _ := end.Arguments["x"].(float64); v != 3 {
 		t.Fatalf("constructed args wrong: %#v", end.Arguments)
 	}
-	// pi never lands this block in content — replicated exactly.
+	// pi 8c9dbffa: getOrCreateSlot now materializes the block for a
+	// done-without-added, so a toolcall_start fires and the block lands in
+	// content (and the stop reason promotes to toolUse).
+	if !sawStart {
+		t.Fatalf("expected toolcall_start for done-without-added")
+	}
+	var toolInContent *ai.ToolCall
 	for _, c := range final.Content {
-		if _, ok := c.(ai.ToolCall); ok {
-			t.Fatalf("toolCall must not be appended to content: %#v", final.Content)
+		if tc, ok := c.(ai.ToolCall); ok {
+			v := tc
+			toolInContent = &v
 		}
 	}
-	if final.StopReason != ai.StopStop {
+	if toolInContent == nil || toolInContent.ID != "call_9|fc_9" {
+		t.Fatalf("toolCall must be appended to content: %#v", final.Content)
+	}
+	if final.StopReason != ai.StopToolUse {
 		t.Fatalf("stop reason wrong: %s (%s)", final.StopReason, final.ErrorMessage)
 	}
 }
@@ -1284,5 +1298,76 @@ func TestResponsesCacheRetentionWithoutSessionID(t *testing.T) {
 	}
 	if _, has := body["prompt_cache_key"]; has {
 		t.Fatalf("prompt_cache_key requires a sessionId")
+	}
+}
+
+// Regression for #6009 (upstream 8c9dbffa): when output items interleave, a
+// delta for an earlier item that arrives AFTER a later item's block was started
+// must route to the earlier item's block by output_index, not to whatever block
+// was appended last. Here the reasoning item (output_index 0) gets a
+// reasoning_text.delta only after the message item (output_index 1) has opened
+// and received a text delta — the thinking must land on content[0], the text on
+// content[1].
+func TestResponsesOutOfOrderItemsPreserveReasoning(t *testing.T) {
+	sse := `data: {"type":"response.created","response":{"id":"r"}}
+
+data: {"type":"response.output_item.added","output_index":0,"item":{"type":"reasoning","id":"rs_1"}}
+
+data: {"type":"response.output_item.added","output_index":1,"item":{"type":"message","id":"msg_1"}}
+
+data: {"type":"response.output_text.delta","output_index":1,"delta":"Answer: "}
+
+data: {"type":"response.reasoning_text.delta","output_index":0,"delta":"thinking hard"}
+
+data: {"type":"response.output_text.delta","output_index":1,"delta":"42"}
+
+data: {"type":"response.output_item.done","output_index":0,"item":{"type":"reasoning","id":"rs_1","content":[{"type":"reasoning_text","text":"thinking hard"}]}}
+
+data: {"type":"response.output_item.done","output_index":1,"item":{"type":"message","id":"msg_1","content":[{"type":"output_text","text":"Answer: 42"}]}}
+
+data: {"type":"response.completed","response":{"id":"r","status":"completed"}}
+
+`
+	// Capture the stream events so we can assert the interleaved reasoning delta
+	// targeted content[0] (the reasoning block), not content[1].
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("content-type", "text/event-stream")
+		io.WriteString(w, sse)
+	}))
+	defer server.Close()
+	m := *reasoningModel()
+	m.BaseURL = server.URL
+	stream := StreamOpenAIResponses(context.Background(), &m, ai.Context{Messages: []ai.Message{ai.NewUserText("hi", 1)}},
+		&OpenAIResponsesOptions{StreamOptions: ai.StreamOptions{APIKey: "sk"}})
+
+	var thinkingDeltaIndex = -1
+	for ev := range stream.Events() {
+		if ev.Type == ai.EventThinkingDelta && ev.Delta == "thinking hard" {
+			thinkingDeltaIndex = ev.ContentIndex
+		}
+	}
+	final := stream.Result()
+
+	// The interleaved thinking delta must have been emitted against content[0].
+	if thinkingDeltaIndex != 0 {
+		t.Fatalf("thinking delta routed to contentIndex %d, want 0", thinkingDeltaIndex)
+	}
+
+	if len(final.Content) != 2 {
+		t.Fatalf("expected 2 content blocks, got %d: %#v", len(final.Content), final.Content)
+	}
+	think, ok := final.Content[0].(ai.ThinkingContent)
+	if !ok {
+		t.Fatalf("content[0] not thinking: %#v", final.Content[0])
+	}
+	if think.Thinking != "thinking hard" {
+		t.Fatalf("reasoning landed on wrong block: %q", think.Thinking)
+	}
+	text, ok := final.Content[1].(ai.TextContent)
+	if !ok {
+		t.Fatalf("content[1] not text: %#v", final.Content[1])
+	}
+	if text.Text != "Answer: 42" {
+		t.Fatalf("text landed on wrong block: %q", text.Text)
 	}
 }

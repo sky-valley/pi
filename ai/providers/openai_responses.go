@@ -334,14 +334,17 @@ func StreamOpenAIResponses(ctx context.Context, model *ai.Model, req ai.Context,
 		stream.Push(ai.AssistantMessageEvent{Type: ai.EventStart, Partial: output.Clone()})
 
 		var builders []*blockBuilder
-		var current *blockBuilder
-		// Per-item streaming state (mirrors pi's currentItem tracking).
-		// hasMsgContentPart / msgLastPartType track the message item's content
-		// parts; hasSummaryPart tracks whether the reasoning item has an open
-		// summary part to append deltas to.
-		var hasMsgContentPart bool
-		var msgLastPartType string
-		var hasSummaryPart bool
+		// outputSlots maps an event's output_index to the in-flight block for
+		// that output item. Tracking by output_index (instead of a single
+		// "current" pointer) preserves routing when items interleave or arrive
+		// out of order: a delta for an earlier item still targets its original
+		// contentIndex even after a later item's block was appended (port of
+		// upstream 8c9dbffa's ResponsesOutputSlot map, closes #6009).
+		type responsesOutputSlot struct {
+			block        *blockBuilder
+			contentIndex int
+		}
+		outputSlots := map[int]*responsesOutputSlot{}
 		// textSigs carries the per-text-block textSignature (blockBuilder, shared
 		// with anthropic, has no textSignature field) keyed by builder index.
 		textSigs := map[int]string{}
@@ -359,7 +362,49 @@ func StreamOpenAIResponses(ctx context.Context, model *ai.Model, req ai.Context,
 			}
 			output.Content = content
 		}
-		idx := func() int { return len(builders) - 1 }
+		// getSlot returns the slot for outputIndex only if it exists AND its
+		// block kind matches the requested kind (port of pi's getSlot<TType>).
+		getSlot := func(outputIndex int, kind string) *responsesOutputSlot {
+			slot := outputSlots[outputIndex]
+			if slot != nil && slot.block.kind == kind {
+				return slot
+			}
+			return nil
+		}
+		// createSlot appends a new block for item and records the slot with its
+		// stable contentIndex, emitting the matching *_start event. Returns nil
+		// for item types that have no streaming block.
+		createSlot := func(outputIndex int, item responsesItem) *responsesOutputSlot {
+			var b *blockBuilder
+			var startEvent ai.EventType
+			switch item.Type {
+			case "reasoning":
+				b = &blockBuilder{kind: "thinking"}
+				startEvent = ai.EventThinkingStart
+			case "message":
+				b = &blockBuilder{kind: "text"}
+				startEvent = ai.EventTextStart
+			case "function_call":
+				b = &blockBuilder{kind: "toolCall", toolID: item.CallID + "|" + item.ID, toolName: item.Name, args: map[string]any{}}
+				b.partialJSON.WriteString(item.Arguments)
+				startEvent = ai.EventToolCallStart
+			default:
+				return nil
+			}
+			builders = append(builders, b)
+			slot := &responsesOutputSlot{block: b, contentIndex: len(builders) - 1}
+			outputSlots[outputIndex] = slot
+			materialize()
+			stream.Push(ai.AssistantMessageEvent{Type: startEvent, ContentIndex: slot.contentIndex, Partial: output.Clone()})
+			return slot
+		}
+		// getOrCreateSlot returns the existing slot for outputIndex or creates one.
+		getOrCreateSlot := func(outputIndex int, item responsesItem) *responsesOutputSlot {
+			if slot := outputSlots[outputIndex]; slot != nil {
+				return slot
+			}
+			return createSlot(outputIndex, item)
+		}
 
 		// sawTerminalResponseEvent tracks whether a terminal response event
 		// (response.completed | response.incomplete | response.failed) arrived
@@ -423,100 +468,84 @@ func StreamOpenAIResponses(ctx context.Context, model *ai.Model, req ai.Context,
 				if ev.Item == nil {
 					return nil
 				}
-				switch ev.Item.Type {
-				case "reasoning":
-					current = &blockBuilder{kind: "thinking"}
-					hasSummaryPart = false
-					builders = append(builders, current)
-					materialize()
-					stream.Push(ai.AssistantMessageEvent{Type: ai.EventThinkingStart, ContentIndex: idx(), Partial: output.Clone()})
-				case "message":
-					current = &blockBuilder{kind: "text"}
-					hasMsgContentPart = false
-					msgLastPartType = ""
-					builders = append(builders, current)
-					materialize()
-					stream.Push(ai.AssistantMessageEvent{Type: ai.EventTextStart, ContentIndex: idx(), Partial: output.Clone()})
-				case "function_call":
-					current = &blockBuilder{kind: "toolCall", toolID: ev.Item.CallID + "|" + ev.Item.ID, toolName: ev.Item.Name, args: map[string]any{}}
-					current.partialJSON.WriteString(ev.Item.Arguments)
-					builders = append(builders, current)
-					materialize()
-					stream.Push(ai.AssistantMessageEvent{Type: ai.EventToolCallStart, ContentIndex: idx(), Partial: output.Clone()})
-				}
-			case "response.reasoning_summary_part.added":
-				if current != nil && current.kind == "thinking" {
-					hasSummaryPart = true
-				}
+				createSlot(ev.OutputIndex, *ev.Item)
 			case "response.reasoning_summary_text.delta":
-				if current != nil && current.kind == "thinking" && hasSummaryPart {
-					current.thinking.WriteString(ev.Delta)
-					materialize()
-					stream.Push(ai.AssistantMessageEvent{Type: ai.EventThinkingDelta, ContentIndex: idx(), Delta: ev.Delta, Partial: output.Clone()})
+				slot := getSlot(ev.OutputIndex, "thinking")
+				if slot == nil {
+					return nil
 				}
+				slot.block.thinking.WriteString(ev.Delta)
+				materialize()
+				stream.Push(ai.AssistantMessageEvent{Type: ai.EventThinkingDelta, ContentIndex: slot.contentIndex, Delta: ev.Delta, Partial: output.Clone()})
 			case "response.reasoning_summary_part.done":
-				if current != nil && current.kind == "thinking" && hasSummaryPart {
-					current.thinking.WriteString("\n\n")
-					materialize()
-					stream.Push(ai.AssistantMessageEvent{Type: ai.EventThinkingDelta, ContentIndex: idx(), Delta: "\n\n", Partial: output.Clone()})
+				slot := getSlot(ev.OutputIndex, "thinking")
+				if slot == nil {
+					return nil
 				}
+				slot.block.thinking.WriteString("\n\n")
+				materialize()
+				stream.Push(ai.AssistantMessageEvent{Type: ai.EventThinkingDelta, ContentIndex: slot.contentIndex, Delta: "\n\n", Partial: output.Clone()})
 			case "response.reasoning_text.delta":
-				if current != nil && current.kind == "thinking" {
-					current.thinking.WriteString(ev.Delta)
-					materialize()
-					stream.Push(ai.AssistantMessageEvent{Type: ai.EventThinkingDelta, ContentIndex: idx(), Delta: ev.Delta, Partial: output.Clone()})
+				slot := getSlot(ev.OutputIndex, "thinking")
+				if slot == nil {
+					return nil
 				}
-			case "response.content_part.added":
-				if current != nil && current.kind == "text" && ev.Part != nil {
-					if ev.Part.Type == "output_text" || ev.Part.Type == "refusal" {
-						hasMsgContentPart = true
-						msgLastPartType = ev.Part.Type
-					}
-				}
+				slot.block.thinking.WriteString(ev.Delta)
+				materialize()
+				stream.Push(ai.AssistantMessageEvent{Type: ai.EventThinkingDelta, ContentIndex: slot.contentIndex, Delta: ev.Delta, Partial: output.Clone()})
 			case "response.output_text.delta":
-				if current != nil && current.kind == "text" && hasMsgContentPart && msgLastPartType == "output_text" {
-					current.text.WriteString(ev.Delta)
-					materialize()
-					stream.Push(ai.AssistantMessageEvent{Type: ai.EventTextDelta, ContentIndex: idx(), Delta: ev.Delta, Partial: output.Clone()})
+				slot := getSlot(ev.OutputIndex, "text")
+				if slot == nil {
+					return nil
 				}
+				slot.block.text.WriteString(ev.Delta)
+				materialize()
+				stream.Push(ai.AssistantMessageEvent{Type: ai.EventTextDelta, ContentIndex: slot.contentIndex, Delta: ev.Delta, Partial: output.Clone()})
 			case "response.refusal.delta":
-				if current != nil && current.kind == "text" && hasMsgContentPart && msgLastPartType == "refusal" {
-					current.text.WriteString(ev.Delta)
-					materialize()
-					stream.Push(ai.AssistantMessageEvent{Type: ai.EventTextDelta, ContentIndex: idx(), Delta: ev.Delta, Partial: output.Clone()})
+				slot := getSlot(ev.OutputIndex, "text")
+				if slot == nil {
+					return nil
 				}
+				slot.block.text.WriteString(ev.Delta)
+				materialize()
+				stream.Push(ai.AssistantMessageEvent{Type: ai.EventTextDelta, ContentIndex: slot.contentIndex, Delta: ev.Delta, Partial: output.Clone()})
 			case "response.function_call_arguments.delta":
-				if current != nil && current.kind == "toolCall" {
-					current.partialJSON.WriteString(ev.Delta)
-					current.args = parseStreamingJSON(current.partialJSON.String())
-					materialize()
-					stream.Push(ai.AssistantMessageEvent{Type: ai.EventToolCallDelta, ContentIndex: idx(), Delta: ev.Delta, Partial: output.Clone()})
+				slot := getSlot(ev.OutputIndex, "toolCall")
+				if slot == nil {
+					return nil
 				}
+				slot.block.partialJSON.WriteString(ev.Delta)
+				slot.block.args = parseStreamingJSON(slot.block.partialJSON.String())
+				materialize()
+				stream.Push(ai.AssistantMessageEvent{Type: ai.EventToolCallDelta, ContentIndex: slot.contentIndex, Delta: ev.Delta, Partial: output.Clone()})
 			case "response.function_call_arguments.done":
-				if current != nil && current.kind == "toolCall" {
-					previous := current.partialJSON.String()
-					current.partialJSON.Reset()
-					current.partialJSON.WriteString(ev.Arguments)
-					current.args = parseStreamingJSON(ev.Arguments)
-					materialize()
-					// Emit the trailing delta so a provider that only sends
-					// .done (no incremental deltas) still yields full args.
-					if strings.HasPrefix(ev.Arguments, previous) {
-						delta := ev.Arguments[len(previous):]
-						if delta != "" {
-							stream.Push(ai.AssistantMessageEvent{Type: ai.EventToolCallDelta, ContentIndex: idx(), Delta: delta, Partial: output.Clone()})
-						}
+				slot := getSlot(ev.OutputIndex, "toolCall")
+				if slot == nil {
+					return nil
+				}
+				previous := slot.block.partialJSON.String()
+				slot.block.partialJSON.Reset()
+				slot.block.partialJSON.WriteString(ev.Arguments)
+				slot.block.args = parseStreamingJSON(ev.Arguments)
+				materialize()
+				// Emit the trailing delta so a provider that only sends
+				// .done (no incremental deltas) still yields full args.
+				if strings.HasPrefix(ev.Arguments, previous) {
+					delta := ev.Arguments[len(previous):]
+					if delta != "" {
+						stream.Push(ai.AssistantMessageEvent{Type: ai.EventToolCallDelta, ContentIndex: slot.contentIndex, Delta: delta, Partial: output.Clone()})
 					}
 				}
 			case "response.output_item.done":
 				if ev.Item == nil {
 					return nil
 				}
-				// pi branches on the ITEM type (shared :443-492); the
-				// function_call branch runs even without a matching current
-				// block, and currentBlock is cleared only in matched branches.
+				// getOrCreateSlot mirrors pi's new design: a done without a
+				// prior added still materializes the block (and its *_start
+				// event) before finalizing (port of 8c9dbffa).
+				slot := getOrCreateSlot(ev.OutputIndex, *ev.Item)
 				switch {
-				case ev.Item.Type == "reasoning" && current != nil && current.kind == "thinking":
+				case ev.Item.Type == "reasoning" && slot != nil && slot.block.kind == "thinking":
 					summaryText := joinPartsText(ev.Item.Summary, "\n\n")
 					contentText := joinPartsText(ev.Item.Content, "\n\n")
 					rebuilt := summaryText
@@ -524,17 +553,17 @@ func StreamOpenAIResponses(ctx context.Context, model *ai.Model, req ai.Context,
 						rebuilt = contentText
 					}
 					if rebuilt == "" {
-						rebuilt = current.thinking.String()
+						rebuilt = slot.block.thinking.String()
 					}
-					current.thinking.Reset()
-					current.thinking.WriteString(rebuilt)
+					slot.block.thinking.Reset()
+					slot.block.thinking.WriteString(rebuilt)
 					if len(ev.RawItem) > 0 {
-						current.thinkingSig = string(ev.RawItem)
+						slot.block.thinkingSig = string(ev.RawItem)
 					}
 					materialize()
-					stream.Push(ai.AssistantMessageEvent{Type: ai.EventThinkingEnd, ContentIndex: idx(), Content: current.thinking.String(), Partial: output.Clone()})
-					current = nil
-				case ev.Item.Type == "message" && current != nil && current.kind == "text":
+					stream.Push(ai.AssistantMessageEvent{Type: ai.EventThinkingEnd, ContentIndex: slot.contentIndex, Content: slot.block.thinking.String(), Partial: output.Clone()})
+					delete(outputSlots, ev.OutputIndex)
+				case ev.Item.Type == "message" && slot != nil && slot.block.kind == "text":
 					// Rebuild final text from item.content (output_text or refusal).
 					var sb strings.Builder
 					for _, p := range ev.Item.Content {
@@ -544,34 +573,24 @@ func StreamOpenAIResponses(ctx context.Context, model *ai.Model, req ai.Context,
 							sb.WriteString(p.Text)
 						}
 					}
-					current.text.Reset()
-					current.text.WriteString(sb.String())
-					textSigs[idx()] = encodeTextSignatureV1(ev.Item.ID, ev.Item.Phase)
+					slot.block.text.Reset()
+					slot.block.text.WriteString(sb.String())
+					textSigs[slot.contentIndex] = encodeTextSignatureV1(ev.Item.ID, ev.Item.Phase)
 					materialize()
-					stream.Push(ai.AssistantMessageEvent{Type: ai.EventTextEnd, ContentIndex: idx(), Content: current.text.String(), Partial: output.Clone()})
-					current = nil
-				case ev.Item.Type == "function_call":
-					var tc ai.ToolCall
-					if current != nil && current.kind == "toolCall" {
-						if current.partialJSON.Len() > 0 {
-							current.args = parseStreamingJSON(current.partialJSON.String())
-						} else {
-							current.args = parseStreamingJSON(orEmptyJSON(ev.Item.Arguments))
-						}
-						materialize()
-						tc = current.toContent().(ai.ToolCall)
-					} else {
-						// pi shared :481-491: a done without a prior added still
-						// constructs the toolCall and emits toolcall_end (the
-						// block is NOT appended to content — replicated as-is).
-						tc = ai.ToolCall{
-							ID:        ev.Item.CallID + "|" + ev.Item.ID,
-							Name:      ev.Item.Name,
-							Arguments: parseStreamingJSON(orEmptyJSON(ev.Item.Arguments)),
-						}
+					stream.Push(ai.AssistantMessageEvent{Type: ai.EventTextEnd, ContentIndex: slot.contentIndex, Content: slot.block.text.String(), Partial: output.Clone()})
+					delete(outputSlots, ev.OutputIndex)
+				case ev.Item.Type == "function_call" && slot != nil && slot.block.kind == "toolCall":
+					// pi 8c9dbffa: parseStreamingJson(item.arguments || partialJson || "{}")
+					// — the done event's item.arguments wins over the scratch buffer.
+					argsJSON := ev.Item.Arguments
+					if argsJSON == "" {
+						argsJSON = slot.block.partialJSON.String()
 					}
-					current = nil
-					stream.Push(ai.AssistantMessageEvent{Type: ai.EventToolCallEnd, ContentIndex: idx(), ToolCall: &tc, Partial: output.Clone()})
+					slot.block.args = parseStreamingJSON(orEmptyJSON(argsJSON))
+					materialize()
+					tc := slot.block.toContent().(ai.ToolCall)
+					stream.Push(ai.AssistantMessageEvent{Type: ai.EventToolCallEnd, ContentIndex: slot.contentIndex, ToolCall: &tc, Partial: output.Clone()})
+					delete(outputSlots, ev.OutputIndex)
 				}
 			case "response.completed", "response.incomplete":
 				// Upstream cd95c274: response.incomplete finalizes usage/cost/
@@ -1026,24 +1045,27 @@ type responsesContentPart struct {
 }
 
 type responsesEvent struct {
-	Type      string                `json:"type"`
-	Delta     string                `json:"delta"`
-	Arguments string                `json:"arguments"`
-	Code      string                `json:"code"`
-	Message   string                `json:"message"`
-	Part      *responsesContentPart `json:"part"`
-	Item      *struct {
-		Type      string                 `json:"type"`
-		ID        string                 `json:"id"`
-		CallID    string                 `json:"call_id"`
-		Name      string                 `json:"name"`
-		Arguments string                 `json:"arguments"`
-		Phase     string                 `json:"phase"`
-		Summary   []responsesContentPart `json:"summary"`
-		Content   []responsesContentPart `json:"content"`
-	} `json:"item"`
-	RawItem  json.RawMessage   `json:"-"`
-	Response *responsesPayload `json:"response"`
+	Type        string                `json:"type"`
+	Delta       string                `json:"delta"`
+	Arguments   string                `json:"arguments"`
+	Code        string                `json:"code"`
+	Message     string                `json:"message"`
+	OutputIndex int                   `json:"output_index"`
+	Part        *responsesContentPart `json:"part"`
+	Item        *responsesItem        `json:"item"`
+	RawItem     json.RawMessage       `json:"-"`
+	Response    *responsesPayload     `json:"response"`
+}
+
+type responsesItem struct {
+	Type      string                 `json:"type"`
+	ID        string                 `json:"id"`
+	CallID    string                 `json:"call_id"`
+	Name      string                 `json:"name"`
+	Arguments string                 `json:"arguments"`
+	Phase     string                 `json:"phase"`
+	Summary   []responsesContentPart `json:"summary"`
+	Content   []responsesContentPart `json:"content"`
 }
 
 type responsesPayload struct {
