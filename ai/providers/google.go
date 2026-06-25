@@ -501,6 +501,7 @@ func StreamGoogle(ctx context.Context, model *ai.Model, req ai.Context, opts *Go
 					Output:      u.CandidatesTokenCount + u.ThoughtsTokenCount,
 					CacheRead:   u.CachedContentTokenCount,
 					CacheWrite:  0,
+					Reasoning:   u.ThoughtsTokenCount,
 					TotalTokens: u.TotalTokenCount,
 				}
 				ai.CalculateCost(model, &output.Usage)

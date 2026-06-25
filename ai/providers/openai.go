@@ -1077,11 +1077,18 @@ func parseChunkUsage(raw *openAIChunkUsage, model *ai.Model) ai.Usage {
 	if input < 0 {
 		input = 0
 	}
+	// pi: `reasoning: completion_tokens_details?.reasoning_tokens || 0` — always
+	// set (0 when absent) for the completions path.
+	reasoningTokens := 0
+	if raw.CompletionTokensDetails != nil {
+		reasoningTokens = raw.CompletionTokensDetails.ReasoningTokens
+	}
 	usage := ai.Usage{
 		Input:       input,
 		Output:      raw.CompletionTokens,
 		CacheRead:   cacheReadTokens,
 		CacheWrite:  cacheWriteTokens,
+		Reasoning:   reasoningTokens,
 		TotalTokens: input + raw.CompletionTokens + cacheReadTokens + cacheWriteTokens,
 	}
 	ai.CalculateCost(model, &usage)
@@ -1119,6 +1126,9 @@ type openAIChunkUsage struct {
 		CachedTokens     *int `json:"cached_tokens"`
 		CacheWriteTokens int  `json:"cache_write_tokens"`
 	} `json:"prompt_tokens_details"`
+	CompletionTokensDetails *struct {
+		ReasoningTokens int `json:"reasoning_tokens"`
+	} `json:"completion_tokens_details"`
 }
 
 // openAIToolCallDelta is one entry of choice.delta.tool_calls. Index is a

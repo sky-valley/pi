@@ -84,6 +84,30 @@ func TestOpenAIProviderParsesStream(t *testing.T) {
 	}
 }
 
+// TestOpenAICompletionsReasoningTokens checks that completion_tokens_details.
+// reasoning_tokens populates Usage.Reasoning, and that absence yields 0 (pi's
+// `reasoning: ... || 0`).
+func TestOpenAICompletionsReasoningTokens(t *testing.T) {
+	withReasoning := "data: {\"choices\":[{\"delta\":{\"content\":\"hi\"}}]}\n\n" +
+		"data: {\"choices\":[],\"usage\":{\"prompt_tokens\":12,\"completion_tokens\":40,\"completion_tokens_details\":{\"reasoning_tokens\":33}}}\n\n" +
+		"data: [DONE]\n\n"
+	final := runOpenAIStream(t, withReasoning, nil)
+	if final.Usage.Reasoning != 33 {
+		t.Fatalf("expected reasoning 33, got %+v", final.Usage)
+	}
+	if final.Usage.Output != 40 {
+		t.Fatalf("output wrong: %+v", final.Usage)
+	}
+
+	withoutReasoning := "data: {\"choices\":[{\"delta\":{\"content\":\"hi\"}}]}\n\n" +
+		"data: {\"choices\":[],\"usage\":{\"prompt_tokens\":12,\"completion_tokens\":40}}\n\n" +
+		"data: [DONE]\n\n"
+	final2 := runOpenAIStream(t, withoutReasoning, nil)
+	if final2.Usage.Reasoning != 0 {
+		t.Fatalf("expected reasoning 0 when absent, got %+v", final2.Usage)
+	}
+}
+
 // runOpenAIStream serves the given SSE body and returns the final assistant
 // message. Optional model mutator lets a test tweak the model.
 func runOpenAIStream(t *testing.T, sse string, mutate func(*ai.Model)) *ai.AssistantMessage {

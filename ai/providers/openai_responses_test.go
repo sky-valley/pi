@@ -764,6 +764,27 @@ data: {"type":"response.completed","response":{"id":"r","status":"completed",%s"
 
 `
 
+// TestResponsesReasoningTokens checks output_tokens_details.reasoning_tokens
+// populates Usage.Reasoning (pi's `reasoning: ... || 0`).
+func TestResponsesReasoningTokens(t *testing.T) {
+	model := &ai.Model{ID: "gpt-5", Api: ai.APIOpenAIResponses, Provider: "openai", Reasoning: true,
+		Cost: ai.ModelCost{Input: 1.25, Output: 10}}
+	req := ai.Context{Messages: []ai.Message{ai.NewUserText("hi", 1)}}
+	sse := "data: {\"type\":\"response.created\",\"response\":{\"id\":\"r\"}}\n\n" +
+		"data: {\"type\":\"response.output_item.added\",\"item\":{\"type\":\"message\",\"id\":\"msg_1\"}}\n\n" +
+		"data: {\"type\":\"response.content_part.added\",\"part\":{\"type\":\"output_text\",\"text\":\"\"}}\n\n" +
+		"data: {\"type\":\"response.output_text.delta\",\"delta\":\"hi\"}\n\n" +
+		"data: {\"type\":\"response.output_item.done\",\"item\":{\"type\":\"message\",\"id\":\"msg_1\",\"content\":[{\"type\":\"output_text\",\"text\":\"hi\"}]}}\n\n" +
+		"data: {\"type\":\"response.completed\",\"response\":{\"id\":\"r\",\"status\":\"completed\",\"usage\":{\"input_tokens\":20,\"output_tokens\":18,\"total_tokens\":38,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens_details\":{\"reasoning_tokens\":12}}}}\n\n"
+	final := runResponsesSSEOpts(t, model, req, sse, &OpenAIResponsesOptions{})
+	if final.Usage.Reasoning != 12 {
+		t.Fatalf("expected reasoning 12, got %+v", final.Usage)
+	}
+	if final.Usage.Output != 18 {
+		t.Fatalf("output wrong: %+v", final.Usage)
+	}
+}
+
 // D2: flex halves cost, priority doubles it (×2.5 for the exact id gpt-5.5),
 // and the response-reported service tier wins over the requested option.
 func TestResponsesServiceTierPricing(t *testing.T) {

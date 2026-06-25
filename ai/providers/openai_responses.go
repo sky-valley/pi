@@ -379,9 +379,11 @@ func StreamOpenAIResponses(ctx context.Context, model *ai.Model, req ai.Context,
 				if r.Usage != nil {
 					cached := r.Usage.InputTokensDetails.CachedTokens
 					output.Usage = ai.Usage{
-						Input:       r.Usage.InputTokens - cached,
-						Output:      r.Usage.OutputTokens,
-						CacheRead:   cached,
+						Input:     r.Usage.InputTokens - cached,
+						Output:    r.Usage.OutputTokens,
+						CacheRead: cached,
+						// pi: `reasoning: output_tokens_details?.reasoning_tokens || 0`.
+						Reasoning:   r.Usage.OutputTokensDetails.ReasoningTokens,
 						TotalTokens: r.Usage.TotalTokens,
 					}
 				}
@@ -1055,6 +1057,9 @@ type responsesPayload struct {
 		InputTokensDetails struct {
 			CachedTokens int `json:"cached_tokens"`
 		} `json:"input_tokens_details"`
+		OutputTokensDetails struct {
+			ReasoningTokens int `json:"reasoning_tokens"`
+		} `json:"output_tokens_details"`
 	} `json:"usage"`
 	Error *struct {
 		Code    string `json:"code"`

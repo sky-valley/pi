@@ -969,6 +969,13 @@ type anthropicUsage struct {
 	CacheCreation            *struct {
 		Ephemeral1hInputTokens *int `json:"ephemeral_1h_input_tokens"`
 	} `json:"cache_creation"`
+	// OutputTokensDetails carries the reasoning breakdown on the final
+	// message_delta usage. ThinkingTokens is a subset of OutputTokens. pi reads
+	// this through a narrow cast since the SDK type omits it; we model it
+	// directly and only apply it when present.
+	OutputTokensDetails *struct {
+		ThinkingTokens *int `json:"thinking_tokens"`
+	} `json:"output_tokens_details"`
 }
 
 type anthropicStreamEvent struct {
@@ -1122,6 +1129,12 @@ func applyUsage(usage *ai.Usage, u anthropicUsage, isStart bool) {
 		if u.CacheCreationInputTokens != nil {
 			usage.CacheWrite = *u.CacheCreationInputTokens
 		}
+	}
+	// Anthropic reports reasoning tokens in output_tokens_details.thinking_tokens
+	// on the final message_delta usage (a subset of output_tokens). pi only sets
+	// reasoning when the field is present; mirror that (don't overwrite with 0).
+	if u.OutputTokensDetails != nil && u.OutputTokensDetails.ThinkingTokens != nil {
+		usage.Reasoning = *u.OutputTokensDetails.ThinkingTokens
 	}
 	usage.TotalTokens = usage.Input + usage.Output + usage.CacheRead + usage.CacheWrite
 }

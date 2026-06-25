@@ -120,6 +120,51 @@ func TestAnthropicProviderParsesStream(t *testing.T) {
 	}
 }
 
+// TestAnthropicReasoningTokens checks that output_tokens_details.thinking_tokens
+// on the final message_delta populates Usage.Reasoning, and that absence leaves
+// it 0 (pi sets reasoning only when the field is present).
+func TestAnthropicReasoningTokens(t *testing.T) {
+	run := func(t *testing.T, deltaUsage string) *ai.AssistantMessage {
+		t.Helper()
+		sse := "event: message_start\n" +
+			`data: {"type":"message_start","message":{"id":"msg_1","usage":{"input_tokens":10,"output_tokens":1}}}` + "\n\n" +
+			"event: content_block_start\n" +
+			`data: {"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}` + "\n\n" +
+			"event: content_block_delta\n" +
+			`data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"hi"}}` + "\n\n" +
+			"event: content_block_stop\n" +
+			`data: {"type":"content_block_stop","index":0}` + "\n\n" +
+			"event: message_delta\n" +
+			`data: {"type":"message_delta","delta":{"stop_reason":"end_turn"},"usage":` + deltaUsage + "}\n\n" +
+			"event: message_stop\n" +
+			`data: {"type":"message_stop"}` + "\n\n"
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("content-type", "text/event-stream")
+			w.WriteHeader(200)
+			io.WriteString(w, sse)
+		}))
+		t.Cleanup(server.Close)
+		model := &ai.Model{ID: "claude-test", Api: ai.APIAnthropicMessages, Provider: "anthropic",
+			BaseURL: server.URL, MaxTokens: 4096, Cost: ai.ModelCost{Input: 3, Output: 15}}
+		req := ai.Context{Messages: []ai.Message{ai.NewUserText("hi", 1)}}
+		return StreamAnthropic(context.Background(), model, req,
+			&AnthropicOptions{StreamOptions: ai.StreamOptions{APIKey: "k"}}).Result()
+	}
+
+	withThinking := run(t, `{"output_tokens":50,"output_tokens_details":{"thinking_tokens":37}}`)
+	if withThinking.Usage.Reasoning != 37 {
+		t.Fatalf("expected reasoning 37, got %+v", withThinking.Usage)
+	}
+	if withThinking.Usage.Output != 50 {
+		t.Fatalf("output wrong: %+v", withThinking.Usage)
+	}
+
+	without := run(t, `{"output_tokens":50}`)
+	if without.Usage.Reasoning != 0 {
+		t.Fatalf("expected reasoning 0 when absent, got %+v", without.Usage)
+	}
+}
+
 func TestAnthropicProviderErrorOnHTTPError(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(429)

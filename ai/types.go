@@ -245,9 +245,22 @@ type Usage struct {
 	CacheWrite int `json:"cacheWrite"`
 	// CacheWrite1h is the subset of CacheWrite written with 1h retention. Only
 	// Anthropic reports this split (pi: Usage.cacheWrite1h, optional).
-	CacheWrite1h int           `json:"cacheWrite1h,omitempty"`
-	TotalTokens  int           `json:"totalTokens"`
-	Cost         CostBreakdown `json:"cost"`
+	CacheWrite1h int `json:"cacheWrite1h,omitempty"`
+	// Reasoning is the count of reasoning/thinking tokens, when the provider
+	// reports them. This is a subset of Output: Output already includes these
+	// tokens. Set to a number (possibly 0) by providers that expose a reasoning
+	// breakdown; left unset by providers that don't (pi: Usage.reasoning, optional).
+	//
+	// Faithfulness note on omitempty: pi leaves reasoning `undefined` when a
+	// provider doesn't report it, but the OpenAI completions/responses and Google
+	// paths set `reasoning: ... || 0` unconditionally, so those providers always
+	// emit reasoning (0 when absent). With omitempty a 0 is dropped from the JSON,
+	// which differs from pi emitting `reasoning: 0` for those providers. We accept
+	// this divergence to keep session goldens byte-identical when reasoning is
+	// 0/unset; the in-memory value (0) is identical either way.
+	Reasoning   int           `json:"reasoning,omitempty"`
+	TotalTokens int           `json:"totalTokens"`
+	Cost        CostBreakdown `json:"cost"`
 }
 
 // ---------------------------------------------------------------------------
