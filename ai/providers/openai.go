@@ -35,6 +35,9 @@ func StreamSimpleOpenAICompletions(ctx context.Context, model *ai.Model, req ai.
 			}
 		}
 	}
+	// pi buildBaseOptions: maxTokens = clamp(options?.maxTokens ?? model.maxTokens).
+	mt := ai.ClampMaxTokensToContext(model, req, ai.SimpleMaxTokensDefault(model, opts))
+	o.MaxTokens = &mt
 	return StreamOpenAICompletions(ctx, model, req, o)
 }
 

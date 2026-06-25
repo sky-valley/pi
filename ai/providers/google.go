@@ -50,6 +50,9 @@ func StreamSimpleGoogle(ctx context.Context, model *ai.Model, req ai.Context, op
 	if opts != nil {
 		g.StreamOptions = opts.StreamOptions
 	}
+	// pi buildBaseOptions: maxTokens = clamp(options?.maxTokens ?? model.maxTokens).
+	mt := ai.ClampMaxTokensToContext(model, req, ai.SimpleMaxTokensDefault(model, opts))
+	g.MaxTokens = &mt
 	reasoning := ai.ThinkingLevel("")
 	if opts != nil {
 		reasoning = opts.Reasoning

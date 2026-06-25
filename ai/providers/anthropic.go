@@ -161,6 +161,9 @@ func StreamSimpleAnthropic(ctx context.Context, model *ai.Model, req ai.Context,
 	if opts != nil {
 		base = opts.StreamOptions
 	}
+	// pi buildBaseOptions: maxTokens = clamp(options?.maxTokens ?? model.maxTokens).
+	baseMaxTokens := ai.ClampMaxTokensToContext(model, req, ai.SimpleMaxTokensDefault(model, opts))
+	base.MaxTokens = &baseMaxTokens
 	aopts := AnthropicOptions{StreamOptions: base}
 
 	reasoning := ai.ThinkingLevel("")
@@ -186,11 +189,13 @@ func StreamSimpleAnthropic(ctx context.Context, model *ai.Model, req ai.Context,
 	if opts != nil {
 		budgets = opts.ThinkingBudgets
 	}
-	maxTokens, thinkingBudget := adjustMaxTokensForThinking(base.MaxTokens, model.MaxTokens, reasoning, budgets)
-	mt := maxTokens
+	adjustedMaxTokens, thinkingBudget := adjustMaxTokensForThinking(base.MaxTokens, model.MaxTokens, reasoning, budgets)
+	// pi: maxTokens = clampMaxTokensToContext(model, context, adjusted.maxTokens);
+	// thinkingBudgetTokens = min(adjusted.thinkingBudget, max(0, maxTokens-1024)).
+	mt := ai.ClampMaxTokensToContext(model, req, adjustedMaxTokens)
 	aopts.MaxTokens = &mt
 	aopts.ThinkingEnabled = true
-	aopts.ThinkingBudgetTokens = thinkingBudget
+	aopts.ThinkingBudgetTokens = min(thinkingBudget, max(0, mt-1024))
 	return StreamAnthropic(ctx, model, req, &aopts)
 }
 
