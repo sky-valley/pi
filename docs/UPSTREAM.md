@@ -10,10 +10,10 @@ commit-by-commit sync pipeline that keeps it current.
 
 | What | Value |
 |---|---|
-| TS source fully reviewed/ported | `09f10595` — "fix(ai): clamp streamSimple max tokens" (2026-06-25); previous pins `a2e3e9d8` (06-24), `470a4736` (06-23), `3b561346` (06-22), `2417adb4` (06-21), `56b22768` (06-19), `29c1504c` (06-17). The models-runtime migration is now **complete**: the `732bb161` substrate (06-23) plus the 06-24 follow-through (catalog-data reorg landed via the 0.80.2 regen; request-scoped auth `ef231c49`; api_key/env credential `49fbe683`; OpenAI Responses terminal events `cd95c274`; anthropic compat→catalog `6184307c`; header-only client auth + vercel ungate `129eb460`). |
+| TS source fully reviewed/ported | `1d486163` — "Fix examples, update to latest undici for vuln fix" (2026-06-25); previous pins `09f10595` (06-25), `a2e3e9d8` (06-24), `470a4736` (06-23), `3b561346` (06-22), `2417adb4` (06-21), `56b22768` (06-19), `29c1504c` (06-17). The models-runtime migration is now **complete**: the `732bb161` substrate (06-23) plus the 06-24 follow-through (catalog-data reorg landed via the 0.80.2 regen; request-scoped auth `ef231c49`; api_key/env credential `49fbe683`; OpenAI Responses terminal events `cd95c274`; anthropic compat→catalog `6184307c`; header-only client auth + vercel ungate `129eb460`). |
 | npm build the byte-goldens were captured from | `@earendil-works/pi-ai` **0.80.2** (catalog endpoint-pinned, re-derived byte-identical from `dist/models.generated.js`, lock integrity verified against the registry — `sha512-5GNKfdrR…uy9RQ==`; subsumes v0.80.0/v0.80.1); `pi-coding-agent` 0.78.1 (session/image goldens — unaffected by 0.80.x) |
 | Parity proofs at the pin | catalog regen endpoint-pinned byte-identical (386,548 B, independently re-derived) · session tree 8/8 · image decisions 8/8 (unchanged this cycle) · differential request diff 6/6 (re-derived from the 0.80.2 build) · in-repo differential parity 36/36 · fireworks/cf anthropic compat coupling 0 mismatches (14 fireworks + 17 cf-anthropic models carry the fields the removed auto-detect synthesized) |
-| Reviewed via | initial port + parity sweeps 1–2 (`3be3911`), registration fix (`b09cb46`); 2026-06-22 v0.79.10 cycle; 2026-06-24 v0.80.2 cycle independent go-review (ship, 3 optional LOW nits) + adversarial parity review (all 7 commits faithful, 6/6 differential, all 3 deliberate divergences confirmed observably-faithful); 2026-06-25 cycle (5 ports, no release) independent go-review (ship; one LOW `strings.Join` cleanup applied) + adversarial parity review (all 5 faithful; responses test-change mutation-verified non-vacuous; `reasoning,omitempty` confirmed acceptable-latent) |
+| Reviewed via | initial port + parity sweeps 1–2 (`3be3911`), registration fix (`b09cb46`); 2026-06-22 v0.79.10 cycle; 2026-06-24 v0.80.2 cycle independent go-review (ship, 3 optional LOW nits) + adversarial parity review (all 7 commits faithful, 6/6 differential, all 3 deliberate divergences confirmed observably-faithful); 2026-06-25 cycle (5 ports, no release) independent go-review (ship; one LOW `strings.Join` cleanup applied) + adversarial parity review (all 5 faithful; responses test-change mutation-verified non-vacuous; `reasoning,omitempty` confirmed acceptable-latent); 2026-06-26 cycle (1 port, no release) independent go-review (ship, no findings) + adversarial parity review (faithful; openai default-model lock mutation-verified non-vacuous) |
 
 Deliberately not ported (out of scope for the ledger unless a commit changes
 that decision): TUI, extensions runtime, OAuth token acquisition, project-trust
@@ -133,6 +133,39 @@ stays latent until a host sets it (see the 2026-06-17 ruling).
   extension resource-loader; `skills.ts` untouched). Future trust commits are
   `n/a` under this ruling UNLESS they change behavior of surface we ported —
   that re-escalates.
+
+## Drift at last sync check (2026-06-26) — pin advanced to 1d486163
+
+**Caught up to `1d486163`.** Delta `09f10595 → 1d486163` fully processed: 6
+main-line changes — **1 port (→ 1 Go commit), 5 n/a, 0 decides**. **No release
+tag crossed** — all 6 land on upstream `[Unreleased]`; `pi-ai` stays **0.80.2**
+and `pi-coding-agent` stays **0.78.1**, so every byte-golden (catalog, session
+tree, image decisions, differential request diff) is untouched. Reviewed via
+independent go-review (ship, no findings) + adversarial parity review (faithful;
+the default-model lock mutation-verified non-vacuous). gofmt clean;
+build/vet/`-race` green.
+
+- **OpenAI default model** (`77428858`, Go `c83f84f`): `defaultModelPerProvider`
+  in `coding/resolve.go` advances openai `gpt-5.4 → gpt-5.5`, matching pi's
+  `model-resolver.ts`. **Only openai moves** — `azure-openai-responses` and
+  `github-copilot` stay `gpt-5.4`, and `openai-codex` was already `gpt-5.5`. This
+  is the per-provider template id `buildFallbackModel` clones when synthesizing a
+  custom-id model under a known provider; it lives in pi-coding-agent surface (not
+  the pi-ai catalog), so no npm catalog regen is involved. Test:
+  `TestDefaultModelPerProviderOpenAI` (locks the four openai-family ids).
+
+n/a (5): `e454f50b` (allow session id for no-session runs — `SessionManager.inMemory`
+gains an id option + `main.ts` `--no-session`/`--session-id` flag plumbing; host/CLI
+surface, and Go's `Session.SessionID` field already accepts an id independent of
+persistence — no `validateSessionIdFlags` consumer in the port); `543710f6` +
+`0d145e89` (reject invalid session files / shorten the error — pi's `setSessionFile`
+now throws on a non-empty unparseable file instead of truncating, but Go's
+`ResumeSession` already rejects headerless files without modifying them, so the
+fix is already-faithful; the `main.ts openSessionOrExit` console-error+exit and the
+error-string wording are host/CLI); `f14b3594` (show length stop errors —
+`interactive/components/assistant-message.ts`, TUI); `1d486163` (fix examples +
+undici vuln bump — `examples/extensions/*` + `package-lock.json`, packaging). No
+new boundary questions.
 
 ## Drift at last sync check (2026-06-25) — pin advanced to 09f10595
 
