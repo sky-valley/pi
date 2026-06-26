@@ -188,3 +188,20 @@ func TestResolveModelCustomIDFallbackInvalidSuffix(t *testing.T) {
 		t.Fatalf("fallback warning drift: %q", r.Warning)
 	}
 }
+
+// pi 77428858: the openai default model advanced gpt-5.4 → gpt-5.5. Only openai
+// moved — azure-openai-responses and github-copilot stay on gpt-5.4 (and
+// openai-codex was already gpt-5.5). Lock the buildFallbackModel template ids.
+func TestDefaultModelPerProviderOpenAI(t *testing.T) {
+	cases := map[string]string{
+		"openai":                 "gpt-5.5",
+		"azure-openai-responses": "gpt-5.4",
+		"github-copilot":         "gpt-5.4",
+		"openai-codex":           "gpt-5.5",
+	}
+	for provider, want := range cases {
+		if got := defaultModelPerProvider[provider]; got != want {
+			t.Fatalf("default model for %q: got %q, want %q", provider, got, want)
+		}
+	}
+}
