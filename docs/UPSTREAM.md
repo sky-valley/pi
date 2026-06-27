@@ -10,7 +10,7 @@ commit-by-commit sync pipeline that keeps it current.
 
 | What | Value |
 |---|---|
-| TS source fully reviewed/ported | `1d486163` — "Fix examples, update to latest undici for vuln fix" (2026-06-25); previous pins `09f10595` (06-25), `a2e3e9d8` (06-24), `470a4736` (06-23), `3b561346` (06-22), `2417adb4` (06-21), `56b22768` (06-19), `29c1504c` (06-17). The models-runtime migration is now **complete**: the `732bb161` substrate (06-23) plus the 06-24 follow-through (catalog-data reorg landed via the 0.80.2 regen; request-scoped auth `ef231c49`; api_key/env credential `49fbe683`; OpenAI Responses terminal events `cd95c274`; anthropic compat→catalog `6184307c`; header-only client auth + vercel ungate `129eb460`). |
+| TS source fully reviewed/ported | `622eca76` — "feat(coding-agent): add installer lock generation" (2026-06-26); previous pins `1d486163` (06-25), `09f10595` (06-25), `a2e3e9d8` (06-24), `470a4736` (06-23), `3b561346` (06-22), `2417adb4` (06-21), `56b22768` (06-19), `29c1504c` (06-17). The models-runtime migration is now **complete**: the `732bb161` substrate (06-23) plus the 06-24 follow-through (catalog-data reorg landed via the 0.80.2 regen; request-scoped auth `ef231c49`; api_key/env credential `49fbe683`; OpenAI Responses terminal events `cd95c274`; anthropic compat→catalog `6184307c`; header-only client auth + vercel ungate `129eb460`). |
 | npm build the byte-goldens were captured from | `@earendil-works/pi-ai` **0.80.2** (catalog endpoint-pinned, re-derived byte-identical from `dist/models.generated.js`, lock integrity verified against the registry — `sha512-5GNKfdrR…uy9RQ==`; subsumes v0.80.0/v0.80.1); `pi-coding-agent` 0.78.1 (session/image goldens — unaffected by 0.80.x) |
 | Parity proofs at the pin | catalog regen endpoint-pinned byte-identical (386,548 B, independently re-derived) · session tree 8/8 · image decisions 8/8 (unchanged this cycle) · differential request diff 6/6 (re-derived from the 0.80.2 build) · in-repo differential parity 36/36 · fireworks/cf anthropic compat coupling 0 mismatches (14 fireworks + 17 cf-anthropic models carry the fields the removed auto-detect synthesized) |
 | Reviewed via | initial port + parity sweeps 1–2 (`3be3911`), registration fix (`b09cb46`); 2026-06-22 v0.79.10 cycle; 2026-06-24 v0.80.2 cycle independent go-review (ship, 3 optional LOW nits) + adversarial parity review (all 7 commits faithful, 6/6 differential, all 3 deliberate divergences confirmed observably-faithful); 2026-06-25 cycle (5 ports, no release) independent go-review (ship; one LOW `strings.Join` cleanup applied) + adversarial parity review (all 5 faithful; responses test-change mutation-verified non-vacuous; `reasoning,omitempty` confirmed acceptable-latent); 2026-06-26 cycle (1 port, no release) independent go-review (ship, no findings) + adversarial parity review (faithful; openai default-model lock mutation-verified non-vacuous) |
@@ -133,6 +133,30 @@ stays latent until a host sets it (see the 2026-06-17 ruling).
   extension resource-loader; `skills.ts` untouched). Future trust commits are
   `n/a` under this ruling UNLESS they change behavior of surface we ported —
   that re-escalates.
+
+## Drift at last sync check (2026-06-27) — pin advanced to 622eca76
+
+**Caught up to `622eca76`.** Delta `1d486163 → 622eca76` fully processed: 2
+main-line changes — **0 port, 2 n/a, 0 decides**. **No release tag crossed** —
+`pi-ai` stays **0.80.2** and `pi-coding-agent` stays **0.78.1**; no
+`models.generated` regen, so every byte-golden (catalog, session tree, image
+decisions, differential request diff) is untouched. Report-only triage; no Go
+code changed (pin advance only).
+
+n/a (2): `87ad8243` (**pi orchestrator** — new `packages/orchestrator/`
+experimental package: a host-side multi-process supervisor with IPC/RPC/
+supervisor/radius/storage, entirely additive. The only `coding-agent/src` touch
+is the brand-new `rpc-entry.ts`, a 12-line `--mode rpc` process entrypoint —
+host/main/CLI surface, same class as the unported `main.ts`/modes wiring. The
+`"version": "0.80.2"` is just the new package declaring itself; no `pi-ai` bump,
+no catalog regen, no tag. Not a boundary question: it's a separate supervisor
+process that doesn't make any non-ported area load-bearing for the SDK and adds
+no new provider/tool on the ported `ai`/`agent`/`coding-agent` core);
+`622eca76` (**installer lock generation** — packaging/CI/release tooling: new
+`coding-agent/install-lock/` package, a `generate-coding-agent-install-lock.mjs`
+script, a `build-binaries.yml` change, and one line in `scripts/release.mjs`
+adding `install-lock:coding-agent` to the release-artifact regen. No ported
+behavior, no version bump, no tag). No new boundary questions.
 
 ## Drift at last sync check (2026-06-26) — pin advanced to 1d486163
 
