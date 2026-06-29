@@ -10,10 +10,10 @@ commit-by-commit sync pipeline that keeps it current.
 
 | What | Value |
 |---|---|
-| TS source fully reviewed/ported | `5a073885` — "feat(coding-agent): add external editor setting" (2026-06-27); previous pins `622eca76` (06-26), `1d486163` (06-25), `09f10595` (06-25), `a2e3e9d8` (06-24), `470a4736` (06-23), `3b561346` (06-22), `2417adb4` (06-21), `56b22768` (06-19), `29c1504c` (06-17). The models-runtime migration is now **complete**: the `732bb161` substrate (06-23) plus the 06-24 follow-through (catalog-data reorg landed via the 0.80.2 regen; request-scoped auth `ef231c49`; api_key/env credential `49fbe683`; OpenAI Responses terminal events `cd95c274`; anthropic compat→catalog `6184307c`; header-only client auth + vercel ungate `129eb460`). |
+| TS source fully reviewed/ported | `541d11f7` — "chore: approve contributor skhoroshavin" (2026-06-29; the substantive change this cycle is `b91bdd5a` Z.AI thinking content); previous pins `5a073885` (06-27), `622eca76` (06-26), `1d486163` (06-25), `09f10595` (06-25), `a2e3e9d8` (06-24), `470a4736` (06-23), `3b561346` (06-22), `2417adb4` (06-21), `56b22768` (06-19), `29c1504c` (06-17). The models-runtime migration is now **complete**: the `732bb161` substrate (06-23) plus the 06-24 follow-through (catalog-data reorg landed via the 0.80.2 regen; request-scoped auth `ef231c49`; api_key/env credential `49fbe683`; OpenAI Responses terminal events `cd95c274`; anthropic compat→catalog `6184307c`; header-only client auth + vercel ungate `129eb460`). |
 | npm build the byte-goldens were captured from | `@earendil-works/pi-ai` **0.80.2** (catalog endpoint-pinned, re-derived byte-identical from `dist/models.generated.js`, lock integrity verified against the registry — `sha512-5GNKfdrR…uy9RQ==`; subsumes v0.80.0/v0.80.1); `pi-coding-agent` 0.78.1 (session/image goldens — unaffected by 0.80.x) |
 | Parity proofs at the pin | catalog regen endpoint-pinned byte-identical (386,548 B, independently re-derived) · session tree 8/8 · image decisions 8/8 (unchanged this cycle) · differential request diff 6/6 (re-derived from the 0.80.2 build) · in-repo differential parity 36/36 · fireworks/cf anthropic compat coupling 0 mismatches (14 fireworks + 17 cf-anthropic models carry the fields the removed auto-detect synthesized) |
-| Reviewed via | initial port + parity sweeps 1–2 (`3be3911`), registration fix (`b09cb46`); 2026-06-22 v0.79.10 cycle; 2026-06-24 v0.80.2 cycle independent go-review (ship, 3 optional LOW nits) + adversarial parity review (all 7 commits faithful, 6/6 differential, all 3 deliberate divergences confirmed observably-faithful); 2026-06-25 cycle (5 ports, no release) independent go-review (ship; one LOW `strings.Join` cleanup applied) + adversarial parity review (all 5 faithful; responses test-change mutation-verified non-vacuous; `reasoning,omitempty` confirmed acceptable-latent); 2026-06-26 cycle (1 port, no release) independent go-review (ship, no findings) + adversarial parity review (faithful; openai default-model lock mutation-verified non-vacuous) |
+| Reviewed via | initial port + parity sweeps 1–2 (`3be3911`), registration fix (`b09cb46`); 2026-06-22 v0.79.10 cycle; 2026-06-24 v0.80.2 cycle independent go-review (ship, 3 optional LOW nits) + adversarial parity review (all 7 commits faithful, 6/6 differential, all 3 deliberate divergences confirmed observably-faithful); 2026-06-25 cycle (5 ports, no release) independent go-review (ship; one LOW `strings.Join` cleanup applied) + adversarial parity review (all 5 faithful; responses test-change mutation-verified non-vacuous; `reasoning,omitempty` confirmed acceptable-latent); 2026-06-26 cycle (1 port, no release) independent go-review (ship, no findings) + adversarial parity review (faithful; openai default-model lock mutation-verified non-vacuous); 2026-06-29 cycle (1 port, no release) independent go-review (ship, no findings) + adversarial parity review (faithful; zai `clear_thinking:false` mutation-verified non-vacuous; confirmed no 0.80.2-derived golden pins the zai request shape, so no latent divergence) |
 
 Deliberately not ported (out of scope for the ledger unless a commit changes
 that decision): TUI, extensions runtime, OAuth token acquisition, project-trust
@@ -133,6 +133,44 @@ stays latent until a host sets it (see the 2026-06-17 ruling).
   extension resource-loader; `skills.ts` untouched). Future trust commits are
   `n/a` under this ruling UNLESS they change behavior of surface we ported —
   that re-escalates.
+
+## Drift at last sync check (2026-06-29) — pin advanced to 541d11f7
+
+**Caught up to `541d11f7`.** Delta `5a073885 → 541d11f7` fully processed: 6
+main-line changes — **1 port (→ 1 Go commit), 5 n/a, 0 decides**. **No release
+tag crossed** — the Z.AI fix's CHANGELOG entry lands in upstream `[Unreleased]`,
+no `package.json` bump; `pi-ai` stays **0.80.2** and `pi-coding-agent` stays
+**0.78.1**, so every byte-golden (catalog, session tree, image decisions,
+differential request diff) is untouched. Reviewed via independent go-review
+(ship, no findings) + adversarial parity review (faithful). gofmt clean;
+build/vet/`-race` green.
+
+- **preserve Z.AI thinking content** (`b91bdd5a`, Go `692984a`): the zai
+  `thinkingFormat` enabled payload in `applyReasoningFormat`
+  (`ai/providers/openai.go:914-924`) now carries `clear_thinking:false` alongside
+  `type:"enabled"` (#6083); the disabled payload stays bare `{type:"disabled"}`.
+  Mirrors `openai-completions.ts buildParams`'s ternary on
+  `options?.reasoningEffort` (Go's `enabled := level != ""`). **Request-body
+  golden surface** (zai-format models with effort), but **no latent divergence**:
+  the published 0.80.2 build still emits the bare shape, yet no zai-with-effort
+  request body is pinned in any 0.80.2-derived golden or differential scenario
+  (the in-repo `TestDiffZaiGLM52ReasoningEffort` is now aligned to the
+  `[Unreleased]` shape). Test: `TestDiffZaiGLM52ReasoningEffort` tightened
+  (`clear_thinking==false` when enabled, key absent when disabled;
+  mutation-verified non-vacuous).
+
+n/a (5): `234c2ad5` (**get_entries/get_tree RPC commands**, #6078 —
+`modes/rpc/*` + docs + test, plus a one-line `index.ts` re-export of the
+`SessionTreeNode` type; RPC mode is host/CLI surface, same class as the 06-27
+orchestrator `rpc-entry.ts` ruling, no ported behavior); `a8c692c7` (**avoid
+pre-prompt compaction continue**, #6074 — only `core/agent-session.ts`, removes a
+pre-prompt `agent.continue()`/`_handlePostAgentRun` loop; agent-session-runtime,
+deliberately not ported, consistent with the compaction-trio rulings);
+`54113731` (**HTTP timeout for Codex SSE headers**, #4945 —
+`openai-codex-responses.ts` only, Codex provider unported); `8f64353e`
+(**restrict bot gate bypasses**, #6127 — `.github/workflows/*`); `541d11f7`
+(**approve contributor skhoroshavin** — `.github/APPROVED_CONTRIBUTORS`,
+contributor-approval meta). No new boundary questions.
 
 ## Drift at last sync check (2026-06-28) — pin advanced to 5a073885
 
