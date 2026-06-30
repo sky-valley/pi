@@ -4,11 +4,39 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"unicode/utf16"
 )
+
+// maxProviderErrorBodyChars caps the surfaced HTTP error body, matching pi's
+// MAX_PROVIDER_ERROR_BODY_CHARS (error-body.ts). Upstream 6fbeba51 added this
+// cap so a verbose proxy/gateway error body cannot dominate the surfaced
+// message (the string can land in a recorded error turn's session JSON).
+const maxProviderErrorBodyChars = 4000
+
+// truncateErrorText ports pi's truncateErrorText (error-body.ts). JS measures
+// with String.length / String.slice, i.e. UTF-16 code units, so the cap and the
+// "[truncated N chars]" count are UTF-16-unit based, not byte- or rune-based.
+// The suffix string is matched byte-exactly.
+func truncateErrorText(text string, maxChars int) string {
+	units := utf16.Encode([]rune(text))
+	if len(units) <= maxChars {
+		return text
+	}
+	head := string(utf16.Decode(units[:maxChars]))
+	return fmt.Sprintf("%s... [truncated %d chars]", head, len(units)-maxChars)
+}
 
 // formatProviderError builds a concise error from an HTTP error response,
 // extracting the provider's structured error message when present (OpenAI,
 // Anthropic, and Google all nest it under "error": {"message": ...}).
+//
+// Architecture note (upstream 6fbeba51): pi's normalizeProviderError exists only
+// to recover the HTTP status and raw body from the JS provider SDKs' opaque error
+// objects (.statusCode/.error/.body/$response/$metadata). The Go port issues raw
+// HTTP requests and already holds resp.StatusCode and the raw body here, so that
+// whole SDK-field-probing layer is N/A — the #5763 "opaque, no body" bug cannot
+// occur. The one architecture-independent, observable behavior 6fbeba51 added is
+// the 4000-char body cap, which we apply to the body-derived message below.
 func formatProviderError(label string, status int, body []byte) error {
 	msg := strings.TrimSpace(string(body))
 	var parsed struct {
@@ -24,6 +52,7 @@ func formatProviderError(label string, status int, body []byte) error {
 			msg = fmt.Sprintf("%s (%s)", msg, parsed.Error.Code)
 		}
 	}
+	msg = truncateErrorText(msg, maxProviderErrorBodyChars)
 	return fmt.Errorf("%s API error %d: %s", label, status, msg)
 }
 
@@ -72,6 +101,9 @@ func openaiSDKErrorMessage(status int, body []byte) string {
 	if msg == "" {
 		return fmt.Sprintf("%d status code (no body)", status)
 	}
+	// pi caps the surfaced body at MAX_PROVIDER_ERROR_BODY_CHARS before the
+	// status prefix is added (error-body.ts truncateErrorText / extractBody).
+	msg = truncateErrorText(msg, maxProviderErrorBodyChars)
 	return fmt.Sprintf("%d %s", status, msg)
 }
 

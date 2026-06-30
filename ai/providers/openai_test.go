@@ -1228,3 +1228,41 @@ func TestClientAPIKeySentinel(t *testing.T) {
 		t.Fatalf("missing key+auth must fail with pi's message, got %v", err)
 	}
 }
+
+// runOpenAIHTTPError serves a non-2xx with the given body and returns the final
+// assistant message (the HTTP-error branch builds output.ErrorMessage).
+func runOpenAIHTTPError(t *testing.T, status int, body string) *ai.AssistantMessage {
+	t.Helper()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(status)
+		io.WriteString(w, body)
+	}))
+	t.Cleanup(server.Close)
+	model := &ai.Model{
+		ID: "gpt-test", Api: ai.APIOpenAICompletions, Provider: "openai", BaseURL: server.URL,
+	}
+	req := ai.Context{Messages: []ai.Message{ai.NewUserText("hi", 1)}}
+	return StreamOpenAICompletions(context.Background(), model, req,
+		&OpenAIOptions{StreamOptions: ai.StreamOptions{APIKey: "sk-test"}}).Result()
+}
+
+// TestOpenRouterMetadataRawDedup locks upstream 6fbeba51's guard: error.metadata.raw
+// is appended only when it is not already present in the surfaced message, to
+// avoid double-printing.
+func TestOpenRouterMetadataRawDedup(t *testing.T) {
+	// Distinct raw vs message → appended on its own line.
+	got := runOpenAIHTTPError(t, 502,
+		`{"error":{"message":"upstream failed","metadata":{"raw":"backend timeout"}}}`).ErrorMessage
+	if got != "OpenAI API error 502: upstream failed\nbackend timeout" {
+		t.Fatalf("distinct raw not appended cleanly: %q", got)
+	}
+	// raw is a substring of the surfaced message → NOT re-appended (the guard).
+	got = runOpenAIHTTPError(t, 502,
+		`{"error":{"message":"backend timeout occurred","metadata":{"raw":"backend timeout"}}}`).ErrorMessage
+	if strings.Count(got, "backend timeout") != 1 {
+		t.Fatalf("raw double-printed despite guard: %q", got)
+	}
+	if got != "OpenAI API error 502: backend timeout occurred" {
+		t.Fatalf("guard mutated message: %q", got)
+	}
+}

@@ -162,9 +162,16 @@ func StreamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Contex
 			data, _ := io.ReadAll(resp.Body)
 			err := formatProviderError("OpenAI", resp.StatusCode, data)
 			// Some providers via OpenRouter give additional information in
-			// error.metadata.raw; pi appends it to the error message
-			// (openai-completions.ts:417-419).
-			if raw := openRouterErrorRaw(data); raw != "" {
+			// error.metadata.raw; pi appends it to the error message.
+			// Upstream 6fbeba51 guarded this against double-printing once
+			// normalizeProviderError started stringifying the whole body into
+			// the message: `if (rawMetadata && !errorMessage.includes(raw))`.
+			// Go surfaces only the parsed .error.message (not the full body
+			// object), so raw is generally not already present and the guard is
+			// near-latent; we port it anyway for structural parity and to cover
+			// the case where raw happens to be a substring of the surfaced
+			// message (e.g. a provider that echoes raw into .error.message).
+			if raw := openRouterErrorRaw(data); raw != "" && !strings.Contains(err.Error(), raw) {
 				err = fmt.Errorf("%s\n%s", err.Error(), raw)
 			}
 			fail(err)
