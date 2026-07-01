@@ -10,10 +10,10 @@ commit-by-commit sync pipeline that keeps it current.
 
 | What | Value |
 |---|---|
-| TS source fully reviewed/ported | `9be55bc7` — "fix(coding-agent): apply output padding to user messages" (2026-06-30; the substantive change this cycle is `6fbeba51` provider HTTP error-body passthrough → Go 4000-char body cap + metadata.raw dedup); previous pins `541d11f7` (06-29), `5a073885` (06-27), `622eca76` (06-26), `1d486163` (06-25), `09f10595` (06-25), `a2e3e9d8` (06-24), `470a4736` (06-23), `3b561346` (06-22), `2417adb4` (06-21), `56b22768` (06-19), `29c1504c` (06-17). The models-runtime migration is now **complete**: the `732bb161` substrate (06-23) plus the 06-24 follow-through (catalog-data reorg landed via the 0.80.2 regen; request-scoped auth `ef231c49`; api_key/env credential `49fbe683`; OpenAI Responses terminal events `cd95c274`; anthropic compat→catalog `6184307c`; header-only client auth + vercel ungate `129eb460`). |
-| npm build the byte-goldens were captured from | `@earendil-works/pi-ai` **0.80.2** (catalog endpoint-pinned, re-derived byte-identical from `dist/models.generated.js`, lock integrity verified against the registry — `sha512-5GNKfdrR…uy9RQ==`; subsumes v0.80.0/v0.80.1); `pi-coding-agent` 0.78.1 (session/image goldens — unaffected by 0.80.x) |
-| Parity proofs at the pin | catalog regen endpoint-pinned byte-identical (386,548 B, independently re-derived) · session tree 8/8 · image decisions 8/8 (unchanged this cycle) · differential request diff 6/6 (re-derived from the 0.80.2 build) · in-repo differential parity 36/36 · fireworks/cf anthropic compat coupling 0 mismatches (14 fireworks + 17 cf-anthropic models carry the fields the removed auto-detect synthesized) |
-| Reviewed via | initial port + parity sweeps 1–2 (`3be3911`), registration fix (`b09cb46`); 2026-06-22 v0.79.10 cycle; 2026-06-24 v0.80.2 cycle independent go-review (ship, 3 optional LOW nits) + adversarial parity review (all 7 commits faithful, 6/6 differential, all 3 deliberate divergences confirmed observably-faithful); 2026-06-25 cycle (5 ports, no release) independent go-review (ship; one LOW `strings.Join` cleanup applied) + adversarial parity review (all 5 faithful; responses test-change mutation-verified non-vacuous; `reasoning,omitempty` confirmed acceptable-latent); 2026-06-26 cycle (1 port, no release) independent go-review (ship, no findings) + adversarial parity review (faithful; openai default-model lock mutation-verified non-vacuous); 2026-06-29 cycle (1 port, no release) independent go-review (ship, no findings) + adversarial parity review (faithful; zai `clear_thinking:false` mutation-verified non-vacuous; confirmed no 0.80.2-derived golden pins the zai request shape, so no latent divergence); 2026-06-30 cycle (1 port, no release) independent go-review (ship; 2 LOW cosmetic nits, not applied) + adversarial parity review (faithful — the 4000-char body-truncation cap is the one architecture-independent behavior; the SDK-field-probing layer is N/A since Go reads the raw `resp.Body`; truncation + metadata.raw-dedup tests mutation-verified non-vacuous; two non-blocking unpinned divergences documented — see the 2026-06-30 drift note) |
+| TS source fully reviewed/ported | `8c943640` — "fix(ai): remove stale model metadata fallbacks" (2026-07-01; this cycle folds all deferred catalog churn into the **v0.80.3** release regen and ports bash-timeout validation `cbcf4e04`+`85b7c247`); previous pins `9be55bc7` (06-30), `541d11f7` (06-29), `5a073885` (06-27), `622eca76` (06-26), `1d486163` (06-25), `09f10595` (06-25), `a2e3e9d8` (06-24), `470a4736` (06-23), `3b561346` (06-22), `2417adb4` (06-21), `56b22768` (06-19), `29c1504c` (06-17). The models-runtime migration is now **complete**: the `732bb161` substrate (06-23) plus the 06-24 follow-through (catalog-data reorg landed via the 0.80.2 regen; request-scoped auth `ef231c49`; api_key/env credential `49fbe683`; OpenAI Responses terminal events `cd95c274`; anthropic compat→catalog `6184307c`; header-only client auth + vercel ungate `129eb460`). |
+| npm build the byte-goldens were captured from | `@earendil-works/pi-ai` **0.80.3** (catalog endpoint-pinned, re-derived byte-identical from the build's `dist/models.generated.js` MODELS, lock integrity verified against the registry — `sha512-jPZLMeGL…z5vdA==`; subsumes 0.80.0–0.80.2); `pi-coding-agent` **0.80.3** (integrity `sha512-TIggw9gC…MTgGA==`; the session/image goldens are role/text + image-decision projections that carry no `Usage`, so the 0.78.1→0.80.3 bump leaves them unchanged) |
+| Parity proofs at the pin | catalog regen endpoint-pinned byte-identical (**397,575 B**, independently re-derived from the 0.80.3 build's MODELS and `cmp`-clean) · session tree 8/8 · image decisions 8/8 · in-repo differential parity 36/36 (request builders untouched this cycle) · bash-timeout validation faithful — both error strings byte-exact, boundary `2147483.647` s accepted, new tests mutation-verified non-vacuous · fireworks/cf anthropic compat coupling still 0 mismatches |
+| Reviewed via | initial port + parity sweeps 1–2 (`3be3911`), registration fix (`b09cb46`); 2026-06-22 v0.79.10 cycle; 2026-06-24 v0.80.2 cycle independent go-review (ship, 3 optional LOW nits) + adversarial parity review (all 7 commits faithful, 6/6 differential, all 3 deliberate divergences confirmed observably-faithful); 2026-06-25 cycle (5 ports, no release) independent go-review (ship; one LOW `strings.Join` cleanup applied) + adversarial parity review (all 5 faithful; responses test-change mutation-verified non-vacuous; `reasoning,omitempty` confirmed acceptable-latent); 2026-06-26 cycle (1 port, no release) independent go-review (ship, no findings) + adversarial parity review (faithful; openai default-model lock mutation-verified non-vacuous); 2026-06-29 cycle (1 port, no release) independent go-review (ship, no findings) + adversarial parity review (faithful; zai `clear_thinking:false` mutation-verified non-vacuous; confirmed no 0.80.2-derived golden pins the zai request shape, so no latent divergence); 2026-06-30 cycle (1 port, no release) independent go-review (ship; 2 LOW cosmetic nits, not applied) + adversarial parity review (faithful — the 4000-char body-truncation cap is the one architecture-independent behavior; the SDK-field-probing layer is N/A since Go reads the raw `resp.Body`; truncation + metadata.raw-dedup tests mutation-verified non-vacuous; two non-blocking unpinned divergences documented — see the 2026-06-30 drift note); 2026-07-01 v0.80.3 cycle (release regen + 1 behavior port) independent go-review (ship; one LOW computed-var-vs-literal-const nit, not applied) + adversarial parity review (both changes faithful — catalog `cmp`-identical to an independent re-derivation from the 0.80.3 build; bash-timeout error strings byte-exact, boundary accepted, both new tests mutation-verified non-vacuous on a worktree copy) |
 
 Deliberately not ported (out of scope for the ledger unless a commit changes
 that decision): TUI, extensions runtime, OAuth token acquisition, project-trust
@@ -133,6 +133,87 @@ stays latent until a host sets it (see the 2026-06-17 ruling).
   extension resource-loader; `skills.ts` untouched). Future trust commits are
   `n/a` under this ruling UNLESS they change behavior of surface we ported —
   that re-escalates.
+
+## Drift at last sync check (2026-07-01) — pin advanced to 8c943640
+
+**Caught up to `8c943640`.** Delta `9be55bc7 → 8c943640` fully processed: 16
+main-line changes — **9 port-class → 2 Go commits, 7 n/a, 0 decides**. **Release
+tag crossed — `v0.80.3`**: both `@earendil-works/pi-ai` and `pi-coding-agent`
+bump **0.80.2/0.78.1 → 0.80.3**. Reviewed via independent go-review (ship; one
+LOW computed-var nit, not applied) + adversarial parity review (both faithful).
+gofmt clean; build/vet/`-race` green.
+
+- **Catalog regen → npm 0.80.3** (release `a23abe4a` + catalog commits
+  `5c1a2977`, `42063764`, `844d175e`, `1da1cdb2`, `1d061b3f`, `8c943640`, Go
+  `23ef141`): `ai/models_catalog.json` re-derived byte-identical
+  (**397,575 B**) from the 0.80.3 build's `MODELS` (`JSON.stringify`, insertion
+  order); parity independently re-derived and `cmp`-clean (endpoint-pinned at the
+  release). Folds in **all** deferred catalog churn since the 0.80.2 regen
+  (06-25 `9cd2c81a`, 06-30 `3d6acb37`) plus this cycle's. Notable data:
+  **`claude-sonnet-5`** added across anthropic / amazon-bedrock (6 regional ids) /
+  openrouter / vercel-ai-gateway / github-copilot, all with
+  `compat:{forceAdaptiveThinking:true}` — **no Go code change**: the ported
+  anthropic path is catalog-driven (`getAnthropicCompat` reads `model.Compat`,
+  `ai/providers/anthropic.go:182`); the bedrock `supportsAdaptiveThinking`
+  hardcoded `sonnet-5` add is unported-bedrock (n/a). Fireworks GLM 5.2 Fast
+  realigned to GLM 5.2; huggingface/nvidia/together/cloudflare/opencode churn;
+  `generate-models.ts` "remove stale metadata fallbacks" (`1d061b3f`/`8c943640`)
+  + copilot claude-4/5 routing (`42063764`) are generator-only, effect in the
+  regenerated data. **Removed from anthropic:** `claude-3-5-haiku-20241022` +
+  `claude-3-5-haiku-latest` — the `ai/catalog_load_test.go` smoke test was
+  repointed to `claude-3-haiku-20240307` (maxTokens 4096, still present); no
+  orphaned refs elsewhere (`coding/resolve.go` has no haiku default). Schema: all
+  12 catalog keys map cleanly onto the Go `Model` struct — no unknown-key drop,
+  no type-abort.
+- **Bash tool timeout validation** (`cbcf4e04` reject oversized + `85b7c247`
+  reject non-positive, Go `91d9fbf`): `coding/tools.go bashTool` now validates
+  the `timeout` arg before spawning (mirroring pi's `resolveTimeoutMs` in
+  `bash.ts`, which throws first inside `exec`): a non-positive timeout →
+  `"Invalid timeout: must be a finite number of seconds"`, and `timeout*1000 >
+  2147483647` (INT32_MAX ms) → `"Invalid timeout: maximum is 2147483.647
+  seconds"` (`maxBashTimeoutSeconds` renders byte-identically to JS
+  `${MAX_TIMEOUT_MS/1000}`). Both surface as the raw tool error (pi's generic
+  `catch` re-throws unchanged). Validation is placed at the top of `Execute`,
+  before the cwd `os.Stat`, matching pi's ordering; the old `timeout > 0` gate on
+  `context.WithTimeout` relaxes to `hasTimeout` (any survivor is already `> 0`).
+  pi's `!Number.isFinite` branch collapses into the `<= 0` rejection — `argFloat`
+  only yields finite float64/int from JSON. Tests:
+  `TestBashRejectsNonPositiveTimeout` (table over int/float 0/-1/-0.5),
+  `TestBashRejectsOversizedTimeout` (message + accepted boundary
+  `2147483.647`) — both mutation-verified non-vacuous.
+
+**Release reconciliation (0.80.3 is the first build to publish three previously
+deferred latent divergences — all re-checked, none bites a golden):**
+- *zai `clear_thinking:false`* (`b91bdd5a`, ported 06-29): **now aligned** — the
+  in-repo `TestDiffZaiGLM52ReasoningEffort` already asserts the enabled-payload
+  shape that 0.80.3 ships, so publication makes the port correct, not divergent.
+- *`Usage.reasoning` `omitempty`* (`d7868b09`, ported 06-25): 0.80.3 is the
+  release that publishes it, so pi now emits `reasoning:0` for
+  openai-completions/responses/google. **Still unpinned:** the sessparity goldens
+  project only `{role,text}` and imgparity only image-decisions — neither
+  serializes `Usage` — and the 6-scenario request diff covers request bodies, not
+  response usage. So no golden/test forces a change to stay faithful. It remains a
+  **live-but-unpinned persisted-session divergence**; the faithful fix (drop
+  `omitempty` but keep anthropic emitting `reasoning` only-when-present — the
+  "split anthropic-optional vs others-always" from the 06-25 note) is a
+  session-format change with no golden to verify against, so it is deferred to its
+  own port+parity cycle rather than bundled into this release regen.
+- *Error-body 4000-char truncation micro-divergences* (`6fbeba51`, ported
+  06-30): error-path only, pinned by no differential golden — unchanged status.
+
+n/a (7): `e547bb9f` + `fd6659dd` (**prepareNextTurn context / preserve run
+prompt**, #6162 — adds a `PrepareNextTurnContext` param + a parallel
+`prepareNextTurnWithContext` callback in `packages/agent/src/agent.ts`, consumed
+by `agent-session.ts`'s per-turn system-prompt/tools refresh; the Go port has
+**no `prepareNextTurn` hook and no agent-session-runtime consumer** — same class
+as the compaction-trio / extension-lifecycle rulings); `040f0a51` (**expose model
+resolution helpers** — pure refactor extracting `resolveModelScopeWithDiagnostics`
++ index.ts SDK exports, no behavior change; Go has no `resolveModelScope`/
+SDK-export layer, only the ported `parseModelPattern`/`ResolveModelPattern`);
+`a3cc169d` (**avoid codex user-agent race**) + `0ac3cfe0` (**zstd codex SSE
+transport**) — Codex provider only (`openai-codex-responses.ts`), deliberately not
+ported; `f98a154d` (**docs: audit changelog**) + `dd87c02c` (**add [Unreleased]
+section**) — changelog meta. No new boundary questions.
 
 ## Drift at last sync check (2026-06-30) — pin advanced to 9be55bc7
 
