@@ -55,7 +55,7 @@ func TestResolveJSONSchemaStrictSampling(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := resolveJSONSchemaStrictSampling(tc.tool, tc.supportsStrict)
+			got, err := resolveJSONSchemaStrictSampling(tc.tool, tc.supportsStrict, nil)
 			assertErrString(t, err, tc.wantErr)
 			if err == nil && got != tc.want {
 				t.Fatalf("strict = %v, want %v", got, tc.want)
@@ -80,7 +80,7 @@ func TestMakeStrictJSONSchema(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	strict, err := makeStrictJSONSchema(parameters)
+	strict, err := makeStrictJSONSchema(parameters, nil)
 	if err != nil {
 		t.Fatalf("makeStrictJSONSchema: %v", err)
 	}
@@ -131,7 +131,7 @@ func TestMakeStrictJSONSchemaEmptyObject(t *testing.T) {
 			if err := json.Unmarshal([]byte(tt.src), &parameters); err != nil {
 				t.Fatal(err)
 			}
-			strict, err := makeStrictJSONSchema(&parameters)
+			strict, err := makeStrictJSONSchema(&parameters, nil)
 			if err != nil {
 				t.Fatalf("makeStrictJSONSchema: %v", err)
 			}
@@ -201,10 +201,10 @@ func TestMakeStrictJSONSchemaUnsupported(t *testing.T) {
 				},
 			}
 
-			if _, err := makeStrictJSONSchema(tc.parameters); err == nil || err.Error() != tc.reason {
+			if _, err := makeStrictJSONSchema(tc.parameters, nil); err == nil || err.Error() != tc.reason {
 				t.Fatalf("makeStrictJSONSchema error = %v, want %q", err, tc.reason)
 			}
-			strict, err := resolveJSONSchemaStrictSampling(tool, true)
+			strict, err := resolveJSONSchemaStrictSampling(tool, true, nil)
 			if err != nil || strict {
 				t.Fatalf("prefer must fall back to unconstrained: strict=%v err=%v", strict, err)
 			}
@@ -227,7 +227,7 @@ func TestMakeStrictJSONSchemaUnsupported(t *testing.T) {
 			tool.ConstrainedSampling = &ai.ConstrainedSamplingConfig{
 				Type: ai.ConstrainedSamplingJSONSchema, Strict: ai.ConstrainedSamplingRequire,
 			}
-			_, err = resolveJSONSchemaStrictSampling(tool, true)
+			_, err = resolveJSONSchemaStrictSampling(tool, true, nil)
 			assertErrString(t, err, `Tool "cannot" requires JSON-schema constrained sampling, but `+tc.reason+`.`)
 		})
 	}

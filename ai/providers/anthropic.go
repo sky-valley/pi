@@ -1592,6 +1592,55 @@ func buildAnthropicParams(model *ai.Model, req ai.TranscriptContext, oauth bool,
 	return params, nil
 }
 
+// anthropicStrictUnsupportedKeywords are the keywords Anthropic strict tool use
+// rejects with a 400 for the whole request (port of
+// ANTHROPIC_STRICT_UNSUPPORTED_KEYWORDS).
+// https://platform.claude.com/docs/en/build-with-claude/structured-outputs#json-schema-limitations
+var anthropicStrictUnsupportedKeywords = map[string]bool{
+	"minimum":          true,
+	"maximum":          true,
+	"exclusiveMinimum": true,
+	"exclusiveMaximum": true,
+	"multipleOf":       true,
+	"maxItems":         true,
+	"uniqueItems":      true,
+	"minContains":      true,
+	"maxContains":      true,
+	"minProperties":    true,
+	"maxProperties":    true,
+}
+
+// anthropicStrictStringFormats are the string formats Anthropic strict mode
+// accepts (port of ANTHROPIC_STRICT_STRING_FORMATS).
+var anthropicStrictStringFormats = map[string]bool{
+	"date-time": true,
+	"time":      true,
+	"date":      true,
+	"duration":  true,
+	"email":     true,
+	"hostname":  true,
+	"uri":       true,
+	"ipv4":      true,
+	"ipv6":      true,
+	"uuid":      true,
+}
+
+// isAnthropicStrictUnsupportedKeyword is pi's Anthropic keyword check: a
+// "prefer" tool whose schema uses one of these is sent non-strict.
+func isAnthropicStrictUnsupportedKeyword(key string, value any) bool {
+	if anthropicStrictUnsupportedKeywords[key] {
+		return true
+	}
+	switch key {
+	case "minItems":
+		return value != 0.0 && value != 1.0
+	case "format":
+		format, ok := value.(string)
+		return !ok || !anthropicStrictStringFormats[format]
+	}
+	return false
+}
+
 func convertAnthropicTools(tools []ai.Tool, oauth, eager, supportsStrictTools bool, cc *cacheControl) ([]map[string]any, error) {
 	out := make([]map[string]any, len(tools))
 	for i, t := range tools {
@@ -1599,7 +1648,7 @@ func convertAnthropicTools(tools []ai.Tool, oauth, eager, supportsStrictTools bo
 		if oauth {
 			name = toClaudeCodeName(name)
 		}
-		strict, err := resolveJSONSchemaStrictSampling(t, supportsStrictTools)
+		strict, err := resolveJSONSchemaStrictSampling(t, supportsStrictTools, isAnthropicStrictUnsupportedKeyword)
 		if err != nil {
 			return nil, err
 		}

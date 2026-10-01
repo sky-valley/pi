@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 
@@ -1450,6 +1451,75 @@ func TestAnthropicStrictTools(t *testing.T) {
 	schema, _ = plainTool["input_schema"].(map[string]any)
 	if len(schema) != 3 {
 		t.Fatalf("non-strict input_schema must stay the legacy 3-key shape: %#v", schema)
+	}
+}
+
+// Upstream 295cc72b0: Anthropic strict tool use rejects keywords like
+// minimum/maximum with a 400 for the whole request, so a "prefer" tool whose
+// schema uses one is sent non-strict, and a "require" tool fails naming the
+// first offending keyword. Replays testdata/anthropic-strict-keywords, captured
+// from pi-ai 0.99.2's anthropic-messages stream.
+func TestAnthropicStrictUnsupportedKeywordsMatchPi(t *testing.T) {
+	raw, err := os.ReadFile("testdata/anthropic-strict-keywords/strict-keywords-0.99.2.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var capture struct {
+		Rows []struct {
+			Name       string          `json:"name"`
+			Strict     string          `json:"strict"`
+			Parameters json.RawMessage `json:"parameters"`
+			SentStrict bool            `json:"sentStrict"`
+			Error      string          `json:"error"`
+		} `json:"rows"`
+	}
+	if err := json.Unmarshal(raw, &capture); err != nil {
+		t.Fatal(err)
+	}
+	if len(capture.Rows) == 0 {
+		t.Fatal("empty capture")
+	}
+	model := &ai.Model{ID: "claude-x", Api: ai.APIAnthropicMessages, Provider: "test-anthropic", Input: []string{"text"}, MaxTokens: 100,
+		Compat: json.RawMessage(`{"supportsStrictTools":true}`)}
+	for _, row := range capture.Rows {
+		var params ai.Schema
+		if err := json.Unmarshal(row.Parameters, &params); err != nil {
+			t.Fatal(err)
+		}
+		req := ai.Context{
+			Messages: []ai.Message{ai.NewUserText("hi", 1)},
+			Tools: []ai.Tool{{Name: "lookup", Description: "d", Parameters: &params,
+				ConstrainedSampling: &ai.ConstrainedSamplingConfig{
+					Type: ai.ConstrainedSamplingJSONSchema, Strict: ai.ConstrainedSamplingStrictness(row.Strict),
+				}}},
+		}
+		body, err := buildAnthropicParams(model, ai.NormalizeContext(req), false, &AnthropicOptions{})
+		if row.Error != "" {
+			if err == nil || err.Error() != row.Error {
+				t.Errorf("%s/%s: err = %v, pi = %q", row.Name, row.Strict, err, row.Error)
+			}
+			continue
+		}
+		if err != nil {
+			t.Errorf("%s/%s: unexpected error %v", row.Name, row.Strict, err)
+			continue
+		}
+		tools, _ := body["tools"].([]map[string]any)
+		if got := len(tools) == 1 && tools[0]["strict"] == true; got != row.SentStrict {
+			t.Errorf("%s/%s: strict = %v, pi = %v", row.Name, row.Strict, got, row.SentStrict)
+		}
+	}
+}
+
+// Characterization: the keyword check is Anthropic's alone: OpenAI's strict mode still takes a
+// bounded integer (upstream 295cc72b0 leaves other providers unchanged).
+func TestStrictUnsupportedKeywordsOnlyAnthropic(t *testing.T) {
+	lower := 1.0
+	tool := ai.Tool{Name: "lookup", Parameters: ai.Object(ai.Prop("n", &ai.Schema{Type: "integer", Minimum: &lower})),
+		ConstrainedSampling: &ai.ConstrainedSamplingConfig{Type: ai.ConstrainedSamplingJSONSchema, Strict: ai.ConstrainedSamplingPrefer}}
+	strict, err := resolveJSONSchemaStrictSampling(tool, true, nil)
+	if err != nil || !strict {
+		t.Fatalf("without a provider check a minimum stays strict, got (%v, %v)", strict, err)
 	}
 }
 

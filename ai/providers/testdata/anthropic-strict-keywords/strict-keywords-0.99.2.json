@@ -1,0 +1,551 @@
+{
+	"piVersion": "0.99.2",
+	"rows": [
+		{
+			"name": "minimum and maximum",
+			"strict": "prefer",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"timeoutMs": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 300000
+					}
+				}
+			},
+			"sentStrict": false
+		},
+		{
+			"name": "nested minItems 2",
+			"strict": "prefer",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"options": {
+						"type": "object",
+						"properties": {
+							"tags": {
+								"type": "array",
+								"items": {
+									"type": "string"
+								},
+								"minItems": 2
+							}
+						}
+					}
+				}
+			},
+			"sentStrict": false
+		},
+		{
+			"name": "format regex",
+			"strict": "prefer",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"expression": {
+						"type": "string",
+						"format": "regex"
+					}
+				}
+			},
+			"sentStrict": false
+		},
+		{
+			"name": "supported keywords",
+			"strict": "prefer",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"code": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 1000,
+						"pattern": "^[a-z]+$"
+					},
+					"url": {
+						"type": "string",
+						"format": "uri"
+					},
+					"tags": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"minItems": 1
+					}
+				}
+			},
+			"sentStrict": true
+		},
+		{
+			"name": "minItems 0",
+			"strict": "prefer",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"tags": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"minItems": 0
+					}
+				}
+			},
+			"sentStrict": true
+		},
+		{
+			"name": "maxItems",
+			"strict": "prefer",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"tags": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"maxItems": 3
+					}
+				}
+			},
+			"sentStrict": false
+		},
+		{
+			"name": "uniqueItems",
+			"strict": "prefer",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"tags": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"uniqueItems": true
+					}
+				}
+			},
+			"sentStrict": false
+		},
+		{
+			"name": "multipleOf fraction",
+			"strict": "prefer",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"n": {
+						"type": "number",
+						"multipleOf": 0.5
+					}
+				}
+			},
+			"sentStrict": false
+		},
+		{
+			"name": "exclusiveMaximum",
+			"strict": "prefer",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"n": {
+						"type": "number",
+						"exclusiveMaximum": 10
+					}
+				}
+			},
+			"sentStrict": false
+		},
+		{
+			"name": "root maxProperties",
+			"strict": "prefer",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"n": {
+						"type": "number"
+					}
+				},
+				"maxProperties": 3
+			},
+			"sentStrict": false
+		},
+		{
+			"name": "anyOf variant exclusiveMinimum",
+			"strict": "prefer",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"n": {
+						"anyOf": [
+							{
+								"type": "number",
+								"exclusiveMinimum": 0
+							},
+							{
+								"type": "string"
+							}
+						]
+					}
+				}
+			},
+			"sentStrict": false
+		},
+		{
+			"name": "items minContains",
+			"strict": "prefer",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"tags": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"minContains": 1
+					}
+				}
+			},
+			"sentStrict": false
+		},
+		{
+			"name": "every allowed format",
+			"strict": "prefer",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"date-time": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"time": {
+						"type": "string",
+						"format": "time"
+					},
+					"date": {
+						"type": "string",
+						"format": "date"
+					},
+					"duration": {
+						"type": "string",
+						"format": "duration"
+					},
+					"email": {
+						"type": "string",
+						"format": "email"
+					},
+					"hostname": {
+						"type": "string",
+						"format": "hostname"
+					},
+					"uri": {
+						"type": "string",
+						"format": "uri"
+					},
+					"ipv4": {
+						"type": "string",
+						"format": "ipv4"
+					},
+					"ipv6": {
+						"type": "string",
+						"format": "ipv6"
+					},
+					"uuid": {
+						"type": "string",
+						"format": "uuid"
+					}
+				}
+			},
+			"sentStrict": true
+		},
+		{
+			"name": "format email-like but not allowed",
+			"strict": "prefer",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"e": {
+						"type": "string",
+						"format": "idn-email"
+					}
+				}
+			},
+			"sentStrict": false
+		},
+		{
+			"name": "minimum and maximum",
+			"strict": "require",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"timeoutMs": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 300000
+					}
+				}
+			},
+			"error": "Tool \"lookup\" requires JSON-schema constrained sampling, but minimum: 1 is unsupported."
+		},
+		{
+			"name": "nested minItems 2",
+			"strict": "require",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"options": {
+						"type": "object",
+						"properties": {
+							"tags": {
+								"type": "array",
+								"items": {
+									"type": "string"
+								},
+								"minItems": 2
+							}
+						}
+					}
+				}
+			},
+			"error": "Tool \"lookup\" requires JSON-schema constrained sampling, but minItems: 2 is unsupported."
+		},
+		{
+			"name": "format regex",
+			"strict": "require",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"expression": {
+						"type": "string",
+						"format": "regex"
+					}
+				}
+			},
+			"error": "Tool \"lookup\" requires JSON-schema constrained sampling, but format: \"regex\" is unsupported."
+		},
+		{
+			"name": "supported keywords",
+			"strict": "require",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"code": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 1000,
+						"pattern": "^[a-z]+$"
+					},
+					"url": {
+						"type": "string",
+						"format": "uri"
+					},
+					"tags": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"minItems": 1
+					}
+				}
+			},
+			"sentStrict": true
+		},
+		{
+			"name": "minItems 0",
+			"strict": "require",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"tags": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"minItems": 0
+					}
+				}
+			},
+			"sentStrict": true
+		},
+		{
+			"name": "maxItems",
+			"strict": "require",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"tags": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"maxItems": 3
+					}
+				}
+			},
+			"error": "Tool \"lookup\" requires JSON-schema constrained sampling, but maxItems: 3 is unsupported."
+		},
+		{
+			"name": "uniqueItems",
+			"strict": "require",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"tags": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"uniqueItems": true
+					}
+				}
+			},
+			"error": "Tool \"lookup\" requires JSON-schema constrained sampling, but uniqueItems: true is unsupported."
+		},
+		{
+			"name": "multipleOf fraction",
+			"strict": "require",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"n": {
+						"type": "number",
+						"multipleOf": 0.5
+					}
+				}
+			},
+			"error": "Tool \"lookup\" requires JSON-schema constrained sampling, but multipleOf: 0.5 is unsupported."
+		},
+		{
+			"name": "exclusiveMaximum",
+			"strict": "require",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"n": {
+						"type": "number",
+						"exclusiveMaximum": 10
+					}
+				}
+			},
+			"error": "Tool \"lookup\" requires JSON-schema constrained sampling, but exclusiveMaximum: 10 is unsupported."
+		},
+		{
+			"name": "root maxProperties",
+			"strict": "require",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"n": {
+						"type": "number"
+					}
+				},
+				"maxProperties": 3
+			},
+			"error": "Tool \"lookup\" requires JSON-schema constrained sampling, but maxProperties: 3 is unsupported."
+		},
+		{
+			"name": "anyOf variant exclusiveMinimum",
+			"strict": "require",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"n": {
+						"anyOf": [
+							{
+								"type": "number",
+								"exclusiveMinimum": 0
+							},
+							{
+								"type": "string"
+							}
+						]
+					}
+				}
+			},
+			"error": "Tool \"lookup\" requires JSON-schema constrained sampling, but exclusiveMinimum: 0 is unsupported."
+		},
+		{
+			"name": "items minContains",
+			"strict": "require",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"tags": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"minContains": 1
+					}
+				}
+			},
+			"error": "Tool \"lookup\" requires JSON-schema constrained sampling, but minContains: 1 is unsupported."
+		},
+		{
+			"name": "every allowed format",
+			"strict": "require",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"date-time": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"time": {
+						"type": "string",
+						"format": "time"
+					},
+					"date": {
+						"type": "string",
+						"format": "date"
+					},
+					"duration": {
+						"type": "string",
+						"format": "duration"
+					},
+					"email": {
+						"type": "string",
+						"format": "email"
+					},
+					"hostname": {
+						"type": "string",
+						"format": "hostname"
+					},
+					"uri": {
+						"type": "string",
+						"format": "uri"
+					},
+					"ipv4": {
+						"type": "string",
+						"format": "ipv4"
+					},
+					"ipv6": {
+						"type": "string",
+						"format": "ipv6"
+					},
+					"uuid": {
+						"type": "string",
+						"format": "uuid"
+					}
+				}
+			},
+			"sentStrict": true
+		},
+		{
+			"name": "format email-like but not allowed",
+			"strict": "require",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"e": {
+						"type": "string",
+						"format": "idn-email"
+					}
+				}
+			},
+			"error": "Tool \"lookup\" requires JSON-schema constrained sampling, but format: \"idn-email\" is unsupported."
+		}
+	]
+}

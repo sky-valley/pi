@@ -3,6 +3,8 @@ package providers
 import (
 	"errors"
 	"fmt"
+	"maps"
+	"slices"
 	"strings"
 
 	"github.com/sky-valley/pi/ai"
@@ -79,13 +81,108 @@ func schemaAllowsNull(schema *ai.Schema) bool {
 	return false
 }
 
+// unsupportedStrictSchemaKeywordCheck reports whether a provider's strict mode
+// rejects this schema keyword with this value (port of
+// UnsupportedStrictSchemaKeywordCheck). A nil check accepts every keyword.
+type unsupportedStrictSchemaKeywordCheck func(key string, value any) bool
+
+// schemaKeywords returns a node's keywords with their values in the order the
+// node serializes (ai.Schema.MarshalJSON), which is the order the port sends
+// them — pi walks Object.entries of the same object. Subschema-valued keywords
+// carry the *ai.Schema; no keyword check inspects them.
+func schemaKeywords(s *ai.Schema) []schemaKeyword {
+	var out []schemaKeyword
+	add := func(key string, value any) { out = append(out, schemaKeyword{key, value}) }
+	if s.Type != "" {
+		if s.Nullable {
+			add("type", []any{s.Type, "null"})
+		} else {
+			add("type", s.Type)
+		}
+	}
+	if s.Description != "" {
+		add("description", s.Description)
+	}
+	if s.Properties != nil {
+		add("properties", s.Properties)
+	}
+	if s.Required != nil {
+		add("required", s.Required)
+	}
+	if s.Items != nil {
+		add("items", s.Items)
+	}
+	if len(s.Enum) > 0 {
+		add("enum", s.Enum)
+	}
+	if s.HasConst {
+		add("const", s.Const)
+	}
+	if s.Default != nil {
+		add("default", s.Default)
+	}
+	if s.AdditionalSchema != nil {
+		add("additionalProperties", s.AdditionalSchema)
+	} else if s.AdditionalAllowed != nil {
+		add("additionalProperties", *s.AdditionalAllowed)
+	}
+	for _, f := range []struct {
+		key   string
+		value *float64
+	}{
+		{"minimum", s.Minimum}, {"maximum", s.Maximum},
+		{"exclusiveMinimum", s.ExclusiveMinimum}, {"exclusiveMaximum", s.ExclusiveMaximum},
+		{"multipleOf", s.MultipleOf},
+	} {
+		if f.value != nil {
+			add(f.key, *f.value)
+		}
+	}
+	if s.MinLength != nil {
+		add("minLength", float64(*s.MinLength))
+	}
+	if s.MaxLength != nil {
+		add("maxLength", float64(*s.MaxLength))
+	}
+	if s.Pattern != "" {
+		add("pattern", s.Pattern)
+	}
+	if s.MinItems != nil {
+		add("minItems", float64(*s.MinItems))
+	}
+	if s.MaxItems != nil {
+		add("maxItems", float64(*s.MaxItems))
+	}
+	if s.Format != "" {
+		add("format", s.Format)
+	}
+	if len(s.AnyOf) > 0 {
+		add("anyOf", s.AnyOf)
+	}
+	if len(s.OneOf) > 0 {
+		add("oneOf", s.OneOf)
+	}
+	if len(s.AllOf) > 0 {
+		add("allOf", s.AllOf)
+	}
+	for _, key := range slices.Sorted(maps.Keys(s.Extra)) {
+		add(key, s.Extra[key])
+	}
+	return out
+}
+
+type schemaKeyword struct {
+	key   string
+	value any
+}
+
 // makeJSONSchemaNodeStrict rewrites one schema node (in place) into the strict
 // subset, or reports why it cannot (port of makeJsonSchemaNodeStrict). Object
 // schemas end up closed (additionalProperties:false) with every property
 // required; a formerly-optional property that does not accept null is widened
 // to {anyOf:[property,{type:"null"}]} so the model can still omit it by
 // sampling null.
-func makeJSONSchemaNodeStrict(schema *ai.Schema) error {
+func makeJSONSchemaNodeStrict(schema *ai.Schema, isUnsupportedKeyword unsupportedStrictSchemaKeywordCheck) error {
 	if schema == nil {
 		// pi hits this for boolean (and null) schema nodes; ai.Schema can only
 		// represent those as nil pointers.
@@ -105,6 +202,14 @@ func makeJSONSchemaNodeStrict(schema *ai.Schema) error {
 			return &unsupportedStrictJSONSchemaError{key + " schemas are unsupported"}
 		}
 	}
+	if isUnsupportedKeyword != nil {
+		for _, kw := range schemaKeywords(schema) {
+			if isUnsupportedKeyword(kw.key, kw.value) {
+				value, _ := jstext.Stringify(kw.value)
+				return &unsupportedStrictJSONSchemaError{kw.key + ": " + value + " is unsupported"}
+			}
+		}
+	}
 
 	if schema.AnyOf != nil {
 		if len(schema.AnyOf) == 0 {
@@ -114,7 +219,7 @@ func makeJSONSchemaNodeStrict(schema *ai.Schema) error {
 			if isStructuredSchema(variant) {
 				return &unsupportedStrictJSONSchemaError{"object and array unions are unsupported"}
 			}
-			if err := makeJSONSchemaNodeStrict(variant); err != nil {
+			if err := makeJSONSchemaNodeStrict(variant, isUnsupportedKeyword); err != nil {
 				return err
 			}
 		}
@@ -123,7 +228,7 @@ func makeJSONSchemaNodeStrict(schema *ai.Schema) error {
 	if schema.Items != nil {
 		// pi rejects tuple-form items ("tuple schemas are unsupported"), which
 		// ai.Schema cannot represent; Items is always a single schema.
-		if err := makeJSONSchemaNodeStrict(schema.Items); err != nil {
+		if err := makeJSONSchemaNodeStrict(schema.Items, isUnsupportedKeyword); err != nil {
 			return err
 		}
 	}
@@ -154,7 +259,7 @@ func makeJSONSchemaNodeStrict(schema *ai.Schema) error {
 	}
 	for _, key := range propertyNames {
 		property := schema.Properties[key]
-		if err := makeJSONSchemaNodeStrict(property); err != nil {
+		if err := makeJSONSchemaNodeStrict(property, isUnsupportedKeyword); err != nil {
 			return err
 		}
 		if !required[key] && !schemaAllowsNull(property) {
@@ -171,12 +276,12 @@ func makeJSONSchemaNodeStrict(schema *ai.Schema) error {
 // provider constrained sampling (port of makeStrictJsonSchema). The input is
 // deep-copied first — like pi's structuredClone, the tool's own schema is
 // never touched.
-func makeStrictJSONSchema(schema *ai.Schema) (*ai.Schema, error) {
+func makeStrictJSONSchema(schema *ai.Schema, isUnsupportedKeyword unsupportedStrictSchemaKeywordCheck) (*ai.Schema, error) {
 	cloned := schema.Clone()
 	if cloned == nil {
 		return nil, &unsupportedStrictJSONSchemaError{"root schema must have type object"}
 	}
-	if err := makeJSONSchemaNodeStrict(cloned); err != nil {
+	if err := makeJSONSchemaNodeStrict(cloned, isUnsupportedKeyword); err != nil {
 		return nil, err
 	}
 	if cloned.Type != "object" || cloned.Nullable {
@@ -190,7 +295,7 @@ func makeStrictJSONSchema(schema *ai.Schema) (*ai.Schema, error) {
 // own parameters otherwise (port of getJsonSchemaToolParameters).
 func jsonSchemaToolParameters(tool ai.Tool, strict bool) (*ai.Schema, error) {
 	if strict {
-		return makeStrictJSONSchema(tool.Parameters)
+		return makeStrictJSONSchema(tool.Parameters, nil)
 	}
 	return tool.Parameters, nil
 }
@@ -293,7 +398,9 @@ func inferGrammarInputProperty(tool ai.Tool) (string, error) {
 // resolveJSONSchemaStrictSampling reports whether a tool should be sent with
 // JSON-schema constrained sampling enabled (port of resolveJsonSchemaStrictSampling).
 // pi returns true or undefined, never false, so a plain bool suffices.
-func resolveJSONSchemaStrictSampling(tool ai.Tool, supportsStrictMode bool) (bool, error) {
+// isUnsupportedKeyword lets a provider reject extra keywords its strict mode
+// does not accept, so "prefer" tools fall back to non-strict.
+func resolveJSONSchemaStrictSampling(tool ai.Tool, supportsStrictMode bool, isUnsupportedKeyword unsupportedStrictSchemaKeywordCheck) (bool, error) {
 	config := tool.ConstrainedSampling
 	if config == nil || config.Type != ai.ConstrainedSamplingJSONSchema {
 		return false, nil
@@ -301,7 +408,7 @@ func resolveJSONSchemaStrictSampling(tool ai.Tool, supportsStrictMode bool) (boo
 	if supportsStrictMode {
 		// Probe the conversion: a schema the strict subset cannot express falls
 		// back to unconstrained sampling unless the tool requires strict.
-		_, err := makeStrictJSONSchema(tool.Parameters)
+		_, err := makeStrictJSONSchema(tool.Parameters, isUnsupportedKeyword)
 		if err == nil {
 			return true, nil
 		}

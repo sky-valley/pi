@@ -1216,7 +1216,7 @@ func convertResponsesTools(tools []ai.Tool, compat responsesCompat, toolSearchRe
 		// ported caller (openai-responses.ts) never sets a defaultStrict, so the
 		// resolver's answer is the whole story here (openai-codex-responses.ts,
 		// which passes strict:null, is deliberately unported).
-		strict, err := resolveJSONSchemaStrictSampling(t, compat.SupportsStrictMode)
+		strict, err := resolveJSONSchemaStrictSampling(t, compat.SupportsStrictMode, nil)
 		if err != nil {
 			return nil, err
 		}

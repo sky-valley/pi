@@ -866,7 +866,7 @@ func supportsGoogleStrictToolSampling(modelID string) bool {
 func resolveGoogleFunctionCallingMode(tools []ai.Tool, toolChoice string, supportsStrictMode bool) (string, error) {
 	useStrictMode := false
 	for _, tool := range tools {
-		strict, err := resolveJSONSchemaStrictSampling(tool, supportsStrictMode)
+		strict, err := resolveJSONSchemaStrictSampling(tool, supportsStrictMode, nil)
 		if err != nil {
 			return "", err
 		}
@@ -1143,7 +1143,7 @@ func googleTools(tools []ai.Tool, useParameters, supportsStrictMode bool) ([]any
 	}
 	var decls []any
 	for _, t := range tools {
-		strict, err := resolveJSONSchemaStrictSampling(t, supportsStrictMode)
+		strict, err := resolveJSONSchemaStrictSampling(t, supportsStrictMode, nil)
 		if err != nil {
 			return nil, err
 		}

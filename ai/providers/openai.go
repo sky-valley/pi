@@ -1193,7 +1193,7 @@ func convertOpenAITools(tools []ai.Tool, compat openAICompletionsCompat) ([]map[
 		// Resolved unconditionally: a tool that REQUIRES strict sampling must fail
 		// the request on a provider that cannot do it, even though the key itself
 		// is only emitted where the provider supports it (some reject unknown fields).
-		strict, err := resolveJSONSchemaStrictSampling(t, compat.SupportsStrictMode)
+		strict, err := resolveJSONSchemaStrictSampling(t, compat.SupportsStrictMode, nil)
 		if err != nil {
 			return nil, err
 		}
