@@ -3,7 +3,6 @@ package providers
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -70,9 +69,16 @@ func getAnthropicFederation(model *ai.Model, apiKey, authToken string, headers a
 // different key replaces it, cache and all.
 var anthropicFederationClient struct {
 	mu         sync.Mutex
-	key        string
+	key        anthropicFederationKey
 	httpClient ai.HTTPDoer
 	tokens     *anthropicTokenCache
+}
+
+// anthropicFederationKey is pi's JSON.stringify([model.baseUrl, federation]):
+// the base URL and the ids the client was built for.
+type anthropicFederationKey struct {
+	baseURL    string
+	federation anthropicFederation
 }
 
 // anthropicFederationTokens returns the token cache for this base URL, config
@@ -80,10 +86,7 @@ var anthropicFederationClient struct {
 // the client's (model.baseUrl, or the default); httpClient is a custom client
 // or nil for the default, pi's fetch.
 func anthropicFederationTokens(baseURL string, f *anthropicFederation, httpClient ai.HTTPDoer) *anthropicTokenCache {
-	// pi: JSON.stringify([model.baseUrl, federation]); any injective encoding
-	// of the same values keys the same.
-	keyBytes, _ := json.Marshal([]string{baseURL, f.ruleID, f.organizationID, f.identityTokenFile, f.serviceAccountID, f.workspaceID})
-	key := string(keyBytes)
+	key := anthropicFederationKey{baseURL: baseURL, federation: *f}
 	c := &anthropicFederationClient
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -98,14 +101,15 @@ func anthropicFederationTokens(baseURL string, f *anthropicFederation, httpClien
 }
 
 // sameHTTPDoer is pi's `federationClient.fetch !== fetch` identity test. A
-// client of a type == cannot compare is never the same one, rather than a
-// panic.
+// client == cannot compare — a func, or a struct holding one, even behind an
+// interface field — is never the same one, rather than a panic: the VALUES
+// are checked, since a comparable type can still hold an uncomparable value.
 func sameHTTPDoer(a, b ai.HTTPDoer) bool {
 	if a == nil || b == nil {
 		return a == nil && b == nil
 	}
-	t := reflect.TypeOf(a)
-	return t == reflect.TypeOf(b) && t.Comparable() && a == b
+	va, vb := reflect.ValueOf(a), reflect.ValueOf(b)
+	return va.Type() == vb.Type() && va.Comparable() && vb.Comparable() && a == b
 }
 
 // appendAnthropicOAuthBeta is the SDK's prepareRequest for token auth: once
@@ -164,9 +168,10 @@ type anthropicAccessToken struct {
 //
 //   - no cached token, or a forced refresh: exchange (blocking);
 //   - more than 120s left: the cached token;
-//   - 30-120s left (advisory): the cached token, and a background exchange
-//     whose failure is swallowed, backing off 5s after one;
-//   - less than 30s left: exchange (blocking), failing on failure.
+//   - more than 30s and up to 120s left (advisory): the cached token, and a
+//     background exchange whose failure is swallowed, backing off 5s after
+//     one;
+//   - 30s or less left: exchange (blocking), failing on failure.
 //
 // Concurrent callers join the exchange in flight, unless forced. pi's
 // federation exchange always has an expiry, so the SDK's never-expiring
@@ -191,21 +196,25 @@ type anthropicTokenRefresh struct {
 // authHeaders writes it into. A ctx that ends while the caller waits returns
 // errRequestAborted at once; the exchange runs on and fills the cache. (The
 // SDK's wait cannot be cut short, but pi's request then fails as aborted all
-// the same: retryProviderRequest checks the signal first.)
+// the same: retryProviderRequest checks the signal first, which is also why
+// an exchange that settles as ctx ends still reads as aborted.)
 func (c *anthropicTokenCache) getToken(ctx context.Context) (string, error) {
 	c.mu.Lock()
 	force := c.nextForce
 	c.nextForce = false
 	cached := c.cached
 	var refresh *anthropicTokenRefresh
-	switch {
-	case force || cached == nil:
+	if force || cached == nil {
 		refresh = c.refreshLocked(force)
-	case cached.expiresAt-anthropicNowSeconds() > anthropicAdvisoryRefreshSecs:
-	case cached.expiresAt-anthropicNowSeconds() > anthropicMandatoryRefreshSecs:
-		c.backgroundRefreshLocked()
-	default:
-		refresh = c.refreshLocked(false)
+	} else {
+		// One clock read, as the SDK's getToken computes the time left once.
+		switch left := cached.expiresAt - anthropicNowSeconds(); {
+		case left > anthropicAdvisoryRefreshSecs:
+		case left > anthropicMandatoryRefreshSecs:
+			c.backgroundRefreshLocked()
+		default:
+			refresh = c.refreshLocked(false)
+		}
 	}
 	c.mu.Unlock()
 
@@ -218,6 +227,9 @@ func (c *anthropicTokenCache) getToken(ctx context.Context) (string, error) {
 		select {
 		case <-refresh.done:
 		case <-done:
+			return "", errRequestAborted
+		}
+		if ctx != nil && ctx.Err() != nil {
 			return "", errRequestAborted
 		}
 		if refresh.err != nil {
@@ -244,7 +256,7 @@ func (c *anthropicTokenCache) refreshLocked(force bool) *anthropicTokenRefresh {
 	if c.pending != nil && !force {
 		return c.pending
 	}
-	return c.doRefreshLocked()
+	return c.doRefreshLocked(false)
 }
 
 func (c *anthropicTokenCache) backgroundRefreshLocked() {
@@ -254,20 +266,14 @@ func (c *anthropicTokenCache) backgroundRefreshLocked() {
 	if anthropicNowSeconds()-c.lastAdvisoryError < anthropicAdvisoryBackoffSecs {
 		return
 	}
-	refresh := c.doRefreshLocked()
-	go func() {
-		<-refresh.done
-		if refresh.err != nil {
-			c.mu.Lock()
-			c.lastAdvisoryError = anthropicNowSeconds()
-			c.mu.Unlock()
-		}
-	}()
+	c.doRefreshLocked(true)
 }
 
 // doRefreshLocked starts an exchange and makes it the one in flight. As in
 // the SDK, its settling clears the in-flight slot whichever exchange holds it.
-func (c *anthropicTokenCache) doRefreshLocked() *anthropicTokenRefresh {
+// An advisory (background) exchange that fails starts the 5s backoff, in the
+// same critical section that settles it, so no exchange can start between.
+func (c *anthropicTokenCache) doRefreshLocked(advisory bool) *anthropicTokenRefresh {
 	refresh := &anthropicTokenRefresh{done: make(chan struct{})}
 	c.pending = refresh
 	go func() {
@@ -275,6 +281,8 @@ func (c *anthropicTokenCache) doRefreshLocked() *anthropicTokenRefresh {
 		c.mu.Lock()
 		if err == nil {
 			c.cached = &token
+		} else if advisory {
+			c.lastAdvisoryError = anthropicNowSeconds()
 		}
 		c.pending = nil
 		refresh.token, refresh.err = token, err
@@ -402,6 +410,11 @@ func postTokenExchange(endpoint string, body []byte, httpClient ai.HTTPDoer) (*h
 	if httpClient != nil {
 		return httpClient.Do(req)
 	}
+	// undici refuses a URL with credentials before sending anything; without
+	// this the identity token would go to the server, with Basic auth on top.
+	if err := fetchRefusal(req); err != nil {
+		return nil, fmt.Errorf("TypeError: %w", err)
+	}
 	resp, err := sharedClient(undiciHeadersTimeoutMs).Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("TypeError: %w", undiciFetchError(err))
@@ -460,6 +473,8 @@ func nodeFSError(err error, path string) string {
 		return fmt.Sprintf("Error: EACCES: permission denied, open '%s'", path)
 	case errors.Is(err, syscall.EISDIR):
 		return "Error: EISDIR: illegal operation on a directory, read"
+	case errors.Is(err, syscall.ENOTDIR):
+		return fmt.Sprintf("Error: ENOTDIR: not a directory, open '%s'", path)
 	}
 	return "Error: " + err.Error()
 }

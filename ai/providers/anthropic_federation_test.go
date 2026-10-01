@@ -251,6 +251,8 @@ func TestAnthropicFederationMatchesPi(t *testing.T) {
 			switch {
 			case row.Base == "closed":
 				base = closedLoopbackURL(t)
+			case row.Base == "credentials":
+				base = strings.Replace(srv.URL, "http://", "http://user:pass@", 1)
 			case row.Base != "":
 				base = row.Base
 			}
@@ -466,16 +468,18 @@ func TestAnthropicFederationClientFollowsTheConfig(t *testing.T) {
 // through the Models runtime, as upstream's "threads authContext federation
 // variables through Models" does: the anthropic resolver must report the
 // provider configured (no key, no header) and hand the ids on in env.
+//
+// The ids come from the runtime's own auth context, not the process env, which
+// holds none: the adapter can only federate if Models passes the resolver's
+// env on.
 func TestAnthropicFederationThroughModels(t *testing.T) {
 	clearAnthropicFederationEnv(t)
-	for _, name := range []string{"ANTHROPIC_OAUTH_TOKEN", "ANTHROPIC_API_KEY"} {
+	for _, name := range []string{"ANTHROPIC_OAUTH_TOKEN", "ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN"} {
 		t.Setenv(name, "")
 	}
 	srv := newFederationServer(t, []federationResponse{grantedToken("federated-token")}, nil)
-	for k, v := range writeIdentityToken(t, "jwt") {
-		t.Setenv(k, v)
-	}
-	m := ai.BuiltinModels()
+	m := ai.CreateModels(&ai.CreateModelsOptions{AuthContext: federationAuthContext(writeIdentityToken(t, "jwt"))})
+	m.SetProvider(ai.BuiltinModels().GetProvider("anthropic"))
 	model := federationTestModel("anthropic", srv.URL)
 	final := m.StreamSimple(context.Background(), model, ai.Context{Messages: []ai.Message{ai.NewUserText("Hello", 1)}}, nil).Result()
 	if final.StopReason != ai.StopStop {
@@ -484,6 +488,151 @@ func TestAnthropicFederationThroughModels(t *testing.T) {
 	exchanges, messages := srv.recorded()
 	if len(exchanges) != 1 || len(messages) != 1 || *messages[0].Headers["authorization"] != "Bearer federated-token" {
 		t.Fatalf("exchanges %+v, messages %+v", exchanges, messages)
+	}
+}
+
+// federationAuthContext is an ai.AuthContext reading env from a map alone, as
+// upstream's test hands createModels one.
+type federationAuthContext map[string]string
+
+func (c federationAuthContext) Env(name string) string { return c[name] }
+func (federationAuthContext) FileExists(string) bool   { return false }
+
+// TestAnthropicFederationAuthTokenWins pins D61's arm against federation: on
+// the port's compat path ANTHROPIC_AUTH_TOKEN authenticates as a bearer and no
+// exchange is made, the precedence pi's anthropic resolver gives the same
+// variables (the auth token resolves before federation is consulted).
+func TestAnthropicFederationAuthTokenWins(t *testing.T) {
+	clearAnthropicFederationEnv(t)
+	srv := newFederationServer(t, []federationResponse{{Status: 599}}, nil)
+	for k, v := range writeIdentityToken(t, "jwt") {
+		t.Setenv(k, v)
+	}
+	t.Setenv("ANTHROPIC_AUTH_TOKEN", "auth-token")
+	model := federationTestModel("anthropic", srv.URL)
+	final := ai.StreamSimple(context.Background(), model, ai.Context{Messages: []ai.Message{ai.NewUserText("Hello", 1)}}, nil).Result()
+	if final.StopReason != ai.StopStop {
+		t.Fatalf("stream: %s %q", final.StopReason, final.ErrorMessage)
+	}
+	exchanges, messages := srv.recorded()
+	if len(exchanges) != 0 || len(messages) != 1 || *messages[0].Headers["authorization"] != "Bearer auth-token" {
+		t.Fatalf("exchanges %+v, messages %+v", exchanges, messages)
+	}
+}
+
+// TestSameHTTPDoerUncomparableValue: a client whose type compares but whose
+// value does not (a func behind an interface field) is a different client
+// every time, not a panic in the stream goroutine.
+func TestSameHTTPDoerUncomparableValue(t *testing.T) {
+	d := valueDoer{next: doerFunc(http.DefaultClient.Do)}
+	if sameHTTPDoer(d, d) {
+		t.Fatal("an uncomparable client must not count as the same one")
+	}
+	c := &http.Client{}
+	if !sameHTTPDoer(c, c) || sameHTTPDoer(c, &http.Client{}) {
+		t.Fatal("pointer clients compare by identity")
+	}
+}
+
+type doerFunc func(*http.Request) (*http.Response, error)
+
+func (f doerFunc) Do(r *http.Request) (*http.Response, error) { return f(r) }
+
+type valueDoer struct{ next ai.HTTPDoer }
+
+func (d valueDoer) Do(r *http.Request) (*http.Response, error) { return d.next.Do(r) }
+
+// TestAnthropicTokenCacheJoinsTheExchangeInFlight pins coalescing without a
+// race: while one exchange is in flight, another caller joins it rather than
+// starting its own. The second caller's ctx is already done, so its getToken
+// returns as soon as it has passed the point where it would have started an
+// exchange — the in-flight slot must still hold the first one.
+func TestAnthropicTokenCacheJoinsTheExchangeInFlight(t *testing.T) {
+	release := make(chan struct{})
+	cache := &anthropicTokenCache{exchange: func() (anthropicAccessToken, error) {
+		<-release
+		return anthropicAccessToken{token: "t", tokenOK: true, expiresAt: anthropicNowSeconds() + 3600}, nil
+	}}
+	first := make(chan error, 1)
+	go func() { _, err := cache.getToken(context.Background()); first <- err }()
+	var inFlight *anthropicTokenRefresh
+	for deadline := time.Now().Add(2 * time.Second); inFlight == nil; time.Sleep(time.Millisecond) {
+		cache.mu.Lock()
+		inFlight = cache.pending
+		cache.mu.Unlock()
+		if time.Now().After(deadline) {
+			t.Fatal("the first exchange never started")
+		}
+	}
+	done, cancel := context.WithCancel(context.Background())
+	cancel()
+	if _, err := cache.getToken(done); !errors.Is(err, errRequestAborted) {
+		t.Fatalf("second caller: %v, want errRequestAborted", err)
+	}
+	cache.mu.Lock()
+	joined := cache.pending == inFlight
+	cache.mu.Unlock()
+	close(release)
+	if err := <-first; err != nil {
+		t.Fatal(err)
+	}
+	if !joined {
+		t.Fatal("the second caller started its own exchange instead of joining the one in flight")
+	}
+}
+
+// TestAnthropicTokenCacheBackgroundRefreshJoinsTheExchangeInFlight: a caller
+// in the advisory window while an exchange is already in flight starts no
+// second one.
+func TestAnthropicTokenCacheBackgroundRefreshJoinsTheExchangeInFlight(t *testing.T) {
+	release := make(chan struct{})
+	defer close(release)
+	cache := &anthropicTokenCache{exchange: func() (anthropicAccessToken, error) {
+		<-release
+		return anthropicAccessToken{token: "t2", tokenOK: true, expiresAt: anthropicNowSeconds() + 3600}, nil
+	}}
+	cache.cached = &anthropicAccessToken{token: "t1", tokenOK: true, expiresAt: anthropicNowSeconds() + 60}
+	if got, err := cache.getToken(context.Background()); err != nil || got != "t1" {
+		t.Fatalf("advisory getToken = %q, %v", got, err)
+	}
+	cache.mu.Lock()
+	inFlight := cache.pending
+	cache.mu.Unlock()
+	if inFlight == nil {
+		t.Fatal("the advisory window started no background refresh")
+	}
+	if got, err := cache.getToken(context.Background()); err != nil || got != "t1" {
+		t.Fatalf("second advisory getToken = %q, %v", got, err)
+	}
+	cache.mu.Lock()
+	same := cache.pending == inFlight
+	cache.mu.Unlock()
+	if !same {
+		t.Fatal("a second background refresh started while one was in flight")
+	}
+}
+
+// TestAnthropicTokenCacheAbortWins: a caller whose ctx has ended reads as
+// aborted even when the exchange it waited on has already failed, as pi's
+// request does (retryProviderRequest checks the signal before the error).
+func TestAnthropicTokenCacheAbortWins(t *testing.T) {
+	done, cancel := context.WithCancel(context.Background())
+	cancel()
+	for range 200 {
+		cache := &anthropicTokenCache{exchange: func() (anthropicAccessToken, error) {
+			return anthropicAccessToken{}, errors.New("exchange failed")
+		}}
+		// Let the exchange settle first, so both select arms are ready.
+		cache.mu.Lock()
+		refresh := cache.doRefreshLocked(false)
+		cache.mu.Unlock()
+		<-refresh.done
+		cache.mu.Lock()
+		cache.pending = refresh
+		cache.mu.Unlock()
+		if _, err := cache.getToken(done); !errors.Is(err, errRequestAborted) {
+			t.Fatalf("getToken = %v, want errRequestAborted", err)
+		}
 	}
 }
 
@@ -534,6 +683,25 @@ func TestAnthropicTokenCacheRefreshPolicy(t *testing.T) {
 		}
 	}
 	callCount := func() int { mu.Lock(); defer mu.Unlock(); return calls }
+	// settled waits until no exchange is in flight: the slot clears in the
+	// same critical section that stores the token, so the cache then holds
+	// whatever the exchange returned.
+	settled := func() {
+		t.Helper()
+		deadline := time.Now().Add(2 * time.Second)
+		for {
+			cache.mu.Lock()
+			pending := cache.pending
+			cache.mu.Unlock()
+			if pending == nil {
+				return
+			}
+			if time.Now().After(deadline) {
+				t.Fatal("the exchange never settled")
+			}
+			time.Sleep(time.Millisecond)
+		}
+	}
 	waitExchange := func() {
 		t.Helper()
 		select {
@@ -541,17 +709,27 @@ func TestAnthropicTokenCacheRefreshPolicy(t *testing.T) {
 		case <-time.After(2 * time.Second):
 			t.Fatal("no exchange")
 		}
-		// Let the refresh settle into the cache.
-		time.Sleep(20 * time.Millisecond)
+		settled()
+	}
+	// noRefreshStarted reports that the last getToken left no exchange in
+	// flight and none ran: an exchange that started and settled already has
+	// counted itself before clearing the slot.
+	noRefreshStarted := func(wantCalls int) {
+		t.Helper()
+		cache.mu.Lock()
+		pending := cache.pending
+		cache.mu.Unlock()
+		if pending != nil || callCount() != wantCalls {
+			t.Fatalf("a refresh started: pending %v, %d exchanges, want %d", pending != nil, callCount(), wantCalls)
+		}
 	}
 
 	get("t1", "") // no cached token: exchange
 	<-exchanged
+	settled()
 	setNow(1000 + 300 - 121) // 121s left: cached, no exchange
 	get("t1", "")
-	if callCount() != 1 {
-		t.Fatalf("%d exchanges at 121s left, want 1", callCount())
-	}
+	noRefreshStarted(1)
 
 	mu.Lock()
 	next = []outcome{{err: errors.New("boom")}}
@@ -564,10 +742,7 @@ func TestAnthropicTokenCacheRefreshPolicy(t *testing.T) {
 	}
 	setNow(1000 + 300 - 120 + 4) // inside the 5s backoff: no refresh
 	get("t1", "")
-	time.Sleep(20 * time.Millisecond)
-	if callCount() != 2 {
-		t.Fatalf("%d exchanges inside the advisory backoff, want 2", callCount())
-	}
+	noRefreshStarted(2)
 	setNow(1000 + 300 - 120 + 5) // backoff over: refresh again
 	mu.Lock()
 	next = []outcome{{token: "t2"}}
@@ -583,11 +758,13 @@ func TestAnthropicTokenCacheRefreshPolicy(t *testing.T) {
 	setNow(1485 - 30)
 	get("", "down")
 	<-exchanged
+	settled()
 	mu.Lock()
 	next = []outcome{{token: "t3"}}
 	mu.Unlock()
 	get("t3", "")
 	<-exchanged
+	settled()
 
 	cache.invalidate()
 	mu.Lock()

@@ -83,7 +83,8 @@ const json = (body, extra = {}) => ({ status: 200, headers: { "content-type": "a
 const granted = (token, expiresIn = 3600) => json({ access_token: token, expires_in: expiresIn });
 
 // Rows: name, env, tokenFile, exchanges (recorded as responses), and optionally
-// requests, waitMs, statuses (of the messages responses), base ("closed" for a
+// requests, waitMs, statuses (of the messages responses), base ("credentials"
+// for the server's URL with user:pass in it, "closed" for a
 // port nothing listens on, or a literal base URL), baseSuffix, provider,
 // apiKey, headers, payloadBetas (an onPayload that sets params.betas).
 const cases = [
@@ -110,6 +111,8 @@ const cases = [
 	},
 	{ name: "stringExpiresInIsANumber", env: ids, tokenFile: "jwt", exchanges: [json({ access_token: "t", expires_in: "3600" })], requests: 2 },
 	{ name: "messages401InvalidatesTheToken", env: ids, tokenFile: "jwt", exchanges: [granted("t1"), granted("t2")], statuses: [401], requests: 3 },
+	// Only a 401 drops the cached token; any other failure keeps it.
+	{ name: "messages500KeepsTheToken", env: ids, tokenFile: "jwt", exchanges: [granted("t1"), granted("t2")], statuses: [500], requests: 2 },
 	{
 		name: "exchange401HintsAtTheWorkspace",
 		env: ids,
@@ -130,6 +133,8 @@ const cases = [
 	{ name: "unsupportedTokenType", env: ids, tokenFile: "jwt", exchanges: [json({ access_token: "t", expires_in: 3600, token_type: "MAC" })] },
 	{ name: "insecureBaseURL", env: ids, tokenFile: "jwt", exchanges: [], base: "http://example.invalid/" },
 	{ name: "unreachableTokenEndpoint", env: ids, tokenFile: "jwt", exchanges: [], base: "closed" },
+	// undici refuses a URL with credentials before sending anything.
+	{ name: "credentialsInBaseURLAreRefused", env: ids, tokenFile: "jwt", exchanges: [], base: "credentials" },
 	{ name: "identityTokenFileMissing", env: ids, tokenFile: null, exchanges: [] },
 	{ name: "identityTokenFileBlank", env: ids, tokenFile: " \n\t", exchanges: [] },
 	{ name: "identityTokenTooLarge", env: ids, tokenFile: { repeat: "a", count: 16 * 1024 + 1 }, exchanges: [] },
@@ -182,6 +187,8 @@ async function run(row, tmp) {
 	let base = `http://127.0.0.1:${srv.address().port}`;
 	if (row.base === "closed") {
 		srv.close();
+	} else if (row.base === "credentials") {
+		base = `http://user:pass@127.0.0.1:${srv.address().port}`;
 	} else if (row.base) {
 		base = row.base;
 	}
