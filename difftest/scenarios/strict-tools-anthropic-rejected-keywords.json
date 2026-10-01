@@ -1,0 +1,135 @@
+{
+  "name": "strict-tools-anthropic-rejected-keywords",
+  "note": "Upstream 295cc72b0 (shipped in pi-ai 0.99.2): Anthropic strict mode rejects keywords such as minimum/maximum/maxItems/uniqueItems and unlisted string formats with a 400, so a strict-prefer tool using one is sent in the legacy shape with no strict flag. bounded (minimum+maximum), nested (minItems 2 inside a nested object) and pattern (format regex) fall back; allowed keeps minLength/maxLength/pattern, format uri and minItems 1, so it stays strict.",
+  "backend": "dist",
+  "api": "anthropic-messages",
+  "entry": "streamSimple",
+  "model": {
+    "id": "claude-strict-test",
+    "name": "Claude Strict Test",
+    "api": "anthropic-messages",
+    "provider": "anthropic",
+    "baseUrl": "https://api.anthropic.com",
+    "reasoning": false,
+    "input": [
+      "text"
+    ],
+    "cost": {
+      "input": 3,
+      "output": 15,
+      "cacheRead": 0.3,
+      "cacheWrite": 3.75
+    },
+    "contextWindow": 200000,
+    "maxTokens": 8192,
+    "compat": {
+      "supportsStrictTools": true
+    }
+  },
+  "context": {
+    "systemPrompt": "You call tools.",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Call a tool.",
+        "timestamp": 1
+      }
+    ],
+    "tools": [
+      {
+        "name": "bounded",
+        "description": "Bounded integer.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "timeoutMs": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 300000
+            }
+          }
+        },
+        "constrainedSampling": {
+          "type": "json_schema",
+          "strict": "prefer"
+        }
+      },
+      {
+        "name": "nested",
+        "description": "Nested minItems.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "options": {
+              "type": "object",
+              "properties": {
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "minItems": 2
+                }
+              }
+            }
+          }
+        },
+        "constrainedSampling": {
+          "type": "json_schema",
+          "strict": "prefer"
+        }
+      },
+      {
+        "name": "pattern",
+        "description": "Unlisted format.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "expression": {
+              "type": "string",
+              "format": "regex"
+            }
+          }
+        },
+        "constrainedSampling": {
+          "type": "json_schema",
+          "strict": "prefer"
+        }
+      },
+      {
+        "name": "allowed",
+        "description": "Supported keywords.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1000,
+              "pattern": "^[a-z]+$"
+            },
+            "url": {
+              "type": "string",
+              "format": "uri"
+            },
+            "tags": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1
+            }
+          }
+        },
+        "constrainedSampling": {
+          "type": "json_schema",
+          "strict": "prefer"
+        }
+      }
+    ]
+  },
+  "options": {
+    "apiKey": "test-key",
+    "maxTokens": 1024
+  }
+}
