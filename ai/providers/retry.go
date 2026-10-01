@@ -159,7 +159,8 @@ func shouldRetryResponse(resp *http.Response) bool {
 // numeric prefix is consumed, and trailing junk is ignored (so "3600s" parses as
 // 3600). ok=false stands for JS NaN — no numeric prefix at all. A prefix that
 // overflows float64 yields ±Inf, matching JS ("1e400" is Infinity, not NaN);
-// the caller clamps it before building a Duration. The "Infinity" literal is
+// serverRetryDelayMs then treats it as dictating nothing (pi's Number.isFinite,
+// upstream 2bbfcca43). The "Infinity" literal is
 // accepted too, because parseFloat does accept it — case-sensitively and as a
 // prefix, so "Infinityx" is Infinity while "Inf" and "infinity" are NaN.
 func parseFloatPrefix(s string) (float64, bool) {
@@ -280,14 +281,10 @@ func (e *serverRetryDelayError) Error() string { return e.msg }
 
 func (e *serverRetryDelayError) Is(target error) bool { return target == errServerRetryDelayTooLong }
 
-// ceilSeconds renders the numeric part of pi's `${Math.ceil(ms / 1000)}s`,
-// including JS's "Infinity" spelling for a header value that overflowed float64.
+// ceilSeconds renders the numeric part of pi's `${Math.ceil(ms / 1000)}s` the
+// way JS prints a number ("1e+21" past 1e21).
 func ceilSeconds(ms float64) string {
-	secs := math.Ceil(ms / 1000)
-	if math.IsInf(secs, 1) {
-		return "Infinity"
-	}
-	return strconv.FormatFloat(secs, 'f', -1, 64)
+	return jstext.NumberToString(math.Ceil(ms / 1000))
 }
 
 // maxServerDelayMs is the largest millisecond delay representable as a Duration.

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"math"
 	"net/http"
@@ -324,29 +325,35 @@ func TestRetryDelayMatchesPi(t *testing.T) {
 		t.Fatal("empty capture")
 	}
 	for _, row := range capture.Rows {
-		resp := &http.Response{StatusCode: http.StatusTooManyRequests, Header: http.Header{}}
-		for _, h := range row.Headers {
-			resp.Header.Set(h[0], h[1])
-		}
-		d, err := retryDelay(resp, 0, wrapCfg(defaultMaxRetryDelayMs), "429 slow down")
-		switch {
-		case row.Error != "":
-			if err == nil || err.Error() != row.Error {
-				t.Errorf("%v: err = %v, pi = %q", row.Headers, err, row.Error)
+		t.Run(fmt.Sprint(row.Headers), func(t *testing.T) {
+			resp := &http.Response{StatusCode: http.StatusTooManyRequests, Header: http.Header{}}
+			for _, h := range row.Headers {
+				resp.Header.Set(h[0], h[1])
 			}
-		case err != nil:
-			t.Errorf("%v: unexpected error %v, pi waits %vms", row.Headers, err, *row.Ms)
-		case row.Backoff:
-			// pi recorded 500ms with Math.random pinned to 0; the jitter takes
-			// up to 25% off the first retry's 0.5s.
-			if d < 375*time.Millisecond || d > 500*time.Millisecond {
-				t.Errorf("%v: delay = %v, pi falls back to the computed backoff", row.Headers, d)
+			d, err := retryDelay(resp, 0, wrapCfg(defaultMaxRetryDelayMs), "429 slow down")
+			if row.Error != "" {
+				if err == nil || err.Error() != row.Error {
+					t.Errorf("err = %v, pi = %q", err, row.Error)
+				}
+				return
 			}
-		default:
-			if want := time.Duration(*row.Ms) * time.Millisecond; d != want {
-				t.Errorf("%v: delay = %v, pi = %v", row.Headers, d, want)
+			if row.Ms == nil {
+				t.Fatal("capture row has neither ms nor error")
 			}
-		}
+			if err != nil {
+				t.Fatalf("unexpected error %v, pi waits %vms", err, *row.Ms)
+			}
+			want := time.Duration(*row.Ms) * time.Millisecond
+			if row.Backoff {
+				// pi recorded the backoff with Math.random pinned to 0; the
+				// jitter takes up to 25% off it.
+				if d < want*3/4 || d > want {
+					t.Errorf("delay = %v, pi falls back to the computed backoff (%v less up to 25%%)", d, want)
+				}
+			} else if d != want {
+				t.Errorf("delay = %v, pi = %v", d, want)
+			}
+		})
 	}
 }
 
@@ -393,7 +400,8 @@ func TestParseFloatPrefix(t *testing.T) {
 		ok   bool
 	}{
 		{"3600", 3600, true},
-		{"3600s", 3600, true}, // JS parseFloat stops at the unit suffix
+		{"3600s", 3600, true},        // JS parseFloat stops at the unit suffix
+		{"1e400", math.Inf(1), true}, // overflow is Infinity in JS, not NaN
 		{" 12.5 ", 12.5, true},
 		{"1e3", 1000, true},
 		{"1e", 1, true}, // dangling exponent is not consumed
@@ -479,9 +487,6 @@ func TestGoogleOversizedServerDelayDoesNotFailFast(t *testing.T) {
 // nanoseconds into a negative Duration. (An infinite one no longer reaches
 // here: since upstream 2bbfcca43 it falls back to the backoff.)
 func TestServerRetryDelayOverflowClamped(t *testing.T) {
-	if f, ok := parseFloatPrefix("1e400"); !ok || !math.IsInf(f, 1) {
-		t.Fatalf("parseFloatPrefix(1e400) = (%v, %v), want (+Inf, true)", f, ok)
-	}
 	resp := &http.Response{StatusCode: 429, Header: http.Header{}}
 	resp.Header.Set("retry-after-ms", "1e300")
 	d, err := retryDelay(resp, 0, retryConfig{maxRetryDelayMs: 0, providerError: openaiSDKErrorMessage}, "")

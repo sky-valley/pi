@@ -34,6 +34,15 @@
 			"headers": [
 				[
 					"retry-after",
+					"1e21"
+				]
+			],
+			"error": "Server requested 1e+21s retry delay (max: 60s). 429 slow down"
+		},
+		{
+			"headers": [
+				[
+					"retry-after",
 					"later"
 				]
 			],

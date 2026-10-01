@@ -27,6 +27,7 @@ const cases = [
 	[["retry-after", "5"]],
 	[["retry-after-ms", "250"]],
 	[["retry-after", "120"]],
+	[["retry-after", "1e21"]],
 	[["retry-after", "later"]],
 	[["retry-after", "Infinity"]],
 	[["retry-after", "1e306"]],
