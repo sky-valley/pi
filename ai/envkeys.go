@@ -12,6 +12,21 @@ import (
 // directly and, when present, authenticates via the Authorization header.
 const AnthropicAuthTokenEnv = "ANTHROPIC_AUTH_TOKEN"
 
+// The workload identity federation variables @anthropic-ai/sdk documents (pi
+// env-api-keys.ts ANTHROPIC_FEDERATION_RULE_ID_ENV et al., upstream a9424cd43).
+// The anthropic provider resolves them last, after every key and
+// ANTHROPIC_AUTH_TOKEN, and hands them to the adapter in env: the first three
+// are required, the service account and workspace ids ride along when set.
+// They are provider config rather than credentials, so they take no part in
+// env-key discovery.
+const (
+	AnthropicFederationRuleIDEnv  = "ANTHROPIC_FEDERATION_RULE_ID"
+	AnthropicOrganizationIDEnv    = "ANTHROPIC_ORGANIZATION_ID"
+	AnthropicServiceAccountIDEnv  = "ANTHROPIC_SERVICE_ACCOUNT_ID"
+	AnthropicIdentityTokenFileEnv = "ANTHROPIC_IDENTITY_TOKEN_FILE"
+	AnthropicWorkspaceIDEnv       = "ANTHROPIC_WORKSPACE_ID"
+)
+
 // apiKeyEnvVars returns the environment variable names that can provide an API
 // key for a provider, in precedence order.
 func apiKeyEnvVars(provider string) []string {

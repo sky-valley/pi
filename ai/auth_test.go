@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"maps"
 	"reflect"
 	"strings"
 	"sync/atomic"
@@ -235,6 +236,67 @@ func TestAnthropicAPIKeyAuthResolve(t *testing.T) {
 	// Unconfigured -> nil.
 	if res, _ := auth.Resolve(context.Background(), fakeAuthContext{}, nil); res != nil {
 		t.Fatalf("unconfigured should be nil, got %+v", res)
+	}
+}
+
+// TestAnthropicAPIKeyAuthResolvesFederation mirrors upstream a9424cd43's
+// anthropic-federation.test.ts resolver cases: with no key and no auth token,
+// ANTHROPIC_FEDERATION_RULE_ID, ANTHROPIC_ORGANIZATION_ID and
+// ANTHROPIC_IDENTITY_TOKEN_FILE (all three) configure the provider with no
+// request auth and the ids in env, the service account and workspace ids
+// riding along when set; keys and ANTHROPIC_AUTH_TOKEN keep winning.
+func TestAnthropicAPIKeyAuthResolvesFederation(t *testing.T) {
+	auth := anthropicAPIKeyAuth()
+	federation := map[string]string{
+		"ANTHROPIC_FEDERATION_RULE_ID":  "fdrl_test",
+		"ANTHROPIC_ORGANIZATION_ID":     "org-test",
+		"ANTHROPIC_SERVICE_ACCOUNT_ID":  "svac_test",
+		"ANTHROPIC_IDENTITY_TOKEN_FILE": "/tmp/identity.jwt",
+	}
+	with := func(extra map[string]string, omit ...string) map[string]string {
+		env := maps.Clone(federation)
+		maps.Copy(env, extra)
+		for _, name := range omit {
+			delete(env, name)
+		}
+		return env
+	}
+	resolve := func(env map[string]string) *AuthResult {
+		t.Helper()
+		res, err := auth.Resolve(context.Background(), fakeAuthContext{env: env}, nil)
+		if err != nil {
+			t.Fatalf("resolve: %v", err)
+		}
+		return res
+	}
+	federated := func(env map[string]string) *AuthResult {
+		return &AuthResult{Env: env, Source: "workload identity federation"}
+	}
+
+	if got, want := resolve(federation), federated(federation); !reflect.DeepEqual(got, want) {
+		t.Errorf("federation: got %+v, want %+v", got, want)
+	}
+	withWorkspace := with(map[string]string{"ANTHROPIC_WORKSPACE_ID": "wrkspc_test"})
+	if got, want := resolve(withWorkspace), federated(withWorkspace); !reflect.DeepEqual(got, want) {
+		t.Errorf("workspace: got %+v, want %+v", got, want)
+	}
+	noServiceAccount := with(nil, "ANTHROPIC_SERVICE_ACCOUNT_ID")
+	if got, want := resolve(noServiceAccount), federated(noServiceAccount); !reflect.DeepEqual(got, want) {
+		t.Errorf("service account is optional: got %+v, want %+v", got, want)
+	}
+	for _, required := range []string{"ANTHROPIC_FEDERATION_RULE_ID", "ANTHROPIC_ORGANIZATION_ID", "ANTHROPIC_IDENTITY_TOKEN_FILE"} {
+		if got := resolve(with(nil, required)); got != nil {
+			t.Errorf("without %s: got %+v, want unconfigured", required, got)
+		}
+	}
+	if got := resolve(with(map[string]string{"ANTHROPIC_API_KEY": "api-key"})); got == nil ||
+		!reflect.DeepEqual(*got, AuthResult{Auth: ModelAuth{APIKey: "api-key"}, Source: "ANTHROPIC_API_KEY"}) {
+		t.Errorf("api key should win over federation: %+v", got)
+	}
+	got := resolve(with(map[string]string{AnthropicAuthTokenEnv: "auth-token"}))
+	if got == nil || got.Source != AnthropicAuthTokenEnv || got.Env != nil ||
+		got.Auth.Headers["Authorization"] == nil || *got.Auth.Headers["Authorization"] != "Bearer auth-token" {
+		t.Errorf("auth token should win over federation: %+v", got)
 	}
 }
 

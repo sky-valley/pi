@@ -106,9 +106,11 @@ func builtinProviderAuth(providerID string) ProviderAuth {
 // anthropicAPIKeyAuth mirrors pi anthropicApiKeyAuth() (upstream 24e5cc04): a
 // stored credential key wins; otherwise ANTHROPIC_AUTH_TOKEN authenticates via
 // an Authorization: Bearer header (never x-api-key), and only if it is absent do
-// ANTHROPIC_OAUTH_TOKEN/ANTHROPIC_API_KEY resolve as api keys. This keeps the
-// facade GetAuth/Stream path byte-faithful and preserves pi's credential-first
-// precedence, which the generic env-key resolver could not express.
+// ANTHROPIC_OAUTH_TOKEN/ANTHROPIC_API_KEY resolve as api keys; the workload
+// identity federation variables (upstream a9424cd43) come last of all. This
+// keeps the facade GetAuth/Stream path byte-faithful and preserves pi's
+// credential-first precedence, which the generic env-key resolver could not
+// express.
 func anthropicAPIKeyAuth() *ApiKeyAuth {
 	return &ApiKeyAuth{
 		Name: "Anthropic API key",
@@ -141,7 +143,27 @@ func anthropicAPIKeyAuth() *ApiKeyAuth {
 					return &AuthResult{Auth: ModelAuth{APIKey: value}, Source: envVar}, nil
 				}
 			}
-			return nil, nil
+
+			// Workload identity federation (upstream a9424cd43): the adapter
+			// exchanges the identity token for a short-lived access token, as
+			// @anthropic-ai/sdk does for pi, and refreshes it itself. Last in line
+			// so keys and ANTHROPIC_AUTH_TOKEN keep winning, as in the SDK. The ids
+			// are provider config rather than auth, so they travel in Env, with no
+			// request auth at all.
+			federation := map[string]string{}
+			for _, envVar := range []string{AnthropicFederationRuleIDEnv, AnthropicOrganizationIDEnv, AnthropicIdentityTokenFileEnv} {
+				value := authCtx.Env(envVar)
+				if value == "" {
+					return nil, nil
+				}
+				federation[envVar] = value
+			}
+			for _, envVar := range []string{AnthropicServiceAccountIDEnv, AnthropicWorkspaceIDEnv} {
+				if value := authCtx.Env(envVar); value != "" {
+					federation[envVar] = value
+				}
+			}
+			return &AuthResult{Env: federation, Source: "workload identity federation"}, nil
 		},
 	}
 }

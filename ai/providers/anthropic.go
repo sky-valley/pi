@@ -576,7 +576,12 @@ func StreamAnthropic(ctx context.Context, model *ai.Model, req ai.TranscriptCont
 		// Authorization header the arm above accepts, whereas this adapter reads
 		// the env value directly so the compat path (ai.StreamSimple, which leaves
 		// APIKey empty for it) authenticates too.
-		if apiKey == "" && authToken == "" && !hasAnthropicAuthHeader(opts.Headers) {
+		//
+		// Workload identity federation (upstream a9424cd43) is the one other way
+		// through: pi's getAnthropicFederation runs first, and only when it finds
+		// no federation config does assertRequestAuth run.
+		federation := getAnthropicFederation(model, apiKey, authToken, opts.Headers, opts.Env)
+		if federation == nil && apiKey == "" && authToken == "" && !hasAnthropicAuthHeader(opts.Headers) {
 			fail(fmt.Errorf("No API key for provider: %s", model.Provider))
 			return
 		}
@@ -681,17 +686,50 @@ func StreamAnthropic(ctx context.Context, model *ai.Model, req ai.TranscriptCont
 		if betaHeader != nil {
 			headers.request = []recordEntry{{"anthropic-beta", *betaHeader}}
 		}
+		retry := retryFromOptions(opts.StreamOptions, anthropicSDKErrorMessage)
+		// pi's federation client: one per base URL, config and fetch, so its
+		// token cache outlives the request (anthropicFederationTokens).
+		var tokens *anthropicTokenCache
+		if federation != nil {
+			tokens = anthropicFederationTokens(baseURL, federation, retry.httpClient)
+			// shouldRetry: a 401 from a request that sent the cached token
+			// invalidates it, so the next request exchanges afresh.
+			retry.onErrorStatus = func(status int) {
+				if status == http.StatusUnauthorized {
+					tokens.invalidate()
+				}
+			}
+		}
 		build := func() (*http.Request, error) {
 			r, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(payload))
 			if err != nil {
 				return nil, err
 			}
-			if err := headers.apply(r.Header); err != nil {
+			attempt := headers
+			if tokens != nil {
+				// The SDK builds the per-request headers before the request, and
+				// authHeaders awaits the token (exchanging when it must) as the
+				// request is built: each attempt is a fresh create() in pi, so
+				// each asks the cache. The token goes out in the SDK's auth bundle,
+				// as `Authorization: Bearer <token>`.
+				if _, err := headerValues(attempt.request); err != nil {
+					return nil, err
+				}
+				token, err := tokens.getToken(ctx)
+				if err != nil {
+					return nil, err
+				}
+				attempt.auth = []recordEntry{{"authorization", "Bearer " + token}}
+			}
+			if err := attempt.apply(r.Header); err != nil {
 				return nil, err
+			}
+			if tokens != nil {
+				appendAnthropicOAuthBeta(r.Header)
 			}
 			return r, nil
 		}
-		resp, err := sendWithRetry(ctx, build, retryFromOptions(opts.StreamOptions, anthropicSDKErrorMessage))
+		resp, err := sendWithRetry(ctx, build, retry)
 		if err != nil {
 			fail(sdkFetchError(err))
 			return

@@ -50,6 +50,11 @@ type retryConfig struct {
 	// httpClient overrides the shared client (pi StreamOptions.fetch). Nil keeps
 	// sharedClient, whose transport carries the timeoutMs response-header cap.
 	httpClient ai.HTTPDoer
+	// onErrorStatus, when set, sees the status of every non-2xx response an
+	// attempt gets, before anything else is done with it: @anthropic-ai/sdk's
+	// shouldRetry, which runs on each one whatever retries remain, invalidates
+	// its token cache on a 401 (see StreamAnthropic's federation arm).
+	onErrorStatus func(status int)
 }
 
 // retryFromOptions mirrors pi's `maxRetries: options?.maxRetries ?? 0` passed
@@ -643,6 +648,9 @@ func sendWithRetry(ctx context.Context, build func() (*http.Request, error), cfg
 				return nil, errRequestAborted
 			}
 			continue
+		}
+		if (resp.StatusCode < 200 || resp.StatusCode >= 300) && cfg.onErrorStatus != nil {
+			cfg.onErrorStatus(resp.StatusCode)
 		}
 		if (resp.StatusCode < 200 || resp.StatusCode >= 300) && aborted() {
 			readAndCloseBody(resp, sdkResponseBody(ctx, resp, cfg.httpClient))
