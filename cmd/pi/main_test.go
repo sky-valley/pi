@@ -84,3 +84,40 @@ func TestResumeExtendsTheSessionsCompaction(t *testing.T) {
 		t.Fatalf("the first compaction after resuming does not extend the file's.\n--- request ---\n%s", summarizations[0])
 	}
 }
+
+// A provider configured without an API key — Anthropic through
+// ANTHROPIC_AUTH_TOKEN, or workload identity federation (upstream a9424cd43) —
+// passes the CLI's auth gate, as pi's coding agent gates on the provider's
+// auth check rather than on an API key; the adapter authenticates the request
+// itself. With nothing configured the gate still refuses, naming the fix.
+func TestProviderAPIKeyGatesOnTheAuthResolver(t *testing.T) {
+	for _, name := range []string{"ANTHROPIC_API_KEY", "ANTHROPIC_OAUTH_TOKEN", "ANTHROPIC_AUTH_TOKEN",
+		"ANTHROPIC_FEDERATION_RULE_ID", "ANTHROPIC_ORGANIZATION_ID", "ANTHROPIC_IDENTITY_TOKEN_FILE",
+		"ANTHROPIC_SERVICE_ACCOUNT_ID", "ANTHROPIC_WORKSPACE_ID"} {
+		t.Setenv(name, "")
+	}
+	if _, err := providerAPIKey("anthropic"); err == nil || !strings.Contains(err.Error(), "_API_KEY") {
+		t.Fatalf("nothing configured: err = %v, want a refusal saying which env var to set", err)
+	}
+
+	t.Setenv("ANTHROPIC_FEDERATION_RULE_ID", "fdrl_test")
+	t.Setenv("ANTHROPIC_ORGANIZATION_ID", "org-test")
+	t.Setenv("ANTHROPIC_IDENTITY_TOKEN_FILE", filepath.Join(t.TempDir(), "token"))
+	if key, err := providerAPIKey("anthropic"); err != nil || key != "" {
+		t.Fatalf("federation: (%q, %v), want no key and no error", key, err)
+	}
+
+	for _, name := range []string{"ANTHROPIC_FEDERATION_RULE_ID", "ANTHROPIC_ORGANIZATION_ID", "ANTHROPIC_IDENTITY_TOKEN_FILE"} {
+		t.Setenv(name, "")
+	}
+	t.Setenv("ANTHROPIC_AUTH_TOKEN", "auth-token")
+	if key, err := providerAPIKey("anthropic"); err != nil || key != "" {
+		t.Fatalf("auth token: (%q, %v), want no key and no error", key, err)
+	}
+
+	t.Setenv("ANTHROPIC_AUTH_TOKEN", "")
+	t.Setenv("ANTHROPIC_API_KEY", "sk-ant-test")
+	if key, err := providerAPIKey("anthropic"); err != nil || key != "sk-ant-test" {
+		t.Fatalf("api key: (%q, %v), want the key", key, err)
+	}
+}
