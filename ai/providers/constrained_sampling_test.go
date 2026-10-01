@@ -92,12 +92,16 @@ func TestMakeStrictJSONSchema(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := `{"type":"object","properties":{` +
+	// pi-ai 0.99.2's makeStrictJsonSchema over the same TypeBox schema, byte
+	// for byte: the root keeps TypeBox's {type, required, properties} order,
+	// and the nested object, which had no required key, gains it after
+	// properties, as a new JS key lands.
+	want := `{"type":"object","required":["path","offset","metadata","nullable"],"properties":{` +
 		`"path":{"type":"string"},` +
 		`"offset":{"anyOf":[{"type":"number"},{"type":"null"}]},` +
 		`"metadata":{"type":"object","properties":{"enabled":{"anyOf":[{"type":"boolean"},{"type":"null"}]}},"required":["enabled"],"additionalProperties":false},` +
 		`"nullable":{"anyOf":[{"type":"string"},{"type":"null"}]}` +
-		`},"required":["path","offset","metadata","nullable"],"additionalProperties":false}`
+		`},"additionalProperties":false}`
 	if string(got) != want {
 		t.Fatalf("strict schema mismatch:\n got: %s\nwant: %s", got, want)
 	}

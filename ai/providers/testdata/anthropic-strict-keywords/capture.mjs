@@ -66,6 +66,21 @@ const schemas = {
 		),
 	),
 	"format email-like but not allowed": obj({ e: { type: "string", format: "idn-email" } }),
+	// The first offending keyword in SOURCE order names the error.
+	"maximum before minimum": obj({ n: { type: "integer", maximum: 10, minimum: 1 } }),
+	"uniqueItems before maxItems": obj({ tags: { type: "array", uniqueItems: true, items: { type: "string" }, maxItems: 3 } }),
+	"maxContains before minimum": obj({ n: { maxContains: 2, type: "integer", minimum: 1 } }),
+	// Values a typed field cannot hold still count.
+	"minItems fraction": obj({ tags: strArray({ minItems: 1.5 }) }),
+	"minItems string": obj({ tags: strArray({ minItems: "1" }) }),
+	"minItems null": obj({ tags: strArray({ minItems: null }) }),
+	"maxItems null": obj({ tags: strArray({ maxItems: null }) }),
+	"format empty": obj({ e: { type: "string", format: "" } }),
+	"format number": obj({ e: { type: "string", format: 5 } }),
+	"format null": obj({ e: { type: "string", format: null } }),
+	"minimum string": obj({ n: { type: "number", minimum: "5" } }),
+	"minimum null": obj({ n: { type: "number", minimum: null } }),
+	"exclusiveMinimum boolean": obj({ n: { type: "number", minimum: 0, exclusiveMinimum: true } }),
 };
 
 const rows = [];

@@ -17,7 +17,9 @@ func TestSchemaMarshalDeterministic(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := `{"type":"object","properties":{"command":{"type":"string","description":"the shell command"},"timeout":{"type":"integer","description":"timeout in ms"}},"required":["command"]}`
+	// TypeBox's serialization of the same Type.Object, from pi-ai 0.99.2's
+	// typebox: type, required, properties.
+	want := `{"type":"object","required":["command"],"properties":{"command":{"type":"string","description":"the shell command"},"timeout":{"type":"integer","description":"timeout in ms"}}}`
 	if string(raw) != want {
 		t.Fatalf("schema JSON mismatch:\n got: %s\nwant: %s", raw, want)
 	}
@@ -486,6 +488,7 @@ func TestSchemaCloneNoAliasing(t *testing.T) {
 		OneOf:             []*Schema{{Type: "number"}},
 		AllOf:             []*Schema{{Type: "boolean"}},
 		Extra:             map[string]any{"x-note": []any{"e"}},
+		KeywordOrder:      []string{"type", "properties"},
 	}
 
 	sv := reflect.ValueOf(src).Elem()

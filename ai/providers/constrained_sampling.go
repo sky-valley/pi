@@ -3,8 +3,6 @@ package providers
 import (
 	"errors"
 	"fmt"
-	"maps"
-	"slices"
 	"strings"
 
 	"github.com/sky-valley/pi/ai"
@@ -86,96 +84,6 @@ func schemaAllowsNull(schema *ai.Schema) bool {
 // UnsupportedStrictSchemaKeywordCheck). A nil check accepts every keyword.
 type unsupportedStrictSchemaKeywordCheck func(key string, value any) bool
 
-// schemaKeywords returns a node's keywords with their values in the order the
-// node serializes (ai.Schema.MarshalJSON), which is the order the port sends
-// them — pi walks Object.entries of the same object. Subschema-valued keywords
-// carry the *ai.Schema; no keyword check inspects them.
-func schemaKeywords(s *ai.Schema) []schemaKeyword {
-	var out []schemaKeyword
-	add := func(key string, value any) { out = append(out, schemaKeyword{key, value}) }
-	if s.Type != "" {
-		if s.Nullable {
-			add("type", []any{s.Type, "null"})
-		} else {
-			add("type", s.Type)
-		}
-	}
-	if s.Description != "" {
-		add("description", s.Description)
-	}
-	if s.Properties != nil {
-		add("properties", s.Properties)
-	}
-	if s.Required != nil {
-		add("required", s.Required)
-	}
-	if s.Items != nil {
-		add("items", s.Items)
-	}
-	if len(s.Enum) > 0 {
-		add("enum", s.Enum)
-	}
-	if s.HasConst {
-		add("const", s.Const)
-	}
-	if s.Default != nil {
-		add("default", s.Default)
-	}
-	if s.AdditionalSchema != nil {
-		add("additionalProperties", s.AdditionalSchema)
-	} else if s.AdditionalAllowed != nil {
-		add("additionalProperties", *s.AdditionalAllowed)
-	}
-	for _, f := range []struct {
-		key   string
-		value *float64
-	}{
-		{"minimum", s.Minimum}, {"maximum", s.Maximum},
-		{"exclusiveMinimum", s.ExclusiveMinimum}, {"exclusiveMaximum", s.ExclusiveMaximum},
-		{"multipleOf", s.MultipleOf},
-	} {
-		if f.value != nil {
-			add(f.key, *f.value)
-		}
-	}
-	if s.MinLength != nil {
-		add("minLength", float64(*s.MinLength))
-	}
-	if s.MaxLength != nil {
-		add("maxLength", float64(*s.MaxLength))
-	}
-	if s.Pattern != "" {
-		add("pattern", s.Pattern)
-	}
-	if s.MinItems != nil {
-		add("minItems", float64(*s.MinItems))
-	}
-	if s.MaxItems != nil {
-		add("maxItems", float64(*s.MaxItems))
-	}
-	if s.Format != "" {
-		add("format", s.Format)
-	}
-	if len(s.AnyOf) > 0 {
-		add("anyOf", s.AnyOf)
-	}
-	if len(s.OneOf) > 0 {
-		add("oneOf", s.OneOf)
-	}
-	if len(s.AllOf) > 0 {
-		add("allOf", s.AllOf)
-	}
-	for _, key := range slices.Sorted(maps.Keys(s.Extra)) {
-		add(key, s.Extra[key])
-	}
-	return out
-}
-
-type schemaKeyword struct {
-	key   string
-	value any
-}
-
 // makeJSONSchemaNodeStrict rewrites one schema node (in place) into the strict
 // subset, or reports why it cannot (port of makeJsonSchemaNodeStrict). Object
 // schemas end up closed (additionalProperties:false) with every property
@@ -203,10 +111,13 @@ func makeJSONSchemaNodeStrict(schema *ai.Schema, isUnsupportedKeyword unsupporte
 		}
 	}
 	if isUnsupportedKeyword != nil {
-		for _, kw := range schemaKeywords(schema) {
-			if isUnsupportedKeyword(kw.key, kw.value) {
-				value, _ := jstext.Stringify(kw.value)
-				return &unsupportedStrictJSONSchemaError{kw.key + ": " + value + " is unsupported"}
+		// Keywords walks the node in the order it serializes — the source's
+		// for a decoded schema, TypeBox's for a built one — as pi walks
+		// Object.entries, so the first offending keyword names the error.
+		for key, value := range schema.Keywords() {
+			if isUnsupportedKeyword(key, value) {
+				rendered, _ := jstext.Stringify(value)
+				return &unsupportedStrictJSONSchemaError{key + ": " + rendered + " is unsupported"}
 			}
 		}
 	}

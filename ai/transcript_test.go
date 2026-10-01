@@ -393,7 +393,7 @@ func TestToToolDeclarationCopiesParameters(t *testing.T) {
 	}
 	withFalse := original
 	withFalse.ConstrainedSampling = &ConstrainedSamplingConfig{}
-	if got, want := jsJSON(t, ToToolDeclaration(withFalse)), `{"name":"a","description":"d","parameters":{"type":"object","properties":{"x":{"type":"string"}},"required":["x"]},"constrainedSampling":false}`; got != want {
+	if got, want := jsJSON(t, ToToolDeclaration(withFalse)), `{"name":"a","description":"d","parameters":{"type":"object","required":["x"],"properties":{"x":{"type":"string"}}},"constrainedSampling":false}`; got != want {
 		t.Fatalf("declaration with constrainedSampling:false\n got %s\nwant %s", got, want)
 	}
 }

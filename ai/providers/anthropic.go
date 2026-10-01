@@ -1633,7 +1633,18 @@ func isAnthropicStrictUnsupportedKeyword(key string, value any) bool {
 	}
 	switch key {
 	case "minItems":
-		return value != 0.0 && value != 1.0
+		// pi: value !== 0 && value !== 1 — anything but the numbers 0 and 1,
+		// a string "1" included.
+		var n float64
+		switch v := value.(type) {
+		case int:
+			n = float64(v)
+		case float64:
+			n = v
+		default:
+			return true
+		}
+		return n != 0 && n != 1
 	case "format":
 		format, ok := value.(string)
 		return !ok || !anthropicStrictStringFormats[format]

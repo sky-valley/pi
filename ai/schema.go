@@ -3,6 +3,7 @@ package ai
 import (
 	"encoding/json"
 	"fmt"
+	"iter"
 	"math"
 	"regexp"
 	"slices"
@@ -52,8 +53,16 @@ type Schema struct {
 	AnyOf    []*Schema
 	OneOf    []*Schema
 	AllOf    []*Schema
-	// Extra holds passthrough keywords not modeled above.
+	// Extra holds passthrough keywords not modeled above, and modeled ones
+	// whose value the typed field cannot hold ("minItems": 1.5, "format": 5,
+	// "minimum": null), so they reach the wire and the strict-mode keyword
+	// checks as pi sends them instead of being dropped.
 	Extra map[string]any
+	// KeywordOrder is the order the keywords serialize in. UnmarshalJSON
+	// records the source's, and the builders record TypeBox's, so a schema
+	// reaches the wire in the order pi sends it. Keywords present but not
+	// listed follow in the default order.
+	KeywordOrder []string
 }
 
 // Field is a named object property used by Object.
@@ -80,6 +89,12 @@ func Object(fields ...Field) *Schema {
 			s.Required = append(s.Required, f.Name)
 		}
 	}
+	// TypeBox's Type.Object emits {type, required, properties}, with no
+	// required key when every property is optional; one added later (strict
+	// conversion) then lands after properties, as a new JS key does.
+	if len(s.Required) > 0 {
+		s.KeywordOrder = []string{"type", "required", "properties"}
+	}
 	return s
 }
 
@@ -97,7 +112,8 @@ func Boolean(desc ...string) *Schema { return &Schema{Type: "boolean", Descripti
 
 // ArrayOf builds an array schema with the given item schema.
 func ArrayOf(item *Schema, desc ...string) *Schema {
-	return &Schema{Type: "array", Items: item, Description: first(desc)}
+	// TypeBox's Type.Array emits {type, items, ...options}.
+	return &Schema{Type: "array", Items: item, Description: first(desc), KeywordOrder: []string{"type", "items"}}
 }
 
 // EnumOf builds a string enum schema.
@@ -122,16 +138,156 @@ func first(s []string) string {
 	return ""
 }
 
-// MarshalJSON renders the schema as standard JSON Schema with deterministic
-// key ordering.
+// Keywords yields the schema's keywords with their values in serialization
+// order: KeywordOrder first, then any present keyword it does not list, in the
+// default order (type, description, properties, required, items, enum, const,
+// default, additionalProperties, the numeric bounds, pattern, the item counts,
+// format, anyOf, oneOf, allOf, then Extra sorted). It is the one walk behind
+// MarshalJSON and the strict-mode keyword checks, the analogue of pi's
+// Object.entries over the same schema object. "properties" yields a value
+// that marshals in OrderedProperties order.
+func (s *Schema) Keywords() iter.Seq2[string, any] {
+	return func(yield func(string, any) bool) {
+		all := s.defaultKeywords()
+		emitted := make([]bool, len(all))
+		for _, key := range s.KeywordOrder {
+			for i, kw := range all {
+				if !emitted[i] && kw.key == key {
+					emitted[i] = true
+					if !yield(kw.key, kw.value) {
+						return
+					}
+				}
+			}
+		}
+		for i, kw := range all {
+			if !emitted[i] && !yield(kw.key, kw.value) {
+				return
+			}
+		}
+	}
+}
+
+type schemaKeyword struct {
+	key   string
+	value any
+}
+
+func (s *Schema) defaultKeywords() []schemaKeyword {
+	var out []schemaKeyword
+	add := func(key string, value any) { out = append(out, schemaKeyword{key, value}) }
+	if s.Type != "" {
+		if s.Nullable {
+			add("type", []string{s.Type, "null"})
+		} else {
+			add("type", s.Type)
+		}
+	}
+	if s.Description != "" {
+		add("description", s.Description)
+	}
+	if s.Properties != nil {
+		add("properties", orderedProperties{s})
+	}
+	if s.Required != nil {
+		add("required", s.Required)
+	}
+	if s.Items != nil {
+		add("items", s.Items)
+	}
+	if len(s.Enum) > 0 {
+		add("enum", s.Enum)
+	}
+	if s.HasConst {
+		add("const", s.Const)
+	}
+	if s.Default != nil {
+		add("default", s.Default)
+	}
+	if s.AdditionalSchema != nil {
+		add("additionalProperties", s.AdditionalSchema)
+	} else if s.AdditionalAllowed != nil {
+		add("additionalProperties", *s.AdditionalAllowed)
+	}
+	for _, f := range []struct {
+		key   string
+		value *float64
+	}{
+		{"minimum", s.Minimum}, {"maximum", s.Maximum},
+		{"exclusiveMinimum", s.ExclusiveMinimum}, {"exclusiveMaximum", s.ExclusiveMaximum},
+		{"multipleOf", s.MultipleOf},
+	} {
+		if f.value != nil {
+			add(f.key, *f.value)
+		}
+	}
+	if s.MinLength != nil {
+		add("minLength", *s.MinLength)
+	}
+	if s.MaxLength != nil {
+		add("maxLength", *s.MaxLength)
+	}
+	if s.Pattern != "" {
+		add("pattern", s.Pattern)
+	}
+	if s.MinItems != nil {
+		add("minItems", *s.MinItems)
+	}
+	if s.MaxItems != nil {
+		add("maxItems", *s.MaxItems)
+	}
+	if s.Format != "" {
+		add("format", s.Format)
+	}
+	if len(s.AnyOf) > 0 {
+		add("anyOf", s.AnyOf)
+	}
+	if len(s.OneOf) > 0 {
+		add("oneOf", s.OneOf)
+	}
+	if len(s.AllOf) > 0 {
+		add("allOf", s.AllOf)
+	}
+	for _, k := range sortedKeys(s.Extra) {
+		add(k, s.Extra[k])
+	}
+	return out
+}
+
+// orderedProperties marshals an object schema's properties in
+// OrderedProperties order.
+type orderedProperties struct{ s *Schema }
+
+func (p orderedProperties) MarshalJSON() ([]byte, error) {
+	var b strings.Builder
+	b.WriteByte('{')
+	for i, name := range p.s.OrderedProperties() {
+		if i > 0 {
+			b.WriteByte(',')
+		}
+		k, _ := json.Marshal(name)
+		b.Write(k)
+		b.WriteByte(':')
+		raw, err := json.Marshal(p.s.Properties[name])
+		if err != nil {
+			return nil, err
+		}
+		b.Write(raw)
+	}
+	b.WriteByte('}')
+	return []byte(b.String()), nil
+}
+
+// MarshalJSON renders the schema as standard JSON Schema, keywords in
+// Keywords order.
 func (s *Schema) MarshalJSON() ([]byte, error) {
 	var b strings.Builder
 	b.WriteByte('{')
 	first := true
-	write := func(key string, val any) error {
+	for key, val := range s.Keywords() {
 		raw, err := json.Marshal(val)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if !first {
 			b.WriteByte(',')
@@ -141,159 +297,6 @@ func (s *Schema) MarshalJSON() ([]byte, error) {
 		b.Write(k)
 		b.WriteByte(':')
 		b.Write(raw)
-		return nil
-	}
-
-	if s.Type != "" {
-		if s.Nullable {
-			if err := write("type", []string{s.Type, "null"}); err != nil {
-				return nil, err
-			}
-		} else {
-			if err := write("type", s.Type); err != nil {
-				return nil, err
-			}
-		}
-	}
-	if s.Description != "" {
-		if err := write("description", s.Description); err != nil {
-			return nil, err
-		}
-	}
-	if s.Properties != nil {
-		order := s.OrderedProperties()
-		props := json.RawMessage("{}")
-		if len(order) > 0 {
-			var pb strings.Builder
-			pb.WriteByte('{')
-			for i, name := range order {
-				if i > 0 {
-					pb.WriteByte(',')
-				}
-				k, _ := json.Marshal(name)
-				pb.Write(k)
-				pb.WriteByte(':')
-				raw, err := json.Marshal(s.Properties[name])
-				if err != nil {
-					return nil, err
-				}
-				pb.Write(raw)
-			}
-			pb.WriteByte('}')
-			props = json.RawMessage(pb.String())
-		}
-		if err := write("properties", props); err != nil {
-			return nil, err
-		}
-	}
-	if s.Required != nil {
-		if err := write("required", s.Required); err != nil {
-			return nil, err
-		}
-	}
-	if s.Items != nil {
-		if err := write("items", s.Items); err != nil {
-			return nil, err
-		}
-	}
-	if len(s.Enum) > 0 {
-		if err := write("enum", s.Enum); err != nil {
-			return nil, err
-		}
-	}
-	if s.HasConst {
-		if err := write("const", s.Const); err != nil {
-			return nil, err
-		}
-	}
-	if s.Default != nil {
-		if err := write("default", s.Default); err != nil {
-			return nil, err
-		}
-	}
-	if s.AdditionalSchema != nil {
-		if err := write("additionalProperties", s.AdditionalSchema); err != nil {
-			return nil, err
-		}
-	} else if s.AdditionalAllowed != nil {
-		if err := write("additionalProperties", *s.AdditionalAllowed); err != nil {
-			return nil, err
-		}
-	}
-	if s.Minimum != nil {
-		if err := write("minimum", *s.Minimum); err != nil {
-			return nil, err
-		}
-	}
-	if s.Maximum != nil {
-		if err := write("maximum", *s.Maximum); err != nil {
-			return nil, err
-		}
-	}
-	if s.ExclusiveMinimum != nil {
-		if err := write("exclusiveMinimum", *s.ExclusiveMinimum); err != nil {
-			return nil, err
-		}
-	}
-	if s.ExclusiveMaximum != nil {
-		if err := write("exclusiveMaximum", *s.ExclusiveMaximum); err != nil {
-			return nil, err
-		}
-	}
-	if s.MultipleOf != nil {
-		if err := write("multipleOf", *s.MultipleOf); err != nil {
-			return nil, err
-		}
-	}
-	if s.MinLength != nil {
-		if err := write("minLength", *s.MinLength); err != nil {
-			return nil, err
-		}
-	}
-	if s.MaxLength != nil {
-		if err := write("maxLength", *s.MaxLength); err != nil {
-			return nil, err
-		}
-	}
-	if s.Pattern != "" {
-		if err := write("pattern", s.Pattern); err != nil {
-			return nil, err
-		}
-	}
-	if s.MinItems != nil {
-		if err := write("minItems", *s.MinItems); err != nil {
-			return nil, err
-		}
-	}
-	if s.MaxItems != nil {
-		if err := write("maxItems", *s.MaxItems); err != nil {
-			return nil, err
-		}
-	}
-	if s.Format != "" {
-		if err := write("format", s.Format); err != nil {
-			return nil, err
-		}
-	}
-	if len(s.AnyOf) > 0 {
-		if err := write("anyOf", s.AnyOf); err != nil {
-			return nil, err
-		}
-	}
-	if len(s.OneOf) > 0 {
-		if err := write("oneOf", s.OneOf); err != nil {
-			return nil, err
-		}
-	}
-	if len(s.AllOf) > 0 {
-		if err := write("allOf", s.AllOf); err != nil {
-			return nil, err
-		}
-	}
-	for _, k := range sortedKeys(s.Extra) {
-		if err := write(k, s.Extra[k]); err != nil {
-			return nil, err
-		}
 	}
 	b.WriteByte('}')
 	return []byte(b.String()), nil
@@ -327,7 +330,16 @@ func (s *Schema) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	s.Extra = map[string]any{}
+	s.KeywordOrder = jsonObjectKeyOrder(data)
+	// keep stores a modeled keyword whose value the typed field cannot hold
+	// in Extra, so it is neither dropped nor read as a zero value.
+	keep := func(key string, raw json.RawMessage) {
+		var v any
+		_ = json.Unmarshal(raw, &v) // an overflowing number stays nil: JSON.stringify(Infinity) is null
+		s.Extra[key] = v
+	}
 	for key, raw := range generic {
+		isNull := string(raw) == "null"
 		switch key {
 		case "type":
 			var single string
@@ -376,30 +388,63 @@ func (s *Schema) UnmarshalJSON(data []byte) error {
 				s.AdditionalSchema = &sub
 			}
 		case "minimum":
-			s.Minimum = unmarshalFloatPtr(raw)
+			if s.Minimum = unmarshalFloatPtr(raw); s.Minimum == nil || isNull {
+				s.Minimum = nil
+				keep(key, raw)
+			}
 		case "maximum":
-			s.Maximum = unmarshalFloatPtr(raw)
+			if s.Maximum = unmarshalFloatPtr(raw); s.Maximum == nil || isNull {
+				s.Maximum = nil
+				keep(key, raw)
+			}
 		case "exclusiveMinimum":
-			s.ExclusiveMinimum = unmarshalFloatPtr(raw)
+			if s.ExclusiveMinimum = unmarshalFloatPtr(raw); s.ExclusiveMinimum == nil || isNull {
+				s.ExclusiveMinimum = nil
+				keep(key, raw)
+			}
 		case "exclusiveMaximum":
-			s.ExclusiveMaximum = unmarshalFloatPtr(raw)
+			if s.ExclusiveMaximum = unmarshalFloatPtr(raw); s.ExclusiveMaximum == nil || isNull {
+				s.ExclusiveMaximum = nil
+				keep(key, raw)
+			}
 		case "multipleOf":
-			s.MultipleOf = unmarshalFloatPtr(raw)
+			if s.MultipleOf = unmarshalFloatPtr(raw); s.MultipleOf == nil || isNull {
+				s.MultipleOf = nil
+				keep(key, raw)
+			}
 		case "minLength":
-			s.MinLength = unmarshalIntPtr(raw)
+			if s.MinLength = unmarshalIntPtr(raw); s.MinLength == nil || isNull {
+				s.MinLength = nil
+				keep(key, raw)
+			}
 		case "maxLength":
-			s.MaxLength = unmarshalIntPtr(raw)
+			if s.MaxLength = unmarshalIntPtr(raw); s.MaxLength == nil || isNull {
+				s.MaxLength = nil
+				keep(key, raw)
+			}
 		case "pattern":
-			_ = json.Unmarshal(raw, &s.Pattern)
+			if json.Unmarshal(raw, &s.Pattern) != nil || s.Pattern == "" {
+				s.Pattern = ""
+				keep(key, raw)
+			}
 		case "minItems":
-			s.MinItems = unmarshalIntPtr(raw)
+			if s.MinItems = unmarshalIntPtr(raw); s.MinItems == nil || isNull {
+				s.MinItems = nil
+				keep(key, raw)
+			}
 		case "maxItems":
-			s.MaxItems = unmarshalIntPtr(raw)
+			if s.MaxItems = unmarshalIntPtr(raw); s.MaxItems == nil || isNull {
+				s.MaxItems = nil
+				keep(key, raw)
+			}
 		case "const":
 			_ = json.Unmarshal(raw, &s.Const)
 			s.HasConst = true
 		case "format":
-			_ = json.Unmarshal(raw, &s.Format)
+			if json.Unmarshal(raw, &s.Format) != nil || s.Format == "" {
+				s.Format = ""
+				keep(key, raw)
+			}
 		case "anyOf":
 			_ = json.Unmarshal(raw, &s.AnyOf)
 		case "oneOf":
@@ -436,6 +481,7 @@ func (s *Schema) Clone() *Schema {
 		}
 	}
 	cp.PropertyOrder = slices.Clone(s.PropertyOrder)
+	cp.KeywordOrder = slices.Clone(s.KeywordOrder)
 	cp.Required = slices.Clone(s.Required)
 	cp.Items = s.Items.Clone()
 	if s.Enum != nil {

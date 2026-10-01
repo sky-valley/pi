@@ -1504,22 +1504,44 @@ func TestAnthropicStrictUnsupportedKeywordsMatchPi(t *testing.T) {
 			t.Errorf("%s/%s: unexpected error %v", row.Name, row.Strict, err)
 			continue
 		}
-		tools, _ := body["tools"].([]map[string]any)
-		if got := len(tools) == 1 && tools[0]["strict"] == true; got != row.SentStrict {
+		tools, ok := body["tools"].([]map[string]any)
+		if !ok || len(tools) != 1 {
+			t.Fatalf("%s/%s: tools wrong: %#v", row.Name, row.Strict, body["tools"])
+		}
+		if got := tools[0]["strict"] == true; got != row.SentStrict {
 			t.Errorf("%s/%s: strict = %v, pi = %v", row.Name, row.Strict, got, row.SentStrict)
 		}
 	}
 }
 
-// Characterization: the keyword check is Anthropic's alone: OpenAI's strict mode still takes a
-// bounded integer (upstream 295cc72b0 leaves other providers unchanged).
+// Characterization: the keyword check is Anthropic's alone. A bounded-integer
+// prefer tool still goes strict through the OpenAI completions, Responses and
+// Google converters (upstream 295cc72b0 leaves other providers unchanged).
 func TestStrictUnsupportedKeywordsOnlyAnthropic(t *testing.T) {
 	lower := 1.0
-	tool := ai.Tool{Name: "lookup", Parameters: ai.Object(ai.Prop("n", &ai.Schema{Type: "integer", Minimum: &lower})),
-		ConstrainedSampling: &ai.ConstrainedSamplingConfig{Type: ai.ConstrainedSamplingJSONSchema, Strict: ai.ConstrainedSamplingPrefer}}
-	strict, err := resolveJSONSchemaStrictSampling(tool, true, nil)
-	if err != nil || !strict {
-		t.Fatalf("without a provider check a minimum stays strict, got (%v, %v)", strict, err)
+	tools := []ai.Tool{{Name: "lookup", Parameters: ai.Object(ai.Prop("n", &ai.Schema{Type: "integer", Minimum: &lower})),
+		ConstrainedSampling: &ai.ConstrainedSamplingConfig{Type: ai.ConstrainedSamplingJSONSchema, Strict: ai.ConstrainedSamplingPrefer}}}
+	// Each converter's mark of a strict tool: the flag, or for Google (which
+	// has none) the converted schema's closed object.
+	marks := map[string]string{"openai-completions": `"strict":true`, "openai-responses": `"strict":true`, "google": `"additionalProperties":false`}
+	converters := map[string]func() (any, error){
+		"openai-completions": func() (any, error) {
+			return convertOpenAITools(tools, openAICompletionsCompat{SupportsStrictMode: true})
+		},
+		"openai-responses": func() (any, error) {
+			return convertResponsesTools(tools, responsesCompat{SupportsStrictMode: true}, false)
+		},
+		"google": func() (any, error) { return googleTools(tools, true, true) },
+	}
+	for name, convert := range converters {
+		out, err := convert()
+		if err != nil {
+			t.Fatalf("%s: %v", name, err)
+		}
+		raw, _ := json.Marshal(out)
+		if !strings.Contains(string(raw), marks[name]) {
+			t.Errorf("%s: a minimum must stay strict without a provider check: %s", name, raw)
+		}
 	}
 }
 

@@ -275,6 +275,207 @@
 			"sentStrict": false
 		},
 		{
+			"name": "maximum before minimum",
+			"strict": "prefer",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"n": {
+						"type": "integer",
+						"maximum": 10,
+						"minimum": 1
+					}
+				}
+			},
+			"sentStrict": false
+		},
+		{
+			"name": "uniqueItems before maxItems",
+			"strict": "prefer",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"tags": {
+						"type": "array",
+						"uniqueItems": true,
+						"items": {
+							"type": "string"
+						},
+						"maxItems": 3
+					}
+				}
+			},
+			"sentStrict": false
+		},
+		{
+			"name": "maxContains before minimum",
+			"strict": "prefer",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"n": {
+						"maxContains": 2,
+						"type": "integer",
+						"minimum": 1
+					}
+				}
+			},
+			"sentStrict": false
+		},
+		{
+			"name": "minItems fraction",
+			"strict": "prefer",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"tags": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"minItems": 1.5
+					}
+				}
+			},
+			"sentStrict": false
+		},
+		{
+			"name": "minItems string",
+			"strict": "prefer",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"tags": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"minItems": "1"
+					}
+				}
+			},
+			"sentStrict": false
+		},
+		{
+			"name": "minItems null",
+			"strict": "prefer",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"tags": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"minItems": null
+					}
+				}
+			},
+			"sentStrict": false
+		},
+		{
+			"name": "maxItems null",
+			"strict": "prefer",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"tags": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"maxItems": null
+					}
+				}
+			},
+			"sentStrict": false
+		},
+		{
+			"name": "format empty",
+			"strict": "prefer",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"e": {
+						"type": "string",
+						"format": ""
+					}
+				}
+			},
+			"sentStrict": false
+		},
+		{
+			"name": "format number",
+			"strict": "prefer",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"e": {
+						"type": "string",
+						"format": 5
+					}
+				}
+			},
+			"sentStrict": false
+		},
+		{
+			"name": "format null",
+			"strict": "prefer",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"e": {
+						"type": "string",
+						"format": null
+					}
+				}
+			},
+			"sentStrict": false
+		},
+		{
+			"name": "minimum string",
+			"strict": "prefer",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"n": {
+						"type": "number",
+						"minimum": "5"
+					}
+				}
+			},
+			"sentStrict": false
+		},
+		{
+			"name": "minimum null",
+			"strict": "prefer",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"n": {
+						"type": "number",
+						"minimum": null
+					}
+				}
+			},
+			"sentStrict": false
+		},
+		{
+			"name": "exclusiveMinimum boolean",
+			"strict": "prefer",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"n": {
+						"type": "number",
+						"minimum": 0,
+						"exclusiveMinimum": true
+					}
+				}
+			},
+			"sentStrict": false
+		},
+		{
 			"name": "minimum and maximum",
 			"strict": "require",
 			"parameters": {
@@ -546,6 +747,207 @@
 				}
 			},
 			"error": "Tool \"lookup\" requires JSON-schema constrained sampling, but format: \"idn-email\" is unsupported."
+		},
+		{
+			"name": "maximum before minimum",
+			"strict": "require",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"n": {
+						"type": "integer",
+						"maximum": 10,
+						"minimum": 1
+					}
+				}
+			},
+			"error": "Tool \"lookup\" requires JSON-schema constrained sampling, but maximum: 10 is unsupported."
+		},
+		{
+			"name": "uniqueItems before maxItems",
+			"strict": "require",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"tags": {
+						"type": "array",
+						"uniqueItems": true,
+						"items": {
+							"type": "string"
+						},
+						"maxItems": 3
+					}
+				}
+			},
+			"error": "Tool \"lookup\" requires JSON-schema constrained sampling, but uniqueItems: true is unsupported."
+		},
+		{
+			"name": "maxContains before minimum",
+			"strict": "require",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"n": {
+						"maxContains": 2,
+						"type": "integer",
+						"minimum": 1
+					}
+				}
+			},
+			"error": "Tool \"lookup\" requires JSON-schema constrained sampling, but maxContains: 2 is unsupported."
+		},
+		{
+			"name": "minItems fraction",
+			"strict": "require",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"tags": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"minItems": 1.5
+					}
+				}
+			},
+			"error": "Tool \"lookup\" requires JSON-schema constrained sampling, but minItems: 1.5 is unsupported."
+		},
+		{
+			"name": "minItems string",
+			"strict": "require",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"tags": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"minItems": "1"
+					}
+				}
+			},
+			"error": "Tool \"lookup\" requires JSON-schema constrained sampling, but minItems: \"1\" is unsupported."
+		},
+		{
+			"name": "minItems null",
+			"strict": "require",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"tags": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"minItems": null
+					}
+				}
+			},
+			"error": "Tool \"lookup\" requires JSON-schema constrained sampling, but minItems: null is unsupported."
+		},
+		{
+			"name": "maxItems null",
+			"strict": "require",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"tags": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"maxItems": null
+					}
+				}
+			},
+			"error": "Tool \"lookup\" requires JSON-schema constrained sampling, but maxItems: null is unsupported."
+		},
+		{
+			"name": "format empty",
+			"strict": "require",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"e": {
+						"type": "string",
+						"format": ""
+					}
+				}
+			},
+			"error": "Tool \"lookup\" requires JSON-schema constrained sampling, but format: \"\" is unsupported."
+		},
+		{
+			"name": "format number",
+			"strict": "require",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"e": {
+						"type": "string",
+						"format": 5
+					}
+				}
+			},
+			"error": "Tool \"lookup\" requires JSON-schema constrained sampling, but format: 5 is unsupported."
+		},
+		{
+			"name": "format null",
+			"strict": "require",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"e": {
+						"type": "string",
+						"format": null
+					}
+				}
+			},
+			"error": "Tool \"lookup\" requires JSON-schema constrained sampling, but format: null is unsupported."
+		},
+		{
+			"name": "minimum string",
+			"strict": "require",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"n": {
+						"type": "number",
+						"minimum": "5"
+					}
+				}
+			},
+			"error": "Tool \"lookup\" requires JSON-schema constrained sampling, but minimum: \"5\" is unsupported."
+		},
+		{
+			"name": "minimum null",
+			"strict": "require",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"n": {
+						"type": "number",
+						"minimum": null
+					}
+				}
+			},
+			"error": "Tool \"lookup\" requires JSON-schema constrained sampling, but minimum: null is unsupported."
+		},
+		{
+			"name": "exclusiveMinimum boolean",
+			"strict": "require",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"n": {
+						"type": "number",
+						"minimum": 0,
+						"exclusiveMinimum": true
+					}
+				}
+			},
+			"error": "Tool \"lookup\" requires JSON-schema constrained sampling, but minimum: 0 is unsupported."
 		}
 	]
 }
