@@ -1,0 +1,201 @@
+{
+	"piCodingAgentVersion": "0.99.2",
+	"rows": [
+		{
+			"name": "read",
+			"parameters": {
+				"type": "object",
+				"required": [
+					"path"
+				],
+				"properties": {
+					"path": {
+						"type": "string",
+						"description": "Path to the file to read (relative or absolute)"
+					},
+					"offset": {
+						"type": "number",
+						"description": "Line number to start reading from (1-indexed)"
+					},
+					"limit": {
+						"type": "number",
+						"description": "Maximum number of lines to read"
+					}
+				}
+			}
+		},
+		{
+			"name": "bash",
+			"parameters": {
+				"type": "object",
+				"required": [
+					"command"
+				],
+				"properties": {
+					"command": {
+						"type": "string",
+						"description": "Shell command to execute"
+					},
+					"timeout": {
+						"type": "number",
+						"description": "Timeout in seconds (optional, no default timeout)"
+					}
+				}
+			}
+		},
+		{
+			"name": "edit",
+			"parameters": {
+				"type": "object",
+				"required": [
+					"path",
+					"edits"
+				],
+				"properties": {
+					"path": {
+						"type": "string",
+						"description": "Path to the file to edit (relative or absolute)"
+					},
+					"edits": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"required": [
+								"oldText",
+								"newText"
+							],
+							"properties": {
+								"oldText": {
+									"type": "string",
+									"description": "Exact text for one targeted replacement. It must be unique in the original file and must not overlap with any other edits[].oldText in the same call."
+								},
+								"newText": {
+									"type": "string",
+									"description": "Replacement text for this targeted edit."
+								}
+							}
+						},
+						"description": "One or more targeted replacements. Each edit is matched against the original file, not incrementally. Do not include overlapping or nested edits. If two changes touch the same block or nearby lines, merge them into one edit instead."
+					}
+				}
+			}
+		},
+		{
+			"name": "write",
+			"parameters": {
+				"type": "object",
+				"required": [
+					"path",
+					"content"
+				],
+				"properties": {
+					"path": {
+						"type": "string",
+						"description": "Path to the file to write (relative or absolute)"
+					},
+					"content": {
+						"type": "string",
+						"description": "Content to write to the file"
+					}
+				}
+			}
+		},
+		{
+			"name": "grep",
+			"parameters": {
+				"type": "object",
+				"required": [
+					"pattern"
+				],
+				"properties": {
+					"pattern": {
+						"type": "string",
+						"description": "Search pattern (regex or literal string)"
+					},
+					"path": {
+						"type": "string",
+						"description": "Directory or file to search (default: current directory)"
+					},
+					"glob": {
+						"type": "string",
+						"description": "Filter files by glob pattern, e.g. '*.ts' or '**/*.spec.ts'"
+					},
+					"ignoreCase": {
+						"type": "boolean",
+						"description": "Case-insensitive search (default: false)"
+					},
+					"literal": {
+						"type": "boolean",
+						"description": "Treat pattern as literal string instead of regex (default: false)"
+					},
+					"context": {
+						"type": "number",
+						"description": "Number of lines to show before and after each match (default: 0)"
+					},
+					"limit": {
+						"type": "number",
+						"description": "Maximum number of matches to return (default: 100)"
+					}
+				}
+			}
+		},
+		{
+			"name": "find",
+			"parameters": {
+				"type": "object",
+				"required": [
+					"pattern"
+				],
+				"properties": {
+					"pattern": {
+						"type": "string",
+						"description": "Glob pattern to match files, e.g. '*.ts', '**/*.json', or 'src/**/*.spec.ts'"
+					},
+					"path": {
+						"type": "string",
+						"description": "Directory to search in (default: current directory)"
+					},
+					"limit": {
+						"type": "number",
+						"description": "Maximum number of results (default: 1000)"
+					}
+				}
+			}
+		},
+		{
+			"name": "ls",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"path": {
+						"type": "string",
+						"description": "Directory to list (default: current directory)"
+					},
+					"limit": {
+						"type": "number",
+						"description": "Maximum number of entries to return (default: 500)"
+					}
+				}
+			}
+		},
+		{
+			"name": "powershell",
+			"parameters": {
+				"type": "object",
+				"required": [
+					"command"
+				],
+				"properties": {
+					"command": {
+						"type": "string",
+						"description": "Shell command to execute"
+					},
+					"timeout": {
+						"type": "number",
+						"description": "Timeout in seconds (optional, no default timeout)"
+					}
+				}
+			}
+		}
+	]
+}

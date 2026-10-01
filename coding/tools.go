@@ -441,8 +441,8 @@ func readToolOps(cwd string, custom *ReadOperations, resize imageResizeFn) agent
 		},
 		Parameters: ai.Object(
 			ai.Prop("path", ai.String("Path to the file to read (relative or absolute)")),
-			ai.Opt("offset", ai.Integer("Line number to start reading from (1-indexed)")),
-			ai.Opt("limit", ai.Integer("Maximum number of lines to read")),
+			ai.Opt("offset", ai.Number("Line number to start reading from (1-indexed)")),
+			ai.Opt("limit", ai.Number("Maximum number of lines to read")),
 		),
 		ConstrainedSampling: preferStrictToolSampling,
 		Execute: func(ctx context.Context, id string, params map[string]any, onUpdate agent.ToolUpdateFunc) (agent.AgentToolResult, error) {
@@ -1661,7 +1661,7 @@ func lsToolOps(cwd string, custom *LsOperations) agent.AgentTool {
 		Description: fmt.Sprintf("List directory contents. Returns entries sorted alphabetically, with '/' suffix for directories. Includes dotfiles. Output is truncated to %d entries or %dKB (whichever is hit first).", lsDefaultLimit, DefaultMaxBytes/1024),
 		Parameters: ai.Object(
 			ai.Opt("path", ai.String("Directory to list (default: current directory)")),
-			ai.Opt("limit", ai.Integer("Maximum number of entries to return (default: 500)")),
+			ai.Opt("limit", ai.Number("Maximum number of entries to return (default: 500)")),
 		),
 		Execute: func(ctx context.Context, id string, params map[string]any, onUpdate agent.ToolUpdateFunc) (agent.AgentToolResult, error) {
 			dir := cwd
@@ -1783,7 +1783,7 @@ func findToolOps(cwd string, custom *FindOperations) agent.AgentTool {
 		Parameters: ai.Object(
 			ai.Prop("pattern", ai.String("Glob pattern to match files, e.g. '*.ts', '**/*.json', or 'src/**/*.spec.ts'")),
 			ai.Opt("path", ai.String("Directory to search in (default: current directory)")),
-			ai.Opt("limit", ai.Integer("Maximum number of results (default: 1000)")),
+			ai.Opt("limit", ai.Number("Maximum number of results (default: 1000)")),
 		),
 		Execute: func(ctx context.Context, id string, params map[string]any, onUpdate agent.ToolUpdateFunc) (agent.AgentToolResult, error) {
 			pattern := argStr(params, "pattern")
@@ -1894,8 +1894,8 @@ func grepToolOps(cwd string, custom *GrepOperations) agent.AgentTool {
 			ai.Opt("glob", ai.String("Filter files by glob pattern, e.g. '*.ts' or '**/*.spec.ts'")),
 			ai.Opt("ignoreCase", ai.Boolean("Case-insensitive search (default: false)")),
 			ai.Opt("literal", ai.Boolean("Treat pattern as literal string instead of regex (default: false)")),
-			ai.Opt("context", ai.Integer("Number of lines to show before and after each match (default: 0)")),
-			ai.Opt("limit", ai.Integer("Maximum number of matches to return (default: 100)")),
+			ai.Opt("context", ai.Number("Number of lines to show before and after each match (default: 0)")),
+			ai.Opt("limit", ai.Number("Maximum number of matches to return (default: 100)")),
 		),
 		Execute: func(ctx context.Context, id string, params map[string]any, onUpdate agent.ToolUpdateFunc) (agent.AgentToolResult, error) {
 			patternStr := argStr(params, "pattern")
