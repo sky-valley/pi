@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -410,14 +409,25 @@ func TestJSTrimRetryAfterHeaderBytes(t *testing.T) {
 		}
 		resp.Body.Close()
 		ms, ok := serverRetryDelayMs(resp)
-		// pi's NaN reading falls through to Date.parse, which is NaN again, and
-		// sleeps Math.max(0, NaN): an immediate, server-dictated retry.
-		wantMs := 0.0
 		if tc.Seconds != nil {
-			wantMs = *tc.Seconds * 1000
+			if want := *tc.Seconds * 1000; !ok || ms != want {
+				t.Errorf("retry-after % x: delay = (%v, %v), pi = %v ms", raw, ms, ok, want)
+			}
+			continue
 		}
-		if !ok || ms != wantMs || math.IsNaN(ms) {
-			t.Errorf("retry-after % x: delay = (%v, %v), pi = %v ms", raw, ms, ok, wantMs)
+		// pi's NaN reading falls through to Date.parse, NaN again for every
+		// row but one, so no header dictates the delay and pi backs off
+		// (upstream 2bbfcca43). The exception is K30: V8's fallback parser
+		// reads "\u00c2 5" as a date in May 2001, so pi retries at once.
+		if string(raw) == "\xc2\xa0\x35" {
+			if !ok {
+				continue
+			}
+			t.Errorf("retry-after % x: now dictates (%v ms); retire K30's Retry-After half", raw, ms)
+			continue
+		}
+		if ok {
+			t.Errorf("retry-after % x: delay = %v ms, pi falls back to the backoff", raw, ms)
 		}
 	}
 }

@@ -2,11 +2,13 @@ package providers
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"io"
 	"math"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -296,19 +298,55 @@ func TestServerRetryDelayNonPositiveHonored(t *testing.T) {
 	}
 }
 
-// TestServerRetryDelayUnparseableDateIsImmediate: a present-but-unparseable
-// Retry-After still counts as server-dictated. pi computes `Date.parse(...) -
-// Date.now()` = NaN, which its sleep clamps to zero rather than falling back to
-// the exponential backoff.
-func TestServerRetryDelayUnparseableDateIsImmediate(t *testing.T) {
-	resp := &http.Response{StatusCode: http.StatusTooManyRequests, Header: http.Header{}}
-	resp.Header.Set("Retry-After", "later")
-	d, err := retryDelay(resp, 0, wrapCfg(defaultMaxRetryDelayMs), "")
+// TestRetryDelayMatchesPi replays the published build's retry waits per
+// Retry-After header shape (testdata/retry-delay, captured from pi-ai 0.99.2).
+// Since upstream 2bbfcca43 a header that does not read as a finite delay — an
+// unparseable date, Infinity, or a value that overflows — no longer dictates
+// the wait: pi falls back to the computed backoff, and a non-finite
+// retry-after-ms falls through to Retry-After first.
+func TestRetryDelayMatchesPi(t *testing.T) {
+	raw, err := os.ReadFile("testdata/retry-delay/retry-delay-0.99.2.json")
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatal(err)
 	}
-	if d != 0 {
-		t.Fatalf("expected an immediate retry for an unparseable Retry-After, got %v", d)
+	var capture struct {
+		Rows []struct {
+			Headers [][2]string `json:"headers"`
+			Ms      *float64    `json:"ms"`
+			Backoff bool        `json:"backoff"`
+			Error   string      `json:"error"`
+		} `json:"rows"`
+	}
+	if err := json.Unmarshal(raw, &capture); err != nil {
+		t.Fatal(err)
+	}
+	if len(capture.Rows) == 0 {
+		t.Fatal("empty capture")
+	}
+	for _, row := range capture.Rows {
+		resp := &http.Response{StatusCode: http.StatusTooManyRequests, Header: http.Header{}}
+		for _, h := range row.Headers {
+			resp.Header.Set(h[0], h[1])
+		}
+		d, err := retryDelay(resp, 0, wrapCfg(defaultMaxRetryDelayMs), "429 slow down")
+		switch {
+		case row.Error != "":
+			if err == nil || err.Error() != row.Error {
+				t.Errorf("%v: err = %v, pi = %q", row.Headers, err, row.Error)
+			}
+		case err != nil:
+			t.Errorf("%v: unexpected error %v, pi waits %vms", row.Headers, err, *row.Ms)
+		case row.Backoff:
+			// pi recorded 500ms with Math.random pinned to 0; the jitter takes
+			// up to 25% off the first retry's 0.5s.
+			if d < 375*time.Millisecond || d > 500*time.Millisecond {
+				t.Errorf("%v: delay = %v, pi falls back to the computed backoff", row.Headers, d)
+			}
+		default:
+			if want := time.Duration(*row.Ms) * time.Millisecond; d != want {
+				t.Errorf("%v: delay = %v, pi = %v", row.Headers, d, want)
+			}
+		}
 	}
 }
 
@@ -436,33 +474,22 @@ func TestGoogleOversizedServerDelayDoesNotFailFast(t *testing.T) {
 	}
 }
 
-// TestServerRetryDelayOverflowClamped: a delay that overflows float64 is
-// Infinity in JS (not NaN), so it fails fast — and must not wrap int64
-// nanoseconds into a negative Duration on the way there.
+// TestServerRetryDelayOverflowClamped: with the limit disabled, a finite delay
+// beyond what a Duration can hold must clamp rather than wrap int64
+// nanoseconds into a negative Duration. (An infinite one no longer reaches
+// here: since upstream 2bbfcca43 it falls back to the backoff.)
 func TestServerRetryDelayOverflowClamped(t *testing.T) {
 	if f, ok := parseFloatPrefix("1e400"); !ok || !math.IsInf(f, 1) {
 		t.Fatalf("parseFloatPrefix(1e400) = (%v, %v), want (+Inf, true)", f, ok)
 	}
 	resp := &http.Response{StatusCode: 429, Header: http.Header{}}
-	resp.Header.Set("retry-after-ms", "1e400")
-
-	_, err := retryDelay(resp, 0, wrapCfg(defaultMaxRetryDelayMs), "429 slow down")
-	if err == nil {
-		t.Fatal("an infinite server delay must fail fast")
-	}
-	// pi: `${Math.ceil(Infinity / 1000)}s` renders as "Infinitys".
-	const want = "Server requested Infinitys retry delay (max: 60s). 429 slow down"
-	if err.Error() != want {
-		t.Fatalf("message mismatch\n got: %q\nwant: %q", err.Error(), want)
-	}
-
-	// With the limit disabled, the same value must clamp rather than wrap.
+	resp.Header.Set("retry-after-ms", "1e300")
 	d, err := retryDelay(resp, 0, retryConfig{maxRetryDelayMs: 0, providerError: openaiSDKErrorMessage}, "")
 	if err != nil {
 		t.Fatalf("limit disabled should not fail fast, got %v", err)
 	}
-	if d < 0 {
-		t.Fatalf("clamped delay must not be negative, got %v", d)
+	if d != serverDelayDuration(maxServerDelayMs) {
+		t.Fatalf("expected the clamped maximum, got %v", d)
 	}
 }
 
@@ -616,9 +643,9 @@ func TestResponsesPromptCacheKey(t *testing.T) {
 }
 
 // TestParseFloatPrefixInfinityLiteral: JS Number.parseFloat accepts the
-// "Infinity" literal — exact-case and as a prefix. Rejecting it inverted the
-// outcome for `Retry-After: Infinity`: pi fails fast, and a NaN reading would
-// instead retry immediately. Values captured from node.
+// "Infinity" literal — exact-case and as a prefix. Since upstream 2bbfcca43 an
+// Infinity and a NaN reading of Retry-After both fall back to the backoff, but
+// parseFloatPrefix stays a faithful parseFloat. Values captured from node.
 func TestParseFloatPrefixInfinityLiteral(t *testing.T) {
 	cases := []struct {
 		in   string
@@ -639,21 +666,6 @@ func TestParseFloatPrefixInfinityLiteral(t *testing.T) {
 		if ok != c.ok || (ok && got != c.want) {
 			t.Errorf("parseFloatPrefix(%q) = (%v, %v), want (%v, %v)", c.in, got, ok, c.want, c.ok)
 		}
-	}
-}
-
-// TestRetryAfterInfinityFailsFast: the end-to-end consequence — an Infinity
-// Retry-After must abort, not retry immediately.
-func TestRetryAfterInfinityFailsFast(t *testing.T) {
-	resp := &http.Response{StatusCode: 429, Header: http.Header{}}
-	resp.Header.Set("Retry-After", "Infinity")
-	_, err := retryDelay(resp, 0, wrapCfg(defaultMaxRetryDelayMs), "429 slow down")
-	if err == nil {
-		t.Fatal("an Infinity Retry-After must fail fast")
-	}
-	const want = "Server requested Infinitys retry delay (max: 60s). 429 slow down"
-	if err.Error() != want {
-		t.Fatalf("message mismatch\n got: %q\nwant: %q", err.Error(), want)
 	}
 }
 

@@ -2418,6 +2418,20 @@ from Divergences: these are bugs, not decisions. **Not
 `difftest/known-divergences.json`** — that file excuses one scenario at one
 request-body JSON path, and only D3/D9-class items can ever be entries in it.
 
+**K30 — a Retry-After that only V8's fallback date parser reads backs off in
+Go; pi retries at once.** pi reads a `Retry-After` that `parseFloat` rejects
+with `Date.parse`; the port uses `net/http`'s `ParseTime` (IMF-fixdate,
+RFC 850, ANSI C). Only a value that does not start with a number gets this far
+(an ISO date's year is read as seconds first), and there V8's fallback parser
+accepts far more: measured in node v26.4.0, the isomorphic-decoded bytes
+`c2 a0 35` (`"\u00c2 5"`) parse as 2001-05-01 local time, so pi computes a
+finite, negative delay and retries immediately, where Go now falls back to the
+backoff (since `2bbfcca43` an unreadable header dictates nothing). ANSI C dates
+are local time in V8 and UTC in `ParseTime`. Neither reaches a real server's
+`Retry-After` (seconds or IMF-fixdate), which is why this is debt rather than
+a port of V8's `DateParser`. Pinned by `TestJSTrimRetryAfterHeaderBytes`,
+which fails the day the `c2 a0 35` row starts matching.
+
 **K20 — a narrowed `maxBytes` resizes to different dimensions than pi.** The
 shrink loop tries PNG and then each JPEG quality at every size, and takes the
 first candidate under the byte budget — so where it stops depends on how big

@@ -1,0 +1,164 @@
+{
+	"piVersion": "0.99.2",
+	"rows": [
+		{
+			"headers": [
+				[
+					"retry-after",
+					"5"
+				]
+			],
+			"ms": 5000,
+			"backoff": false
+		},
+		{
+			"headers": [
+				[
+					"retry-after-ms",
+					"250"
+				]
+			],
+			"ms": 250,
+			"backoff": false
+		},
+		{
+			"headers": [
+				[
+					"retry-after",
+					"120"
+				]
+			],
+			"error": "Server requested 120s retry delay (max: 60s). 429 slow down"
+		},
+		{
+			"headers": [
+				[
+					"retry-after",
+					"later"
+				]
+			],
+			"ms": 500,
+			"backoff": true
+		},
+		{
+			"headers": [
+				[
+					"retry-after",
+					"Infinity"
+				]
+			],
+			"ms": 500,
+			"backoff": true
+		},
+		{
+			"headers": [
+				[
+					"retry-after",
+					"1e306"
+				]
+			],
+			"ms": 500,
+			"backoff": true
+		},
+		{
+			"headers": [
+				[
+					"retry-after-ms",
+					"1e400"
+				]
+			],
+			"ms": 500,
+			"backoff": true
+		},
+		{
+			"headers": [
+				[
+					"retry-after-ms",
+					"Infinity"
+				]
+			],
+			"ms": 500,
+			"backoff": true
+		},
+		{
+			"headers": [
+				[
+					"retry-after-ms",
+					"-Infinity"
+				]
+			],
+			"ms": 500,
+			"backoff": true
+		},
+		{
+			"headers": [
+				[
+					"retry-after-ms",
+					"Infinity"
+				],
+				[
+					"retry-after",
+					"2"
+				]
+			],
+			"ms": 2000,
+			"backoff": false
+		},
+		{
+			"headers": [
+				[
+					"retry-after-ms",
+					"abc"
+				],
+				[
+					"retry-after",
+					"3"
+				]
+			],
+			"ms": 3000,
+			"backoff": false
+		},
+		{
+			"headers": [
+				[
+					"retry-after-ms",
+					"1e400"
+				],
+				[
+					"retry-after",
+					"later"
+				]
+			],
+			"ms": 500,
+			"backoff": true
+		},
+		{
+			"headers": [
+				[
+					"retry-after",
+					"Mon, 01 Jan 2001 00:00:00 GMT"
+				]
+			],
+			"ms": 0,
+			"backoff": false
+		},
+		{
+			"headers": [
+				[
+					"retry-after",
+					"2001-01-01T00:00:00Z"
+				]
+			],
+			"error": "Server requested 2001s retry delay (max: 60s). 429 slow down"
+		},
+		{
+			"headers": [
+				[
+					"retry-after",
+					"2001-01-01"
+				]
+			],
+			"error": "Server requested 2001s retry delay (max: 60s). 429 slow down"
+		}
+	]
+}

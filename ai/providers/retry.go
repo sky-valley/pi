@@ -215,31 +215,34 @@ func parseFloatPrefix(s string) (float64, bool) {
 
 // serverRetryDelayMs extracts a server-requested retry delay in milliseconds,
 // mirroring pi's getRetryDelayMs header handling. `retry-after-ms` wins when it
-// parses; otherwise `Retry-After` is read as seconds, falling back to an HTTP
-// date. A present-but-unparseable `Retry-After` still counts as server-dictated:
-// pi's `Date.parse(...) - Date.now()` yields NaN there, which its abortable
-// sleep clamps to an immediate retry rather than falling back to backoff.
-// ok=false means no header dictated the delay.
+// reads as a finite number; otherwise `Retry-After` is read as seconds, falling
+// back to an HTTP date. A header that yields no finite delay — unparseable,
+// Infinity, or a value that overflows — dictates nothing, so the caller falls
+// back to the computed backoff (pi's Number.isFinite guards, upstream
+// 2bbfcca43). ok=false means no header dictated the delay.
 func serverRetryDelayMs(resp *http.Response) (float64, bool) {
 	if resp == nil {
 		return 0, false
 	}
 	if v := resp.Header.Get("retry-after-ms"); v != "" {
-		if ms, ok := parseFloatPrefix(jstext.IsomorphicDecode(v)); ok {
+		if ms, ok := parseFloatPrefix(jstext.IsomorphicDecode(v)); ok && isFinite(ms) {
 			return ms, true
 		}
 	}
 	if ra := resp.Header.Get("Retry-After"); ra != "" {
 		if secs, ok := parseFloatPrefix(jstext.IsomorphicDecode(ra)); ok {
-			return secs * 1000, true
-		}
-		if t, err := http.ParseTime(ra); err == nil {
+			// seconds * 1000 can overflow a finite reading to Infinity.
+			if ms := secs * 1000; isFinite(ms) {
+				return ms, true
+			}
+		} else if t, err := http.ParseTime(ra); err == nil {
 			return float64(time.Until(t).Milliseconds()), true
 		}
-		return 0, true
 	}
 	return 0, false
 }
+
+func isFinite(f float64) bool { return !math.IsInf(f, 0) && !math.IsNaN(f) }
 
 // validateServerRetryDelay ports pi's validateServerRetryDelayMs: a
 // server-requested delay above maxRetryDelayMs fails the request immediately
