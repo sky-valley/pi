@@ -729,6 +729,7 @@ func StreamAnthropic(ctx context.Context, model *ai.Model, req ai.TranscriptCont
 				}
 			}
 		}
+		headers.validate = anthropicValidateHeaders(tokens != nil)
 		build := func() (*http.Request, error) {
 			r, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(payload))
 			if err != nil {
@@ -2323,6 +2324,26 @@ func anthropicClientHeaders(model *ai.Model, opts *AnthropicOptions, oauth bool,
 	o.merge(opts.Headers)
 
 	return sdkHeaders{own: anthropicOwnHeaders, auth: auth, defaults: o, body: jsonBody, checkName: undiciDeleteHeaderName}
+}
+
+// errAnthropicNoRequestAuth is @anthropic-ai/sdk 0.129.0's refusal of a
+// request it cannot authenticate (client.validateHeaders).
+var errAnthropicNoRequestAuth = errors.New(`Could not resolve authentication method. Expected one of apiKey, authToken, credentials, config, or profile to be set. Or for one of the "X-Api-Key" or "Authorization" headers to be explicitly omitted`)
+
+// anthropicValidateHeaders is @anthropic-ai/sdk 0.129.0's validateHeaders: a
+// request goes out with a non-empty X-Api-Key or Authorization, under a
+// federation token (federated), or with a marker that deleted either header
+// — a caller that deletes one owns the request's auth. Anything else, such as
+// a request authenticated by cf-aig-authorization alone, fails before it is
+// sent, although pi's own check (assertRequestAuth) let it through.
+func anthropicValidateHeaders(federated bool) func(http.Header, map[string]bool) error {
+	return func(h http.Header, nulls map[string]bool) error {
+		if headersGet(h, "X-Api-Key") != "" || headersGet(h, "Authorization") != "" || federated ||
+			nulls["X-Api-Key"] || nulls["Authorization"] {
+			return nil
+		}
+		return errAnthropicNoRequestAuth
+	}
 }
 
 // anthropicOwnHeaders is the bundle @anthropic-ai/sdk's buildHeaders writes for

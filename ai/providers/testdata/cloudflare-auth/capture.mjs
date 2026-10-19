@@ -27,6 +27,11 @@ const pkg = path.join(npmDir, "node_modules/@earendil-works/pi-ai");
 const version = JSON.parse(fs.readFileSync(path.join(pkg, "package.json"), "utf8")).version;
 const load = (file) => import(pathToFileURL(path.join(pkg, "dist", file)).href);
 const { builtinModels } = await load("providers/all.js");
+const adapters = {
+	"anthropic-messages": await load("api/anthropic-messages.js"),
+	"openai-completions": await load("api/openai-completions.js"),
+	"openai-responses": await load("api/openai-responses.js"),
+};
 const { InMemoryCredentialStore } = await load("auth/credential-store.js");
 const compat = await load("compat.js");
 
@@ -134,7 +139,7 @@ function plain(value) {
 	return value === undefined ? null : JSON.parse(JSON.stringify(value));
 }
 
-const out = { version, auth: [], login: [], stream: [] };
+const out = { version, auth: [], login: [], stream: [], direct: [] };
 for (const [envName, env] of Object.entries(envs)) {
 	setEnv(env);
 	for (const [credName, credential] of Object.entries(credentials)) {
@@ -187,5 +192,37 @@ for (const provider of ["cloudflare-workers-ai", "cloudflare-ai-gateway"]) {
 	});
 }
 
+// The adapters on their own, with a model of no Cloudflare provider: whether
+// a request whose auth headers the options own goes out, or the SDK's own
+// check of its auth headers (validateHeaders) refuses it.
+const directOptions = {
+	"gateway-header": { headers: { "cf-aig-authorization": "Bearer request-header" } },
+	"gateway-header-no-authorization": { headers: { "cf-aig-authorization": "Bearer request-header", Authorization: null } },
+	"gateway-header-no-x-api-key": { headers: { "cf-aig-authorization": "Bearer request-header", "x-api-key": null } },
+	"key-empty-x-api-key": { apiKey: "request-key", headers: { "x-api-key": "" } },
+	"key-no-x-api-key": { apiKey: "request-key", headers: { "X-Api-Key": null } },
+	"key-empty-authorization": { apiKey: "request-key", headers: { Authorization: "" } },
+	"key-no-authorization": { apiKey: "request-key", headers: { authorization: null } },
+};
+for (const [api, adapter] of Object.entries(adapters)) {
+	const model = {
+		id: "direct-model",
+		name: "Direct Model",
+		api,
+		provider: "direct",
+		baseUrl: "https://example.test/v1",
+		reasoning: false,
+		input: ["text"],
+		cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+		contextWindow: 10000,
+		maxTokens: 1000,
+	};
+	for (const [optionName, options] of Object.entries(directOptions)) {
+		out.direct.push({ api, options: optionName, ...(await outcome(adapter.stream(model, { messages: [] }, options))) });
+	}
+}
+
 fs.writeFileSync(outFile, `${JSON.stringify(out, null, "\t")}\n`);
-console.log(`wrote ${out.auth.length} auth, ${out.login.length} login and ${out.stream.length} stream rows to ${outFile}`);
+console.log(
+	`wrote ${out.auth.length} auth, ${out.login.length} login, ${out.stream.length} stream and ${out.direct.length} direct rows to ${outFile}`,
+);

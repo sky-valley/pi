@@ -52,16 +52,18 @@ func TestOpenAICompletionsHeaderStates(t *testing.T) {
 			t.Fatalf("authorization = %q, want the default Bearer k", got)
 		}
 	})
-	t.Run("empty string sends an empty header", func(t *testing.T) {
-		h := captureOpenAIHeaders(t, openAITestModel(), ai.StreamOptions{
-			ProviderRequestOptions: ai.ProviderRequestOptions{APIKey: "k", Headers: ai.ProviderHeaders{"authorization": strPtr("")}},
-		})
-		values, ok := h["Authorization"]
-		if !ok {
-			t.Fatal("an empty string must still send the header, not suppress it")
-		}
-		if len(values) != 1 || values[0] != "" {
-			t.Fatalf("authorization = %v, want one empty value", values)
+	t.Run("empty string replaces the default", func(t *testing.T) {
+		// An empty Authorization leaves openai's client nothing to
+		// authenticate with, and its validateHeaders refuses the request
+		// before sending it (pi's capture: testdata/cloudflare-auth,
+		// openai-completions key-empty-authorization).
+		final := StreamOpenAICompletions(context.Background(), openAITestModel(), ai.NormalizeContext(
+			ai.Context{Messages: []ai.Message{ai.NewUserText("hi", 1)}}),
+			&OpenAIOptions{StreamOptions: ai.StreamOptions{
+				ProviderRequestOptions: ai.ProviderRequestOptions{APIKey: "k", Headers: ai.ProviderHeaders{"authorization": strPtr("")}},
+			}}).Result()
+		if final.StopReason != ai.StopError || final.ErrorMessage != errOpenAINoRequestAuth.Error() {
+			t.Fatalf("stopped %s with %q, want openai's validateHeaders refusal", final.StopReason, final.ErrorMessage)
 		}
 	})
 	t.Run("null suppresses the default", func(t *testing.T) {
@@ -475,7 +477,7 @@ func TestHeaderObjectCaseCollisionIsDeterministic(t *testing.T) {
 		h := http.Header{}
 		o := &headerObject{}
 		o.merge(headers)
-		if err := o.applyAsDefaultHeaders(h, undiciDeleteHeaderName); err != nil {
+		if err := o.applyAsDefaultHeaders(h, nil, undiciDeleteHeaderName); err != nil {
 			t.Fatal(err)
 		}
 		if got := h.Get("authorization"); got != "Bearer x" {

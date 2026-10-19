@@ -1,6 +1,7 @@
 package providers
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"net/http"
@@ -192,8 +193,10 @@ func (o *headerObject) mergeStrings(source map[string]string) {
 // It fails where the SDK's buildHeaders throws, before anything is sent: slot
 // by slot, on the name (checkName, the SDK's own check of it) and then on the
 // value.
-func (o *headerObject) applyAsDefaultHeaders(h http.Header, checkName headerNameCheck) error {
-	return o.fold(h, nil, checkName)
+//
+// nulls, when not nil, records the names a marker left deleted (see fold).
+func (o *headerObject) applyAsDefaultHeaders(h http.Header, nulls map[string]bool, checkName headerNameCheck) error {
+	return o.fold(h, nulls, checkName)
 }
 
 // headerNameCheck is how an SDK's buildHeaders refuses the name of an entry of
@@ -248,7 +251,7 @@ func (o *headerObject) fold(h http.Header, nulls map[string]bool, checkName head
 // reads it: pi's header object, or the Headers a client built from it at
 // construction (builtHeaders).
 type defaultHeaders interface {
-	applyAsDefaultHeaders(h http.Header, checkName headerNameCheck) error
+	applyAsDefaultHeaders(h http.Header, nulls map[string]bool, checkName headerNameCheck) error
 }
 
 // builtHeaders is what buildHeaders returns: a Headers object, every value in
@@ -273,14 +276,19 @@ func buildDefaultHeaders(checkName headerNameCheck, bundles ...*headerObject) (b
 	return b, nil
 }
 
-// applyAsDefaultHeaders writes the built Headers onto h; every name in it was
-// checked when it was built.
-func (b builtHeaders) applyAsDefaultHeaders(h http.Header, _ headerNameCheck) error {
+// applyAsDefaultHeaders writes the built Headers onto h, its values and then
+// its markers, as buildHeaders iterates one; every name in it was checked when
+// it was built.
+func (b builtHeaders) applyAsDefaultHeaders(h http.Header, nulls map[string]bool, _ headerNameCheck) error {
 	for key, values := range b.header {
 		h[key] = slices.Clone(values)
+		delete(nulls, key)
 	}
 	for key := range b.nulls {
 		h.Del(key)
+		if nulls != nil {
+			nulls[key] = true
+		}
 	}
 	return nil
 }
@@ -323,6 +331,10 @@ type sdkHeaders struct {
 	// checkName is the SDK's check of a name in defaults: the bundles it
 	// writes itself carry names it takes.
 	checkName headerNameCheck
+	// validate is the SDK's validateHeaders: given the headers built and the
+	// names a marker left deleted (canonical keys), it refuses a request it
+	// cannot authenticate, before anything is sent. Nil checks nothing.
+	validate func(h http.Header, nulls map[string]bool) error
 }
 
 // jsonBody is the SDKs' body bundle for the JSON params every adapter sends.
@@ -348,7 +360,8 @@ func (s sdkHeaders) apply(h http.Header) error {
 			h.Set(e.name, e.value)
 		}
 	}
-	if err := s.defaults.applyAsDefaultHeaders(h, s.checkName); err != nil {
+	nulls := map[string]bool{}
+	if err := s.defaults.applyAsDefaultHeaders(h, nulls, s.checkName); err != nil {
 		return err
 	}
 	body, err := headerValues(s.body)
@@ -358,7 +371,11 @@ func (s sdkHeaders) apply(h http.Header) error {
 	for _, bundle := range [][]recordEntry{body, request} {
 		for _, e := range bundle {
 			h.Set(e.name, e.value)
+			delete(nulls, http.CanonicalHeaderKey(e.name))
 		}
+	}
+	if s.validate != nil {
+		return s.validate(h, nulls)
 	}
 	return nil
 }
@@ -397,6 +414,7 @@ func openAIClientHeaders(o *headerObject, apiKey string) (sdkHeaders, error) {
 		defaults:  o,
 		body:      jsonBody,
 		checkName: openaiHeaderName,
+		validate:  openAIValidateHeaders,
 	}
 	if org, ok := sdkEnv("OPENAI_ORG_ID"); ok {
 		s.own = append(s.own, recordEntry{"openai-organization", org})
@@ -412,6 +430,27 @@ func openAIClientHeaders(o *headerObject, apiKey string) (sdkHeaders, error) {
 		s.defaults = built
 	}
 	return s, nil
+}
+
+// errOpenAINoRequestAuth is openai 7.19.0's refusal of a request it cannot
+// authenticate (client.validateHeaders).
+var errOpenAINoRequestAuth = errors.New(`Could not resolve authentication method. Expected either apiKey or adminAPIKey to be set. Or for one of the "Authorization" or "api-key" headers to be explicitly omitted`)
+
+// openAIValidateHeaders is openai 7.19.0's validateHeaders: a request goes out
+// with a non-empty Authorization or api-key, or with a marker that deleted
+// either. pi always hands the client a key ("unused" when a header owns the
+// auth), so only a header that replaces the client's Authorization with an
+// empty value fails here.
+func openAIValidateHeaders(h http.Header, nulls map[string]bool) error {
+	if headersGet(h, "Authorization") != "" || headersGet(h, "Api-Key") != "" || nulls["Authorization"] || nulls["Api-Key"] {
+		return nil
+	}
+	return errOpenAINoRequestAuth
+}
+
+// headersGet is Headers.get: every value of the header, joined by ", ".
+func headersGet(h http.Header, name string) string {
+	return strings.Join(h.Values(name), ", ")
 }
 
 // sdkEnv reads an environment variable as both SDKs' readEnv does: from the

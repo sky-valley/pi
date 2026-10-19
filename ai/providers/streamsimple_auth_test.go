@@ -221,7 +221,12 @@ func TestAnthropicStreamSimpleAcceptsHeaderOwnedAuth(t *testing.T) {
 	}{
 		{name: "authorization", headers: ai.ProviderHeaders{"Authorization": strHeader("Bearer gw-token")}},
 		{name: "x-api-key", headers: ai.ProviderHeaders{"x-api-key": strHeader("gw-key")}},
-		{name: "cf-aig-authorization", headers: ai.ProviderHeaders{"cf-aig-authorization": strHeader("Bearer cf-token")}},
+		// As cloudflareAIGatewayAuth resolves it: the markers are what lets the
+		// SDK send it, since cf-aig-authorization alone passes pi's gate but not
+		// the SDK's validateHeaders (TestAdapterAuthHeadersMatchPi).
+		{name: "cf-aig-authorization", headers: ai.ProviderHeaders{
+			"cf-aig-authorization": strHeader("Bearer cf-token"), "Authorization": nil, "x-api-key": nil,
+		}},
 		// pi's hasHeader lowercases the name it compares, so the spelling of the
 		// caller's key does not matter.
 		{name: "uppercase spelling", headers: ai.ProviderHeaders{"AUTHORIZATION": strHeader("Bearer gw-token")}},

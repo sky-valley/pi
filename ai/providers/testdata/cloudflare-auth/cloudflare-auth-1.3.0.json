@@ -17445,5 +17445,291 @@
 			"stopReason": "error",
 			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
 		}
+	],
+	"direct": [
+		{
+			"api": "anthropic-messages",
+			"options": "gateway-header",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Could not resolve authentication method. Expected one of apiKey, authToken, credentials, config, or profile to be set. Or for one of the \"X-Api-Key\" or \"Authorization\" headers to be explicitly omitted"
+		},
+		{
+			"api": "anthropic-messages",
+			"options": "gateway-header-no-authorization",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://example.test/v1/v1/messages?beta=true",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-header"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"api": "anthropic-messages",
+			"options": "gateway-header-no-x-api-key",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://example.test/v1/v1/messages?beta=true",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-header"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"api": "anthropic-messages",
+			"options": "key-empty-x-api-key",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Could not resolve authentication method. Expected one of apiKey, authToken, credentials, config, or profile to be set. Or for one of the \"X-Api-Key\" or \"Authorization\" headers to be explicitly omitted"
+		},
+		{
+			"api": "anthropic-messages",
+			"options": "key-no-x-api-key",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://example.test/v1/v1/messages?beta=true",
+					"headers": {}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"api": "anthropic-messages",
+			"options": "key-empty-authorization",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://example.test/v1/v1/messages?beta=true",
+					"headers": {
+						"authorization": "",
+						"x-api-key": "request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"api": "anthropic-messages",
+			"options": "key-no-authorization",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://example.test/v1/v1/messages?beta=true",
+					"headers": {
+						"x-api-key": "request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"api": "openai-completions",
+			"options": "gateway-header",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://example.test/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer unused",
+						"cf-aig-authorization": "Bearer request-header"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"api": "openai-completions",
+			"options": "gateway-header-no-authorization",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://example.test/v1/chat/completions",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-header"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"api": "openai-completions",
+			"options": "gateway-header-no-x-api-key",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://example.test/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer unused",
+						"cf-aig-authorization": "Bearer request-header"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"api": "openai-completions",
+			"options": "key-empty-x-api-key",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://example.test/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key",
+						"x-api-key": ""
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"api": "openai-completions",
+			"options": "key-no-x-api-key",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://example.test/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"api": "openai-completions",
+			"options": "key-empty-authorization",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Could not resolve authentication method. Expected either apiKey or adminAPIKey to be set. Or for one of the \"Authorization\" or \"api-key\" headers to be explicitly omitted"
+		},
+		{
+			"api": "openai-completions",
+			"options": "key-no-authorization",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://example.test/v1/chat/completions",
+					"headers": {}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"api": "openai-responses",
+			"options": "gateway-header",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://example.test/v1/responses",
+					"headers": {
+						"authorization": "Bearer unused",
+						"cf-aig-authorization": "Bearer request-header"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"api": "openai-responses",
+			"options": "gateway-header-no-authorization",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://example.test/v1/responses",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-header"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"api": "openai-responses",
+			"options": "gateway-header-no-x-api-key",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://example.test/v1/responses",
+					"headers": {
+						"authorization": "Bearer unused",
+						"cf-aig-authorization": "Bearer request-header"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"api": "openai-responses",
+			"options": "key-empty-x-api-key",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://example.test/v1/responses",
+					"headers": {
+						"authorization": "Bearer request-key",
+						"x-api-key": ""
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"api": "openai-responses",
+			"options": "key-no-x-api-key",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://example.test/v1/responses",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"api": "openai-responses",
+			"options": "key-empty-authorization",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Could not resolve authentication method. Expected either apiKey or adminAPIKey to be set. Or for one of the \"Authorization\" or \"api-key\" headers to be explicitly omitted"
+		},
+		{
+			"api": "openai-responses",
+			"options": "key-no-authorization",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://example.test/v1/responses",
+					"headers": {}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		}
 	]
 }

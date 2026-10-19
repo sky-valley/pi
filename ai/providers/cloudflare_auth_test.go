@@ -34,18 +34,29 @@ type cloudflareAuthCapture struct {
 		Stored     json.RawMessage `json:"stored"`
 	} `json:"login"`
 	Stream []cloudflareStreamRow `json:"stream"`
+	Direct []struct {
+		Api     ai.Api `json:"api"`
+		Options string `json:"options"`
+		cloudflareOutcome
+	} `json:"direct"`
 }
 
-type cloudflareStreamRow struct {
-	Env          string             `json:"env"`
-	Credential   string             `json:"credential"`
-	Provider     string             `json:"provider"`
-	ModelID      string             `json:"modelId"`
-	Options      string             `json:"options"`
-	Entry        string             `json:"entry"`
+// cloudflareOutcome is what a row's stream did: its requests, or the setup
+// error when it sent none.
+type cloudflareOutcome struct {
 	Requests     []cloudflareRecord `json:"requests"`
 	StopReason   ai.StopReason      `json:"stopReason"`
 	ErrorMessage *string            `json:"errorMessage"`
+}
+
+type cloudflareStreamRow struct {
+	Env        string `json:"env"`
+	Credential string `json:"credential"`
+	Provider   string `json:"provider"`
+	ModelID    string `json:"modelId"`
+	Options    string `json:"options"`
+	Entry      string `json:"entry"`
+	cloudflareOutcome
 }
 
 // cloudflareRecord is one request as the capture records it: the URL and the
@@ -332,12 +343,15 @@ func streamCloudflareRow(t *testing.T, row cloudflareStreamRow) cloudflareStream
 		result = ai.Stream(context.Background(), model, ai.Context{}, &options).Result()
 	}
 	got := row
-	got.Requests = recorder.requests
+	got.cloudflareOutcome = recordedOutcome(recorder, result)
+	return got
+}
+
+func recordedOutcome(recorder *cloudflareRecorder, result *ai.AssistantMessage) cloudflareOutcome {
+	got := cloudflareOutcome{Requests: recorder.requests, StopReason: result.StopReason}
 	if got.Requests == nil {
 		got.Requests = []cloudflareRecord{}
 	}
-	got.StopReason = result.StopReason
-	got.ErrorMessage = nil
 	if len(got.Requests) == 0 {
 		message := result.ErrorMessage
 		got.ErrorMessage = &message
@@ -345,7 +359,15 @@ func streamCloudflareRow(t *testing.T, row cloudflareStreamRow) cloudflareStream
 	return got
 }
 
-func describeCloudflareOutcome(row cloudflareStreamRow) string {
+func (o cloudflareOutcome) matches(want cloudflareOutcome) bool {
+	if want.Requests == nil {
+		want.Requests = []cloudflareRecord{}
+	}
+	return reflect.DeepEqual(o.Requests, want.Requests) && o.StopReason == want.StopReason &&
+		reflect.DeepEqual(o.ErrorMessage, want.ErrorMessage)
+}
+
+func describeCloudflareOutcome(row cloudflareOutcome) string {
 	if len(row.Requests) > 0 {
 		raw, _ := json.Marshal(row.Requests)
 		return string(raw)
@@ -373,18 +395,62 @@ func TestCloudflareRequestsMatchPi(t *testing.T) {
 			continue
 		}
 		got := streamCloudflareRow(t, want)
-		if want.Requests == nil {
-			want.Requests = []cloudflareRecord{}
-		}
-		if reflect.DeepEqual(got.Requests, want.Requests) && got.StopReason == want.StopReason &&
-			reflect.DeepEqual(got.ErrorMessage, want.ErrorMessage) {
+		if got.matches(want.cloudflareOutcome) {
 			continue
 		}
 		mismatches++
 		t.Errorf("%s %s/%s %s %s options:\n go %s\n pi %s", want.Entry, want.Env, want.Credential, want.ModelID, want.Options,
-			describeCloudflareOutcome(got), describeCloudflareOutcome(want))
+			describeCloudflareOutcome(got.cloudflareOutcome), describeCloudflareOutcome(want.cloudflareOutcome))
 	}
 	if mismatches > 0 {
 		t.Logf("%d of %d rows differ", mismatches, len(capture.Stream))
+	}
+}
+
+// TestAdapterAuthHeadersMatchPi: an adapter called on its own, for a model of
+// no Cloudflare provider, sends a request whose auth headers the options own
+// as pi's does, and refuses one that carries neither of its SDK's auth
+// headers, nor a marker deleting one, as the SDK's validateHeaders does.
+func TestAdapterAuthHeadersMatchPi(t *testing.T) {
+	capture := loadCloudflareAuthCapture(t)
+	directOptions := map[string]func() ai.StreamOptions{
+		"gateway-header": func() ai.StreamOptions {
+			return cloudflareRequestOptions("", nil, ai.ProviderHeaders{"cf-aig-authorization": strPtr("Bearer request-header")})
+		},
+		"gateway-header-no-authorization": func() ai.StreamOptions {
+			return cloudflareRequestOptions("", nil, ai.ProviderHeaders{"cf-aig-authorization": strPtr("Bearer request-header"), "Authorization": nil})
+		},
+		"gateway-header-no-x-api-key": func() ai.StreamOptions {
+			return cloudflareRequestOptions("", nil, ai.ProviderHeaders{"cf-aig-authorization": strPtr("Bearer request-header"), "x-api-key": nil})
+		},
+		"key-empty-x-api-key": func() ai.StreamOptions {
+			return cloudflareRequestOptions("request-key", nil, ai.ProviderHeaders{"x-api-key": strPtr("")})
+		},
+		"key-no-x-api-key": func() ai.StreamOptions {
+			return cloudflareRequestOptions("request-key", nil, ai.ProviderHeaders{"X-Api-Key": nil})
+		},
+		"key-empty-authorization": func() ai.StreamOptions {
+			return cloudflareRequestOptions("request-key", nil, ai.ProviderHeaders{"Authorization": strPtr("")})
+		},
+		"key-no-authorization": func() ai.StreamOptions {
+			return cloudflareRequestOptions("request-key", nil, ai.ProviderHeaders{"authorization": nil})
+		},
+	}
+	for _, want := range capture.Direct {
+		model := &ai.Model{
+			ID: "direct-model", Name: "Direct Model", Api: want.Api, Provider: "direct",
+			BaseURL: "https://example.test/v1", Input: []string{"text"}, ContextWindow: 10000, MaxTokens: 1000,
+		}
+		provider, ok := ai.GetApiProvider(want.Api)
+		if !ok {
+			t.Fatalf("no api provider for %s", want.Api)
+		}
+		recorder := &cloudflareRecorder{}
+		options := directOptions[want.Options]()
+		options.HTTPClient = recorder
+		result := provider.Stream(context.Background(), model, ai.NormalizeContext(ai.Context{}), &options).Result()
+		if got := recordedOutcome(recorder, result); !got.matches(want.cloudflareOutcome) {
+			t.Errorf("%s %s:\n go %s\n pi %s", want.Api, want.Options, describeCloudflareOutcome(got), describeCloudflareOutcome(want.cloudflareOutcome))
+		}
 	}
 }
