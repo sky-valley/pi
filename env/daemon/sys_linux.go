@@ -74,14 +74,14 @@ const watchPerDirectory = true
 // startWithEmptySignalMask starts a process whose signal mask is empty, as
 // libuv and the Rust daemon set it: the forked child takes the mask of the
 // thread that forks it.
-func startWithEmptySignalMask(program string, argv []string, attr *os.ProcAttr) (*os.Process, error) {
+func startWithEmptySignalMask(program string, argv []string, attr *syscall.ProcAttr) (int, error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 	var empty, previous unix.Sigset_t
 	if unix.PthreadSigmask(unix.SIG_SETMASK, &empty, &previous) == nil {
 		defer unix.PthreadSigmask(unix.SIG_SETMASK, &previous, nil)
 	}
-	return os.StartProcess(program, argv, attr)
+	return syscall.ForkExec(program, argv, attr)
 }
 
 // realpath is the realpath(3) of the C library the Rust daemon links: musl's

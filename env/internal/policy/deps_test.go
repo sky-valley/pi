@@ -21,7 +21,7 @@ import (
 // budget is tighter than the module's.
 var daemonModules = map[string]string{
 	"golang.org/x/sys":             "system calls the daemon makes as the Rust daemon makes them through libc and windows-sys (env/daemon/sys_*.go)",
-	"github.com/fsnotify/fsnotify": "native file watching for the watch operation, where the Rust daemon uses the notify crate (env/daemon/watch.go)",
+	"github.com/fsnotify/fsnotify": "native file watching for the watch operation on Linux and Windows, where the Rust daemon uses the notify crate (env/daemon/watch_fsnotify.go; macOS watches through kqueue itself, watch_darwin.go)",
 }
 
 // rootModules are the modules the root module's own policy test admits; the
@@ -152,5 +152,24 @@ func TestNoCgoInBuild(t *testing.T) {
 			"To resolve: the daemon is cross-compiled with CGO_ENABLED=0 for every system it\n"+
 			"ships to; replace the cgo dependency with system calls through golang.org/x/sys.",
 			goos, strings.Join(offenders, "\n\t"))
+	}
+}
+
+// TestDaemonStartsNoProcessThroughOSExec keeps os/exec out of the daemon on
+// Linux and Android: os.StartProcess, under os/exec, probes pidfd support on
+// first use, and Android before 12 kills a process calling pidfd_open with
+// SIGSYS; Go ignores SIGSYS during the probe for GOOS=android only, so the
+// android/amd64 daemon (a linux build tagged pienv_android) would die on its
+// first command. env/daemon's TestAndroidBuildRunsCommandsWithoutPidfd runs
+// that build under such a seccomp filter.
+func TestDaemonStartsNoProcessThroughOSExec(t *testing.T) {
+	for _, goos := range []string{"linux", "android"} {
+		for _, pkg := range listDeps(t, goos, "./cmd/pi-env") {
+			if pkg.ImportPath == "os/exec" {
+				t.Errorf("GOOS=%s: the daemon imports os/exec.\n\n"+
+					"To resolve: start processes with startProcess (env/daemon/sys_unix.go), which\n"+
+					"uses syscall.ForkExec and wait4(2), never os.StartProcess or os.Process.", goos)
+			}
+		}
 	}
 }

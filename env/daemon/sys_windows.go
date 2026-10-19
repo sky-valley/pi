@@ -776,17 +776,17 @@ var job = sync.OnceValue(func() windows.Handle {
 
 // spawnProcess starts program with args quoted as libuv quotes them, Node's
 // environment, and a hidden console, in the daemon's job.
-func spawnProcess(program string, args []string, cwd string, env object, inheritEnv bool, files []*os.File) (*os.Process, error) {
+func spawnProcess(program string, args []string, cwd string, env object, inheritEnv bool, files []*os.File) (child, error) {
 	commandLine := `"` + program + `"`
 	for _, arg := range args {
 		if hasNul(arg) {
-			return nil, errNulData
+			return child{}, errNulData
 		}
 		commandLine += " " + quoteArgument(arg)
 	}
 	environment := childEnvironment(env, inheritEnv)
 	if slices.ContainsFunc(environment, hasNul) {
-		return nil, errNulData
+		return child{}, errNulData
 	}
 	process, err := os.StartProcess(program, append([]string{program}, args...), &os.ProcAttr{
 		Dir:   cwd,
@@ -795,7 +795,7 @@ func spawnProcess(program string, args []string, cwd string, env object, inherit
 		Sys:   &syscall.SysProcAttr{CmdLine: commandLine, CreationFlags: windows.CREATE_NO_WINDOW},
 	})
 	if err != nil {
-		return nil, err
+		return child{}, err
 	}
 	if j := job(); j != 0 {
 		if h, err := windows.OpenProcess(windows.PROCESS_SET_QUOTA|windows.PROCESS_TERMINATE, false, uint32(process.Pid)); err == nil {
@@ -803,7 +803,7 @@ func spawnProcess(program string, args []string, cwd string, env object, inherit
 			windows.CloseHandle(h)
 		}
 	}
-	return process, nil
+	return child{pid: process.Pid, process: process}, nil
 }
 
 // killTree is Node's killProcessTree on Windows: taskkill /F /T, not waited
@@ -820,10 +820,20 @@ func killTree(pid int) {
 	}
 }
 
-// exitCode: exit codes are unsigned 32-bit values on Windows (an access
-// violation is 3221225477).
-func exitCode(state *os.ProcessState) int64 {
-	return int64(uint32(state.ExitCode()))
+// child is a started command.
+type child struct {
+	pid     int
+	process *os.Process
+}
+
+// wait waits for the command to exit: its exit code, an unsigned 32-bit value
+// on Windows (an access violation is 3221225477).
+func (c child) wait() (int64, error) {
+	state, err := c.process.Wait()
+	if err != nil {
+		return 0, err
+	}
+	return int64(uint32(state.ExitCode())), nil
 }
 
 var nulError = errors.New("path contains a NUL byte")

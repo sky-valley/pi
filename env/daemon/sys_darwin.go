@@ -52,7 +52,7 @@ const watchPerDirectory = true
 // libuv and the Rust daemon set it: the forked child takes the mask of the
 // thread that forks it, which __pthread_sigmask(2) clears for the moment (x/sys
 // has no pthread_sigmask for macOS).
-func startWithEmptySignalMask(program string, argv []string, attr *os.ProcAttr) (*os.Process, error) {
+func startWithEmptySignalMask(program string, argv []string, attr *syscall.ProcAttr) (int, error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 	const sigSetmask = 3 // SIG_SETMASK
@@ -60,7 +60,7 @@ func startWithEmptySignalMask(program string, argv []string, attr *os.ProcAttr) 
 	if _, _, errno := unix.RawSyscall(unix.SYS___PTHREAD_SIGMASK, sigSetmask, uintptr(unsafe.Pointer(&empty)), uintptr(unsafe.Pointer(&previous))); errno == 0 {
 		defer unix.RawSyscall(unix.SYS___PTHREAD_SIGMASK, sigSetmask, uintptr(unsafe.Pointer(&previous)), 0)
 	}
-	return os.StartProcess(program, argv, attr)
+	return syscall.ForkExec(program, argv, attr)
 }
 
 // knownFormat reports whether the kernel can execute the file: a "#!"

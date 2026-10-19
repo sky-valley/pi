@@ -5,8 +5,9 @@ package daemon
 import (
 	"bytes"
 	"errors"
+	"io"
 	"os"
-	"os/exec"
+	"runtime"
 	"slices"
 	"sort"
 	"strings"
@@ -317,12 +318,25 @@ func pathIdentity(_ string, st fileStat, _ bool) (uint64, uint64) {
 // with a dot.
 func isHiddenEntry(name, _ string) bool { return strings.HasPrefix(name, ".") }
 
+// whichBash is the first line `which bash` prints, if that names a file.
 func whichBash() string {
-	command := exec.Command("which", "bash")
-	command.Stdin = nil
-	command.Stderr = nil
-	out, err := command.Output()
+	null, err := os.OpenFile(os.DevNull, os.O_RDWR, 0)
 	if err != nil {
+		return ""
+	}
+	defer null.Close()
+	r, w, err := os.Pipe()
+	if err != nil {
+		return ""
+	}
+	defer r.Close()
+	process, err := startProcess("which", []string{"which", "bash"}, os.Environ(), "", []*os.File{null, w, null}, false)
+	w.Close()
+	if err != nil {
+		return ""
+	}
+	out, _ := io.ReadAll(r)
+	if code, err := process.wait(); err != nil || code != 0 {
 		return ""
 	}
 	first, _, _ := strings.Cut(strings.TrimSpace(string(out)), "\n")
@@ -449,18 +463,30 @@ func lookupEnv(env []string, key string) (string, bool) {
 // the environment env and the working directory dir, its standard streams
 // files, and leads a new session (with ctty, with stdin as its controlling
 // terminal).
-func startProcess(name string, argv []string, env []string, dir string, files []*os.File, ctty bool) (*os.Process, error) {
+func startProcess(name string, argv []string, env []string, dir string, files []*os.File, ctty bool) (child, error) {
 	if slices.ContainsFunc(argv, hasNul) || slices.ContainsFunc(env, hasNul) {
-		return nil, errNulData
+		return child{}, errNulData
 	}
-	attr := &os.ProcAttr{
+	fds := make([]uintptr, len(files))
+	for i, f := range files {
+		fds[i] = f.Fd()
+	}
+	defer runtime.KeepAlive(files)
+	attr := &syscall.ProcAttr{
 		Dir:   dir,
 		Env:   env,
-		Files: files,
+		Files: fds,
 		Sys:   &syscall.SysProcAttr{Setsid: true, Setctty: ctty, Ctty: 0},
 	}
-	fail := func(errno syscall.Errno) (*os.Process, error) {
-		return nil, &os.PathError{Op: "fork/exec", Path: name, Err: errno}
+	start := func(program string, argv []string) (child, error) {
+		pid, err := startWithEmptySignalMask(program, argv, attr)
+		if err != nil {
+			return child{}, &os.PathError{Op: "fork/exec", Path: program, Err: err}
+		}
+		return child{pid: pid}, nil
+	}
+	fail := func(errno syscall.Errno) (child, error) {
+		return child{}, &os.PathError{Op: "fork/exec", Path: name, Err: errno}
 	}
 	// The child enters its working directory before execvp(3) searches.
 	if errno := chdirFailure(dir); errno != 0 {
@@ -490,21 +516,21 @@ func startProcess(name string, argv []string, env []string, dir string, files []
 	denied, last := false, unix.ENOENT
 	for _, candidate := range candidates {
 		resolved := candidate
-		if !strings.HasPrefix(resolved, "/") {
+		if dir != "" && !strings.HasPrefix(resolved, "/") {
 			resolved = dir + "/" + resolved
 		}
 		errno := execFailure(resolved)
 		if errno == 0 {
 			// What fails now failed in the child (or execve found the format
 			// unknown); the search ends there, as with a failure before execvp.
-			process, err := startWithEmptySignalMask(candidate, argv, attr)
+			process, err := start(candidate, argv)
 			if err == nil || !errors.As(err, &errno) || errno != unix.ENOEXEC {
 				return process, err
 			}
 		}
 		switch execvp.step(errno, resolved) {
 		case runThroughShell:
-			return startWithEmptySignalMask(execvp.shell, append([]string{"sh", candidate}, argv[1:]...), attr)
+			return start(execvp.shell, append([]string{"sh", candidate}, argv[1:]...))
 		case stopSearch:
 			return fail(errno)
 		case nextDenied:
@@ -569,17 +595,29 @@ func killTree(pid int) {
 	}
 }
 
-// exitCode is the command's exit code; a process killed by a signal has none
-// and reports 128 + the signal, as the shell does.
-func exitCode(state *os.ProcessState) int64 {
-	status, ok := state.Sys().(syscall.WaitStatus)
-	if !ok {
-		return int64(state.ExitCode())
+// child is a started command; its pid is also its process group's. Commands
+// start through syscall.ForkExec and are reaped with wait4(2), not through
+// os.StartProcess and os.Process: on Linux their first use probes pidfd
+// support, and Android before 12 kills a process that calls pidfd_open
+// (SIGSYS), which Go guards against for GOOS=android only, not in the
+// android/amd64 daemon (a linux build with the pienv_android tag).
+type child struct{ pid int }
+
+// wait waits for the command to exit: its exit code, or 128 + the signal
+// that killed it, as the shell reports it.
+func (c child) wait() (int64, error) {
+	var status syscall.WaitStatus
+	err := retry(func() (err error) {
+		_, err = syscall.Wait4(c.pid, &status, 0, nil)
+		return err
+	})
+	if err != nil {
+		return 0, os.NewSyscallError("wait", err)
 	}
 	if status.Signaled() {
-		return 128 + int64(status.Signal())
+		return 128 + int64(status.Signal()), nil
 	}
-	return int64(status.ExitStatus())
+	return int64(status.ExitStatus()), nil
 }
 
 // nulError is how Rust refuses a path or argument with a NUL byte before any
@@ -713,7 +751,7 @@ func removeTree(parent int, name string, root bool) error {
 // spawnProcess starts program with args (argv[0] is program as given), the
 // environment Rust's Command builds, its working directory, and files as its
 // standard streams.
-func spawnProcess(program string, args []string, cwd string, env object, inheritEnv bool, files []*os.File) (*os.Process, error) {
+func spawnProcess(program string, args []string, cwd string, env object, inheritEnv bool, files []*os.File) (child, error) {
 	return startProcess(program, append([]string{program}, args...), childEnvironment(env, inheritEnv), cwd, files, false)
 }
 

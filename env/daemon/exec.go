@@ -239,7 +239,7 @@ type commandMessage struct {
 	data   []byte
 	ended  bool
 	exited bool
-	state  *os.ProcessState
+	code   int64
 	err    error
 }
 
@@ -329,7 +329,7 @@ func runExec(id uint32, request execRequest, tmpdir string, out *output, ctl *co
 		_ = writeAll(command.stdin, []byte(stdinCommand))
 		command.stdin.Close()
 	}
-	pid := command.process.Pid
+	pid := command.process.pid
 	running.add(pid)
 	var deadline time.Time
 	if request.hasTimeout {
@@ -349,9 +349,9 @@ func runExec(id uint32, request execRequest, tmpdir string, out *output, ctl *co
 		go readPipe(stream, pipe, messages, done, stop, gate)
 	}
 	go func() {
-		state, err := command.process.Wait()
+		code, err := command.process.wait()
 		select {
-		case messages <- commandMessage{exited: true, state: state, err: err}:
+		case messages <- commandMessage{exited: true, code: code, err: err}:
 		case <-done:
 		}
 	}()
@@ -386,7 +386,8 @@ func runExec(id uint32, request execRequest, tmpdir string, out *output, ctl *co
 	var (
 		ended     [2]bool
 		exited    bool
-		state     *os.ProcessState
+		reported  bool
+		code      int64
 		waitErr   error
 		idleUntil time.Time
 		timedOut  bool
@@ -460,7 +461,7 @@ func runExec(id uint32, request execRequest, tmpdir string, out *output, ctl *co
 					waitErr = message.err
 					idleUntil = time.Now()
 				} else {
-					state = message.state
+					reported, code = true, message.code
 					idleUntil = time.Now().Add(exitStdioGrace)
 				}
 			}
@@ -505,10 +506,10 @@ func runExec(id uint32, request execRequest, tmpdir string, out *output, ctl *co
 	if waitErr != nil {
 		return nil, newFailure("spawn_error", waitErr.Error())
 	}
-	if state == nil {
+	if !reported {
 		return nil, newFailure("spawn_error", "process did not report its exit")
 	}
-	result := object{"exitCode": exitCode(state)}
+	result := object{"exitCode": code}
 	if spilled != nil && spilled.path != "" {
 		result["spillPath"] = spilled.path
 	}
@@ -518,7 +519,7 @@ func runExec(id uint32, request execRequest, tmpdir string, out *output, ctl *co
 // command is a started command: its process, its output pipes (stdout,
 // stderr), and its stdin when the command goes there.
 type command struct {
-	process *os.Process
+	process child
 	output  [2]*os.File
 	stdin   *os.File
 }
