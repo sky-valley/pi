@@ -230,6 +230,9 @@ func (s streamSetup) fail(err error) *AssistantMessageEventStream {
 	msg := NewErrorMessage(s.model.Api, s.model.Provider, s.model.ID, StopError, err.Error())
 	msg.Timestamp = s.startedAt
 	event := AssistantMessageEvent{Type: EventError, Reason: StopError, Error: msg}
+	// pi's catch pushes the event, which times the message, before its
+	// observer sees it: the observer's own time is not the request's.
+	s.stream.time(msg)
 	if s.observer != nil {
 		// pi's catch calls onEvent unguarded, so an observer that throws here
 		// leaves its stream unended for good. Go ends it regardless.

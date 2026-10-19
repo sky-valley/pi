@@ -838,6 +838,46 @@ func TestStreamSetupObservesSetupFailureOnce(t *testing.T) {
 	}
 }
 
+// slowObserver takes its time over each observation, and notes whether the
+// setup error it sees is timed already.
+type slowObserver struct {
+	delay       time.Duration
+	timedOnSeen bool
+}
+
+func (o *slowObserver) onEvent(event AssistantMessageEvent) error {
+	o.timedOnSeen = event.Error != nil && event.Error.DurationMs != nil
+	time.Sleep(o.delay)
+	return nil
+}
+
+func (o *slowObserver) onResult(*AssistantMessage) { time.Sleep(o.delay) }
+
+// TestStreamSetupTimesASetupFailureBeforeObserving: pi's lazyStream catch
+// pushes the setup error, which stamps its durationMs, and only then hands
+// it to the observer (lazy.ts at d2e7d8b7c: push, onEvent, end, onResult), so
+// the observer sees it timed and the time it takes is not in the duration.
+func TestStreamSetupTimesASetupFailureBeforeObserving(t *testing.T) {
+	observer := &slowObserver{delay: 40 * time.Millisecond}
+	stream := startStreamSetup(telemetryTestModel, observer).fail(errors.New("setup"))
+	got := stream.Result()
+	if got.Timestamp < stream.startedAtMs {
+		// The call's start and the stream's creation fell in different
+		// milliseconds: pi leaves such a setup error untimed too.
+		t.Skip("setup error stamped a millisecond before its stream; untimed in pi as here")
+	}
+	if !observer.timedOnSeen {
+		t.Error("the observer saw the setup error untimed; pi's push stamps it first")
+	}
+	if got.DurationMs == nil || *got.DurationMs >= 40 {
+		var ms any = "unset"
+		if got.DurationMs != nil {
+			ms = *got.DurationMs
+		}
+		t.Errorf("durationMs = %v, want the setup's own time, not the observer's %v", ms, observer.delay)
+	}
+}
+
 // TestCompatCloudflareStreamsThroughModels mirrors pi's compat stream() and
 // streamSimple() on a built-in cloudflare-* model with no resolved key: they
 // route through compatModels, the Models runtime, so the request is observed
