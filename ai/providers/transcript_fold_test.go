@@ -249,7 +249,7 @@ func TestConvertersFoldAnUnresolvedTranscript(t *testing.T) {
 	}
 
 	responses := foldModel("gpt-4.1", ai.APIOpenAIResponses, "openai", "")
-	input, err := responsesInput(responses, ai.NormalizeContext(transcriptChangesContext()))
+	input, err := responsesInput(responses, ai.NormalizeContext(transcriptChangesContext()), "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -271,7 +271,7 @@ func TestResponsesLeadingSystemMessageDoesNotAdvanceFallbackIDs(t *testing.T) {
 		},
 		ai.NewUserText("again", 3),
 	}}
-	input, err := responsesInput(model, ai.NormalizeContext(req))
+	input, err := responsesInput(model, ai.NormalizeContext(req), "")
 	if err != nil {
 		t.Fatal(err)
 	}

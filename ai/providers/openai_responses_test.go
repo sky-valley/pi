@@ -185,7 +185,7 @@ func responsesToolNames(body map[string]any) []string {
 // The context is normalized first, as every stream entry point does.
 func mustResponsesInput(t *testing.T, model *ai.Model, req ai.Context) []any {
 	t.Helper()
-	in, err := responsesInput(model, ai.NormalizeContext(req))
+	in, err := responsesInput(model, ai.NormalizeContext(req), "")
 	if err != nil {
 		t.Fatalf("responsesInput: %v", err)
 	}
@@ -1659,7 +1659,7 @@ func TestResponsesInvalidThinkingSignatureFailsStream(t *testing.T) {
 		},
 		ai.NewUserText("again", 2),
 	}}
-	if _, err := responsesInput(model, ai.NormalizeContext(req)); err == nil {
+	if _, err := responsesInput(model, ai.NormalizeContext(req), ""); err == nil {
 		t.Fatalf("expected responsesInput to error on invalid thinkingSignature")
 	}
 	final := runResponsesSSE(t, model, req, "")

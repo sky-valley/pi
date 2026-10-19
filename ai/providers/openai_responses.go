@@ -26,6 +26,11 @@ const openaiResponsesMinOutputTokens = 16
 // subscription's usage (pi CHATGPT_USAGE_URL).
 const chatGPTUsageURL = "https://chatgpt.com/settings/usage"
 
+// configurationUpdateRequestEffort is the fixed reasoning.effort sent while
+// configuration_update items carry the thinking level (pi
+// CONFIGURATION_UPDATE_REQUEST_EFFORT).
+const configurationUpdateRequestEffort = "medium"
+
 // isChatGPTSignIn reports whether a request to OpenAI itself authenticates with
 // a Sign in with ChatGPT access token (pi isChatGPTSignIn, upstream 02eed88fd):
 // OpenAI API keys start with "sk-", so any other credential sent there is such
@@ -95,6 +100,11 @@ type responsesCompat struct {
 	// `max_output_tokens` parameter. Some Codex-protocol gateways reject it.
 	// Default: true.
 	SupportsMaxOutputTokens bool
+	// SupportsMidConvoEffort reports whether thinking level changes are sent
+	// as configuration_update input items instead of a changing
+	// reasoning.effort, so a change keeps the prompt cache (upstream
+	// 60ac3bcc3). Default: false.
+	SupportsMidConvoEffort bool
 }
 
 // detectResponsesSessionAffinityFormat is pi's detectSessionAffinityFormat:
@@ -124,7 +134,20 @@ func getResponsesCompat(model *ai.Model) responsesCompat {
 	applyCompat(o, "supportsToolSearch", &c.SupportsToolSearch)
 	applyCompat(o, "supportsExplicitPromptCacheMode", &c.SupportsExplicitPromptCacheMode)
 	applyCompat(o, "supportsMaxOutputTokens", &c.SupportsMaxOutputTokens)
+	applyCompat(o, "supportsMidConvoEffort", &c.SupportsMidConvoEffort)
 	return c
+}
+
+// configurationUpdateEffort is the effort to send in configuration_update
+// items, or "" to send it as reasoning.effort (pi
+// getConfigurationUpdateEffort): the reasoning effort through the model's
+// thinkingLevelMap, when compat.supportsMidConvoEffort is set and the request
+// is not Sign in with ChatGPT, which rejects the items.
+func configurationUpdateEffort(model *ai.Model, opts *OpenAIResponsesOptions, compat responsesCompat) string {
+	if !compat.SupportsMidConvoEffort || opts.ReasoningEffort == "" || isChatGPTSignIn(model, opts.APIKey) {
+		return ""
+	}
+	return effortValue(model, opts.ReasoningEffort)
 }
 
 // textSignatureV1 is the encoded provider metadata carried on assistant text
@@ -293,9 +316,13 @@ func StreamOpenAIResponses(ctx context.Context, model *ai.Model, req ai.Transcri
 	normalized := ai.ResolveTranscript(req, getResponsesCompat(model).SupportsMidConvoSystemMessages)
 
 	go func() {
+		// The reply records the level its configuration_update item set, so a
+		// later request rebuilds the item before it unchanged (upstream
+		// 60ac3bcc3).
 		output := &ai.AssistantMessage{
 			Content: ai.ContentList{}, Api: model.Api, Provider: model.Provider, Model: model.ID,
-			StopReason: ai.StopPending, Timestamp: nowMillis(),
+			ProviderThinkingLevel: configurationUpdateEffort(model, opts, getResponsesCompat(model)),
+			StopReason:            ai.StopPending, Timestamp: nowMillis(),
 		}
 		fail := func(err error) {
 			if ctx != nil && ctx.Err() != nil {
@@ -1030,7 +1057,8 @@ func buildResponsesParams(model *ai.Model, req ai.TranscriptContext, opts *OpenA
 	// system messages (responsesInput emits the later ones there), and the
 	// complete current tool set otherwise.
 	transcriptTools := ai.ResolveTranscriptTools(req.Messages, compat.SupportsAdditionalTools || compat.SupportsToolSearch)
-	input, err := responsesInput(model, req)
+	updateEffort := configurationUpdateEffort(model, opts, compat)
+	input, err := responsesInput(model, req, updateEffort)
 	if err != nil {
 		return nil, err
 	}
@@ -1106,6 +1134,11 @@ func buildResponsesParams(model *ai.Model, req ai.TranscriptContext, opts *OpenA
 			effort := reasoningEffort
 			if opts.ReasoningEffort != "" {
 				effort = effortValue(model, opts.ReasoningEffort)
+			}
+			// The level rides in configuration_update items instead, so the
+			// request's own effort never changes.
+			if updateEffort != "" {
+				effort = configurationUpdateRequestEffort
 			}
 			summary := opts.ReasoningSummary
 			if summary == "" {
@@ -1262,8 +1295,19 @@ func convertResponsesTools(tools []ai.Tool, compat responsesCompat, toolSearchRe
 // (port of convertResponsesMessages). It errors when an assistant thinking
 // block carries an unparseable thinkingSignature (pi's JSON.parse throws and
 // fails the stream).
-func responsesInput(model *ai.Model, req ai.TranscriptContext) ([]any, error) {
+//
+// A non-empty updateEffort is the effort of the reply being generated, sent as
+// configuration_update items rather than a changing reasoning.effort, which
+// would invalidate the prompt cache (pi configurationUpdateEffort, upstream
+// 60ac3bcc3). Each item sets the effort from that point on: one goes before
+// every earlier reply of this model with the level recorded on it
+// (ProviderThinkingLevel), and one with updateEffort goes at the end, so
+// earlier input never changes.
+func responsesInput(model *ai.Model, req ai.TranscriptContext, updateEffort string) ([]any, error) {
 	var items []any
+	configurationUpdate := func(effort string) map[string]any {
+		return map[string]any{"type": "configuration_update", "reasoning": map[string]any{"effort": effort}}
+	}
 
 	compat := getResponsesCompat(model)
 	grammarProps, err := grammarToolInputProperties(ai.GetDeclaredTools(req.Messages), compat.SupportsOpenAIGrammarTools)
@@ -1418,6 +1462,9 @@ func responsesInput(model *ai.Model, req ai.TranscriptContext) ([]any, error) {
 			if len(output) == 0 {
 				continue
 			}
+			if updateEffort != "" && isSameModel && am.ProviderThinkingLevel != "" {
+				items = append(items, configurationUpdate(am.ProviderThinkingLevel))
+			}
 			items = append(items, output...)
 		} else if tr, ok := asToolResultMsg(m); ok {
 			// pi takes the raw first split segment (shared :229); any
@@ -1469,6 +1516,9 @@ func responsesInput(model *ai.Model, req ai.TranscriptContext) ([]any, error) {
 		if !isLeadingSystemMessage {
 			msgIndex++
 		}
+	}
+	if updateEffort != "" {
+		items = append(items, configurationUpdate(updateEffort))
 	}
 	return items, nil
 }

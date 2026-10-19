@@ -1,0 +1,2208 @@
+{
+	"piAi": "1.3.0",
+	"runs": [
+		{
+			"name": "level change/first",
+			"model": {
+				"id": "gpt-6-luna",
+				"name": "GPT-6 Luna",
+				"api": "openai-responses",
+				"provider": "openai",
+				"baseUrl": "https://api.openai.com/v1",
+				"reasoning": true,
+				"thinkingLevelMap": {
+					"off": "none",
+					"minimal": null,
+					"low": "low",
+					"medium": "medium",
+					"high": "high",
+					"xhigh": "xhigh",
+					"max": "max"
+				},
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 272000,
+				"maxTokens": 128000,
+				"compat": {
+					"supportsMidConvoEffort": true
+				}
+			},
+			"messages": [
+				{
+					"role": "user",
+					"content": "one",
+					"timestamp": 0
+				}
+			],
+			"apiKey": "sk-test",
+			"reasoningEffort": "high",
+			"body": "data: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_1\"}}\n\ndata: {\"type\":\"response.output_item.added\",\"output_index\":0,\"item\":{\"type\":\"message\",\"id\":\"msg_resp_1\",\"role\":\"assistant\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"text\":\"answer\",\"annotations\":[]}]}}\n\ndata: {\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"type\":\"message\",\"id\":\"msg_resp_1\",\"role\":\"assistant\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"text\":\"answer\",\"annotations\":[]}]}}\n\ndata: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_1\",\"status\":\"completed\"}}\n\n",
+			"payload": {
+				"model": "gpt-6-luna",
+				"input": [
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "one"
+							}
+						]
+					},
+					{
+						"type": "configuration_update",
+						"reasoning": {
+							"effort": "high"
+						}
+					}
+				],
+				"stream": true,
+				"store": false,
+				"reasoning": {
+					"effort": "medium",
+					"summary": "auto"
+				},
+				"include": [
+					"reasoning.encrypted_content"
+				]
+			},
+			"message": {
+				"role": "assistant",
+				"content": [
+					{
+						"type": "text",
+						"text": "answer",
+						"textSignature": "{\"v\":1,\"id\":\"msg_resp_1\"}"
+					}
+				],
+				"api": "openai-responses",
+				"provider": "openai",
+				"model": "gpt-6-luna",
+				"providerThinkingLevel": "high",
+				"usage": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"totalTokens": 0,
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0
+					}
+				},
+				"stopReason": "stop",
+				"timestamp": 0,
+				"responseId": "resp_1",
+				"rawStopReason": "completed"
+			}
+		},
+		{
+			"name": "level change/second",
+			"model": {
+				"id": "gpt-6-luna",
+				"name": "GPT-6 Luna",
+				"api": "openai-responses",
+				"provider": "openai",
+				"baseUrl": "https://api.openai.com/v1",
+				"reasoning": true,
+				"thinkingLevelMap": {
+					"off": "none",
+					"minimal": null,
+					"low": "low",
+					"medium": "medium",
+					"high": "high",
+					"xhigh": "xhigh",
+					"max": "max"
+				},
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 272000,
+				"maxTokens": 128000,
+				"compat": {
+					"supportsMidConvoEffort": true
+				}
+			},
+			"messages": [
+				{
+					"role": "user",
+					"content": "one",
+					"timestamp": 0
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "text",
+							"text": "answer",
+							"textSignature": "{\"v\":1,\"id\":\"msg_resp_1\"}"
+						}
+					],
+					"api": "openai-responses",
+					"provider": "openai",
+					"model": "gpt-6-luna",
+					"providerThinkingLevel": "high",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "stop",
+					"timestamp": 0,
+					"responseId": "resp_1",
+					"rawStopReason": "completed"
+				},
+				{
+					"role": "user",
+					"content": "two",
+					"timestamp": 0
+				}
+			],
+			"apiKey": "sk-test",
+			"reasoningEffort": "high",
+			"body": "data: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_1\"}}\n\ndata: {\"type\":\"response.output_item.added\",\"output_index\":0,\"item\":{\"type\":\"message\",\"id\":\"msg_resp_1\",\"role\":\"assistant\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"text\":\"answer\",\"annotations\":[]}]}}\n\ndata: {\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"type\":\"message\",\"id\":\"msg_resp_1\",\"role\":\"assistant\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"text\":\"answer\",\"annotations\":[]}]}}\n\ndata: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_1\",\"status\":\"completed\"}}\n\n",
+			"payload": {
+				"model": "gpt-6-luna",
+				"input": [
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "one"
+							}
+						]
+					},
+					{
+						"type": "configuration_update",
+						"reasoning": {
+							"effort": "high"
+						}
+					},
+					{
+						"type": "message",
+						"role": "assistant",
+						"content": [
+							{
+								"type": "output_text",
+								"text": "answer",
+								"annotations": []
+							}
+						],
+						"status": "completed",
+						"id": "msg_resp_1"
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "two"
+							}
+						]
+					},
+					{
+						"type": "configuration_update",
+						"reasoning": {
+							"effort": "high"
+						}
+					}
+				],
+				"stream": true,
+				"store": false,
+				"reasoning": {
+					"effort": "medium",
+					"summary": "auto"
+				},
+				"include": [
+					"reasoning.encrypted_content"
+				]
+			},
+			"message": {
+				"role": "assistant",
+				"content": [
+					{
+						"type": "text",
+						"text": "answer",
+						"textSignature": "{\"v\":1,\"id\":\"msg_resp_1\"}"
+					}
+				],
+				"api": "openai-responses",
+				"provider": "openai",
+				"model": "gpt-6-luna",
+				"providerThinkingLevel": "high",
+				"usage": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"totalTokens": 0,
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0
+					}
+				},
+				"stopReason": "stop",
+				"timestamp": 0,
+				"responseId": "resp_1",
+				"rawStopReason": "completed"
+			}
+		},
+		{
+			"name": "level change/third",
+			"model": {
+				"id": "gpt-6-luna",
+				"name": "GPT-6 Luna",
+				"api": "openai-responses",
+				"provider": "openai",
+				"baseUrl": "https://api.openai.com/v1",
+				"reasoning": true,
+				"thinkingLevelMap": {
+					"off": "none",
+					"minimal": null,
+					"low": "low",
+					"medium": "medium",
+					"high": "high",
+					"xhigh": "xhigh",
+					"max": "max"
+				},
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 272000,
+				"maxTokens": 128000,
+				"compat": {
+					"supportsMidConvoEffort": true
+				}
+			},
+			"messages": [
+				{
+					"role": "user",
+					"content": "one",
+					"timestamp": 0
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "text",
+							"text": "answer",
+							"textSignature": "{\"v\":1,\"id\":\"msg_resp_1\"}"
+						}
+					],
+					"api": "openai-responses",
+					"provider": "openai",
+					"model": "gpt-6-luna",
+					"providerThinkingLevel": "high",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "stop",
+					"timestamp": 0,
+					"responseId": "resp_1",
+					"rawStopReason": "completed"
+				},
+				{
+					"role": "user",
+					"content": "two",
+					"timestamp": 0
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "text",
+							"text": "answer",
+							"textSignature": "{\"v\":1,\"id\":\"msg_resp_1\"}"
+						}
+					],
+					"api": "openai-responses",
+					"provider": "openai",
+					"model": "gpt-6-luna",
+					"providerThinkingLevel": "high",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "stop",
+					"timestamp": 0,
+					"responseId": "resp_1",
+					"rawStopReason": "completed"
+				},
+				{
+					"role": "user",
+					"content": "three",
+					"timestamp": 0
+				}
+			],
+			"apiKey": "sk-test",
+			"reasoningEffort": "low",
+			"body": "data: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_1\"}}\n\ndata: {\"type\":\"response.output_item.added\",\"output_index\":0,\"item\":{\"type\":\"message\",\"id\":\"msg_resp_1\",\"role\":\"assistant\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"text\":\"answer\",\"annotations\":[]}]}}\n\ndata: {\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"type\":\"message\",\"id\":\"msg_resp_1\",\"role\":\"assistant\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"text\":\"answer\",\"annotations\":[]}]}}\n\ndata: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_1\",\"status\":\"completed\"}}\n\n",
+			"payload": {
+				"model": "gpt-6-luna",
+				"input": [
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "one"
+							}
+						]
+					},
+					{
+						"type": "configuration_update",
+						"reasoning": {
+							"effort": "high"
+						}
+					},
+					{
+						"type": "message",
+						"role": "assistant",
+						"content": [
+							{
+								"type": "output_text",
+								"text": "answer",
+								"annotations": []
+							}
+						],
+						"status": "completed",
+						"id": "msg_resp_1"
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "two"
+							}
+						]
+					},
+					{
+						"type": "configuration_update",
+						"reasoning": {
+							"effort": "high"
+						}
+					},
+					{
+						"type": "message",
+						"role": "assistant",
+						"content": [
+							{
+								"type": "output_text",
+								"text": "answer",
+								"annotations": []
+							}
+						],
+						"status": "completed",
+						"id": "msg_resp_1"
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "three"
+							}
+						]
+					},
+					{
+						"type": "configuration_update",
+						"reasoning": {
+							"effort": "low"
+						}
+					}
+				],
+				"stream": true,
+				"store": false,
+				"reasoning": {
+					"effort": "medium",
+					"summary": "auto"
+				},
+				"include": [
+					"reasoning.encrypted_content"
+				]
+			},
+			"message": {
+				"role": "assistant",
+				"content": [
+					{
+						"type": "text",
+						"text": "answer",
+						"textSignature": "{\"v\":1,\"id\":\"msg_resp_1\"}"
+					}
+				],
+				"api": "openai-responses",
+				"provider": "openai",
+				"model": "gpt-6-luna",
+				"providerThinkingLevel": "low",
+				"usage": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"totalTokens": 0,
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0
+					}
+				},
+				"stopReason": "stop",
+				"timestamp": 0,
+				"responseId": "resp_1",
+				"rawStopReason": "completed"
+			}
+		},
+		{
+			"name": "tool loop/call",
+			"model": {
+				"id": "gpt-6-luna",
+				"name": "GPT-6 Luna",
+				"api": "openai-responses",
+				"provider": "openai",
+				"baseUrl": "https://api.openai.com/v1",
+				"reasoning": true,
+				"thinkingLevelMap": {
+					"off": "none",
+					"minimal": null,
+					"low": "low",
+					"medium": "medium",
+					"high": "high",
+					"xhigh": "xhigh",
+					"max": "max"
+				},
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 272000,
+				"maxTokens": 128000,
+				"compat": {
+					"supportsMidConvoEffort": true
+				}
+			},
+			"messages": [
+				{
+					"role": "user",
+					"content": "one",
+					"timestamp": 0
+				}
+			],
+			"apiKey": "sk-test",
+			"reasoningEffort": "high",
+			"body": "data: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_1\"}}\n\ndata: {\"type\":\"response.output_item.added\",\"output_index\":0,\"item\":{\"type\":\"function_call\",\"id\":\"fc_1\",\"call_id\":\"call_1\",\"name\":\"lookup\",\"arguments\":\"{}\",\"status\":\"completed\"}}\n\ndata: {\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"type\":\"function_call\",\"id\":\"fc_1\",\"call_id\":\"call_1\",\"name\":\"lookup\",\"arguments\":\"{}\",\"status\":\"completed\"}}\n\ndata: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_1\",\"status\":\"completed\"}}\n\n",
+			"payload": {
+				"model": "gpt-6-luna",
+				"input": [
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "one"
+							}
+						]
+					},
+					{
+						"type": "configuration_update",
+						"reasoning": {
+							"effort": "high"
+						}
+					}
+				],
+				"stream": true,
+				"store": false,
+				"reasoning": {
+					"effort": "medium",
+					"summary": "auto"
+				},
+				"include": [
+					"reasoning.encrypted_content"
+				]
+			},
+			"message": {
+				"role": "assistant",
+				"content": [
+					{
+						"type": "toolCall",
+						"id": "call_1|fc_1",
+						"name": "lookup",
+						"arguments": {}
+					}
+				],
+				"api": "openai-responses",
+				"provider": "openai",
+				"model": "gpt-6-luna",
+				"providerThinkingLevel": "high",
+				"usage": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"totalTokens": 0,
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0
+					}
+				},
+				"stopReason": "toolUse",
+				"timestamp": 0,
+				"responseId": "resp_1",
+				"rawStopReason": "completed"
+			}
+		},
+		{
+			"name": "tool loop/after the result",
+			"model": {
+				"id": "gpt-6-luna",
+				"name": "GPT-6 Luna",
+				"api": "openai-responses",
+				"provider": "openai",
+				"baseUrl": "https://api.openai.com/v1",
+				"reasoning": true,
+				"thinkingLevelMap": {
+					"off": "none",
+					"minimal": null,
+					"low": "low",
+					"medium": "medium",
+					"high": "high",
+					"xhigh": "xhigh",
+					"max": "max"
+				},
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 272000,
+				"maxTokens": 128000,
+				"compat": {
+					"supportsMidConvoEffort": true
+				}
+			},
+			"messages": [
+				{
+					"role": "user",
+					"content": "one",
+					"timestamp": 0
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "toolCall",
+							"id": "call_1|fc_1",
+							"name": "lookup",
+							"arguments": {}
+						}
+					],
+					"api": "openai-responses",
+					"provider": "openai",
+					"model": "gpt-6-luna",
+					"providerThinkingLevel": "high",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "toolUse",
+					"timestamp": 0,
+					"responseId": "resp_1",
+					"rawStopReason": "completed"
+				},
+				{
+					"role": "toolResult",
+					"toolCallId": "call_1|fc_1",
+					"toolName": "lookup",
+					"content": [
+						{
+							"type": "text",
+							"text": "result"
+						}
+					],
+					"isError": false,
+					"timestamp": 0
+				}
+			],
+			"apiKey": "sk-test",
+			"reasoningEffort": "low",
+			"body": "data: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_1\"}}\n\ndata: {\"type\":\"response.output_item.added\",\"output_index\":0,\"item\":{\"type\":\"message\",\"id\":\"msg_resp_1\",\"role\":\"assistant\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"text\":\"answer\",\"annotations\":[]}]}}\n\ndata: {\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"type\":\"message\",\"id\":\"msg_resp_1\",\"role\":\"assistant\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"text\":\"answer\",\"annotations\":[]}]}}\n\ndata: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_1\",\"status\":\"completed\"}}\n\n",
+			"payload": {
+				"model": "gpt-6-luna",
+				"input": [
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "one"
+							}
+						]
+					},
+					{
+						"type": "configuration_update",
+						"reasoning": {
+							"effort": "high"
+						}
+					},
+					{
+						"type": "function_call",
+						"id": "fc_1",
+						"call_id": "call_1",
+						"name": "lookup",
+						"arguments": "{}"
+					},
+					{
+						"type": "function_call_output",
+						"call_id": "call_1",
+						"output": "result"
+					},
+					{
+						"type": "configuration_update",
+						"reasoning": {
+							"effort": "low"
+						}
+					}
+				],
+				"stream": true,
+				"store": false,
+				"reasoning": {
+					"effort": "medium",
+					"summary": "auto"
+				},
+				"include": [
+					"reasoning.encrypted_content"
+				]
+			},
+			"message": {
+				"role": "assistant",
+				"content": [
+					{
+						"type": "text",
+						"text": "answer",
+						"textSignature": "{\"v\":1,\"id\":\"msg_resp_1\"}"
+					}
+				],
+				"api": "openai-responses",
+				"provider": "openai",
+				"model": "gpt-6-luna",
+				"providerThinkingLevel": "low",
+				"usage": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"totalTokens": 0,
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0
+					}
+				},
+				"stopReason": "stop",
+				"timestamp": 0,
+				"responseId": "resp_1",
+				"rawStopReason": "completed"
+			}
+		},
+		{
+			"name": "origins/unstamped",
+			"model": {
+				"id": "gpt-6-luna",
+				"name": "GPT-6 Luna",
+				"api": "openai-responses",
+				"provider": "openai",
+				"baseUrl": "https://api.openai.com/v1",
+				"reasoning": true,
+				"thinkingLevelMap": {
+					"off": "none",
+					"minimal": null,
+					"low": "low",
+					"medium": "medium",
+					"high": "high",
+					"xhigh": "xhigh",
+					"max": "max"
+				},
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 272000,
+				"maxTokens": 128000,
+				"compat": {}
+			},
+			"messages": [
+				{
+					"role": "user",
+					"content": "one",
+					"timestamp": 0
+				}
+			],
+			"apiKey": "sk-test",
+			"reasoningEffort": "high",
+			"body": "data: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_1\"}}\n\ndata: {\"type\":\"response.output_item.added\",\"output_index\":0,\"item\":{\"type\":\"message\",\"id\":\"msg_resp_1\",\"role\":\"assistant\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"text\":\"answer\",\"annotations\":[]}]}}\n\ndata: {\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"type\":\"message\",\"id\":\"msg_resp_1\",\"role\":\"assistant\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"text\":\"answer\",\"annotations\":[]}]}}\n\ndata: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_1\",\"status\":\"completed\"}}\n\n",
+			"payload": {
+				"model": "gpt-6-luna",
+				"input": [
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "one"
+							}
+						]
+					}
+				],
+				"stream": true,
+				"store": false,
+				"reasoning": {
+					"effort": "high",
+					"summary": "auto"
+				},
+				"include": [
+					"reasoning.encrypted_content"
+				]
+			},
+			"message": {
+				"role": "assistant",
+				"content": [
+					{
+						"type": "text",
+						"text": "answer",
+						"textSignature": "{\"v\":1,\"id\":\"msg_resp_1\"}"
+					}
+				],
+				"api": "openai-responses",
+				"provider": "openai",
+				"model": "gpt-6-luna",
+				"usage": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"totalTokens": 0,
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0
+					}
+				},
+				"stopReason": "stop",
+				"timestamp": 0,
+				"responseId": "resp_1",
+				"rawStopReason": "completed"
+			}
+		},
+		{
+			"name": "origins/only this model's recorded replies",
+			"model": {
+				"id": "gpt-6-luna",
+				"name": "GPT-6 Luna",
+				"api": "openai-responses",
+				"provider": "openai",
+				"baseUrl": "https://api.openai.com/v1",
+				"reasoning": true,
+				"thinkingLevelMap": {
+					"off": "none",
+					"minimal": null,
+					"low": "low",
+					"medium": "medium",
+					"high": "high",
+					"xhigh": "xhigh",
+					"max": "max"
+				},
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 272000,
+				"maxTokens": 128000,
+				"compat": {
+					"supportsMidConvoEffort": true
+				}
+			},
+			"messages": [
+				{
+					"role": "user",
+					"content": "one",
+					"timestamp": 0
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "text",
+							"text": "answer",
+							"textSignature": "{\"v\":1,\"id\":\"msg_resp_1\"}"
+						}
+					],
+					"api": "openai-responses",
+					"provider": "openai",
+					"model": "gpt-6-luna",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "stop",
+					"timestamp": 0,
+					"responseId": "resp_1",
+					"rawStopReason": "completed"
+				},
+				{
+					"role": "user",
+					"content": "two",
+					"timestamp": 0
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "text",
+							"text": "answer",
+							"textSignature": "{\"v\":1,\"id\":\"msg_resp_1\"}"
+						}
+					],
+					"api": "openai-responses",
+					"provider": "opencode",
+					"model": "gpt-6-luna",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "stop",
+					"timestamp": 0,
+					"responseId": "resp_1",
+					"rawStopReason": "completed",
+					"providerThinkingLevel": "high"
+				},
+				{
+					"role": "user",
+					"content": "three",
+					"timestamp": 0
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "text",
+							"text": "answer",
+							"textSignature": "{\"v\":1,\"id\":\"msg_resp_1\"}"
+						}
+					],
+					"api": "openai-responses",
+					"provider": "openai",
+					"model": "gpt-6-sol",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "stop",
+					"timestamp": 0,
+					"responseId": "resp_1",
+					"rawStopReason": "completed",
+					"providerThinkingLevel": "high"
+				},
+				{
+					"role": "user",
+					"content": "four",
+					"timestamp": 0
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "text",
+							"text": "answer",
+							"textSignature": "{\"v\":1,\"id\":\"msg_resp_1\"}"
+						}
+					],
+					"api": "openai-responses",
+					"provider": "openai",
+					"model": "gpt-6-luna",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "stop",
+					"timestamp": 0,
+					"responseId": "resp_1",
+					"rawStopReason": "completed",
+					"providerThinkingLevel": "high"
+				},
+				{
+					"role": "user",
+					"content": "five",
+					"timestamp": 0
+				}
+			],
+			"apiKey": "sk-test",
+			"reasoningEffort": "low",
+			"body": "data: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_1\"}}\n\ndata: {\"type\":\"response.output_item.added\",\"output_index\":0,\"item\":{\"type\":\"message\",\"id\":\"msg_resp_1\",\"role\":\"assistant\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"text\":\"answer\",\"annotations\":[]}]}}\n\ndata: {\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"type\":\"message\",\"id\":\"msg_resp_1\",\"role\":\"assistant\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"text\":\"answer\",\"annotations\":[]}]}}\n\ndata: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_1\",\"status\":\"completed\"}}\n\n",
+			"payload": {
+				"model": "gpt-6-luna",
+				"input": [
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "one"
+							}
+						]
+					},
+					{
+						"type": "message",
+						"role": "assistant",
+						"content": [
+							{
+								"type": "output_text",
+								"text": "answer",
+								"annotations": []
+							}
+						],
+						"status": "completed",
+						"id": "msg_resp_1"
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "two"
+							}
+						]
+					},
+					{
+						"type": "message",
+						"role": "assistant",
+						"content": [
+							{
+								"type": "output_text",
+								"text": "answer",
+								"annotations": []
+							}
+						],
+						"status": "completed",
+						"id": "msg_pi_3"
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "three"
+							}
+						]
+					},
+					{
+						"type": "message",
+						"role": "assistant",
+						"content": [
+							{
+								"type": "output_text",
+								"text": "answer",
+								"annotations": []
+							}
+						],
+						"status": "completed",
+						"id": "msg_pi_5"
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "four"
+							}
+						]
+					},
+					{
+						"type": "configuration_update",
+						"reasoning": {
+							"effort": "high"
+						}
+					},
+					{
+						"type": "message",
+						"role": "assistant",
+						"content": [
+							{
+								"type": "output_text",
+								"text": "answer",
+								"annotations": []
+							}
+						],
+						"status": "completed",
+						"id": "msg_resp_1"
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "five"
+							}
+						]
+					},
+					{
+						"type": "configuration_update",
+						"reasoning": {
+							"effort": "low"
+						}
+					}
+				],
+				"stream": true,
+				"store": false,
+				"reasoning": {
+					"effort": "medium",
+					"summary": "auto"
+				},
+				"include": [
+					"reasoning.encrypted_content"
+				]
+			},
+			"message": {
+				"role": "assistant",
+				"content": [
+					{
+						"type": "text",
+						"text": "answer",
+						"textSignature": "{\"v\":1,\"id\":\"msg_resp_1\"}"
+					}
+				],
+				"api": "openai-responses",
+				"provider": "openai",
+				"model": "gpt-6-luna",
+				"providerThinkingLevel": "low",
+				"usage": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"totalTokens": 0,
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0
+					}
+				},
+				"stopReason": "stop",
+				"timestamp": 0,
+				"responseId": "resp_1",
+				"rawStopReason": "completed"
+			}
+		},
+		{
+			"name": "reasoning.effort/Sign in with ChatGPT/first",
+			"model": {
+				"id": "gpt-6-luna",
+				"name": "GPT-6 Luna",
+				"api": "openai-responses",
+				"provider": "openai",
+				"baseUrl": "https://api.openai.com/v1",
+				"reasoning": true,
+				"thinkingLevelMap": {
+					"off": "none",
+					"minimal": null,
+					"low": "low",
+					"medium": "medium",
+					"high": "high",
+					"xhigh": "xhigh",
+					"max": "max"
+				},
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 272000,
+				"maxTokens": 128000,
+				"compat": {
+					"supportsMidConvoEffort": true
+				}
+			},
+			"messages": [
+				{
+					"role": "user",
+					"content": "one",
+					"timestamp": 0
+				}
+			],
+			"apiKey": "chatgpt-access-token",
+			"reasoningEffort": "high",
+			"body": "data: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_1\"}}\n\ndata: {\"type\":\"response.output_item.added\",\"output_index\":0,\"item\":{\"type\":\"message\",\"id\":\"msg_resp_1\",\"role\":\"assistant\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"text\":\"answer\",\"annotations\":[]}]}}\n\ndata: {\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"type\":\"message\",\"id\":\"msg_resp_1\",\"role\":\"assistant\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"text\":\"answer\",\"annotations\":[]}]}}\n\ndata: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_1\",\"status\":\"completed\"}}\n\n",
+			"payload": {
+				"model": "gpt-6-luna",
+				"input": [
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "one"
+							}
+						]
+					}
+				],
+				"stream": true,
+				"store": false,
+				"reasoning": {
+					"effort": "high",
+					"summary": "auto"
+				},
+				"include": [
+					"reasoning.encrypted_content"
+				]
+			},
+			"message": {
+				"role": "assistant",
+				"content": [
+					{
+						"type": "text",
+						"text": "answer",
+						"textSignature": "{\"v\":1,\"id\":\"msg_resp_1\"}"
+					}
+				],
+				"api": "openai-responses",
+				"provider": "openai",
+				"model": "gpt-6-luna",
+				"usage": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"totalTokens": 0,
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0
+					}
+				},
+				"stopReason": "stop",
+				"timestamp": 0,
+				"responseId": "resp_1",
+				"rawStopReason": "completed"
+			}
+		},
+		{
+			"name": "reasoning.effort/Sign in with ChatGPT/second",
+			"model": {
+				"id": "gpt-6-luna",
+				"name": "GPT-6 Luna",
+				"api": "openai-responses",
+				"provider": "openai",
+				"baseUrl": "https://api.openai.com/v1",
+				"reasoning": true,
+				"thinkingLevelMap": {
+					"off": "none",
+					"minimal": null,
+					"low": "low",
+					"medium": "medium",
+					"high": "high",
+					"xhigh": "xhigh",
+					"max": "max"
+				},
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 272000,
+				"maxTokens": 128000,
+				"compat": {
+					"supportsMidConvoEffort": true
+				}
+			},
+			"messages": [
+				{
+					"role": "user",
+					"content": "one",
+					"timestamp": 0
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "text",
+							"text": "answer",
+							"textSignature": "{\"v\":1,\"id\":\"msg_resp_1\"}"
+						}
+					],
+					"api": "openai-responses",
+					"provider": "openai",
+					"model": "gpt-6-luna",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "stop",
+					"timestamp": 0,
+					"responseId": "resp_1",
+					"rawStopReason": "completed"
+				},
+				{
+					"role": "user",
+					"content": "two",
+					"timestamp": 0
+				}
+			],
+			"apiKey": "chatgpt-access-token",
+			"reasoningEffort": "low",
+			"body": "data: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_1\"}}\n\ndata: {\"type\":\"response.output_item.added\",\"output_index\":0,\"item\":{\"type\":\"message\",\"id\":\"msg_resp_1\",\"role\":\"assistant\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"text\":\"answer\",\"annotations\":[]}]}}\n\ndata: {\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"type\":\"message\",\"id\":\"msg_resp_1\",\"role\":\"assistant\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"text\":\"answer\",\"annotations\":[]}]}}\n\ndata: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_1\",\"status\":\"completed\"}}\n\n",
+			"payload": {
+				"model": "gpt-6-luna",
+				"input": [
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "one"
+							}
+						]
+					},
+					{
+						"type": "message",
+						"role": "assistant",
+						"content": [
+							{
+								"type": "output_text",
+								"text": "answer",
+								"annotations": []
+							}
+						],
+						"status": "completed",
+						"id": "msg_resp_1"
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "two"
+							}
+						]
+					}
+				],
+				"stream": true,
+				"store": false,
+				"reasoning": {
+					"effort": "low",
+					"summary": "auto"
+				},
+				"include": [
+					"reasoning.encrypted_content"
+				]
+			},
+			"message": {
+				"role": "assistant",
+				"content": [
+					{
+						"type": "text",
+						"text": "answer",
+						"textSignature": "{\"v\":1,\"id\":\"msg_resp_1\"}"
+					}
+				],
+				"api": "openai-responses",
+				"provider": "openai",
+				"model": "gpt-6-luna",
+				"usage": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"totalTokens": 0,
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0
+					}
+				},
+				"stopReason": "stop",
+				"timestamp": 0,
+				"responseId": "resp_1",
+				"rawStopReason": "completed"
+			}
+		},
+		{
+			"name": "reasoning.effort/compat flag off/first",
+			"model": {
+				"id": "gpt-6-luna",
+				"name": "GPT-6 Luna",
+				"api": "openai-responses",
+				"provider": "openai",
+				"baseUrl": "https://api.openai.com/v1",
+				"reasoning": true,
+				"thinkingLevelMap": {
+					"off": "none",
+					"minimal": null,
+					"low": "low",
+					"medium": "medium",
+					"high": "high",
+					"xhigh": "xhigh",
+					"max": "max"
+				},
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 272000,
+				"maxTokens": 128000,
+				"compat": {
+					"supportsMidConvoEffort": false
+				}
+			},
+			"messages": [
+				{
+					"role": "user",
+					"content": "one",
+					"timestamp": 0
+				}
+			],
+			"apiKey": "sk-test",
+			"reasoningEffort": "high",
+			"body": "data: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_1\"}}\n\ndata: {\"type\":\"response.output_item.added\",\"output_index\":0,\"item\":{\"type\":\"message\",\"id\":\"msg_resp_1\",\"role\":\"assistant\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"text\":\"answer\",\"annotations\":[]}]}}\n\ndata: {\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"type\":\"message\",\"id\":\"msg_resp_1\",\"role\":\"assistant\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"text\":\"answer\",\"annotations\":[]}]}}\n\ndata: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_1\",\"status\":\"completed\"}}\n\n",
+			"payload": {
+				"model": "gpt-6-luna",
+				"input": [
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "one"
+							}
+						]
+					}
+				],
+				"stream": true,
+				"store": false,
+				"reasoning": {
+					"effort": "high",
+					"summary": "auto"
+				},
+				"include": [
+					"reasoning.encrypted_content"
+				]
+			},
+			"message": {
+				"role": "assistant",
+				"content": [
+					{
+						"type": "text",
+						"text": "answer",
+						"textSignature": "{\"v\":1,\"id\":\"msg_resp_1\"}"
+					}
+				],
+				"api": "openai-responses",
+				"provider": "openai",
+				"model": "gpt-6-luna",
+				"usage": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"totalTokens": 0,
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0
+					}
+				},
+				"stopReason": "stop",
+				"timestamp": 0,
+				"responseId": "resp_1",
+				"rawStopReason": "completed"
+			}
+		},
+		{
+			"name": "reasoning.effort/compat flag off/second",
+			"model": {
+				"id": "gpt-6-luna",
+				"name": "GPT-6 Luna",
+				"api": "openai-responses",
+				"provider": "openai",
+				"baseUrl": "https://api.openai.com/v1",
+				"reasoning": true,
+				"thinkingLevelMap": {
+					"off": "none",
+					"minimal": null,
+					"low": "low",
+					"medium": "medium",
+					"high": "high",
+					"xhigh": "xhigh",
+					"max": "max"
+				},
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 272000,
+				"maxTokens": 128000,
+				"compat": {
+					"supportsMidConvoEffort": false
+				}
+			},
+			"messages": [
+				{
+					"role": "user",
+					"content": "one",
+					"timestamp": 0
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "text",
+							"text": "answer",
+							"textSignature": "{\"v\":1,\"id\":\"msg_resp_1\"}"
+						}
+					],
+					"api": "openai-responses",
+					"provider": "openai",
+					"model": "gpt-6-luna",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "stop",
+					"timestamp": 0,
+					"responseId": "resp_1",
+					"rawStopReason": "completed"
+				},
+				{
+					"role": "user",
+					"content": "two",
+					"timestamp": 0
+				}
+			],
+			"apiKey": "sk-test",
+			"reasoningEffort": "low",
+			"body": "data: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_1\"}}\n\ndata: {\"type\":\"response.output_item.added\",\"output_index\":0,\"item\":{\"type\":\"message\",\"id\":\"msg_resp_1\",\"role\":\"assistant\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"text\":\"answer\",\"annotations\":[]}]}}\n\ndata: {\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"type\":\"message\",\"id\":\"msg_resp_1\",\"role\":\"assistant\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"text\":\"answer\",\"annotations\":[]}]}}\n\ndata: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_1\",\"status\":\"completed\"}}\n\n",
+			"payload": {
+				"model": "gpt-6-luna",
+				"input": [
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "one"
+							}
+						]
+					},
+					{
+						"type": "message",
+						"role": "assistant",
+						"content": [
+							{
+								"type": "output_text",
+								"text": "answer",
+								"annotations": []
+							}
+						],
+						"status": "completed",
+						"id": "msg_resp_1"
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "two"
+							}
+						]
+					}
+				],
+				"stream": true,
+				"store": false,
+				"reasoning": {
+					"effort": "low",
+					"summary": "auto"
+				},
+				"include": [
+					"reasoning.encrypted_content"
+				]
+			},
+			"message": {
+				"role": "assistant",
+				"content": [
+					{
+						"type": "text",
+						"text": "answer",
+						"textSignature": "{\"v\":1,\"id\":\"msg_resp_1\"}"
+					}
+				],
+				"api": "openai-responses",
+				"provider": "openai",
+				"model": "gpt-6-luna",
+				"usage": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"totalTokens": 0,
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0
+					}
+				},
+				"stopReason": "stop",
+				"timestamp": 0,
+				"responseId": "resp_1",
+				"rawStopReason": "completed"
+			}
+		},
+		{
+			"name": "reasoning.effort/thinking off/first",
+			"model": {
+				"id": "gpt-6-luna",
+				"name": "GPT-6 Luna",
+				"api": "openai-responses",
+				"provider": "openai",
+				"baseUrl": "https://api.openai.com/v1",
+				"reasoning": true,
+				"thinkingLevelMap": {
+					"off": "none",
+					"minimal": null,
+					"low": "low",
+					"medium": "medium",
+					"high": "high",
+					"xhigh": "xhigh",
+					"max": "max"
+				},
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 272000,
+				"maxTokens": 128000,
+				"compat": {
+					"supportsMidConvoEffort": true
+				}
+			},
+			"messages": [
+				{
+					"role": "user",
+					"content": "one",
+					"timestamp": 0
+				}
+			],
+			"apiKey": "sk-test",
+			"reasoningEffort": "high",
+			"body": "data: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_1\"}}\n\ndata: {\"type\":\"response.output_item.added\",\"output_index\":0,\"item\":{\"type\":\"message\",\"id\":\"msg_resp_1\",\"role\":\"assistant\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"text\":\"answer\",\"annotations\":[]}]}}\n\ndata: {\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"type\":\"message\",\"id\":\"msg_resp_1\",\"role\":\"assistant\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"text\":\"answer\",\"annotations\":[]}]}}\n\ndata: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_1\",\"status\":\"completed\"}}\n\n",
+			"payload": {
+				"model": "gpt-6-luna",
+				"input": [
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "one"
+							}
+						]
+					},
+					{
+						"type": "configuration_update",
+						"reasoning": {
+							"effort": "high"
+						}
+					}
+				],
+				"stream": true,
+				"store": false,
+				"reasoning": {
+					"effort": "medium",
+					"summary": "auto"
+				},
+				"include": [
+					"reasoning.encrypted_content"
+				]
+			},
+			"message": {
+				"role": "assistant",
+				"content": [
+					{
+						"type": "text",
+						"text": "answer",
+						"textSignature": "{\"v\":1,\"id\":\"msg_resp_1\"}"
+					}
+				],
+				"api": "openai-responses",
+				"provider": "openai",
+				"model": "gpt-6-luna",
+				"providerThinkingLevel": "high",
+				"usage": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"totalTokens": 0,
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0
+					}
+				},
+				"stopReason": "stop",
+				"timestamp": 0,
+				"responseId": "resp_1",
+				"rawStopReason": "completed"
+			}
+		},
+		{
+			"name": "reasoning.effort/thinking off/second",
+			"model": {
+				"id": "gpt-6-luna",
+				"name": "GPT-6 Luna",
+				"api": "openai-responses",
+				"provider": "openai",
+				"baseUrl": "https://api.openai.com/v1",
+				"reasoning": true,
+				"thinkingLevelMap": {
+					"off": "none",
+					"minimal": null,
+					"low": "low",
+					"medium": "medium",
+					"high": "high",
+					"xhigh": "xhigh",
+					"max": "max"
+				},
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 272000,
+				"maxTokens": 128000,
+				"compat": {
+					"supportsMidConvoEffort": true
+				}
+			},
+			"messages": [
+				{
+					"role": "user",
+					"content": "one",
+					"timestamp": 0
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "text",
+							"text": "answer",
+							"textSignature": "{\"v\":1,\"id\":\"msg_resp_1\"}"
+						}
+					],
+					"api": "openai-responses",
+					"provider": "openai",
+					"model": "gpt-6-luna",
+					"providerThinkingLevel": "high",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "stop",
+					"timestamp": 0,
+					"responseId": "resp_1",
+					"rawStopReason": "completed"
+				},
+				{
+					"role": "user",
+					"content": "two",
+					"timestamp": 0
+				}
+			],
+			"apiKey": "sk-test",
+			"reasoningEffort": null,
+			"body": "data: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_1\"}}\n\ndata: {\"type\":\"response.output_item.added\",\"output_index\":0,\"item\":{\"type\":\"message\",\"id\":\"msg_resp_1\",\"role\":\"assistant\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"text\":\"answer\",\"annotations\":[]}]}}\n\ndata: {\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"type\":\"message\",\"id\":\"msg_resp_1\",\"role\":\"assistant\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"text\":\"answer\",\"annotations\":[]}]}}\n\ndata: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_1\",\"status\":\"completed\"}}\n\n",
+			"payload": {
+				"model": "gpt-6-luna",
+				"input": [
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "one"
+							}
+						]
+					},
+					{
+						"type": "message",
+						"role": "assistant",
+						"content": [
+							{
+								"type": "output_text",
+								"text": "answer",
+								"annotations": []
+							}
+						],
+						"status": "completed",
+						"id": "msg_resp_1"
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "two"
+							}
+						]
+					}
+				],
+				"stream": true,
+				"store": false,
+				"reasoning": {
+					"effort": "none"
+				}
+			},
+			"message": {
+				"role": "assistant",
+				"content": [
+					{
+						"type": "text",
+						"text": "answer",
+						"textSignature": "{\"v\":1,\"id\":\"msg_resp_1\"}"
+					}
+				],
+				"api": "openai-responses",
+				"provider": "openai",
+				"model": "gpt-6-luna",
+				"usage": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"totalTokens": 0,
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0
+					}
+				},
+				"stopReason": "stop",
+				"timestamp": 0,
+				"responseId": "resp_1",
+				"rawStopReason": "completed"
+			}
+		},
+		{
+			"name": "mapped level",
+			"model": {
+				"id": "gpt-6-luna",
+				"name": "GPT-6 Luna",
+				"api": "openai-responses",
+				"provider": "openai",
+				"baseUrl": "https://api.openai.com/v1",
+				"reasoning": true,
+				"thinkingLevelMap": {
+					"off": "none",
+					"minimal": null,
+					"low": "low",
+					"medium": "medium",
+					"high": "HIGH-ish",
+					"xhigh": "xhigh",
+					"max": "max"
+				},
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 272000,
+				"maxTokens": 128000,
+				"compat": {
+					"supportsMidConvoEffort": true
+				}
+			},
+			"messages": [
+				{
+					"role": "user",
+					"content": "one",
+					"timestamp": 0
+				}
+			],
+			"apiKey": "sk-test",
+			"reasoningEffort": "off",
+			"body": "data: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_1\"}}\n\ndata: {\"type\":\"response.output_item.added\",\"output_index\":0,\"item\":{\"type\":\"message\",\"id\":\"msg_resp_1\",\"role\":\"assistant\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"text\":\"answer\",\"annotations\":[]}]}}\n\ndata: {\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"type\":\"message\",\"id\":\"msg_resp_1\",\"role\":\"assistant\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"text\":\"answer\",\"annotations\":[]}]}}\n\ndata: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_1\",\"status\":\"completed\"}}\n\n",
+			"payload": {
+				"model": "gpt-6-luna",
+				"input": [
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "one"
+							}
+						]
+					},
+					{
+						"type": "configuration_update",
+						"reasoning": {
+							"effort": "none"
+						}
+					}
+				],
+				"stream": true,
+				"store": false,
+				"reasoning": {
+					"effort": "medium",
+					"summary": "auto"
+				},
+				"include": [
+					"reasoning.encrypted_content"
+				]
+			},
+			"message": {
+				"role": "assistant",
+				"content": [
+					{
+						"type": "text",
+						"text": "answer",
+						"textSignature": "{\"v\":1,\"id\":\"msg_resp_1\"}"
+					}
+				],
+				"api": "openai-responses",
+				"provider": "openai",
+				"model": "gpt-6-luna",
+				"providerThinkingLevel": "none",
+				"usage": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"totalTokens": 0,
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0
+					}
+				},
+				"stopReason": "stop",
+				"timestamp": 0,
+				"responseId": "resp_1",
+				"rawStopReason": "completed"
+			}
+		},
+		{
+			"name": "mapped level/high",
+			"model": {
+				"id": "gpt-6-luna",
+				"name": "GPT-6 Luna",
+				"api": "openai-responses",
+				"provider": "openai",
+				"baseUrl": "https://api.openai.com/v1",
+				"reasoning": true,
+				"thinkingLevelMap": {
+					"off": "none",
+					"minimal": null,
+					"low": "low",
+					"medium": "medium",
+					"high": "HIGH-ish",
+					"xhigh": "xhigh",
+					"max": "max"
+				},
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 272000,
+				"maxTokens": 128000,
+				"compat": {
+					"supportsMidConvoEffort": true
+				}
+			},
+			"messages": [
+				{
+					"role": "user",
+					"content": "one",
+					"timestamp": 0
+				}
+			],
+			"apiKey": "sk-test",
+			"reasoningEffort": "high",
+			"body": "data: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_1\"}}\n\ndata: {\"type\":\"response.output_item.added\",\"output_index\":0,\"item\":{\"type\":\"message\",\"id\":\"msg_resp_1\",\"role\":\"assistant\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"text\":\"answer\",\"annotations\":[]}]}}\n\ndata: {\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"type\":\"message\",\"id\":\"msg_resp_1\",\"role\":\"assistant\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"text\":\"answer\",\"annotations\":[]}]}}\n\ndata: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_1\",\"status\":\"completed\"}}\n\n",
+			"payload": {
+				"model": "gpt-6-luna",
+				"input": [
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "one"
+							}
+						]
+					},
+					{
+						"type": "configuration_update",
+						"reasoning": {
+							"effort": "HIGH-ish"
+						}
+					}
+				],
+				"stream": true,
+				"store": false,
+				"reasoning": {
+					"effort": "medium",
+					"summary": "auto"
+				},
+				"include": [
+					"reasoning.encrypted_content"
+				]
+			},
+			"message": {
+				"role": "assistant",
+				"content": [
+					{
+						"type": "text",
+						"text": "answer",
+						"textSignature": "{\"v\":1,\"id\":\"msg_resp_1\"}"
+					}
+				],
+				"api": "openai-responses",
+				"provider": "openai",
+				"model": "gpt-6-luna",
+				"providerThinkingLevel": "HIGH-ish",
+				"usage": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"totalTokens": 0,
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0
+					}
+				},
+				"stopReason": "stop",
+				"timestamp": 0,
+				"responseId": "resp_1",
+				"rawStopReason": "completed"
+			}
+		}
+	]
+}
