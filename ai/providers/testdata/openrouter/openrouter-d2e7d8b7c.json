@@ -1,0 +1,1154 @@
+{
+	"sha": "d2e7d8b7c",
+	"cost": [
+		{
+			"pricing": {
+				"prompt": "0.000003",
+				"completion": "0.000015"
+			},
+			"cost": {
+				"input": 3,
+				"output": 15,
+				"cacheRead": 0,
+				"cacheWrite": 0
+			}
+		},
+		{
+			"pricing": {
+				"prompt": "0.000003",
+				"completion": "0.000015",
+				"input_cache_read": "0.0000003",
+				"input_cache_write": "0.00000375"
+			},
+			"cost": {
+				"input": 3,
+				"output": 15,
+				"cacheRead": 0.3,
+				"cacheWrite": 3.75
+			}
+		},
+		{
+			"pricing": {},
+			"cost": {
+				"input": 0,
+				"output": 0,
+				"cacheRead": 0,
+				"cacheWrite": 0
+			}
+		},
+		{
+			"pricing": {
+				"prompt": "-1",
+				"completion": "-1"
+			},
+			"cost": {
+				"input": 0,
+				"output": 0,
+				"cacheRead": 0,
+				"cacheWrite": 0
+			}
+		},
+		{
+			"pricing": {
+				"prompt": "0",
+				"completion": "0"
+			},
+			"cost": {
+				"input": 0,
+				"output": 0,
+				"cacheRead": 0,
+				"cacheWrite": 0
+			}
+		},
+		{
+			"pricing": {
+				"prompt": "-0",
+				"completion": "0.0"
+			},
+			"cost": {
+				"input": 0,
+				"output": 0,
+				"cacheRead": 0,
+				"cacheWrite": 0
+			}
+		},
+		{
+			"pricing": {
+				"prompt": "abc",
+				"completion": ""
+			},
+			"cost": {
+				"input": 0,
+				"output": 0,
+				"cacheRead": 0,
+				"cacheWrite": 0
+			}
+		},
+		{
+			"pricing": {
+				"prompt": "1.5e-6abc",
+				"completion": "  2e-6",
+				"input_cache_read": " 3e-7"
+			},
+			"cost": {
+				"input": 1.5,
+				"output": 2,
+				"cacheRead": 0.3,
+				"cacheWrite": 0
+			}
+		},
+		{
+			"pricing": {
+				"prompt": "Infinity",
+				"completion": "-Infinity"
+			},
+			"cost": {
+				"input": "Infinity",
+				"output": 0,
+				"cacheRead": 0,
+				"cacheWrite": 0
+			}
+		},
+		{
+			"pricing": {
+				"prompt": 0.000002,
+				"completion": null
+			},
+			"cost": {
+				"input": 2,
+				"output": 0,
+				"cacheRead": 0,
+				"cacheWrite": 0
+			}
+		},
+		{
+			"pricing": {
+				"prompt": "0.0000000078125",
+				"completion": "0.0000000000005"
+			},
+			"cost": {
+				"input": 0.007813,
+				"output": 0,
+				"cacheRead": 0,
+				"cacheWrite": 0
+			}
+		},
+		{
+			"pricing": {
+				"prompt": "0.1",
+				"completion": "0.0000001234565"
+			},
+			"cost": {
+				"input": 100000,
+				"output": 0.123457,
+				"cacheRead": 0,
+				"cacheWrite": 0
+			}
+		},
+		{
+			"pricing": {
+				"prompt": "0.000001",
+				"completion": "0.000002",
+				"overrides": [
+					{
+						"min_prompt_tokens": 200000,
+						"prompt": "0.000002",
+						"completion": "0.000004"
+					},
+					{
+						"min_prompt_tokens": 128000,
+						"input_cache_read": "-1"
+					},
+					{
+						"min_prompt_tokens": 64000,
+						"utc_start": 0,
+						"utc_end": 8,
+						"prompt": "0.0000005"
+					},
+					{
+						"utc_days": [
+							"sat"
+						],
+						"prompt": "0.0000005"
+					},
+					{
+						"prompt": "0.0000009"
+					},
+					{
+						"min_prompt_tokens": 1000,
+						"utc_start": null,
+						"prompt": "0.0000006"
+					}
+				]
+			},
+			"cost": {
+				"input": 1,
+				"output": 2,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"tiers": [
+					{
+						"inputTokensAbove": 200000,
+						"input": 2,
+						"output": 4,
+						"cacheRead": 0,
+						"cacheWrite": 0
+					},
+					{
+						"inputTokensAbove": 128000,
+						"input": 1,
+						"output": 2,
+						"cacheRead": 0,
+						"cacheWrite": 0
+					}
+				]
+			}
+		},
+		{
+			"pricing": {
+				"prompt": "0.000001",
+				"overrides": [
+					{
+						"min_prompt_tokens": 64000,
+						"utc_days": []
+					}
+				]
+			},
+			"cost": {
+				"input": 1,
+				"output": 0,
+				"cacheRead": 0,
+				"cacheWrite": 0
+			}
+		},
+		{
+			"pricing": {
+				"prompt": "0.000001",
+				"overrides": []
+			},
+			"cost": {
+				"input": 1,
+				"output": 0,
+				"cacheRead": 0,
+				"cacheWrite": 0
+			}
+		}
+	],
+	"catalog": [
+		{
+			"id": "listed",
+			"name": "listed",
+			"api": "openai-completions",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"reasoning": false,
+			"input": [
+				"text"
+			],
+			"cost": {
+				"input": 1,
+				"output": 2,
+				"cacheRead": 0.1,
+				"cacheWrite": 0
+			},
+			"contextWindow": 200000,
+			"maxTokens": 50000
+		},
+		{
+			"id": "no-limits",
+			"name": "no-limits",
+			"api": "openai-completions",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"reasoning": false,
+			"input": [
+				"text"
+			],
+			"cost": {
+				"input": 1,
+				"output": 2,
+				"cacheRead": 0.1,
+				"cacheWrite": 0
+			},
+			"contextWindow": 200000,
+			"maxTokens": 50000
+		},
+		{
+			"id": "router",
+			"name": "router",
+			"api": "openai-completions",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"reasoning": false,
+			"input": [
+				"text"
+			],
+			"cost": {
+				"input": 1,
+				"output": 2,
+				"cacheRead": 0.1,
+				"cacheWrite": 0
+			},
+			"contextWindow": 200000,
+			"maxTokens": 50000
+		},
+		{
+			"id": "context-only",
+			"name": "context-only",
+			"api": "openai-completions",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"reasoning": false,
+			"input": [
+				"text"
+			],
+			"cost": {
+				"input": 1,
+				"output": 2,
+				"cacheRead": 0.1,
+				"cacheWrite": 0
+			},
+			"contextWindow": 200000,
+			"maxTokens": 50000
+		},
+		{
+			"id": "duplicate",
+			"name": "duplicate",
+			"api": "openai-completions",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"reasoning": false,
+			"input": [
+				"text"
+			],
+			"cost": {
+				"input": 1,
+				"output": 2,
+				"cacheRead": 0.1,
+				"cacheWrite": 0
+			},
+			"contextWindow": 200000,
+			"maxTokens": 50000
+		},
+		{
+			"id": "blocked",
+			"name": "blocked",
+			"api": "openai-completions",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"reasoning": false,
+			"input": [
+				"text"
+			],
+			"cost": {
+				"input": 1,
+				"output": 2,
+				"cacheRead": 0.1,
+				"cacheWrite": 0
+			},
+			"contextWindow": 200000,
+			"maxTokens": 50000
+		},
+		{
+			"type": "chat",
+			"id": "typed-chat",
+			"name": "typed-chat",
+			"api": "openai-completions",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"reasoning": false,
+			"input": [
+				"text"
+			],
+			"cost": {
+				"input": 1,
+				"output": 2,
+				"cacheRead": 0.1,
+				"cacheWrite": 0
+			},
+			"contextWindow": 200000,
+			"maxTokens": 50000
+		},
+		{
+			"type": "image",
+			"id": "image",
+			"name": "image",
+			"api": "openrouter-images",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"input": [
+				"text"
+			],
+			"output": [
+				"image"
+			],
+			"cost": {
+				"input": 0,
+				"output": 0,
+				"cacheRead": 0,
+				"cacheWrite": 0
+			}
+		},
+		{
+			"type": "classifier",
+			"id": "classifier",
+			"name": "classifier",
+			"api": "typesafe-system-one",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"input": [
+				"text"
+			],
+			"cost": {
+				"input": 0,
+				"output": 0,
+				"cacheRead": 0,
+				"cacheWrite": 0
+			},
+			"contextWindow": 64000
+		}
+	],
+	"personalize": [
+		{
+			"name": "api key",
+			"credential": {
+				"type": "api_key",
+				"key": "sk-or-test"
+			},
+			"status": 200,
+			"body": "{\"data\":[{\"id\":\"listed\",\"context_length\":1000000,\"top_provider\":{\"context_length\":262144,\"max_completion_tokens\":32768},\"pricing\":{\"prompt\":\"0.000003\",\"completion\":\"0.000015\"}},{\"id\":\"no-limits\",\"context_length\":0,\"top_provider\":{\"context_length\":null,\"max_completion_tokens\":null}},{\"id\":\"router\",\"pricing\":{\"prompt\":\"-1\",\"completion\":\"-1\"}},{\"id\":\"context-only\",\"context_length\":131072},{\"id\":\"duplicate\",\"context_length\":1000},{\"id\":\"duplicate\",\"context_length\":2000},{\"id\":\"typed-chat\",\"pricing\":{}},{\"id\":7,\"context_length\":9},\"not an object\",null,{\"name\":\"no id\"}]}",
+			"request": {
+				"url": "https://openrouter.ai/api/v1/models/user",
+				"headers": {
+					"accept": "application/json",
+					"authorization": "Bearer sk-or-test"
+				}
+			},
+			"result": [
+				{
+					"id": "listed",
+					"name": "listed",
+					"api": "openai-completions",
+					"provider": "openrouter",
+					"baseUrl": "https://openrouter.ai/api/v1",
+					"reasoning": false,
+					"input": [
+						"text"
+					],
+					"cost": {
+						"input": 3,
+						"output": 15,
+						"cacheRead": 0,
+						"cacheWrite": 0
+					},
+					"contextWindow": 262144,
+					"maxTokens": 32768
+				},
+				{
+					"id": "no-limits",
+					"name": "no-limits",
+					"api": "openai-completions",
+					"provider": "openrouter",
+					"baseUrl": "https://openrouter.ai/api/v1",
+					"reasoning": false,
+					"input": [
+						"text"
+					],
+					"cost": {
+						"input": 1,
+						"output": 2,
+						"cacheRead": 0.1,
+						"cacheWrite": 0
+					},
+					"contextWindow": 200000,
+					"maxTokens": 50000
+				},
+				{
+					"id": "router",
+					"name": "router",
+					"api": "openai-completions",
+					"provider": "openrouter",
+					"baseUrl": "https://openrouter.ai/api/v1",
+					"reasoning": false,
+					"input": [
+						"text"
+					],
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0
+					},
+					"contextWindow": 200000,
+					"maxTokens": 50000
+				},
+				{
+					"id": "context-only",
+					"name": "context-only",
+					"api": "openai-completions",
+					"provider": "openrouter",
+					"baseUrl": "https://openrouter.ai/api/v1",
+					"reasoning": false,
+					"input": [
+						"text"
+					],
+					"cost": {
+						"input": 1,
+						"output": 2,
+						"cacheRead": 0.1,
+						"cacheWrite": 0
+					},
+					"contextWindow": 131072,
+					"maxTokens": 50000
+				},
+				{
+					"id": "duplicate",
+					"name": "duplicate",
+					"api": "openai-completions",
+					"provider": "openrouter",
+					"baseUrl": "https://openrouter.ai/api/v1",
+					"reasoning": false,
+					"input": [
+						"text"
+					],
+					"cost": {
+						"input": 1,
+						"output": 2,
+						"cacheRead": 0.1,
+						"cacheWrite": 0
+					},
+					"contextWindow": 2000,
+					"maxTokens": 50000
+				},
+				{
+					"type": "chat",
+					"id": "typed-chat",
+					"name": "typed-chat",
+					"api": "openai-completions",
+					"provider": "openrouter",
+					"baseUrl": "https://openrouter.ai/api/v1",
+					"reasoning": false,
+					"input": [
+						"text"
+					],
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0
+					},
+					"contextWindow": 200000,
+					"maxTokens": 50000
+				},
+				{
+					"type": "image",
+					"id": "image",
+					"name": "image",
+					"api": "openrouter-images",
+					"provider": "openrouter",
+					"baseUrl": "https://openrouter.ai/api/v1",
+					"input": [
+						"text"
+					],
+					"output": [
+						"image"
+					],
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0
+					}
+				},
+				{
+					"type": "classifier",
+					"id": "classifier",
+					"name": "classifier",
+					"api": "typesafe-system-one",
+					"provider": "openrouter",
+					"baseUrl": "https://openrouter.ai/api/v1",
+					"input": [
+						"text"
+					],
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0
+					},
+					"contextWindow": 64000
+				}
+			]
+		},
+		{
+			"name": "oauth access token",
+			"credential": {
+				"type": "oauth",
+				"access": "oauth-access",
+				"refresh": "r",
+				"expires": 0
+			},
+			"status": 200,
+			"body": "{\"data\":[{\"id\":\"listed\",\"context_length\":1000000,\"top_provider\":{\"context_length\":262144,\"max_completion_tokens\":32768},\"pricing\":{\"prompt\":\"0.000003\",\"completion\":\"0.000015\"}},{\"id\":\"no-limits\",\"context_length\":0,\"top_provider\":{\"context_length\":null,\"max_completion_tokens\":null}},{\"id\":\"router\",\"pricing\":{\"prompt\":\"-1\",\"completion\":\"-1\"}},{\"id\":\"context-only\",\"context_length\":131072},{\"id\":\"duplicate\",\"context_length\":1000},{\"id\":\"duplicate\",\"context_length\":2000},{\"id\":\"typed-chat\",\"pricing\":{}},{\"id\":7,\"context_length\":9},\"not an object\",null,{\"name\":\"no id\"}]}",
+			"request": {
+				"url": "https://openrouter.ai/api/v1/models/user",
+				"headers": {
+					"accept": "application/json",
+					"authorization": "Bearer oauth-access"
+				}
+			},
+			"result": [
+				{
+					"id": "listed",
+					"name": "listed",
+					"api": "openai-completions",
+					"provider": "openrouter",
+					"baseUrl": "https://openrouter.ai/api/v1",
+					"reasoning": false,
+					"input": [
+						"text"
+					],
+					"cost": {
+						"input": 3,
+						"output": 15,
+						"cacheRead": 0,
+						"cacheWrite": 0
+					},
+					"contextWindow": 262144,
+					"maxTokens": 32768
+				},
+				{
+					"id": "no-limits",
+					"name": "no-limits",
+					"api": "openai-completions",
+					"provider": "openrouter",
+					"baseUrl": "https://openrouter.ai/api/v1",
+					"reasoning": false,
+					"input": [
+						"text"
+					],
+					"cost": {
+						"input": 1,
+						"output": 2,
+						"cacheRead": 0.1,
+						"cacheWrite": 0
+					},
+					"contextWindow": 200000,
+					"maxTokens": 50000
+				},
+				{
+					"id": "router",
+					"name": "router",
+					"api": "openai-completions",
+					"provider": "openrouter",
+					"baseUrl": "https://openrouter.ai/api/v1",
+					"reasoning": false,
+					"input": [
+						"text"
+					],
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0
+					},
+					"contextWindow": 200000,
+					"maxTokens": 50000
+				},
+				{
+					"id": "context-only",
+					"name": "context-only",
+					"api": "openai-completions",
+					"provider": "openrouter",
+					"baseUrl": "https://openrouter.ai/api/v1",
+					"reasoning": false,
+					"input": [
+						"text"
+					],
+					"cost": {
+						"input": 1,
+						"output": 2,
+						"cacheRead": 0.1,
+						"cacheWrite": 0
+					},
+					"contextWindow": 131072,
+					"maxTokens": 50000
+				},
+				{
+					"id": "duplicate",
+					"name": "duplicate",
+					"api": "openai-completions",
+					"provider": "openrouter",
+					"baseUrl": "https://openrouter.ai/api/v1",
+					"reasoning": false,
+					"input": [
+						"text"
+					],
+					"cost": {
+						"input": 1,
+						"output": 2,
+						"cacheRead": 0.1,
+						"cacheWrite": 0
+					},
+					"contextWindow": 2000,
+					"maxTokens": 50000
+				},
+				{
+					"type": "chat",
+					"id": "typed-chat",
+					"name": "typed-chat",
+					"api": "openai-completions",
+					"provider": "openrouter",
+					"baseUrl": "https://openrouter.ai/api/v1",
+					"reasoning": false,
+					"input": [
+						"text"
+					],
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0
+					},
+					"contextWindow": 200000,
+					"maxTokens": 50000
+				},
+				{
+					"type": "image",
+					"id": "image",
+					"name": "image",
+					"api": "openrouter-images",
+					"provider": "openrouter",
+					"baseUrl": "https://openrouter.ai/api/v1",
+					"input": [
+						"text"
+					],
+					"output": [
+						"image"
+					],
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0
+					}
+				},
+				{
+					"type": "classifier",
+					"id": "classifier",
+					"name": "classifier",
+					"api": "typesafe-system-one",
+					"provider": "openrouter",
+					"baseUrl": "https://openrouter.ai/api/v1",
+					"input": [
+						"text"
+					],
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0
+					},
+					"contextWindow": 64000
+				}
+			]
+		},
+		{
+			"name": "regional base URL with trailing slashes",
+			"credential": {
+				"type": "api_key",
+				"key": "k"
+			},
+			"baseUrl": "https://us.openrouter.ai/api/v1//",
+			"status": 200,
+			"body": "{\"data\":[{\"id\":\"listed\",\"context_length\":1000000,\"top_provider\":{\"context_length\":262144,\"max_completion_tokens\":32768},\"pricing\":{\"prompt\":\"0.000003\",\"completion\":\"0.000015\"}},{\"id\":\"no-limits\",\"context_length\":0,\"top_provider\":{\"context_length\":null,\"max_completion_tokens\":null}},{\"id\":\"router\",\"pricing\":{\"prompt\":\"-1\",\"completion\":\"-1\"}},{\"id\":\"context-only\",\"context_length\":131072},{\"id\":\"duplicate\",\"context_length\":1000},{\"id\":\"duplicate\",\"context_length\":2000},{\"id\":\"typed-chat\",\"pricing\":{}},{\"id\":7,\"context_length\":9},\"not an object\",null,{\"name\":\"no id\"}]}",
+			"request": {
+				"url": "https://us.openrouter.ai/api/v1/models/user",
+				"headers": {
+					"accept": "application/json",
+					"authorization": "Bearer k"
+				}
+			},
+			"result": [
+				{
+					"id": "listed",
+					"name": "listed",
+					"api": "openai-completions",
+					"provider": "openrouter",
+					"baseUrl": "https://openrouter.ai/api/v1",
+					"reasoning": false,
+					"input": [
+						"text"
+					],
+					"cost": {
+						"input": 3,
+						"output": 15,
+						"cacheRead": 0,
+						"cacheWrite": 0
+					},
+					"contextWindow": 262144,
+					"maxTokens": 32768
+				},
+				{
+					"id": "no-limits",
+					"name": "no-limits",
+					"api": "openai-completions",
+					"provider": "openrouter",
+					"baseUrl": "https://openrouter.ai/api/v1",
+					"reasoning": false,
+					"input": [
+						"text"
+					],
+					"cost": {
+						"input": 1,
+						"output": 2,
+						"cacheRead": 0.1,
+						"cacheWrite": 0
+					},
+					"contextWindow": 200000,
+					"maxTokens": 50000
+				},
+				{
+					"id": "router",
+					"name": "router",
+					"api": "openai-completions",
+					"provider": "openrouter",
+					"baseUrl": "https://openrouter.ai/api/v1",
+					"reasoning": false,
+					"input": [
+						"text"
+					],
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0
+					},
+					"contextWindow": 200000,
+					"maxTokens": 50000
+				},
+				{
+					"id": "context-only",
+					"name": "context-only",
+					"api": "openai-completions",
+					"provider": "openrouter",
+					"baseUrl": "https://openrouter.ai/api/v1",
+					"reasoning": false,
+					"input": [
+						"text"
+					],
+					"cost": {
+						"input": 1,
+						"output": 2,
+						"cacheRead": 0.1,
+						"cacheWrite": 0
+					},
+					"contextWindow": 131072,
+					"maxTokens": 50000
+				},
+				{
+					"id": "duplicate",
+					"name": "duplicate",
+					"api": "openai-completions",
+					"provider": "openrouter",
+					"baseUrl": "https://openrouter.ai/api/v1",
+					"reasoning": false,
+					"input": [
+						"text"
+					],
+					"cost": {
+						"input": 1,
+						"output": 2,
+						"cacheRead": 0.1,
+						"cacheWrite": 0
+					},
+					"contextWindow": 2000,
+					"maxTokens": 50000
+				},
+				{
+					"type": "chat",
+					"id": "typed-chat",
+					"name": "typed-chat",
+					"api": "openai-completions",
+					"provider": "openrouter",
+					"baseUrl": "https://openrouter.ai/api/v1",
+					"reasoning": false,
+					"input": [
+						"text"
+					],
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0
+					},
+					"contextWindow": 200000,
+					"maxTokens": 50000
+				},
+				{
+					"type": "image",
+					"id": "image",
+					"name": "image",
+					"api": "openrouter-images",
+					"provider": "openrouter",
+					"baseUrl": "https://openrouter.ai/api/v1",
+					"input": [
+						"text"
+					],
+					"output": [
+						"image"
+					],
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0
+					}
+				},
+				{
+					"type": "classifier",
+					"id": "classifier",
+					"name": "classifier",
+					"api": "typesafe-system-one",
+					"provider": "openrouter",
+					"baseUrl": "https://openrouter.ai/api/v1",
+					"input": [
+						"text"
+					],
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0
+					},
+					"contextWindow": 64000
+				}
+			]
+		},
+		{
+			"name": "no credential",
+			"status": 200,
+			"body": "{\"data\":[{\"id\":\"listed\",\"context_length\":1000000,\"top_provider\":{\"context_length\":262144,\"max_completion_tokens\":32768},\"pricing\":{\"prompt\":\"0.000003\",\"completion\":\"0.000015\"}},{\"id\":\"no-limits\",\"context_length\":0,\"top_provider\":{\"context_length\":null,\"max_completion_tokens\":null}},{\"id\":\"router\",\"pricing\":{\"prompt\":\"-1\",\"completion\":\"-1\"}},{\"id\":\"context-only\",\"context_length\":131072},{\"id\":\"duplicate\",\"context_length\":1000},{\"id\":\"duplicate\",\"context_length\":2000},{\"id\":\"typed-chat\",\"pricing\":{}},{\"id\":7,\"context_length\":9},\"not an object\",null,{\"name\":\"no id\"}]}",
+			"result": "unchanged"
+		},
+		{
+			"name": "empty key",
+			"credential": {
+				"type": "api_key",
+				"key": ""
+			},
+			"status": 200,
+			"body": "{\"data\":[{\"id\":\"listed\",\"context_length\":1000000,\"top_provider\":{\"context_length\":262144,\"max_completion_tokens\":32768},\"pricing\":{\"prompt\":\"0.000003\",\"completion\":\"0.000015\"}},{\"id\":\"no-limits\",\"context_length\":0,\"top_provider\":{\"context_length\":null,\"max_completion_tokens\":null}},{\"id\":\"router\",\"pricing\":{\"prompt\":\"-1\",\"completion\":\"-1\"}},{\"id\":\"context-only\",\"context_length\":131072},{\"id\":\"duplicate\",\"context_length\":1000},{\"id\":\"duplicate\",\"context_length\":2000},{\"id\":\"typed-chat\",\"pricing\":{}},{\"id\":7,\"context_length\":9},\"not an object\",null,{\"name\":\"no id\"}]}",
+			"result": "unchanged"
+		},
+		{
+			"name": "401",
+			"credential": {
+				"type": "api_key",
+				"key": "k"
+			},
+			"status": 401,
+			"body": "",
+			"request": {
+				"url": "https://openrouter.ai/api/v1/models/user",
+				"headers": {
+					"accept": "application/json",
+					"authorization": "Bearer k"
+				}
+			},
+			"result": "unchanged"
+		},
+		{
+			"name": "403",
+			"credential": {
+				"type": "api_key",
+				"key": "k"
+			},
+			"status": 403,
+			"body": "",
+			"request": {
+				"url": "https://openrouter.ai/api/v1/models/user",
+				"headers": {
+					"accept": "application/json",
+					"authorization": "Bearer k"
+				}
+			},
+			"result": "unchanged"
+		},
+		{
+			"name": "404",
+			"credential": {
+				"type": "api_key",
+				"key": "k"
+			},
+			"status": 404,
+			"body": "not found",
+			"request": {
+				"url": "https://openrouter.ai/api/v1/models/user",
+				"headers": {
+					"accept": "application/json",
+					"authorization": "Bearer k"
+				}
+			},
+			"result": "unchanged"
+		},
+		{
+			"name": "500",
+			"credential": {
+				"type": "api_key",
+				"key": "k"
+			},
+			"status": 500,
+			"body": "",
+			"request": {
+				"url": "https://openrouter.ai/api/v1/models/user",
+				"headers": {
+					"accept": "application/json",
+					"authorization": "Bearer k"
+				}
+			},
+			"error": "OpenRouter model list request failed: 500"
+		},
+		{
+			"name": "429",
+			"credential": {
+				"type": "api_key",
+				"key": "k"
+			},
+			"status": 429,
+			"body": "{\"data\":[{\"id\":\"listed\",\"context_length\":1000000,\"top_provider\":{\"context_length\":262144,\"max_completion_tokens\":32768},\"pricing\":{\"prompt\":\"0.000003\",\"completion\":\"0.000015\"}},{\"id\":\"no-limits\",\"context_length\":0,\"top_provider\":{\"context_length\":null,\"max_completion_tokens\":null}},{\"id\":\"router\",\"pricing\":{\"prompt\":\"-1\",\"completion\":\"-1\"}},{\"id\":\"context-only\",\"context_length\":131072},{\"id\":\"duplicate\",\"context_length\":1000},{\"id\":\"duplicate\",\"context_length\":2000},{\"id\":\"typed-chat\",\"pricing\":{}},{\"id\":7,\"context_length\":9},\"not an object\",null,{\"name\":\"no id\"}]}",
+			"request": {
+				"url": "https://openrouter.ai/api/v1/models/user",
+				"headers": {
+					"accept": "application/json",
+					"authorization": "Bearer k"
+				}
+			},
+			"error": "OpenRouter model list request failed: 429"
+		},
+		{
+			"name": "not JSON",
+			"credential": {
+				"type": "api_key",
+				"key": "k"
+			},
+			"status": 200,
+			"body": "<html>",
+			"request": {
+				"url": "https://openrouter.ai/api/v1/models/user",
+				"headers": {
+					"accept": "application/json",
+					"authorization": "Bearer k"
+				}
+			},
+			"error": "Unexpected token '<', \"<html>\" is not valid JSON"
+		},
+		{
+			"name": "no data",
+			"credential": {
+				"type": "api_key",
+				"key": "k"
+			},
+			"status": 200,
+			"body": "{}",
+			"request": {
+				"url": "https://openrouter.ai/api/v1/models/user",
+				"headers": {
+					"accept": "application/json",
+					"authorization": "Bearer k"
+				}
+			},
+			"error": "Invalid OpenRouter model list response"
+		},
+		{
+			"name": "data not an array",
+			"credential": {
+				"type": "api_key",
+				"key": "k"
+			},
+			"status": 200,
+			"body": "{\"data\":{}}",
+			"request": {
+				"url": "https://openrouter.ai/api/v1/models/user",
+				"headers": {
+					"accept": "application/json",
+					"authorization": "Bearer k"
+				}
+			},
+			"error": "Invalid OpenRouter model list response"
+		},
+		{
+			"name": "array body",
+			"credential": {
+				"type": "api_key",
+				"key": "k"
+			},
+			"status": 200,
+			"body": "[]",
+			"request": {
+				"url": "https://openrouter.ai/api/v1/models/user",
+				"headers": {
+					"accept": "application/json",
+					"authorization": "Bearer k"
+				}
+			},
+			"error": "Invalid OpenRouter model list response"
+		},
+		{
+			"name": "empty list",
+			"credential": {
+				"type": "api_key",
+				"key": "k"
+			},
+			"status": 200,
+			"body": "{\"data\":[]}",
+			"request": {
+				"url": "https://openrouter.ai/api/v1/models/user",
+				"headers": {
+					"accept": "application/json",
+					"authorization": "Bearer k"
+				}
+			},
+			"result": [
+				{
+					"type": "image",
+					"id": "image",
+					"name": "image",
+					"api": "openrouter-images",
+					"provider": "openrouter",
+					"baseUrl": "https://openrouter.ai/api/v1",
+					"input": [
+						"text"
+					],
+					"output": [
+						"image"
+					],
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0
+					}
+				},
+				{
+					"type": "classifier",
+					"id": "classifier",
+					"name": "classifier",
+					"api": "typesafe-system-one",
+					"provider": "openrouter",
+					"baseUrl": "https://openrouter.ai/api/v1",
+					"input": [
+						"text"
+					],
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0
+					},
+					"contextWindow": 64000
+				}
+			]
+		}
+	]
+}

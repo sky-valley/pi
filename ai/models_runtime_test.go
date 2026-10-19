@@ -1846,3 +1846,53 @@ func TestModelsRefreshStopsWaitingOnSupersede(t *testing.T) {
 		t.Fatal("a superseded refresh must return without waiting for a stalled provider")
 	}
 }
+
+// baseURLOverride is a wrapper that applies a configured base URL outside the
+// provider it wraps — pi's `{ ...inner, baseUrl }`.
+type baseURLOverride struct {
+	Provider
+	baseURL string
+}
+
+func (o baseURLOverride) BaseURL() string { return o.baseURL }
+
+// TestModelsRefreshPassesRegisteredBaseURL mirrors pi "passes the registered
+// provider's base URL, including wrapper overrides, to refreshModels"
+// (upstream ee409a85f): a models.json baseUrl (e.g. a regional OpenRouter
+// host) is applied by a wrapper around the built-in provider, and the
+// built-in refresh must still request that URL — in both phases.
+func TestModelsRefreshPassesRegisteredBaseURL(t *testing.T) {
+	var baseURLs []string
+	inner := CreateProvider(CreateProviderOptions{
+		ID:      "dynamic",
+		BaseURL: "https://default.example.test/v1",
+		Auth:    ProviderAuth{APIKey: EnvAPIKeyAuth("dynamic", "K")},
+		FetchModels: func(_ context.Context, req RefreshModelsContext) ([]*Model, error) {
+			return nil, nil
+		},
+		API: stubAPI(),
+	})
+	recording := baseURLOverride{Provider: refreshRecorder{Provider: inner, seen: &baseURLs}, baseURL: "https://regional.example.test/v1"}
+	m := modelsWithEnv(map[string]string{"K": "key"}, nil)
+	m.SetProvider(recording)
+
+	if result := m.Refresh(context.Background(), nil); len(result.Errors) != 0 {
+		t.Fatalf("refresh errors: %v", result.Errors)
+	}
+	want := []string{"https://regional.example.test/v1", "https://regional.example.test/v1"}
+	if !reflect.DeepEqual(baseURLs, want) {
+		t.Fatalf("refresh contexts carried base URLs %q, want %q", baseURLs, want)
+	}
+}
+
+// refreshRecorder records the BaseURL of every refresh context its provider
+// is handed.
+type refreshRecorder struct {
+	Provider
+	seen *[]string
+}
+
+func (r refreshRecorder) RefreshModels(ctx context.Context, req RefreshModelsContext) error {
+	*r.seen = append(*r.seen, req.BaseURL)
+	return r.Provider.RefreshModels(ctx, req)
+}

@@ -122,6 +122,35 @@ func ToString(v any) (s string, ok bool) {
 	return "[object Object]", true
 }
 
+// ToFixed is Number.prototype.toFixed(fractionDigits) (ECMA-262): x's exact
+// binary value rounded to fractionDigits decimals, a tie going to the larger
+// magnitude, with the sign written apart from the digits — so -0 prints as
+// "0.000000" and a negative that rounds to zero keeps its "-". NaN, ±Infinity
+// and a magnitude of 1e21 or more print as String(x). strconv.FormatFloat is
+// not the same: it rounds a tie to even. fractionDigits must be 0-100.
+func ToFixed(x float64, fractionDigits int) string {
+	if math.IsNaN(x) || math.IsInf(x, 0) || math.Abs(x) >= 1e21 {
+		return NumberToString(x)
+	}
+	sign := ""
+	if x < 0 {
+		sign, x = "-", -x
+	}
+	scaled := new(big.Rat).SetFloat64(x)
+	scaled.Mul(scaled, new(big.Rat).SetInt(new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(fractionDigits)), nil)))
+	// n = floor(scaled + 1/2): the nearest integer, the larger one on a tie.
+	scaled.Add(scaled, big.NewRat(1, 2))
+	digits := new(big.Int).Quo(scaled.Num(), scaled.Denom()).String()
+	if fractionDigits == 0 {
+		return sign + digits
+	}
+	if len(digits) <= fractionDigits {
+		digits = strings.Repeat("0", fractionDigits+1-len(digits)) + digits
+	}
+	point := len(digits) - fractionDigits
+	return sign + digits[:point] + "." + digits[point:]
+}
+
 // StringToNumber is ECMA-262 StringToNumber, the Number(string) coercion: the
 // string trimmed of JavaScript whitespace, "" as 0, an unsigned 0x/0b/0o
 // integer of any size, "Infinity" with an optional sign, or a signed decimal

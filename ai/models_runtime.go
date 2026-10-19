@@ -70,6 +70,10 @@ type RefreshModelsContext struct {
 	// Force bypasses provider freshness checks and fetches immediately when
 	// network access is allowed (pi 97f9978f).
 	Force bool
+	// BaseURL is the base URL of the registered provider, including
+	// configuration overrides that wrappers apply outside the provider
+	// receiving this context (upstream ee409a85f). Empty is pi's undefined.
+	BaseURL string
 }
 
 // publish routes through Publish, reporting a resolvable error when a caller
@@ -1015,6 +1019,7 @@ func (m *modelsImpl) runProviderRefreshPhase(
 		},
 		AllowNetwork: allowNetwork,
 		Force:        force,
+		BaseURL:      p.BaseURL(),
 	})
 }
 
