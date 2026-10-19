@@ -627,6 +627,75 @@
 			]
 		},
 		{
+			"name": "modifiers-no-tools-all-remove-only",
+			"options": {
+				"tools": [
+					"-write"
+				],
+				"noTools": "all"
+			},
+			"customTools": [
+				"dynamic_tool"
+			],
+			"active": [],
+			"registered": []
+		},
+		{
+			"name": "modifiers-no-tools-all-remove-missing",
+			"options": {
+				"tools": [
+					"-x"
+				],
+				"noTools": "all"
+			},
+			"customTools": [
+				"dynamic_tool"
+			],
+			"active": [],
+			"registered": []
+		},
+		{
+			"name": "modifiers-no-tools-all-empty-names",
+			"options": {
+				"tools": [
+					"+",
+					"-"
+				],
+				"noTools": "all"
+			},
+			"customTools": [
+				"dynamic_tool"
+			],
+			"active": [],
+			"registered": []
+		},
+		{
+			"name": "modifiers-no-tools-builtin-remove-only",
+			"options": {
+				"tools": [
+					"-write"
+				],
+				"noTools": "builtin"
+			},
+			"customTools": [
+				"dynamic_tool"
+			],
+			"active": [
+				"dynamic_tool"
+			],
+			"registered": [
+				"read",
+				"bash",
+				"powershell",
+				"edit",
+				"write",
+				"grep",
+				"find",
+				"ls",
+				"dynamic_tool"
+			]
+		},
+		{
 			"name": "modifiers-remove-all",
 			"options": {
 				"tools": [

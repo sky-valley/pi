@@ -209,9 +209,11 @@ func toolListError(entries []string) string {
 
 // applyToolModifiers is pi's applyToolModifiers: the `+name` and `-name`
 // entries applied to base in order — `+name` adds a tool not yet there,
-// `-name` removes one. Other entries are ignored.
+// `-name` removes one. Other entries are ignored. The result is never nil,
+// as pi's is always an array: under NoTools "all" it is the allowlist, and
+// a nil one would allow everything.
 func applyToolModifiers(base, entries []string) []string {
-	tools := slices.Clone(base)
+	tools := append([]string{}, base...)
 	for _, entry := range entries {
 		if !isToolModifier(entry) {
 			continue

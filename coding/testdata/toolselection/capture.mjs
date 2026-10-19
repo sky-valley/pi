@@ -120,6 +120,12 @@ const sessions = [
 	{ name: "modifiers-add-custom", tools: ["+dynamic_tool", "-bash"], customTools: ["dynamic_tool", "other_tool"] },
 	{ name: "modifiers-no-tools-all", tools: ["+grep", "-write"], noTools: "all", customTools: ["dynamic_tool"] },
 	{ name: "modifiers-no-tools-builtin", tools: ["+grep"], noTools: "builtin", customTools: ["dynamic_tool"] },
+	// Modifier lists that add nothing to an empty selection: the allowlist is
+	// empty, not absent.
+	{ name: "modifiers-no-tools-all-remove-only", tools: ["-write"], noTools: "all", customTools: ["dynamic_tool"] },
+	{ name: "modifiers-no-tools-all-remove-missing", tools: ["-x"], noTools: "all", customTools: ["dynamic_tool"] },
+	{ name: "modifiers-no-tools-all-empty-names", tools: ["+", "-"], noTools: "all", customTools: ["dynamic_tool"] },
+	{ name: "modifiers-no-tools-builtin-remove-only", tools: ["-write"], noTools: "builtin", customTools: ["dynamic_tool"] },
 	{ name: "modifiers-remove-all", tools: ["-read", "-bash", "-edit", "-write"], customTools: ["dynamic_tool"] },
 	{ name: "modifiers-excluded", tools: ["+grep", "+ls"], excludeTools: ["g*"] },
 	{ name: "modifiers-empty-names", tools: ["+", "-"] },
