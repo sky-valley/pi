@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/sky-valley/pi/internal/jstext"
+	"github.com/sky-valley/pi/telemetry"
 )
 
 // Models runtime ported from pi packages/ai/src/models.ts (732bb161; facade
@@ -21,7 +22,9 @@ import (
 // (async). The Go port keeps its existing contract (G3, stream.go): resolution
 // runs synchronously and failures are encoded as a terminal stream error, so
 // applyAuth runs inline and errors flow through a streamSetup started before
-// it, which stamps and times them as lazyStream does.
+// it, which stamps and times them as lazyStream does; on success the
+// provider's stream is forwarded through it, as lazyStream forwards, and the
+// request's telemetry observes that forwarding (telemetry.go).
 
 // ProviderStreams binds an API's stream implementations (pi ProviderStreams).
 // FetchDeferred and CancelDeferred are nil unless the api supports deferred
@@ -1525,7 +1528,11 @@ func (m *modelsImpl) applyAuth(
 
 func (m *modelsImpl) Stream(ctx context.Context, model *Model, req Context, opts *ModelsStreamOptions) *AssistantMessageEventStream {
 	transcript := NormalizeContext(req)
-	setup := startStreamSetup()
+	var parent telemetry.Span
+	if opts != nil {
+		parent = opts.Telemetry
+	}
+	setup := startStreamSetup(observeModelRequest(model, parent, "", false))
 	if err := AssertChatModel(model); err != nil {
 		return setup.fail(model, err)
 	}
@@ -1548,7 +1555,7 @@ func (m *modelsImpl) Stream(ctx context.Context, model *Model, req Context, opts
 		stream = opts.StreamOptions
 	}
 	stream.ProviderRequestOptions = *requestOptions
-	return p.Stream(ctx, requestModel, transcript, &stream)
+	return setup.forward(p.Stream(ctx, requestModel, transcript, &stream))
 }
 
 func (m *modelsImpl) Complete(ctx context.Context, model *Model, req Context, opts *ModelsStreamOptions) *AssistantMessage {
@@ -1557,7 +1564,12 @@ func (m *modelsImpl) Complete(ctx context.Context, model *Model, req Context, op
 
 func (m *modelsImpl) StreamSimple(ctx context.Context, model *Model, req Context, opts *ModelsSimpleStreamOptions) *AssistantMessageEventStream {
 	transcript := NormalizeContext(req)
-	setup := startStreamSetup()
+	var parent telemetry.Span
+	var reasoning ThinkingLevel
+	if opts != nil {
+		parent, reasoning = opts.Telemetry, opts.Reasoning
+	}
+	setup := startStreamSetup(observeModelRequest(model, parent, reasoning, false))
 	if err := AssertChatModel(model); err != nil {
 		return setup.fail(model, err)
 	}
@@ -1580,7 +1592,7 @@ func (m *modelsImpl) StreamSimple(ctx context.Context, model *Model, req Context
 		simple = opts.SimpleStreamOptions
 	}
 	simple.ProviderRequestOptions = *requestOptions
-	return p.StreamSimple(ctx, requestModel, transcript, &simple)
+	return setup.forward(p.StreamSimple(ctx, requestModel, transcript, &simple))
 }
 
 func (m *modelsImpl) CompleteSimple(ctx context.Context, model *Model, req Context, opts *ModelsSimpleStreamOptions) *AssistantMessage {
@@ -1588,7 +1600,11 @@ func (m *modelsImpl) CompleteSimple(ctx context.Context, model *Model, req Conte
 }
 
 func (m *modelsImpl) StreamDeferred(ctx context.Context, model *Model, handle DeferredHandle, opts *ModelsDeferredFetchOptions) *AssistantMessageEventStream {
-	setup := startStreamSetup()
+	var parent telemetry.Span
+	if opts != nil {
+		parent = opts.Telemetry
+	}
+	setup := startStreamSetup(observeModelRequest(model, parent, "", true))
 	if err := AssertChatModel(model); err != nil {
 		return setup.fail(model, err)
 	}
@@ -1612,7 +1628,7 @@ func (m *modelsImpl) StreamDeferred(ctx context.Context, model *Model, handle De
 		deferredOptions = opts.DeferredFetchOptions
 	}
 	deferredOptions.ProviderRequestOptions = *requestOptions
-	return fetcher.FetchDeferred(ctx, requestModel, handle, &deferredOptions)
+	return setup.forward(fetcher.FetchDeferred(ctx, requestModel, handle, &deferredOptions))
 }
 
 // FetchDeferred is pi's `streamDeferred(...).result()` (upstream b37834b69) —

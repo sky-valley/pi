@@ -140,32 +140,76 @@ func CompleteSimple(ctx context.Context, model *Model, req Context, opts *Simple
 // created, as pi's lazyStream stamps a setup error (3ba22ce17), so the stream
 // times it only when both readings fall in the same millisecond.
 func ErrorStream(model *Model, err error) *AssistantMessageEventStream {
-	return startStreamSetup().fail(model, err)
+	return startStreamSetup(nil).fail(model, err)
 }
 
 // streamSetup is pi's lazyStream around setup the port runs inline before it
-// hands back a provider's stream: the call's start is read and the stream
+// hands over a provider's stream: the call's start is read and the stream
 // created BEFORE setup runs, so a setup failure is stamped at the call's start
 // and timed across the setup — a slow credential resolution or OAuth refresh
-// that then fails reads as the long failure it was. On success the provider's
-// own stream is returned and this one is dropped, as pi's forwarding stream
+// that then fails reads as the long failure it was. On success the
+// provider's stream is forwarded into this one (pi forwardStream), which
 // keeps the inner stream's timing.
+//
+// observer, when set, sees each event the stream delivers and then its
+// result, once.
 type streamSetup struct {
 	startedAt int64
 	stream    *AssistantMessageEventStream
+	observer  streamObserver
+}
+
+// streamObserver is a synchronous, read-only view of a streamSetup's
+// delivery (pi LazyStreamObserver, upstream 2ec55d808): onEvent sees each
+// event right after the stream delivered it, and onResult sees the result —
+// nil when there is none — after the stream ended.
+type streamObserver interface {
+	onEvent(event AssistantMessageEvent)
+	onResult(result *AssistantMessage)
 }
 
 // startStreamSetup reads the call's start, then creates the stream.
-func startStreamSetup() streamSetup {
+func startStreamSetup(observer streamObserver) streamSetup {
 	startedAt := nowMillis()
-	return streamSetup{startedAt: startedAt, stream: NewAssistantMessageEventStream()}
+	return streamSetup{startedAt: startedAt, stream: NewAssistantMessageEventStream(), observer: observer}
 }
 
 // fail ends the setup's stream with err (pi createSetupErrorMessage).
 func (s streamSetup) fail(model *Model, err error) *AssistantMessageEventStream {
 	msg := NewErrorMessage(model.Api, model.Provider, model.ID, StopError, err.Error())
 	msg.Timestamp = s.startedAt
-	s.stream.Push(AssistantMessageEvent{Type: EventError, Reason: StopError, Error: msg})
+	event := AssistantMessageEvent{Type: EventError, Reason: StopError, Error: msg}
+	s.stream.Push(event)
+	if s.observer != nil {
+		s.observer.onEvent(event)
+	}
 	s.stream.End()
+	if s.observer != nil {
+		s.observer.onResult(msg)
+	}
+	return s.stream
+}
+
+// forward delivers inner's events through the setup's stream, then ends it
+// with inner's result (pi forwardStream). The observer sees each event after
+// it was delivered and the result after the stream ended.
+func (s streamSetup) forward(inner *AssistantMessageEventStream) *AssistantMessageEventStream {
+	go func() {
+		for event := range inner.Events() {
+			s.stream.Push(event)
+			if s.observer != nil {
+				s.observer.onEvent(event)
+			}
+		}
+		result := inner.Result()
+		if result != nil {
+			s.stream.End(result)
+		} else {
+			s.stream.End()
+		}
+		if s.observer != nil {
+			s.observer.onResult(result)
+		}
+	}()
 	return s.stream
 }
