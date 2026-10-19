@@ -235,14 +235,17 @@ func LoadProjectContextFiles(cwd string) []ContextFile {
 	}
 
 	// A nested linked worktree's context file shadows the main repo's copy of
-	// the same tracked file; skip the shadowed one (pi cced6a21).
+	// the same tracked file; skip the shadowed one (pi cced6a21). The check
+	// compares the walked directory's real path plus the file name, not the
+	// file's real path: a worktree AGENTS.md that symlinks to the main repo's
+	// file resolves to the shadowed path itself (upstream f1b2e77f5).
 	shadowed, hasShadowed := findShadowedContextFile(cwd)
 
 	var ancestors []ContextFile
 	current := cwd
 	for {
 		if cf, ok := loadContextFileFromDir(current); ok &&
-			!(hasShadowed && canonicalizePath(cf.Path) == shadowed) &&
+			!(hasShadowed && filepath.Join(canonicalizePath(current), filepath.Base(cf.Path)) == shadowed) &&
 			!seen[cf.Path] {
 			ancestors = append([]ContextFile{cf}, ancestors...)
 			seen[cf.Path] = true

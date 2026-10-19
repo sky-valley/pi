@@ -282,3 +282,40 @@ func TestWorktreeShadowFollowsTheLoadableCandidate(t *testing.T) {
 	assertContents(t, contextContents(LoadProjectContextFiles(worktreeSrc)),
 		"main agents", "worktree claude")
 }
+
+func contextPaths(files []ContextFile) []string {
+	out := make([]string, 0, len(files))
+	for _, f := range files {
+		out = append(out, f.Path)
+	}
+	return out
+}
+
+// resource-loader.test.ts at f1b2e77f5 (#10681): the shadow check compares the
+// walked directory's real path plus the file name, not the file's real path,
+// so a worktree AGENTS.md symlinked to the main repo's copy is the worktree's
+// own and is loaded once.
+func TestWorktreeLoadsContextSymlinkedToTheMainRepo(t *testing.T) {
+	t.Run("the worktree's file links to the main repo's", func(t *testing.T) {
+		isolatedHome(t)
+		_, main, worktree, worktreeSrc := nestedWorktree(t)
+		writeFile(t, filepath.Join(main, "AGENTS.md"), "main repo instructions")
+		if err := os.Symlink(filepath.Join(main, "AGENTS.md"), filepath.Join(worktree, "AGENTS.md")); err != nil {
+			t.Skipf("symlinks unavailable: %v", err)
+		}
+		assertContents(t, contextPaths(LoadProjectContextFiles(worktreeSrc)), filepath.Join(worktree, "AGENTS.md"))
+	})
+	t.Run("both link to one shared file", func(t *testing.T) {
+		isolatedHome(t)
+		outer, main, worktree, worktreeSrc := nestedWorktree(t)
+		shared := filepath.Join(outer, "shared-agents.md")
+		writeFile(t, shared, "shared instructions")
+		if err := os.Symlink(shared, filepath.Join(main, "AGENTS.md")); err != nil {
+			t.Skipf("symlinks unavailable: %v", err)
+		}
+		if err := os.Symlink(shared, filepath.Join(worktree, "AGENTS.md")); err != nil {
+			t.Fatal(err)
+		}
+		assertContents(t, contextPaths(LoadProjectContextFiles(worktreeSrc)), filepath.Join(worktree, "AGENTS.md"))
+	})
+}
