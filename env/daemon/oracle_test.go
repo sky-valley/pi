@@ -81,10 +81,11 @@ func startDaemon(t *testing.T, binary string, env ...string) *daemonSession {
 	return startDaemonWith(t, exec.Command(binary, "serve", "--token", "0123abcd"), env...)
 }
 
-// startDaemonIgnoring starts the daemon with signals ignored, as nohup or a
-// parent may start it.
-func startDaemonIgnoring(t *testing.T, binary string, signals string, env ...string) *daemonSession {
-	return startDaemonWith(t, exec.Command("/bin/sh", "-c", `trap '' `+signals+`; exec "$0" serve --token 0123abcd`, binary), env...)
+// startDaemonPrepared starts the daemon from python3 after setup, Python
+// statements that ignore or block signals as nohup or a parent may.
+func startDaemonPrepared(t *testing.T, binary string, setup string, env ...string) *daemonSession {
+	script := "import os, signal, sys\n" + setup + "\nos.execv(sys.argv[1], [sys.argv[1], 'serve', '--token', '0123abcd'])"
+	return startDaemonWith(t, exec.Command("/usr/bin/python3", "-I", "-c", script, binary), env...)
 }
 
 func startDaemonWith(t *testing.T, cmd *exec.Cmd, env ...string) *daemonSession {
@@ -262,10 +263,11 @@ type scenario struct {
 	name string
 	// skip is a reason to skip the scenario on this system, or "".
 	skip func() string
-	// ignoreSignals are signals the daemon is started ignoring.
-	ignoreSignals string
-	run           func(r *recorder)
-	clean         []func(string) string
+	// launch, when set, is Python run before the daemon starts in its process
+	// (startDaemonPrepared).
+	launch string
+	run    func(r *recorder)
+	clean  []func(string) string
 }
 
 func goldenPath() string {
@@ -319,9 +321,9 @@ func TestOracle(t *testing.T) {
 			}
 			env = append(env, "HOME="+filepath.Join(root, "home"), "GIT_CONFIG_GLOBAL="+filepath.Join(root, "gitconfig"), "GIT_CONFIG_SYSTEM="+os.DevNull)
 			session := startDaemon
-			if sc.ignoreSignals != "" {
+			if sc.launch != "" {
 				session = func(t *testing.T, binary string, env ...string) *daemonSession {
-					return startDaemonIgnoring(t, binary, sc.ignoreSignals, env...)
+					return startDaemonPrepared(t, binary, sc.launch, env...)
 				}
 			}
 			r := &recorder{daemonSession: session(t, binary, env...), root: root}

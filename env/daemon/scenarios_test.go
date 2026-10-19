@@ -448,16 +448,19 @@ func scenarios() []scenario {
 			},
 		},
 		{
-			// Children get the default disposition of every signal, also of those
-			// the daemon was started ignoring (libuv resets them all).
-			name:          "signals",
-			ignoreSignals: "HUP INT TERM USR1 TSTP TTIN TTOU",
+			// Children get the default disposition of every signal and an empty
+			// signal mask, also when the daemon was started ignoring or blocking
+			// signals (libuv resets them all).
+			name: "signals",
+			launch: "for s in (signal.SIGHUP, signal.SIGINT, signal.SIGTERM, signal.SIGUSR1, signal.SIGTSTP, signal.SIGTTIN, signal.SIGTTOU):\n" +
+				"    signal.signal(s, signal.SIG_IGN)\n" +
+				"signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGUSR2, signal.SIGWINCH, signal.SIGALRM})",
 			skip: func() string {
 				if reason := unixOnly(); reason != "" {
 					return reason
 				}
 				if _, err := os.Stat("/usr/bin/python3"); err != nil {
-					return "needs /usr/bin/python3 to report a child's dispositions"
+					return "needs /usr/bin/python3 to start the daemon and report a child's dispositions"
 				}
 				return ""
 			},

@@ -2,6 +2,7 @@ package daemon
 
 import (
 	"os"
+	"runtime"
 	"strings"
 	"sync"
 	"unsafe"
@@ -20,11 +21,18 @@ const defaultPath = "/usr/bin:/bin"
 // through FSEvents; fsnotify watches through kqueue, which is not recursive.
 const watchPerDirectory = true
 
-// startWithEmptySignalMask starts a process. libuv and the Rust daemon give
-// the child an empty signal mask; x/sys/unix has no pthread_sigmask for macOS,
-// so here the child keeps the mask of the thread that forks it, which is the
-// daemon's inherited mask less what Go unblocks (usually empty).
+// startWithEmptySignalMask starts a process whose signal mask is empty, as
+// libuv and the Rust daemon set it: the forked child takes the mask of the
+// thread that forks it, which __pthread_sigmask(2) clears for the moment (x/sys
+// has no pthread_sigmask for macOS).
 func startWithEmptySignalMask(program string, argv []string, attr *os.ProcAttr) (*os.Process, error) {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+	const sigSetmask = 3 // SIG_SETMASK
+	var empty, previous uint32
+	if _, _, errno := unix.RawSyscall(unix.SYS___PTHREAD_SIGMASK, sigSetmask, uintptr(unsafe.Pointer(&empty)), uintptr(unsafe.Pointer(&previous))); errno == 0 {
+		defer unix.RawSyscall(unix.SYS___PTHREAD_SIGMASK, sigSetmask, uintptr(unsafe.Pointer(&previous)), 0)
+	}
 	return os.StartProcess(program, argv, attr)
 }
 
