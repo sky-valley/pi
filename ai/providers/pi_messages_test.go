@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 
@@ -510,5 +511,69 @@ func TestPiMessagesHeadersTimeoutFailsFetch(t *testing.T) {
 	events, final := drain(streamAbortAdapter(t, context.Background(), string(ai.APIPiMessages), server.URL, opts))
 	if fmt.Sprint(events) != "[error]" || final.StopReason != ai.StopError || final.ErrorMessage != "fetch failed" {
 		t.Fatalf("stream %v, stop %s %q; pi: [error], error \"fetch failed\"", events, final.StopReason, final.ErrorMessage)
+	}
+}
+
+// piMessagesArgumentsErrorCaptureFile is what
+// testdata/pi-messages/capture-pi-messages-arguments-error.mjs recorded from
+// pi-ai 1.3.0.
+const piMessagesArgumentsErrorCaptureFile = "testdata/pi-messages/pi-messages-arguments-error-1.3.0.json"
+
+// toolcall_end is pi's Object.assign(block, event.toolCall): every key of the
+// gateway's tool call lands on the block, argumentsError (upstream 87f9a3641)
+// included, so arguments the gateway could not parse fail validation on the
+// client — `Invalid arguments for tool "read": …` — instead of running the
+// tool with {}. A falsy one validates as absent; a truthy non-string is
+// written as JavaScript's template literal writes it.
+func TestPiMessagesToolCallKeepsArgumentsErrorLikePi(t *testing.T) {
+	data, err := os.ReadFile(piMessagesArgumentsErrorCaptureFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var capture struct {
+		Rows []struct {
+			Name       string `json:"name"`
+			Body       string `json:"body"`
+			StopReason string `json:"stopReason"`
+			ToolCall   struct {
+				ArgumentsError json.RawMessage `json:"argumentsError"`
+			} `json:"toolCall"`
+			Validation *string `json:"validation"`
+		} `json:"rows"`
+	}
+	if err := json.Unmarshal(data, &capture); err != nil {
+		t.Fatalf("%s: %v; rerun the capture", piMessagesArgumentsErrorCaptureFile, err)
+	}
+	if len(capture.Rows) == 0 {
+		t.Fatalf("%s holds no rows; rerun the capture", piMessagesArgumentsErrorCaptureFile)
+	}
+	tool := ai.Tool{Name: "read", Description: "read", Parameters: ai.Object(ai.Opt("path", ai.String()))}
+	for _, row := range capture.Rows {
+		t.Run(row.Name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "text/event-stream")
+				io.WriteString(w, row.Body)
+			}))
+			defer server.Close()
+			opts := &PiMessagesOptions{StreamOptions: ai.StreamOptions{ProviderRequestOptions: ai.ProviderRequestOptions{APIKey: "k"}}}
+			final := StreamPiMessages(t.Context(), piMessagesTestModel(server.URL+"/v1"), ai.NormalizeContext(ai.Context{Messages: []ai.Message{ai.NewUserText("hi", 0)}}), opts).Result()
+			if string(final.StopReason) != row.StopReason || len(final.Content) != 1 {
+				t.Fatalf("stream ended %s (%q) with %d blocks; pi %s", final.StopReason, final.ErrorMessage, len(final.Content), row.StopReason)
+			}
+			tc, ok := final.Content[0].(ai.ToolCall)
+			if !ok {
+				t.Fatalf("block is %T, want a tool call", final.Content[0])
+			}
+			if want, isString := rawString(row.ToolCall.ArgumentsError); isString && tc.ArgumentsError != want {
+				t.Errorf("argumentsError %q, pi %q", tc.ArgumentsError, want)
+			}
+			_, verr := ai.ValidateToolArguments(tool, tc)
+			switch {
+			case row.Validation == nil && verr != nil:
+				t.Errorf("validation failed (%v); pi's passes", verr)
+			case row.Validation != nil && (verr == nil || verr.Error() != *row.Validation):
+				t.Errorf("validation = %v, pi's = %q", verr, *row.Validation)
+			}
+		})
 	}
 }

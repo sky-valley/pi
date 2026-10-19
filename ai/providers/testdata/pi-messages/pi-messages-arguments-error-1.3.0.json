@@ -1,0 +1,69 @@
+{
+	"piAi": "1.3.0",
+	"rows": [
+		{
+			"name": "string argumentsError",
+			"body": "data: {\"type\":\"start\"}\n\ndata: {\"type\":\"toolcall_start\",\"contentIndex\":0,\"id\":\"call_1\",\"toolName\":\"read\"}\n\ndata: {\"type\":\"toolcall_delta\",\"contentIndex\":0,\"delta\":\"{\\\"path\\\":\"}\n\ndata: {\"type\":\"toolcall_end\",\"contentIndex\":0,\"toolCall\":{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"read\",\"arguments\":{},\"argumentsError\":\"Unexpected end of JSON input\\n\\nReceived arguments:\\n{\\\"path\\\":\"}}\n\ndata: {\"type\":\"done\",\"reason\":\"toolUse\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}}}\n\n",
+			"stopReason": "toolUse",
+			"toolCall": {
+				"type": "toolCall",
+				"id": "call_1",
+				"name": "read",
+				"arguments": {},
+				"argumentsError": "Unexpected end of JSON input\n\nReceived arguments:\n{\"path\":"
+			},
+			"validation": "Invalid arguments for tool \"read\": Unexpected end of JSON input\n\nReceived arguments:\n{\"path\":"
+		},
+		{
+			"name": "no argumentsError",
+			"body": "data: {\"type\":\"start\"}\n\ndata: {\"type\":\"toolcall_start\",\"contentIndex\":0,\"id\":\"call_1\",\"toolName\":\"read\"}\n\ndata: {\"type\":\"toolcall_delta\",\"contentIndex\":0,\"delta\":\"{\\\"path\\\":\"}\n\ndata: {\"type\":\"toolcall_end\",\"contentIndex\":0,\"toolCall\":{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"read\",\"arguments\":{}}}\n\ndata: {\"type\":\"done\",\"reason\":\"toolUse\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}}}\n\n",
+			"stopReason": "toolUse",
+			"toolCall": {
+				"type": "toolCall",
+				"id": "call_1",
+				"name": "read",
+				"arguments": {}
+			},
+			"validation": null
+		},
+		{
+			"name": "null argumentsError",
+			"body": "data: {\"type\":\"start\"}\n\ndata: {\"type\":\"toolcall_start\",\"contentIndex\":0,\"id\":\"call_1\",\"toolName\":\"read\"}\n\ndata: {\"type\":\"toolcall_delta\",\"contentIndex\":0,\"delta\":\"{\\\"path\\\":\"}\n\ndata: {\"type\":\"toolcall_end\",\"contentIndex\":0,\"toolCall\":{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"read\",\"arguments\":{},\"argumentsError\":null}}\n\ndata: {\"type\":\"done\",\"reason\":\"toolUse\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}}}\n\n",
+			"stopReason": "toolUse",
+			"toolCall": {
+				"type": "toolCall",
+				"id": "call_1",
+				"name": "read",
+				"arguments": {},
+				"argumentsError": null
+			},
+			"validation": null
+		},
+		{
+			"name": "empty argumentsError",
+			"body": "data: {\"type\":\"start\"}\n\ndata: {\"type\":\"toolcall_start\",\"contentIndex\":0,\"id\":\"call_1\",\"toolName\":\"read\"}\n\ndata: {\"type\":\"toolcall_delta\",\"contentIndex\":0,\"delta\":\"{\\\"path\\\":\"}\n\ndata: {\"type\":\"toolcall_end\",\"contentIndex\":0,\"toolCall\":{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"read\",\"arguments\":{},\"argumentsError\":\"\"}}\n\ndata: {\"type\":\"done\",\"reason\":\"toolUse\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}}}\n\n",
+			"stopReason": "toolUse",
+			"toolCall": {
+				"type": "toolCall",
+				"id": "call_1",
+				"name": "read",
+				"arguments": {},
+				"argumentsError": ""
+			},
+			"validation": null
+		},
+		{
+			"name": "number argumentsError",
+			"body": "data: {\"type\":\"start\"}\n\ndata: {\"type\":\"toolcall_start\",\"contentIndex\":0,\"id\":\"call_1\",\"toolName\":\"read\"}\n\ndata: {\"type\":\"toolcall_delta\",\"contentIndex\":0,\"delta\":\"{\\\"path\\\":\"}\n\ndata: {\"type\":\"toolcall_end\",\"contentIndex\":0,\"toolCall\":{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"read\",\"arguments\":{},\"argumentsError\":5}}\n\ndata: {\"type\":\"done\",\"reason\":\"toolUse\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}}}\n\n",
+			"stopReason": "toolUse",
+			"toolCall": {
+				"type": "toolCall",
+				"id": "call_1",
+				"name": "read",
+				"arguments": {},
+				"argumentsError": 5
+			},
+			"validation": "Invalid arguments for tool \"read\": 5"
+		}
+	]
+}

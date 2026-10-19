@@ -468,6 +468,13 @@ var errAssignToUndefined = errors.New("Cannot convert undefined or null to objec
 // cannot mix, so a text or thinking block becomes a tool call when the toolCall
 // says `"type":"toolCall"`, and stays as it is otherwise. A member Go cannot
 // hold in its field (a non-string id) is left as it was.
+//
+// argumentsError (upstream 87f9a3641) is assigned too, so a gateway's report of
+// malformed final arguments fails validation here as it would have there. pi's
+// validation reads it as `if (toolCall.argumentsError)` and writes it with a
+// template literal, so a falsy one is held as "" (absent) and a truthy
+// non-string as its JavaScript string; one with no string form is left as it
+// was.
 func assignPiMessagesToolCall(block ai.Content, raw json.RawMessage) ai.Content {
 	o := rawOptional(raw)
 	if o == nil {
@@ -498,6 +505,13 @@ func assignPiMessagesToolCall(block ai.Content, raw json.RawMessage) ai.Content 
 	}
 	if s, ok := rawString(o["namespace"]); ok {
 		tc.Namespace = s
+	}
+	if raw, present := o["argumentsError"]; present {
+		if !rawTruthy(raw) {
+			tc.ArgumentsError = ""
+		} else if s, err := rawToString(raw); err == nil {
+			tc.ArgumentsError = s
+		}
 	}
 	return tc
 }
