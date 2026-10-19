@@ -1101,7 +1101,12 @@ func StreamSimplePiMessages(ctx context.Context, model *ai.Model, req ai.Transcr
 
 // RegisterPiMessages registers the pi-messages api provider.
 func RegisterPiMessages() {
-	ai.RegisterApiProvider(ai.ApiProvider{
+	ai.RegisterApiProvider(piMessagesApiProvider())
+}
+
+// piMessagesApiProvider is the pi-messages api's built-in implementation.
+func piMessagesApiProvider() ai.ApiProvider {
+	return ai.ApiProvider{
 		Api: ai.APIPiMessages,
 		Stream: func(ctx context.Context, model *ai.Model, req ai.TranscriptContext, opts *ai.StreamOptions) *ai.AssistantMessageEventStream {
 			p := &PiMessagesOptions{}
@@ -1111,5 +1116,5 @@ func RegisterPiMessages() {
 			return StreamPiMessages(ctx, model, req, p)
 		},
 		StreamSimple: StreamSimplePiMessages,
-	})
+	}
 }

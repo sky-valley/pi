@@ -3,9 +3,7 @@ package ai
 import (
 	"context"
 	"fmt"
-	"slices"
 	"strings"
-	"sync"
 
 	"github.com/sky-valley/pi/internal/jstext"
 )
@@ -91,33 +89,6 @@ func resolveProvider(api Api) (ApiProvider, error) {
 	return p, nil
 }
 
-// compatRuntime is compat.ts's module state: compatModels, the built-in
-// providers as a Models runtime with no stored credentials, and the api
-// registrations it streams through (builtinApiProviderInstances). It is built
-// on first use; pi builds it when compat loads.
-type compatRuntime struct {
-	models        MutableModels
-	registrations map[Api]uint64
-}
-
-var compat = sync.OnceValue(func() compatRuntime {
-	registrations := registrations()
-	return compatRuntime{models: BuiltinModels(), registrations: registrations}
-})
-
-// serves is compat.ts getBuiltinProviderForModel's test: the registry still
-// holds the api implementation compatModels was built from, and the built-in
-// provider of model's name has a model on its api.
-func (c compatRuntime) serves(model *Model) bool {
-	current, registered := registration(model.Api)
-	built, wasRegistered := c.registrations[model.Api]
-	if registered != wasRegistered || current != built {
-		return false
-	}
-	provider := c.models.GetProvider(model.Provider)
-	return provider != nil && slices.ContainsFunc(provider.GetModels(), func(m *Model) bool { return m.Api == model.Api })
-}
-
 // routesThroughModels is compat.ts's Cloudflare branch: a built-in
 // cloudflare-* model without a resolved key (an explicit API key or a
 // cf-aig-authorization header) streams through compatModels, whose
@@ -133,7 +104,7 @@ func routesThroughModels(model *Model, opts *StreamOptions) bool {
 			return false
 		}
 	}
-	return compat().serves(model)
+	return builtinProviderFor(model) != nil
 }
 
 // Stream streams an assistant response using provider-native options.
@@ -158,7 +129,7 @@ func Stream(ctx context.Context, model *Model, req Context, opts *StreamOptions)
 		if opts != nil {
 			options = &ModelsStreamOptions{StreamOptions: *opts}
 		}
-		return compat().models.Stream(ctx, model, req, options)
+		return compatModels().Stream(ctx, model, req, options)
 	}
 	transcript := NormalizeContext(req)
 	p, err := resolveProvider(model.Api)
@@ -186,7 +157,7 @@ func StreamSimple(ctx context.Context, model *Model, req Context, opts *SimpleSt
 		if opts != nil {
 			options = &ModelsSimpleStreamOptions{SimpleStreamOptions: *opts}
 		}
-		return compat().models.StreamSimple(ctx, model, req, options)
+		return compatModels().StreamSimple(ctx, model, req, options)
 	}
 	transcript := NormalizeContext(req)
 	p, err := resolveProvider(model.Api)

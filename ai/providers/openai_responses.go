@@ -1887,7 +1887,12 @@ func iterateOpenAISSE2(body io.Reader, ctx context.Context, onEvent func(any) er
 
 // RegisterOpenAIResponses registers the openai-responses api provider.
 func RegisterOpenAIResponses() {
-	ai.RegisterApiProvider(ai.ApiProvider{
+	ai.RegisterApiProvider(openAIResponsesApiProvider())
+}
+
+// openAIResponsesApiProvider is the openai-responses api's built-in implementation.
+func openAIResponsesApiProvider() ai.ApiProvider {
+	return ai.ApiProvider{
 		Api: ai.APIOpenAIResponses,
 		Stream: func(ctx context.Context, model *ai.Model, req ai.TranscriptContext, opts *ai.StreamOptions) *ai.AssistantMessageEventStream {
 			o := &OpenAIResponsesOptions{}
@@ -1897,5 +1902,5 @@ func RegisterOpenAIResponses() {
 			return StreamOpenAIResponses(ctx, model, req, o)
 		},
 		StreamSimple: StreamSimpleOpenAIResponses,
-	})
+	}
 }

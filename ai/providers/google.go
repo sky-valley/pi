@@ -1861,7 +1861,12 @@ func (d *codedBody) fail(n int, err error) (int, error) {
 
 // RegisterGoogle registers the google-generative-ai api provider.
 func RegisterGoogle() {
-	ai.RegisterApiProvider(ai.ApiProvider{
+	ai.RegisterApiProvider(googleApiProvider())
+}
+
+// googleApiProvider is the google-generative-ai api's built-in implementation.
+func googleApiProvider() ai.ApiProvider {
+	return ai.ApiProvider{
 		Api: ai.APIGoogleGenerativeAI,
 		Stream: func(ctx context.Context, model *ai.Model, req ai.TranscriptContext, opts *ai.StreamOptions) *ai.AssistantMessageEventStream {
 			g := &GoogleOptions{}
@@ -1871,5 +1876,5 @@ func RegisterGoogle() {
 			return StreamGoogle(ctx, model, req, g)
 		},
 		StreamSimple: StreamSimpleGoogle,
-	})
+	}
 }

@@ -2818,7 +2818,12 @@ func flattenHeaders(h http.Header) map[string]string {
 
 // RegisterAnthropic registers the anthropic-messages api provider.
 func RegisterAnthropic() {
-	ai.RegisterApiProvider(ai.ApiProvider{
+	ai.RegisterApiProvider(anthropicApiProvider())
+}
+
+// anthropicApiProvider is the anthropic-messages api's built-in implementation.
+func anthropicApiProvider() ai.ApiProvider {
+	return ai.ApiProvider{
 		Api: ai.APIAnthropicMessages,
 		Stream: func(ctx context.Context, model *ai.Model, req ai.TranscriptContext, opts *ai.StreamOptions) *ai.AssistantMessageEventStream {
 			aopts := &AnthropicOptions{}
@@ -2828,5 +2833,5 @@ func RegisterAnthropic() {
 			return StreamAnthropic(ctx, model, req, aopts)
 		},
 		StreamSimple: StreamSimpleAnthropic,
-	})
+	}
 }

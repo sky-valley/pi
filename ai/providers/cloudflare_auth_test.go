@@ -388,6 +388,10 @@ func describeCloudflareOutcome(row cloudflareOutcome) string {
 // still take the adapters' inline Cloudflare path (docs/UPSTREAM.md
 // 2026-06-24 item 2) and are not compared here.
 func TestCloudflareRequestsMatchPi(t *testing.T) {
+	// Record the registry's api implementations as the built-ins, as pi's
+	// compat has them after it loads: other tests in this package register
+	// implementations of their own (TestAnthropicRegisterAndStreamSimple).
+	RegisterBuiltins()
 	capture := loadCloudflareAuthCapture(t)
 	mismatches := 0
 	for _, want := range capture.Stream {

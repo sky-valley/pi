@@ -959,7 +959,8 @@ func TestCompatCloudflareResolvedOrOverriddenStreamsDirect(t *testing.T) {
 		}
 	}
 
-	compat() // built before the override below, as pi's is at load
+	// The built-ins were recorded without one (package ai registers none), so
+	// an implementation registered for the api now is an override.
 	RegisterApiProvider(ApiProvider{
 		Api: model.Api,
 		Stream: func(context.Context, *Model, TranscriptContext, *StreamOptions) *AssistantMessageEventStream {

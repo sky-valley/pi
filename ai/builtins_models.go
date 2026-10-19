@@ -6,13 +6,14 @@ import (
 )
 
 // BuiltinModels constructs a Models collection from the embedded catalog,
-// wiring each provider's models, ProviderAuth, and registered ApiProvider
-// stream implementations into the runtime Provider/Models object-model (pi
-// builtinModels over createModels/createProvider). Stream implementations come
-// from the global ApiProvider registry, which the ai/providers package
-// populates on import; a host that imports ai/providers gets fully streamable
-// providers, otherwise GetAuth/GetModels still work and unwired apis error on
-// stream (matching unported apis).
+// wiring each provider's models, ProviderAuth, and built-in api
+// implementations into the runtime Provider/Models object-model (pi
+// builtinModels over createModels/createProvider). The implementations are the
+// ones the ai/providers package hands over on import
+// (RegisterBuiltInApiProviders) — like pi's, whatever the ApiProvider registry
+// holds; a host that imports ai/providers gets fully streamable providers,
+// otherwise GetAuth/GetModels still work and unwired apis error on stream
+// (matching unported apis).
 //
 // The pre-existing global free functions (Stream/GetModel/GetEnvApiKey, …)
 // remain the compat surface — pi's "@earendil-works/pi-ai/compat".
@@ -36,7 +37,7 @@ func BuiltinModels() MutableModels {
 		}
 		// Every api the provider's models use gets an entry, so the provider
 		// always has the implementation CreateProvider requires. An api with no
-		// registered ApiProvider — this host did not import ai/providers, or
+		// built-in implementation — this host did not import ai/providers, or
 		// the adapter is not ported — gets an empty one, which streams the
 		// same "has no API implementation" error as a missing entry.
 		apiMap := map[Api]ProviderStreams{}
@@ -45,7 +46,7 @@ func BuiltinModels() MutableModels {
 				continue
 			}
 			var streams ProviderStreams
-			if ap, ok := GetApiProvider(mod.Api); ok {
+			if ap, ok := builtinApi(mod.Api); ok {
 				streams = ProviderStreams{
 					Stream:         ap.Stream,
 					StreamSimple:   ap.StreamSimple,

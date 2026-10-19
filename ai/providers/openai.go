@@ -1780,7 +1780,12 @@ func iterateOpenAISSE(body io.Reader, ctx context.Context, onEvent func(any) err
 // options use StreamOpenAICompletions directly) and intentionally diverges
 // from pi's structurally-typed options object.
 func RegisterOpenAICompletions() {
-	ai.RegisterApiProvider(ai.ApiProvider{
+	ai.RegisterApiProvider(openAICompletionsApiProvider())
+}
+
+// openAICompletionsApiProvider is the openai-completions api's built-in implementation.
+func openAICompletionsApiProvider() ai.ApiProvider {
+	return ai.ApiProvider{
 		Api: ai.APIOpenAICompletions,
 		Stream: func(ctx context.Context, model *ai.Model, req ai.TranscriptContext, opts *ai.StreamOptions) *ai.AssistantMessageEventStream {
 			o := &OpenAIOptions{}
@@ -1790,5 +1795,5 @@ func RegisterOpenAICompletions() {
 			return StreamOpenAICompletions(ctx, model, req, o)
 		},
 		StreamSimple: StreamSimpleOpenAICompletions,
-	})
+	}
 }
