@@ -158,23 +158,9 @@ func streamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Transc
 			return
 		}
 
-		// Cloudflare providers carry {VAR} placeholders in baseUrl. pi resolves
-		// them in its cloudflareStreams wrapper (providers/cloudflare-stream.ts),
-		// not in createClient, and it never fails: an absent env var is left in
-		// the URL as the literal {CLOUDFLARE_ACCOUNT_ID}. We fail fast instead —
-		// a deliberate divergence (docs/UPSTREAM.md, 2026-06-24 ruling items 2-3).
-		// With the vars set, the emitted request matches pi byte-for-byte.
 		baseURL := model.BaseURL
 		if baseURL == "" {
 			baseURL = "https://api.openai.com/v1"
-		}
-		if isCloudflareProvider(model.Provider) {
-			resolved, cfErr := resolveCloudflareBaseURL(model, opts.Env)
-			if cfErr != nil {
-				fail(cfErr)
-				return
-			}
-			baseURL = resolved
 		}
 
 		// Resolved before the request body, matching pi: a bad grammar tool must
@@ -197,12 +183,6 @@ func streamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Transc
 		// default attribution first so model.headers and options.headers
 		// override them.
 		applyAttributionDefaults(o.set, model, opts.SessionID)
-		// Header-owned provider auth (pi resolves it in the auth layer and
-		// delivers it as options.headers, above attribution and below
-		// model/consumer headers).
-		if model.Provider == "cloudflare-ai-gateway" {
-			o.merge(cloudflareAIGatewayAuthHeaders(apiKey))
-		}
 		// pi createClient header precedence (openai-completions.ts:458-477):
 		// model.headers first, then copilot dynamic headers, then session
 		// affinity (overrides model headers), with options.headers merged last.

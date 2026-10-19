@@ -496,31 +496,6 @@ func TestDiffDetectCloudflareAiGateway(t *testing.T) {
 	}
 }
 
-func TestDiffCloudflareAiGatewayAuthHeader(t *testing.T) {
-	// pi createClient: cloudflare-ai-gateway puts the apiKey in cf-aig-authorization
-	// and does NOT set the default Authorization Bearer.
-	var gotHeaders http.Header
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		gotHeaders = r.Header.Clone()
-		w.Header().Set("content-type", "text/event-stream")
-		io.WriteString(w, "data: {\"choices\":[{\"delta\":{},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n")
-	}))
-	defer server.Close()
-	model := openAIModel(func(m *ai.Model) {
-		m.Provider = "cloudflare-ai-gateway"
-		m.BaseURL = server.URL
-	})
-	StreamOpenAICompletions(context.Background(), model, ai.NormalizeContext(baseReq()),
-		&OpenAIOptions{StreamOptions: ai.StreamOptions{ProviderRequestOptions: ai.ProviderRequestOptions{APIKey: "cf-key"}}}).
-		Result()
-	if gotHeaders.Get("cf-aig-authorization") != "Bearer cf-key" {
-		t.Fatalf("cf-aig-authorization = %q, want Bearer cf-key", gotHeaders.Get("cf-aig-authorization"))
-	}
-	if gotHeaders.Get("Authorization") != "" {
-		t.Fatalf("default Authorization should be omitted for cloudflare-ai-gateway, got %q", gotHeaders.Get("Authorization"))
-	}
-}
-
 func TestDiffDetectOpenRouterDeveloperRoleMatrix(t *testing.T) {
 	// pi: isOpenRouterDeveloperRoleModel => anthropic/ or openai/ prefixed models
 	// get supportsDeveloperRole=true; other OpenRouter models get false.

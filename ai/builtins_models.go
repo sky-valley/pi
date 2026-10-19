@@ -54,7 +54,7 @@ func BuiltinModels() MutableModels {
 					CancelDeferred: ap.CancelDeferred,
 				}
 			}
-			apiMap[mod.Api] = streams
+			apiMap[mod.Api] = builtinProviderStreams(providerID, streams)
 		}
 		m.SetProvider(CreateProvider(CreateProviderOptions{
 			ID:           providerID,
@@ -65,6 +65,18 @@ func BuiltinModels() MutableModels {
 		}))
 	}
 	return m
+}
+
+// builtinProviderStreams is a built-in provider's implementation of one api:
+// the built-in one, which the Cloudflare providers wrap so their endpoint
+// placeholders resolve from the request's env (pi's provider factories hand
+// cloudflareStreams(api) to createProvider).
+func builtinProviderStreams(providerID string, streams ProviderStreams) ProviderStreams {
+	switch providerID {
+	case "cloudflare-workers-ai", "cloudflare-ai-gateway":
+		return cloudflareStreams(streams)
+	}
+	return streams
 }
 
 // builtinProviderAuth builds the ProviderAuth for a built-in provider. Providers

@@ -4,9 +4,9 @@ package providers
 // packages/ai/src/api/cloudflare-ai-binding.ts, upstream 55adba4f2).
 //
 // pi's Cloudflare AI Gateway support speaks HTTPS
-// (`gateway.ai.cloudflare.com/v1/{account}/{gateway}/{provider}/...`, see
-// cloudflare.go), which needs a Cloudflare API token even when the caller is a
-// Worker in the gateway's own account.
+// (`gateway.ai.cloudflare.com/v1/{account}/{gateway}/{provider}/...`, the
+// cloudflare-ai-gateway models' base URLs), which needs a Cloudflare API token
+// even when the caller is a Worker in the gateway's own account.
 //
 // A Worker avoids that token by talking to the gateway through the AI
 // binding's fetch passthrough (`env.AI.fetch()`), which serves the gateway's

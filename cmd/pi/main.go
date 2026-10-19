@@ -28,21 +28,29 @@ import (
 	"github.com/sky-valley/pi/coding"
 )
 
-// providerAPIKey returns the provider's API key from the environment once the
-// provider's auth resolver reports its auth configured, as pi's coding agent
-// gates on checkAuth rather than on an API key. A provider configured without
-// one — Anthropic through ANTHROPIC_AUTH_TOKEN, or workload identity
-// federation (upstream a9424cd43) — passes with an empty key: its adapter
-// authenticates the request itself.
-func providerAPIKey(provider string) (string, error) {
+// requireProviderAuth refuses a provider whose auth is not configured, as pi's
+// coding agent gates on the provider's auth check rather than on an API key.
+// The CLI hands its session no key: like pi's model runtime, the request
+// resolves the provider's auth itself — compat's Stream injects an env API
+// key, an Anthropic auth token or workload identity federation (upstream
+// a9424cd43) authenticates in the adapter, and a Cloudflare model goes
+// through the built-in Models, whose auth fills its endpoint's account and
+// gateway ids from the environment.
+func requireProviderAuth(provider string) error {
 	check, err := ai.BuiltinModels().CheckAuth(context.Background(), provider)
 	if err != nil {
-		return "", err
+		return err
 	}
-	if check == nil {
-		return "", fmt.Errorf("no credentials found for provider %q (set the appropriate *_API_KEY env var)", provider)
+	if check != nil {
+		return nil
 	}
-	return ai.GetEnvApiKey(provider, nil), nil
+	switch provider {
+	case "cloudflare-workers-ai":
+		return fmt.Errorf("no credentials found for provider %q (set CLOUDFLARE_API_KEY and CLOUDFLARE_ACCOUNT_ID)", provider)
+	case "cloudflare-ai-gateway":
+		return fmt.Errorf("no credentials found for provider %q (set CLOUDFLARE_API_KEY, CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_GATEWAY_ID)", provider)
+	}
+	return fmt.Errorf("no credentials found for provider %q (set the appropriate *_API_KEY env var)", provider)
 }
 
 func main() {
@@ -143,8 +151,7 @@ func main() {
 		model = resolved.Model
 		parsedThink = resolved.ThinkingLevel
 	}
-	apiKey, err := providerAPIKey(model.Provider)
-	if err != nil {
+	if err := requireProviderAuth(model.Provider); err != nil {
 		fatal(err)
 	}
 
@@ -162,7 +169,6 @@ func main() {
 		Cwd:           cwd,
 		SystemPrompt:  system,
 		ThinkingLevel: agent.ThinkingLevel(think),
-		APIKey:        apiKey,
 		// pi enables compaction by default (settings compaction.enabled ?? true).
 		Compaction: &coding.DefaultCompactionSettings,
 	})
@@ -288,12 +294,11 @@ func handleSlash(sess *coding.Session, line string) bool {
 			fmt.Fprintf(os.Stderr, "\033[31m%v\033[0m\n", err)
 			break
 		}
-		key, err := providerAPIKey(m.Provider)
-		if err != nil {
+		if err := requireProviderAuth(m.Provider); err != nil {
 			fmt.Fprintf(os.Stderr, "\033[31m%v\033[0m\n", err)
 			break
 		}
-		sess.SetModel(m, key)
+		sess.SetModel(m, "")
 		fmt.Printf("switched to %s/%s\n", m.Provider, m.ID)
 	case "/think":
 		sess.SetThinkingLevel(agent.ThinkingLevel(arg))

@@ -379,14 +379,14 @@ func describeCloudflareOutcome(row cloudflareOutcome) string {
 }
 
 // TestCloudflareRequestsMatchPi: a Cloudflare model streamed through Models,
-// or through compat's Stream without a key of its own (which routes through
-// the built-in Models), reaches the URL and carries the auth headers pi's
+// or through compat's Stream (which routes a request without auth of its own
+// through the built-in Models), reaches the URL and carries the auth headers pi's
 // does — or fails with pi's setup error — for every ambient environment,
-// stored credential and request option set of the capture.
-//
-// compat's direct rows — an explicit apiKey or cf-aig-authorization header —
-// still take the adapters' inline Cloudflare path (docs/UPSTREAM.md
-// 2026-06-24 item 2) and are not compared here.
+// stored credential and request option set of the capture. A compat request
+// with auth of its own (an explicit apiKey or a cf-aig-authorization header)
+// streams through the built-in provider: its endpoint placeholders resolve
+// from the request's env alone, and the adapter sends the key as it would for
+// any provider.
 func TestCloudflareRequestsMatchPi(t *testing.T) {
 	// Record the registry's api implementations as the built-ins, as pi's
 	// compat has them after it loads: other tests in this package register
@@ -395,9 +395,6 @@ func TestCloudflareRequestsMatchPi(t *testing.T) {
 	capture := loadCloudflareAuthCapture(t)
 	mismatches := 0
 	for _, want := range capture.Stream {
-		if want.Entry == "compat" && want.Options != "none" && want.Options != "env" {
-			continue
-		}
 		got := streamCloudflareRow(t, want)
 		if got.matches(want.cloudflareOutcome) {
 			continue

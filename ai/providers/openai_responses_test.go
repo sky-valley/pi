@@ -1280,54 +1280,6 @@ func TestResponsesCopilotDynamicHeaders(t *testing.T) {
 	}
 }
 
-// D6: cloudflare-ai-gateway resolves {VAR} placeholders in baseUrl, sends the
-// API key via cf-aig-authorization, and suppresses the default Authorization
-// (pi openai-responses.ts:212-223).
-func TestResponsesCloudflareAIGateway(t *testing.T) {
-	var gotPath string
-	var got http.Header
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		gotPath = r.URL.Path
-		got = r.Header.Clone()
-		w.Header().Set("content-type", "text/event-stream")
-		io.WriteString(w, "data: {\"type\":\"response.completed\",\"response\":{\"id\":\"r\",\"status\":\"completed\"}}\n\n")
-	}))
-	defer server.Close()
-	t.Setenv("CLOUDFLARE_ACCOUNT_ID", "acct42")
-	model := &ai.Model{ID: "gpt-5", Api: ai.APIOpenAIResponses, Provider: "cloudflare-ai-gateway",
-		BaseURL: server.URL + "/{CLOUDFLARE_ACCOUNT_ID}"}
-	req := ai.Context{Messages: []ai.Message{ai.NewUserText("hi", 1)}}
-	final := StreamOpenAIResponses(context.Background(), model, ai.NormalizeContext(req), &OpenAIResponsesOptions{StreamOptions: ai.StreamOptions{ProviderRequestOptions: ai.ProviderRequestOptions{APIKey: "cfkey"}}}).Result()
-	if final.StopReason != ai.StopStop {
-		t.Fatalf("stream failed: %s", final.ErrorMessage)
-	}
-	if gotPath != "/acct42/responses" {
-		t.Fatalf("baseURL placeholder not resolved, path %q", gotPath)
-	}
-	if got.Get("cf-aig-authorization") != "Bearer cfkey" {
-		t.Fatalf("cf-aig-authorization wrong: %q", got.Get("cf-aig-authorization"))
-	}
-	if got.Get("authorization") != "" {
-		t.Fatalf("default Authorization must be suppressed for cloudflare-ai-gateway, got %q", got.Get("authorization"))
-	}
-}
-
-// D6: a missing {VAR} env fails the stream with pi's exact message.
-func TestResponsesCloudflareMissingEnvFailsStream(t *testing.T) {
-	t.Setenv("CLOUDFLARE_ACCOUNT_ID", "")
-	model := &ai.Model{ID: "gpt-5", Api: ai.APIOpenAIResponses, Provider: "cloudflare-ai-gateway",
-		BaseURL: "https://gateway.example/{CLOUDFLARE_ACCOUNT_ID}"}
-	final := StreamOpenAIResponses(context.Background(), model, ai.NormalizeContext(ai.Context{Messages: []ai.Message{ai.NewUserText("hi", 1)}}),
-		&OpenAIResponsesOptions{StreamOptions: ai.StreamOptions{ProviderRequestOptions: ai.ProviderRequestOptions{APIKey: "cfkey"}}}).
-		Result()
-	if final.StopReason != ai.StopError {
-		t.Fatalf("expected error, got %s", final.StopReason)
-	}
-	if final.ErrorMessage != "CLOUDFLARE_ACCOUNT_ID is required for provider cloudflare-ai-gateway but is not set." {
-		t.Fatalf("error message wrong: %q", final.ErrorMessage)
-	}
-}
-
 // responsesHTTPError streams against a server that answers status/body for the
 // given provider id and returns the terminal ErrorMessage.
 func responsesHTTPError(t *testing.T, provider string, status int, body string) string {

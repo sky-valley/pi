@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -93,34 +95,82 @@ func TestResumeExtendsTheSessionsCompaction(t *testing.T) {
 // passes the CLI's auth gate, as pi's coding agent gates on the provider's
 // auth check rather than on an API key; the adapter authenticates the request
 // itself. With nothing configured the gate still refuses, naming the fix.
-func TestProviderAPIKeyGatesOnTheAuthResolver(t *testing.T) {
+func TestRequireProviderAuthGatesOnTheAuthResolver(t *testing.T) {
 	for _, name := range []string{"ANTHROPIC_API_KEY", "ANTHROPIC_OAUTH_TOKEN", "ANTHROPIC_AUTH_TOKEN",
 		"ANTHROPIC_FEDERATION_RULE_ID", "ANTHROPIC_ORGANIZATION_ID", "ANTHROPIC_IDENTITY_TOKEN_FILE",
 		"ANTHROPIC_SERVICE_ACCOUNT_ID", "ANTHROPIC_WORKSPACE_ID"} {
 		t.Setenv(name, "")
 	}
-	if _, err := providerAPIKey("anthropic"); err == nil || !strings.Contains(err.Error(), "_API_KEY") {
+	if err := requireProviderAuth("anthropic"); err == nil || !strings.Contains(err.Error(), "_API_KEY") {
 		t.Fatalf("nothing configured: err = %v, want a refusal saying which env var to set", err)
 	}
 
 	t.Setenv("ANTHROPIC_FEDERATION_RULE_ID", "fdrl_test")
 	t.Setenv("ANTHROPIC_ORGANIZATION_ID", "org-test")
 	t.Setenv("ANTHROPIC_IDENTITY_TOKEN_FILE", filepath.Join(t.TempDir(), "token"))
-	if key, err := providerAPIKey("anthropic"); err != nil || key != "" {
-		t.Fatalf("federation: (%q, %v), want no key and no error", key, err)
+	if err := requireProviderAuth("anthropic"); err != nil {
+		t.Fatalf("federation: %v, want no error", err)
 	}
 
 	for _, name := range []string{"ANTHROPIC_FEDERATION_RULE_ID", "ANTHROPIC_ORGANIZATION_ID", "ANTHROPIC_IDENTITY_TOKEN_FILE"} {
 		t.Setenv(name, "")
 	}
 	t.Setenv("ANTHROPIC_AUTH_TOKEN", "auth-token")
-	if key, err := providerAPIKey("anthropic"); err != nil || key != "" {
-		t.Fatalf("auth token: (%q, %v), want no key and no error", key, err)
+	if err := requireProviderAuth("anthropic"); err != nil {
+		t.Fatalf("auth token: %v, want no error", err)
 	}
 
 	t.Setenv("ANTHROPIC_AUTH_TOKEN", "")
 	t.Setenv("ANTHROPIC_API_KEY", "sk-ant-test")
-	if key, err := providerAPIKey("anthropic"); err != nil || key != "sk-ant-test" {
-		t.Fatalf("api key: (%q, %v), want the key", key, err)
+	if err := requireProviderAuth("anthropic"); err != nil {
+		t.Fatalf("api key: %v, want no error", err)
+	}
+}
+
+// The key alone does not configure Cloudflare (ai/cloudflare_auth.go), so
+// the gate refuses it, naming every variable the provider needs.
+func TestRequireProviderAuthNamesCloudflaresVariables(t *testing.T) {
+	t.Setenv("CLOUDFLARE_API_KEY", "env-key")
+	t.Setenv("CLOUDFLARE_ACCOUNT_ID", "")
+	t.Setenv("CLOUDFLARE_GATEWAY_ID", "")
+	for provider, want := range map[string]string{
+		"cloudflare-workers-ai": "CLOUDFLARE_ACCOUNT_ID)",
+		"cloudflare-ai-gateway": "CLOUDFLARE_GATEWAY_ID)",
+	} {
+		if err := requireProviderAuth(provider); err == nil || !strings.HasSuffix(err.Error(), want) {
+			t.Errorf("%s with only the key: err = %v, want a refusal ending %q", provider, err, want)
+		}
+	}
+}
+
+// cliRecorder answers every request 401 and records its URL and auth header.
+type cliRecorder struct{ url, authorization string }
+
+func (r *cliRecorder) Do(req *http.Request) (*http.Response, error) {
+	r.url, r.authorization = req.URL.String(), req.Header.Get("Authorization")
+	return &http.Response{StatusCode: http.StatusUnauthorized, Status: "401 Unauthorized",
+		Header: http.Header{"Content-Type": []string{"application/json"}},
+		Body:   io.NopCloser(strings.NewReader(`{}`)), Request: req}, nil
+}
+
+// A Cloudflare model the CLI streams reaches the account the environment
+// names, as pi's coding agent's does: its requests resolve auth through the
+// model runtime, which fills the base URL's {CLOUDFLARE_ACCOUNT_ID} from the
+// resolved env (testdata/cloudflare-auth in ai/providers, Models rows).
+func TestCLICloudflareRequestReachesTheAccount(t *testing.T) {
+	t.Setenv("CLOUDFLARE_API_KEY", "env-key")
+	t.Setenv("CLOUDFLARE_ACCOUNT_ID", "env-account")
+	t.Setenv("CLOUDFLARE_GATEWAY_ID", "")
+	model := ai.GetModel("cloudflare-workers-ai", "@cf/deepseek-ai/deepseek-v4-flash-0731")
+	if err := requireProviderAuth(model.Provider); err != nil {
+		t.Fatal(err)
+	}
+	// The CLI's session has no key, so the agent loop sets none on a request.
+	recorder := &cliRecorder{}
+	opts := &ai.SimpleStreamOptions{StreamOptions: ai.StreamOptions{ProviderRequestOptions: ai.ProviderRequestOptions{HTTPClient: recorder}}}
+	ai.StreamSimple(context.Background(), model, ai.Context{}, opts).Result()
+	const want = "https://api.cloudflare.com/client/v4/accounts/env-account/ai/v1/chat/completions"
+	if recorder.url != want || recorder.authorization != "Bearer env-key" {
+		t.Fatalf("request to %q with %q, pi to %q with Bearer env-key", recorder.url, recorder.authorization, want)
 	}
 }

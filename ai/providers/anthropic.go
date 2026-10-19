@@ -598,14 +598,11 @@ func StreamAnthropic(ctx context.Context, model *ai.Model, req ai.TranscriptCont
 			fail(err)
 			return
 		}
-		// pi never sniffs an OAuth token for these two: github-copilot has its own
-		// createClient branch ahead of the sniff, and cloudflare-ai-gateway
-		// resolves to header-owned auth with no apiKey at all, so
-		// isOAuthToken(undefined) is false however the gateway key looks. An
-		// auth-token request is a plain bearer credential, not OAuth, so it never
-		// triggers the OAuth body either.
+		// pi never sniffs an OAuth token for github-copilot, whose createClient
+		// branch comes ahead of the sniff. An auth-token request is a plain
+		// bearer credential, not OAuth, so it never triggers the OAuth body
+		// either.
 		oauth := authToken == "" &&
-			model.Provider != "cloudflare-ai-gateway" &&
 			model.Provider != "github-copilot" &&
 			isOAuthToken(apiKey)
 
@@ -687,16 +684,6 @@ func StreamAnthropic(ctx context.Context, model *ai.Model, req ai.TranscriptCont
 		}
 
 		baseURL := model.BaseURL
-		if model.Provider == "cloudflare-ai-gateway" {
-			// pi: resolveCloudflareBaseUrl(model) throws on a missing env var,
-			// which surfaces as a failed stream.
-			resolved, rerr := resolveCloudflareBaseURL(model, opts.Env)
-			if rerr != nil {
-				fail(rerr)
-				return
-			}
-			baseURL = resolved
-		}
 		if baseURL == "" {
 			baseURL = anthropicDefaultBaseURL
 		}
@@ -2239,27 +2226,6 @@ func anthropicClientHeaders(model *ai.Model, opts *AnthropicOptions, oauth bool,
 	// request BODY and is turned back into an `anthropic-beta` header by the
 	// caller — as a per-request header that outranks everything merged below.
 	//
-	// Cloudflare AI Gateway auth is header-owned: pi's resolver returns
-	// cf-aig-authorization plus markers suppressing x-api-key/Authorization, and
-	// no api key at all, so pi's createClient takes its plain api-key branch and
-	// the SDK sends no x-api-key. The Go port resolves that auth inline here
-	// (2026-06-24 divergence), so the key is consumed by the marker bundle and
-	// branchKey — the credential the branches below may emit — is empty, which
-	// is what pi's createClient sees. The OAuth sniff is unaffected: the caller
-	// computed `oauth` from the real apiKey and already excludes this provider.
-	// The bundle is built only from a real key. pi's resolver returns it when it
-	// HAS a gateway credential; with none it returns nothing and the request is
-	// header-owned, so there is no bearer to send and no x-api-key/Authorization
-	// to suppress. Since 8b5899dce widened the gate to accept header-owned auth,
-	// an empty key reaches here, and building the bundle from it would synthesize
-	// `cf-aig-authorization: "Bearer "` — a credential pi never emits.
-	branchKey := apiKey
-	var providerAuthHeaders ai.ProviderHeaders
-	if model.Provider == "cloudflare-ai-gateway" && apiKey != "" {
-		providerAuthHeaders = cloudflareAIGatewayAuthHeaders(apiKey)
-		branchKey = ""
-	}
-
 	// Branch order mirrors pi createClient (anthropic-messages.ts): github-copilot,
 	// then the OAuth sniff, then plain api-key auth. The ANTHROPIC_AUTH_TOKEN
 	// bearer path (upstream 24e5cc04) sits ahead of them: it is set only for the
@@ -2278,11 +2244,11 @@ func anthropicClientHeaders(model *ai.Model, opts *AnthropicOptions, oauth bool,
 		// pi: `authToken: apiKey ?? null`. No key means no Authorization header
 		// at all — the request rides on whatever header owns its auth — not an
 		// empty bearer.
-		if branchKey != "" {
-			auth = []recordEntry{{"authorization", "Bearer " + branchKey}}
+		if apiKey != "" {
+			auth = []recordEntry{{"authorization", "Bearer " + apiKey}}
 		}
 	case oauth:
-		auth = []recordEntry{{"authorization", "Bearer " + branchKey}}
+		auth = []recordEntry{{"authorization", "Bearer " + apiKey}}
 		o.set("user-agent", "claude-cli/"+claudeCodeVersion)
 		o.set("x-app", "cli")
 	default:
@@ -2290,10 +2256,10 @@ func anthropicClientHeaders(model *ai.Model, opts *AnthropicOptions, oauth bool,
 		// x-api-key — its "API key or header-owned auth" branch. A key that
 		// reaches createClient is never the empty string (assertRequestAuth
 		// rejects a falsy one unless a header carries the credential), so an
-		// empty branchKey here is pi's null: emit nothing and let the header
-		// that authorized the request do the work.
-		if branchKey != "" {
-			auth = []recordEntry{{"x-api-key", branchKey}}
+		// empty apiKey here is pi's null: emit nothing and let the header that
+		// authorized the request do the work.
+		if apiKey != "" {
+			auth = []recordEntry{{"x-api-key", apiKey}}
 		}
 		// pi anthropic.ts:496-497: cacheSessionId is dropped when the effective
 		// cacheRetention is "none", so no session-affinity header is sent under
@@ -2309,9 +2275,6 @@ func anthropicClientHeaders(model *ai.Model, opts *AnthropicOptions, oauth bool,
 		}
 	}
 
-	// Header-owned provider auth sits above attribution and below the
-	// model/consumer headers, where pi's auth.headers enter the merge.
-	o.merge(providerAuthHeaders)
 	o.merge(model.Headers)
 	// pi merges copilotDynamicHeaders after model.headers, before options
 	// headers (anthropic-messages.ts createClient).

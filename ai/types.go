@@ -1450,8 +1450,10 @@ type ProviderRequestOptions struct {
 	HTTPClient HTTPDoer
 	// Env holds provider-scoped environment overrides. When set, a non-empty
 	// value here takes precedence over os.Getenv for provider configuration such
-	// as PI_CACHE_RETENTION and Cloudflare base-URL placeholders (pi 7f29e7a3).
-	// Defaults to nil, in which case lookups fall through to the OS environment.
+	// as PI_CACHE_RETENTION (pi 7f29e7a3). Defaults to nil, in which case
+	// lookups fall through to the OS environment. A Cloudflare model's base-URL
+	// placeholders are filled from Env alone (pi cloudflareStreams): through
+	// Models it carries the account and gateway ids Cloudflare auth resolved.
 	Env map[string]string
 }
 

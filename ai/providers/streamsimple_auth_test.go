@@ -342,17 +342,15 @@ func TestAnthropicStreamSimpleAuthTokenStillAuthenticates(t *testing.T) {
 }
 
 // TestAnthropicStreamSimpleGatewayHeaderOwnedAuthSendsNoEmptyGatewayBearer
-// covers the third branch header-owned auth newly makes reachable. Widening the
-// gate to pi's header set lets a cloudflare-ai-gateway request through with no
-// api key, and the adapter's header assembly then built the gateway bundle from that
-// empty key — synthesizing `cf-aig-authorization: "Bearer "`, a credential pi
-// never sends. pi's adapter never mentions Cloudflare at all: on the
-// "API key or header-owned auth" branch it passes `apiKey: apiKey ?? null` and
-// sends the caller's headers and nothing else (8b5899dce:packages/ai/src/api/
-// anthropic-messages.ts:954-975). The gateway bundle is the port's own inline
-// rendering of pi's resolver (the 2026-06-24 divergence), and that resolver
-// produces the bundle only when it HAS a gateway credential — with none there is
-// nothing to send and nothing to suppress.
+// covers the third branch header-owned auth newly makes reachable: a
+// cloudflare-ai-gateway request with no api key. pi's adapter never mentions
+// Cloudflare: on the "API key or header-owned auth" branch it passes
+// `apiKey: apiKey ?? null` and sends the caller's headers and nothing else
+// (8b5899dce:packages/ai/src/api/anthropic-messages.ts:954-975). The gateway's
+// own credential comes from its auth resolver (ai/cloudflare_auth.go), never
+// from the adapter, so nothing here may synthesize a cf-aig-authorization —
+// the port's adapter once built `"Bearer "` from the empty key — or delete the
+// caller's Authorization.
 func TestAnthropicStreamSimpleGatewayHeaderOwnedAuthSendsNoEmptyGatewayBearer(t *testing.T) {
 	t.Setenv(ai.AnthropicAuthTokenEnv, "")
 

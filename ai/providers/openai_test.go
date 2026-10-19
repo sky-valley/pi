@@ -647,50 +647,6 @@ data: [DONE]
 	}
 }
 
-// ---- C4: cloudflare {VAR} baseURL resolution (pi :490) ----
-
-func TestOpenAICloudflareBaseURLResolved(t *testing.T) {
-	var gotPath string
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		gotPath = r.URL.Path
-		w.Header().Set("content-type", "text/event-stream")
-		io.WriteString(w, "data: {\"choices\":[{\"delta\":{\"content\":\"hi\"},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n")
-	}))
-	defer server.Close()
-	t.Setenv("CLOUDFLARE_ACCOUNT_ID", "acct123")
-	model := &ai.Model{
-		ID: "m", Api: ai.APIOpenAICompletions, Provider: "cloudflare-workers-ai",
-		BaseURL: server.URL + "/client/v4/accounts/{CLOUDFLARE_ACCOUNT_ID}/ai/v1",
-	}
-	final := StreamOpenAICompletions(context.Background(), model, ai.NormalizeContext(ai.Context{Messages: []ai.Message{ai.NewUserText("hi", 1)}}),
-		&OpenAIOptions{StreamOptions: ai.StreamOptions{ProviderRequestOptions: ai.ProviderRequestOptions{APIKey: "k"}}}).
-		Result()
-	if final.StopReason != ai.StopStop {
-		t.Fatalf("stream failed: %s (%s)", final.StopReason, final.ErrorMessage)
-	}
-	if gotPath != "/client/v4/accounts/acct123/ai/v1/chat/completions" {
-		t.Fatalf("placeholder not resolved, path = %q", gotPath)
-	}
-}
-
-func TestOpenAICloudflareBaseURLMissingEnvFailsStream(t *testing.T) {
-	t.Setenv("CLOUDFLARE_ACCOUNT_ID", "")
-	model := &ai.Model{
-		ID: "m", Api: ai.APIOpenAICompletions, Provider: "cloudflare-workers-ai",
-		BaseURL: "https://api.cloudflare.com/client/v4/accounts/{CLOUDFLARE_ACCOUNT_ID}/ai/v1",
-	}
-	final := StreamOpenAICompletions(context.Background(), model, ai.NormalizeContext(ai.Context{Messages: []ai.Message{ai.NewUserText("hi", 1)}}),
-		&OpenAIOptions{StreamOptions: ai.StreamOptions{ProviderRequestOptions: ai.ProviderRequestOptions{APIKey: "k"}}}).
-		Result()
-	if final.StopReason != ai.StopError {
-		t.Fatalf("expected error stop, got %s", final.StopReason)
-	}
-	want := "CLOUDFLARE_ACCOUNT_ID is required for provider cloudflare-workers-ai but is not set."
-	if final.ErrorMessage != want {
-		t.Fatalf("error message = %q, want %q", final.ErrorMessage, want)
-	}
-}
-
 // ---- C5: prompt_cache_retention independent of sessionId (pi :515) ----
 
 func TestOpenAICacheRetentionWithoutSessionID(t *testing.T) {

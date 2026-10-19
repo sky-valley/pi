@@ -89,22 +89,10 @@ func resolveProvider(api Api) (ApiProvider, error) {
 	return p, nil
 }
 
-// routesThroughModels is compat.ts's Cloudflare branch: a built-in
-// cloudflare-* model without a resolved key (an explicit API key or a
-// cf-aig-authorization header) streams through compatModels, whose
-// Cloudflare auth resolves the key and the account and gateway ids — and
-// which observes the request under its telemetry, as Models does. Every
-// other model streams straight from its api provider.
-func routesThroughModels(model *Model, opts *StreamOptions) bool {
-	if !strings.HasPrefix(model.Provider, "cloudflare-") {
-		return false
-	}
-	if opts != nil {
-		if hasExplicitAPIKey(opts.APIKey) || opts.Headers["cf-aig-authorization"] != nil {
-			return false
-		}
-	}
-	return builtinProviderFor(model) != nil
+// hasResolvedCloudflareAuth is compat.ts's test for a request that brings its
+// own Cloudflare auth: an explicit API key or a cf-aig-authorization header.
+func hasResolvedCloudflareAuth(opts *StreamOptions) bool {
+	return opts != nil && (hasExplicitAPIKey(opts.APIKey) || opts.Headers["cf-aig-authorization"] != nil)
 }
 
 // Stream streams an assistant response using provider-native options.
@@ -120,16 +108,23 @@ func routesThroughModels(model *Model, opts *StreamOptions) bool {
 // transcript whose leading system message carries req.SystemPrompt and
 // req.Tools (pi compat.ts stream, upstream 9e05370b2).
 //
-// A built-in cloudflare-* model without a resolved key streams through the
-// built-in providers' Models runtime instead, as pi's does: it is observed
-// under opts.Telemetry and must be a chat model.
+// A built-in model streams through its built-in provider, as pi's compat
+// does (getBuiltinProviderForModel): for a Cloudflare model that fills the
+// endpoint placeholders from opts.Env alone (cloudflareStreams). A Cloudflare
+// model without auth of its own streams through the built-in providers'
+// Models runtime instead, whose Cloudflare auth resolves the key and the
+// account and gateway ids from the environment; it is observed under
+// opts.Telemetry and must be a chat model.
 func Stream(ctx context.Context, model *Model, req Context, opts *StreamOptions) *AssistantMessageEventStream {
-	if routesThroughModels(model, opts) {
-		var options *ModelsStreamOptions
-		if opts != nil {
-			options = &ModelsStreamOptions{StreamOptions: *opts}
+	if provider := builtinProviderFor(model); provider != nil {
+		if strings.HasPrefix(model.Provider, "cloudflare-") && !hasResolvedCloudflareAuth(opts) {
+			var options *ModelsStreamOptions
+			if opts != nil {
+				options = &ModelsStreamOptions{StreamOptions: *opts}
+			}
+			return compatModels().Stream(ctx, model, req, options)
 		}
-		return compatModels().Stream(ctx, model, req, options)
+		return provider.Stream(ctx, model, NormalizeContext(req), withEnvAPIKey(model, opts))
 	}
 	transcript := NormalizeContext(req)
 	p, err := resolveProvider(model.Api)
@@ -146,18 +141,22 @@ func Complete(ctx context.Context, model *Model, req Context, opts *StreamOption
 
 // StreamSimple streams an assistant response using unified reasoning options.
 // See Stream for the deliberate unknown-api divergence from pi (errors are
-// encoded in the stream, not thrown), and for the normalization it applies.
+// encoded in the stream, not thrown), for the normalization it applies, and
+// for the built-in and Cloudflare routing.
 func StreamSimple(ctx context.Context, model *Model, req Context, opts *SimpleStreamOptions) *AssistantMessageEventStream {
 	var base *StreamOptions
 	if opts != nil {
 		base = &opts.StreamOptions
 	}
-	if routesThroughModels(model, base) {
-		var options *ModelsSimpleStreamOptions
-		if opts != nil {
-			options = &ModelsSimpleStreamOptions{SimpleStreamOptions: *opts}
+	if provider := builtinProviderFor(model); provider != nil {
+		if strings.HasPrefix(model.Provider, "cloudflare-") && !hasResolvedCloudflareAuth(base) {
+			var options *ModelsSimpleStreamOptions
+			if opts != nil {
+				options = &ModelsSimpleStreamOptions{SimpleStreamOptions: *opts}
+			}
+			return compatModels().StreamSimple(ctx, model, req, options)
 		}
-		return compatModels().StreamSimple(ctx, model, req, options)
+		return provider.StreamSimple(ctx, model, NormalizeContext(req), withEnvAPIKeySimple(model, opts))
 	}
 	transcript := NormalizeContext(req)
 	p, err := resolveProvider(model.Api)

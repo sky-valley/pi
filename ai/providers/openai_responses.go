@@ -347,20 +347,9 @@ func StreamOpenAIResponses(ctx context.Context, model *ai.Model, req ai.Transcri
 			return
 		}
 
-		// pi createClient runs before onPayload: Cloudflare providers resolve
-		// {VAR} placeholders in baseUrl from the environment, failing the
-		// stream when a variable is unset (openai-responses.ts:212-223).
 		baseURL := model.BaseURL
 		if baseURL == "" {
 			baseURL = "https://api.openai.com/v1"
-		}
-		if isCloudflareProvider(model.Provider) {
-			resolved, cfErr := resolveCloudflareBaseURL(model, opts.Env)
-			if cfErr != nil {
-				fail(cfErr)
-				return
-			}
-			baseURL = resolved
 		}
 
 		// Resolved before the request body, matching pi: a bad grammar tool must
@@ -383,12 +372,6 @@ func StreamOpenAIResponses(ctx context.Context, model *ai.Model, req ai.Transcri
 		// default attribution first so model.headers and options.headers
 		// override them.
 		applyAttributionDefaults(o.set, model, opts.SessionID)
-		// Header-owned provider auth (pi resolves it in the auth layer and
-		// delivers it as options.headers, above attribution and below
-		// model/consumer headers).
-		if model.Provider == "cloudflare-ai-gateway" {
-			o.merge(cloudflareAIGatewayAuthHeaders(apiKey))
-		}
 		// pi createClient header precedence (openai-responses.ts:189-219):
 		// model.headers, copilot dynamic headers, session cache headers,
 		// then options.headers merged last so they can override defaults.
