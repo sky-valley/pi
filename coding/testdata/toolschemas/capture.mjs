@@ -1,12 +1,14 @@
-// Captures the parameter schemas of pi's built-in tools as the model receives
-// them — the oracle behind TestBuiltinToolSchemasMatchPi.
+// Captures the parameter and output schemas of pi's built-in tools as the
+// model and programmatic callers receive them — the oracle behind
+// TestBuiltinToolSchemasMatchPi.
 //
 //   node capture.mjs <pi npm dir> <out.json>
-//   e.g. node capture.mjs ~/.cache/pi-npm/0.99.2 toolschemas-0.99.2.json
+//   e.g. node capture.mjs <npm>/1.3.0 toolschemas-1.3.0.json
 //
 // Each row is createToolDefinition(name, cwd) from the published build, with
-// its parameters serialized by JSON.stringify (TypeBox's symbol-keyed metadata
-// does not serialize, exactly as on the wire).
+// its parameters, and its outputSchema when it declares one, serialized by
+// JSON.stringify (TypeBox's symbol-keyed metadata does not serialize, exactly
+// as on the wire).
 import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -23,7 +25,9 @@ const { createToolDefinition } = await import(pathToFileURL(path.join(pkg, "dist
 const names = ["read", "bash", "edit", "write", "grep", "find", "ls", "powershell"];
 const rows = names.map((name) => {
 	const def = createToolDefinition(name, "/tmp");
-	return { name, parameters: JSON.parse(JSON.stringify(def.parameters)) };
+	const row = { name, parameters: JSON.parse(JSON.stringify(def.parameters)) };
+	if (def.outputSchema !== undefined) row.outputSchema = JSON.parse(JSON.stringify(def.outputSchema));
+	return row;
 });
 fs.writeFileSync(outFile, `${JSON.stringify({ piCodingAgentVersion: version, rows }, null, "\t")}\n`);
 console.error(`${rows.length} tools from pi-coding-agent ${version}`);

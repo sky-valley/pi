@@ -422,6 +422,55 @@ func isAnimatedPNG(buf []byte) bool {
 	return false
 }
 
+// ReadToolImage is the read tool's structured content for an image (pi
+// ReadToolOutput's object arm, upstream 021eae60a): the image block codemode's
+// image() accepts, with Type always "image", and Note the text that goes with
+// it, such as resize hints. For a text file, and for an image that could not
+// be processed, the structured content is the result text, a plain string.
+type ReadToolImage struct {
+	Type     string `json:"type"`
+	Data     string `json:"data"`
+	MimeType string `json:"mimeType"`
+	Note     string `json:"note"`
+}
+
+// readOutputSchema is the read tool's OutputSchema (pi readOutputSchema): the
+// text, or an image block with its note. Like pi it leaves out property
+// descriptions, so the type stays on one line in tool descriptions. Built per
+// tool like Parameters, since a Schema can be modified in place.
+func readOutputSchema() *ai.Schema {
+	image := ai.Object(
+		ai.Prop("type", &ai.Schema{Type: "string", Const: "image", HasConst: true}),
+		ai.Prop("data", ai.String()),
+		ai.Prop("mimeType", ai.String()),
+		ai.Prop("note", ai.String()),
+	)
+	return &ai.Schema{AnyOf: []*ai.Schema{ai.String(), image}}
+}
+
+// toReadOutput is pi's toReadOutput: the first image block with the first
+// text block as its note, or that text when there is no image.
+func toReadOutput(content ai.ContentList) any {
+	text, hasText := "", false
+	var image *ai.ImageContent
+	for _, block := range content {
+		switch b := block.(type) {
+		case ai.TextContent:
+			if !hasText {
+				text, hasText = b.Text, true
+			}
+		case ai.ImageContent:
+			if image == nil {
+				image = &b
+			}
+		}
+	}
+	if image == nil {
+		return text
+	}
+	return ReadToolImage{Type: "image", Data: image.Data, MimeType: image.MimeType, Note: text}
+}
+
 // readTool builds the read tool against the local filesystem — the form every
 // existing caller uses. readToolOps is the injection seam.
 func readTool(cwd string) agent.AgentTool { return readToolOps(cwd, nil, nil) }
@@ -432,6 +481,7 @@ func readTool(cwd string) agent.AgentTool { return readToolOps(cwd, nil, nil) }
 // member falls back to the local default, which is pi's spread-over-defaults.
 func readToolOps(cwd string, custom *ReadOperations, resize imageResizeFn) agent.AgentTool {
 	ops := resolveReadOperations(custom)
+	read := readFile(cwd, ops, resize)
 	return agent.AgentTool{
 		Name:        "read",
 		Label:       "read",
@@ -444,124 +494,138 @@ func readToolOps(cwd string, custom *ReadOperations, resize imageResizeFn) agent
 			ai.Opt("offset", ai.Number("Line number to start reading from (1-indexed)")),
 			ai.Opt("limit", ai.Number("Maximum number of lines to read")),
 		),
+		OutputSchema:        readOutputSchema(),
 		ConstrainedSampling: preferStrictToolSampling,
 		Execute: func(ctx context.Context, id string, params map[string]any, onUpdate agent.ToolUpdateFunc) (agent.AgentToolResult, error) {
-			path := argStr(params, "path")
-			abs := resolveReadPath(path, cwd)
-			// pi calls ops.access before reading (read.ts:248). The EISDIR a
-			// directory produces is NOT checked here: Node's fs.readFile raises it
-			// on its own, so it belongs to the filesystem implementation — see
-			// DefaultReadOperations. Checking it here would stat the LOCAL disk
-			// even when a host has injected a remote filesystem.
-			if err := ops.Access(ctx, abs); err != nil {
-				return agent.AgentToolResult{}, err
+			res, err := read(ctx, params)
+			if err != nil {
+				return res, err
 			}
-			mime := ""
-			if ops.DetectImageMimeType != nil {
-				mime = ops.DetectImageMimeType(ctx, abs)
-			}
-			if mime != "" {
-				data, err := ops.ReadFile(ctx, abs)
-				if err != nil {
-					return agent.AgentToolResult{}, err
-				}
-				// Normalize (convert BMP→PNG), downscale/re-encode to fit the
-				// model's inline image limits, and apply EXIF orientation (port of
-				// pi's processImage). The note text matches pi's read tool exactly
-				// (utils/image-process.ts).
-				processed := processImage(data, mime, true, resize.get())
-				if !processed.Ok {
-					return agent.AgentToolResult{Content: ai.ContentList{ai.TextContent{
-						Text: fmt.Sprintf("Read image file [%s]\n%s", mime, processed.Message),
-					}}}, nil
-				}
-				note := fmt.Sprintf("Read image file [%s]", processed.MimeType)
-				if len(processed.Hints) > 0 {
-					note += "\n" + strings.Join(processed.Hints, "\n")
-				}
-				// pi's read never assigns `details` on the image branches
-				// (read.ts:108-131), so it stays undefined and off the wire.
-				return agent.AgentToolResult{Content: ai.ContentList{
-					ai.TextContent{Text: note},
-					ai.ImageContent{Data: encodeBase64(processed.Data), MimeType: processed.MimeType},
-				}}, nil
-			}
+			res.StructuredContent = toReadOutput(res.Content)
+			return res, nil
+		},
+	}
+}
 
+// readFile is the read tool's execution, before pi's `.then` adds the
+// structured content to its result.
+func readFile(cwd string, ops ReadOperations, resize imageResizeFn) func(ctx context.Context, params map[string]any) (agent.AgentToolResult, error) {
+	return func(ctx context.Context, params map[string]any) (agent.AgentToolResult, error) {
+		path := argStr(params, "path")
+		abs := resolveReadPath(path, cwd)
+		// pi calls ops.access before reading (read.ts:248). The EISDIR a
+		// directory produces is NOT checked here: Node's fs.readFile raises it
+		// on its own, so it belongs to the filesystem implementation — see
+		// DefaultReadOperations. Checking it here would stat the LOCAL disk
+		// even when a host has injected a remote filesystem.
+		if err := ops.Access(ctx, abs); err != nil {
+			return agent.AgentToolResult{}, err
+		}
+		mime := ""
+		if ops.DetectImageMimeType != nil {
+			mime = ops.DetectImageMimeType(ctx, abs)
+		}
+		if mime != "" {
 			data, err := ops.ReadFile(ctx, abs)
 			if err != nil {
 				return agent.AgentToolResult{}, err
 			}
-			allLines := strings.Split(string(data), "\n")
-			totalFileLines := len(allLines)
-			offset, hasOffset := argInt(params, "offset")
-			startLine := 0
-			if hasOffset && offset > 0 {
-				startLine = offset - 1
+			// Normalize (convert BMP→PNG), downscale/re-encode to fit the
+			// model's inline image limits, and apply EXIF orientation (port of
+			// pi's processImage). The note text matches pi's read tool exactly
+			// (utils/image-process.ts).
+			processed := processImage(data, mime, true, resize.get())
+			if !processed.Ok {
+				return agent.AgentToolResult{Content: ai.ContentList{ai.TextContent{
+					Text: fmt.Sprintf("Read image file [%s]\n%s", mime, processed.Message),
+				}}}, nil
 			}
-			startLineDisplay := startLine + 1
-			if startLine >= len(allLines) {
-				return agent.AgentToolResult{}, fmt.Errorf("Offset %d is beyond end of file (%d lines total)", offset, len(allLines))
+			note := fmt.Sprintf("Read image file [%s]", processed.MimeType)
+			if len(processed.Hints) > 0 {
+				note += "\n" + strings.Join(processed.Hints, "\n")
 			}
-			var selected string
-			hasLimit := false
-			userLimitedLines := 0
-			if limit, ok := argInt(params, "limit"); ok {
-				hasLimit = true
-				// pi: endLine = Math.min(startLine + limit, allLines.length), then
-				// allLines.slice(startLine, endLine) with JS slice semantics: a
-				// negative end counts back from the array end, and an end before
-				// start yields an empty slice (never a panic).
-				endLine := startLine + limit
-				if endLine > len(allLines) {
-					endLine = len(allLines)
-				}
-				effEnd := endLine
-				if effEnd < 0 {
-					effEnd = len(allLines) + effEnd
-					if effEnd < 0 {
-						effEnd = 0
-					}
-				}
-				if effEnd < startLine {
-					effEnd = startLine
-				}
-				selected = strings.Join(allLines[startLine:effEnd], "\n")
-				// pi keeps the raw arithmetic value (may be zero or negative) for
-				// the continuation-footer math.
-				userLimitedLines = endLine - startLine
-			} else {
-				selected = strings.Join(allLines[startLine:], "\n")
-			}
+			// pi's read never assigns `details` on the image branches
+			// (read.ts:108-131), so it stays undefined and off the wire.
+			return agent.AgentToolResult{Content: ai.ContentList{
+				ai.TextContent{Text: note},
+				ai.ImageContent{Data: encodeBase64(processed.Data), MimeType: processed.MimeType},
+			}}, nil
+		}
 
-			tr := TruncateHead(selected, 0, 0)
-			var out string
-			switch {
-			case tr.FirstLineExceedsLimit:
-				firstLineSize := FormatSize(len(allLines[startLine]))
-				out = fmt.Sprintf("[Line %d is %s, exceeds %s limit. Use bash: sed -n '%dp' %s | head -c %d]",
-					startLineDisplay, firstLineSize, FormatSize(DefaultMaxBytes), startLineDisplay, path, DefaultMaxBytes)
-			case tr.Truncated:
-				endLineDisplay := startLineDisplay + tr.OutputLines - 1
-				nextOffset := endLineDisplay + 1
-				out = tr.Content
-				if tr.TruncatedBy == "lines" {
-					out += fmt.Sprintf("\n\n[Showing lines %d-%d of %d. Use offset=%d to continue.]", startLineDisplay, endLineDisplay, totalFileLines, nextOffset)
-				} else {
-					out += fmt.Sprintf("\n\n[Showing lines %d-%d of %d (%s limit). Use offset=%d to continue.]", startLineDisplay, endLineDisplay, totalFileLines, FormatSize(DefaultMaxBytes), nextOffset)
+		data, err := ops.ReadFile(ctx, abs)
+		if err != nil {
+			return agent.AgentToolResult{}, err
+		}
+		allLines := strings.Split(string(data), "\n")
+		totalFileLines := len(allLines)
+		offset, hasOffset := argInt(params, "offset")
+		startLine := 0
+		if hasOffset && offset > 0 {
+			startLine = offset - 1
+		}
+		startLineDisplay := startLine + 1
+		if startLine >= len(allLines) {
+			return agent.AgentToolResult{}, fmt.Errorf("Offset %d is beyond end of file (%d lines total)", offset, len(allLines))
+		}
+		var selected string
+		hasLimit := false
+		userLimitedLines := 0
+		if limit, ok := argInt(params, "limit"); ok {
+			hasLimit = true
+			// pi: endLine = Math.min(startLine + limit, allLines.length), then
+			// allLines.slice(startLine, endLine) with JS slice semantics: a
+			// negative end counts back from the array end, and an end before
+			// start yields an empty slice (never a panic).
+			endLine := startLine + limit
+			if endLine > len(allLines) {
+				endLine = len(allLines)
+			}
+			effEnd := endLine
+			if effEnd < 0 {
+				effEnd = len(allLines) + effEnd
+				if effEnd < 0 {
+					effEnd = 0
 				}
-			case hasLimit && startLine+userLimitedLines < len(allLines):
-				remaining := len(allLines) - (startLine + userLimitedLines)
-				nextOffset := startLine + userLimitedLines + 1
-				out = fmt.Sprintf("%s\n\n[%d more lines in file. Use offset=%d to continue.]", tr.Content, remaining, nextOffset)
-			default:
-				out = tr.Content
 			}
-			res := textResult(out)
-			if tr.Truncated {
-				res.Details = map[string]any{"truncation": tr}
+			if effEnd < startLine {
+				effEnd = startLine
 			}
-			return res, nil
-		},
+			selected = strings.Join(allLines[startLine:effEnd], "\n")
+			// pi keeps the raw arithmetic value (may be zero or negative) for
+			// the continuation-footer math.
+			userLimitedLines = endLine - startLine
+		} else {
+			selected = strings.Join(allLines[startLine:], "\n")
+		}
+
+		tr := TruncateHead(selected, 0, 0)
+		var out string
+		switch {
+		case tr.FirstLineExceedsLimit:
+			firstLineSize := FormatSize(len(allLines[startLine]))
+			out = fmt.Sprintf("[Line %d is %s, exceeds %s limit. Use bash: sed -n '%dp' %s | head -c %d]",
+				startLineDisplay, firstLineSize, FormatSize(DefaultMaxBytes), startLineDisplay, path, DefaultMaxBytes)
+		case tr.Truncated:
+			endLineDisplay := startLineDisplay + tr.OutputLines - 1
+			nextOffset := endLineDisplay + 1
+			out = tr.Content
+			if tr.TruncatedBy == "lines" {
+				out += fmt.Sprintf("\n\n[Showing lines %d-%d of %d. Use offset=%d to continue.]", startLineDisplay, endLineDisplay, totalFileLines, nextOffset)
+			} else {
+				out += fmt.Sprintf("\n\n[Showing lines %d-%d of %d (%s limit). Use offset=%d to continue.]", startLineDisplay, endLineDisplay, totalFileLines, FormatSize(DefaultMaxBytes), nextOffset)
+			}
+		case hasLimit && startLine+userLimitedLines < len(allLines):
+			remaining := len(allLines) - (startLine + userLimitedLines)
+			nextOffset := startLine + userLimitedLines + 1
+			out = fmt.Sprintf("%s\n\n[%d more lines in file. Use offset=%d to continue.]", tr.Content, remaining, nextOffset)
+		default:
+			out = tr.Content
+		}
+		res := textResult(out)
+		if tr.Truncated {
+			res.Details = map[string]any{"truncation": tr}
+		}
+		return res, nil
 	}
 }
 
@@ -1089,12 +1153,14 @@ type BashToolOutput struct {
 const bashStructuredOutputMaxBytes = 1024 * 1024
 
 // bashOutputSchema is the shell tools' OutputSchema (pi bashOutputSchema),
-// built per tool like Parameters, since a Schema can be modified in place.
+// built per tool like Parameters, since a Schema can be modified in place. Its
+// descriptions are short because codemode renders them into the tool's
+// one-line type (upstream 6f1072cc0); BashToolOutput documents the limits.
 func bashOutputSchema() *ai.Schema {
 	return ai.Object(
-		ai.Prop("output", ai.String("Combined stdout and stderr, up to 1 MiB. Longer output keeps its first and last 512 KiB around an omission marker.")),
-		ai.Prop("truncated", ai.Boolean("Whether `output` omits part of the command output")),
-		ai.Opt("full_output_path", ai.String("Temp file with the full output, when truncated")),
+		ai.Prop("output", ai.String("Combined stdout and stderr, possibly truncated")),
+		ai.Prop("truncated", ai.Boolean()),
+		ai.Opt("full_output_path", ai.String("Full output, when truncated")),
 		ai.Prop("exit_code", ai.Number()),
 		ai.Prop("wall_time_seconds", ai.Number()),
 	)

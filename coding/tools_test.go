@@ -2,6 +2,7 @@ package coding
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -404,4 +405,51 @@ func TestBashSessionEnvRaceWithSetModel(t *testing.T) {
 		}
 	}
 	<-done
+}
+
+// tools.test.ts at 021eae60a: read hands programmatic callers its result as
+// structured content — the text for a text file, and for an image an image
+// block carrying the text that goes with it as its note. An image that could
+// not be processed is only text, so it is text there too.
+func TestReadStructuredContent(t *testing.T) {
+	dir := t.TempDir()
+	content := "Hello, world!\nLine 2\nLine 3"
+	os.WriteFile(filepath.Join(dir, "test.txt"), []byte(content), 0o644)
+	r, err := run(t, readTool(dir), map[string]any{"path": "test.txt"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if r.StructuredContent != content {
+		t.Fatalf("text file structured content = %#v, want the text %q", r.StructuredContent, content)
+	}
+
+	os.WriteFile(filepath.Join(dir, "pixel.png"), minimalPNG(), 0o644)
+	r, err = run(t, readTool(dir), map[string]any{"path": "pixel.png"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var image ai.ImageContent
+	for _, c := range r.Content {
+		if ic, ok := c.(ai.ImageContent); ok {
+			image = ic
+		}
+	}
+	want := ReadToolImage{Type: "image", Data: image.Data, MimeType: "image/png", Note: resultText(r)}
+	if image.Data == "" || r.StructuredContent != want {
+		t.Fatalf("image structured content = %#v, want %#v", r.StructuredContent, want)
+	}
+	if got, err := json.Marshal(r.StructuredContent); err != nil || string(got) != `{"type":"image","data":"`+image.Data+`","mimeType":"image/png","note":"Read image file [image/png]"}` {
+		t.Fatalf("image structured content JSON = %s, %v", got, err)
+	}
+
+	// A PNG header with no image data: detected as an image, but processing
+	// fails and only the note remains.
+	os.WriteFile(filepath.Join(dir, "broken.png"), minimalPNG()[:33], 0o644)
+	r, err = run(t, readTool(dir), map[string]any{"path": "broken.png"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if text := resultText(r); !strings.HasPrefix(text, "Read image file [image/png]\n") || r.StructuredContent != text {
+		t.Fatalf("unprocessable image structured content = %#v, want its text %q", r.StructuredContent, text)
+	}
 }
