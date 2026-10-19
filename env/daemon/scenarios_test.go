@@ -179,6 +179,59 @@ func scenarios() []scenario {
 			},
 		},
 		{
+			// Command runs the program through the C library's execvp(3): which
+			// failures move the search on to the next PATH entry, and whether a
+			// file the kernel cannot execute runs through sh, is the library's
+			// (macOS and bionic run it; musl, which the Linux builds use, fails).
+			name: "execvp",
+			skip: unixOnly,
+			run: func(r *recorder) {
+				writeFixture(t(r), r.root, map[string]string{
+					"bin/script": "echo from script\n", "bin/dir/": "", "bin/plain": "x",
+					"dirs/script/": "", "plains/script": "x", "later/script": "#!/bin/sh\necho later\n",
+				})
+				os.Chmod(filepath.Join(r.root, "bin", "script"), 0o755)
+				os.Chmod(filepath.Join(r.root, "later", "script"), 0o755)
+				r.do("script without shebang", `{"op":"exec","argv":["%R/bin/script"],"cwd":"%R","env":{}}`)
+				r.do("relative script without shebang", `{"op":"exec","argv":["bin/script"],"cwd":"%R","env":{}}`)
+				r.do("script in PATH", `{"op":"exec","argv":["script"],"cwd":"%R","env":{"PATH":"%R/bin:%R/later"}}`)
+				r.do("directory in PATH", `{"op":"exec","argv":["dir"],"cwd":"%R","env":{"PATH":"%R/bin"}}`)
+				r.do("directory then program", `{"op":"exec","argv":["script"],"cwd":"%R","env":{"PATH":"%R/dirs:%R/later"}}`)
+				r.do("not executable in PATH", `{"op":"exec","argv":["plain"],"cwd":"%R","env":{"PATH":"%R/bin"}}`)
+				r.do("not executable then program", `{"op":"exec","argv":["script"],"cwd":"%R","env":{"PATH":"%R/plains:%R/later"}}`)
+				r.do("file as directory then program", `{"op":"exec","argv":["script"],"cwd":"%R","env":{"PATH":"%R/bin/plain:%R/later"}}`)
+				r.do("missing then program", `{"op":"exec","argv":["script"],"cwd":"%R","env":{"PATH":"%R/nope:%R/later"}}`)
+				r.do("missing everywhere", `{"op":"exec","argv":["nothing"],"cwd":"%R","env":{"PATH":"%R/nope:%R/bin"}}`)
+				r.do("pty script without shebang", `{"op":"pty","argv":["%R/bin/script"],"cwd":"%R","env":{},"cols":80,"rows":24}`)
+			},
+		},
+		{
+			// musl's execvp searches /usr/local/bin:/bin:/usr/bin when PATH is
+			// unset, glibc /bin:/usr/bin.
+			name: "musl default PATH",
+			skip: func() string {
+				if reason := muslOnly(); reason != "" {
+					return reason
+				}
+				f, err := os.CreateTemp("/usr/local/bin", ".pi-env-oracle-")
+				if err != nil {
+					return "needs to write a program into /usr/local/bin (run as root, as in a container)"
+				}
+				f.Close()
+				os.Remove(f.Name())
+				return ""
+			},
+			run: func(r *recorder) {
+				program := "/usr/local/bin/pi-env-oracle-local"
+				if err := os.WriteFile(program, []byte("#!/bin/sh\necho local\n"), 0o755); err != nil {
+					t(r).Fatal(err)
+				}
+				defer os.Remove(program)
+				r.do("no PATH", `{"op":"exec","argv":["pi-env-oracle-local"],"cwd":"%R","env":{},"inheritEnv":false}`)
+				r.do("PATH set", `{"op":"exec","argv":["pi-env-oracle-local"],"cwd":"%R","env":{"PATH":"/bin"},"inheritEnv":false}`)
+			},
+		},
+		{
 			name: "watch through links",
 			skip: unixOnly,
 			run:  watchThroughLinks,
@@ -637,6 +690,13 @@ except OSError:
 // foreignCwd is a working directory outside the scenario's directory, the
 // test's own.
 var foreignCwd = regexp.MustCompile(`"cwd":"[^<"][^"]*"`)
+
+func muslOnly() string {
+	if runtime.GOOS != "linux" || onAndroid {
+		return "musl's realpath(3) and execvp(3): the Rust daemon's Linux builds are static musl"
+	}
+	return ""
+}
 
 func needsPython() string {
 	if reason := unixOnly(); reason != "" {

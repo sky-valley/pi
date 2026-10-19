@@ -1,10 +1,13 @@
 package daemon
 
 import (
+	"encoding/binary"
+	"io"
 	"os"
 	"runtime"
 	"strings"
 	"sync"
+	"syscall"
 	"unsafe"
 
 	"golang.org/x/sys/unix"
@@ -12,9 +15,33 @@ import (
 
 // macOS.
 
-// defaultPath is the search path execvp(3) uses when PATH is unset
-// (_PATH_DEFPATH).
-const defaultPath = "/usr/bin:/bin"
+// execvp is macOS's execvP(3) (Libc gen/FreeBSD/exec.c): an empty entry is
+// ".", a file that is not an executable runs through /bin/sh, and EACCES
+// counts only for a candidate that exists (stat decides).
+var execvp = execvpRules{
+	defaultPath: "/usr/bin:/bin", // _PATH_DEFPATH
+	emptyEntry:  func(name string) string { return "./" + name },
+	shell:       "/bin/sh", // _PATH_BSHELL
+	step: func(err syscall.Errno, resolved string) searchStep {
+		switch err {
+		case unix.ELOOP, unix.ENAMETOOLONG, unix.ENOENT, unix.ENOTDIR:
+			return nextCandidate
+		case unix.ENOEXEC:
+			return runThroughShell
+		case unix.E2BIG, unix.ENOMEM, unix.ETXTBSY:
+			return stopSearch
+		}
+		var st unix.Stat_t
+		switch {
+		case unix.Stat(resolved, &st) != nil:
+			return nextCandidate
+		case err == unix.EACCES:
+			return nextDenied
+		}
+		return stopSearch
+	},
+	exhausted: func(syscall.Errno) syscall.Errno { return unix.ENOENT },
+}
 
 // watchPerDirectory reports whether native watching needs a watch on every
 // directory below a recursive target. The Rust daemon watches recursively
@@ -34,6 +61,29 @@ func startWithEmptySignalMask(program string, argv []string, attr *os.ProcAttr) 
 		defer unix.RawSyscall(unix.SYS___PTHREAD_SIGMASK, sigSetmask, uintptr(unsafe.Pointer(&previous)), 0)
 	}
 	return os.StartProcess(program, argv, attr)
+}
+
+// knownFormat reports whether the kernel can execute the file: a "#!"
+// script or a Mach-O image, thin or fat; anything else fails with ENOEXEC.
+// A file that cannot be read is left to the kernel.
+func knownFormat(path string) bool {
+	f, err := os.Open(path)
+	if err != nil {
+		return true
+	}
+	defer f.Close()
+	var head [4]byte
+	if n, _ := io.ReadFull(f, head[:]); n >= 2 && head[0] == '#' && head[1] == '!' {
+		return true
+	} else if n < 4 {
+		return false
+	}
+	switch binary.BigEndian.Uint32(head[:]) {
+	case 0xfeedface, 0xcefaedfe, 0xfeedfacf, 0xcffaedfe, // MH_MAGIC, MH_CIGAM, MH_MAGIC_64, MH_CIGAM_64
+		0xcafebabe, 0xbebafeca, 0xcafebabf, 0xbfbafeca: // FAT_MAGIC, FAT_CIGAM, FAT_MAGIC_64, FAT_CIGAM_64
+		return true
+	}
+	return false
 }
 
 // rootDevice is the device of "/", which realpath compares mount points with.

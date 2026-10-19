@@ -330,6 +330,116 @@
       "json": "{\"exitCode\":137}"
     }
   ],
+  "execvp": [
+    {
+      "label": "script without shebang",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "from script\n"
+    },
+    {
+      "label": "script without shebang",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    },
+    {
+      "label": "relative script without shebang",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "from script\n"
+    },
+    {
+      "label": "relative script without shebang",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    },
+    {
+      "label": "script in PATH",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "from script\n"
+    },
+    {
+      "label": "script in PATH",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    },
+    {
+      "label": "directory in PATH",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"Permission denied (os error 13)\"}"
+    },
+    {
+      "label": "directory then program",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "later\n"
+    },
+    {
+      "label": "directory then program",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    },
+    {
+      "label": "not executable in PATH",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"Permission denied (os error 13)\"}"
+    },
+    {
+      "label": "not executable then program",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "later\n"
+    },
+    {
+      "label": "not executable then program",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    },
+    {
+      "label": "file as directory then program",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "later\n"
+    },
+    {
+      "label": "file as directory then program",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    },
+    {
+      "label": "missing then program",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "later\n"
+    },
+    {
+      "label": "missing then program",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    },
+    {
+      "label": "missing everywhere",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"No such file or directory (os error 2)\"}"
+    },
+    {
+      "label": "pty script without shebang",
+      "kind": 4,
+      "json": "{\"kind\":\"started\",\"pid\":0}"
+    },
+    {
+      "label": "pty script without shebang",
+      "kind": 4,
+      "json": "{\"kind\":\"output\"}",
+      "payload": "from script\r\n"
+    },
+    {
+      "label": "pty script without shebang",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    }
+  ],
   "gitignore": [
     {
       "label": "repo",

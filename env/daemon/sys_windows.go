@@ -24,9 +24,6 @@ const pathSeparator = `\`
 // watchPerDirectory: Windows always polls.
 const watchPerDirectory = false
 
-// defaultPath is unused on Windows: programs are searched as libuv does.
-const defaultPath = ""
-
 // osErrorName is libuv's uv_translate_sys_error for the errors file and
 // process operations produce.
 func osErrorName(err error) string {
