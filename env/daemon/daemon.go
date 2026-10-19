@@ -46,6 +46,15 @@ var features = []string{"listFiles"}
 // handle is an open file or directory of the connection, valid until close.
 type handle interface{ close() }
 
+// entry is a handle in the connection's table and its users: the table, until
+// close, and each request using it. The handle closes when its last user lets
+// go, as the Rust daemon's closes when its last Arc drops: a request in flight
+// finishes on an open handle, and close does not wait for it.
+type entry struct {
+	handle handle
+	users  int // guarded by server.mu
+}
+
 // fileHandle is an open file.
 type fileHandle struct {
 	file *os.File
@@ -74,17 +83,13 @@ type dirHandle struct {
 	done     bool
 }
 
-func (h *dirHandle) close() {
-	h.mu.Lock()
-	defer h.mu.Unlock()
-	h.dir.Close()
-}
+func (h *dirHandle) close() { h.dir.Close() }
 
 type server struct {
 	out        *output
 	tmpdir     string
 	mu         sync.Mutex
-	handles    map[uint64]handle
+	handles    map[uint64]*entry
 	nextHandle atomic.Uint64
 	controls   map[uint32]*control
 	jobs       *jobQueue
@@ -117,21 +122,35 @@ func boolField(json any, key string) bool {
 	return b
 }
 
-func (s *server) file(json any) (*fileHandle, *failure) {
+// file is the file handle a request names, held open until release is
+// called.
+func (s *server) file(json any) (handle *fileHandle, release func(), fail *failure) {
 	id, fail := number(json, "handle")
 	if fail != nil {
-		return nil, fail
+		return nil, nil, fail
 	}
 	s.mu.Lock()
-	h := s.handles[id]
+	defer s.mu.Unlock()
+	e := s.handles[id]
+	if e == nil {
+		return nil, nil, newFailure("EBADF", "unknown handle")
+	}
+	handle, ok := e.handle.(*fileHandle)
+	if !ok {
+		return nil, nil, newFailure("EBADF", "not a file handle")
+	}
+	e.users++
+	return handle, func() { s.release(e) }, nil
+}
+
+// release lets go of a handle, closing it if that was its last user.
+func (s *server) release(e *entry) {
+	s.mu.Lock()
+	e.users--
+	last := e.users == 0
 	s.mu.Unlock()
-	switch h := h.(type) {
-	case *fileHandle:
-		return h, nil
-	case *dirHandle:
-		return nil, newFailure("EBADF", "not a file handle")
-	default:
-		return nil, newFailure("EBADF", "unknown handle")
+	if last {
+		e.handle.close()
 	}
 }
 
@@ -142,7 +161,7 @@ func (s *server) insert(h handle) (uint64, *failure) {
 		return 0, newFailure("EMFILE", "EMFILE: too many open files")
 	}
 	id := s.nextHandle.Add(1) - 1
-	s.handles[id] = h
+	s.handles[id] = &entry{handle: h, users: 1}
 	return id, nil
 }
 
@@ -214,10 +233,11 @@ func (s *server) dispatch(id uint32, json any, payload []byte, ctl *control) (ob
 		}
 		return plain(object{"handle": handle}, nil)
 	case "writeChunk":
-		handle, fail := s.file(json)
+		handle, release, fail := s.file(json)
 		if fail != nil {
 			return plain(nil, fail)
 		}
+		defer release()
 		if handle.failed.Load() {
 			return plain(nil, newFailure("EBADF", "an earlier write failed"))
 		}
@@ -273,10 +293,11 @@ func (s *server) dispatch(id uint32, json any, payload []byte, ctl *control) (ob
 	case "open":
 		return plain(s.open(json))
 	case "pread":
-		handle, fail := s.file(json)
+		handle, release, fail := s.file(json)
 		if fail != nil {
 			return plain(nil, fail)
 		}
+		defer release()
 		length, fail := number(json, "length")
 		if fail != nil {
 			return plain(nil, fail)
@@ -293,20 +314,22 @@ func (s *server) dispatch(id uint32, json any, payload []byte, ctl *control) (ob
 		}
 		return object{}, data, nil
 	case "fstat":
-		handle, fail := s.file(json)
+		handle, release, fail := s.file(json)
 		if fail != nil {
 			return plain(nil, fail)
 		}
+		defer release()
 		st, err := fstatFile(handle.file)
 		if err != nil {
 			return plain(nil, ioFailure(err, "fstat", handle.path))
 		}
 		return plain(info(handle.path, st), nil)
 	case "scanLines":
-		handle, fail := s.file(json)
+		handle, release, fail := s.file(json)
 		if fail != nil {
 			return plain(nil, fail)
 		}
+		defer release()
 		return plain(scanLines(handle.file, handle.path, json, ctl))
 	case "opendir":
 		p, fail := path()
@@ -336,14 +359,11 @@ func (s *server) dispatch(id uint32, json any, payload []byte, ctl *control) (ob
 			return plain(nil, fail)
 		}
 		s.mu.Lock()
-		h := s.handles[id]
+		e := s.handles[id]
 		delete(s.handles, id)
 		s.mu.Unlock()
-		if h != nil {
-			// Closed once no request uses it any more, as dropping the last
-			// reference does: a read blocked on a FIFO does not hold up the
-			// reply.
-			go h.close()
+		if e != nil {
+			s.release(e)
 		}
 		return plain(object{}, nil)
 	case "exec":
@@ -416,14 +436,21 @@ func (s *server) readDir(json any) (object, *failure) {
 	if fail != nil {
 		return nil, fail
 	}
-	// Lock only this directory, so other requests are not held up by a slow
-	// listing.
 	s.mu.Lock()
-	dir, ok := s.handles[id].(*dirHandle)
-	s.mu.Unlock()
-	if !ok {
+	e := s.handles[id]
+	var dir *dirHandle
+	if e != nil {
+		dir, _ = e.handle.(*dirHandle)
+	}
+	if dir == nil {
+		s.mu.Unlock()
 		return nil, newFailure("EBADF", "not a directory handle")
 	}
+	e.users++
+	s.mu.Unlock()
+	defer s.release(e)
+	// Lock only this directory, so other requests are not held up by a slow
+	// listing.
 	dir.mu.Lock()
 	defer dir.mu.Unlock()
 	entries := []any{}
@@ -611,7 +638,8 @@ func (s *server) serveFrames(input io.Reader) error {
 				// Commands and watchers last; they get their own goroutines.
 				go respond()
 			case "writeChunk":
-				if handle, fail := s.file(json); fail == nil {
+				if handle, release, fail := s.file(json); fail == nil {
+					release()
 					s.runInOrder(handle, respond)
 				} else {
 					s.jobs.send(respond)
@@ -671,7 +699,7 @@ func serve(token string, stdin io.Reader, stdout io.Writer) error {
 	s := &server{
 		out:       out,
 		tmpdir:    tmpdir(),
-		handles:   map[uint64]handle{},
+		handles:   map[uint64]*entry{},
 		controls:  map[uint32]*control{},
 		jobs:      startWorkers(),
 		running:   newGroups(),

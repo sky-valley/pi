@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/sky-valley/pi/env/internal/frame"
 )
@@ -316,6 +317,23 @@ func scenarios() []scenario {
 				r.do("read null", `{"op":"pread","handle":5,"length":10}`)
 				r.do("read mode missing", `{"op":"open","path":"%R/missing","mode":"read"}`)
 				r.do("fstat dir handle", `{"op":"fstat","handle":4}`)
+			},
+		},
+		{
+			// A handle closed while a request uses it stays open until that
+			// request is done, as dropping the Rust daemon's last Arc closes it:
+			// an endless scan goes on after close until it is cancelled.
+			name: "close in flight",
+			skip: unixOnly,
+			run: func(r *recorder) {
+				r.do("open", `{"op":"open","path":"/dev/zero","mode":"read"}`)
+				scan := r.start(`{"op":"scanLines","handle":1,"startLine":0}`, nil)
+				time.Sleep(300 * time.Millisecond)
+				r.do("close", `{"op":"close","handle":1}`)
+				time.Sleep(300 * time.Millisecond)
+				r.send(frame.Cancel, scan, nil, nil)
+				r.keep("scan", r.wait(scan, finished))
+				r.do("closed", `{"op":"fstat","handle":1}`)
 			},
 		},
 		{

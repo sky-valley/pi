@@ -1,4 +1,26 @@
 {
+  "close in flight": [
+    {
+      "label": "open",
+      "kind": 2,
+      "json": "{\"handle\":1,\"stat\":{\"dev\":0,\"ino\":0,\"kind\":\"other\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"zero\",\"size\":0}}"
+    },
+    {
+      "label": "close",
+      "kind": 2,
+      "json": "{}"
+    },
+    {
+      "label": "scan",
+      "kind": 3,
+      "json": "{\"code\":\"aborted\",\"message\":\"aborted\"}"
+    },
+    {
+      "label": "closed",
+      "kind": 3,
+      "json": "{\"code\":\"EBADF\",\"message\":\"unknown handle\"}"
+    }
+  ],
   "environment order": [
     {
       "label": "inherited",
