@@ -87,14 +87,12 @@ func TestResolveModelThinkingLevelSuffix(t *testing.T) {
 	if r.Model.ID != "claude-sonnet-4-5" || r.ThinkingLevel != "high" {
 		t.Fatalf("suffix parse wrong: id=%s level=%q", r.Model.ID, r.ThinkingLevel)
 	}
-	// Bare-id pattern with suffix. ("claude-sonnet-4-5" is ambiguous across
-	// providers in the catalog, so like pi the fuzzy matcher picks an alias —
-	// only the model presence and parsed level are asserted here.)
-	r, err = ResolveModelPattern("claude-sonnet-4-5:xhigh")
+	// Bare-id pattern with suffix, on an id only one provider offers.
+	r, err = ResolveModelPattern("meta-llama/llama-4-scout:xhigh")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if r.Model == nil || r.ThinkingLevel != "xhigh" {
+	if r.Model == nil || r.Model.ID != "meta-llama/llama-4-scout" || r.ThinkingLevel != "xhigh" {
 		t.Fatalf("bare-id suffix parse wrong: model=%v level=%q", r.Model, r.ThinkingLevel)
 	}
 	// No suffix → empty level.
@@ -359,8 +357,37 @@ func TestResolveModelXaiFallbackDefault(t *testing.T) {
 		{ID: "grok-4.6", Provider: "xai", ContextWindow: 460_000, MaxTokens: 46_000},
 		{ID: "grok-4.7", Provider: "xai", ContextWindow: 470_000, MaxTokens: 47_000},
 	}
-	got := buildFallbackModel("xai", "my-custom-grok", models)
+	got := buildFallbackModel(models, "my-custom-grok")
 	if got == nil || got.ID != "my-custom-grok" || got.ContextWindow != 470_000 || got.MaxTokens != 47_000 {
 		t.Fatalf("fallback must be templated from grok-4.7 (cw=470000 mt=47000), got %+v", got)
+	}
+}
+
+// hermeticAuthEnv clears the environment for the test, so no provider has
+// configured auth unless the test sets it.
+func hermeticAuthEnv(t *testing.T) {
+	t.Helper()
+	for _, kv := range os.Environ() {
+		key, _, _ := strings.Cut(kv, "=")
+		t.Setenv(key, "")
+		os.Unsetenv(key)
+	}
+}
+
+// Upstream d7f7e0dfe on the real catalog: several providers offer
+// claude-haiku-4-5, so configured credentials choose between them — the sole
+// authenticated provider wins, and with none the reference is ambiguous
+// instead of being decided by catalog order.
+func TestResolveModelPatternConfiguredAuthBreaksTies(t *testing.T) {
+	hermeticAuthEnv(t)
+	_, err := ResolveModelPattern("claude-haiku-4-5:high")
+	if err == nil || !strings.HasPrefix(err.Error(), `Model "claude-haiku-4-5:high" is ambiguous across providers: anthropic/claude-haiku-4-5, `) ||
+		!strings.HasSuffix(err.Error(), ". No matching provider is authenticated. Use --provider or provider/model.") {
+		t.Fatalf("with no credentials: error = %v, want the ambiguity naming anthropic/claude-haiku-4-5", err)
+	}
+	t.Setenv("ANTHROPIC_API_KEY", "test-key")
+	r, err := ResolveModelPattern("claude-haiku-4-5:high")
+	if err != nil || r.Model.Provider != "anthropic" || r.Model.ID != "claude-haiku-4-5" || r.ThinkingLevel != "high" {
+		t.Fatalf("with an Anthropic key: %+v, %v; want anthropic/claude-haiku-4-5 at high", r, err)
 	}
 }

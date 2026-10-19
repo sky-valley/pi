@@ -1,0 +1,2073 @@
+{
+	"piCodingAgentVersion": "1.3.0",
+	"catalogs": {
+		"all": [
+			{
+				"id": "claude-sonnet-4-5",
+				"name": "Claude Sonnet 4.5",
+				"api": "openai-completions",
+				"provider": "anthropic",
+				"baseUrl": "https://anthropic.invalid/claude-sonnet-4-5",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 8192
+			},
+			{
+				"id": "gpt-4o",
+				"name": "GPT-4o",
+				"api": "openai-completions",
+				"provider": "openai",
+				"baseUrl": "https://openai.invalid/gpt-4o",
+				"reasoning": false,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 8192
+			},
+			{
+				"id": "qwen/qwen3-coder:exacto",
+				"name": "Qwen3 Coder Exacto",
+				"api": "openai-completions",
+				"provider": "openrouter",
+				"baseUrl": "https://openrouter.invalid/qwen/qwen3-coder:exacto",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 8192
+			},
+			{
+				"id": "openai/gpt-4o:extended",
+				"name": "GPT-4o Extended",
+				"api": "openai-completions",
+				"provider": "openrouter",
+				"baseUrl": "https://openrouter.invalid/openai/gpt-4o:extended",
+				"reasoning": false,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 8192
+			},
+			{
+				"id": "some-base-model",
+				"name": "Some Base Model",
+				"api": "openai-completions",
+				"provider": "neuralwatt",
+				"baseUrl": "https://neuralwatt.invalid/some-base-model",
+				"reasoning": false,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 8192
+			}
+		],
+		"gateways": [
+			{
+				"id": "claude-sonnet-4-5",
+				"name": "claude-sonnet-4-5",
+				"api": "openai-completions",
+				"provider": "anthropic",
+				"baseUrl": "https://anthropic.invalid/claude-sonnet-4-5",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 8192
+			},
+			{
+				"id": "anthropic/claude-opus-5.5",
+				"name": "anthropic/claude-opus-5.5",
+				"api": "openai-completions",
+				"provider": "openrouter",
+				"baseUrl": "https://openrouter.invalid/anthropic/claude-opus-5.5",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 8192
+			},
+			{
+				"id": "anthropic/claude-opus-5.5",
+				"name": "anthropic/claude-opus-5.5",
+				"api": "openai-completions",
+				"provider": "vercel-ai-gateway",
+				"baseUrl": "https://vercel-ai-gateway.invalid/anthropic/claude-opus-5.5",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 8192
+			}
+		],
+		"defaults": [
+			{
+				"id": "grok-4.6",
+				"name": "grok-4.6",
+				"api": "openai-completions",
+				"provider": "xai",
+				"baseUrl": "https://xai.invalid/grok-4.6",
+				"reasoning": false,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 460000,
+				"maxTokens": 8192
+			},
+			{
+				"id": "grok-4.7",
+				"name": "grok-4.7",
+				"api": "openai-completions",
+				"provider": "xai",
+				"baseUrl": "https://xai.invalid/grok-4.7",
+				"reasoning": false,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 470000,
+				"maxTokens": 8192
+			},
+			{
+				"id": "codestral-latest",
+				"name": "codestral-latest",
+				"api": "openai-completions",
+				"provider": "mistral",
+				"baseUrl": "https://mistral.invalid/codestral-latest",
+				"reasoning": false,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 8192
+			}
+		],
+		"reference": [
+			{
+				"id": "claude-sonnet-4-5",
+				"name": "claude-sonnet-4-5",
+				"api": "openai-completions",
+				"provider": "anthropic",
+				"baseUrl": "https://anthropic.invalid/claude-sonnet-4-5",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 8192
+			},
+			{
+				"id": "claude-sonnet-4-5-20250929",
+				"name": "claude-sonnet-4-5-20250929",
+				"api": "openai-completions",
+				"provider": "anthropic",
+				"baseUrl": "https://anthropic.invalid/claude-sonnet-4-5-20250929",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 8192
+			},
+			{
+				"id": "claude-opus-4-8",
+				"name": "claude-opus-4-8",
+				"api": "openai-completions",
+				"provider": "anthropic",
+				"baseUrl": "https://anthropic.invalid/claude-opus-4-8",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 8192
+			},
+			{
+				"id": "exact",
+				"name": "exact",
+				"api": "openai-completions",
+				"provider": "anthropic",
+				"baseUrl": "https://anthropic.invalid/exact",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 8192
+			},
+			{
+				"id": "shared-pro",
+				"name": "shared-pro",
+				"api": "openai-completions",
+				"provider": "anthropic",
+				"baseUrl": "https://anthropic.invalid/shared-pro",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 8192
+			},
+			{
+				"id": "gpt-4o",
+				"name": "gpt-4o",
+				"api": "openai-completions",
+				"provider": "openai",
+				"baseUrl": "https://openai.invalid/gpt-4o",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 8192
+			},
+			{
+				"id": "qwen/qwen3-coder:exacto",
+				"name": "qwen/qwen3-coder:exacto",
+				"api": "openai-completions",
+				"provider": "openrouter",
+				"baseUrl": "https://openrouter.invalid/qwen/qwen3-coder:exacto",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 8192
+			},
+			{
+				"id": "openai/gpt-4o:extended",
+				"name": "openai/gpt-4o:extended",
+				"api": "openai-completions",
+				"provider": "openrouter",
+				"baseUrl": "https://openrouter.invalid/openai/gpt-4o:extended",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 8192
+			},
+			{
+				"id": "shared",
+				"name": "shared",
+				"api": "openai-completions",
+				"provider": "gw-a",
+				"baseUrl": "https://gw-a.invalid/shared",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 8192
+			},
+			{
+				"id": "anthropic/future",
+				"name": "anthropic/future",
+				"api": "openai-completions",
+				"provider": "gw-a",
+				"baseUrl": "https://gw-a.invalid/anthropic/future",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 8192
+			},
+			{
+				"id": "anthropic/exact",
+				"name": "anthropic/exact",
+				"api": "openai-completions",
+				"provider": "gw-a",
+				"baseUrl": "https://gw-a.invalid/anthropic/exact",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 8192
+			},
+			{
+				"id": "anthropic/claude-opus-4.8",
+				"name": "anthropic/claude-opus-4.8",
+				"api": "openai-completions",
+				"provider": "gw-a",
+				"baseUrl": "https://gw-a.invalid/anthropic/claude-opus-4.8",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 8192
+			},
+			{
+				"id": "anthropic/claude-opus",
+				"name": "anthropic/claude-opus",
+				"api": "openai-completions",
+				"provider": "gw-a",
+				"baseUrl": "https://gw-a.invalid/anthropic/claude-opus",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 8192
+			},
+			{
+				"id": "shared",
+				"name": "shared",
+				"api": "openai-completions",
+				"provider": "gw-b",
+				"baseUrl": "https://gw-b.invalid/shared",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 8192
+			},
+			{
+				"id": "anthropic/future",
+				"name": "anthropic/future",
+				"api": "openai-completions",
+				"provider": "gw-b",
+				"baseUrl": "https://gw-b.invalid/anthropic/future",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 8192
+			},
+			{
+				"id": "claude-opus-4-8",
+				"name": "claude-opus-4-8",
+				"api": "openai-completions",
+				"provider": "gw-b",
+				"baseUrl": "https://gw-b.invalid/claude-opus-4-8",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 8192
+			},
+			{
+				"id": "gw-b/free",
+				"name": "gw-b/free",
+				"api": "openai-completions",
+				"provider": "gw-b",
+				"baseUrl": "https://gw-b.invalid/gw-b/free",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 8192
+			},
+			{
+				"id": "zz:free",
+				"name": "zz:free",
+				"api": "openai-completions",
+				"provider": "gw-b",
+				"baseUrl": "https://gw-b.invalid/zz:free",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 8192
+			}
+		],
+		"empty": []
+	},
+	"references": [
+		{
+			"name": "exact id",
+			"text": "claude-sonnet-4-5",
+			"request": {
+				"text": "claude-sonnet-4-5",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "resolved",
+				"model": "anthropic/claude-sonnet-4-5"
+			}
+		},
+		{
+			"name": "exact id is case-insensitive",
+			"text": "GPT-4O",
+			"request": {
+				"text": "GPT-4O",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "resolved",
+				"model": "openai/gpt-4o"
+			}
+		},
+		{
+			"name": "fuzzy prefers aliases over dated ids",
+			"text": "sonnet",
+			"request": {
+				"text": "sonnet",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "resolved",
+				"model": "anthropic/claude-sonnet-4-5"
+			}
+		},
+		{
+			"name": "thinking suffix",
+			"text": "sonnet:high",
+			"request": {
+				"text": "sonnet:high",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "resolved",
+				"model": "anthropic/claude-sonnet-4-5",
+				"thinkingLevel": "high"
+			}
+		},
+		{
+			"name": "colon in a literal id is not a thinking suffix",
+			"text": "qwen/qwen3-coder:exacto",
+			"request": {
+				"text": "qwen/qwen3-coder:exacto",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "resolved",
+				"model": "openrouter/qwen/qwen3-coder:exacto"
+			}
+		},
+		{
+			"name": "provider prefix, colon id, and thinking suffix",
+			"text": "openrouter/qwen/qwen3-coder:exacto:high",
+			"request": {
+				"text": "openrouter/qwen/qwen3-coder:exacto:high",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "resolved",
+				"model": "openrouter/qwen/qwen3-coder:exacto",
+				"thinkingLevel": "high"
+			}
+		},
+		{
+			"name": "raw id wins when the provider prefix names no matching model",
+			"text": "openai/gpt-4o:extended",
+			"request": {
+				"text": "openai/gpt-4o:extended",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "resolved",
+				"model": "openrouter/openai/gpt-4o:extended"
+			}
+		},
+		{
+			"name": "fuzzy searches the prefixed provider first",
+			"text": "openrouter/qwen",
+			"request": {
+				"text": "openrouter/qwen",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "resolved",
+				"model": "openrouter/qwen/qwen3-coder:exacto"
+			}
+		},
+		{
+			"name": "strict keeps an invalid suffix in the id",
+			"text": "gpt-4o:random",
+			"request": {
+				"text": "gpt-4o:random",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "not-found"
+			}
+		},
+		{
+			"name": "lenient drops an invalid suffix with a warning",
+			"text": "gpt-4o:random",
+			"thinkingSuffix": "lenient",
+			"request": {
+				"text": "gpt-4o:random",
+				"thinkingSuffix": "lenient",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "resolved",
+				"model": "openai/gpt-4o",
+				"warning": "Invalid thinking level \"random\" in pattern \"gpt-4o:random\". Using default instead."
+			}
+		},
+		{
+			"name": "lenient invalid outer suffix discards the inner thinking level",
+			"text": "qwen/qwen3-coder:exacto:high:random",
+			"thinkingSuffix": "lenient",
+			"request": {
+				"text": "qwen/qwen3-coder:exacto:high:random",
+				"thinkingSuffix": "lenient",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "resolved",
+				"model": "openrouter/qwen/qwen3-coder:exacto",
+				"warning": "Invalid thinking level \"random\" in pattern \"qwen/qwen3-coder:exacto:high:random\". Using default instead."
+			}
+		},
+		{
+			"name": "none keeps the suffix in the id",
+			"text": "gpt-4o:high",
+			"thinkingSuffix": "none",
+			"request": {
+				"text": "gpt-4o:high",
+				"thinkingSuffix": "none",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "not-found"
+			}
+		},
+		{
+			"name": "exact-only skips fuzzy matches",
+			"text": "sonnet",
+			"fuzzy": false,
+			"request": {
+				"text": "sonnet",
+				"thinkingSuffix": "strict",
+				"fuzzy": false
+			},
+			"result": {
+				"status": "not-found"
+			}
+		},
+		{
+			"name": "empty text",
+			"text": "  ",
+			"request": {
+				"text": "  ",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "not-found"
+			}
+		},
+		{
+			"name": "sole usable provider wins",
+			"text": "shared",
+			"usable": [
+				"gw-b"
+			],
+			"request": {
+				"text": "shared",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "resolved",
+				"model": "gw-b/shared"
+			}
+		},
+		{
+			"name": "no usable provider is ambiguous instead of falling through to fuzzy",
+			"text": "shared",
+			"request": {
+				"text": "shared",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "ambiguous",
+				"candidates": [
+					"gw-a/shared",
+					"gw-b/shared"
+				],
+				"usableCount": 0
+			}
+		},
+		{
+			"name": "several usable providers are ambiguous",
+			"text": "shared",
+			"usable": [
+				"gw-a",
+				"gw-b"
+			],
+			"request": {
+				"text": "shared",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "ambiguous",
+				"candidates": [
+					"gw-a/shared",
+					"gw-b/shared"
+				],
+				"usableCount": 2
+			}
+		},
+		{
+			"name": "thinking suffix does not change provider selection",
+			"text": "shared:high",
+			"usable": [
+				"gw-b"
+			],
+			"request": {
+				"text": "shared:high",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "resolved",
+				"model": "gw-b/shared",
+				"thinkingLevel": "high"
+			}
+		},
+		{
+			"name": "thinking suffix does not bypass ambiguity",
+			"text": "shared:high",
+			"usable": [
+				"gw-a",
+				"gw-b"
+			],
+			"request": {
+				"text": "shared:high",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "ambiguous",
+				"candidates": [
+					"gw-a/shared",
+					"gw-b/shared"
+				],
+				"usableCount": 2,
+				"thinkingLevel": "high"
+			}
+		},
+		{
+			"name": "provider prefix without a direct model selects the usable raw id",
+			"text": "anthropic/future",
+			"usable": [
+				"gw-b"
+			],
+			"request": {
+				"text": "anthropic/future",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "resolved",
+				"model": "gw-b/anthropic/future"
+			}
+		},
+		{
+			"name": "usable qualified match beats a usable raw id",
+			"text": "anthropic/exact",
+			"usable": [
+				"anthropic",
+				"gw-a"
+			],
+			"request": {
+				"text": "anthropic/exact",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "resolved",
+				"model": "anthropic/exact"
+			}
+		},
+		{
+			"name": "usable raw id beats an unusable qualified match",
+			"text": "anthropic/exact",
+			"usable": [
+				"gw-a"
+			],
+			"request": {
+				"text": "anthropic/exact",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "resolved",
+				"model": "gw-a/anthropic/exact"
+			}
+		},
+		{
+			"name": "unusable qualified match is kept when nothing is usable",
+			"text": "anthropic/exact",
+			"request": {
+				"text": "anthropic/exact",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "resolved",
+				"model": "anthropic/exact"
+			}
+		},
+		{
+			"name": "named provider's usable fuzzy match beats a raw id elsewhere",
+			"text": "anthropic/claude-opus",
+			"usable": [
+				"anthropic"
+			],
+			"request": {
+				"text": "anthropic/claude-opus",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "resolved",
+				"model": "anthropic/claude-opus-4-8"
+			}
+		},
+		{
+			"name": "usable raw id beats the named provider's unusable fuzzy match",
+			"text": "anthropic/claude-opus",
+			"usable": [
+				"gw-a"
+			],
+			"request": {
+				"text": "anthropic/claude-opus",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "resolved",
+				"model": "gw-a/anthropic/claude-opus"
+			}
+		},
+		{
+			"name": "named provider's fuzzy match is kept when nothing is usable",
+			"text": "anthropic/claude-opus",
+			"request": {
+				"text": "anthropic/claude-opus",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "resolved",
+				"model": "anthropic/claude-opus-4-8"
+			}
+		},
+		{
+			"name": "named provider's literal id beats its fuzzy matches",
+			"text": "gw-b/free",
+			"request": {
+				"text": "gw-b/free",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "resolved",
+				"model": "gw-b/gw-b/free"
+			}
+		},
+		{
+			"name": "fuzzy prefers usable providers",
+			"text": "opus",
+			"usable": [
+				"gw-a"
+			],
+			"request": {
+				"text": "opus",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "resolved",
+				"model": "gw-a/anthropic/claude-opus-4.8"
+			}
+		},
+		{
+			"name": "fuzzy id tie across usable providers is ambiguous",
+			"text": "opus",
+			"usable": [
+				"anthropic",
+				"gw-a",
+				"gw-b"
+			],
+			"request": {
+				"text": "opus",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "ambiguous",
+				"candidates": [
+					"anthropic/claude-opus-4-8",
+					"gw-b/claude-opus-4-8"
+				],
+				"usableCount": 2
+			}
+		},
+		{
+			"name": "fuzzy id tie resolves to the sole usable provider",
+			"text": "opus",
+			"usable": [
+				"anthropic"
+			],
+			"request": {
+				"text": "opus",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "resolved",
+				"model": "anthropic/claude-opus-4-8"
+			}
+		},
+		{
+			"name": "explicit provider ignores usable providers elsewhere",
+			"text": "shared",
+			"provider": "gw-a",
+			"usable": [
+				"gw-b"
+			],
+			"request": {
+				"text": "shared",
+				"provider": "gw-a",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "resolved",
+				"model": "gw-a/shared"
+			}
+		},
+		{
+			"name": "explicit provider accepts its own prefix",
+			"text": "GW-B/shared",
+			"provider": "gw-b",
+			"request": {
+				"text": "GW-B/shared",
+				"provider": "gw-b",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "resolved",
+				"model": "gw-b/shared"
+			}
+		},
+		{
+			"name": "explicit provider allows fuzzy matches",
+			"text": "4o",
+			"provider": "openai",
+			"request": {
+				"text": "4o",
+				"provider": "openai",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "resolved",
+				"model": "openai/gpt-4o"
+			}
+		},
+		{
+			"name": "explicit provider never leaves the provider",
+			"text": "gpt-4o",
+			"provider": "gw-a",
+			"request": {
+				"text": "gpt-4o",
+				"provider": "gw-a",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "not-found",
+				"target": {
+					"provider": "gw-a",
+					"providerModels": [
+						"gw-a/anthropic/claude-opus",
+						"gw-a/anthropic/claude-opus-4.8",
+						"gw-a/anthropic/exact",
+						"gw-a/anthropic/future",
+						"gw-a/shared"
+					],
+					"modelText": "gpt-4o",
+					"modelId": "gpt-4o"
+				}
+			}
+		},
+		{
+			"name": "not-found target under a provider prefix",
+			"text": "anthropic/ghost",
+			"request": {
+				"text": "anthropic/ghost",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "not-found",
+				"target": {
+					"provider": "anthropic",
+					"providerModels": [
+						"anthropic/claude-opus-4-8",
+						"anthropic/claude-sonnet-4-5",
+						"anthropic/claude-sonnet-4-5-20250929",
+						"anthropic/exact",
+						"anthropic/shared-pro"
+					],
+					"modelText": "ghost",
+					"modelId": "ghost"
+				}
+			}
+		},
+		{
+			"name": "not-found target keeps a thinking suffix apart",
+			"text": "anthropic/ghost:high",
+			"request": {
+				"text": "anthropic/ghost:high",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "not-found",
+				"target": {
+					"provider": "anthropic",
+					"providerModels": [
+						"anthropic/claude-opus-4-8",
+						"anthropic/claude-sonnet-4-5",
+						"anthropic/claude-sonnet-4-5-20250929",
+						"anthropic/exact",
+						"anthropic/shared-pro"
+					],
+					"modelText": "ghost:high",
+					"modelId": "ghost",
+					"thinkingLevel": "high"
+				}
+			}
+		},
+		{
+			"name": "not-found target keeps an invalid suffix in the id",
+			"text": "anthropic/ghost:banana",
+			"request": {
+				"text": "anthropic/ghost:banana",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "not-found",
+				"target": {
+					"provider": "anthropic",
+					"providerModels": [
+						"anthropic/claude-opus-4-8",
+						"anthropic/claude-sonnet-4-5",
+						"anthropic/claude-sonnet-4-5-20250929",
+						"anthropic/exact",
+						"anthropic/shared-pro"
+					],
+					"modelText": "ghost:banana",
+					"modelId": "ghost:banana"
+				}
+			}
+		},
+		{
+			"name": "not-found target with suffix none",
+			"text": "anthropic/ghost:high",
+			"thinkingSuffix": "none",
+			"request": {
+				"text": "anthropic/ghost:high",
+				"thinkingSuffix": "none",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "not-found",
+				"target": {
+					"provider": "anthropic",
+					"providerModels": [
+						"anthropic/claude-opus-4-8",
+						"anthropic/claude-sonnet-4-5",
+						"anthropic/claude-sonnet-4-5-20250929",
+						"anthropic/exact",
+						"anthropic/shared-pro"
+					],
+					"modelText": "ghost:high",
+					"modelId": "ghost:high"
+				}
+			}
+		},
+		{
+			"name": "not-found target under an explicit provider",
+			"text": "ghost:low",
+			"provider": "OPENAI",
+			"request": {
+				"text": "ghost:low",
+				"provider": "OPENAI",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "not-found",
+				"target": {
+					"provider": "openai",
+					"providerModels": [
+						"openai/gpt-4o"
+					],
+					"modelText": "ghost:low",
+					"modelId": "ghost",
+					"thinkingLevel": "low"
+				}
+			}
+		},
+		{
+			"name": "not-found target under an explicit provider with its prefix",
+			"text": "openai/ghost",
+			"provider": "openai",
+			"request": {
+				"text": "openai/ghost",
+				"provider": "openai",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "not-found",
+				"target": {
+					"provider": "openai",
+					"providerModels": [
+						"openai/gpt-4o"
+					],
+					"modelText": "ghost",
+					"modelId": "ghost"
+				}
+			}
+		},
+		{
+			"name": "not-found without a known prefix has no target",
+			"text": "nobody/ghost",
+			"request": {
+				"text": "nobody/ghost",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "not-found"
+			}
+		},
+		{
+			"name": "an unknown explicit provider has no target",
+			"text": "ghost",
+			"provider": "nobody",
+			"request": {
+				"text": "ghost",
+				"provider": "nobody",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "not-found"
+			}
+		},
+		{
+			"name": "provider prefix with no model text",
+			"text": "anthropic/",
+			"request": {
+				"text": "anthropic/",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "ambiguous",
+				"candidates": [
+					"gw-a/anthropic/future",
+					"gw-b/anthropic/future"
+				],
+				"usableCount": 0
+			}
+		},
+		{
+			"name": "surrounding space is trimmed",
+			"text": "  anthropic/exact  ",
+			"request": {
+				"text": "  anthropic/exact  ",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "resolved",
+				"model": "anthropic/exact"
+			}
+		},
+		{
+			"name": "space around the prefix",
+			"text": "anthropic / exact",
+			"request": {
+				"text": "anthropic / exact",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "resolved",
+				"model": "anthropic/exact"
+			}
+		},
+		{
+			"name": "upper-case prefix",
+			"text": "ANTHROPIC/claude-opus-4-8",
+			"request": {
+				"text": "ANTHROPIC/claude-opus-4-8",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "resolved",
+				"model": "anthropic/claude-opus-4-8"
+			}
+		},
+		{
+			"name": "empty suffix",
+			"text": "gpt-4o:",
+			"request": {
+				"text": "gpt-4o:",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "resolved",
+				"model": "openrouter/openai/gpt-4o:extended"
+			}
+		},
+		{
+			"name": "lenient empty suffix",
+			"text": "gpt-4o:",
+			"thinkingSuffix": "lenient",
+			"request": {
+				"text": "gpt-4o:",
+				"thinkingSuffix": "lenient",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "resolved",
+				"model": "openrouter/openai/gpt-4o:extended"
+			}
+		},
+		{
+			"name": "colon id under its provider",
+			"text": "gw-b/zz:free",
+			"request": {
+				"text": "gw-b/zz:free",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "resolved",
+				"model": "gw-b/zz:free"
+			}
+		},
+		{
+			"name": "colon id with suffix",
+			"text": "zz:free:max",
+			"request": {
+				"text": "zz:free:max",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "resolved",
+				"model": "gw-b/zz:free",
+				"thinkingLevel": "max"
+			}
+		},
+		{
+			"name": "lenient double invalid suffix",
+			"text": "gpt-4o:a:b",
+			"thinkingSuffix": "lenient",
+			"request": {
+				"text": "gpt-4o:a:b",
+				"thinkingSuffix": "lenient",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "resolved",
+				"model": "openai/gpt-4o",
+				"warning": "Invalid thinking level \"b\" in pattern \"gpt-4o:a:b\". Using default instead."
+			}
+		},
+		{
+			"name": "lenient invalid suffix not found",
+			"text": "ghost:banana",
+			"thinkingSuffix": "lenient",
+			"request": {
+				"text": "ghost:banana",
+				"thinkingSuffix": "lenient",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "not-found"
+			}
+		},
+		{
+			"name": "fuzzy via name substring",
+			"text": "SONNET-4-5-2025",
+			"request": {
+				"text": "SONNET-4-5-2025",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "resolved",
+				"model": "anthropic/claude-sonnet-4-5-20250929"
+			}
+		},
+		{
+			"name": "ambiguous exact with a usable named provider",
+			"text": "gw-a/shared",
+			"usable": [
+				"gw-b"
+			],
+			"request": {
+				"text": "gw-a/shared",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "resolved",
+				"model": "gw-a/shared"
+			}
+		},
+		{
+			"name": "fuzzy across providers with none usable",
+			"text": "anthropic/",
+			"fuzzy": true,
+			"request": {
+				"text": "anthropic/",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "ambiguous",
+				"candidates": [
+					"gw-a/anthropic/future",
+					"gw-b/anthropic/future"
+				],
+				"usableCount": 0
+			}
+		},
+		{
+			"name": "fuzzy match on several providers none usable",
+			"text": "future",
+			"request": {
+				"text": "future",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "ambiguous",
+				"candidates": [
+					"gw-a/anthropic/future",
+					"gw-b/anthropic/future"
+				],
+				"usableCount": 0
+			}
+		},
+		{
+			"name": "fuzzy match on several providers one usable",
+			"text": "future",
+			"usable": [
+				"gw-a"
+			],
+			"request": {
+				"text": "future",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "resolved",
+				"model": "gw-a/anthropic/future"
+			}
+		},
+		{
+			"name": "thinking level suffix on an ambiguous lenient match",
+			"text": "shared:high",
+			"thinkingSuffix": "lenient",
+			"request": {
+				"text": "shared:high",
+				"thinkingSuffix": "lenient",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "ambiguous",
+				"candidates": [
+					"gw-a/shared",
+					"gw-b/shared"
+				],
+				"usableCount": 0,
+				"thinkingLevel": "high"
+			}
+		},
+		{
+			"name": "off suffix",
+			"text": "exact:off",
+			"request": {
+				"text": "exact:off",
+				"thinkingSuffix": "strict",
+				"fuzzy": true
+			},
+			"result": {
+				"status": "resolved",
+				"model": "anthropic/exact",
+				"thinkingLevel": "off"
+			}
+		}
+	],
+	"cli": [
+		{
+			"name": "no model",
+			"catalog": "all",
+			"configured": [],
+			"result": {
+				"model": null
+			}
+		},
+		{
+			"name": "invalid suffix under an explicit provider stays in the id",
+			"cliProvider": "openai",
+			"cliModel": "gpt-4o:extended",
+			"catalog": "all",
+			"configured": [],
+			"result": {
+				"model": {
+					"provider": "openai",
+					"id": "gpt-4o:extended",
+					"name": "gpt-4o:extended",
+					"reasoning": false,
+					"baseUrl": "https://openai.invalid/gpt-4o",
+					"contextWindow": 128000
+				},
+				"warning": "Model \"gpt-4o:extended\" not found for provider \"openai\". Using custom model id."
+			}
+		},
+		{
+			"name": "explicit provider custom id without double prefixing",
+			"cliProvider": "openrouter",
+			"cliModel": "openrouter/openai/ghost-model",
+			"catalog": "all",
+			"configured": [],
+			"result": {
+				"model": {
+					"provider": "openrouter",
+					"id": "openai/ghost-model",
+					"name": "openai/ghost-model",
+					"reasoning": true,
+					"baseUrl": "https://openrouter.invalid/qwen/qwen3-coder:exacto",
+					"contextWindow": 128000
+				},
+				"warning": "Model \"openai/ghost-model\" not found for provider \"openrouter\". Using custom model id."
+			}
+		},
+		{
+			"name": "no models",
+			"cliProvider": "openai",
+			"cliModel": "gpt-4o",
+			"catalog": "empty",
+			"configured": [],
+			"result": {
+				"model": null,
+				"error": "No models available. Check your installation or add models to models.json."
+			}
+		},
+		{
+			"name": "authenticated gateway",
+			"cliModel": "anthropic/claude-opus-5.5",
+			"catalog": "gateways",
+			"configured": [
+				"vercel-ai-gateway"
+			],
+			"result": {
+				"model": {
+					"provider": "vercel-ai-gateway",
+					"id": "anthropic/claude-opus-5.5",
+					"name": "anthropic/claude-opus-5.5",
+					"reasoning": true,
+					"baseUrl": "https://vercel-ai-gateway.invalid/anthropic/claude-opus-5.5",
+					"contextWindow": 128000
+				}
+			}
+		},
+		{
+			"name": "authenticated gateway with a thinking suffix",
+			"cliModel": "anthropic/claude-opus-5.5:high",
+			"catalog": "gateways",
+			"configured": [
+				"vercel-ai-gateway"
+			],
+			"result": {
+				"model": {
+					"provider": "vercel-ai-gateway",
+					"id": "anthropic/claude-opus-5.5",
+					"name": "anthropic/claude-opus-5.5",
+					"reasoning": true,
+					"baseUrl": "https://vercel-ai-gateway.invalid/anthropic/claude-opus-5.5",
+					"contextWindow": 128000
+				},
+				"thinkingLevel": "high"
+			}
+		},
+		{
+			"name": "ambiguous with no authenticated provider",
+			"cliModel": "anthropic/claude-opus-5.5",
+			"catalog": "gateways",
+			"configured": [],
+			"result": {
+				"model": null,
+				"error": "Model \"anthropic/claude-opus-5.5\" is ambiguous across providers: openrouter/anthropic/claude-opus-5.5, vercel-ai-gateway/anthropic/claude-opus-5.5. No matching provider is authenticated. Use --provider or provider/model."
+			}
+		},
+		{
+			"name": "ambiguous with several authenticated providers",
+			"cliModel": "anthropic/claude-opus-5.5",
+			"catalog": "gateways",
+			"configured": [
+				"openrouter",
+				"vercel-ai-gateway"
+			],
+			"result": {
+				"model": null,
+				"error": "Model \"anthropic/claude-opus-5.5\" is ambiguous across providers: openrouter/anthropic/claude-opus-5.5, vercel-ai-gateway/anthropic/claude-opus-5.5. More than one matching provider is authenticated. Use --provider or provider/model."
+			}
+		},
+		{
+			"name": "api key does not choose a provider",
+			"cliModel": "anthropic/claude-opus-5.5",
+			"inlineApiKey": true,
+			"catalog": "gateways",
+			"configured": [
+				"vercel-ai-gateway"
+			],
+			"result": {
+				"model": null,
+				"error": "Model \"anthropic/claude-opus-5.5\" is ambiguous across providers: openrouter/anthropic/claude-opus-5.5, vercel-ai-gateway/anthropic/claude-opus-5.5. --api-key does not choose a provider. Use --provider or provider/model."
+			}
+		},
+		{
+			"name": "custom id strips a thinking suffix",
+			"cliModel": "neuralwatt/zai-org/GLM-5.1-FP8:high",
+			"catalog": "all",
+			"configured": [],
+			"result": {
+				"model": {
+					"provider": "neuralwatt",
+					"id": "zai-org/GLM-5.1-FP8",
+					"name": "zai-org/GLM-5.1-FP8",
+					"reasoning": true,
+					"baseUrl": "https://neuralwatt.invalid/some-base-model",
+					"contextWindow": 128000
+				},
+				"thinkingLevel": "high",
+				"warning": "Model \"zai-org/GLM-5.1-FP8\" not found for provider \"neuralwatt\". Using custom model id."
+			}
+		},
+		{
+			"name": "custom id without a suffix",
+			"cliModel": "neuralwatt/zai-org/GLM-5.1-FP8",
+			"catalog": "all",
+			"configured": [],
+			"result": {
+				"model": {
+					"provider": "neuralwatt",
+					"id": "zai-org/GLM-5.1-FP8",
+					"name": "zai-org/GLM-5.1-FP8",
+					"reasoning": false,
+					"baseUrl": "https://neuralwatt.invalid/some-base-model",
+					"contextWindow": 128000
+				},
+				"warning": "Model \"zai-org/GLM-5.1-FP8\" not found for provider \"neuralwatt\". Using custom model id."
+			}
+		},
+		{
+			"name": "custom id level off",
+			"cliModel": "neuralwatt/zai-org/GLM-5.1-FP8:off",
+			"catalog": "all",
+			"configured": [],
+			"result": {
+				"model": {
+					"provider": "neuralwatt",
+					"id": "zai-org/GLM-5.1-FP8",
+					"name": "zai-org/GLM-5.1-FP8",
+					"reasoning": false,
+					"baseUrl": "https://neuralwatt.invalid/some-base-model",
+					"contextWindow": 128000
+				},
+				"thinkingLevel": "off",
+				"warning": "Model \"zai-org/GLM-5.1-FP8\" not found for provider \"neuralwatt\". Using custom model id."
+			}
+		},
+		{
+			"name": "custom id level minimal",
+			"cliModel": "neuralwatt/zai-org/GLM-5.1-FP8:minimal",
+			"catalog": "all",
+			"configured": [],
+			"result": {
+				"model": {
+					"provider": "neuralwatt",
+					"id": "zai-org/GLM-5.1-FP8",
+					"name": "zai-org/GLM-5.1-FP8",
+					"reasoning": true,
+					"baseUrl": "https://neuralwatt.invalid/some-base-model",
+					"contextWindow": 128000
+				},
+				"thinkingLevel": "minimal",
+				"warning": "Model \"zai-org/GLM-5.1-FP8\" not found for provider \"neuralwatt\". Using custom model id."
+			}
+		},
+		{
+			"name": "custom id level low",
+			"cliModel": "neuralwatt/zai-org/GLM-5.1-FP8:low",
+			"catalog": "all",
+			"configured": [],
+			"result": {
+				"model": {
+					"provider": "neuralwatt",
+					"id": "zai-org/GLM-5.1-FP8",
+					"name": "zai-org/GLM-5.1-FP8",
+					"reasoning": true,
+					"baseUrl": "https://neuralwatt.invalid/some-base-model",
+					"contextWindow": 128000
+				},
+				"thinkingLevel": "low",
+				"warning": "Model \"zai-org/GLM-5.1-FP8\" not found for provider \"neuralwatt\". Using custom model id."
+			}
+		},
+		{
+			"name": "custom id level medium",
+			"cliModel": "neuralwatt/zai-org/GLM-5.1-FP8:medium",
+			"catalog": "all",
+			"configured": [],
+			"result": {
+				"model": {
+					"provider": "neuralwatt",
+					"id": "zai-org/GLM-5.1-FP8",
+					"name": "zai-org/GLM-5.1-FP8",
+					"reasoning": true,
+					"baseUrl": "https://neuralwatt.invalid/some-base-model",
+					"contextWindow": 128000
+				},
+				"thinkingLevel": "medium",
+				"warning": "Model \"zai-org/GLM-5.1-FP8\" not found for provider \"neuralwatt\". Using custom model id."
+			}
+		},
+		{
+			"name": "custom id level high",
+			"cliModel": "neuralwatt/zai-org/GLM-5.1-FP8:high",
+			"catalog": "all",
+			"configured": [],
+			"result": {
+				"model": {
+					"provider": "neuralwatt",
+					"id": "zai-org/GLM-5.1-FP8",
+					"name": "zai-org/GLM-5.1-FP8",
+					"reasoning": true,
+					"baseUrl": "https://neuralwatt.invalid/some-base-model",
+					"contextWindow": 128000
+				},
+				"thinkingLevel": "high",
+				"warning": "Model \"zai-org/GLM-5.1-FP8\" not found for provider \"neuralwatt\". Using custom model id."
+			}
+		},
+		{
+			"name": "custom id level xhigh",
+			"cliModel": "neuralwatt/zai-org/GLM-5.1-FP8:xhigh",
+			"catalog": "all",
+			"configured": [],
+			"result": {
+				"model": {
+					"provider": "neuralwatt",
+					"id": "zai-org/GLM-5.1-FP8",
+					"name": "zai-org/GLM-5.1-FP8",
+					"reasoning": true,
+					"baseUrl": "https://neuralwatt.invalid/some-base-model",
+					"contextWindow": 128000
+				},
+				"thinkingLevel": "xhigh",
+				"warning": "Model \"zai-org/GLM-5.1-FP8\" not found for provider \"neuralwatt\". Using custom model id."
+			}
+		},
+		{
+			"name": "custom id level max",
+			"cliModel": "neuralwatt/zai-org/GLM-5.1-FP8:max",
+			"catalog": "all",
+			"configured": [],
+			"result": {
+				"model": {
+					"provider": "neuralwatt",
+					"id": "zai-org/GLM-5.1-FP8",
+					"name": "zai-org/GLM-5.1-FP8",
+					"reasoning": true,
+					"baseUrl": "https://neuralwatt.invalid/some-base-model",
+					"contextWindow": 128000
+				},
+				"thinkingLevel": "max",
+				"warning": "Model \"zai-org/GLM-5.1-FP8\" not found for provider \"neuralwatt\". Using custom model id."
+			}
+		},
+		{
+			"name": "custom id keeps an invalid suffix",
+			"cliModel": "neuralwatt/zai-org/GLM-5.1-FP8:banana",
+			"catalog": "all",
+			"configured": [],
+			"result": {
+				"model": {
+					"provider": "neuralwatt",
+					"id": "zai-org/GLM-5.1-FP8:banana",
+					"name": "zai-org/GLM-5.1-FP8:banana",
+					"reasoning": false,
+					"baseUrl": "https://neuralwatt.invalid/some-base-model",
+					"contextWindow": 128000
+				},
+				"warning": "Model \"zai-org/GLM-5.1-FP8:banana\" not found for provider \"neuralwatt\". Using custom model id."
+			}
+		},
+		{
+			"name": "explicit provider custom id strips the suffix",
+			"cliProvider": "neuralwatt",
+			"cliModel": "zai-org/GLM-5.1-FP8:high",
+			"catalog": "all",
+			"configured": [],
+			"result": {
+				"model": {
+					"provider": "neuralwatt",
+					"id": "zai-org/GLM-5.1-FP8",
+					"name": "zai-org/GLM-5.1-FP8",
+					"reasoning": true,
+					"baseUrl": "https://neuralwatt.invalid/some-base-model",
+					"contextWindow": 128000
+				},
+				"thinkingLevel": "high",
+				"warning": "Model \"zai-org/GLM-5.1-FP8\" not found for provider \"neuralwatt\". Using custom model id."
+			}
+		},
+		{
+			"name": "explicit thinking keeps the suffix in the custom id",
+			"cliModel": "neuralwatt/zai-org/GLM-5.1-FP8:high",
+			"cliThinking": "medium",
+			"catalog": "all",
+			"configured": [],
+			"result": {
+				"model": {
+					"provider": "neuralwatt",
+					"id": "zai-org/GLM-5.1-FP8:high",
+					"name": "zai-org/GLM-5.1-FP8:high",
+					"reasoning": true,
+					"baseUrl": "https://neuralwatt.invalid/some-base-model",
+					"contextWindow": 128000
+				},
+				"warning": "Model \"zai-org/GLM-5.1-FP8:high\" not found for provider \"neuralwatt\". Using custom model id."
+			}
+		},
+		{
+			"name": "explicit thinking off on a custom id",
+			"cliModel": "neuralwatt/ghost",
+			"cliThinking": "off",
+			"catalog": "all",
+			"configured": [],
+			"result": {
+				"model": {
+					"provider": "neuralwatt",
+					"id": "ghost",
+					"name": "ghost",
+					"reasoning": false,
+					"baseUrl": "https://neuralwatt.invalid/some-base-model",
+					"contextWindow": 128000
+				},
+				"warning": "Model \"ghost\" not found for provider \"neuralwatt\". Using custom model id."
+			}
+		},
+		{
+			"name": "explicit thinking high on a custom id",
+			"cliModel": "neuralwatt/ghost",
+			"cliThinking": "high",
+			"catalog": "all",
+			"configured": [],
+			"result": {
+				"model": {
+					"provider": "neuralwatt",
+					"id": "ghost",
+					"name": "ghost",
+					"reasoning": true,
+					"baseUrl": "https://neuralwatt.invalid/some-base-model",
+					"contextWindow": 128000
+				},
+				"warning": "Model \"ghost\" not found for provider \"neuralwatt\". Using custom model id."
+			}
+		},
+		{
+			"name": "unknown provider",
+			"cliProvider": "nobody",
+			"cliModel": "gpt-4o",
+			"catalog": "all",
+			"configured": [],
+			"result": {
+				"model": null,
+				"error": "Unknown provider \"nobody\". Use --list-models to see available providers/models."
+			}
+		},
+		{
+			"name": "explicit provider is case-insensitive",
+			"cliProvider": "OpenAI",
+			"cliModel": "gpt-4o",
+			"catalog": "all",
+			"configured": [],
+			"result": {
+				"model": {
+					"provider": "openai",
+					"id": "gpt-4o",
+					"name": "GPT-4o",
+					"reasoning": false,
+					"baseUrl": "https://openai.invalid/gpt-4o",
+					"contextWindow": 128000
+				}
+			}
+		},
+		{
+			"name": "not found",
+			"cliModel": "definitely-not-a-model",
+			"catalog": "all",
+			"configured": [],
+			"result": {
+				"model": null,
+				"error": "Model \"definitely-not-a-model\" not found. Use --list-models to see available models."
+			}
+		},
+		{
+			"name": "resolved with a thinking suffix",
+			"cliModel": "sonnet:high",
+			"catalog": "all",
+			"configured": [],
+			"result": {
+				"model": {
+					"provider": "anthropic",
+					"id": "claude-sonnet-4-5",
+					"name": "Claude Sonnet 4.5",
+					"reasoning": true,
+					"baseUrl": "https://anthropic.invalid/claude-sonnet-4-5",
+					"contextWindow": 128000
+				},
+				"thinkingLevel": "high"
+			}
+		},
+		{
+			"name": "resolved colon id",
+			"cliModel": "openai/gpt-4o:extended",
+			"catalog": "all",
+			"configured": [],
+			"result": {
+				"model": {
+					"provider": "openrouter",
+					"id": "openai/gpt-4o:extended",
+					"name": "GPT-4o Extended",
+					"reasoning": false,
+					"baseUrl": "https://openrouter.invalid/openai/gpt-4o:extended",
+					"contextWindow": 128000
+				}
+			}
+		},
+		{
+			"name": "fallback templated from the provider default",
+			"cliModel": "xai/my-custom-grok",
+			"catalog": "defaults",
+			"configured": [],
+			"result": {
+				"model": {
+					"provider": "xai",
+					"id": "my-custom-grok",
+					"name": "my-custom-grok",
+					"reasoning": false,
+					"baseUrl": "https://xai.invalid/grok-4.7",
+					"contextWindow": 470000
+				},
+				"warning": "Model \"my-custom-grok\" not found for provider \"xai\". Using custom model id."
+			}
+		},
+		{
+			"name": "fallback with no default uses the provider's first model",
+			"cliModel": "mistral/my-custom",
+			"catalog": "defaults",
+			"configured": [],
+			"result": {
+				"model": {
+					"provider": "mistral",
+					"id": "my-custom",
+					"name": "my-custom",
+					"reasoning": false,
+					"baseUrl": "https://mistral.invalid/codestral-latest",
+					"contextWindow": 128000
+				},
+				"warning": "Model \"my-custom\" not found for provider \"mistral\". Using custom model id."
+			}
+		},
+		{
+			"name": "fallback reasoning for a requested level",
+			"cliModel": "mistral/my-custom:high",
+			"catalog": "defaults",
+			"configured": [],
+			"result": {
+				"model": {
+					"provider": "mistral",
+					"id": "my-custom",
+					"name": "my-custom",
+					"reasoning": true,
+					"baseUrl": "https://mistral.invalid/codestral-latest",
+					"contextWindow": 128000
+				},
+				"thinkingLevel": "high",
+				"warning": "Model \"my-custom\" not found for provider \"mistral\". Using custom model id."
+			}
+		},
+		{
+			"name": "fallback keeps reasoning off for :off",
+			"cliModel": "mistral/my-custom:off",
+			"catalog": "defaults",
+			"configured": [],
+			"result": {
+				"model": {
+					"provider": "mistral",
+					"id": "my-custom",
+					"name": "my-custom",
+					"reasoning": false,
+					"baseUrl": "https://mistral.invalid/codestral-latest",
+					"contextWindow": 128000
+				},
+				"thinkingLevel": "off",
+				"warning": "Model \"my-custom\" not found for provider \"mistral\". Using custom model id."
+			}
+		},
+		{
+			"name": "reference catalog ambiguity",
+			"cliModel": "shared",
+			"catalog": "reference",
+			"configured": [],
+			"result": {
+				"model": null,
+				"error": "Model \"shared\" is ambiguous across providers: gw-a/shared, gw-b/shared. No matching provider is authenticated. Use --provider or provider/model."
+			}
+		},
+		{
+			"name": "reference catalog fuzzy tie",
+			"cliModel": "opus",
+			"catalog": "reference",
+			"configured": [
+				"anthropic",
+				"gw-b"
+			],
+			"result": {
+				"model": null,
+				"error": "Model \"opus\" is ambiguous across providers: anthropic/claude-opus-4-8, gw-b/claude-opus-4-8. More than one matching provider is authenticated. Use --provider or provider/model."
+			}
+		},
+		{
+			"name": "reference catalog fuzzy tie with api key",
+			"cliModel": "opus",
+			"inlineApiKey": true,
+			"catalog": "reference",
+			"configured": [
+				"anthropic",
+				"gw-b"
+			],
+			"result": {
+				"model": null,
+				"error": "Model \"opus\" is ambiguous across providers: anthropic/claude-opus-4-8, gw-b/claude-opus-4-8. --api-key does not choose a provider. Use --provider or provider/model."
+			}
+		}
+	]
+}

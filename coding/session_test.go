@@ -83,9 +83,9 @@ func TestResolveModelFromCatalog(t *testing.T) {
 	if m.Provider != "anthropic" || m.Api != ai.APIAnthropicMessages {
 		t.Fatalf("unexpected model: %#v", m)
 	}
-	// Bare id resolution.
-	if _, err := ResolveModel("claude-haiku-4-5"); err != nil {
-		t.Fatalf("bare id resolution failed: %v", err)
+	// Bare id resolution: a provider-unique id resolves.
+	if m, err := ResolveModel("meta-llama/llama-4-scout"); err != nil || m.Provider != "openrouter" {
+		t.Fatalf("bare id resolution failed: %v, %v", m, err)
 	}
 	if _, err := ResolveModel("does-not-exist"); err == nil {
 		t.Fatal("expected error for unknown model")
