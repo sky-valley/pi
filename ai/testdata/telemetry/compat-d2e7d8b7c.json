@@ -1,0 +1,816 @@
+{
+	"sha": "d2e7d8b7c",
+	"rows": [
+		{
+			"name": "workers-ai-stream",
+			"entry": "stream",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"type": null,
+			"reasoning": null,
+			"delivered": [
+				"error"
+			],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-workers-ai",
+			"spans": [
+				{
+					"id": 1,
+					"parentId": null,
+					"context": 1,
+					"parentContext": null,
+					"links": [],
+					"name": "caller",
+					"attributes": {},
+					"events": [],
+					"status": {
+						"status": "ok"
+					},
+					"settled": true,
+					"endSequence": 2
+				},
+				{
+					"id": 2,
+					"parentId": 1,
+					"context": 2,
+					"parentContext": 1,
+					"links": [],
+					"name": "pi.ai.request",
+					"attributes": {
+						"provider": "cloudflare-workers-ai",
+						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+						"api": "openai-completions",
+						"stop": "error",
+						"usage.input": 0,
+						"usage.output": 0,
+						"usage.cache_read": 0,
+						"usage.cache_write": 0,
+						"cost.total": 0
+					},
+					"events": [
+						{
+							"name": "pi.ai.first_chunk",
+							"attributes": {}
+						}
+					],
+					"status": {
+						"status": "error",
+						"error": {
+							"name": "provider_error",
+							"message": "Provider is not configured: cloudflare-workers-ai"
+						}
+					},
+					"settled": true,
+					"endSequence": 1
+				}
+			],
+			"measurements": [
+				{
+					"kind": "histogram",
+					"name": "pi.ai.first_chunk.duration",
+					"description": "Time to the first normalized stream event.",
+					"unit": "ms",
+					"boundaries": null,
+					"value": "duration",
+					"attributes": {
+						"provider": "cloudflare-workers-ai",
+						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731"
+					},
+					"context": 2
+				},
+				{
+					"kind": "histogram",
+					"name": "pi.ai.request.duration",
+					"description": "Logical request or poll duration.",
+					"unit": "ms",
+					"boundaries": null,
+					"value": "duration",
+					"attributes": {
+						"provider": "cloudflare-workers-ai",
+						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+						"stop": "error"
+					},
+					"context": 2
+				},
+				{
+					"kind": "counter",
+					"name": "pi.ai.tokens",
+					"description": "Reported model token usage; pending and deferred polls are excluded.",
+					"unit": "token",
+					"boundaries": null,
+					"value": 0,
+					"attributes": {
+						"provider": "cloudflare-workers-ai",
+						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+						"kind": "input"
+					},
+					"context": null
+				},
+				{
+					"kind": "counter",
+					"name": "pi.ai.tokens",
+					"description": "Reported model token usage; pending and deferred polls are excluded.",
+					"unit": "token",
+					"boundaries": null,
+					"value": 0,
+					"attributes": {
+						"provider": "cloudflare-workers-ai",
+						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+						"kind": "output"
+					},
+					"context": null
+				},
+				{
+					"kind": "counter",
+					"name": "pi.ai.tokens",
+					"description": "Reported model token usage; pending and deferred polls are excluded.",
+					"unit": "token",
+					"boundaries": null,
+					"value": 0,
+					"attributes": {
+						"provider": "cloudflare-workers-ai",
+						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+						"kind": "cache_read"
+					},
+					"context": null
+				},
+				{
+					"kind": "counter",
+					"name": "pi.ai.tokens",
+					"description": "Reported model token usage; pending and deferred polls are excluded.",
+					"unit": "token",
+					"boundaries": null,
+					"value": 0,
+					"attributes": {
+						"provider": "cloudflare-workers-ai",
+						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+						"kind": "cache_write"
+					},
+					"context": null
+				},
+				{
+					"kind": "counter",
+					"name": "pi.ai.cost",
+					"description": "Reported model cost; pending and deferred polls are excluded.",
+					"unit": "USD",
+					"boundaries": null,
+					"value": 0,
+					"attributes": {
+						"provider": "cloudflare-workers-ai",
+						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731"
+					},
+					"context": null
+				}
+			]
+		},
+		{
+			"name": "workers-ai-streamSimple",
+			"entry": "streamSimple",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"reasoning": "low",
+			"type": null,
+			"delivered": [
+				"error"
+			],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-workers-ai",
+			"spans": [
+				{
+					"id": 1,
+					"parentId": null,
+					"context": 1,
+					"parentContext": null,
+					"links": [],
+					"name": "caller",
+					"attributes": {},
+					"events": [],
+					"status": {
+						"status": "ok"
+					},
+					"settled": true,
+					"endSequence": 2
+				},
+				{
+					"id": 2,
+					"parentId": 1,
+					"context": 2,
+					"parentContext": 1,
+					"links": [],
+					"name": "pi.ai.request",
+					"attributes": {
+						"provider": "cloudflare-workers-ai",
+						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+						"api": "openai-completions",
+						"reasoning": "low",
+						"stop": "error",
+						"usage.input": 0,
+						"usage.output": 0,
+						"usage.cache_read": 0,
+						"usage.cache_write": 0,
+						"cost.total": 0
+					},
+					"events": [
+						{
+							"name": "pi.ai.first_chunk",
+							"attributes": {}
+						}
+					],
+					"status": {
+						"status": "error",
+						"error": {
+							"name": "provider_error",
+							"message": "Provider is not configured: cloudflare-workers-ai"
+						}
+					},
+					"settled": true,
+					"endSequence": 1
+				}
+			],
+			"measurements": [
+				{
+					"kind": "histogram",
+					"name": "pi.ai.first_chunk.duration",
+					"description": "Time to the first normalized stream event.",
+					"unit": "ms",
+					"boundaries": null,
+					"value": "duration",
+					"attributes": {
+						"provider": "cloudflare-workers-ai",
+						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731"
+					},
+					"context": 2
+				},
+				{
+					"kind": "histogram",
+					"name": "pi.ai.request.duration",
+					"description": "Logical request or poll duration.",
+					"unit": "ms",
+					"boundaries": null,
+					"value": "duration",
+					"attributes": {
+						"provider": "cloudflare-workers-ai",
+						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+						"stop": "error"
+					},
+					"context": 2
+				},
+				{
+					"kind": "counter",
+					"name": "pi.ai.tokens",
+					"description": "Reported model token usage; pending and deferred polls are excluded.",
+					"unit": "token",
+					"boundaries": null,
+					"value": 0,
+					"attributes": {
+						"provider": "cloudflare-workers-ai",
+						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+						"kind": "input"
+					},
+					"context": null
+				},
+				{
+					"kind": "counter",
+					"name": "pi.ai.tokens",
+					"description": "Reported model token usage; pending and deferred polls are excluded.",
+					"unit": "token",
+					"boundaries": null,
+					"value": 0,
+					"attributes": {
+						"provider": "cloudflare-workers-ai",
+						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+						"kind": "output"
+					},
+					"context": null
+				},
+				{
+					"kind": "counter",
+					"name": "pi.ai.tokens",
+					"description": "Reported model token usage; pending and deferred polls are excluded.",
+					"unit": "token",
+					"boundaries": null,
+					"value": 0,
+					"attributes": {
+						"provider": "cloudflare-workers-ai",
+						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+						"kind": "cache_read"
+					},
+					"context": null
+				},
+				{
+					"kind": "counter",
+					"name": "pi.ai.tokens",
+					"description": "Reported model token usage; pending and deferred polls are excluded.",
+					"unit": "token",
+					"boundaries": null,
+					"value": 0,
+					"attributes": {
+						"provider": "cloudflare-workers-ai",
+						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+						"kind": "cache_write"
+					},
+					"context": null
+				},
+				{
+					"kind": "counter",
+					"name": "pi.ai.cost",
+					"description": "Reported model cost; pending and deferred polls are excluded.",
+					"unit": "USD",
+					"boundaries": null,
+					"value": 0,
+					"attributes": {
+						"provider": "cloudflare-workers-ai",
+						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731"
+					},
+					"context": null
+				}
+			]
+		},
+		{
+			"name": "ai-gateway-stream",
+			"entry": "stream",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"type": null,
+			"reasoning": null,
+			"delivered": [
+				"error"
+			],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway",
+			"spans": [
+				{
+					"id": 1,
+					"parentId": null,
+					"context": 1,
+					"parentContext": null,
+					"links": [],
+					"name": "caller",
+					"attributes": {},
+					"events": [],
+					"status": {
+						"status": "ok"
+					},
+					"settled": true,
+					"endSequence": 2
+				},
+				{
+					"id": 2,
+					"parentId": 1,
+					"context": 2,
+					"parentContext": 1,
+					"links": [],
+					"name": "pi.ai.request",
+					"attributes": {
+						"provider": "cloudflare-ai-gateway",
+						"model": "claude-haiku-4-5",
+						"api": "anthropic-messages",
+						"stop": "error",
+						"usage.input": 0,
+						"usage.output": 0,
+						"usage.cache_read": 0,
+						"usage.cache_write": 0,
+						"cost.total": 0
+					},
+					"events": [
+						{
+							"name": "pi.ai.first_chunk",
+							"attributes": {}
+						}
+					],
+					"status": {
+						"status": "error",
+						"error": {
+							"name": "provider_error",
+							"message": "Provider is not configured: cloudflare-ai-gateway"
+						}
+					},
+					"settled": true,
+					"endSequence": 1
+				}
+			],
+			"measurements": [
+				{
+					"kind": "histogram",
+					"name": "pi.ai.first_chunk.duration",
+					"description": "Time to the first normalized stream event.",
+					"unit": "ms",
+					"boundaries": null,
+					"value": "duration",
+					"attributes": {
+						"provider": "cloudflare-ai-gateway",
+						"model": "claude-haiku-4-5"
+					},
+					"context": 2
+				},
+				{
+					"kind": "histogram",
+					"name": "pi.ai.request.duration",
+					"description": "Logical request or poll duration.",
+					"unit": "ms",
+					"boundaries": null,
+					"value": "duration",
+					"attributes": {
+						"provider": "cloudflare-ai-gateway",
+						"model": "claude-haiku-4-5",
+						"stop": "error"
+					},
+					"context": 2
+				},
+				{
+					"kind": "counter",
+					"name": "pi.ai.tokens",
+					"description": "Reported model token usage; pending and deferred polls are excluded.",
+					"unit": "token",
+					"boundaries": null,
+					"value": 0,
+					"attributes": {
+						"provider": "cloudflare-ai-gateway",
+						"model": "claude-haiku-4-5",
+						"kind": "input"
+					},
+					"context": null
+				},
+				{
+					"kind": "counter",
+					"name": "pi.ai.tokens",
+					"description": "Reported model token usage; pending and deferred polls are excluded.",
+					"unit": "token",
+					"boundaries": null,
+					"value": 0,
+					"attributes": {
+						"provider": "cloudflare-ai-gateway",
+						"model": "claude-haiku-4-5",
+						"kind": "output"
+					},
+					"context": null
+				},
+				{
+					"kind": "counter",
+					"name": "pi.ai.tokens",
+					"description": "Reported model token usage; pending and deferred polls are excluded.",
+					"unit": "token",
+					"boundaries": null,
+					"value": 0,
+					"attributes": {
+						"provider": "cloudflare-ai-gateway",
+						"model": "claude-haiku-4-5",
+						"kind": "cache_read"
+					},
+					"context": null
+				},
+				{
+					"kind": "counter",
+					"name": "pi.ai.tokens",
+					"description": "Reported model token usage; pending and deferred polls are excluded.",
+					"unit": "token",
+					"boundaries": null,
+					"value": 0,
+					"attributes": {
+						"provider": "cloudflare-ai-gateway",
+						"model": "claude-haiku-4-5",
+						"kind": "cache_write"
+					},
+					"context": null
+				},
+				{
+					"kind": "counter",
+					"name": "pi.ai.cost",
+					"description": "Reported model cost; pending and deferred polls are excluded.",
+					"unit": "USD",
+					"boundaries": null,
+					"value": 0,
+					"attributes": {
+						"provider": "cloudflare-ai-gateway",
+						"model": "claude-haiku-4-5"
+					},
+					"context": null
+				}
+			]
+		},
+		{
+			"name": "ai-gateway-streamSimple",
+			"entry": "streamSimple",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"type": null,
+			"reasoning": null,
+			"delivered": [
+				"error"
+			],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway",
+			"spans": [
+				{
+					"id": 1,
+					"parentId": null,
+					"context": 1,
+					"parentContext": null,
+					"links": [],
+					"name": "caller",
+					"attributes": {},
+					"events": [],
+					"status": {
+						"status": "ok"
+					},
+					"settled": true,
+					"endSequence": 2
+				},
+				{
+					"id": 2,
+					"parentId": 1,
+					"context": 2,
+					"parentContext": 1,
+					"links": [],
+					"name": "pi.ai.request",
+					"attributes": {
+						"provider": "cloudflare-ai-gateway",
+						"model": "claude-haiku-4-5",
+						"api": "anthropic-messages",
+						"stop": "error",
+						"usage.input": 0,
+						"usage.output": 0,
+						"usage.cache_read": 0,
+						"usage.cache_write": 0,
+						"cost.total": 0
+					},
+					"events": [
+						{
+							"name": "pi.ai.first_chunk",
+							"attributes": {}
+						}
+					],
+					"status": {
+						"status": "error",
+						"error": {
+							"name": "provider_error",
+							"message": "Provider is not configured: cloudflare-ai-gateway"
+						}
+					},
+					"settled": true,
+					"endSequence": 1
+				}
+			],
+			"measurements": [
+				{
+					"kind": "histogram",
+					"name": "pi.ai.first_chunk.duration",
+					"description": "Time to the first normalized stream event.",
+					"unit": "ms",
+					"boundaries": null,
+					"value": "duration",
+					"attributes": {
+						"provider": "cloudflare-ai-gateway",
+						"model": "claude-haiku-4-5"
+					},
+					"context": 2
+				},
+				{
+					"kind": "histogram",
+					"name": "pi.ai.request.duration",
+					"description": "Logical request or poll duration.",
+					"unit": "ms",
+					"boundaries": null,
+					"value": "duration",
+					"attributes": {
+						"provider": "cloudflare-ai-gateway",
+						"model": "claude-haiku-4-5",
+						"stop": "error"
+					},
+					"context": 2
+				},
+				{
+					"kind": "counter",
+					"name": "pi.ai.tokens",
+					"description": "Reported model token usage; pending and deferred polls are excluded.",
+					"unit": "token",
+					"boundaries": null,
+					"value": 0,
+					"attributes": {
+						"provider": "cloudflare-ai-gateway",
+						"model": "claude-haiku-4-5",
+						"kind": "input"
+					},
+					"context": null
+				},
+				{
+					"kind": "counter",
+					"name": "pi.ai.tokens",
+					"description": "Reported model token usage; pending and deferred polls are excluded.",
+					"unit": "token",
+					"boundaries": null,
+					"value": 0,
+					"attributes": {
+						"provider": "cloudflare-ai-gateway",
+						"model": "claude-haiku-4-5",
+						"kind": "output"
+					},
+					"context": null
+				},
+				{
+					"kind": "counter",
+					"name": "pi.ai.tokens",
+					"description": "Reported model token usage; pending and deferred polls are excluded.",
+					"unit": "token",
+					"boundaries": null,
+					"value": 0,
+					"attributes": {
+						"provider": "cloudflare-ai-gateway",
+						"model": "claude-haiku-4-5",
+						"kind": "cache_read"
+					},
+					"context": null
+				},
+				{
+					"kind": "counter",
+					"name": "pi.ai.tokens",
+					"description": "Reported model token usage; pending and deferred polls are excluded.",
+					"unit": "token",
+					"boundaries": null,
+					"value": 0,
+					"attributes": {
+						"provider": "cloudflare-ai-gateway",
+						"model": "claude-haiku-4-5",
+						"kind": "cache_write"
+					},
+					"context": null
+				},
+				{
+					"kind": "counter",
+					"name": "pi.ai.cost",
+					"description": "Reported model cost; pending and deferred polls are excluded.",
+					"unit": "USD",
+					"boundaries": null,
+					"value": 0,
+					"attributes": {
+						"provider": "cloudflare-ai-gateway",
+						"model": "claude-haiku-4-5"
+					},
+					"context": null
+				}
+			]
+		},
+		{
+			"name": "workers-ai-not-chat",
+			"entry": "stream",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"type": "image",
+			"reasoning": null,
+			"delivered": [
+				"error"
+			],
+			"stopReason": "error",
+			"errorMessage": "Model cloudflare-workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731 is not a chat model",
+			"spans": [
+				{
+					"id": 1,
+					"parentId": null,
+					"context": 1,
+					"parentContext": null,
+					"links": [],
+					"name": "caller",
+					"attributes": {},
+					"events": [],
+					"status": {
+						"status": "ok"
+					},
+					"settled": true,
+					"endSequence": 2
+				},
+				{
+					"id": 2,
+					"parentId": 1,
+					"context": 2,
+					"parentContext": 1,
+					"links": [],
+					"name": "pi.ai.request",
+					"attributes": {
+						"provider": "cloudflare-workers-ai",
+						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+						"api": "openai-completions",
+						"stop": "error",
+						"usage.input": 0,
+						"usage.output": 0,
+						"usage.cache_read": 0,
+						"usage.cache_write": 0,
+						"cost.total": 0
+					},
+					"events": [
+						{
+							"name": "pi.ai.first_chunk",
+							"attributes": {}
+						}
+					],
+					"status": {
+						"status": "error",
+						"error": {
+							"name": "provider_error",
+							"message": "Model cloudflare-workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731 is not a chat model"
+						}
+					},
+					"settled": true,
+					"endSequence": 1
+				}
+			],
+			"measurements": [
+				{
+					"kind": "histogram",
+					"name": "pi.ai.first_chunk.duration",
+					"description": "Time to the first normalized stream event.",
+					"unit": "ms",
+					"boundaries": null,
+					"value": "duration",
+					"attributes": {
+						"provider": "cloudflare-workers-ai",
+						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731"
+					},
+					"context": 2
+				},
+				{
+					"kind": "histogram",
+					"name": "pi.ai.request.duration",
+					"description": "Logical request or poll duration.",
+					"unit": "ms",
+					"boundaries": null,
+					"value": "duration",
+					"attributes": {
+						"provider": "cloudflare-workers-ai",
+						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+						"stop": "error"
+					},
+					"context": 2
+				},
+				{
+					"kind": "counter",
+					"name": "pi.ai.tokens",
+					"description": "Reported model token usage; pending and deferred polls are excluded.",
+					"unit": "token",
+					"boundaries": null,
+					"value": 0,
+					"attributes": {
+						"provider": "cloudflare-workers-ai",
+						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+						"kind": "input"
+					},
+					"context": null
+				},
+				{
+					"kind": "counter",
+					"name": "pi.ai.tokens",
+					"description": "Reported model token usage; pending and deferred polls are excluded.",
+					"unit": "token",
+					"boundaries": null,
+					"value": 0,
+					"attributes": {
+						"provider": "cloudflare-workers-ai",
+						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+						"kind": "output"
+					},
+					"context": null
+				},
+				{
+					"kind": "counter",
+					"name": "pi.ai.tokens",
+					"description": "Reported model token usage; pending and deferred polls are excluded.",
+					"unit": "token",
+					"boundaries": null,
+					"value": 0,
+					"attributes": {
+						"provider": "cloudflare-workers-ai",
+						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+						"kind": "cache_read"
+					},
+					"context": null
+				},
+				{
+					"kind": "counter",
+					"name": "pi.ai.tokens",
+					"description": "Reported model token usage; pending and deferred polls are excluded.",
+					"unit": "token",
+					"boundaries": null,
+					"value": 0,
+					"attributes": {
+						"provider": "cloudflare-workers-ai",
+						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+						"kind": "cache_write"
+					},
+					"context": null
+				},
+				{
+					"kind": "counter",
+					"name": "pi.ai.cost",
+					"description": "Reported model cost; pending and deferred polls are excluded.",
+					"unit": "USD",
+					"boundaries": null,
+					"value": 0,
+					"attributes": {
+						"provider": "cloudflare-workers-ai",
+						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731"
+					},
+					"context": null
+				}
+			]
+		}
+	]
+}

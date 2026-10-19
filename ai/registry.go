@@ -43,12 +43,35 @@ type ApiProvider struct {
 type registeredProvider struct {
 	provider ApiProvider
 	sourceID string
+	// seq tells registrations apart, as pi compares the registry's provider
+	// objects by identity (compat.ts builtinApiProviderInstances).
+	seq uint64
 }
 
 var (
-	registryMu sync.RWMutex
-	registry   = map[Api]registeredProvider{}
+	registryMu  sync.RWMutex
+	registry    = map[Api]registeredProvider{}
+	registrySeq uint64
 )
+
+// registrations returns each api's current registration (registeredProvider.seq).
+func registrations() map[Api]uint64 {
+	registryMu.RLock()
+	defer registryMu.RUnlock()
+	out := make(map[Api]uint64, len(registry))
+	for api, entry := range registry {
+		out[api] = entry.seq
+	}
+	return out
+}
+
+// registration returns api's current registration, if it has one.
+func registration(api Api) (uint64, bool) {
+	registryMu.RLock()
+	defer registryMu.RUnlock()
+	entry, ok := registry[api]
+	return entry.seq, ok
+}
 
 // RegisterApiProvider registers a provider for its Api. sourceID groups
 // providers for bulk unregistration (extensions).
@@ -101,6 +124,7 @@ func RegisterApiProvider(p ApiProvider, sourceID ...string) {
 			return orig(ctx, model, handle, opts)
 		}
 	}
+	registrySeq++
 	registry[api] = registeredProvider{
 		provider: ApiProvider{
 			Api:            api,
@@ -110,6 +134,7 @@ func RegisterApiProvider(p ApiProvider, sourceID ...string) {
 			CancelDeferred: cancelDeferred,
 		},
 		sourceID: sid,
+		seq:      registrySeq,
 	}
 }
 

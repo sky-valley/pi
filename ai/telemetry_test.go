@@ -837,3 +837,137 @@ func TestStreamSetupObservesSetupFailureOnce(t *testing.T) {
 		t.Errorf("observed %q, want %q", got, want)
 	}
 }
+
+// TestCompatCloudflareStreamsThroughModels mirrors pi's compat stream() and
+// streamSimple() on a built-in cloudflare-* model with no resolved key: they
+// route through compatModels, the Models runtime, so the request is observed
+// under options.telemetry and a non-chat model is refused. Every row of
+// testdata/telemetry/compat-d2e7d8b7c.json (capture-compat.mts) runs with no
+// Cloudflare credentials, as pi's did.
+func TestCompatCloudflareStreamsThroughModels(t *testing.T) {
+	for _, name := range []string{"CLOUDFLARE_API_KEY", "CLOUDFLARE_ACCOUNT_ID", "CLOUDFLARE_GATEWAY_ID"} {
+		t.Setenv(name, "")
+	}
+	data, err := os.ReadFile("testdata/telemetry/compat-d2e7d8b7c.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var capture struct {
+		Rows []struct {
+			Name         string          `json:"name"`
+			Entry        string          `json:"entry"`
+			Provider     string          `json:"provider"`
+			ModelID      string          `json:"modelId"`
+			Type         *string         `json:"type"`
+			Reasoning    *string         `json:"reasoning"`
+			Delivered    []EventType     `json:"delivered"`
+			StopReason   StopReason      `json:"stopReason"`
+			ErrorMessage *string         `json:"errorMessage"`
+			Spans        json.RawMessage `json:"spans"`
+			Measurements json.RawMessage `json:"measurements"`
+		} `json:"rows"`
+	}
+	if err := json.Unmarshal(data, &capture); err != nil {
+		t.Fatal(err)
+	}
+	for _, row := range capture.Rows {
+		t.Run(row.Name, func(t *testing.T) {
+			catalog := GetModel(row.Provider, row.ModelID)
+			if catalog == nil {
+				t.Fatalf("%s/%s is not in the catalog", row.Provider, row.ModelID)
+			}
+			model := *catalog
+			if row.Type != nil {
+				model.Type = ModelType(*row.Type)
+			}
+			recorder := telemetry.NewInMemoryContext()
+			var delivered []EventType
+			var result *AssistantMessage
+			_ = recorder.StartSpan(telemetry.SpanOptions{Name: "caller"}, func(span telemetry.Span) error {
+				request := StreamOptions{ProviderRequestOptions: ProviderRequestOptions{Telemetry: span}}
+				var stream *AssistantMessageEventStream
+				if row.Entry == "stream" {
+					stream = Stream(context.Background(), &model, Context{}, &request)
+				} else {
+					simple := SimpleStreamOptions{StreamOptions: request}
+					if row.Reasoning != nil {
+						simple.Reasoning = ThinkingLevel(*row.Reasoning)
+					}
+					stream = StreamSimple(context.Background(), &model, Context{}, &simple)
+				}
+				for event := range stream.Events() {
+					delivered = append(delivered, event.Type)
+				}
+				result = stream.Result()
+				return nil
+			})
+			waitSettled(t, recorder)
+			if !reflect.DeepEqual(delivered, row.Delivered) {
+				t.Errorf("delivered %v, pi %v", delivered, row.Delivered)
+			}
+			if result == nil {
+				t.Fatal("no result")
+			}
+			if result.StopReason != row.StopReason || row.ErrorMessage != nil && result.ErrorMessage != *row.ErrorMessage {
+				t.Errorf("result stopped %q with %q, pi %q with %q", result.StopReason, result.ErrorMessage, row.StopReason, *row.ErrorMessage)
+			}
+			recorded := recordedTelemetry(t, recorder)
+			if want := dropEndSequence(decodeRaw(t, row.Spans)); !reflect.DeepEqual(recorded["spans"], want) {
+				t.Errorf("spans:\n go %v\n pi %v", recorded["spans"], want)
+			}
+			if want := decodeRaw(t, row.Measurements); !reflect.DeepEqual(recorded["measurements"], want) {
+				t.Errorf("measurements:\n go %v\n pi %v", recorded["measurements"], want)
+			}
+		})
+	}
+}
+
+// TestCompatCloudflareResolvedOrOverriddenStreamsDirect: compat.ts sends a
+// cloudflare-* model straight to its api provider, unobserved, when the
+// request carries an explicit key or a cf-aig-authorization header, and when
+// the registry no longer holds the implementation compatModels was built
+// from (getBuiltinProviderForModel compares the registry's provider with
+// builtinApiProviderInstances).
+func TestCompatCloudflareResolvedOrOverriddenStreamsDirect(t *testing.T) {
+	model := GetModel("cloudflare-workers-ai", "@cf/deepseek-ai/deepseek-v4-flash-0731")
+	if model == nil {
+		t.Fatal("cloudflare-workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731 is not in the catalog")
+	}
+	// direct streams a row and reports whether only the caller's span was
+	// recorded: no pi.ai.request, so the request went straight to the api
+	// provider.
+	direct := func(options StreamOptions) (*AssistantMessage, bool) {
+		recorder := telemetry.NewInMemoryContext()
+		var result *AssistantMessage
+		_ = recorder.StartSpan(telemetry.SpanOptions{Name: "caller"}, func(span telemetry.Span) error {
+			options.Telemetry = span
+			result = Stream(context.Background(), model, Context{}, &options).Result()
+			return nil
+		})
+		return result, len(recorder.Spans()) == 1
+	}
+	gateway := "Bearer k"
+	for _, tc := range []struct {
+		name    string
+		options StreamOptions
+	}{
+		{"explicit key", StreamOptions{ProviderRequestOptions: ProviderRequestOptions{APIKey: "k"}}},
+		{"gateway header", StreamOptions{ProviderRequestOptions: ProviderRequestOptions{Headers: ProviderHeaders{"cf-aig-authorization": &gateway}}}},
+	} {
+		if result, ok := direct(tc.options); !ok {
+			t.Errorf("%s: streamed through Models (%q), want the api provider", tc.name, result.ErrorMessage)
+		}
+	}
+
+	compat() // built before the override below, as pi's is at load
+	RegisterApiProvider(ApiProvider{
+		Api: model.Api,
+		Stream: func(context.Context, *Model, TranscriptContext, *StreamOptions) *AssistantMessageEventStream {
+			return ErrorStream(model, errors.New("direct"))
+		},
+	}, "compat-cloudflare-test")
+	defer UnregisterApiProviders("compat-cloudflare-test")
+	if result, ok := direct(StreamOptions{}); !ok || result.ErrorMessage != "direct" {
+		t.Errorf("overridden api: streamed through %q, want the overriding api provider", result.ErrorMessage)
+	}
+}
