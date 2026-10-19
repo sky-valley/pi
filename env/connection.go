@@ -151,7 +151,9 @@ type ConnectionOptions struct {
 	// start, and the next request tries again. Its context ends when the
 	// connection is closed.
 	CommandFunc func(ctx context.Context) ([]string, error)
-	// OnLog receives the daemon's and the transport's diagnostic output.
+	// OnLog receives the daemon's and the transport's diagnostic output, in
+	// order and one call at a time, on a goroutine of the connection's own;
+	// it may use the connection.
 	OnLog func(text string)
 }
 
@@ -190,6 +192,9 @@ type Connection struct {
 	stopLife context.CancelFunc
 
 	timing timing
+	// logs passes texts to OnLog: stdout and stderr are read on two
+	// goroutines, which must not wait for it.
+	logs serial[string]
 
 	mu       sync.Mutex
 	session  *session
@@ -203,7 +208,9 @@ type Connection struct {
 // request.
 func NewConnection(options ConnectionOptions) *Connection {
 	life, stop := context.WithCancel(context.Background())
-	return &Connection{options: options, life: life, stopLife: stop, timing: timing{pingInterval, silenceLimit}, nextID: 1}
+	c := &Connection{options: options, life: life, stopLife: stop, timing: timing{pingInterval, silenceLimit}, nextID: 1}
+	c.logs.fn = options.OnLog
+	return c
 }
 
 // starting is a start in progress, shared by the requests that wait for it.
@@ -652,13 +659,20 @@ func killProcess(p *os.Process) {
 	_ = p.Signal(syscall.SIGTERM)
 }
 
+// log passes text to OnLog.
+func (c *Connection) log(text string) {
+	if c.options.OnLog != nil {
+		c.logs.push(text)
+	}
+}
+
 func (c *Connection) readLog(stderr io.ReadCloser) {
 	defer stderr.Close()
 	buf := make([]byte, 64*1024)
 	for {
 		n, err := stderr.Read(buf)
-		if n > 0 && c.options.OnLog != nil {
-			c.options.OnLog(jstext.DecodeUTF8(buf[:n]))
+		if n > 0 {
+			c.log(jstext.DecodeUTF8(buf[:n]))
 		}
 		if err != nil {
 			return
@@ -692,8 +706,8 @@ func (c *Connection) readFrames(s *session, stdout io.ReadCloser) {
 		n, err := input.Read(chunk)
 		buffered = append(buffered, chunk[:n]...)
 		if index := bytes.Index(buffered, marker); index != -1 {
-			if noise := jstext.Trim(jstext.DecodeUTF8(buffered[:index])); noise != "" && c.options.OnLog != nil {
-				c.options.OnLog(noise)
+			if noise := jstext.Trim(jstext.DecodeUTF8(buffered[:index])); noise != "" {
+				c.log(noise)
 			}
 			buffered = buffered[index+len(marker):]
 			break

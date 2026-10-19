@@ -123,6 +123,64 @@ func TestConnectionStartsAndFailsLikeUpstream(t *testing.T) {
 	}
 }
 
+// TestCallsOnLogOneAtATime: the daemon's shell noise (stdout) and its
+// diagnostics (stderr) are read on two goroutines, but OnLog, like upstream's
+// onLog on its one thread, never runs twice at once.
+func TestCallsOnLogOneAtATime(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("fakedaemon.sh needs a POSIX shell")
+	}
+	script, err := filepath.Abs("testdata/connection/fakedaemon.sh")
+	mustDo(t, err)
+	var active, most, calls atomic.Int32
+	connection := NewConnection(ConnectionOptions{Command: []string{"sh", script, "chatty"}, OnLog: func(string) {
+		calls.Add(1)
+		n := active.Add(1)
+		defer active.Add(-1)
+		for m := most.Load(); n > m && !most.CompareAndSwap(m, n); m = most.Load() {
+		}
+		time.Sleep(300 * time.Millisecond)
+	}})
+	defer connection.Close()
+	_, err = connection.Info(background())
+	mustDo(t, err)
+	waitFor(t, 5*time.Second, "both logs", func() bool { return calls.Load() == 2 })
+	if n := most.Load(); n != 1 {
+		t.Fatalf("OnLog ran on %d goroutines at once", n)
+	}
+}
+
+// TestOnLogMayUseTheConnection: upstream's onLog may call into the
+// connection (its calls return promises); Go's OnLog, called for the shell
+// noise before the daemon's sync line, may wait for the daemon's answers.
+func TestOnLogMayUseTheConnection(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("fakedaemon.sh needs a POSIX shell")
+	}
+	script, err := filepath.Abs("testdata/connection/fakedaemon.sh")
+	mustDo(t, err)
+	var connection *Connection
+	logged := make(chan error, 2)
+	connection = NewConnection(ConnectionOptions{Command: []string{"sh", script, "chatty"}, OnLog: func(string) {
+		_, err := connection.Info(background())
+		logged <- err
+	}})
+	defer connection.Close()
+	started := make(chan error, 1)
+	go func() {
+		_, err := connection.Info(background())
+		started <- err
+	}()
+	for _, ch := range []chan error{started, logged, logged} {
+		select {
+		case err := <-ch:
+			mustDo(t, err)
+		case <-time.After(5 * time.Second):
+			t.Fatal("the connection hung on an OnLog that asks for Info")
+		}
+	}
+}
+
 func TestRequestFieldsComeBeforeTheOperation(t *testing.T) {
 	for _, c := range []struct {
 		fields any

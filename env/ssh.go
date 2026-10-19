@@ -782,7 +782,8 @@ type sshState struct {
 // sshConnectionFor is a Connection whose every start detects the remote
 // system (once), verifies or deploys the daemon, then starts it.
 func sshConnectionFor(options SSHConnectOptions, state *sshState) *Connection {
-	return NewConnection(ConnectionOptions{
+	var connection *Connection
+	connection = NewConnection(ConnectionOptions{
 		CommandFunc: func(ctx context.Context) ([]string, error) {
 			state.mu.Lock()
 			remote, verified := state.remote, state.verified
@@ -793,9 +794,7 @@ func sshConnectionFor(options SSHConnectOptions, state *sshState) *Connection {
 					return nil, err
 				}
 				for _, warning := range detected.Warnings {
-					if options.OnLog != nil {
-						options.OnLog(warning + "\n")
-					}
+					connection.log(warning + "\n")
 				}
 				remote = &detected
 				state.mu.Lock()
@@ -824,6 +823,7 @@ func sshConnectionFor(options SSHConnectOptions, state *sshState) *Connection {
 		},
 		OnLog: options.OnLog,
 	})
+	return connection
 }
 
 // SSHConnection returns a Connection to the target that does nothing until

@@ -70,16 +70,17 @@ type RemoteWatcher struct {
 	onChange   func(WatchChange)
 	options    RemoteWatchOptions
 
+	// changes delivers to onChange one at a time, off the goroutines that
+	// receive the changes, so a callback can neither stall the watch request
+	// nor deadlock calling Close.
+	changes serial[WatchChange]
+
 	mu      sync.Mutex
 	mode    string
 	closed  bool
 	cancel  context.CancelFunc
 	request chan struct{}
 	wake    chan struct{}
-	// queue holds the changes onChange has yet to receive; delivering is set
-	// while a goroutine delivers them.
-	queue      []WatchChange
-	delivering bool
 }
 
 // errWatcherClosed is what start reports once the watcher is closed.
@@ -91,6 +92,7 @@ var errWatcherClosed = errors.New("the watcher is closed")
 // upstream's callbacks run on one thread); it may call Close.
 func OpenRemoteWatcher(connection *Connection, targets []WatchTarget, onChange func(WatchChange), options RemoteWatchOptions) (*RemoteWatcher, error) {
 	w := &RemoteWatcher{connection: connection, targets: targets, onChange: onChange, options: options, mode: "native", wake: make(chan struct{})}
+	w.changes.fn = w.call
 	if err := w.start(false); err != nil {
 		return nil, err
 	}
@@ -112,7 +114,7 @@ func (w *RemoteWatcher) Mode() string {
 // idempotent.
 func (w *RemoteWatcher) Close() error {
 	w.mu.Lock()
-	w.queue = nil
+	w.changes.clear()
 	if w.closed {
 		w.mu.Unlock()
 		return nil
@@ -137,7 +139,7 @@ func (w *RemoteWatcher) post(change WatchChange) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	if !w.closed {
-		w.enqueue(change)
+		w.changes.push(change)
 	}
 }
 
@@ -146,36 +148,8 @@ func (w *RemoteWatcher) stop(err *FileError) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	if !w.closed {
-		w.enqueue(WatchChange{Err: err})
+		w.changes.push(WatchChange{Err: err})
 		w.closed = true
-	}
-}
-
-// enqueue queues change and starts delivering unless a goroutine does; w.mu
-// is held.
-func (w *RemoteWatcher) enqueue(change WatchChange) {
-	w.queue = append(w.queue, change)
-	if !w.delivering {
-		w.delivering = true
-		go w.deliver()
-	}
-}
-
-// deliver calls onChange with the queued changes, one at a time, off the
-// goroutines that receive them, so a callback can neither stall the watch
-// request nor deadlock calling Close.
-func (w *RemoteWatcher) deliver() {
-	for {
-		w.mu.Lock()
-		if len(w.queue) == 0 {
-			w.delivering = false
-			w.mu.Unlock()
-			return
-		}
-		change := w.queue[0]
-		w.queue = w.queue[1:]
-		w.mu.Unlock()
-		w.call(change)
 	}
 }
 

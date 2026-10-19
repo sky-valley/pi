@@ -65,6 +65,13 @@ windows)
 	printf 'PI-ENV %s\n' "$token"
 	frame 2 1 '{"protocol":1,"version":"0.0.0","os":"windows","arch":"x86_64","home":"C:\\Users\\me","tmpdir":"C:\\Temp","separator":"\\","cwd":"D:\\daemon","driveCwds":{"E:":"E:\\e-cwd","F:":"C:\\elsewhere"},"pid":1}'
 	;;
+chatty)
+	# Shell noise on stdout and a diagnostic on stderr at once.
+	printf 'noise\n'
+	printf 'diagnostic\n' >&2
+	printf 'PI-ENV %s\n' "$token"
+	frame 2 1 "$hello"
+	;;
 silent)
 	# A daemon that hangs once it answered: it neither reads nor pings.
 	printf 'PI-ENV %s\n' "$token"
