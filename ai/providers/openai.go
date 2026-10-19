@@ -122,6 +122,13 @@ func StreamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Transc
 			stream.End()
 		}
 
+		// pi resolves an azure model's endpoint in its provider wrapper, ahead
+		// of the stream and so of the key check; the port has no wrapper yet.
+		if model.Provider == azureProvider {
+			fail(azureChatCompletionsError(model))
+			return
+		}
+
 		apiKey, keyErr := clientAPIKey(model.Provider, opts.APIKey, opts.Headers)
 		if keyErr != nil {
 			fail(keyErr)
