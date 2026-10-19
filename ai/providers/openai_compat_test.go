@@ -264,11 +264,12 @@ func TestOpenAICompatDeepSeekReasoningContent(t *testing.T) {
 // (09f10595): streamSimple now sends a context-clamped default maxTokens.
 func TestOpenAICompatStreamSimpleSendsClampedDefaultMaxTokens(t *testing.T) {
 	model := &ai.Model{ID: "gpt-4o-mini", Api: ai.APIOpenAICompletions, Provider: "openai", MaxTokens: 8000, ContextWindow: 10000}
-	// 8000 'x' user chars -> estimate ceil(8000/4)=2000; available = 10000-2000-4096 = 3904.
+	// 8000 'x' user chars -> estimate ceil(8000/3.5)=2286; available = 10000-2286-4096 = 3618
+	// (upstream 311f0e020).
 	body := captureOpenAIBody(t, model,
 		ai.Context{Messages: []ai.Message{ai.NewUserText(strings.Repeat("x", 8000), 1)}}, nil)
-	if v, _ := body["max_completion_tokens"].(float64); v != 3904 {
-		t.Fatalf("default max_completion_tokens = %v, want 3904", body["max_completion_tokens"])
+	if v, _ := body["max_completion_tokens"].(float64); v != 3618 {
+		t.Fatalf("default max_completion_tokens = %v, want 3618", body["max_completion_tokens"])
 	}
 	if _, ok := body["max_tokens"]; ok {
 		t.Fatalf("OpenAI must not send max_tokens")
@@ -281,8 +282,8 @@ func TestOpenAICompatStreamSimpleClampsExplicitMaxTokens(t *testing.T) {
 	body := captureOpenAIBody(t, model,
 		ai.Context{Messages: []ai.Message{ai.NewUserText(strings.Repeat("x", 8000), 1)}},
 		&ai.SimpleStreamOptions{StreamOptions: ai.StreamOptions{MaxTokens: &mt}})
-	if v, _ := body["max_completion_tokens"].(float64); v != 3904 {
-		t.Fatalf("explicit clamped max_completion_tokens = %v, want 3904", body["max_completion_tokens"])
+	if v, _ := body["max_completion_tokens"].(float64); v != 3618 {
+		t.Fatalf("explicit clamped max_completion_tokens = %v, want 3618", body["max_completion_tokens"])
 	}
 }
 

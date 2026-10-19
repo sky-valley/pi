@@ -27,7 +27,10 @@ type ContextUsageEstimate struct {
 }
 
 const (
-	charsPerToken       = 4
+	// charsPerToken is 3.5 since upstream 27075fe07 (#10497): large new inputs
+	// need more room than chars/4 left when limiting output. The divisions
+	// below are float, as pi's Math.ceil(chars / CHARS_PER_TOKEN).
+	charsPerToken       = 3.5
 	estimatedImageChars = 4800
 )
 
@@ -78,7 +81,7 @@ func estimateTextAndImageContentChars(content ContentList) int {
 	return chars
 }
 
-// estimateTextTokens mirrors pi's estimateTextTokens: ceil(length / 4) over the
+// estimateTextTokens mirrors pi's estimateTextTokens: ceil(length / 3.5) over the
 // UTF-16 length.
 func estimateTextTokens(text string) int {
 	return int(math.Ceil(float64(jsStringLength(text)) / charsPerToken))

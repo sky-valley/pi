@@ -601,23 +601,24 @@ func TestAnthropicStreamSimpleClampsMaxTokensAndBudget(t *testing.T) {
 		ID: "claude-test", Api: ai.APIAnthropicMessages, Provider: "anthropic", BaseURL: server.URL,
 		Input: []string{"text"}, MaxTokens: 8000, ContextWindow: 10000, Reasoning: true,
 	}
-	// 8000 'x' chars -> estimate 2000; available = 10000-2000-4096 = 3904.
-	// adjustMaxTokensForThinking(3904, 8000, high=16384) -> maxTokens 8000,
-	// budget max(0,8000-1024)=6976. Re-clamp maxTokens -> 3904.
-	// thinking_budget = min(6976, max(0,3904-1024)) = min(6976,2880) = 2880.
+	// 8000 'x' chars -> estimate ceil(8000/3.5) = 2286; available =
+	// 10000-2286-4096 = 3618. adjustMaxTokensForThinking(3618, 8000, high=16384)
+	// -> maxTokens 8000, budget max(0,8000-1024)=6976. Re-clamp maxTokens -> 3618.
+	// thinking_budget = min(6976, max(0,3618-1024)) = 2594. pi's
+	// streamSimpleAnthropic at d2e7d8b7c sends the same (src capture).
 	req := ai.Context{Messages: []ai.Message{ai.NewUserText(strings.Repeat("x", 8000), 1)}}
 	opts := &ai.SimpleStreamOptions{StreamOptions: ai.StreamOptions{ProviderRequestOptions: ai.ProviderRequestOptions{APIKey: "k"}}, Reasoning: ai.ThinkingHigh}
 	StreamSimpleAnthropic(context.Background(), model, ai.NormalizeContext(req), opts).Result()
 
-	if v, _ := gotBody["max_tokens"].(float64); v != 3904 {
-		t.Fatalf("max_tokens = %v, want 3904", gotBody["max_tokens"])
+	if v, _ := gotBody["max_tokens"].(float64); v != 3618 {
+		t.Fatalf("max_tokens = %v, want 3618", gotBody["max_tokens"])
 	}
 	thinking, ok := gotBody["thinking"].(map[string]any)
 	if !ok {
 		t.Fatalf("thinking object missing: %v", gotBody["thinking"])
 	}
-	if v, _ := thinking["budget_tokens"].(float64); v != 2880 {
-		t.Fatalf("budget_tokens = %v, want 2880", thinking["budget_tokens"])
+	if v, _ := thinking["budget_tokens"].(float64); v != 2594 {
+		t.Fatalf("budget_tokens = %v, want 2594", thinking["budget_tokens"])
 	}
 }
 
