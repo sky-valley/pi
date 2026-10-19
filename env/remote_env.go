@@ -118,9 +118,11 @@ func (e *RemoteExecutionEnv) SetCwd(cwd string) {
 	e.mu.Unlock()
 }
 
-// remotePath is Node's path flavor of the remote system.
-func remotePath(ctx context.Context, connection *Connection) (nodepath.Flavor, error) {
-	info, err := connection.Info(ctx)
+// remotePath is Node's path flavor of the remote system. As upstream's, it
+// waits for the daemon to start whether or not the operation was aborted:
+// its callers check for aborts where upstream does.
+func remotePath(connection *Connection) (nodepath.Flavor, error) {
+	info, err := connection.Info(context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -342,7 +344,7 @@ func (r *remoteBinaryReader) Info(ctx context.Context) (coding.FileInfo, error) 
 	if err := json.Unmarshal(reply.JSON, &remote); err != nil {
 		return coding.FileInfo{}, toFileError(err, r.handle.path)
 	}
-	paths, err := remotePath(ctx, r.handle.env.connection)
+	paths, err := remotePath(r.handle.env.connection)
 	if err != nil {
 		return coding.FileInfo{}, toFileError(err, r.handle.path)
 	}
@@ -444,7 +446,7 @@ func (r *remoteDirReader) Next(ctx context.Context, maxEntries int) ([]coding.Fi
 		return nil, false, &FileError{Code: FileInvalid, Message: "maxEntries must be a positive safe integer", Path: path}
 	}
 	entries := []coding.FileInfo{}
-	paths, err := remotePath(ctx, r.handle.env.connection)
+	paths, err := remotePath(r.handle.env.connection)
 	if err != nil {
 		return nil, false, toFileError(err, path)
 	}
@@ -657,18 +659,20 @@ func (e *RemoteExecutionEnv) open(resolved string, fields object) (*handle, open
 	return &handle{env: e, id: opened.Handle, session: reply.Session, path: resolved}, opened, nil
 }
 
-// AbsolutePath implements coding.FileSystem.
+// AbsolutePath implements coding.FileSystem. As upstream's absolutePath, it
+// does not look at ctx.
 func (e *RemoteExecutionEnv) AbsolutePath(ctx context.Context, path string) (string, error) {
-	resolved, err := e.resolve(ctx, path)
+	resolved, err := e.resolve(context.WithoutCancel(ctx), path)
 	if err != nil {
 		return "", toFileError(err, path)
 	}
 	return resolved, nil
 }
 
-// JoinPath implements coding.FileSystem.
-func (e *RemoteExecutionEnv) JoinPath(ctx context.Context, parts []string) (string, error) {
-	paths, err := remotePath(ctx, e.connection)
+// JoinPath implements coding.FileSystem. As upstream's joinPath, it does
+// not look at ctx.
+func (e *RemoteExecutionEnv) JoinPath(_ context.Context, parts []string) (string, error) {
+	paths, err := remotePath(e.connection)
 	if err != nil {
 		return "", toFileError(err, "")
 	}
@@ -983,7 +987,7 @@ func (e *RemoteExecutionEnv) Stat(ctx context.Context, path string) (coding.File
 		if err := json.Unmarshal(reply.JSON, &remote); err != nil {
 			return coding.FileInfo{}, err
 		}
-		paths, err := remotePath(ctx, e.connection)
+		paths, err := remotePath(e.connection)
 		if err != nil {
 			return coding.FileInfo{}, err
 		}
@@ -1021,7 +1025,7 @@ func (e *RemoteExecutionEnv) ListDir(ctx context.Context, path string) ([]coding
 		// Node's readdir fails on any entry it cannot lstat. libuv sorts
 		// names by their bytes on POSIX; on Windows it keeps the file
 		// system's order, which the daemon reports.
-		paths, err := remotePath(ctx, e.connection)
+		paths, err := remotePath(e.connection)
 		if err != nil {
 			return nil, err
 		}
@@ -1163,7 +1167,8 @@ func (e *RemoteExecutionEnv) CreateTempDir(ctx context.Context, prefix string) (
 	if prefix == "" {
 		prefix = "tmp-"
 	}
-	info, err := e.connection.Info(ctx)
+	// Upstream checks for an abort before it waits for the daemon, not after.
+	info, err := e.connection.Info(context.WithoutCancel(ctx))
 	if err != nil {
 		return "", toFileError(err, "")
 	}
@@ -1195,7 +1200,7 @@ func (e *RemoteExecutionEnv) CreateTempFile(ctx context.Context, options *TempFi
 	if err != nil {
 		return "", err
 	}
-	paths, err := remotePath(ctx, e.connection)
+	paths, err := remotePath(e.connection)
 	if err != nil {
 		return "", toFileError(err, "")
 	}

@@ -247,6 +247,37 @@ func TestResolvesPathsLikeUpstream(t *testing.T) {
 	}
 }
 
+// TestResolvesPathsWithAnAbortedContextLikeUpstream: absolutePath and
+// joinPath do not look at the context; aborted, they still wait for the
+// daemon to start and resolve.
+func TestResolvesPathsWithAnAbortedContextLikeUpstream(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("fakedaemon.sh needs a POSIX shell")
+	}
+	golden := loadStarts(t)
+	script, err := filepath.Abs("testdata/connection/fakedaemon.sh")
+	mustDo(t, err)
+	for _, want := range golden.AbortedPaths {
+		connection := NewConnection(ConnectionOptions{Command: []string{"sh", script, "posix"}})
+		env := NewRemoteExecutionEnv(RemoteExecutionEnvOptions{Connection: connection, ID: "pi-env:paths", Cwd: "/work/dir"})
+		var resolved string
+		switch want.Operation {
+		case "absolutePath ~/a":
+			resolved, err = env.AbsolutePath(abortedContext(), "~/a")
+		case "joinPath a b":
+			resolved, err = env.JoinPath(abortedContext(), []string{"a", "b"})
+		default:
+			t.Fatalf("unknown operation %q", want.Operation)
+		}
+		connection.Close()
+		var got any = resolved
+		if err != nil {
+			got = map[string]any{"code": errorCode(err)}
+		}
+		compareJSON(t, want.Operation, got, want.Result)
+	}
+}
+
 // TestFailsRequestsLikeUpstreamWhenTheConnectionIsLost: a request larger than
 // a frame loses the connection (the daemon refuses it and exits), and so does
 // a daemon that stops reading and pinging, even while a write to it is

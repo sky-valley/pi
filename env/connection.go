@@ -232,7 +232,8 @@ type session struct {
 }
 
 // Info connects if needed and returns what the daemon reported about its
-// machine.
+// machine. Ending ctx stops the wait for a daemon that is starting (upstream's
+// info cannot be aborted); a started daemon's answer is returned regardless.
 func (c *Connection) Info(ctx context.Context) (RemoteInfo, error) {
 	st, err := c.connect(ctx)
 	if err != nil {
@@ -356,15 +357,26 @@ func (c *Connection) connect(ctx context.Context) (*starting, error) {
 		go c.start(st)
 	}
 	c.mu.Unlock()
+	// A daemon already started answers even if ctx ended; select alone would
+	// pick between the two at random.
 	select {
 	case <-st.done:
-		if st.err != nil {
-			return nil, st.err
-		}
-		return st, nil
+		return st.result()
+	default:
+	}
+	select {
+	case <-st.done:
+		return st.result()
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	}
+}
+
+func (st *starting) result() (*starting, error) {
+	if st.err != nil {
+		return nil, st.err
+	}
+	return st, nil
 }
 
 // start starts a daemon; a failed start is not remembered, so the next

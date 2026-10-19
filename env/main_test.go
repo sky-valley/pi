@@ -112,6 +112,8 @@ var listingEntries = map[string][]map[string]any{
 	},
 	"vanishing": {listingEntry("x"), {"name": "gone", "error": map[string]any{"code": "ENOENT", "message": "ENOENT: no such file or directory, lstat"}}, listingEntry("y")},
 	"denied":    {listingEntry("x"), {"name": "secret", "error": map[string]any{"code": "EACCES", "message": "EACCES: permission denied, lstat"}}},
+	// Closing the handle of "exiting" ends the daemon without an answer.
+	"exiting": {},
 }
 
 func listingInfo(name string) map[string]any {
@@ -124,7 +126,7 @@ func listingEntry(name string) map[string]any {
 
 // runListingDaemon answers hello for a system (linux or windows), opendir of
 // the directories of listingEntries, readdir with all their entries, and
-// close.
+// close (exiting instead for the directory "exiting").
 func runListingDaemon(system string, args []string) int {
 	token := ""
 	for i, arg := range args {
@@ -164,6 +166,11 @@ func runListingDaemon(system string, args []string) int {
 			answer = map[string]any{"handle": handle}
 		case "readdir":
 			answer = map[string]any{"entries": listingEntries[handles[request.Handle]], "done": true}
+		case "close":
+			if handles[request.Handle] == "exiting" {
+				return 0
+			}
+			answer = map[string]any{}
 		default:
 			answer = map[string]any{}
 		}

@@ -300,6 +300,87 @@ func (c *expiringContext) Err() error {
 	return nil
 }
 
+// endingContext ends, Err and Done, right after a number of Err checks that
+// reported none, to end an operation just past one of its abort checkpoints.
+type endingContext struct {
+	context.Context
+	cancel context.CancelFunc
+	mu     sync.Mutex
+	checks int
+}
+
+func newEndingContext(checks int) *endingContext {
+	ctx, cancel := context.WithCancel(context.Background())
+	return &endingContext{Context: ctx, cancel: cancel, checks: checks}
+}
+
+func (c *endingContext) Err() error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.checks > 0 {
+		c.checks--
+		if c.checks == 0 {
+			c.cancel()
+		}
+		return nil
+	}
+	return c.Context.Err()
+}
+
+// TestEndedContextsAbortOnlyWhereUpstreamChecks: upstream's info() never
+// looks at an abort signal, nor do its operations after their last abort
+// checkpoint (Stat after lstat, BinaryReader.Info after fstat, ListDir of an
+// empty directory after readdir, CreateTempFile after mkdtemp): a context
+// that ends there does not fail them, also when the connection is lost
+// meanwhile and must start again.
+func TestEndedContextsAbortOnlyWhereUpstreamChecks(t *testing.T) {
+	env, connection := environment(t)
+	mustDo(t, env.WriteFile(background(), "a.txt", []byte("a")))
+	mustDo(t, env.CreateDir(background(), "empty", nil))
+	failures := map[string]int{}
+	for range 30 {
+		if _, err := connection.Info(abortedContext()); err != nil {
+			failures["Info"]++
+		}
+		if _, err := env.Stat(newEndingContext(1), "a.txt"); err != nil {
+			failures["Stat"]++
+		}
+		reader, err := env.OpenBinaryReader(background(), "a.txt", nil)
+		mustDo(t, err)
+		if _, err := reader.Info(newEndingContext(1)); err != nil {
+			failures["BinaryReader.Info"]++
+		}
+		reader.Close()
+		if infos, err := env.ListDir(newEndingContext(1), "empty"); err != nil || len(infos) != 0 {
+			failures["ListDir"]++
+		}
+		if path, err := env.CreateTempFile(newEndingContext(1), nil); err != nil {
+			failures["CreateTempFile"]++
+		} else {
+			mustDo(t, os.RemoveAll(filepath.Dir(path)))
+		}
+	}
+	if len(failures) != 0 {
+		t.Errorf("failed with an ended context (of 30 each): %v", failures)
+	}
+	// Upstream's createTempDir checks before it waits for the daemon to start,
+	// not after.
+	fresh := NewRemoteExecutionEnv(RemoteExecutionEnvOptions{Connection: newConnection(t), ID: "pi-env:test", Cwd: env.Cwd()})
+	if dir, err := fresh.CreateTempDir(newEndingContext(1), ""); err != nil {
+		t.Errorf("CreateTempDir with a context that ended while the daemon started: %v", err)
+	} else {
+		mustDo(t, os.Remove(dir))
+	}
+	// The listing daemon exits when the handle of "exiting" is closed, after
+	// readdir: ListDir starts it again for the remote's path rules.
+	listing := NewConnection(ConnectionOptions{Command: []string{os.Args[0], listingDaemonArg, "linux"}})
+	t.Cleanup(listing.Close)
+	listingEnv := NewRemoteExecutionEnv(RemoteExecutionEnvOptions{Connection: listing, ID: "pi-env:listing", Cwd: "/"})
+	if infos, err := listingEnv.ListDir(newEndingContext(1), "exiting"); err != nil || len(infos) != 0 {
+		t.Errorf("ListDir with the connection lost after readdir: %v, %v", infos, err)
+	}
+}
+
 // TestWriteChecksForAbortsBetweenChunksAndAppendDoesNot: Node's writeFile
 // checks its signal before each 512 KiB write, appendFile only before and
 // after, so an append aborted midway still writes everything.
