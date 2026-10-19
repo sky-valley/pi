@@ -222,6 +222,10 @@ type LoginOptions struct {
 	// app can create the ID on first use, and it must return the same ID on
 	// every later call.
 	GetDeviceID func() string
+	// AgentName is the name this app introduces itself with during login,
+	// e.g. OpenAI's agent name hint and Codex originator. Empty means pi's own
+	// name.
+	AgentName string
 }
 
 // ApiKeyAuth is api-key auth: a stored key/provider env plus ambient sources
