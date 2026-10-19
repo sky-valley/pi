@@ -21,11 +21,6 @@ const (
 	openRouterUserModelsTimeout = 15 * time.Second
 )
 
-// openRouterFetch is the stand-in for the globalThis.fetch pi's
-// personalizeOpenRouterCatalog calls; tests replace it as pi's spy on fetch
-// does.
-var openRouterFetch ai.HTTPDoer = http.DefaultClient
-
 // PersonalizeOpenRouterCatalog restricts an OpenRouter catalog to the chat
 // models the key may use, with the key's limits and prices from
 // GET /models/user. Image and classifier models are returned as they are. A
@@ -42,6 +37,13 @@ var openRouterFetch ai.HTTPDoer = http.DefaultClient
 // Listed values are JavaScript values: a limit counts when it is truthy, and a
 // price is parseFloat of its string form.
 func PersonalizeOpenRouterCatalog(ctx context.Context, catalog []*ai.Model, refresh ai.RefreshModelsContext) ([]*ai.Model, error) {
+	// pi calls the global fetch, which http.DefaultClient stands for.
+	return personalizeOpenRouterCatalog(ctx, catalog, refresh, http.DefaultClient)
+}
+
+// personalizeOpenRouterCatalog is PersonalizeOpenRouterCatalog sending through
+// client.
+func personalizeOpenRouterCatalog(ctx context.Context, catalog []*ai.Model, refresh ai.RefreshModelsContext, client ai.HTTPDoer) ([]*ai.Model, error) {
 	var key string
 	if credential := refresh.Credential; credential != nil {
 		if credential.Type == ai.CredentialOAuth {
@@ -66,7 +68,7 @@ func PersonalizeOpenRouterCatalog(ctx context.Context, catalog []*ai.Model, refr
 	}
 	req.Header.Set("accept", "application/json")
 	req.Header.Set("authorization", "Bearer "+key)
-	resp, err := openRouterFetch.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
