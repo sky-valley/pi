@@ -179,6 +179,11 @@ func scenarios() []scenario {
 			},
 		},
 		{
+			name: "watch through links",
+			skip: unixOnly,
+			run:  watchThroughLinks,
+		},
+		{
 			name: "stat",
 			skip: unixOnly,
 			run: func(r *recorder) {
@@ -641,6 +646,52 @@ func needsPython() string {
 		return "needs /usr/bin/python3 to start the daemon"
 	}
 	return ""
+}
+
+// watchThroughLinks watches a tree whose links lead out of it: what changes
+// behind a link is not a change of the tree (FSEvents and inotify do not
+// follow links), while the links themselves coming and going are. Steps are a
+// second apart, so each reports on its own.
+func watchThroughLinks(r *recorder) {
+	t := r.t
+	writeFixture(t, r.root, map[string]string{"P/plain": "x", "Q/file": "x"})
+	symlink(t, filepath.Join(r.root, "Q"), filepath.Join(r.root, "P", "dlink"))
+	symlink(t, filepath.Join(r.root, "Q", "file"), filepath.Join(r.root, "P", "flink"))
+	appendTo := func(path string) {
+		f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0)
+		if err != nil {
+			t.Fatal(err)
+		}
+		f.WriteString("y")
+		f.Close()
+	}
+	// Outside every target, below an ancestor that is a link on macOS (/tmp
+	// is private/tmp there).
+	missing := "/tmp/pi-env-oracle-missing-" + filepath.Base(r.root)
+	elsewhere := "/tmp/pi-env-oracle-elsewhere-" + filepath.Base(r.root)
+	// FSEvents may still deliver the fixture's creation after the watch
+	// starts: what arrives before the first step is not kept.
+	time.Sleep(time.Second)
+	id := r.start(strings.ReplaceAll(`{"op":"watch","targets":[{"path":"%R/P","recursive":true},{"path":"`+missing+`"}],"mode":"native"}`, "%R", jsonEscape(r.root)), nil)
+	r.wait(id, func(f []frame.Frame) bool { return len(f) > 0 })
+	step := func(change func()) {
+		change()
+		time.Sleep(time.Second)
+	}
+	time.Sleep(time.Second)
+	settled := len(r.wait(id, func([]frame.Frame) bool { return true }))
+	step(func() { writeFixture(t, r.root, map[string]string{"Q/new": ""}) })
+	step(func() { appendTo(filepath.Join(r.root, "Q", "file")) })
+	step(func() { os.Remove(filepath.Join(r.root, "Q", "new")) })
+	step(func() { os.WriteFile(elsewhere, nil, 0o644) })
+	step(func() { os.Remove(elsewhere) })
+	step(func() { symlink(t, filepath.Join(r.root, "Q"), filepath.Join(r.root, "P", "l2")) })
+	step(func() { os.Remove(filepath.Join(r.root, "P", "l2")) })
+	step(func() { appendTo(filepath.Join(r.root, "P", "plain")) })
+	step(func() { os.Remove(filepath.Join(r.root, "Q", "file")) })
+	step(func() { os.Rename(filepath.Join(r.root, "P", "flink"), filepath.Join(r.root, "P", "flink2")) })
+	r.send(frame.Cancel, id, nil, nil)
+	r.keep("watch", r.wait(id, finished)[settled:])
 }
 
 // summarizeEnvironment reduces env(1) output to whether the variables are in

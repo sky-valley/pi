@@ -1675,6 +1675,33 @@
       "json": "{}"
     }
   ],
+  "watch through links": [
+    {
+      "label": "watch",
+      "kind": 4,
+      "json": "{\"kind\":\"change\",\"paths\":[\"\u003croot\u003e/P/l2\"]}"
+    },
+    {
+      "label": "watch",
+      "kind": 4,
+      "json": "{\"kind\":\"change\",\"paths\":[\"\u003croot\u003e/P/l2\"]}"
+    },
+    {
+      "label": "watch",
+      "kind": 4,
+      "json": "{\"kind\":\"change\",\"paths\":[\"\u003croot\u003e/P/plain\"]}"
+    },
+    {
+      "label": "watch",
+      "kind": 4,
+      "json": "{\"kind\":\"change\",\"paths\":[\"\u003croot\u003e/P/flink\",\"\u003croot\u003e/P/flink2\"]}"
+    },
+    {
+      "label": "watch",
+      "kind": 2,
+      "json": "{}"
+    }
+  ],
   "write": [
     {
       "label": "new with parents",
