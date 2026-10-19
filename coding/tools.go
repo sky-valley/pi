@@ -3,7 +3,6 @@ package coding
 import (
 	"bytes"
 	"context"
-	"crypto/rand"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -1602,11 +1601,8 @@ func (a *outputAccumulator) ensureTempFile() {
 	if a.tempFilePath != "" {
 		return
 	}
-	var rb [8]byte
-	_, _ = rand.Read(rb[:]) // crypto/rand.Read never returns an error (Go 1.24)
-	// pi: `${prefix}-${16 hex chars}.log` in the OS temp dir.
-	a.tempFilePath = filepath.Join(os.TempDir(), fmt.Sprintf("%s-%x.log", a.prefix, rb))
-	f, err := os.Create(a.tempFilePath)
+	path, f, err := createOutputFile(a.prefix, ".log")
+	a.tempFilePath = path
 	if err != nil {
 		a.tempFileErr = err
 		return

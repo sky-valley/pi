@@ -7,6 +7,8 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"regexp"
+	"runtime"
 	"testing"
 )
 
@@ -161,4 +163,31 @@ func TestOutputAccumulatorReportsTempFileErrors(t *testing.T) {
 			t.Fatalf("closeTempFile() = %v, want the write error (%v)", err, os.ErrClosed)
 		}
 	})
+}
+
+// pi creates every output file readable only by the user and never through a
+// link someone else placed at its path (utils/output-files.ts, upstream
+// d677d0ee7): createWriteStream(path, {mode: 0o600, flags: "wx"}).
+func TestOutputAccumulatorTempFileIsPrivate(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Windows file modes carry no group or other permissions")
+	}
+	t.Setenv("TMPDIR", t.TempDir())
+	acc := newOutputAccumulator(2, 1000, "pi-test")
+	acc.append([]byte("1\n2\n3\n")) // three lines pass maxLines
+	if acc.tempFile == nil {
+		t.Fatalf("precondition: three lines should open the temp file (%v)", acc.tempFileErr)
+	}
+	defer acc.closeTempFile()
+	info, err := os.Stat(acc.tempFilePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if mode := info.Mode().Perm(); mode != 0o600 {
+		t.Fatalf("temp file mode = %o, want 600", mode)
+	}
+	if dir, base := filepath.Split(acc.tempFilePath); filepath.Clean(dir) != filepath.Clean(os.Getenv("TMPDIR")) ||
+		!regexp.MustCompile(`^pi-test-[0-9a-f]{16}\.log$`).MatchString(base) {
+		t.Fatalf("temp file path = %q, want <TMPDIR>/pi-test-<16 hex>.log", acc.tempFilePath)
+	}
 }
