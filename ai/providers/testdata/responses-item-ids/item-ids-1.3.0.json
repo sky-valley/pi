@@ -1,0 +1,166 @@
+{
+	"piAi": "1.3.0",
+	"origins": {
+		"sameModel": {
+			"api": "openai-responses",
+			"provider": "openai",
+			"model": "gpt-5"
+		},
+		"otherModel": {
+			"api": "openai-responses",
+			"provider": "openai",
+			"model": "gpt-other"
+		},
+		"foreignProvider": {
+			"api": "pi-messages",
+			"provider": "radius",
+			"model": "gpt-other"
+		}
+	},
+	"rows": [
+		{
+			"grammar": true,
+			"origin": "sameModel",
+			"id": "call_1|fc_1",
+			"input": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"hi\"}]},{\"type\":\"custom_tool_call\",\"call_id\":\"call_1\",\"name\":\"gram\",\"input\":\"SELECT 1\"},{\"type\":\"custom_tool_call_output\",\"call_id\":\"call_1\",\"output\":\"ok\"}]"
+		},
+		{
+			"grammar": true,
+			"origin": "sameModel",
+			"id": "call_1|ctc_1",
+			"input": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"hi\"}]},{\"type\":\"custom_tool_call\",\"id\":\"ctc_1\",\"call_id\":\"call_1\",\"name\":\"gram\",\"input\":\"SELECT 1\"},{\"type\":\"custom_tool_call_output\",\"call_id\":\"call_1\",\"output\":\"ok\"}]"
+		},
+		{
+			"grammar": true,
+			"origin": "sameModel",
+			"id": "call_1|msg_1",
+			"input": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"hi\"}]},{\"type\":\"custom_tool_call\",\"call_id\":\"call_1\",\"name\":\"gram\",\"input\":\"SELECT 1\"},{\"type\":\"custom_tool_call_output\",\"call_id\":\"call_1\",\"output\":\"ok\"}]"
+		},
+		{
+			"grammar": true,
+			"origin": "sameModel",
+			"id": "call_1",
+			"input": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"hi\"}]},{\"type\":\"custom_tool_call\",\"call_id\":\"call_1\",\"name\":\"gram\",\"input\":\"SELECT 1\"},{\"type\":\"custom_tool_call_output\",\"call_id\":\"call_1\",\"output\":\"ok\"}]"
+		},
+		{
+			"grammar": true,
+			"origin": "otherModel",
+			"id": "call_1|fc_1",
+			"input": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"hi\"}]},{\"type\":\"custom_tool_call\",\"call_id\":\"call_1\",\"name\":\"gram\",\"input\":\"SELECT 1\"},{\"type\":\"custom_tool_call_output\",\"call_id\":\"call_1\",\"output\":\"ok\"}]"
+		},
+		{
+			"grammar": true,
+			"origin": "otherModel",
+			"id": "call_1|ctc_1",
+			"input": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"hi\"}]},{\"type\":\"custom_tool_call\",\"call_id\":\"call_1\",\"name\":\"gram\",\"input\":\"SELECT 1\"},{\"type\":\"custom_tool_call_output\",\"call_id\":\"call_1\",\"output\":\"ok\"}]"
+		},
+		{
+			"grammar": true,
+			"origin": "otherModel",
+			"id": "call_1|msg_1",
+			"input": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"hi\"}]},{\"type\":\"custom_tool_call\",\"call_id\":\"call_1\",\"name\":\"gram\",\"input\":\"SELECT 1\"},{\"type\":\"custom_tool_call_output\",\"call_id\":\"call_1\",\"output\":\"ok\"}]"
+		},
+		{
+			"grammar": true,
+			"origin": "otherModel",
+			"id": "call_1",
+			"input": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"hi\"}]},{\"type\":\"custom_tool_call\",\"call_id\":\"call_1\",\"name\":\"gram\",\"input\":\"SELECT 1\"},{\"type\":\"custom_tool_call_output\",\"call_id\":\"call_1\",\"output\":\"ok\"}]"
+		},
+		{
+			"grammar": true,
+			"origin": "foreignProvider",
+			"id": "call_1|fc_1",
+			"input": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"hi\"}]},{\"type\":\"custom_tool_call\",\"call_id\":\"call_1\",\"name\":\"gram\",\"input\":\"SELECT 1\"},{\"type\":\"custom_tool_call_output\",\"call_id\":\"call_1\",\"output\":\"ok\"}]"
+		},
+		{
+			"grammar": true,
+			"origin": "foreignProvider",
+			"id": "call_1|ctc_1",
+			"input": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"hi\"}]},{\"type\":\"custom_tool_call\",\"call_id\":\"call_1\",\"name\":\"gram\",\"input\":\"SELECT 1\"},{\"type\":\"custom_tool_call_output\",\"call_id\":\"call_1\",\"output\":\"ok\"}]"
+		},
+		{
+			"grammar": true,
+			"origin": "foreignProvider",
+			"id": "call_1|msg_1",
+			"input": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"hi\"}]},{\"type\":\"custom_tool_call\",\"call_id\":\"call_1\",\"name\":\"gram\",\"input\":\"SELECT 1\"},{\"type\":\"custom_tool_call_output\",\"call_id\":\"call_1\",\"output\":\"ok\"}]"
+		},
+		{
+			"grammar": true,
+			"origin": "foreignProvider",
+			"id": "call_1",
+			"input": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"hi\"}]},{\"type\":\"custom_tool_call\",\"call_id\":\"call_1\",\"name\":\"gram\",\"input\":\"SELECT 1\"},{\"type\":\"custom_tool_call_output\",\"call_id\":\"call_1\",\"output\":\"ok\"}]"
+		},
+		{
+			"grammar": false,
+			"origin": "sameModel",
+			"id": "call_1|fc_1",
+			"input": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"hi\"}]},{\"type\":\"function_call\",\"id\":\"fc_1\",\"call_id\":\"call_1\",\"name\":\"gram\",\"arguments\":\"{\\\"query\\\":\\\"SELECT 1\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"ok\"}]"
+		},
+		{
+			"grammar": false,
+			"origin": "sameModel",
+			"id": "call_1|ctc_1",
+			"input": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"hi\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"gram\",\"arguments\":\"{\\\"query\\\":\\\"SELECT 1\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"ok\"}]"
+		},
+		{
+			"grammar": false,
+			"origin": "sameModel",
+			"id": "call_1|msg_1",
+			"input": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"hi\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"gram\",\"arguments\":\"{\\\"query\\\":\\\"SELECT 1\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"ok\"}]"
+		},
+		{
+			"grammar": false,
+			"origin": "sameModel",
+			"id": "call_1",
+			"input": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"hi\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"gram\",\"arguments\":\"{\\\"query\\\":\\\"SELECT 1\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"ok\"}]"
+		},
+		{
+			"grammar": false,
+			"origin": "otherModel",
+			"id": "call_1|fc_1",
+			"input": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"hi\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"gram\",\"arguments\":\"{\\\"query\\\":\\\"SELECT 1\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"ok\"}]"
+		},
+		{
+			"grammar": false,
+			"origin": "otherModel",
+			"id": "call_1|ctc_1",
+			"input": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"hi\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"gram\",\"arguments\":\"{\\\"query\\\":\\\"SELECT 1\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"ok\"}]"
+		},
+		{
+			"grammar": false,
+			"origin": "otherModel",
+			"id": "call_1|msg_1",
+			"input": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"hi\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"gram\",\"arguments\":\"{\\\"query\\\":\\\"SELECT 1\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"ok\"}]"
+		},
+		{
+			"grammar": false,
+			"origin": "otherModel",
+			"id": "call_1",
+			"input": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"hi\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"gram\",\"arguments\":\"{\\\"query\\\":\\\"SELECT 1\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"ok\"}]"
+		},
+		{
+			"grammar": false,
+			"origin": "foreignProvider",
+			"id": "call_1|fc_1",
+			"input": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"hi\"}]},{\"type\":\"function_call\",\"id\":\"fc_lxmq3j1alksqn\",\"call_id\":\"call_1\",\"name\":\"gram\",\"arguments\":\"{\\\"query\\\":\\\"SELECT 1\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"ok\"}]"
+		},
+		{
+			"grammar": false,
+			"origin": "foreignProvider",
+			"id": "call_1|ctc_1",
+			"input": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"hi\"}]},{\"type\":\"function_call\",\"id\":\"fc_109pmnaixmdh7\",\"call_id\":\"call_1\",\"name\":\"gram\",\"arguments\":\"{\\\"query\\\":\\\"SELECT 1\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"ok\"}]"
+		},
+		{
+			"grammar": false,
+			"origin": "foreignProvider",
+			"id": "call_1|msg_1",
+			"input": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"hi\"}]},{\"type\":\"function_call\",\"id\":\"fc_ex5ajhdhywnw\",\"call_id\":\"call_1\",\"name\":\"gram\",\"arguments\":\"{\\\"query\\\":\\\"SELECT 1\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"ok\"}]"
+		},
+		{
+			"grammar": false,
+			"origin": "foreignProvider",
+			"id": "call_1",
+			"input": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"hi\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"gram\",\"arguments\":\"{\\\"query\\\":\\\"SELECT 1\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"ok\"}]"
+		}
+	]
+}

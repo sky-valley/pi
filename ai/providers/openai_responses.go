@@ -1361,13 +1361,17 @@ func responsesInput(model *ai.Model, req ai.TranscriptContext) ([]any, error) {
 					// id here without further touching it (shared :201-217).
 					callID, itemID := splitToolCallID(v.ID)
 					property, isGrammar := grammarProps[v.Name]
-					// For different-model messages, drop the fc_ item id to avoid
-					// pairing validation against reasoning items. Replaying a
-					// custom-tool call as a function_call also drops any non-fc_*
-					// id (e.g. a ctc_* custom-tool id), which function_call items
-					// cannot carry (upstream 24bace27).
-					if (isDifferentModel && strings.HasPrefix(itemID, "fc_")) ||
-						(!isGrammar && !strings.HasPrefix(itemID, "fc_")) {
+					// For different-model messages, drop the item id to avoid
+					// pairing validation against reasoning items. Also drop an id
+					// that does not match the replayed item type: function_call ids
+					// must be fc_* and custom_tool_call ids ctc_* — a foreign call's
+					// id is normalized to fc_*, and a call switches between the two
+					// types when grammar tool support differs (upstream bc2d8dc1c).
+					itemIDPrefix := "fc_"
+					if isGrammar {
+						itemIDPrefix = "ctc_"
+					}
+					if isDifferentModel || !strings.HasPrefix(itemID, itemIDPrefix) {
 						itemID = ""
 					}
 					var item map[string]any
