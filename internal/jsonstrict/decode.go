@@ -9,9 +9,8 @@
 // smuggle extra fields past the parser can reach code paths the schema was
 // meant to gate, so this is a security boundary rather than a tidiness rule.
 //
-// Two packages own decoders built on this one: protocol, for the CBOR wire, and
-// chord, for its strict-JSON service boundary. Neither imports the other, and
-// both need the same machinery, so it lives here rather than in either.
+// chord owns the one decoder built on this package, for its strict-JSON
+// service boundary.
 package jsonstrict
 
 import (

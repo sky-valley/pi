@@ -13,8 +13,8 @@ type note struct {
 	Rank  int
 }
 
-// TestDecodeReadsTheConfiguredTag: the tag key is per decoder, so the same
-// machinery serves protocol's `cbor` fields and chord's `json` ones.
+// TestDecodeReadsTheConfiguredTag: the tag key is per decoder, not fixed to
+// chord's `json`.
 func TestDecodeReadsTheConfiguredTag(t *testing.T) {
 	d := &Decoder{Tag: "json"}
 	var got note
