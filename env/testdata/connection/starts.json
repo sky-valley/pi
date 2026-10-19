@@ -1,0 +1,579 @@
+{
+	"starts": [
+		{
+			"name": "exit",
+			"outcome": {
+				"code": "unknown",
+				"message": "pi-env exited with code 7 before it was ready",
+				"lost": true
+			},
+			"logs": null
+		},
+		{
+			"name": "protocol",
+			"outcome": {
+				"code": "unknown",
+				"message": "Unsupported protocol 2",
+				"lost": true
+			},
+			"logs": null
+		},
+		{
+			"name": "noprotocol",
+			"outcome": {
+				"code": "unknown",
+				"message": "Unsupported protocol undefined",
+				"lost": true
+			},
+			"logs": null
+		},
+		{
+			"name": "corrupt",
+			"outcome": {
+				"code": "unknown",
+				"message": "Corrupt frame from pi-env",
+				"lost": true
+			},
+			"logs": null
+		},
+		{
+			"name": "short",
+			"outcome": {
+				"code": "unknown",
+				"message": "Corrupt frame from pi-env",
+				"lost": true
+			},
+			"logs": null
+		},
+		{
+			"name": "array",
+			"outcome": {
+				"code": "unknown",
+				"message": "Corrupt frame from pi-env",
+				"lost": true
+			},
+			"logs": null
+		},
+		{
+			"name": "refuse",
+			"outcome": {
+				"code": "EINVAL",
+				"message": "hello refused",
+				"lost": false
+			},
+			"logs": null
+		},
+		{
+			"name": "noise",
+			"outcome": {
+				"info": {
+					"protocol": 1,
+					"version": "0.0.0",
+					"os": "linux",
+					"arch": "x86_64",
+					"home": "/h",
+					"tmpdir": "/t",
+					"separator": "/",
+					"cwd": "/",
+					"driveCwds": {},
+					"pid": 1
+				}
+			},
+			"logs": [
+				"Welcome to the box\nlast login: never"
+			]
+		},
+		{
+			"name": "stderr",
+			"outcome": {
+				"info": {
+					"protocol": 1,
+					"version": "0.0.0",
+					"os": "linux",
+					"arch": "x86_64",
+					"home": "/h",
+					"tmpdir": "/t",
+					"separator": "/",
+					"cwd": "/",
+					"driveCwds": {},
+					"pid": 1
+				}
+			},
+			"logs": [
+				"diagnostic line\n"
+			]
+		},
+		{
+			"name": "missing program",
+			"outcome": {
+				"code": "spawn_error",
+				"message": "spawn /nonexistent/pi-env-missing ENOENT",
+				"lost": true
+			},
+			"logs": null
+		},
+		{
+			"name": "no command",
+			"outcome": {
+				"code": "spawn_error",
+				"message": "No daemon command",
+				"lost": false
+			},
+			"logs": null
+		},
+		{
+			"name": "failing command function",
+			"outcome": {
+				"code": "spawn_error",
+				"message": "ssh gpu-box failed: Network is unreachable",
+				"lost": true
+			},
+			"logs": null
+		},
+		{
+			"name": "closed",
+			"outcome": {
+				"code": "unknown",
+				"message": "Connection closed",
+				"lost": false
+			},
+			"logs": null
+		}
+	],
+	"paths": [
+		{
+			"mode": "posix",
+			"cwd": "/work/dir",
+			"input": "",
+			"result": "/work/dir"
+		},
+		{
+			"mode": "posix",
+			"cwd": "/work/dir",
+			"input": ".",
+			"result": "/work/dir"
+		},
+		{
+			"mode": "posix",
+			"cwd": "/work/dir",
+			"input": "..",
+			"result": "/work"
+		},
+		{
+			"mode": "posix",
+			"cwd": "/work/dir",
+			"input": "a/b",
+			"result": "/work/dir/a/b"
+		},
+		{
+			"mode": "posix",
+			"cwd": "/work/dir",
+			"input": "a\\b",
+			"result": "/work/dir/a\\b"
+		},
+		{
+			"mode": "posix",
+			"cwd": "/work/dir",
+			"input": "/abs/x/../y",
+			"result": "/abs/y"
+		},
+		{
+			"mode": "posix",
+			"cwd": "/work/dir",
+			"input": "~",
+			"result": "/home/me"
+		},
+		{
+			"mode": "posix",
+			"cwd": "/work/dir",
+			"input": "~/a",
+			"result": "/home/me/a"
+		},
+		{
+			"mode": "posix",
+			"cwd": "/work/dir",
+			"input": "~\\a",
+			"result": "/work/dir/~\\a"
+		},
+		{
+			"mode": "posix",
+			"cwd": "/work/dir",
+			"input": "~a",
+			"result": "/work/dir/~a"
+		},
+		{
+			"mode": "posix",
+			"cwd": "/work/dir",
+			"input": "C:\\x",
+			"result": "/work/dir/C:\\x"
+		},
+		{
+			"mode": "posix",
+			"cwd": "/work/dir",
+			"input": "C:/x",
+			"result": "/work/dir/C:/x"
+		},
+		{
+			"mode": "posix",
+			"cwd": "/work/dir",
+			"input": "c:x",
+			"result": "/work/dir/c:x"
+		},
+		{
+			"mode": "posix",
+			"cwd": "/work/dir",
+			"input": "C:",
+			"result": "/work/dir/C:"
+		},
+		{
+			"mode": "posix",
+			"cwd": "/work/dir",
+			"input": "D:x",
+			"result": "/work/dir/D:x"
+		},
+		{
+			"mode": "posix",
+			"cwd": "/work/dir",
+			"input": "E:x",
+			"result": "/work/dir/E:x"
+		},
+		{
+			"mode": "posix",
+			"cwd": "/work/dir",
+			"input": "e:x",
+			"result": "/work/dir/e:x"
+		},
+		{
+			"mode": "posix",
+			"cwd": "/work/dir",
+			"input": "F:x",
+			"result": "/work/dir/F:x"
+		},
+		{
+			"mode": "posix",
+			"cwd": "/work/dir",
+			"input": "Z:x",
+			"result": "/work/dir/Z:x"
+		},
+		{
+			"mode": "posix",
+			"cwd": "/work/dir",
+			"input": "\\x",
+			"result": "/work/dir/\\x"
+		},
+		{
+			"mode": "posix",
+			"cwd": "/work/dir",
+			"input": "\\\\srv\\share\\x",
+			"result": "/work/dir/\\\\srv\\share\\x"
+		},
+		{
+			"mode": "posix",
+			"cwd": "/work/dir",
+			"input": "//srv/share/x",
+			"result": "/srv/share/x"
+		},
+		{
+			"mode": "posix",
+			"cwd": "/work/dir",
+			"input": "file:///etc/x",
+			"result": "/etc/x"
+		},
+		{
+			"mode": "posix",
+			"cwd": "/work/dir",
+			"input": "file:///C:/x/../y",
+			"result": "/C:/y"
+		},
+		{
+			"mode": "posix",
+			"cwd": "/work/dir",
+			"input": "file://host/share/x",
+			"result": "/work/dir/file:/host/share/x"
+		},
+		{
+			"mode": "posix",
+			"cwd": "/work/dir",
+			"input": "file:///a%20b",
+			"result": "/a b"
+		},
+		{
+			"mode": "posix",
+			"cwd": "/work/dir",
+			"input": "file:///a%2Fb",
+			"result": "/work/dir/file:/a%2Fb"
+		},
+		{
+			"mode": "posix",
+			"cwd": "/work/dir",
+			"input": "file:///100%",
+			"result": "/work/dir/file:/100%"
+		},
+		{
+			"mode": "posix",
+			"cwd": "/work/dir",
+			"input": "file:",
+			"result": "/work/dir/file:"
+		},
+		{
+			"mode": "posix",
+			"cwd": "/work/dir",
+			"input": "FILE:///x",
+			"result": "/work/dir/FILE:/x"
+		},
+		{
+			"mode": "posix",
+			"cwd": "/work/dir",
+			"input": "file://localhost/x",
+			"result": "/x"
+		},
+		{
+			"mode": "posix",
+			"cwd": "/work/dir",
+			"input": "file:///D:x",
+			"result": "/D:x"
+		},
+		{
+			"mode": "posix",
+			"cwd": "/work/dir",
+			"input": "join a .. b c/d",
+			"result": "b/c/d"
+		},
+		{
+			"mode": "windows",
+			"cwd": "C:\\work",
+			"input": "",
+			"result": "C:\\work"
+		},
+		{
+			"mode": "windows",
+			"cwd": "C:\\work",
+			"input": ".",
+			"result": "C:\\work"
+		},
+		{
+			"mode": "windows",
+			"cwd": "C:\\work",
+			"input": "..",
+			"result": "C:\\"
+		},
+		{
+			"mode": "windows",
+			"cwd": "C:\\work",
+			"input": "a/b",
+			"result": "C:\\work\\a\\b"
+		},
+		{
+			"mode": "windows",
+			"cwd": "C:\\work",
+			"input": "a\\b",
+			"result": "C:\\work\\a\\b"
+		},
+		{
+			"mode": "windows",
+			"cwd": "C:\\work",
+			"input": "/abs/x/../y",
+			"result": "\\abs\\y"
+		},
+		{
+			"mode": "windows",
+			"cwd": "C:\\work",
+			"input": "~",
+			"result": "C:\\Users\\me"
+		},
+		{
+			"mode": "windows",
+			"cwd": "C:\\work",
+			"input": "~/a",
+			"result": "C:\\Users\\me\\a"
+		},
+		{
+			"mode": "windows",
+			"cwd": "C:\\work",
+			"input": "~\\a",
+			"result": "C:\\Users\\me\\a"
+		},
+		{
+			"mode": "windows",
+			"cwd": "C:\\work",
+			"input": "~a",
+			"result": "C:\\work\\~a"
+		},
+		{
+			"mode": "windows",
+			"cwd": "C:\\work",
+			"input": "C:\\x",
+			"result": "C:\\x"
+		},
+		{
+			"mode": "windows",
+			"cwd": "C:\\work",
+			"input": "C:/x",
+			"result": "C:\\x"
+		},
+		{
+			"mode": "windows",
+			"cwd": "C:\\work",
+			"input": "c:x",
+			"result": "c:\\work\\x"
+		},
+		{
+			"mode": "windows",
+			"cwd": "C:\\work",
+			"input": "C:",
+			"result": "C:\\work"
+		},
+		{
+			"mode": "windows",
+			"cwd": "C:\\work",
+			"input": "D:x",
+			"result": "D:\\daemon\\x"
+		},
+		{
+			"mode": "windows",
+			"cwd": "C:\\work",
+			"input": "E:x",
+			"result": "E:\\e-cwd\\x"
+		},
+		{
+			"mode": "windows",
+			"cwd": "C:\\work",
+			"input": "e:x",
+			"result": "e:\\e-cwd\\x"
+		},
+		{
+			"mode": "windows",
+			"cwd": "C:\\work",
+			"input": "F:x",
+			"result": "F:\\x"
+		},
+		{
+			"mode": "windows",
+			"cwd": "C:\\work",
+			"input": "Z:x",
+			"result": "Z:\\x"
+		},
+		{
+			"mode": "windows",
+			"cwd": "C:\\work",
+			"input": "\\x",
+			"result": "\\x"
+		},
+		{
+			"mode": "windows",
+			"cwd": "C:\\work",
+			"input": "\\\\srv\\share\\x",
+			"result": "\\\\srv\\share\\x"
+		},
+		{
+			"mode": "windows",
+			"cwd": "C:\\work",
+			"input": "//srv/share/x",
+			"result": "\\\\srv\\share\\x"
+		},
+		{
+			"mode": "windows",
+			"cwd": "C:\\work",
+			"input": "file:///etc/x",
+			"result": "C:\\work\\file:\\etc\\x"
+		},
+		{
+			"mode": "windows",
+			"cwd": "C:\\work",
+			"input": "file:///C:/x/../y",
+			"result": "C:\\y"
+		},
+		{
+			"mode": "windows",
+			"cwd": "C:\\work",
+			"input": "file://host/share/x",
+			"result": "\\\\host\\share\\x"
+		},
+		{
+			"mode": "windows",
+			"cwd": "C:\\work",
+			"input": "file:///a%20b",
+			"result": "C:\\work\\file:\\a%20b"
+		},
+		{
+			"mode": "windows",
+			"cwd": "C:\\work",
+			"input": "file:///a%2Fb",
+			"result": "C:\\work\\file:\\a%2Fb"
+		},
+		{
+			"mode": "windows",
+			"cwd": "C:\\work",
+			"input": "file:///100%",
+			"result": "C:\\work\\file:\\100%"
+		},
+		{
+			"mode": "windows",
+			"cwd": "C:\\work",
+			"input": "file:",
+			"result": "C:\\work\\file:"
+		},
+		{
+			"mode": "windows",
+			"cwd": "C:\\work",
+			"input": "FILE:///x",
+			"result": "C:\\work\\FILE:\\x"
+		},
+		{
+			"mode": "windows",
+			"cwd": "C:\\work",
+			"input": "file://localhost/x",
+			"result": "C:\\work\\file:\\localhost\\x"
+		},
+		{
+			"mode": "windows",
+			"cwd": "C:\\work",
+			"input": "file:///D:x",
+			"result": "D:\\daemon\\x"
+		},
+		{
+			"mode": "windows",
+			"cwd": "C:\\work",
+			"input": "join a .. b c/d",
+			"result": "b\\c\\d"
+		}
+	],
+	"abortedPaths": [
+		{
+			"operation": "absolutePath ~/a",
+			"result": "/home/me/a"
+		},
+		{
+			"operation": "joinPath a b",
+			"result": "a/b"
+		}
+	],
+	"lost": [
+		{
+			"name": "request above a frame",
+			"outcome": {
+				"code": "unknown",
+				"message": "pi-env connection lost",
+				"lost": true
+			},
+			"restarted": true
+		},
+		{
+			"name": "command above a frame",
+			"outcome": {
+				"code": "unknown",
+				"message": "pi-env connection lost"
+			},
+			"restarted": true
+		},
+		{
+			"name": "daemon stops reading",
+			"outcome": {
+				"code": "unknown",
+				"message": "pi-env connection timed out",
+				"lost": true
+			},
+			"afterSilenceLimit": true
+		}
+	]
+}

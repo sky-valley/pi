@@ -1,0 +1,190 @@
+{
+	"comment": "SSH bootstrap scenarios for ssh_oracle_test.go and capture.mts: each runs one call of the client against fakessh.sh, which answers call n with responses[n]. Both clients must make the same ssh calls (arguments and stdin) and reach the same outcome.",
+	"binaryLength": 1000,
+	"scenarios": [
+		{
+			"name": "linux, deploy over a configured route",
+			"api": "connectSsh",
+			"target": { "host": "gpu-box", "user": "me", "port": 2222, "identityFile": "/keys/id 100%", "knownHostsFile": "/data/known_hosts", "hostKeyAlias": "pi-env-gpu", "configFile": "/data/ssh_config" },
+			"responses": [
+				{ "code": 0, "out": "Welcome to gpu-box\nPI-ENV-PROBE\nLinux\nx86_64\nGNU/Linux\n/home/me\n/tmp\n-\n" },
+				{ "code": 0, "out": "missing\n" },
+				{ "code": 0, "out": "deployed\n" },
+				{ "code": 1, "err": "launch refused\n", "nostdin": true }
+			]
+		},
+		{
+			"name": "linux, verified daemon, login shell",
+			"api": "connectSsh",
+			"loginShell": true,
+			"target": { "host": "box", "knownHostsFile": "/kh", "hostKeyAlias": "pi-env-box" },
+			"responses": [
+				{ "code": 0, "out": "PI-ENV-PROBE\nLinux\naarch64\nGNU/Linux\n/home/o'brien\n-\n-\n" },
+				{ "code": 0, "out": "present\n" },
+				{ "code": 1, "nostdin": true }
+			]
+		},
+		{
+			"name": "macOS",
+			"api": "connectSsh",
+			"target": { "host": "mac", "knownHostsFile": "/kh", "hostKeyAlias": "pi-env-mac" },
+			"responses": [
+				{ "code": 0, "out": "PI-ENV-PROBE\nDarwin\narm64\nDarwin\n/Users/me\n/var/folders/xy/T/\n-\n" },
+				{ "code": 0, "out": "noise\npresent\n" },
+				{ "code": 1, "nostdin": true }
+			]
+		},
+		{
+			"name": "Termux without a hash tool",
+			"api": "connectSsh",
+			"target": { "host": "phone", "knownHostsFile": "/kh", "hostKeyAlias": "pi-env-phone" },
+			"responses": [
+				{ "code": 0, "out": "PI-ENV-PROBE\nLinux\naarch64\nAndroid\n/data/data/com.termux/files/home\n-\n-\n" },
+				{ "code": 0, "out": "nohash\n" }
+			]
+		},
+		{
+			"name": "Termux with termux-exec",
+			"api": "connectSsh",
+			"target": { "host": "phone", "knownHostsFile": "/kh", "hostKeyAlias": "pi-env-phone" },
+			"responses": [
+				{ "code": 0, "out": "PI-ENV-PROBE\nLinux\nx86_64\nAndroid\n/data/data/com.termux/files/home\n/data/data/com.termux/files/usr/tmp\n/data/data/com.termux/files/usr/lib/libtermux-exec.so\n" },
+				{ "code": 0, "out": "missing\n" },
+				{ "code": 0, "out": "deployed\n" },
+				{ "code": 1, "nostdin": true }
+			]
+		},
+		{
+			"name": "Windows with cmd.exe, a home with a space",
+			"api": "connectSsh",
+			"target": { "host": "win", "knownHostsFile": "/kh", "hostKeyAlias": "pi-env-win" },
+			"responses": [
+				{ "code": 1, "err": "'sh' is not recognized as an internal or external command,\r\noperable program or batch file.\r\n" },
+				{ "code": 0, "out": "PI-ENV-PROBE\r\nWindows\r\nX64\r\n-\r\nC:\\Users\\Jane Doe\r\n-\r\n-\r\n" },
+				{ "code": 0, "out": "Windows_NT\r\n" },
+				{ "code": 0, "out": "missing\r\n" },
+				{ "code": 0, "out": "deployed\r\n" },
+				{ "code": 1, "nostdin": true }
+			]
+		},
+		{
+			"name": "Windows with PowerShell",
+			"api": "connectSsh",
+			"target": { "host": "win", "knownHostsFile": "/kh", "hostKeyAlias": "pi-env-win" },
+			"responses": [
+				{ "code": 1, "err": "sh : The term 'sh' is not recognized\r\n" },
+				{ "code": 0, "out": "PI-ENV-PROBE\r\nWindows\r\nArm64\r\n-\r\nC:\\Users\\me\r\n-\r\n-\r\n" },
+				{ "code": 0, "out": "%OS%\r\n" },
+				{ "code": 0, "out": "present\r\n" },
+				{ "code": 1, "nostdin": true }
+			]
+		},
+		{
+			"name": "Windows with Git Bash",
+			"api": "connectSsh",
+			"target": { "host": "win", "knownHostsFile": "/kh", "hostKeyAlias": "pi-env-win" },
+			"responses": [
+				{ "code": 0, "out": "PI-ENV-PROBE\nMINGW64_NT-10.0-19045\nx86_64\nMsys\n/c/Users/me\n/tmp\n-\n" },
+				{ "code": 0, "out": "PI-ENV-PROBE\r\nWindows\r\nX64\r\n-\r\nC:\\Users\\me\r\n-\r\n-\r\n" },
+				{ "code": 0, "out": "Windows_NT\r\n" },
+				{ "code": 0, "out": "present\r\n" },
+				{ "code": 1, "nostdin": true }
+			]
+		},
+		{
+			"name": "unknown host key",
+			"api": "connectSsh",
+			"target": { "host": "box", "knownHostsFile": "/kh", "hostKeyAlias": "pi-env-box" },
+			"responses": [{ "code": 255, "err": "Host key verification failed.\r\n" }]
+		},
+		{
+			"name": "no host key known",
+			"api": "detectPlatform",
+			"target": { "host": "box", "knownHostsFile": "/kh", "hostKeyAlias": "pi-env-box" },
+			"responses": [{ "code": 255, "err": "No ED25519 host key is known for pi-env-box and you have requested strict checking.\nHost key verification failed.\n" }]
+		},
+		{
+			"name": "changed host key",
+			"api": "connectSsh",
+			"target": { "host": "box", "knownHostsFile": "/kh", "hostKeyAlias": "pi-env-box" },
+			"responses": [{ "code": 255, "err": "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n" }]
+		},
+		{
+			"name": "connection refused",
+			"api": "detectPlatform",
+			"target": { "host": "box", "knownHostsFile": "/kh", "hostKeyAlias": "pi-env-box" },
+			"responses": [
+				{ "code": 255, "err": "ssh: connect to host box port 22: Connection refused\r\n" },
+				{ "code": 255, "err": "ssh: connect to host box port 22: Connection refused\r\n" }
+			]
+		},
+		{
+			"name": "unexpected answer",
+			"api": "detectPlatform",
+			"target": { "host": "box", "knownHostsFile": "/kh", "hostKeyAlias": "pi-env-box" },
+			"responses": [
+				{ "code": 0, "out": "hello\n" },
+				{ "code": 0, "out": "  hello there \n" }
+			]
+		},
+		{
+			"name": "unsupported architecture",
+			"api": "detectPlatform",
+			"target": { "host": "box", "knownHostsFile": "/kh", "hostKeyAlias": "pi-env-box" },
+			"responses": [{ "code": 0, "out": "PI-ENV-PROBE\nLinux\nmips64\nGNU/Linux\n/home/me\n-\n-\n" }]
+		},
+		{
+			"name": "unsupported system",
+			"api": "detectPlatform",
+			"target": { "host": "box", "knownHostsFile": "/kh", "hostKeyAlias": "pi-env-box" },
+			"responses": [{ "code": 0, "out": "PI-ENV-PROBE\nSunOS\nx86_64\n-\n/home/me\n" }]
+		},
+		{
+			"name": "corrupt upload",
+			"api": "connectSsh",
+			"target": { "host": "box", "knownHostsFile": "/kh", "hostKeyAlias": "pi-env-box" },
+			"responses": [
+				{ "code": 0, "out": "PI-ENV-PROBE\nLinux\nx86_64\nGNU/Linux\n/home/me\n-\n-\n" },
+				{ "code": 0, "out": "missing\n" },
+				{ "code": 1, "err": "pi-env upload is corrupt\n" }
+			]
+		},
+		{
+			"name": "host key scan without a key",
+			"api": "scanHostKey",
+			"target": { "host": "box", "port": 22, "knownHostsFile": "/kh", "hostKeyAlias": "pi-env-box" },
+			"responses": [{ "code": 255, "err": "Permission denied (publickey).\r\n" }]
+		},
+		{
+			"name": "lazy connection, untrusted then trusted",
+			"api": "sshConnection",
+			"target": { "host": "box", "knownHostsFile": "/kh", "hostKeyAlias": "pi-env-box" },
+			"responses": [
+				{ "code": 255, "err": "Host key verification failed.\n" },
+				{ "code": 0, "out": "PI-ENV-PROBE\nLinux\nx86_64\nGNU/Linux\n/home/me\n-\n-\n" },
+				{ "code": 0, "out": "missing\n" },
+				{ "code": 0, "out": "deployed\n" },
+				{ "code": 1, "nostdin": true },
+				{ "code": 0, "out": "present\n" },
+				{ "code": 1, "nostdin": true }
+			]
+		}
+	],
+	"arguments": [
+		{ "host": "box", "knownHostsFile": "/kh", "hostKeyAlias": "pi-env-box" },
+		{ "host": "user@box.example", "user": "me", "port": 1, "identityFile": "/k/id_%h", "knownHostsFile": "/a b/k%n", "hostKeyAlias": "a", "configFile": "/c f" },
+		{ "host": "box", "port": 65535, "knownHostsFile": "/kh", "hostKeyAlias": "pi-env-box" },
+		{ "host": "-oProxyCommand=evil", "knownHostsFile": "/kh", "hostKeyAlias": "pi-env-box" },
+		{ "host": "box host", "knownHostsFile": "/kh", "hostKeyAlias": "pi-env-box" },
+		{ "host": "box ", "knownHostsFile": "/kh", "hostKeyAlias": "pi-env-box" },
+		{ "host": "box", "knownHostsFile": "/kh", "hostKeyAlias": "-x" },
+		{ "host": "box", "user": "a\nb", "knownHostsFile": "/kh", "hostKeyAlias": "pi-env-box" },
+		{ "host": "box", "user": "-l", "knownHostsFile": "/kh", "hostKeyAlias": "pi-env-box" },
+		{ "host": "box", "port": 70000, "knownHostsFile": "/kh", "hostKeyAlias": "pi-env-box" },
+		{ "host": "box", "port": -1, "knownHostsFile": "/kh", "hostKeyAlias": "pi-env-box" },
+		{ "host": "box", "knownHostsFile": "/k\"h", "hostKeyAlias": "pi-env-box" },
+		{ "host": "box", "knownHostsFile": "/kh", "identityFile": "/id\u0007", "hostKeyAlias": "pi-env-box" },
+		{ "host": "box\u007f", "knownHostsFile": "/kh", "hostKeyAlias": "pi-env-box" },
+		{ "host": "bøx", "knownHostsFile": "/kh", "hostKeyAlias": "pi-env-bøx" }
+	]
+}

@@ -1,0 +1,2058 @@
+{
+  "close in flight": [
+    {
+      "label": "open",
+      "kind": 2,
+      "json": "{\"handle\":1,\"stat\":{\"dev\":0,\"ino\":0,\"kind\":\"other\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"zero\",\"size\":0}}"
+    },
+    {
+      "label": "close",
+      "kind": 2,
+      "json": "{}"
+    },
+    {
+      "label": "scan",
+      "kind": 3,
+      "json": "{\"code\":\"aborted\",\"message\":\"aborted\"}"
+    },
+    {
+      "label": "closed",
+      "kind": 3,
+      "json": "{\"code\":\"EBADF\",\"message\":\"unknown handle\"}"
+    }
+  ],
+  "environment order": [
+    {
+      "label": "inherited",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "sorted=false ZZ=false"
+    },
+    {
+      "label": "inherited",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    },
+    {
+      "label": "inherited, a variable set",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "sorted=true ZZ=true"
+    },
+    {
+      "label": "inherited, a variable set",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    },
+    {
+      "label": "inherited, only a non-string",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "sorted=false ZZ=false"
+    },
+    {
+      "label": "inherited, only a non-string",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    },
+    {
+      "label": "inherited, null env",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "sorted=false ZZ=false"
+    },
+    {
+      "label": "inherited, null env",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    },
+    {
+      "label": "cleared",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "sorted=true ZZ=true"
+    },
+    {
+      "label": "cleared",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    }
+  ],
+  "escaping": [
+    {
+      "label": "lstat odd name",
+      "kind": 2,
+      "json": "{\"dev\":0,\"ino\":0,\"kind\":\"file\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"a\\u0001b\\u001f\\\"q\\\\é\u2028\u2029\u003c\u003e\u0026\",\"size\":1}"
+    },
+    {
+      "label": "missing odd name",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, lstat '\u003croot\u003e/\\b\\f\\n\\r\\t\\u0000'\",\"path\":\"\u003croot\u003e/\\b\\f\\n\\r\\t\\u0000\",\"syscall\":\"lstat\"}"
+    },
+    {
+      "label": "opendir odd",
+      "kind": 2,
+      "json": "{\"handle\":1}"
+    },
+    {
+      "label": "readdir odd",
+      "kind": 2,
+      "json": "{\"done\":true,\"entries\":[{\"info\":{\"dev\":0,\"ino\":0,\"kind\":\"file\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"a\\u0001b\\u001f\\\"q\\\\é\u2028\u2029\u003c\u003e\u0026\",\"size\":1},\"name\":\"a\\u0001b\\u001f\\\"q\\\\é\u2028\u2029\u003c\u003e\u0026\"}]}"
+    }
+  ],
+  "exec": [
+    {
+      "label": "argv",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "hi"
+    },
+    {
+      "label": "argv",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    },
+    {
+      "label": "stderr",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stderr\"}",
+      "payload": "oops"
+    },
+    {
+      "label": "stderr",
+      "kind": 2,
+      "json": "{\"exitCode\":3}"
+    },
+    {
+      "label": "signal",
+      "kind": 2,
+      "json": "{\"exitCode\":137}"
+    },
+    {
+      "label": "invalid utf-8",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "a��b"
+    },
+    {
+      "label": "invalid utf-8",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    },
+    {
+      "label": "leading bom",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "x﻿"
+    },
+    {
+      "label": "leading bom",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    },
+    {
+      "label": "string command",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "42 /bin/bash\n"
+    },
+    {
+      "label": "string command",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    },
+    {
+      "label": "shell path",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "/bin/sh\n"
+    },
+    {
+      "label": "shell path",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    },
+    {
+      "label": "missing shell",
+      "kind": 3,
+      "json": "{\"code\":\"shell_unavailable\",\"message\":\"Custom shell path not found: \u003croot\u003e/nosh\"}"
+    },
+    {
+      "label": "environment",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "A=1\nB=2\n"
+    },
+    {
+      "label": "environment",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    },
+    {
+      "label": "path search",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "ok"
+    },
+    {
+      "label": "path search",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    },
+    {
+      "label": "no such program",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"No such file or directory (os error 2)\"}"
+    },
+    {
+      "label": "not executable",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"Permission denied (os error 13)\"}"
+    },
+    {
+      "label": "script without shebang",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"Permission denied (os error 13)\"}"
+    },
+    {
+      "label": "missing cwd",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"Working directory does not exist: \u003croot\u003e/missing\\nCannot execute bash commands.\"}"
+    },
+    {
+      "label": "cwd is a file",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"Not a directory (os error 20)\"}"
+    },
+    {
+      "label": "empty program",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"No such file or directory (os error 2)\"}"
+    },
+    {
+      "label": "directory as program",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"Permission denied (os error 13)\"}"
+    },
+    {
+      "label": "inherited PATH replaced",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"No such file or directory (os error 2)\"}"
+    },
+    {
+      "label": "empty PATH entry",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"Permission denied (os error 13)\"}"
+    },
+    {
+      "label": "no PATH",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "ok"
+    },
+    {
+      "label": "no PATH",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    },
+    {
+      "label": "empty argv",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"Empty argv: no program to run\"}"
+    },
+    {
+      "label": "nothing to run",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"exec needs command or argv\"}"
+    },
+    {
+      "label": "no cwd",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"exec needs cwd\"}"
+    },
+    {
+      "label": "timeout",
+      "kind": 3,
+      "json": "{\"code\":\"timeout\",\"message\":\"timeout\"}"
+    },
+    {
+      "label": "spill",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "hello\nworld\n"
+    },
+    {
+      "label": "spill",
+      "kind": 2,
+      "json": "{\"exitCode\":0,\"spillPath\":\"\u003ctmp\u003e/tmp-XXXXXX/pi-output-UUID.log\"}"
+    },
+    {
+      "label": "no spill",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "hello"
+    },
+    {
+      "label": "no spill",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    },
+    {
+      "label": "window",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"skipped\":{\"bytes\":59,\"endsWithNewline\":false,\"newlines\":22},\"stream\":\"stdout\"}",
+      "payload": "\n24\n25\n"
+    },
+    {
+      "label": "window",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    },
+    {
+      "label": "incomplete window",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "hi"
+    },
+    {
+      "label": "incomplete window",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    },
+    {
+      "label": "aborted",
+      "kind": 3,
+      "json": "{\"code\":\"aborted\",\"message\":\"aborted\"}"
+    },
+    {
+      "label": "killed",
+      "kind": 2,
+      "json": "{\"exitCode\":137}"
+    }
+  ],
+  "execvp": [
+    {
+      "label": "script without shebang",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"Exec format error (os error 8)\"}"
+    },
+    {
+      "label": "relative script without shebang",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"Exec format error (os error 8)\"}"
+    },
+    {
+      "label": "script in PATH",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"Exec format error (os error 8)\"}"
+    },
+    {
+      "label": "directory in PATH",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"Permission denied (os error 13)\"}"
+    },
+    {
+      "label": "directory then program",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "later\n"
+    },
+    {
+      "label": "directory then program",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    },
+    {
+      "label": "not executable in PATH",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"Permission denied (os error 13)\"}"
+    },
+    {
+      "label": "not executable then program",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "later\n"
+    },
+    {
+      "label": "not executable then program",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    },
+    {
+      "label": "file as directory then program",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "later\n"
+    },
+    {
+      "label": "file as directory then program",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    },
+    {
+      "label": "missing then program",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "later\n"
+    },
+    {
+      "label": "missing then program",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    },
+    {
+      "label": "missing everywhere",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"No such file or directory (os error 2)\"}"
+    },
+    {
+      "label": "pty script without shebang",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"Exec format error (os error 8)\"}"
+    }
+  ],
+  "gitignore": [
+    {
+      "label": "repo",
+      "kind": 2,
+      "json": "{\"count\":34,\"truncated\":false}",
+      "payload": "f.gitignore\u0000d.hidden\u0000f.hidden/visible\u0000fabbc.txt\u0000fdat.md\u0000fdironly\u0000ddocs\u0000ddocs/a\u0000fdocs/a/d.md\u0000dfoo\u0000finner.txt\u0000fkeep.log\u0000fl\u0000llinked\u0000dmid\u0000dmid/a\u0000dmid/a/b\u0000fmid/a/b/deep\u0000dnested\u0000fnested/.gitignore\u0000fnested/a.log\u0000fnested/c.txt\u0000dsub\u0000fsub/.dot\u0000fsub/.gitignore\u0000fsub/anchored-global\u0000dsub/build\u0000fsub/build/y\u0000fsub/important.log\u0000fsub/keep.txt\u0000dx\u0000fxy.z\u0000f{x,y}.alt\u0000féq\u0000"
+    },
+    {
+      "label": "repo hidden off",
+      "kind": 2,
+      "json": "{\"count\":28,\"truncated\":false}",
+      "payload": "fabbc.txt\u0000fdat.md\u0000fdironly\u0000ddocs\u0000ddocs/a\u0000fdocs/a/d.md\u0000dfoo\u0000finner.txt\u0000fkeep.log\u0000fl\u0000llinked\u0000dmid\u0000dmid/a\u0000dmid/a/b\u0000fmid/a/b/deep\u0000dnested\u0000fnested/a.log\u0000fnested/c.txt\u0000dsub\u0000fsub/anchored-global\u0000dsub/build\u0000fsub/build/y\u0000fsub/important.log\u0000fsub/keep.txt\u0000dx\u0000fxy.z\u0000f{x,y}.alt\u0000féq\u0000"
+    },
+    {
+      "label": "repo gitignore off",
+      "kind": 2,
+      "json": "{\"count\":74,\"truncated\":false}",
+      "payload": "f!bang\u0000f#hash\u0000f.gitignore\u0000d.hidden\u0000f.hidden/visible\u0000f[lit]\u0000f[z\u0000fa.log\u0000fabbc.txt\u0000fabc.txt\u0000fanchored-global\u0000fay.z\u0000fbat.md\u0000fbq\u0000dbuild\u0000fbuild/x\u0000fcache\u0000fcat.md\u0000fdat.md\u0000fdironly\u0000ddocs\u0000ddocs/a\u0000fdocs/a/b.tmp\u0000fdocs/a/d.md\u0000fdocs/c.tmp\u0000fexcluded.md\u0000ffile.é\u0000dfoo\u0000dfoo/deep\u0000ffoo/deep/in\u0000ffoo/in\u0000fglobal.txt\u0000finner.txt\u0000fkeep-excluded.md\u0000fkeep.log\u0000fl\u0000llinked\u0000dmid\u0000dmid/a\u0000dmid/a/b\u0000fmid/a/b/deep\u0000fmid/a/deep\u0000dnested\u0000fnested/.gitignore\u0000fnested/a.log\u0000fnested/b.md\u0000fnested/c.txt\u0000dout\u0000fout/z\u0000fre\u0000fspaces\u0000dsub\u0000fsub/.dot\u0000fsub/.gitignore\u0000fsub/a.txt\u0000fsub/anchored-global\u0000dsub/build\u0000fsub/build/y\u0000fsub/important.log\u0000fsub/inner.txt\u0000fsub/keep.txt\u0000fsub/other.log\u0000dsub/out\u0000fsub/out/w\u0000ftrailing \u0000dx\u0000dx/cache\u0000fx/cache/f\u0000dx/dironly\u0000fx/dironly/f\u0000fx.alt\u0000fxy.z\u0000f{x,y}.alt\u0000féq\u0000"
+    },
+    {
+      "label": "subdirectory",
+      "kind": 2,
+      "json": "{\"count\":6,\"truncated\":false}",
+      "payload": "f.dot\u0000f.gitignore\u0000dbuild\u0000fbuild/y\u0000fimportant.log\u0000fkeep.txt\u0000"
+    },
+    {
+      "label": "deep subdirectory",
+      "kind": 2,
+      "json": "{\"count\":1,\"truncated\":false}",
+      "payload": "fd.md\u0000"
+    },
+    {
+      "label": "nested repo",
+      "kind": 2,
+      "json": "{\"count\":3,\"truncated\":false}",
+      "payload": "f.gitignore\u0000fa.log\u0000fc.txt\u0000"
+    },
+    {
+      "label": "not a repo",
+      "kind": 2,
+      "json": "{\"count\":3,\"truncated\":false}",
+      "payload": "f.gitignore\u0000fa.log\u0000fb.txt\u0000"
+    },
+    {
+      "label": "worktree",
+      "kind": 2,
+      "json": "{\"count\":2,\"truncated\":false}",
+      "payload": "f.gitignore\u0000fb.md\u0000"
+    },
+    {
+      "label": "root with trailing slash",
+      "kind": 2,
+      "json": "{\"count\":34,\"truncated\":false}",
+      "payload": "f.gitignore\u0000d.hidden\u0000f.hidden/visible\u0000fabbc.txt\u0000fdat.md\u0000fdironly\u0000ddocs\u0000ddocs/a\u0000fdocs/a/d.md\u0000dfoo\u0000finner.txt\u0000fkeep.log\u0000fl\u0000llinked\u0000dmid\u0000dmid/a\u0000dmid/a/b\u0000fmid/a/b/deep\u0000dnested\u0000fnested/.gitignore\u0000fnested/a.log\u0000fnested/c.txt\u0000dsub\u0000fsub/.dot\u0000fsub/.gitignore\u0000fsub/anchored-global\u0000dsub/build\u0000fsub/build/y\u0000fsub/important.log\u0000fsub/keep.txt\u0000dx\u0000fxy.z\u0000f{x,y}.alt\u0000féq\u0000"
+    },
+    {
+      "label": "root with dot",
+      "kind": 2,
+      "json": "{\"count\":6,\"truncated\":false}",
+      "payload": "f.dot\u0000f.gitignore\u0000dbuild\u0000fbuild/y\u0000fimportant.log\u0000fkeep.txt\u0000"
+    }
+  ],
+  "listFiles": [
+    {
+      "label": "default",
+      "kind": 2,
+      "json": "{\"count\":21,\"truncated\":false}",
+      "payload": "d.hidden\u0000f.hidden/x\u0000fA.txt\u0000da\u0000da/b\u0000fa/b/c.txt\u0000la/loop\u0000fa/z.txt\u0000da b\u0000fa b/c d\u0000fb.txt\u0000ldangling\u0000dempty\u0000llink\u0000dnode_modules\u0000dnode_modules/m\u0000fnode_modules/m/i.js\u0000dskip\u0000fskip/inner\u0000dé\u0000fé/ü\u0000"
+    },
+    {
+      "label": "no hidden",
+      "kind": 2,
+      "json": "{\"count\":19,\"truncated\":false}",
+      "payload": "fA.txt\u0000da\u0000da/b\u0000fa/b/c.txt\u0000la/loop\u0000fa/z.txt\u0000da b\u0000fa b/c d\u0000fb.txt\u0000ldangling\u0000dempty\u0000llink\u0000dnode_modules\u0000dnode_modules/m\u0000fnode_modules/m/i.js\u0000dskip\u0000fskip/inner\u0000dé\u0000fé/ü\u0000"
+    },
+    {
+      "label": "exclude",
+      "kind": 2,
+      "json": "{\"count\":16,\"truncated\":false}",
+      "payload": "d.hidden\u0000f.hidden/x\u0000fA.txt\u0000da\u0000da/b\u0000fa/b/c.txt\u0000la/loop\u0000fa/z.txt\u0000da b\u0000fa b/c d\u0000fb.txt\u0000ldangling\u0000dempty\u0000llink\u0000dé\u0000fé/ü\u0000"
+    },
+    {
+      "label": "max entries",
+      "kind": 2,
+      "json": "{\"count\":2,\"truncated\":true}",
+      "payload": "d.hidden\u0000f.hidden/x\u0000"
+    },
+    {
+      "label": "max entries exact",
+      "kind": 2,
+      "json": "{\"count\":0,\"truncated\":true}"
+    },
+    {
+      "label": "max bytes",
+      "kind": 2,
+      "json": "{\"count\":1,\"truncated\":true}",
+      "payload": "d.hidden\u0000"
+    },
+    {
+      "label": "timeout",
+      "kind": 2,
+      "json": "{\"count\":0,\"truncated\":true}"
+    },
+    {
+      "label": "sub",
+      "kind": 2,
+      "json": "{\"count\":4,\"truncated\":false}",
+      "payload": "db\u0000fb/c.txt\u0000lloop\u0000fz.txt\u0000"
+    },
+    {
+      "label": "through link",
+      "kind": 2,
+      "json": "{\"count\":4,\"truncated\":false}",
+      "payload": "db\u0000fb/c.txt\u0000lloop\u0000fz.txt\u0000"
+    },
+    {
+      "label": "missing",
+      "kind": 3,
+      "json": "{\"code\":\"ENOENT\",\"message\":\"ENOENT: no such file or directory, scandir '\u003croot\u003e/missing'\",\"path\":\"\u003croot\u003e/missing\",\"syscall\":\"scandir\"}"
+    },
+    {
+      "label": "file",
+      "kind": 3,
+      "json": "{\"code\":\"ENOTDIR\",\"message\":\"ENOTDIR: not a directory, scandir '\u003croot\u003e/b.txt'\",\"path\":\"\u003croot\u003e/b.txt\"}"
+    },
+    {
+      "label": "bad max",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"invalid field maxEntries\"}"
+    },
+    {
+      "label": "bad exclude",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"invalid field exclude\"}"
+    },
+    {
+      "label": "bad exclude item",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"invalid field exclude\"}"
+    },
+    {
+      "label": "no path",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"missing field path\"}"
+    },
+    {
+      "label": "null fields",
+      "kind": 2,
+      "json": "{\"count\":21,\"truncated\":false}",
+      "payload": "d.hidden\u0000f.hidden/x\u0000fA.txt\u0000da\u0000da/b\u0000fa/b/c.txt\u0000la/loop\u0000fa/z.txt\u0000da b\u0000fa b/c d\u0000fb.txt\u0000ldangling\u0000dempty\u0000llink\u0000dnode_modules\u0000dnode_modules/m\u0000fnode_modules/m/i.js\u0000dskip\u0000fskip/inner\u0000dé\u0000fé/ü\u0000"
+    }
+  ],
+  "mkdir": [
+    {
+      "label": "new",
+      "kind": 2,
+      "json": "{}"
+    },
+    {
+      "label": "existing",
+      "kind": 3,
+      "json": "{\"code\":\"EEXIST\",\"message\":\"EEXIST: file already exists, mkdir '\u003croot\u003e/dir'\",\"path\":\"\u003croot\u003e/dir\",\"syscall\":\"mkdir\"}"
+    },
+    {
+      "label": "existing recursive",
+      "kind": 2,
+      "json": "{}"
+    },
+    {
+      "label": "file recursive",
+      "kind": 3,
+      "json": "{\"code\":\"EEXIST\",\"message\":\"EEXIST: file already exists, mkdir '\u003croot\u003e/file'\",\"path\":\"\u003croot\u003e/file\",\"syscall\":\"mkdir\"}"
+    },
+    {
+      "label": "missing parent",
+      "kind": 3,
+      "json": "{\"code\":\"ENOENT\",\"message\":\"ENOENT: no such file or directory, mkdir '\u003croot\u003e/a/b'\",\"path\":\"\u003croot\u003e/a/b\",\"syscall\":\"mkdir\"}"
+    },
+    {
+      "label": "deep recursive",
+      "kind": 2,
+      "json": "{}"
+    },
+    {
+      "label": "through file",
+      "kind": 3,
+      "json": "{\"code\":\"ENOTDIR\",\"message\":\"ENOTDIR: not a directory, mkdir '\u003croot\u003e/file/x/y'\",\"path\":\"\u003croot\u003e/file/x/y\",\"syscall\":\"mkdir\"}"
+    },
+    {
+      "label": "through file plain",
+      "kind": 3,
+      "json": "{\"code\":\"ENOTDIR\",\"message\":\"ENOTDIR: not a directory, mkdir '\u003croot\u003e/file/x'\",\"path\":\"\u003croot\u003e/file/x\",\"syscall\":\"mkdir\"}"
+    },
+    {
+      "label": "lstat deep",
+      "kind": 2,
+      "json": "{\"dev\":0,\"ino\":0,\"kind\":\"directory\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"d\",\"size\":4096}"
+    }
+  ],
+  "mkdtemp": [
+    {
+      "label": "new",
+      "kind": 2,
+      "json": "{\"path\":\"\u003croot\u003e/pre-XXXXXX\"}"
+    },
+    {
+      "label": "missing parent",
+      "kind": 3,
+      "json": "{\"code\":\"ENOENT\",\"message\":\"ENOENT: no such file or directory, mkdtemp '\u003croot\u003e/missing/pre-XXXXXX'\",\"path\":\"\u003croot\u003e/missing/pre-XXXXXX\",\"syscall\":\"mkdtemp\"}"
+    },
+    {
+      "label": "parent is file",
+      "kind": 3,
+      "json": "{\"code\":\"ENOTDIR\",\"message\":\"ENOTDIR: not a directory, mkdtemp '\u003croot\u003e/file/pre-XXXXXX'\",\"path\":\"\u003croot\u003e/file/pre-XXXXXX\",\"syscall\":\"mkdtemp\"}"
+    }
+  ],
+  "musl": [
+    {
+      "label": "realpath %R/chain39-1",
+      "kind": 2,
+      "json": "{\"path\":\"\u003croot\u003e/file\"}"
+    },
+    {
+      "label": "realpath %R/chain40-1",
+      "kind": 3,
+      "json": "{\"code\":\"ELOOP\",\"message\":\"ELOOP: too many symbolic links encountered, realpath '\u003croot\u003e/chain40-1'\",\"path\":\"\u003croot\u003e/chain40-1\",\"syscall\":\"realpath\"}"
+    },
+    {
+      "label": "realpath %R/chain41-1",
+      "kind": 3,
+      "json": "{\"code\":\"ELOOP\",\"message\":\"ELOOP: too many symbolic links encountered, realpath '\u003croot\u003e/chain41-1'\",\"path\":\"\u003croot\u003e/chain41-1\",\"syscall\":\"realpath\"}"
+    },
+    {
+      "label": "realpath //",
+      "kind": 2,
+      "json": "{\"path\":\"//\"}"
+    },
+    {
+      "label": "realpath //tmp",
+      "kind": 2,
+      "json": "{\"path\":\"//tmp\"}"
+    },
+    {
+      "label": "realpath ///tmp",
+      "kind": 2,
+      "json": "{\"path\":\"/tmp\"}"
+    },
+    {
+      "label": "realpath //tmp/",
+      "kind": 2,
+      "json": "{\"path\":\"//tmp\"}"
+    },
+    {
+      "label": "realpath //%R",
+      "kind": 2,
+      "json": "{\"path\":\"\u003croot\u003e\"}"
+    },
+    {
+      "label": "realpath /%R//dir",
+      "kind": 2,
+      "json": "{\"path\":\"/\u003croot\u003e/dir\"}"
+    },
+    {
+      "label": "realpath %R/file/",
+      "kind": 3,
+      "json": "{\"code\":\"ENOTDIR\",\"message\":\"ENOTDIR: not a directory, realpath '\u003croot\u003e/file/'\",\"path\":\"\u003croot\u003e/file/\",\"syscall\":\"realpath\"}"
+    },
+    {
+      "label": "realpath %R/file/.",
+      "kind": 3,
+      "json": "{\"code\":\"ENOTDIR\",\"message\":\"ENOTDIR: not a directory, realpath '\u003croot\u003e/file/.'\",\"path\":\"\u003croot\u003e/file/.\",\"syscall\":\"realpath\"}"
+    },
+    {
+      "label": "realpath %R/file/..",
+      "kind": 3,
+      "json": "{\"code\":\"ENOTDIR\",\"message\":\"ENOTDIR: not a directory, realpath '\u003croot\u003e/file/..'\",\"path\":\"\u003croot\u003e/file/..\",\"syscall\":\"realpath\"}"
+    },
+    {
+      "label": "realpath %R/file/x/..",
+      "kind": 3,
+      "json": "{\"code\":\"ENOTDIR\",\"message\":\"ENOTDIR: not a directory, realpath '\u003croot\u003e/file/x/..'\",\"path\":\"\u003croot\u003e/file/x/..\",\"syscall\":\"realpath\"}"
+    },
+    {
+      "label": "realpath %R/missing/..",
+      "kind": 3,
+      "json": "{\"code\":\"ENOENT\",\"message\":\"ENOENT: no such file or directory, realpath '\u003croot\u003e/missing/..'\",\"path\":\"\u003croot\u003e/missing/..\",\"syscall\":\"realpath\"}"
+    },
+    {
+      "label": "realpath %R/dangling/..",
+      "kind": 3,
+      "json": "{\"code\":\"ENOENT\",\"message\":\"ENOENT: no such file or directory, realpath '\u003croot\u003e/dangling/..'\",\"path\":\"\u003croot\u003e/dangling/..\",\"syscall\":\"realpath\"}"
+    },
+    {
+      "label": "realpath %R/flink/",
+      "kind": 3,
+      "json": "{\"code\":\"ENOTDIR\",\"message\":\"ENOTDIR: not a directory, realpath '\u003croot\u003e/flink/'\",\"path\":\"\u003croot\u003e/flink/\",\"syscall\":\"realpath\"}"
+    },
+    {
+      "label": "realpath %R/flink/.",
+      "kind": 3,
+      "json": "{\"code\":\"ENOTDIR\",\"message\":\"ENOTDIR: not a directory, realpath '\u003croot\u003e/flink/.'\",\"path\":\"\u003croot\u003e/flink/.\",\"syscall\":\"realpath\"}"
+    },
+    {
+      "label": "realpath %R/dslash",
+      "kind": 2,
+      "json": "{\"path\":\"\u003croot\u003e/dir\"}"
+    },
+    {
+      "label": "realpath %R/dslash/sub/..",
+      "kind": 2,
+      "json": "{\"path\":\"\u003croot\u003e/dir\"}"
+    },
+    {
+      "label": "realpath %R/dir/sub/../..",
+      "kind": 2,
+      "json": "{\"path\":\"\u003croot\u003e\"}"
+    },
+    {
+      "label": "realpath %R/dir/../file",
+      "kind": 2,
+      "json": "{\"path\":\"\u003croot\u003e/file\"}"
+    },
+    {
+      "label": "realpath %R/.",
+      "kind": 2,
+      "json": "{\"path\":\"\u003croot\u003e\"}"
+    },
+    {
+      "label": "realpath %R/..",
+      "kind": 2,
+      "json": "{\"path\":\"/tmp\"}"
+    },
+    {
+      "label": "realpath /..",
+      "kind": 2,
+      "json": "{\"path\":\"/\"}"
+    },
+    {
+      "label": "realpath /../..",
+      "kind": 2,
+      "json": "{\"path\":\"/\"}"
+    },
+    {
+      "label": "realpath %R/dir/sub/",
+      "kind": 2,
+      "json": "{\"path\":\"\u003croot\u003e/dir/sub\"}"
+    },
+    {
+      "label": "realpath %R/dir//sub/.//",
+      "kind": 2,
+      "json": "{\"path\":\"\u003croot\u003e/dir/sub\"}"
+    },
+    {
+      "label": "realpath %R/dangling",
+      "kind": 3,
+      "json": "{\"code\":\"ENOENT\",\"message\":\"ENOENT: no such file or directory, realpath '\u003croot\u003e/dangling'\",\"path\":\"\u003croot\u003e/dangling\",\"syscall\":\"realpath\"}"
+    }
+  ],
+  "musl default PATH": [
+    {
+      "label": "no PATH",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "local\n"
+    },
+    {
+      "label": "no PATH",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    },
+    {
+      "label": "PATH set",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"No such file or directory (os error 2)\"}"
+    }
+  ],
+  "not UTF-8": [
+    {
+      "label": "hello",
+      "kind": 2,
+      "json": "{\"arch\":\"aarch64\",\"cwd\":\"\u003croot\u003e/c�wd\",\"driveCwds\":{},\"features\":[\"listFiles\"],\"home\":\"\",\"os\":\"linux\",\"pid\":0,\"protocol\":1,\"separator\":\"/\",\"tmpdir\":\"/second\",\"version\":\"1.3.0\"}"
+    },
+    {
+      "label": "exit",
+      "kind": 2,
+      "json": "{}"
+    },
+    {
+      "label": "login shell",
+      "kind": 2,
+      "json": "{\"exitCode\":7}"
+    },
+    {
+      "label": "watch ready",
+      "kind": 4,
+      "json": "{\"kind\":\"ready\",\"mode\":\"native\"}"
+    },
+    {
+      "label": "watch change",
+      "kind": 4,
+      "json": "{\"kind\":\"change\",\"paths\":[\"\u003croot\u003e/w/a�b\"]}"
+    },
+    {
+      "label": "watch closed",
+      "kind": 2,
+      "json": "{}"
+    }
+  ],
+  "nul": [
+    {
+      "label": "lstat",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, lstat '\u003croot\u003e/a\\u0000b'\",\"path\":\"\u003croot\u003e/a\\u0000b\",\"syscall\":\"lstat\"}"
+    },
+    {
+      "label": "realpath",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, realpath '\u003croot\u003e/a\\u0000b'\",\"path\":\"\u003croot\u003e/a\\u0000b\",\"syscall\":\"realpath\"}"
+    },
+    {
+      "label": "write",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, open '\u003croot\u003e/a\\u0000b'\",\"path\":\"\u003croot\u003e/a\\u0000b\",\"syscall\":\"open\"}"
+    },
+    {
+      "label": "truncate",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, open '\u003croot\u003e/a\\u0000b'\",\"path\":\"\u003croot\u003e/a\\u0000b\",\"syscall\":\"open\"}"
+    },
+    {
+      "label": "fsync",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, open '\u003croot\u003e/a\\u0000b'\",\"path\":\"\u003croot\u003e/a\\u0000b\",\"syscall\":\"open\"}"
+    },
+    {
+      "label": "rename from",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, rename '\u003croot\u003e/a\\u0000b' -\u003e '\u003croot\u003e/c'\",\"path\":\"\u003croot\u003e/a\\u0000b\",\"syscall\":\"rename\"}"
+    },
+    {
+      "label": "rename to",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, rename '\u003croot\u003e/file' -\u003e '\u003croot\u003e/a\\u0000b'\",\"path\":\"\u003croot\u003e/file\",\"syscall\":\"rename\"}"
+    },
+    {
+      "label": "mkdir",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, mkdir '\u003croot\u003e/a\\u0000b'\",\"path\":\"\u003croot\u003e/a\\u0000b\",\"syscall\":\"mkdir\"}"
+    },
+    {
+      "label": "rm",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, lstat '\u003croot\u003e/a\\u0000b'\",\"path\":\"\u003croot\u003e/a\\u0000b\",\"syscall\":\"lstat\"}"
+    },
+    {
+      "label": "mkdtemp",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"EINVAL: invalid argument, mkdtemp '\u003croot\u003e/a\\u0000bXXXXXX'\",\"path\":\"\u003croot\u003e/a\\u0000bXXXXXX\",\"syscall\":\"mkdtemp\"}"
+    },
+    {
+      "label": "open",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, open '\u003croot\u003e/a\\u0000b'\",\"path\":\"\u003croot\u003e/a\\u0000b\",\"syscall\":\"open\"}"
+    },
+    {
+      "label": "open read mode",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, open '\u003croot\u003e/a\\u0000b'\",\"path\":\"\u003croot\u003e/a\\u0000b\",\"syscall\":\"open\"}"
+    },
+    {
+      "label": "opendir",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, opendir '\u003croot\u003e/a\\u0000b'\",\"path\":\"\u003croot\u003e/a\\u0000b\",\"syscall\":\"opendir\"}"
+    },
+    {
+      "label": "opendir trailing nul",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, opendir '\u003croot\u003e/dir\\u0000'\",\"path\":\"\u003croot\u003e/dir\\u0000\",\"syscall\":\"opendir\"}"
+    },
+    {
+      "label": "listFiles",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, scandir '\u003croot\u003e/a\\u0000b'\",\"path\":\"\u003croot\u003e/a\\u0000b\",\"syscall\":\"scandir\"}"
+    },
+    {
+      "label": "exec cwd",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"Working directory does not exist: \u003croot\u003e/a\\u0000b\\nCannot execute bash commands.\"}"
+    },
+    {
+      "label": "exec argument",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"nul byte found in provided data\"}"
+    },
+    {
+      "label": "exec variable",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"nul byte found in provided data\"}"
+    },
+    {
+      "label": "exec variable name",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"nul byte found in provided data\"}"
+    },
+    {
+      "label": "pty cwd",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"Working directory does not exist: \u003croot\u003e/a\\u0000b\"}"
+    },
+    {
+      "label": "pty argument",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"nul byte found in provided data\"}"
+    },
+    {
+      "label": "pty variable",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"nul byte found in provided data\"}"
+    },
+    {
+      "label": "watch",
+      "kind": 4,
+      "json": "{\"kind\":\"ready\",\"mode\":\"polling\"}"
+    },
+    {
+      "label": "watch closed",
+      "kind": 2,
+      "json": "{}"
+    }
+  ],
+  "protocol": [
+    {
+      "label": "hello",
+      "kind": 2,
+      "json": "{\"arch\":\"aarch64\",\"cwd\":\"*\",\"driveCwds\":{},\"features\":[\"listFiles\"],\"home\":\"*\",\"os\":\"linux\",\"pid\":0,\"protocol\":1,\"separator\":\"/\",\"tmpdir\":\"*\",\"version\":\"1.3.0\"}"
+    },
+    {
+      "label": "unknown op",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"unknown operation frobnicate\"}"
+    },
+    {
+      "label": "no op",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"unknown operation \"}"
+    },
+    {
+      "label": "not an object",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"unknown operation \"}"
+    },
+    {
+      "label": "null",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"invalid JSON\"}"
+    },
+    {
+      "label": "invalid JSON",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"invalid JSON\"}"
+    },
+    {
+      "label": "trailing garbage",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"invalid JSON\"}"
+    },
+    {
+      "label": "lone surrogate",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"invalid JSON\"}"
+    },
+    {
+      "label": "paired surrogates",
+      "kind": 3,
+      "json": "{\"code\":\"ENOENT\",\"message\":\"ENOENT: no such file or directory, lstat '\u003croot\u003e/😀'\",\"path\":\"\u003croot\u003e/😀\",\"syscall\":\"lstat\"}"
+    },
+    {
+      "label": "number out of range",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"invalid JSON\"}"
+    },
+    {
+      "label": "deep nesting",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"invalid JSON\"}"
+    },
+    {
+      "label": "nesting at the limit",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"missing or invalid field handle\"}"
+    },
+    {
+      "label": "missing path",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"missing field path\"}"
+    },
+    {
+      "label": "path not a string",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"missing field path\"}"
+    },
+    {
+      "label": "handle as float",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"missing or invalid field handle\"}"
+    },
+    {
+      "label": "handle negative zero",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"missing or invalid field handle\"}"
+    },
+    {
+      "label": "handle exponent",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"missing or invalid field handle\"}"
+    },
+    {
+      "label": "close unknown handle",
+      "kind": 2,
+      "json": "{}"
+    },
+    {
+      "label": "pread unknown handle",
+      "kind": 3,
+      "json": "{\"code\":\"EBADF\",\"message\":\"unknown handle\"}"
+    },
+    {
+      "label": "readdir unknown handle",
+      "kind": 3,
+      "json": "{\"code\":\"EBADF\",\"message\":\"not a directory handle\"}"
+    },
+    {
+      "label": "empty JSON",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"unknown operation \"}"
+    }
+  ],
+  "pty": [
+    {
+      "label": "raw output and exit code",
+      "kind": 4,
+      "json": "{\"kind\":\"started\",\"pid\":0}"
+    },
+    {
+      "label": "raw output and exit code",
+      "kind": 4,
+      "json": "{\"kind\":\"output\"}",
+      "payload": "61ff62"
+    },
+    {
+      "label": "raw output and exit code",
+      "kind": 2,
+      "json": "{\"exitCode\":3}"
+    },
+    {
+      "label": "size",
+      "kind": 4,
+      "json": "{\"kind\":\"started\",\"pid\":0}"
+    },
+    {
+      "label": "size",
+      "kind": 4,
+      "json": "{\"kind\":\"output\"}",
+      "payload": "17 91\r\n"
+    },
+    {
+      "label": "size",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    },
+    {
+      "label": "interrupt started",
+      "kind": 4,
+      "json": "{\"kind\":\"started\",\"pid\":0}"
+    },
+    {
+      "label": "interrupt",
+      "kind": 2,
+      "json": "{}"
+    },
+    {
+      "label": "interrupted",
+      "kind": 4,
+      "json": "{\"kind\":\"output\"}",
+      "payload": "^C"
+    },
+    {
+      "label": "interrupted",
+      "kind": 2,
+      "json": "{\"exitCode\":130}"
+    },
+    {
+      "label": "missing cwd",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"Working directory does not exist: \u003croot\u003e/missing\"}"
+    },
+    {
+      "label": "empty argv",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"argv must be a non-empty array of strings\"}"
+    },
+    {
+      "label": "bad argv",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"argv must be a non-empty array of strings\"}"
+    },
+    {
+      "label": "no cwd",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"pty needs cwd\"}"
+    },
+    {
+      "label": "zero cols",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"cols must be between 1 and 4096\"}"
+    },
+    {
+      "label": "too many rows",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"rows must be between 1 and 4096\"}"
+    },
+    {
+      "label": "no such program",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"No such file or directory (os error 2)\"}"
+    },
+    {
+      "label": "write to nothing",
+      "kind": 3,
+      "json": "{\"code\":\"EBADF\",\"message\":\"no running terminal with this id\"}"
+    },
+    {
+      "label": "resize nothing",
+      "kind": 3,
+      "json": "{\"code\":\"EBADF\",\"message\":\"no running terminal with this id\"}"
+    },
+    {
+      "label": "foreground nothing",
+      "kind": 3,
+      "json": "{\"code\":\"EBADF\",\"message\":\"no running terminal with this id\"}"
+    },
+    {
+      "label": "write without target",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"missing field target\"}"
+    }
+  ],
+  "readdir": [
+    {
+      "label": "opendir",
+      "kind": 2,
+      "json": "{\"handle\":1}"
+    },
+    {
+      "label": "page 2",
+      "kind": 2,
+      "json": "{\"done\":false,\"entries\":[{\"info\":{\"dev\":0,\"ino\":0,\"kind\":\"file\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"b\",\"size\":0},\"name\":\"b\"},{\"info\":{\"dev\":0,\"ino\":0,\"kind\":\"directory\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"sub\",\"size\":4096},\"name\":\"sub\"}]}"
+    },
+    {
+      "label": "page 0",
+      "kind": 2,
+      "json": "{\"done\":false,\"entries\":[{\"info\":{\"dev\":0,\"ino\":0,\"kind\":\"file\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"a\",\"size\":0},\"name\":\"a\"}]}"
+    },
+    {
+      "label": "page rest",
+      "kind": 2,
+      "json": "{\"done\":true,\"entries\":[{\"info\":{\"dev\":0,\"ino\":0,\"kind\":\"symlink\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"e\",\"size\":1},\"name\":\"e\"},{\"info\":{\"dev\":0,\"ino\":0,\"kind\":\"file\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"c\",\"size\":0},\"name\":\"c\"}]}"
+    },
+    {
+      "label": "page after end",
+      "kind": 2,
+      "json": "{\"done\":true,\"entries\":[]}"
+    },
+    {
+      "label": "opendir again",
+      "kind": 2,
+      "json": "{\"handle\":2}"
+    },
+    {
+      "label": "exact page",
+      "kind": 2,
+      "json": "{\"done\":false,\"entries\":[{\"info\":{\"dev\":0,\"ino\":0,\"kind\":\"file\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"b\",\"size\":0},\"name\":\"b\"},{\"info\":{\"dev\":0,\"ino\":0,\"kind\":\"directory\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"sub\",\"size\":4096},\"name\":\"sub\"},{\"info\":{\"dev\":0,\"ino\":0,\"kind\":\"file\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"a\",\"size\":0},\"name\":\"a\"},{\"info\":{\"dev\":0,\"ino\":0,\"kind\":\"symlink\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"e\",\"size\":1},\"name\":\"e\"},{\"info\":{\"dev\":0,\"ino\":0,\"kind\":\"file\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"c\",\"size\":0},\"name\":\"c\"}]}"
+    },
+    {
+      "label": "after exact page",
+      "kind": 2,
+      "json": "{\"done\":true,\"entries\":[]}"
+    },
+    {
+      "label": "opendir file",
+      "kind": 3,
+      "json": "{\"code\":\"ENOTDIR\",\"message\":\"ENOTDIR: not a directory, opendir '\u003croot\u003e/file'\",\"path\":\"\u003croot\u003e/file\",\"syscall\":\"opendir\"}"
+    },
+    {
+      "label": "opendir missing",
+      "kind": 3,
+      "json": "{\"code\":\"ENOENT\",\"message\":\"ENOENT: no such file or directory, opendir '\u003croot\u003e/missing'\",\"path\":\"\u003croot\u003e/missing\",\"syscall\":\"opendir\"}"
+    },
+    {
+      "label": "open file",
+      "kind": 2,
+      "json": "{\"handle\":3,\"info\":{\"dev\":0,\"ino\":0,\"kind\":\"file\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"file\",\"size\":0}}"
+    },
+    {
+      "label": "readdir file handle",
+      "kind": 3,
+      "json": "{\"code\":\"EBADF\",\"message\":\"not a directory handle\"}"
+    },
+    {
+      "label": "fstat dir handle",
+      "kind": 3,
+      "json": "{\"code\":\"EBADF\",\"message\":\"not a file handle\"}"
+    },
+    {
+      "label": "readdir no max",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"missing or invalid field max\"}"
+    }
+  ],
+  "readers": [
+    {
+      "label": "open",
+      "kind": 2,
+      "json": "{\"handle\":1,\"info\":{\"dev\":0,\"ino\":0,\"kind\":\"file\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"f.txt\",\"size\":11}}"
+    },
+    {
+      "label": "pread",
+      "kind": 2,
+      "json": "{}",
+      "payload": "hello"
+    },
+    {
+      "label": "pread middle",
+      "kind": 2,
+      "json": "{}",
+      "payload": "lo\nworld"
+    },
+    {
+      "label": "pread past end",
+      "kind": 2,
+      "json": "{}"
+    },
+    {
+      "label": "pread empty",
+      "kind": 2,
+      "json": "{}"
+    },
+    {
+      "label": "read current",
+      "kind": 2,
+      "json": "{}",
+      "payload": "hel"
+    },
+    {
+      "label": "read current again",
+      "kind": 2,
+      "json": "{}",
+      "payload": "lo\n"
+    },
+    {
+      "label": "pread no length",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"missing or invalid field length\"}"
+    },
+    {
+      "label": "fstat",
+      "kind": 2,
+      "json": "{\"dev\":0,\"ino\":0,\"kind\":\"file\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"f.txt\",\"size\":11}"
+    },
+    {
+      "label": "close",
+      "kind": 2,
+      "json": "{}"
+    },
+    {
+      "label": "pread closed",
+      "kind": 3,
+      "json": "{\"code\":\"EBADF\",\"message\":\"unknown handle\"}"
+    },
+    {
+      "label": "open dir",
+      "kind": 3,
+      "json": "{\"code\":\"EISDIR\",\"message\":\"EISDIR: illegal operation on a directory, read\",\"path\":\"\u003croot\u003e/dir\"}"
+    },
+    {
+      "label": "open fifo",
+      "kind": 3,
+      "json": "{\"code\":\"NOT_REGULAR\",\"message\":\"Not a regular file\",\"path\":\"\u003croot\u003e/fifo\"}"
+    },
+    {
+      "label": "open link",
+      "kind": 2,
+      "json": "{\"handle\":2,\"info\":{\"dev\":0,\"ino\":0,\"kind\":\"file\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"link\",\"size\":11}}"
+    },
+    {
+      "label": "open link no follow",
+      "kind": 3,
+      "json": "{\"code\":\"SYMLINK\",\"message\":\"Refusing to follow a symbolic link\",\"path\":\"\u003croot\u003e/link\"}"
+    },
+    {
+      "label": "open dangling",
+      "kind": 3,
+      "json": "{\"code\":\"ENOENT\",\"message\":\"ENOENT: no such file or directory, open '\u003croot\u003e/dangling'\",\"path\":\"\u003croot\u003e/dangling\",\"syscall\":\"open\"}"
+    },
+    {
+      "label": "open dangling no follow",
+      "kind": 3,
+      "json": "{\"code\":\"SYMLINK\",\"message\":\"Refusing to follow a symbolic link\",\"path\":\"\u003croot\u003e/dangling\"}"
+    },
+    {
+      "label": "open missing",
+      "kind": 3,
+      "json": "{\"code\":\"ENOENT\",\"message\":\"ENOENT: no such file or directory, open '\u003croot\u003e/missing'\",\"path\":\"\u003croot\u003e/missing\",\"syscall\":\"open\"}"
+    },
+    {
+      "label": "read mode file",
+      "kind": 2,
+      "json": "{\"handle\":3,\"stat\":{\"dev\":0,\"ino\":0,\"kind\":\"file\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"f.txt\",\"size\":11}}"
+    },
+    {
+      "label": "read mode dir",
+      "kind": 2,
+      "json": "{\"handle\":4,\"stat\":{\"dev\":0,\"ino\":0,\"kind\":\"directory\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"dir\",\"size\":4096}}"
+    },
+    {
+      "label": "read dir",
+      "kind": 3,
+      "json": "{\"code\":\"EISDIR\",\"message\":\"EISDIR: illegal operation on a directory, read '\u003croot\u003e/dir'\",\"path\":\"\u003croot\u003e/dir\",\"syscall\":\"read\"}"
+    },
+    {
+      "label": "read mode null",
+      "kind": 2,
+      "json": "{\"handle\":5,\"stat\":{\"dev\":0,\"ino\":0,\"kind\":\"other\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"null\",\"size\":0}}"
+    },
+    {
+      "label": "read null",
+      "kind": 2,
+      "json": "{}"
+    },
+    {
+      "label": "read mode missing",
+      "kind": 3,
+      "json": "{\"code\":\"ENOENT\",\"message\":\"ENOENT: no such file or directory, open '\u003croot\u003e/missing'\",\"path\":\"\u003croot\u003e/missing\",\"syscall\":\"open\"}"
+    },
+    {
+      "label": "fstat dir handle",
+      "kind": 2,
+      "json": "{\"dev\":0,\"ino\":0,\"kind\":\"directory\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"dir\",\"size\":4096}"
+    }
+  ],
+  "realpath": [
+    {
+      "label": "root",
+      "kind": 2,
+      "json": "{\"path\":\"\u003croot\u003e\"}"
+    },
+    {
+      "label": "case",
+      "kind": 3,
+      "json": "{\"code\":\"ENOENT\",\"message\":\"ENOENT: no such file or directory, realpath '\u003croot\u003e/casedir/file.TXT'\",\"path\":\"\u003croot\u003e/casedir/file.TXT\",\"syscall\":\"realpath\"}"
+    },
+    {
+      "label": "relative link",
+      "kind": 2,
+      "json": "{\"path\":\"\u003croot\u003e/dir/sub\"}"
+    },
+    {
+      "label": "absolute link",
+      "kind": 2,
+      "json": "{\"path\":\"\u003croot\u003e/dir/sub\"}"
+    },
+    {
+      "label": "link then dotdot",
+      "kind": 2,
+      "json": "{\"path\":\"\u003croot\u003e/dir/sub\"}"
+    },
+    {
+      "label": "loop",
+      "kind": 3,
+      "json": "{\"code\":\"ELOOP\",\"message\":\"ELOOP: too many symbolic links encountered, realpath '\u003croot\u003e/loop1'\",\"path\":\"\u003croot\u003e/loop1\",\"syscall\":\"realpath\"}"
+    },
+    {
+      "label": "dangling",
+      "kind": 3,
+      "json": "{\"code\":\"ENOENT\",\"message\":\"ENOENT: no such file or directory, realpath '\u003croot\u003e/dangling'\",\"path\":\"\u003croot\u003e/dangling\",\"syscall\":\"realpath\"}"
+    },
+    {
+      "label": "missing",
+      "kind": 3,
+      "json": "{\"code\":\"ENOENT\",\"message\":\"ENOENT: no such file or directory, realpath '\u003croot\u003e/missing'\",\"path\":\"\u003croot\u003e/missing\",\"syscall\":\"realpath\"}"
+    },
+    {
+      "label": "missing below missing",
+      "kind": 3,
+      "json": "{\"code\":\"ENOENT\",\"message\":\"ENOENT: no such file or directory, realpath '\u003croot\u003e/missing/x'\",\"path\":\"\u003croot\u003e/missing/x\",\"syscall\":\"realpath\"}"
+    },
+    {
+      "label": "file with slash",
+      "kind": 3,
+      "json": "{\"code\":\"ENOTDIR\",\"message\":\"ENOTDIR: not a directory, realpath '\u003croot\u003e/file/'\",\"path\":\"\u003croot\u003e/file/\",\"syscall\":\"realpath\"}"
+    },
+    {
+      "label": "file with dot",
+      "kind": 3,
+      "json": "{\"code\":\"ENOTDIR\",\"message\":\"ENOTDIR: not a directory, realpath '\u003croot\u003e/file/.'\",\"path\":\"\u003croot\u003e/file/.\",\"syscall\":\"realpath\"}"
+    },
+    {
+      "label": "through file",
+      "kind": 3,
+      "json": "{\"code\":\"ENOTDIR\",\"message\":\"ENOTDIR: not a directory, realpath '\u003croot\u003e/file/x'\",\"path\":\"\u003croot\u003e/file/x\",\"syscall\":\"realpath\"}"
+    },
+    {
+      "label": "slash",
+      "kind": 2,
+      "json": "{\"path\":\"/\"}"
+    },
+    {
+      "label": "double slash",
+      "kind": 2,
+      "json": "{\"path\":\"\u003croot\u003e/dir/sub\"}"
+    },
+    {
+      "label": "empty",
+      "kind": 3,
+      "json": "{\"code\":\"ENOENT\",\"message\":\"ENOENT: no such file or directory, realpath ''\",\"path\":\"\",\"syscall\":\"realpath\"}"
+    },
+    {
+      "label": "tmp",
+      "kind": 2,
+      "json": "{\"path\":\"/tmp\"}"
+    }
+  ],
+  "rm": [
+    {
+      "label": "missing",
+      "kind": 3,
+      "json": "{\"code\":\"ENOENT\",\"message\":\"ENOENT: no such file or directory, lstat '\u003croot\u003e/nope'\",\"path\":\"\u003croot\u003e/nope\",\"syscall\":\"lstat\"}"
+    },
+    {
+      "label": "missing force",
+      "kind": 2,
+      "json": "{}"
+    },
+    {
+      "label": "dir",
+      "kind": 3,
+      "json": "{\"code\":\"ERR_FS_EISDIR\",\"message\":\"Path is a directory: rm returned EISDIR (is a directory) \u003croot\u003e/empty\",\"path\":\"\u003croot\u003e/empty\"}"
+    },
+    {
+      "label": "dir force",
+      "kind": 3,
+      "json": "{\"code\":\"ERR_FS_EISDIR\",\"message\":\"Path is a directory: rm returned EISDIR (is a directory) \u003croot\u003e/empty\",\"path\":\"\u003croot\u003e/empty\"}"
+    },
+    {
+      "label": "dir recursive",
+      "kind": 2,
+      "json": "{}"
+    },
+    {
+      "label": "gone",
+      "kind": 3,
+      "json": "{\"code\":\"ENOENT\",\"message\":\"ENOENT: no such file or directory, lstat '\u003croot\u003e/dir'\",\"path\":\"\u003croot\u003e/dir\",\"syscall\":\"lstat\"}"
+    },
+    {
+      "label": "file",
+      "kind": 2,
+      "json": "{}"
+    },
+    {
+      "label": "link to dir",
+      "kind": 2,
+      "json": "{}"
+    },
+    {
+      "label": "target kept",
+      "kind": 2,
+      "json": "{\"dev\":0,\"ino\":0,\"kind\":\"file\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"x\",\"size\":0}"
+    },
+    {
+      "label": "through file",
+      "kind": 3,
+      "json": "{\"code\":\"ENOTDIR\",\"message\":\"ENOTDIR: not a directory, lstat '\u003croot\u003e/target/x/y'\",\"path\":\"\u003croot\u003e/target/x/y\",\"syscall\":\"lstat\"}"
+    }
+  ],
+  "scanLines": [
+    {
+      "label": "open mixed",
+      "kind": 2,
+      "json": "{\"handle\":1,\"info\":{\"dev\":0,\"ino\":0,\"kind\":\"file\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"mixed\",\"size\":16}}"
+    },
+    {
+      "label": "scan mixed \"startLine\":0",
+      "kind": 2,
+      "json": "{\"end\":16,\"firstLineBytes\":1,\"firstLineEnd\":4,\"lastLineStart\":14,\"newlines\":4,\"selectedBytes\":14,\"start\":0}"
+    },
+    {
+      "label": "scan mixed \"startLine\":1,\"endLine\":3",
+      "kind": 2,
+      "json": "{\"end\":8,\"firstLineBytes\":3,\"firstLineEnd\":7,\"lastLineStart\":8,\"newlines\":4,\"selectedBytes\":4,\"start\":5}"
+    },
+    {
+      "label": "scan mixed \"startLine\":2,\"endLine\":3",
+      "kind": 2,
+      "json": "{\"end\":8,\"firstLineBytes\":0,\"firstLineEnd\":8,\"lastLineStart\":8,\"newlines\":4,\"selectedBytes\":0,\"start\":8}"
+    },
+    {
+      "label": "scan mixed \"startLine\":9",
+      "kind": 2,
+      "json": "{\"end\":16,\"firstLineBytes\":0,\"firstLineEnd\":16,\"lastLineStart\":16,\"newlines\":4,\"selectedBytes\":0,\"start\":16}"
+    },
+    {
+      "label": "scan mixed \"startLine\":0,\"endLine\":1",
+      "kind": 2,
+      "json": "{\"end\":4,\"firstLineBytes\":1,\"firstLineEnd\":4,\"lastLineStart\":0,\"newlines\":4,\"selectedBytes\":1,\"start\":0}"
+    },
+    {
+      "label": "scan mixed \"startLine\":3,\"endLine\":40001",
+      "kind": 2,
+      "json": "{\"end\":16,\"firstLineBytes\":4,\"firstLineEnd\":13,\"lastLineStart\":14,\"newlines\":4,\"selectedBytes\":7,\"start\":9}"
+    },
+    {
+      "label": "open plain",
+      "kind": 2,
+      "json": "{\"handle\":2,\"info\":{\"dev\":0,\"ino\":0,\"kind\":\"file\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"plain\",\"size\":14}}"
+    },
+    {
+      "label": "scan plain \"startLine\":0",
+      "kind": 2,
+      "json": "{\"end\":14,\"firstLineBytes\":3,\"firstLineEnd\":3,\"lastLineStart\":14,\"newlines\":3,\"selectedBytes\":14,\"start\":0}"
+    },
+    {
+      "label": "scan plain \"startLine\":1,\"endLine\":3",
+      "kind": 2,
+      "json": "{\"end\":13,\"firstLineBytes\":3,\"firstLineEnd\":7,\"lastLineStart\":8,\"newlines\":3,\"selectedBytes\":9,\"start\":4}"
+    },
+    {
+      "label": "scan plain \"startLine\":2,\"endLine\":3",
+      "kind": 2,
+      "json": "{\"end\":13,\"firstLineBytes\":5,\"firstLineEnd\":13,\"lastLineStart\":8,\"newlines\":3,\"selectedBytes\":5,\"start\":8}"
+    },
+    {
+      "label": "scan plain \"startLine\":9",
+      "kind": 2,
+      "json": "{\"end\":14,\"firstLineBytes\":0,\"firstLineEnd\":14,\"lastLineStart\":14,\"newlines\":3,\"selectedBytes\":0,\"start\":14}"
+    },
+    {
+      "label": "scan plain \"startLine\":0,\"endLine\":1",
+      "kind": 2,
+      "json": "{\"end\":3,\"firstLineBytes\":3,\"firstLineEnd\":3,\"lastLineStart\":0,\"newlines\":3,\"selectedBytes\":3,\"start\":0}"
+    },
+    {
+      "label": "scan plain \"startLine\":3,\"endLine\":40001",
+      "kind": 2,
+      "json": "{\"end\":14,\"firstLineBytes\":0,\"firstLineEnd\":14,\"lastLineStart\":14,\"newlines\":3,\"selectedBytes\":0,\"start\":14}"
+    },
+    {
+      "label": "open empty",
+      "kind": 2,
+      "json": "{\"handle\":3,\"info\":{\"dev\":0,\"ino\":0,\"kind\":\"file\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"empty\",\"size\":0}}"
+    },
+    {
+      "label": "scan empty \"startLine\":0",
+      "kind": 2,
+      "json": "{\"end\":0,\"firstLineBytes\":0,\"firstLineEnd\":0,\"lastLineStart\":0,\"newlines\":0,\"selectedBytes\":0,\"start\":0}"
+    },
+    {
+      "label": "scan empty \"startLine\":1,\"endLine\":3",
+      "kind": 2,
+      "json": "{\"end\":0,\"firstLineBytes\":0,\"firstLineEnd\":0,\"lastLineStart\":0,\"newlines\":0,\"selectedBytes\":0,\"start\":0}"
+    },
+    {
+      "label": "scan empty \"startLine\":2,\"endLine\":3",
+      "kind": 2,
+      "json": "{\"end\":0,\"firstLineBytes\":0,\"firstLineEnd\":0,\"lastLineStart\":0,\"newlines\":0,\"selectedBytes\":0,\"start\":0}"
+    },
+    {
+      "label": "scan empty \"startLine\":9",
+      "kind": 2,
+      "json": "{\"end\":0,\"firstLineBytes\":0,\"firstLineEnd\":0,\"lastLineStart\":0,\"newlines\":0,\"selectedBytes\":0,\"start\":0}"
+    },
+    {
+      "label": "scan empty \"startLine\":0,\"endLine\":1",
+      "kind": 2,
+      "json": "{\"end\":0,\"firstLineBytes\":0,\"firstLineEnd\":0,\"lastLineStart\":0,\"newlines\":0,\"selectedBytes\":0,\"start\":0}"
+    },
+    {
+      "label": "scan empty \"startLine\":3,\"endLine\":40001",
+      "kind": 2,
+      "json": "{\"end\":0,\"firstLineBytes\":0,\"firstLineEnd\":0,\"lastLineStart\":0,\"newlines\":0,\"selectedBytes\":0,\"start\":0}"
+    },
+    {
+      "label": "open bom",
+      "kind": 2,
+      "json": "{\"handle\":4,\"info\":{\"dev\":0,\"ino\":0,\"kind\":\"file\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"bom\",\"size\":3}}"
+    },
+    {
+      "label": "scan bom \"startLine\":0",
+      "kind": 2,
+      "json": "{\"end\":3,\"firstLineBytes\":0,\"firstLineEnd\":3,\"lastLineStart\":0,\"newlines\":0,\"selectedBytes\":0,\"start\":0}"
+    },
+    {
+      "label": "scan bom \"startLine\":1,\"endLine\":3",
+      "kind": 2,
+      "json": "{\"end\":3,\"firstLineBytes\":0,\"firstLineEnd\":3,\"lastLineStart\":3,\"newlines\":0,\"selectedBytes\":0,\"start\":3}"
+    },
+    {
+      "label": "scan bom \"startLine\":2,\"endLine\":3",
+      "kind": 2,
+      "json": "{\"end\":3,\"firstLineBytes\":0,\"firstLineEnd\":3,\"lastLineStart\":3,\"newlines\":0,\"selectedBytes\":0,\"start\":3}"
+    },
+    {
+      "label": "scan bom \"startLine\":9",
+      "kind": 2,
+      "json": "{\"end\":3,\"firstLineBytes\":0,\"firstLineEnd\":3,\"lastLineStart\":3,\"newlines\":0,\"selectedBytes\":0,\"start\":3}"
+    },
+    {
+      "label": "scan bom \"startLine\":0,\"endLine\":1",
+      "kind": 2,
+      "json": "{\"end\":3,\"firstLineBytes\":0,\"firstLineEnd\":3,\"lastLineStart\":0,\"newlines\":0,\"selectedBytes\":0,\"start\":0}"
+    },
+    {
+      "label": "scan bom \"startLine\":3,\"endLine\":40001",
+      "kind": 2,
+      "json": "{\"end\":3,\"firstLineBytes\":0,\"firstLineEnd\":3,\"lastLineStart\":3,\"newlines\":0,\"selectedBytes\":0,\"start\":3}"
+    },
+    {
+      "label": "open partial",
+      "kind": 2,
+      "json": "{\"handle\":5,\"info\":{\"dev\":0,\"ino\":0,\"kind\":\"file\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"partial\",\"size\":2}}"
+    },
+    {
+      "label": "scan partial \"startLine\":0",
+      "kind": 2,
+      "json": "{\"end\":2,\"firstLineBytes\":3,\"firstLineEnd\":2,\"lastLineStart\":0,\"newlines\":0,\"selectedBytes\":3,\"start\":0}"
+    },
+    {
+      "label": "scan partial \"startLine\":1,\"endLine\":3",
+      "kind": 2,
+      "json": "{\"end\":2,\"firstLineBytes\":0,\"firstLineEnd\":2,\"lastLineStart\":2,\"newlines\":0,\"selectedBytes\":0,\"start\":2}"
+    },
+    {
+      "label": "scan partial \"startLine\":2,\"endLine\":3",
+      "kind": 2,
+      "json": "{\"end\":2,\"firstLineBytes\":0,\"firstLineEnd\":2,\"lastLineStart\":2,\"newlines\":0,\"selectedBytes\":0,\"start\":2}"
+    },
+    {
+      "label": "scan partial \"startLine\":9",
+      "kind": 2,
+      "json": "{\"end\":2,\"firstLineBytes\":0,\"firstLineEnd\":2,\"lastLineStart\":2,\"newlines\":0,\"selectedBytes\":0,\"start\":2}"
+    },
+    {
+      "label": "scan partial \"startLine\":0,\"endLine\":1",
+      "kind": 2,
+      "json": "{\"end\":2,\"firstLineBytes\":3,\"firstLineEnd\":2,\"lastLineStart\":0,\"newlines\":0,\"selectedBytes\":3,\"start\":0}"
+    },
+    {
+      "label": "scan partial \"startLine\":3,\"endLine\":40001",
+      "kind": 2,
+      "json": "{\"end\":2,\"firstLineBytes\":0,\"firstLineEnd\":2,\"lastLineStart\":2,\"newlines\":0,\"selectedBytes\":0,\"start\":2}"
+    },
+    {
+      "label": "open long",
+      "kind": 2,
+      "json": "{\"handle\":6,\"info\":{\"dev\":0,\"ino\":0,\"kind\":\"file\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"long\",\"size\":220001}}"
+    },
+    {
+      "label": "scan long \"startLine\":0",
+      "kind": 2,
+      "json": "{\"end\":220001,\"firstLineBytes\":140000,\"firstLineEnd\":140000,\"lastLineStart\":220001,\"newlines\":40001,\"selectedBytes\":220001,\"start\":0}"
+    },
+    {
+      "label": "scan long \"startLine\":1,\"endLine\":3",
+      "kind": 2,
+      "json": "{\"end\":140004,\"firstLineBytes\":1,\"firstLineEnd\":140002,\"lastLineStart\":140003,\"newlines\":40001,\"selectedBytes\":3,\"start\":140001}"
+    },
+    {
+      "label": "scan long \"startLine\":2,\"endLine\":3",
+      "kind": 2,
+      "json": "{\"end\":140004,\"firstLineBytes\":1,\"firstLineEnd\":140004,\"lastLineStart\":140003,\"newlines\":40001,\"selectedBytes\":1,\"start\":140003}"
+    },
+    {
+      "label": "scan long \"startLine\":9",
+      "kind": 2,
+      "json": "{\"end\":220001,\"firstLineBytes\":1,\"firstLineEnd\":140018,\"lastLineStart\":220001,\"newlines\":40001,\"selectedBytes\":79984,\"start\":140017}"
+    },
+    {
+      "label": "scan long \"startLine\":0,\"endLine\":1",
+      "kind": 2,
+      "json": "{\"end\":140000,\"firstLineBytes\":140000,\"firstLineEnd\":140000,\"lastLineStart\":0,\"newlines\":40001,\"selectedBytes\":140000,\"start\":0}"
+    },
+    {
+      "label": "scan long \"startLine\":3,\"endLine\":40001",
+      "kind": 2,
+      "json": "{\"end\":220000,\"firstLineBytes\":1,\"firstLineEnd\":140006,\"lastLineStart\":219999,\"newlines\":40001,\"selectedBytes\":79995,\"start\":140005}"
+    },
+    {
+      "label": "invalid range",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"Invalid line range\"}"
+    },
+    {
+      "label": "no start",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"missing or invalid field startLine\"}"
+    }
+  ],
+  "signals": [
+    {
+      "label": "ignored in child",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "[] []\n"
+    },
+    {
+      "label": "ignored in child",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    }
+  ],
+  "stat": [
+    {
+      "label": "file",
+      "kind": 2,
+      "json": "{\"dev\":0,\"ino\":0,\"kind\":\"file\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"a.txt\",\"size\":5}"
+    },
+    {
+      "label": "dir",
+      "kind": 2,
+      "json": "{\"dev\":0,\"ino\":0,\"kind\":\"directory\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"dir\",\"size\":4096}"
+    },
+    {
+      "label": "dir trailing slash",
+      "kind": 2,
+      "json": "{\"dev\":0,\"ino\":0,\"kind\":\"directory\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"dir\",\"size\":4096}"
+    },
+    {
+      "label": "dir dot",
+      "kind": 2,
+      "json": "{\"dev\":0,\"ino\":0,\"kind\":\"directory\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"dir\",\"size\":4096}"
+    },
+    {
+      "label": "dir dotdot",
+      "kind": 2,
+      "json": "{\"dev\":0,\"ino\":0,\"kind\":\"directory\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"\",\"size\":4096}"
+    },
+    {
+      "label": "symlink",
+      "kind": 2,
+      "json": "{\"dev\":0,\"ino\":0,\"kind\":\"symlink\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"link\",\"size\":5}"
+    },
+    {
+      "label": "dangling",
+      "kind": 2,
+      "json": "{\"dev\":0,\"ino\":0,\"kind\":\"symlink\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"dangling\",\"size\":7}"
+    },
+    {
+      "label": "missing",
+      "kind": 3,
+      "json": "{\"code\":\"ENOENT\",\"message\":\"ENOENT: no such file or directory, lstat '\u003croot\u003e/nope'\",\"path\":\"\u003croot\u003e/nope\",\"syscall\":\"lstat\"}"
+    },
+    {
+      "label": "through file",
+      "kind": 3,
+      "json": "{\"code\":\"ENOTDIR\",\"message\":\"ENOTDIR: not a directory, lstat '\u003croot\u003e/a.txt/x'\",\"path\":\"\u003croot\u003e/a.txt/x\",\"syscall\":\"lstat\"}"
+    },
+    {
+      "label": "root",
+      "kind": 2,
+      "json": "{\"dev\":0,\"ino\":0,\"kind\":\"directory\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"\",\"size\":4096}"
+    },
+    {
+      "label": "device",
+      "kind": 2,
+      "json": "{\"dev\":0,\"ino\":0,\"kind\":\"other\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"null\",\"size\":0}"
+    },
+    {
+      "label": "empty path",
+      "kind": 3,
+      "json": "{\"code\":\"ENOENT\",\"message\":\"ENOENT: no such file or directory, lstat ''\",\"path\":\"\",\"syscall\":\"lstat\"}"
+    }
+  ],
+  "truncate-fsync-rename": [
+    {
+      "label": "truncate",
+      "kind": 2,
+      "json": "{}"
+    },
+    {
+      "label": "size",
+      "kind": 2,
+      "json": "{\"dev\":0,\"ino\":0,\"kind\":\"file\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"file\",\"size\":3}"
+    },
+    {
+      "label": "truncate grow",
+      "kind": 2,
+      "json": "{}"
+    },
+    {
+      "label": "truncate dir",
+      "kind": 3,
+      "json": "{\"code\":\"EISDIR\",\"message\":\"EISDIR: illegal operation on a directory, open '\u003croot\u003e/dir'\",\"path\":\"\u003croot\u003e/dir\",\"syscall\":\"open\"}"
+    },
+    {
+      "label": "truncate missing",
+      "kind": 3,
+      "json": "{\"code\":\"ENOENT\",\"message\":\"ENOENT: no such file or directory, open '\u003croot\u003e/nope'\",\"path\":\"\u003croot\u003e/nope\",\"syscall\":\"open\"}"
+    },
+    {
+      "label": "truncate huge",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: out of range integral type conversion attempted, ftruncate '\u003croot\u003e/file'\",\"path\":\"\u003croot\u003e/file\",\"syscall\":\"ftruncate\"}"
+    },
+    {
+      "label": "truncate no size",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"missing or invalid field size\"}"
+    },
+    {
+      "label": "fsync",
+      "kind": 2,
+      "json": "{}"
+    },
+    {
+      "label": "fsync dir",
+      "kind": 3,
+      "json": "{\"code\":\"EISDIR\",\"message\":\"EISDIR: illegal operation on a directory, open '\u003croot\u003e/dir'\",\"path\":\"\u003croot\u003e/dir\"}"
+    },
+    {
+      "label": "fsync missing",
+      "kind": 3,
+      "json": "{\"code\":\"ENOENT\",\"message\":\"ENOENT: no such file or directory, open '\u003croot\u003e/nope'\",\"path\":\"\u003croot\u003e/nope\",\"syscall\":\"open\"}"
+    },
+    {
+      "label": "rename",
+      "kind": 2,
+      "json": "{}"
+    },
+    {
+      "label": "rename missing",
+      "kind": 3,
+      "json": "{\"code\":\"ENOENT\",\"message\":\"ENOENT: no such file or directory, rename '\u003croot\u003e/file' -\u003e '\u003croot\u003e/x'\",\"path\":\"\u003croot\u003e/file\",\"syscall\":\"rename\"}"
+    },
+    {
+      "label": "rename no to",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"missing field to\"}"
+    },
+    {
+      "label": "dir onto file",
+      "kind": 3,
+      "json": "{\"code\":\"ENOTDIR\",\"message\":\"ENOTDIR: not a directory, rename '\u003croot\u003e/dir' -\u003e '\u003croot\u003e/other'\",\"path\":\"\u003croot\u003e/dir\",\"syscall\":\"rename\"}"
+    },
+    {
+      "label": "file onto dir",
+      "kind": 3,
+      "json": "{\"code\":\"EISDIR\",\"message\":\"EISDIR: illegal operation on a directory, rename '\u003croot\u003e/other' -\u003e '\u003croot\u003e/dir'\",\"path\":\"\u003croot\u003e/other\",\"syscall\":\"rename\"}"
+    },
+    {
+      "label": "dir onto full dir",
+      "kind": 3,
+      "json": "{\"code\":\"ENOTEMPTY\",\"message\":\"ENOTEMPTY: directory not empty, rename '\u003croot\u003e/dir' -\u003e '\u003croot\u003e/full'\",\"path\":\"\u003croot\u003e/dir\",\"syscall\":\"rename\"}"
+    },
+    {
+      "label": "file onto file",
+      "kind": 2,
+      "json": "{}"
+    }
+  ],
+  "watch": [
+    {
+      "label": "no targets",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"watch needs targets\"}"
+    },
+    {
+      "label": "target without path",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"watch needs targets\"}"
+    },
+    {
+      "label": "too many directories",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"Watched paths exceed 1 directories\"}"
+    },
+    {
+      "label": "zero directories",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"Watched paths exceed 0 directories\"}"
+    },
+    {
+      "label": "native ready",
+      "kind": 4,
+      "json": "{\"kind\":\"ready\",\"mode\":\"native\"}"
+    },
+    {
+      "label": "native change",
+      "kind": 4,
+      "json": "{\"kind\":\"change\",\"paths\":[\"\u003croot\u003e/dir/b/new\"]}"
+    },
+    {
+      "label": "native closed",
+      "kind": 2,
+      "json": "{}"
+    },
+    {
+      "label": "polling ready",
+      "kind": 4,
+      "json": "{\"kind\":\"ready\",\"mode\":\"polling\"}"
+    },
+    {
+      "label": "polling change",
+      "kind": 4,
+      "json": "{\"kind\":\"change\",\"paths\":[\"\u003croot\u003e/dir/b/new\"]}"
+    },
+    {
+      "label": "polling closed",
+      "kind": 2,
+      "json": "{}"
+    }
+  ],
+  "watch through links": [
+    {
+      "label": "watch",
+      "kind": 4,
+      "json": "{\"kind\":\"change\",\"paths\":[\"\u003croot\u003e/P/l2\"]}"
+    },
+    {
+      "label": "watch",
+      "kind": 4,
+      "json": "{\"kind\":\"change\",\"paths\":[\"\u003croot\u003e/P/l2\"]}"
+    },
+    {
+      "label": "watch",
+      "kind": 4,
+      "json": "{\"kind\":\"change\",\"paths\":[\"\u003croot\u003e/P/plain\"]}"
+    },
+    {
+      "label": "watch",
+      "kind": 4,
+      "json": "{\"kind\":\"change\",\"paths\":[\"\u003croot\u003e/P/flink\",\"\u003croot\u003e/P/flink2\"]}"
+    },
+    {
+      "label": "watch",
+      "kind": 2,
+      "json": "{}"
+    }
+  ],
+  "write": [
+    {
+      "label": "new with parents",
+      "kind": 2,
+      "json": "{}"
+    },
+    {
+      "label": "read back",
+      "kind": 2,
+      "json": "{\"dev\":0,\"ino\":0,\"kind\":\"file\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"z.txt\",\"size\":5}"
+    },
+    {
+      "label": "no parents",
+      "kind": 3,
+      "json": "{\"code\":\"ENOENT\",\"message\":\"ENOENT: no such file or directory, open '\u003croot\u003e/m/n.txt'\",\"path\":\"\u003croot\u003e/m/n.txt\",\"syscall\":\"open\"}"
+    },
+    {
+      "label": "onto dir",
+      "kind": 3,
+      "json": "{\"code\":\"EISDIR\",\"message\":\"EISDIR: illegal operation on a directory, open '\u003croot\u003e/dir'\",\"path\":\"\u003croot\u003e/dir\",\"syscall\":\"open\"}"
+    },
+    {
+      "label": "parent is file",
+      "kind": 3,
+      "json": "{\"code\":\"EEXIST\",\"message\":\"EEXIST: file already exists, mkdir '\u003croot\u003e/file'\",\"path\":\"\u003croot\u003e/file\",\"syscall\":\"mkdir\"}"
+    },
+    {
+      "label": "append",
+      "kind": 2,
+      "json": "{}"
+    },
+    {
+      "label": "size after append",
+      "kind": 2,
+      "json": "{\"dev\":0,\"ino\":0,\"kind\":\"file\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"file\",\"size\":7}"
+    },
+    {
+      "label": "keep",
+      "kind": 2,
+      "json": "{\"handle\":1}"
+    },
+    {
+      "label": "chunk",
+      "kind": 2,
+      "json": "{}"
+    },
+    {
+      "label": "chunk 2",
+      "kind": 2,
+      "json": "{}"
+    },
+    {
+      "label": "size kept",
+      "kind": 2,
+      "json": "{\"dev\":0,\"ino\":0,\"kind\":\"file\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"kept\",\"size\":6}"
+    },
+    {
+      "label": "close",
+      "kind": 2,
+      "json": "{}"
+    },
+    {
+      "label": "chunk after close",
+      "kind": 3,
+      "json": "{\"code\":\"EBADF\",\"message\":\"unknown handle\"}"
+    },
+    {
+      "label": "open reader",
+      "kind": 2,
+      "json": "{\"handle\":2,\"info\":{\"dev\":0,\"ino\":0,\"kind\":\"file\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"kept\",\"size\":6}}"
+    },
+    {
+      "label": "chunk to reader",
+      "kind": 3,
+      "json": "{\"code\":\"EBADF\",\"message\":\"EBADF: bad file descriptor, write '\u003croot\u003e/kept'\",\"path\":\"\u003croot\u003e/kept\",\"syscall\":\"write\"}"
+    },
+    {
+      "label": "chunk again",
+      "kind": 3,
+      "json": "{\"code\":\"EBADF\",\"message\":\"an earlier write failed\"}"
+    },
+    {
+      "label": "opendir",
+      "kind": 2,
+      "json": "{\"handle\":3}"
+    },
+    {
+      "label": "chunk to dir",
+      "kind": 3,
+      "json": "{\"code\":\"EBADF\",\"message\":\"not a file handle\"}"
+    },
+    {
+      "label": "pread dir",
+      "kind": 3,
+      "json": "{\"code\":\"EBADF\",\"message\":\"not a file handle\"}"
+    }
+  ]
+}
