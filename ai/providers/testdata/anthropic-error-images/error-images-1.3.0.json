@@ -1,0 +1,1155 @@
+{
+	"source": "pi-ai 1.3.0",
+	"rows": [
+		{
+			"name": "upstream/moves the images after the tool results",
+			"model": {
+				"id": "claude-test",
+				"name": "Claude Test",
+				"api": "anthropic-messages",
+				"provider": "anthropic",
+				"baseUrl": "http://127.0.0.1:9",
+				"reasoning": false,
+				"input": [
+					"text",
+					"image"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 200000,
+				"maxTokens": 1024
+			},
+			"messages": [
+				{
+					"role": "user",
+					"content": "Show the screenshots",
+					"timestamp": 1
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "toolCall",
+							"id": "call-1",
+							"name": "codemode",
+							"arguments": {}
+						},
+						{
+							"type": "toolCall",
+							"id": "call-2",
+							"name": "read",
+							"arguments": {}
+						}
+					],
+					"api": "anthropic-messages",
+					"provider": "anthropic",
+					"model": "claude-test",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "toolUse",
+					"timestamp": 2
+				},
+				{
+					"role": "toolResult",
+					"toolCallId": "call-1",
+					"toolName": "codemode",
+					"content": [
+						{
+							"type": "text",
+							"text": "Script failed"
+						},
+						{
+							"type": "image",
+							"data": "AAAA",
+							"mimeType": "image/png"
+						},
+						{
+							"type": "image",
+							"data": "CCCC",
+							"mimeType": "image/png"
+						},
+						{
+							"type": "text",
+							"text": "Script error"
+						}
+					],
+					"isError": true,
+					"timestamp": 3
+				},
+				{
+					"role": "toolResult",
+					"toolCallId": "call-2",
+					"toolName": "read",
+					"content": [
+						{
+							"type": "image",
+							"data": "BBBB",
+							"mimeType": "image/png"
+						}
+					],
+					"isError": false,
+					"timestamp": 3
+				}
+			],
+			"cacheRetention": "none",
+			"payload": {
+				"model": "claude-test",
+				"messages": [
+					{
+						"role": "user",
+						"content": "Show the screenshots"
+					},
+					{
+						"role": "assistant",
+						"content": [
+							{
+								"type": "tool_use",
+								"id": "call-1",
+								"name": "codemode",
+								"input": {}
+							},
+							{
+								"type": "tool_use",
+								"id": "call-2",
+								"name": "read",
+								"input": {}
+							}
+						]
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "tool_result",
+								"tool_use_id": "call-1",
+								"content": "Script failed\n(image attached after the tool results)\nScript error",
+								"is_error": true
+							},
+							{
+								"type": "tool_result",
+								"tool_use_id": "call-2",
+								"content": [
+									{
+										"type": "text",
+										"text": "(see attached image)"
+									},
+									{
+										"type": "image",
+										"source": {
+											"type": "base64",
+											"media_type": "image/png",
+											"data": "BBBB"
+										}
+									}
+								],
+								"is_error": false
+							},
+							{
+								"type": "text",
+								"text": "Images from the error result of tool call call-1 (codemode):"
+							},
+							{
+								"type": "image",
+								"source": {
+									"type": "base64",
+									"media_type": "image/png",
+									"data": "AAAA"
+								}
+							},
+							{
+								"type": "image",
+								"source": {
+									"type": "base64",
+									"media_type": "image/png",
+									"data": "CCCC"
+								}
+							}
+						]
+					}
+				],
+				"max_tokens": 1024,
+				"stream": true
+			}
+		},
+		{
+			"name": "upstream/keeps error results without images",
+			"model": {
+				"id": "claude-test",
+				"name": "Claude Test",
+				"api": "anthropic-messages",
+				"provider": "anthropic",
+				"baseUrl": "http://127.0.0.1:9",
+				"reasoning": false,
+				"input": [
+					"text",
+					"image"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 200000,
+				"maxTokens": 1024
+			},
+			"messages": [
+				{
+					"role": "user",
+					"content": "Run it",
+					"timestamp": 1
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "toolCall",
+							"id": "call-1",
+							"name": "codemode",
+							"arguments": {}
+						}
+					],
+					"api": "anthropic-messages",
+					"provider": "anthropic",
+					"model": "claude-test",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "toolUse",
+					"timestamp": 2
+				},
+				{
+					"role": "toolResult",
+					"toolCallId": "call-1",
+					"toolName": "codemode",
+					"content": [
+						{
+							"type": "text",
+							"text": "Script failed"
+						}
+					],
+					"isError": true,
+					"timestamp": 3
+				}
+			],
+			"cacheRetention": "none",
+			"payload": {
+				"model": "claude-test",
+				"messages": [
+					{
+						"role": "user",
+						"content": "Run it"
+					},
+					{
+						"role": "assistant",
+						"content": [
+							{
+								"type": "tool_use",
+								"id": "call-1",
+								"name": "codemode",
+								"input": {}
+							}
+						]
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "tool_result",
+								"tool_use_id": "call-1",
+								"content": "Script failed",
+								"is_error": true
+							}
+						]
+					}
+				],
+				"max_tokens": 1024,
+				"stream": true
+			}
+		},
+		{
+			"name": "images-only error result",
+			"model": {
+				"id": "claude-test",
+				"name": "Claude Test",
+				"api": "anthropic-messages",
+				"provider": "anthropic",
+				"baseUrl": "http://127.0.0.1:9",
+				"reasoning": false,
+				"input": [
+					"text",
+					"image"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 200000,
+				"maxTokens": 1024
+			},
+			"messages": [
+				{
+					"role": "user",
+					"content": "Run it",
+					"timestamp": 1
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "toolCall",
+							"id": "call-1",
+							"name": "codemode",
+							"arguments": {}
+						}
+					],
+					"api": "anthropic-messages",
+					"provider": "anthropic",
+					"model": "claude-test",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "toolUse",
+					"timestamp": 2
+				},
+				{
+					"role": "toolResult",
+					"toolCallId": "call-1",
+					"toolName": "codemode",
+					"content": [
+						{
+							"type": "image",
+							"data": "AAAA",
+							"mimeType": "image/png"
+						},
+						{
+							"type": "image",
+							"data": "BBBB",
+							"mimeType": "image/png"
+						}
+					],
+					"isError": true,
+					"timestamp": 3
+				}
+			],
+			"cacheRetention": "none",
+			"payload": {
+				"model": "claude-test",
+				"messages": [
+					{
+						"role": "user",
+						"content": "Run it"
+					},
+					{
+						"role": "assistant",
+						"content": [
+							{
+								"type": "tool_use",
+								"id": "call-1",
+								"name": "codemode",
+								"input": {}
+							}
+						]
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "tool_result",
+								"tool_use_id": "call-1",
+								"content": "(image attached after the tool results)",
+								"is_error": true
+							},
+							{
+								"type": "text",
+								"text": "Images from the error result of tool call call-1 (codemode):"
+							},
+							{
+								"type": "image",
+								"source": {
+									"type": "base64",
+									"media_type": "image/png",
+									"data": "AAAA"
+								}
+							},
+							{
+								"type": "image",
+								"source": {
+									"type": "base64",
+									"media_type": "image/png",
+									"data": "BBBB"
+								}
+							}
+						]
+					}
+				],
+				"max_tokens": 1024,
+				"stream": true
+			}
+		},
+		{
+			"name": "two error results",
+			"model": {
+				"id": "claude-test",
+				"name": "Claude Test",
+				"api": "anthropic-messages",
+				"provider": "anthropic",
+				"baseUrl": "http://127.0.0.1:9",
+				"reasoning": false,
+				"input": [
+					"text",
+					"image"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 200000,
+				"maxTokens": 1024
+			},
+			"messages": [
+				{
+					"role": "user",
+					"content": "Run them",
+					"timestamp": 1
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "toolCall",
+							"id": "call-1",
+							"name": "a",
+							"arguments": {}
+						},
+						{
+							"type": "toolCall",
+							"id": "call-2",
+							"name": "b",
+							"arguments": {}
+						},
+						{
+							"type": "toolCall",
+							"id": "call-3",
+							"name": "c",
+							"arguments": {}
+						}
+					],
+					"api": "anthropic-messages",
+					"provider": "anthropic",
+					"model": "claude-test",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "toolUse",
+					"timestamp": 2
+				},
+				{
+					"role": "toolResult",
+					"toolCallId": "call-1",
+					"toolName": "a",
+					"content": [
+						{
+							"type": "image",
+							"data": "A1",
+							"mimeType": "image/png"
+						},
+						{
+							"type": "text",
+							"text": "between"
+						},
+						{
+							"type": "image",
+							"data": "A2",
+							"mimeType": "image/png"
+						}
+					],
+					"isError": true,
+					"timestamp": 3
+				},
+				{
+					"role": "toolResult",
+					"toolCallId": "call-2",
+					"toolName": "b",
+					"content": [
+						{
+							"type": "text",
+							"text": "fine"
+						},
+						{
+							"type": "image",
+							"data": "B1",
+							"mimeType": "image/png"
+						}
+					],
+					"isError": false,
+					"timestamp": 3
+				},
+				{
+					"role": "toolResult",
+					"toolCallId": "call-3",
+					"toolName": "c",
+					"content": [
+						{
+							"type": "text",
+							"text": "failed"
+						},
+						{
+							"type": "image",
+							"data": "C1",
+							"mimeType": "image/png"
+						}
+					],
+					"isError": true,
+					"timestamp": 3
+				}
+			],
+			"cacheRetention": "none",
+			"payload": {
+				"model": "claude-test",
+				"messages": [
+					{
+						"role": "user",
+						"content": "Run them"
+					},
+					{
+						"role": "assistant",
+						"content": [
+							{
+								"type": "tool_use",
+								"id": "call-1",
+								"name": "a",
+								"input": {}
+							},
+							{
+								"type": "tool_use",
+								"id": "call-2",
+								"name": "b",
+								"input": {}
+							},
+							{
+								"type": "tool_use",
+								"id": "call-3",
+								"name": "c",
+								"input": {}
+							}
+						]
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "tool_result",
+								"tool_use_id": "call-1",
+								"content": "(image attached after the tool results)\nbetween\n(image attached after the tool results)",
+								"is_error": true
+							},
+							{
+								"type": "tool_result",
+								"tool_use_id": "call-2",
+								"content": [
+									{
+										"type": "text",
+										"text": "fine"
+									},
+									{
+										"type": "image",
+										"source": {
+											"type": "base64",
+											"media_type": "image/png",
+											"data": "B1"
+										}
+									}
+								],
+								"is_error": false
+							},
+							{
+								"type": "tool_result",
+								"tool_use_id": "call-3",
+								"content": "failed\n(image attached after the tool results)",
+								"is_error": true
+							},
+							{
+								"type": "text",
+								"text": "Images from the error result of tool call call-1 (a):"
+							},
+							{
+								"type": "image",
+								"source": {
+									"type": "base64",
+									"media_type": "image/png",
+									"data": "A1"
+								}
+							},
+							{
+								"type": "image",
+								"source": {
+									"type": "base64",
+									"media_type": "image/png",
+									"data": "A2"
+								}
+							},
+							{
+								"type": "text",
+								"text": "Images from the error result of tool call call-3 (c):"
+							},
+							{
+								"type": "image",
+								"source": {
+									"type": "base64",
+									"media_type": "image/png",
+									"data": "C1"
+								}
+							}
+						]
+					}
+				],
+				"max_tokens": 1024,
+				"stream": true
+			}
+		},
+		{
+			"name": "placeholder text before an image",
+			"model": {
+				"id": "claude-test",
+				"name": "Claude Test",
+				"api": "anthropic-messages",
+				"provider": "anthropic",
+				"baseUrl": "http://127.0.0.1:9",
+				"reasoning": false,
+				"input": [
+					"text",
+					"image"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 200000,
+				"maxTokens": 1024
+			},
+			"messages": [
+				{
+					"role": "user",
+					"content": "Run it",
+					"timestamp": 1
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "toolCall",
+							"id": "call-1",
+							"name": "codemode",
+							"arguments": {}
+						}
+					],
+					"api": "anthropic-messages",
+					"provider": "anthropic",
+					"model": "claude-test",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "toolUse",
+					"timestamp": 2
+				},
+				{
+					"role": "toolResult",
+					"toolCallId": "call-1",
+					"toolName": "codemode",
+					"content": [
+						{
+							"type": "text",
+							"text": "(image attached after the tool results)"
+						},
+						{
+							"type": "image",
+							"data": "AAAA",
+							"mimeType": "image/png"
+						},
+						{
+							"type": "text",
+							"text": "done"
+						}
+					],
+					"isError": true,
+					"timestamp": 3
+				}
+			],
+			"cacheRetention": "none",
+			"payload": {
+				"model": "claude-test",
+				"messages": [
+					{
+						"role": "user",
+						"content": "Run it"
+					},
+					{
+						"role": "assistant",
+						"content": [
+							{
+								"type": "tool_use",
+								"id": "call-1",
+								"name": "codemode",
+								"input": {}
+							}
+						]
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "tool_result",
+								"tool_use_id": "call-1",
+								"content": "(image attached after the tool results)\ndone",
+								"is_error": true
+							},
+							{
+								"type": "text",
+								"text": "Images from the error result of tool call call-1 (codemode):"
+							},
+							{
+								"type": "image",
+								"source": {
+									"type": "base64",
+									"media_type": "image/png",
+									"data": "AAAA"
+								}
+							}
+						]
+					}
+				],
+				"max_tokens": 1024,
+				"stream": true
+			}
+		},
+		{
+			"name": "model without image input",
+			"model": {
+				"id": "claude-test",
+				"name": "Claude Test",
+				"api": "anthropic-messages",
+				"provider": "anthropic",
+				"baseUrl": "http://127.0.0.1:9",
+				"reasoning": false,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 200000,
+				"maxTokens": 1024
+			},
+			"messages": [
+				{
+					"role": "user",
+					"content": "Run it",
+					"timestamp": 1
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "toolCall",
+							"id": "call-1",
+							"name": "codemode",
+							"arguments": {}
+						}
+					],
+					"api": "anthropic-messages",
+					"provider": "anthropic",
+					"model": "claude-test",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "toolUse",
+					"timestamp": 2
+				},
+				{
+					"role": "toolResult",
+					"toolCallId": "call-1",
+					"toolName": "codemode",
+					"content": [
+						{
+							"type": "text",
+							"text": "Script failed"
+						},
+						{
+							"type": "image",
+							"data": "AAAA",
+							"mimeType": "image/png"
+						}
+					],
+					"isError": true,
+					"timestamp": 3
+				}
+			],
+			"cacheRetention": "none",
+			"payload": {
+				"model": "claude-test",
+				"messages": [
+					{
+						"role": "user",
+						"content": "Run it"
+					},
+					{
+						"role": "assistant",
+						"content": [
+							{
+								"type": "tool_use",
+								"id": "call-1",
+								"name": "codemode",
+								"input": {}
+							}
+						]
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "tool_result",
+								"tool_use_id": "call-1",
+								"content": "Script failed\n(tool image omitted: model does not support images)",
+								"is_error": true
+							}
+						]
+					}
+				],
+				"max_tokens": 1024,
+				"stream": true
+			}
+		},
+		{
+			"name": "cache breakpoint on the last image",
+			"model": {
+				"id": "claude-test",
+				"name": "Claude Test",
+				"api": "anthropic-messages",
+				"provider": "anthropic",
+				"baseUrl": "http://127.0.0.1:9",
+				"reasoning": false,
+				"input": [
+					"text",
+					"image"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 200000,
+				"maxTokens": 1024
+			},
+			"messages": [
+				{
+					"role": "user",
+					"content": "Run it",
+					"timestamp": 1
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "toolCall",
+							"id": "call-1",
+							"name": "codemode",
+							"arguments": {}
+						}
+					],
+					"api": "anthropic-messages",
+					"provider": "anthropic",
+					"model": "claude-test",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "toolUse",
+					"timestamp": 2
+				},
+				{
+					"role": "toolResult",
+					"toolCallId": "call-1",
+					"toolName": "codemode",
+					"content": [
+						{
+							"type": "text",
+							"text": "Script failed"
+						},
+						{
+							"type": "image",
+							"data": "AAAA",
+							"mimeType": "image/png"
+						}
+					],
+					"isError": true,
+					"timestamp": 3
+				}
+			],
+			"cacheRetention": "short",
+			"payload": {
+				"model": "claude-test",
+				"messages": [
+					{
+						"role": "user",
+						"content": "Run it"
+					},
+					{
+						"role": "assistant",
+						"content": [
+							{
+								"type": "tool_use",
+								"id": "call-1",
+								"name": "codemode",
+								"input": {}
+							}
+						]
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "tool_result",
+								"tool_use_id": "call-1",
+								"content": "Script failed\n(image attached after the tool results)",
+								"is_error": true
+							},
+							{
+								"type": "text",
+								"text": "Images from the error result of tool call call-1 (codemode):"
+							},
+							{
+								"type": "image",
+								"source": {
+									"type": "base64",
+									"media_type": "image/png",
+									"data": "AAAA"
+								},
+								"cache_control": {
+									"type": "ephemeral"
+								}
+							}
+						]
+					}
+				],
+				"max_tokens": 1024,
+				"stream": true
+			}
+		},
+		{
+			"name": "normalized tool call id",
+			"model": {
+				"id": "claude-test",
+				"name": "Claude Test",
+				"api": "anthropic-messages",
+				"provider": "anthropic",
+				"baseUrl": "http://127.0.0.1:9",
+				"reasoning": false,
+				"input": [
+					"text",
+					"image"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 200000,
+				"maxTokens": 1024
+			},
+			"messages": [
+				{
+					"role": "user",
+					"content": "Run it",
+					"timestamp": 1
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "toolCall",
+							"id": "call|abc/1",
+							"name": "codemode",
+							"arguments": {}
+						}
+					],
+					"api": "openai-responses",
+					"provider": "openai",
+					"model": "gpt-5",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "toolUse",
+					"timestamp": 2
+				},
+				{
+					"role": "toolResult",
+					"toolCallId": "call|abc/1",
+					"toolName": "codemode",
+					"content": [
+						{
+							"type": "text",
+							"text": "Script failed"
+						},
+						{
+							"type": "image",
+							"data": "AAAA",
+							"mimeType": "image/png"
+						}
+					],
+					"isError": true,
+					"timestamp": 3
+				}
+			],
+			"cacheRetention": "none",
+			"payload": {
+				"model": "claude-test",
+				"messages": [
+					{
+						"role": "user",
+						"content": "Run it"
+					},
+					{
+						"role": "assistant",
+						"content": [
+							{
+								"type": "tool_use",
+								"id": "call_abc_1",
+								"name": "codemode",
+								"input": {}
+							}
+						]
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "tool_result",
+								"tool_use_id": "call_abc_1",
+								"content": "Script failed\n(image attached after the tool results)",
+								"is_error": true
+							},
+							{
+								"type": "text",
+								"text": "Images from the error result of tool call call_abc_1 (codemode):"
+							},
+							{
+								"type": "image",
+								"source": {
+									"type": "base64",
+									"media_type": "image/png",
+									"data": "AAAA"
+								}
+							}
+						]
+					}
+				],
+				"max_tokens": 1024,
+				"stream": true
+			}
+		}
+	]
+}

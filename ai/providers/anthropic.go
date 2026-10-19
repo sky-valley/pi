@@ -1988,17 +1988,29 @@ func convertAnthropicMessages(transformed []ai.Message, oauth bool, cc *cacheCon
 			// Collect all consecutive toolResult messages (needed for z.ai's
 			// Anthropic endpoint).
 			var toolResults []any
+			// Anthropic rejects error tool results that contain anything but
+			// text, so their images follow all tool results of the turn, which
+			// must come first in the user message (#10794).
+			var errorImages []any
 			j := i
 			for j < len(transformed) {
 				next, ok := asToolResultMsg(transformed[j])
 				if !ok {
 					break
 				}
-				toolResults = append(toolResults, convertToolResult(next))
+				content := next.Content
+				if split, ok := splitErrorToolResultImages(next); ok {
+					content = split.content
+					errorImages = append(errorImages, map[string]any{"type": "text", "text": split.caption})
+					for _, image := range split.images {
+						errorImages = append(errorImages, convertImageBlock(image))
+					}
+				}
+				toolResults = append(toolResults, convertToolResult(next, content))
 				j++
 			}
 			i = j - 1
-			params = append(params, map[string]any{"role": "user", "content": toolResults})
+			params = append(params, map[string]any{"role": "user", "content": append(toolResults, errorImages...)})
 		}
 	}
 
@@ -2037,12 +2049,7 @@ func convertUserBlocks(content ai.ContentList) []any {
 			}
 			blocks = append(blocks, map[string]any{"type": "text", "text": sanitizeSurrogates(v.Text)})
 		case ai.ImageContent:
-			blocks = append(blocks, map[string]any{
-				"type": "image",
-				"source": map[string]any{
-					"type": "base64", "media_type": v.MimeType, "data": v.Data,
-				},
-			})
+			blocks = append(blocks, convertImageBlock(v))
 		}
 	}
 	return blocks
@@ -2091,12 +2098,23 @@ func convertAssistantBlocks(am *ai.AssistantMessage, oauth, allowEmptySig bool) 
 	return blocks
 }
 
-// convertToolResult builds a tool_result block (port of pi's convertToolResult).
-func convertToolResult(tr ai.ToolResultMessage) map[string]any {
+// convertImageBlock is pi's convertImageBlock: an image as an Anthropic base64
+// image block.
+func convertImageBlock(image ai.ImageContent) map[string]any {
+	return map[string]any{
+		"type":   "image",
+		"source": map[string]any{"type": "base64", "media_type": image.MimeType, "data": image.Data},
+	}
+}
+
+// convertToolResult builds a tool_result block (port of pi's convertToolResult)
+// from content, which is the result's own content unless an error result's
+// images were split out of it (splitErrorToolResultImages).
+func convertToolResult(tr ai.ToolResultMessage, content ai.ContentList) map[string]any {
 	return map[string]any{
 		"type":        "tool_result",
 		"tool_use_id": tr.ToolCallID,
-		"content":     convertContentBlocks(tr.Content),
+		"content":     convertContentBlocks(content),
 		"is_error":    tr.IsError,
 	}
 }
@@ -2128,7 +2146,7 @@ func convertContentBlocks(content ai.ContentList) any {
 			hasText = true
 			blocks = append(blocks, map[string]any{"type": "text", "text": sanitizeSurrogates(v.Text)})
 		case ai.ImageContent:
-			blocks = append(blocks, map[string]any{"type": "image", "source": map[string]any{"type": "base64", "media_type": v.MimeType, "data": v.Data}})
+			blocks = append(blocks, convertImageBlock(v))
 		}
 	}
 	if !hasText {

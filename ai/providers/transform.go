@@ -8,7 +8,41 @@ import (
 const (
 	nonVisionUserImagePlaceholder = "(image omitted: model does not support images)"
 	nonVisionToolImagePlaceholder = "(tool image omitted: model does not support images)"
+	errorToolImagePlaceholder     = "(image attached after the tool results)"
 )
+
+// splitErrorToolResult is pi's SplitErrorToolResult: an error tool result split
+// into a text-only result and the images to send after the tool results.
+type splitErrorToolResult struct {
+	// content is the result's content with each run of images replaced by a
+	// note.
+	content ai.ContentList
+	// caption names the tool call, to send before images.
+	caption string
+	images  []ai.ImageContent
+}
+
+// splitErrorToolResultImages is pi's splitErrorToolResultImages (upstream
+// 5ab7fe74c), for APIs that reject images in error results (Anthropic, and
+// Claude on Bedrock): send content as the tool result and the caption and
+// images after all tool results of the turn, in the same user message. ok is
+// false for a result that needs no split.
+func splitErrorToolResultImages(msg ai.ToolResultMessage) (split splitErrorToolResult, ok bool) {
+	if !msg.IsError {
+		return split, false
+	}
+	for _, block := range msg.Content {
+		if image, isImage := block.(ai.ImageContent); isImage {
+			split.images = append(split.images, image)
+		}
+	}
+	if len(split.images) == 0 {
+		return split, false
+	}
+	split.content = replaceImagesWithPlaceholder(msg.Content, errorToolImagePlaceholder)
+	split.caption = "Images from the error result of tool call " + msg.ToolCallID + " (" + msg.ToolName + "):"
+	return split, true
+}
 
 // asAssistantMsg normalizes a value/pointer assistant message.
 func asAssistantMsg(m ai.Message) (*ai.AssistantMessage, bool) {
