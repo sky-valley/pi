@@ -7,6 +7,7 @@ import (
 	"errors"
 	"os"
 	"os/exec"
+	"slices"
 	"sort"
 	"strings"
 	"syscall"
@@ -435,6 +436,9 @@ func lookPath(program string, env []string, dir string) (string, error) {
 // controlling terminal). A file the kernel does not recognize as an
 // executable runs through /bin/sh, as execvp runs it.
 func startProcess(path string, argv []string, env []string, dir string, files []*os.File, ctty bool) (*os.Process, error) {
+	if slices.ContainsFunc(argv, hasNul) || slices.ContainsFunc(env, hasNul) {
+		return nil, errNulData
+	}
 	program, err := lookPath(path, env, dir)
 	if err != nil {
 		return nil, &os.PathError{Op: "fork/exec", Path: path, Err: err}
@@ -608,13 +612,7 @@ func removeTree(parent int, name string, root bool) error {
 // environment Rust's Command builds, its working directory, and files as its
 // standard streams.
 func spawnProcess(program string, args []string, cwd string, env object, inheritEnv bool, files []*os.File) (*os.Process, error) {
-	argv := append([]string{program}, args...)
-	for _, arg := range argv {
-		if hasNul(arg) {
-			return nil, errors.New("nul byte found in provided data")
-		}
-	}
-	return startProcess(program, argv, childEnvironment(env, inheritEnv), cwd, files, false)
+	return startProcess(program, append([]string{program}, args...), childEnvironment(env, inheritEnv), cwd, files, false)
 }
 
 // irregularKind: Unix listings report no irregular entries.

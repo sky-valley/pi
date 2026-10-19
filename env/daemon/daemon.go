@@ -313,6 +313,9 @@ func (s *server) dispatch(id uint32, json any, payload []byte, ctl *control) (ob
 		if fail != nil {
 			return plain(nil, fail)
 		}
+		if hasNul(p) {
+			return plain(nil, ioFailure(nulError, "opendir", p))
+		}
 		dir, err := openDir(p)
 		if err != nil {
 			return plain(nil, ioFailure(err, "opendir", p))

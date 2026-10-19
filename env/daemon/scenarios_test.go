@@ -105,6 +105,41 @@ func scenarios() []scenario {
 			},
 		},
 		{
+			// Rust refuses a NUL byte in a path, argument or variable before
+			// any system call, with an error that has no OS code.
+			name: "nul",
+			skip: unixOnly,
+			run: func(r *recorder) {
+				writeFixture(t(r), r.root, map[string]string{"file": "x", "dir/": ""})
+				r.do("lstat", `{"op":"lstat","path":"%R/a\u0000b"}`)
+				r.do("realpath", `{"op":"realpath","path":"%R/a\u0000b"}`)
+				r.do("write", `{"op":"write","path":"%R/a\u0000b"}`, []byte("x")...)
+				r.do("truncate", `{"op":"truncate","path":"%R/a\u0000b","size":0}`)
+				r.do("fsync", `{"op":"fsync","path":"%R/a\u0000b"}`)
+				r.do("rename from", `{"op":"rename","path":"%R/a\u0000b","to":"%R/c"}`)
+				r.do("rename to", `{"op":"rename","path":"%R/file","to":"%R/a\u0000b"}`)
+				r.do("mkdir", `{"op":"mkdir","path":"%R/a\u0000b","recursive":true}`)
+				r.do("rm", `{"op":"rm","path":"%R/a\u0000b","force":true}`)
+				r.do("mkdtemp", `{"op":"mkdtemp","path":"%R/a\u0000b"}`)
+				r.do("open", `{"op":"open","path":"%R/a\u0000b"}`)
+				r.do("open read mode", `{"op":"open","path":"%R/a\u0000b","mode":"read"}`)
+				r.do("opendir", `{"op":"opendir","path":"%R/a\u0000b"}`)
+				r.do("opendir trailing nul", `{"op":"opendir","path":"%R/dir\u0000"}`)
+				r.do("listFiles", `{"op":"listFiles","path":"%R/a\u0000b"}`)
+				r.do("exec cwd", `{"op":"exec","argv":["true"],"cwd":"%R/a\u0000b","env":{}}`)
+				r.do("exec argument", `{"op":"exec","argv":["echo","a\u0000b"],"cwd":"%R","env":{}}`)
+				r.do("exec variable", `{"op":"exec","argv":["true"],"cwd":"%R","env":{"A":"a\u0000b"}}`)
+				r.do("exec variable name", `{"op":"exec","argv":["true"],"cwd":"%R","env":{"A\u0000B":"x"}}`)
+				r.do("pty cwd", `{"op":"pty","argv":["true"],"cwd":"%R/a\u0000b","env":{},"cols":80,"rows":24}`)
+				r.do("pty argument", `{"op":"pty","argv":["echo","a\u0000b"],"cwd":"%R","env":{},"cols":80,"rows":24}`)
+				r.do("pty variable", `{"op":"pty","argv":["true"],"cwd":"%R","env":{"A":"a\u0000b"},"cols":80,"rows":24}`)
+				id := r.start(strings.ReplaceAll(`{"op":"watch","targets":[{"path":"%R/a\u0000b"}],"mode":"polling"}`, "%R", jsonEscape(r.root)), nil)
+				r.keep("watch", r.wait(id, func(f []frame.Frame) bool { return len(f) > 0 }))
+				r.send(frame.Cancel, id, nil, nil)
+				r.keep("watch closed", r.wait(id, finished)[1:])
+			},
+		},
+		{
 			name: "stat",
 			skip: unixOnly,
 			run: func(r *recorder) {

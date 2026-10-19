@@ -783,13 +783,17 @@ func spawnProcess(program string, args []string, cwd string, env object, inherit
 	commandLine := `"` + program + `"`
 	for _, arg := range args {
 		if hasNul(arg) {
-			return nil, errors.New("nul byte found in provided data")
+			return nil, errNulData
 		}
 		commandLine += " " + quoteArgument(arg)
 	}
+	environment := childEnvironment(env, inheritEnv)
+	if slices.ContainsFunc(environment, hasNul) {
+		return nil, errNulData
+	}
 	process, err := os.StartProcess(program, append([]string{program}, args...), &os.ProcAttr{
 		Dir:   cwd,
-		Env:   childEnvironment(env, inheritEnv),
+		Env:   environment,
 		Files: files,
 		Sys:   &syscall.SysProcAttr{CmdLine: commandLine, CreationFlags: windows.CREATE_NO_WINDOW},
 	})

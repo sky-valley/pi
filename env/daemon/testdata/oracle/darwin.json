@@ -524,6 +524,128 @@
       "json": "{\"code\":\"ENOTDIR\",\"message\":\"ENOTDIR: not a directory, mkdtemp '\u003croot\u003e/file/pre-XXXXXX'\",\"path\":\"\u003croot\u003e/file/pre-XXXXXX\",\"syscall\":\"mkdtemp\"}"
     }
   ],
+  "nul": [
+    {
+      "label": "lstat",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, lstat '\u003croot\u003e/a\\u0000b'\",\"path\":\"\u003croot\u003e/a\\u0000b\",\"syscall\":\"lstat\"}"
+    },
+    {
+      "label": "realpath",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, realpath '\u003croot\u003e/a\\u0000b'\",\"path\":\"\u003croot\u003e/a\\u0000b\",\"syscall\":\"realpath\"}"
+    },
+    {
+      "label": "write",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, open '\u003croot\u003e/a\\u0000b'\",\"path\":\"\u003croot\u003e/a\\u0000b\",\"syscall\":\"open\"}"
+    },
+    {
+      "label": "truncate",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, open '\u003croot\u003e/a\\u0000b'\",\"path\":\"\u003croot\u003e/a\\u0000b\",\"syscall\":\"open\"}"
+    },
+    {
+      "label": "fsync",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, open '\u003croot\u003e/a\\u0000b'\",\"path\":\"\u003croot\u003e/a\\u0000b\",\"syscall\":\"open\"}"
+    },
+    {
+      "label": "rename from",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, rename '\u003croot\u003e/a\\u0000b' -\u003e '\u003croot\u003e/c'\",\"path\":\"\u003croot\u003e/a\\u0000b\",\"syscall\":\"rename\"}"
+    },
+    {
+      "label": "rename to",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, rename '\u003croot\u003e/file' -\u003e '\u003croot\u003e/a\\u0000b'\",\"path\":\"\u003croot\u003e/file\",\"syscall\":\"rename\"}"
+    },
+    {
+      "label": "mkdir",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, mkdir '\u003croot\u003e/a\\u0000b'\",\"path\":\"\u003croot\u003e/a\\u0000b\",\"syscall\":\"mkdir\"}"
+    },
+    {
+      "label": "rm",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, lstat '\u003croot\u003e/a\\u0000b'\",\"path\":\"\u003croot\u003e/a\\u0000b\",\"syscall\":\"lstat\"}"
+    },
+    {
+      "label": "mkdtemp",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"EINVAL: invalid argument, mkdtemp '\u003croot\u003e/a\\u0000bXXXXXX'\",\"path\":\"\u003croot\u003e/a\\u0000bXXXXXX\",\"syscall\":\"mkdtemp\"}"
+    },
+    {
+      "label": "open",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, open '\u003croot\u003e/a\\u0000b'\",\"path\":\"\u003croot\u003e/a\\u0000b\",\"syscall\":\"open\"}"
+    },
+    {
+      "label": "open read mode",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, open '\u003croot\u003e/a\\u0000b'\",\"path\":\"\u003croot\u003e/a\\u0000b\",\"syscall\":\"open\"}"
+    },
+    {
+      "label": "opendir",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, opendir '\u003croot\u003e/a\\u0000b'\",\"path\":\"\u003croot\u003e/a\\u0000b\",\"syscall\":\"opendir\"}"
+    },
+    {
+      "label": "opendir trailing nul",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, opendir '\u003croot\u003e/dir\\u0000'\",\"path\":\"\u003croot\u003e/dir\\u0000\",\"syscall\":\"opendir\"}"
+    },
+    {
+      "label": "listFiles",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, scandir '\u003croot\u003e/a\\u0000b'\",\"path\":\"\u003croot\u003e/a\\u0000b\",\"syscall\":\"scandir\"}"
+    },
+    {
+      "label": "exec cwd",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"Working directory does not exist: \u003croot\u003e/a\\u0000b\\nCannot execute bash commands.\"}"
+    },
+    {
+      "label": "exec argument",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"nul byte found in provided data\"}"
+    },
+    {
+      "label": "exec variable",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"nul byte found in provided data\"}"
+    },
+    {
+      "label": "exec variable name",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"nul byte found in provided data\"}"
+    },
+    {
+      "label": "pty cwd",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"Working directory does not exist: \u003croot\u003e/a\\u0000b\"}"
+    },
+    {
+      "label": "pty argument",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"nul byte found in provided data\"}"
+    },
+    {
+      "label": "pty variable",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"nul byte found in provided data\"}"
+    },
+    {
+      "label": "watch",
+      "kind": 4,
+      "json": "{\"kind\":\"ready\",\"mode\":\"polling\"}"
+    },
+    {
+      "label": "watch closed",
+      "kind": 2,
+      "json": "{}"
+    }
+  ],
   "protocol": [
     {
       "label": "hello",
