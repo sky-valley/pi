@@ -77,9 +77,12 @@ func serveAbortBeforeResponse(t *testing.T, retry bool, body string) (string, *a
 // adapter that sends with sendWithRetry: pi's retryProviderRequest turns an
 // abort that ends the request, or its retry wait, into
 // Error("Request aborted"), and the google adapter's buildParams throws that
-// same message before onPayload when the signal is already aborted.
+// same message before onPayload when the signal is already aborted. Since
+// d4d53612b the anthropic adapter's request loop opens with
+// signal.throwIfAborted(), so an already-aborted anthropic stream fails with
+// the AbortError's "This operation was aborted" before onPayload.
 func TestAbortBeforeResponseMatchesPi(t *testing.T) {
-	raw, err := os.ReadFile("testdata/abort-before-response/abort-before-response-2b0a123de.json")
+	raw, err := os.ReadFile("testdata/abort-before-response/abort-before-response-d4d53612b.json")
 	if err != nil {
 		t.Fatal(err)
 	}

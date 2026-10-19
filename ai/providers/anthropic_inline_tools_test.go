@@ -29,18 +29,22 @@ type wireRequest struct {
 	body   []byte
 }
 
-// wireResponse is one canned reply of a scriptedDoer.
+// wireResponse is one canned reply of a scriptedDoer. contentType defaults to
+// text/event-stream for a 200 and application/json otherwise.
 type wireResponse struct {
-	status int
-	body   string
+	status      int
+	body        string
+	contentType string
 }
 
 // scriptedDoer answers each request with the next response (the last one
-// repeating) and records every request it was sent.
+// repeating) and records every request it was sent. onRequest, when set, runs
+// with the request's 1-based number before it is answered.
 type scriptedDoer struct {
 	mu        sync.Mutex
 	responses []wireResponse
 	requests  []wireRequest
+	onRequest func(n int)
 }
 
 func (d *scriptedDoer) Do(req *http.Request) (*http.Response, error) {
@@ -51,10 +55,16 @@ func (d *scriptedDoer) Do(req *http.Request) (*http.Response, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	d.requests = append(d.requests, wireRequest{url: req.URL.String(), header: req.Header.Clone(), body: body})
+	if d.onRequest != nil {
+		d.onRequest(len(d.requests))
+	}
 	r := d.responses[min(len(d.requests), len(d.responses))-1]
-	contentType := "text/event-stream"
-	if r.status != http.StatusOK {
-		contentType = "application/json"
+	contentType := r.contentType
+	if contentType == "" {
+		contentType = "text/event-stream"
+		if r.status != http.StatusOK {
+			contentType = "application/json"
+		}
 	}
 	return &http.Response{
 		StatusCode: r.status,
@@ -134,7 +144,7 @@ func TestAnthropicInlineToolsMatchPi(t *testing.T) {
 	for _, row := range capture.Rows {
 		t.Run(row.Name, func(t *testing.T) {
 			messages := decodeCapturedMessages(t, row.Name, row.Messages)
-			doer := &scriptedDoer{responses: []wireResponse{{http.StatusOK, anthropicSSE}}}
+			doer := &scriptedDoer{responses: []wireResponse{{status: http.StatusOK, body: anthropicSSE}}}
 			var payload []byte
 			opts := &ai.SimpleStreamOptions{}
 			opts.APIKey = row.APIKey

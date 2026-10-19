@@ -3,7 +3,7 @@
 // this package.
 //
 //   node --experimental-strip-types capture.mts <extraction> <out.json> <sha>
-//   e.g. ... capture.mts <dir> abort-before-response-2b0a123de.json 2b0a123de
+//   e.g. ... capture.mts <dir> abort-before-response-d4d53612b.json d4d53612b
 //
 // <extraction> holds `git archive <sha> packages/ai package-lock.json` from the
 // upstream clone, plus a node_modules resolving pi-ai's dependencies. The

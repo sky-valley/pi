@@ -1378,11 +1378,11 @@ func streamAnthropicSSE(t *testing.T, model *ai.Model, sse string) *ai.Assistant
 // the errors constrained sampling can raise.
 func mustBuildAnthropicParams(t *testing.T, model *ai.Model, req ai.Context, oauth bool, opts *AnthropicOptions) map[string]any {
 	t.Helper()
-	params, err := buildAnthropicParams(model, ai.NormalizeContext(req), oauth, opts)
+	params, err := buildAnthropicParams(model, ai.NormalizeContext(req), oauth, opts, false)
 	if err != nil {
 		t.Fatalf("buildAnthropicParams: %v", err)
 	}
-	return params
+	return params.body
 }
 
 // Upstream 24bace27: with compat.supportsStrictTools, a json_schema-constrained
@@ -1494,7 +1494,8 @@ func TestAnthropicStrictUnsupportedKeywordsMatchPi(t *testing.T) {
 					Type: ai.ConstrainedSamplingJSONSchema, Strict: ai.ConstrainedSamplingStrictness(row.Strict),
 				}}},
 		}
-		body, err := buildAnthropicParams(model, ai.NormalizeContext(req), false, &AnthropicOptions{})
+		built, err := buildAnthropicParams(model, ai.NormalizeContext(req), false, &AnthropicOptions{}, false)
+		body := built.body
 		if row.Error != "" {
 			if err == nil || err.Error() != row.Error {
 				t.Errorf("%s/%s: err = %v, pi = %q", row.Name, row.Strict, err, row.Error)
@@ -1559,7 +1560,7 @@ func TestAnthropicStrictToolsRequireFails(t *testing.T) {
 			},
 		}},
 	}
-	_, err := buildAnthropicParams(model, ai.NormalizeContext(req), false, &AnthropicOptions{})
+	_, err := buildAnthropicParams(model, ai.NormalizeContext(req), false, &AnthropicOptions{}, false)
 	assertErrString(t, err, `Tool "js_require" requires JSON-schema constrained sampling, but strict tools are unsupported.`)
 }
 

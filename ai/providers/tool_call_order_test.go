@@ -92,11 +92,11 @@ func TestOpenAIResponsesReplaysToolCallArgumentsInModelOrder(t *testing.T) {
 
 func TestAnthropicReplaysToolCallArgumentsInModelOrder(t *testing.T) {
 	model := &ai.Model{ID: "claude-sonnet-4", Api: ai.APIAnthropicMessages, Provider: "anthropic", MaxTokens: 1024}
-	params, err := buildAnthropicParams(model, ai.NormalizeContext(loadOrderedToolCallContext(t)), false, &AnthropicOptions{})
+	params, err := buildAnthropicParams(model, ai.NormalizeContext(loadOrderedToolCallContext(t)), false, &AnthropicOptions{}, false)
 	if err != nil {
 		t.Fatalf("buildAnthropicParams: %v", err)
 	}
-	body := mustMarshal(t, params)
+	body := mustMarshal(t, params.body)
 	if !strings.Contains(body, `"input":`+orderedArgsJSON) {
 		t.Fatalf("anthropic body lost argument key order:\n got %s\nwant input %s", body, orderedArgsJSON)
 	}
