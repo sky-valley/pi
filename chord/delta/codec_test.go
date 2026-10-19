@@ -14,7 +14,7 @@ import (
 // over these inputs and 400 random streams against Encode and Decode.
 
 // wireOps parses a JSON array of wire tuples through ParseWireOp — the batch a
-// decoder is handed after the services wire layer has checked its shape.
+// decoder is handed once each tuple's shape has been checked.
 func wireOps(t *testing.T, literal string) []WireOp {
 	t.Helper()
 	raw, ok := tree(t, literal).([]any)

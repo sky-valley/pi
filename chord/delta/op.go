@@ -338,8 +338,8 @@ func IsBase[O tuple](ops []O) bool {
 
 // ParseOp is upstream's assertValidOp: it checks verb, arity and payload shape
 // of a DECODED op given as an any-tree (paths inline, no "#", no short forms)
-// and returns it typed. The services wire layer runs it on every op in a
-// snapshot or update; an applier's own checks run on the typed value.
+// and returns it typed. A receiver runs it on every op it is handed; an
+// applier's own checks run on the typed value.
 //
 // Validating an Op against the wire grammar would be laxer than the type: a
 // two-element ["s", value] would pass, and apply would then read the value as a

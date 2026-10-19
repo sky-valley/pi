@@ -11,8 +11,8 @@ import (
 )
 
 // tree parses a JSON literal into the any-tree encoding/json produces, which is
-// the form the services wire layer hands to ParseOp/ParseWireOp — the Go
-// counterpart of the `unknown` upstream's assertValidOp takes.
+// the form ParseOp/ParseWireOp take — the Go counterpart of the `unknown`
+// upstream's assertValidOp takes.
 func tree(t *testing.T, literal string) any {
 	t.Helper()
 	var v any
