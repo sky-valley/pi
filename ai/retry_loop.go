@@ -10,10 +10,10 @@ import (
 // Policy-driven assistant-call retry, ported from pi
 // packages/ai/src/utils/retry.ts (upstream 65dd2e0e). Kept alongside
 // IsRetryableAssistantError so the classifier and the retry loop live together
-// and stay reusable by the SDK and other callers. Latent in the Go SDK today:
-// the summary/branch-summary retry consumers that wire this in pi live in the
-// unported agent-harness/host layer (see the 2026-06-25 ruling — retry.ts
-// additions are ported to mirror pi's SDK structure).
+// and stay reusable by the SDK and other callers. pi's consumer is the
+// coding agent's compaction (core/compaction/compaction.ts wraps each summary
+// call in retryAssistantCall), under the policy AgentSession reads from
+// settings.retry (getRetrySettings).
 
 // RetryPolicy is bounded retry with exponential backoff
 // (baseDelayMs * 2^(attempt-1)), capped at MaxAgentDelayMs. Mirrors pi's

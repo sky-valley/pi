@@ -8,7 +8,7 @@ import (
 
 // retryClassifyCaptureFile is written by testdata/retry-classify/capture.mts,
 // which runs upstream's own packages/ai/src/utils/retry.ts under node.
-const retryClassifyCaptureFile = "testdata/retry-classify/classify-3dd803d7e.json"
+const retryClassifyCaptureFile = "testdata/retry-classify/classify-d2e7d8b7c.json"
 
 type capturedPattern struct {
 	Source string `json:"source"`

@@ -9,7 +9,7 @@ import (
 // providerErrorPattern is pi's buildProviderErrorPattern result,
 // new RegExp(patterns.join("|"), "i"), matched with that RegExp's semantics
 // rather than RE2's. A JavaScript RegExp without the "u" flag differs from RE2
-// in two ways these patterns can observe:
+// in three ways these patterns can observe:
 //
 //   - "i" compares the toUpperCase of each character but never lets a
 //     non-ASCII character canonicalize to an ASCII one, so against all-ASCII
@@ -25,8 +25,14 @@ import (
 //     an astral character is excluded, not counted as two. Go strings cannot
 //     hold a lone surrogate; an invalid UTF-8 byte decodes as one U+FFFD,
 //     which "." matches in both.
+//   - \S matches one UTF-16 code unit that is not JavaScript whitespace (which
+//     takes in \v and the Unicode space separators), where RE2's matches any
+//     code point but the ASCII \t\n\f\r and space. The only \S here is \S+
+//     between spaces, and a run of non-whitespace code units that holds one
+//     surrogate of a pair holds its partner, so it is a run of code points
+//     outside JavaScript's whitespace.
 type providerErrorPattern struct {
-	source string // RegExp.prototype.source: the alternatives joined with "|"
+	source string // RegExp.prototype.source: the alternatives joined with "|", "/" escaped
 	re     *regexp.Regexp
 }
 
@@ -34,21 +40,61 @@ type providerErrorPattern struct {
 // matching the same text where every "." is flanked by ASCII literals.
 const jsDot = `[^\n\r\x{2028}\x{2029}\x{10000}-\x{10FFFF}]`
 
+// jsNonSpace is \S of a JavaScript RegExp: everything but the WhiteSpace and
+// LineTerminator code points.
+const jsNonSpace = `[^\t\n\v\f\r \x{A0}\x{1680}\x{2000}-\x{200A}\x{2028}\x{2029}\x{202F}\x{205F}\x{3000}\x{FEFF}]`
+
 func buildProviderErrorPattern(patterns []string) providerErrorPattern {
 	alternatives := make([]string, len(patterns))
 	for i, pattern := range patterns {
-		if strings.ContainsAny(pattern, `\^$|*+()[]{}`) {
-			// Lowercasing would corrupt escapes and classes (\S is not \s), and
-			// RE2 and JavaScript disagree on several of them.
-			panic(fmt.Sprintf("ai: provider error pattern %q uses RegExp syntax beyond literals, \".\" and \"?\"; "+
-				"teach buildProviderErrorPattern its JavaScript semantics before adding it", pattern))
-		}
-		alternatives[i] = strings.ReplaceAll(asciiLower(pattern), ".", jsDot)
+		alternatives[i] = translateProviderErrorPattern(pattern)
 	}
 	return providerErrorPattern{
-		source: strings.Join(patterns, "|"),
+		// EscapeRegExpPattern writes "/" as "\/" so the source reads as a literal.
+		source: strings.ReplaceAll(strings.Join(patterns, "|"), "/", `\/`),
 		re:     regexp.MustCompile(strings.Join(alternatives, "|")),
 	}
+}
+
+// translateProviderErrorPattern rewrites one alternative into RE2 syntax with
+// the JavaScript semantics providerErrorPattern describes. It knows literals,
+// ".", "?", "+", non-capturing groups and \S+, and panics on anything else:
+// lowercasing would corrupt other escapes and classes, and RE2 and JavaScript
+// disagree on several of them.
+func translateProviderErrorPattern(pattern string) string {
+	unsupported := func(what string) {
+		panic(fmt.Sprintf("ai: provider error pattern %q uses %s; "+
+			"teach translateProviderErrorPattern its JavaScript semantics before adding it", pattern, what))
+	}
+	var b strings.Builder
+	for i := 0; i < len(pattern); i++ {
+		switch c := pattern[i]; c {
+		case '.':
+			b.WriteString(jsDot)
+		case '\\':
+			if !strings.HasPrefix(pattern[i:], `\S+`) {
+				unsupported("an escape other than \\S+")
+			}
+			b.WriteString(jsNonSpace)
+			i++ // the "+" follows as a quantifier
+		case '(':
+			if !strings.HasPrefix(pattern[i:], "(?:") {
+				unsupported("a group other than (?:...)")
+			}
+			b.WriteString("(?:")
+			i += 2
+		case ')', '?', '+':
+			b.WriteByte(c)
+		case '^', '$', '|', '*', '[', ']', '{', '}':
+			unsupported(fmt.Sprintf("%q", c))
+		default:
+			if 'A' <= c && c <= 'Z' {
+				c += 'a' - 'A'
+			}
+			b.WriteByte(c)
+		}
+	}
+	return b.String()
 }
 
 // MatchString is RegExp.prototype.test on s.
@@ -104,9 +150,12 @@ var nonRetryableProviderLimitErrorPattern = buildProviderErrorPattern([]string{
 var retryableProviderErrorPattern = buildProviderErrorPattern([]string{
 	// Generic provider load, HTTP status, and server-side transient failures.
 	"overloaded",
+	"server_busy",
+	"servers are currently busy",
 	// Azure OpenAI's peak-load capacity refusal (#9669): a transient capacity
 	// message, not an account limit.
 	"currently experiencing high demand",
+	"model is at capacity",
 	"rate.?limit",
 	"too many requests",
 	"429",
@@ -116,14 +165,24 @@ var retryableProviderErrorPattern = buildProviderErrorPattern([]string{
 	"504",
 	"520", // Cloudflare unknown-error status (#9627)
 	"524", // Cloudflare origin-timeout status (#6239)
-	"service.?unavailable",
+	// Also matches "The service is temporarily unavailable" (#10965).
+	"service.?(?:is.?)?(?:temporarily.?)?unavailable",
 	"server.?error",
 	"internal.?error",
 
 	// Wrapper/provider text for transient upstream failures, including OpenRouter
-	// "Provider returned error" responses (#2264).
-	"provider.?returned.?error",
+	// "Provider returned error" responses (#2264) and gateway wording such as
+	// "The upstream provider returned an error" (#10842).
+	"provider.?returned.?(?:an.?)?error",
 	"exceeded request buffer limit while retrying upstream",
+	// Gateway failure relaying the upstream response stream, sent as an OpenAI
+	// Responses `response.failed` event without an error code (#10920).
+	"unable to forward upstream",
+	// Other gateway upstream failures relayed as `response.failed` error codes (#10920).
+	"upstream.?request.?failed",
+	"upstream_stream_read_error",
+	"stream was interrupted",
+	"http/?2 stream failed",
 
 	// Network, proxy, and fetch transport failures. This includes OpenAI Codex
 	// raw-fetch failures such as "upstream connect", "connection refused", and
@@ -134,6 +193,9 @@ var retryableProviderErrorPattern = buildProviderErrorPattern([]string{
 	"connection.?lost",
 	"other side closed",
 	"fetch failed",
+	// node-fetch system errors, e.g. the Google ADC OAuth token refresh used by
+	// google-vertex. The reason is often empty (#10996).
+	`request to \S+ failed, reason:`,
 	// DNS resolution failures surface as node/libuv transport errors (#6904).
 	"getaddrinfo",
 	"ENOTFOUND",
@@ -157,6 +219,9 @@ var retryableProviderErrorPattern = buildProviderErrorPattern([]string{
 	"stream ended before message_stop",
 	"stream ended before a terminal response event",
 	"http2 request did not get a response",
+	// Node ERR_HTTP2_STREAM_CANCEL: the HTTP/2 session died before the request was
+	// sent, e.g. after the Bedrock SDK's 5-minute session timeout (#10379).
+	"pending stream has been canceled",
 
 	// Provider-requested retry delay cap failures should flow through the outer
 	// retry policy so callers can surface/abort the backoff (#1123).

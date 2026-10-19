@@ -1,12 +1,12 @@
 {
-	"sha": "3dd803d7e",
+	"sha": "d2e7d8b7c",
 	"patterns": {
 		"NON_RETRYABLE_PROVIDER_LIMIT_ERROR_PATTERN": {
 			"source": "GoUsageLimitError|FreeUsageLimitError|Monthly usage limit reached|available balance|insufficient_quota|out of budget|quota exceeded|billing|subscription_sharing_usage_limit_exceeded",
 			"flags": "i"
 		},
 		"RETRYABLE_PROVIDER_ERROR_PATTERN": {
-			"source": "overloaded|currently experiencing high demand|rate.?limit|too many requests|429|500|502|503|504|520|524|service.?unavailable|server.?error|internal.?error|provider.?returned.?error|exceeded request buffer limit while retrying upstream|network.?error|connection.?error|connection.?refused|connection.?lost|other side closed|fetch failed|getaddrinfo|ENOTFOUND|EAI_AGAIN|upstream.?connect|reset before headers|socket hang up|socket connection was closed|timed? out|timeout|terminated|websocket.?closed|websocket.?error|ended without|stream ended before message_stop|stream ended before a terminal response event|http2 request did not get a response|retry delay|you can retry your request|try your request again|please retry your request|ResourceExhausted|subscription_sharing_usage_unavailable|subscription_sharing_user_unavailable",
+			"source": "overloaded|server_busy|servers are currently busy|currently experiencing high demand|model is at capacity|rate.?limit|too many requests|429|500|502|503|504|520|524|service.?(?:is.?)?(?:temporarily.?)?unavailable|server.?error|internal.?error|provider.?returned.?(?:an.?)?error|exceeded request buffer limit while retrying upstream|unable to forward upstream|upstream.?request.?failed|upstream_stream_read_error|stream was interrupted|http\\/?2 stream failed|network.?error|connection.?error|connection.?refused|connection.?lost|other side closed|fetch failed|request to \\S+ failed, reason:|getaddrinfo|ENOTFOUND|EAI_AGAIN|upstream.?connect|reset before headers|socket hang up|socket connection was closed|timed? out|timeout|terminated|websocket.?closed|websocket.?error|ended without|stream ended before message_stop|stream ended before a terminal response event|http2 request did not get a response|pending stream has been canceled|retry delay|you can retry your request|try your request again|please retry your request|ResourceExhausted|subscription_sharing_usage_unavailable|subscription_sharing_user_unavailable",
 			"flags": "i"
 		}
 	},
@@ -177,6 +177,118 @@
 			"retryable": true
 		},
 		{
+			"covers": "pi: HTTP/2 pending stream cancellation (#10379)",
+			"stopReason": "error",
+			"errorMessage": "The pending stream has been canceled",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "pi: HTTP/2 pending stream cancellation (#10379)",
+			"stopReason": "error",
+			"errorMessage": "The pending stream has been canceled (caused by: socket closed)",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "pi: service temporarily unavailable (#10965)",
+			"stopReason": "error",
+			"errorMessage": "The service is temporarily unavailable. Please retry later.",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "pi: Bedrock ServiceUnavailableException",
+			"stopReason": "error",
+			"errorMessage": "Service unavailable: The service is temporarily unavailable.",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "pi: node-fetch request failure (#10996)",
+			"stopReason": "error",
+			"errorMessage": "request to https://oauth2.googleapis.com/token failed, reason:",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "pi: node-fetch request failure (#10996)",
+			"stopReason": "error",
+			"errorMessage": "request to https://oauth2.googleapis.com/token failed, reason: connect ECONNREFUSED 127.0.0.1:9",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "pi: gateway upstream failure (#10920)",
+			"stopReason": "error",
+			"errorMessage": "unknown: Unable to forward upstream stream",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "pi: gateway upstream failure (#10920)",
+			"stopReason": "error",
+			"errorMessage": "upstream_error: Upstream request failed",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "pi: gateway upstream failure (#10920)",
+			"stopReason": "error",
+			"errorMessage": "upstream_stream_read_error: Upstream response stream was interrupted",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "pi: gateway upstream failure (#10920)",
+			"stopReason": "error",
+			"errorMessage": "Upstream HTTP/2 stream failed",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "pi: model at capacity (#10278)",
+			"stopReason": "error",
+			"errorMessage": "Selected model is at capacity",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "pi: server busy (#10543)",
+			"stopReason": "error",
+			"errorMessage": "server_busy",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "pi: server busy (#10543)",
+			"stopReason": "error",
+			"errorMessage": "servers are currently busy",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "pi: upstream provider returned an error (#10842)",
+			"stopReason": "error",
+			"errorMessage": "The upstream provider returned an error",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
 			"covers": "guard: stop",
 			"stopReason": "stop",
 			"errorMessage": "overloaded",
@@ -230,9 +342,33 @@
 			"retryable": true
 		},
 		{
+			"covers": "server_busy",
+			"stopReason": "error",
+			"errorMessage": "Server_Busy",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "servers are currently busy",
+			"stopReason": "error",
+			"errorMessage": "The Servers Are Currently Busy",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
 			"covers": "currently experiencing high demand",
 			"stopReason": "error",
 			"errorMessage": "Currently Experiencing High Demand",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "model is at capacity",
+			"stopReason": "error",
+			"errorMessage": "Model Is At Capacity",
 			"limitPattern": false,
 			"retryablePattern": true,
 			"retryable": true
@@ -310,9 +446,33 @@
 			"retryable": true
 		},
 		{
-			"covers": "service.?unavailable",
+			"covers": "service.?(?:is.?)?(?:temporarily.?)?unavailable",
 			"stopReason": "error",
 			"errorMessage": "Service Unavailable",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "service.?(?:is.?)?(?:temporarily.?)?unavailable",
+			"stopReason": "error",
+			"errorMessage": "service is unavailable",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "service.?(?:is.?)?(?:temporarily.?)?unavailable",
+			"stopReason": "error",
+			"errorMessage": "Service-Temporarily-Unavailable",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "service.?(?:is.?)?(?:temporarily.?)?unavailable",
+			"stopReason": "error",
+			"errorMessage": "serviceistemporarilyunavailable",
 			"limitPattern": false,
 			"retryablePattern": true,
 			"retryable": true
@@ -334,9 +494,73 @@
 			"retryable": true
 		},
 		{
-			"covers": "provider.?returned.?error",
+			"covers": "provider.?returned.?(?:an.?)?error",
 			"stopReason": "error",
 			"errorMessage": "Provider returned error",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "provider.?returned.?(?:an.?)?error",
+			"stopReason": "error",
+			"errorMessage": "provider_returned_an_error",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "provider.?returned.?(?:an.?)?error",
+			"stopReason": "error",
+			"errorMessage": "provider returned anerror",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "unable to forward upstream",
+			"stopReason": "error",
+			"errorMessage": "UNABLE TO FORWARD UPSTREAM",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "upstream.?request.?failed",
+			"stopReason": "error",
+			"errorMessage": "upstream_request_failed",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "upstream_stream_read_error",
+			"stopReason": "error",
+			"errorMessage": "Upstream_Stream_Read_Error",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "stream was interrupted",
+			"stopReason": "error",
+			"errorMessage": "Stream Was Interrupted",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "http/?2 stream failed",
+			"stopReason": "error",
+			"errorMessage": "http2 stream failed",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "http/?2 stream failed",
+			"stopReason": "error",
+			"errorMessage": "HTTP/2 Stream Failed",
 			"limitPattern": false,
 			"retryablePattern": true,
 			"retryable": true
@@ -385,6 +609,22 @@
 			"covers": "fetch failed",
 			"stopReason": "error",
 			"errorMessage": "TypeError: fetch failed",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "request to \\S+ failed, reason:",
+			"stopReason": "error",
+			"errorMessage": "FetchError: Request to https://x failed, reason: socket hang",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "request to \\S+ failed, reason:",
+			"stopReason": "error",
+			"errorMessage": "request to x failed, reason:",
 			"limitPattern": false,
 			"retryablePattern": true,
 			"retryable": true
@@ -513,6 +753,14 @@
 			"covers": "http2 request did not get a response",
 			"stopReason": "error",
 			"errorMessage": "http2 request did not get a response",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "pending stream has been canceled",
+			"stopReason": "error",
+			"errorMessage": "PENDING STREAM HAS BEEN CANCELED",
 			"limitPattern": false,
 			"retryablePattern": true,
 			"retryable": true
@@ -776,6 +1024,134 @@
 		{
 			"covers": "near-miss",
 			"stopReason": "error",
+			"errorMessage": "service is temporarily  unavailable",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "near-miss",
+			"stopReason": "error",
+			"errorMessage": "service was temporarily unavailable",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "near-miss",
+			"stopReason": "error",
+			"errorMessage": "service temporarily is unavailable",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "near-miss",
+			"stopReason": "error",
+			"errorMessage": "server busy",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "near-miss",
+			"stopReason": "error",
+			"errorMessage": "server is currently busy",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "near-miss",
+			"stopReason": "error",
+			"errorMessage": "model at capacity",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "near-miss",
+			"stopReason": "error",
+			"errorMessage": "unable to forward downstream",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "near-miss",
+			"stopReason": "error",
+			"errorMessage": "upstream read error",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "near-miss",
+			"stopReason": "error",
+			"errorMessage": "stream interrupted",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "near-miss",
+			"stopReason": "error",
+			"errorMessage": "http/1.1 stream failed",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "near-miss",
+			"stopReason": "error",
+			"errorMessage": "http//2 stream failed",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "near-miss",
+			"stopReason": "error",
+			"errorMessage": "pending stream has been cancelled",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "near-miss",
+			"stopReason": "error",
+			"errorMessage": "request to  failed, reason:",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "near-miss",
+			"stopReason": "error",
+			"errorMessage": "request to a b failed, reason:",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "near-miss",
+			"stopReason": "error",
+			"errorMessage": "request to https://x failed reason:",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "near-miss",
+			"stopReason": "error",
+			"errorMessage": "request to https://x failed, reason",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "near-miss",
+			"stopReason": "error",
 			"errorMessage": "subscription_sharing_usage unavailable",
 			"limitPattern": false,
 			"retryablePattern": false,
@@ -792,7 +1168,15 @@
 		{
 			"covers": "near-miss",
 			"stopReason": "error",
-			"errorMessage": "provider returned an error",
+			"errorMessage": "provider returned a error",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "near-miss",
+			"stopReason": "error",
+			"errorMessage": "provider returned  an error",
 			"limitPattern": false,
 			"retryablePattern": false,
 			"retryable": false
@@ -998,6 +1382,198 @@
 			"retryable": false
 		},
 		{
+			"covers": "dot: astral is two code units",
+			"stopReason": "error",
+			"errorMessage": "service is😀unavailable",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "dot: JS excludes U+2028",
+			"stopReason": "error",
+			"errorMessage": "provider returned an error",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "dot: JS excludes CR",
+			"stopReason": "error",
+			"errorMessage": "service\ris temporarily unavailable",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "dot: in a group",
+			"stopReason": "error",
+			"errorMessage": "serviceéisétemporarilyéunavailable",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "dot: in a group",
+			"stopReason": "error",
+			"errorMessage": "provider returned an﻿error",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "\\S: astral",
+			"stopReason": "error",
+			"errorMessage": "request to https://😀.example failed, reason:",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "\\S: non-ASCII",
+			"stopReason": "error",
+			"errorMessage": "request to https://bücher.example failed, reason:",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "\\S: U+FFFD",
+			"stopReason": "error",
+			"errorMessage": "request to � failed, reason:",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "\\S: JS excludes \\t",
+			"stopReason": "error",
+			"errorMessage": "request to a\tb failed, reason:",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "\\S: JS excludes \\v",
+			"stopReason": "error",
+			"errorMessage": "request to a\u000bb failed, reason:",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "\\S: JS excludes \\f",
+			"stopReason": "error",
+			"errorMessage": "request to a\fb failed, reason:",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "\\S: JS excludes U+00A0",
+			"stopReason": "error",
+			"errorMessage": "request to a b failed, reason:",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "\\S: JS excludes U+1680",
+			"stopReason": "error",
+			"errorMessage": "request to a b failed, reason:",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "\\S: JS excludes U+2000",
+			"stopReason": "error",
+			"errorMessage": "request to a b failed, reason:",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "\\S: JS excludes U+200A",
+			"stopReason": "error",
+			"errorMessage": "request to a b failed, reason:",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "\\S: JS excludes U+2028",
+			"stopReason": "error",
+			"errorMessage": "request to a b failed, reason:",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "\\S: JS excludes U+2029",
+			"stopReason": "error",
+			"errorMessage": "request to a b failed, reason:",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "\\S: JS excludes U+202F",
+			"stopReason": "error",
+			"errorMessage": "request to a b failed, reason:",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "\\S: JS excludes U+205F",
+			"stopReason": "error",
+			"errorMessage": "request to a b failed, reason:",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "\\S: JS excludes U+3000",
+			"stopReason": "error",
+			"errorMessage": "request to a　b failed, reason:",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "\\S: JS excludes U+FEFF",
+			"stopReason": "error",
+			"errorMessage": "request to a﻿b failed, reason:",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "\\S: U+180E is not a space",
+			"stopReason": "error",
+			"errorMessage": "request to a᠎b failed, reason:",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "\\S: U+200B is not a space",
+			"stopReason": "error",
+			"errorMessage": "request to a​b failed, reason:",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "\\S: U+0085 is not a space",
+			"stopReason": "error",
+			"errorMessage": "request to ab failed, reason:",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
 			"covers": "fold: U+212A is not k",
 			"stopReason": "error",
 			"errorMessage": "socKet hang up",
@@ -1049,6 +1625,38 @@
 			"covers": "fold: U+0130 is not I",
 			"stopReason": "error",
 			"errorMessage": "TİMEOUT",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "fold: U+017F is not s",
+			"stopReason": "error",
+			"errorMessage": "upſtream_stream_read_error",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "fold: U+017F is not s",
+			"stopReason": "error",
+			"errorMessage": "ſerver_busy",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "fold: U+017F is not s in a group",
+			"stopReason": "error",
+			"errorMessage": "service iſ temporarily unavailable",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "fold: U+017F is not s before \\S",
+			"stopReason": "error",
+			"errorMessage": "Requeſt to https://x failed, reason:",
 			"limitPattern": false,
 			"retryablePattern": false,
 			"retryable": false
