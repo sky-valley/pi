@@ -36,7 +36,10 @@ let modulePath;
 if (src) {
 	const agent = path.join(extraction, "packages/coding-agent");
 	const modules = path.join(agent, "node_modules");
-	if (!fs.existsSync(modules)) fs.symlinkSync(path.join(pkg, "node_modules"), modules);
+	// 1.x installs hoist the package's dependencies into the build's own
+	// node_modules (no shrinkwrap since 581e7ba78); older ones nest them.
+	const nested = path.join(pkg, "node_modules");
+	if (!fs.existsSync(modules)) fs.symlinkSync(fs.existsSync(nested) ? nested : path.join(npmDir, "node_modules"), modules);
 	source = { sha };
 	modulePath = path.join(agent, "src/core/model-resolver.ts");
 } else {
