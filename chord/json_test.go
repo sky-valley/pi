@@ -208,10 +208,10 @@ func TestCopyJSON(t *testing.T) {
 	}
 }
 
-// IsValue is on protocol's hot path — requireOpaqueJSON checks every call,
-// result and update payload with it — so a tree encoding/json decoded is
-// checked without allocating: no sorted keys, no boxed values, and no
-// ancestor set until the walk is deep enough to be a cycle.
+// IsValue is chord's public strict-JSON check (pi isJsonValue, a root export),
+// which a host may run over every payload it relays, so a tree encoding/json
+// decoded is checked without allocating: no sorted keys, no boxed values, and
+// no ancestor set until the walk is deep enough to be a cycle.
 func TestIsValueDoesNotAllocate(t *testing.T) {
 	rows := make([]any, 2_000)
 	for i := range rows {
