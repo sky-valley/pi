@@ -698,10 +698,7 @@ func fauxClone(message *ai.AssistantMessage, api, provider, modelID string) *ai.
 }
 
 func fauxErrorMessage(err error, api, provider, modelID string) *ai.AssistantMessage {
-	return &ai.AssistantMessage{
-		Content: ai.ContentList{}, Api: api, Provider: provider, Model: modelID,
-		StopReason: ai.StopError, ErrorMessage: err.Error(), Timestamp: nowMillis(),
-	}
+	return ai.NewErrorMessage(ai.Api(api), ai.ProviderId(provider), modelID, ai.StopError, err.Error())
 }
 
 func fauxAbortedMessage(partial *ai.AssistantMessage) *ai.AssistantMessage {

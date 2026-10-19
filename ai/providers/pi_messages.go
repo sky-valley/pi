@@ -843,16 +843,7 @@ func createPiMessagesErrorEvent(model *ai.Model, err error, aborted bool) ai.Ass
 	if aborted {
 		reason = ai.StopAborted
 	}
-	msg := &ai.AssistantMessage{
-		Content:      ai.ContentList{},
-		Api:          model.Api,
-		Provider:     model.Provider,
-		Model:        model.ID,
-		Usage:        ai.Usage{},
-		StopReason:   reason,
-		ErrorMessage: err.Error(),
-		Timestamp:    nowMillis(),
-	}
+	msg := ai.NewErrorMessage(model.Api, model.Provider, model.ID, reason, err.Error())
 	if !aborted {
 		if re, ok := err.(*piMessagesResponseError); ok {
 			msg.Diagnostics = append(msg.Diagnostics, ai.Diagnostic{

@@ -1,0 +1,1543 @@
+{
+	"piAi": "1.3.0",
+	"rows": [
+		{
+			"name": "anthropic-messages/success",
+			"api": "anthropic-messages",
+			"scenario": "success",
+			"layer": "stream",
+			"keys": [
+				"role",
+				"content",
+				"api",
+				"provider",
+				"model",
+				"usage",
+				"stopReason",
+				"timestamp",
+				"providerThinkingLevel",
+				"responseId",
+				"responseModel",
+				"rawStopReason",
+				"diagnostics",
+				"durationMs"
+			],
+			"contentKeys": [
+				[
+					"type",
+					"thinking",
+					"thinkingSignature"
+				],
+				[
+					"type",
+					"text"
+				],
+				[
+					"type",
+					"id",
+					"name",
+					"arguments"
+				]
+			],
+			"usageKeys": [
+				"input",
+				"output",
+				"cacheRead",
+				"cacheWrite",
+				"totalTokens",
+				"cost",
+				"cacheWrite1h"
+			],
+			"message": {
+				"role": "assistant",
+				"content": [
+					{
+						"type": "thinking",
+						"thinking": "hmm",
+						"thinkingSignature": "sig"
+					},
+					{
+						"type": "text",
+						"text": "hi"
+					},
+					{
+						"type": "toolCall",
+						"id": "toolu_1",
+						"name": "read",
+						"arguments": {
+							"path": "a"
+						}
+					}
+				],
+				"api": "anthropic-messages",
+				"provider": "anthropic",
+				"model": "claude-fable-5-1",
+				"usage": {
+					"input": 5,
+					"output": 3,
+					"cacheRead": 0,
+					"cacheWrite": 4,
+					"totalTokens": 12,
+					"cost": {
+						"input": 0.0000049999999999999996,
+						"output": 0.000006,
+						"cacheRead": 0,
+						"cacheWrite": 0.000008,
+						"total": 0.000019
+					},
+					"cacheWrite1h": 4
+				},
+				"stopReason": "toolUse",
+				"timestamp": 1792422909801,
+				"providerThinkingLevel": "low",
+				"responseId": "msg_1",
+				"responseModel": "claude-fable-5-1-relabeled",
+				"rawStopReason": "tool_use",
+				"diagnostics": [
+					{
+						"type": "anthropic_input_transformations",
+						"timestamp": 1792422909810,
+						"details": {
+							"transformations": [
+								{
+									"type": "thinking_dropped",
+									"path": "messages[0]",
+									"reason": "r"
+								}
+							]
+						}
+					}
+				],
+				"durationMs": 10
+			}
+		},
+		{
+			"name": "anthropic-messages/success/agent",
+			"api": "anthropic-messages",
+			"scenario": "success",
+			"layer": "agent",
+			"keys": [
+				"role",
+				"content",
+				"api",
+				"provider",
+				"model",
+				"usage",
+				"stopReason",
+				"timestamp",
+				"providerThinkingLevel",
+				"responseId",
+				"responseModel",
+				"rawStopReason",
+				"diagnostics",
+				"durationMs",
+				"thinkingLevel"
+			],
+			"contentKeys": [
+				[
+					"type",
+					"thinking",
+					"thinkingSignature"
+				],
+				[
+					"type",
+					"text"
+				],
+				[
+					"type",
+					"id",
+					"name",
+					"arguments"
+				]
+			],
+			"usageKeys": [
+				"input",
+				"output",
+				"cacheRead",
+				"cacheWrite",
+				"totalTokens",
+				"cost",
+				"cacheWrite1h"
+			],
+			"message": {
+				"role": "assistant",
+				"content": [
+					{
+						"type": "thinking",
+						"thinking": "hmm",
+						"thinkingSignature": "sig"
+					},
+					{
+						"type": "text",
+						"text": "hi"
+					},
+					{
+						"type": "toolCall",
+						"id": "toolu_1",
+						"name": "read",
+						"arguments": {
+							"path": "a"
+						}
+					}
+				],
+				"api": "anthropic-messages",
+				"provider": "anthropic",
+				"model": "claude-fable-5-1",
+				"usage": {
+					"input": 5,
+					"output": 3,
+					"cacheRead": 0,
+					"cacheWrite": 4,
+					"totalTokens": 12,
+					"cost": {
+						"input": 0.0000049999999999999996,
+						"output": 0.000006,
+						"cacheRead": 0,
+						"cacheWrite": 0.000008,
+						"total": 0.000019
+					},
+					"cacheWrite1h": 4
+				},
+				"stopReason": "toolUse",
+				"timestamp": 1792422909811,
+				"providerThinkingLevel": "low",
+				"responseId": "msg_1",
+				"responseModel": "claude-fable-5-1-relabeled",
+				"rawStopReason": "tool_use",
+				"diagnostics": [
+					{
+						"type": "anthropic_input_transformations",
+						"timestamp": 1792422909812,
+						"details": {
+							"transformations": [
+								{
+									"type": "thinking_dropped",
+									"path": "messages[0]",
+									"reason": "r"
+								}
+							]
+						}
+					}
+				],
+				"durationMs": 1,
+				"thinkingLevel": "low"
+			}
+		},
+		{
+			"name": "anthropic-messages/error",
+			"api": "anthropic-messages",
+			"scenario": "error",
+			"layer": "stream",
+			"keys": [
+				"role",
+				"content",
+				"api",
+				"provider",
+				"model",
+				"usage",
+				"stopReason",
+				"timestamp",
+				"providerThinkingLevel",
+				"errorMessage",
+				"durationMs"
+			],
+			"contentKeys": [],
+			"usageKeys": [
+				"input",
+				"output",
+				"cacheRead",
+				"cacheWrite",
+				"totalTokens",
+				"cost"
+			],
+			"message": {
+				"role": "assistant",
+				"content": [],
+				"api": "anthropic-messages",
+				"provider": "anthropic",
+				"model": "claude-fable-5-1",
+				"usage": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"totalTokens": 0,
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0
+					}
+				},
+				"stopReason": "error",
+				"timestamp": 1792422909812,
+				"providerThinkingLevel": "low",
+				"errorMessage": "400 {\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"bad request\"}}",
+				"durationMs": 1
+			}
+		},
+		{
+			"name": "anthropic-messages/error/agent",
+			"api": "anthropic-messages",
+			"scenario": "error",
+			"layer": "agent",
+			"keys": [
+				"role",
+				"content",
+				"api",
+				"provider",
+				"model",
+				"usage",
+				"stopReason",
+				"timestamp",
+				"providerThinkingLevel",
+				"errorMessage",
+				"durationMs",
+				"thinkingLevel"
+			],
+			"contentKeys": [],
+			"usageKeys": [
+				"input",
+				"output",
+				"cacheRead",
+				"cacheWrite",
+				"totalTokens",
+				"cost"
+			],
+			"message": {
+				"role": "assistant",
+				"content": [],
+				"api": "anthropic-messages",
+				"provider": "anthropic",
+				"model": "claude-fable-5-1",
+				"usage": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"totalTokens": 0,
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0
+					}
+				},
+				"stopReason": "error",
+				"timestamp": 1792422909813,
+				"providerThinkingLevel": "low",
+				"errorMessage": "400 {\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"bad request\"}}",
+				"durationMs": 0,
+				"thinkingLevel": "low"
+			}
+		},
+		{
+			"name": "openai-completions/success",
+			"api": "openai-completions",
+			"scenario": "success",
+			"layer": "stream",
+			"keys": [
+				"role",
+				"content",
+				"api",
+				"provider",
+				"model",
+				"usage",
+				"stopReason",
+				"timestamp",
+				"responseId",
+				"responseModel",
+				"rawStopReason",
+				"durationMs"
+			],
+			"contentKeys": [
+				[
+					"type",
+					"thinking",
+					"thinkingSignature"
+				],
+				[
+					"type",
+					"text"
+				],
+				[
+					"type",
+					"id",
+					"name",
+					"arguments"
+				]
+			],
+			"usageKeys": [
+				"input",
+				"output",
+				"cacheRead",
+				"cacheWrite",
+				"reasoning",
+				"totalTokens",
+				"cost"
+			],
+			"message": {
+				"role": "assistant",
+				"content": [
+					{
+						"type": "thinking",
+						"thinking": "hmm",
+						"thinkingSignature": "reasoning_content"
+					},
+					{
+						"type": "text",
+						"text": "hi"
+					},
+					{
+						"type": "toolCall",
+						"id": "call_1",
+						"name": "read",
+						"arguments": {
+							"path": "a"
+						}
+					}
+				],
+				"api": "openai-completions",
+				"provider": "openai",
+				"model": "gpt-4o",
+				"usage": {
+					"input": 5,
+					"output": 3,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"reasoning": 0,
+					"totalTokens": 8,
+					"cost": {
+						"input": 0.0000049999999999999996,
+						"output": 0.000006,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0.000011
+					}
+				},
+				"stopReason": "toolUse",
+				"timestamp": 1792422909904,
+				"responseId": "chatcmpl_1",
+				"responseModel": "gpt-4o-2024",
+				"rawStopReason": "tool_calls",
+				"durationMs": 5
+			}
+		},
+		{
+			"name": "openai-completions/success/agent",
+			"api": "openai-completions",
+			"scenario": "success",
+			"layer": "agent",
+			"keys": [
+				"role",
+				"content",
+				"api",
+				"provider",
+				"model",
+				"usage",
+				"stopReason",
+				"timestamp",
+				"responseId",
+				"responseModel",
+				"rawStopReason",
+				"durationMs",
+				"thinkingLevel"
+			],
+			"contentKeys": [
+				[
+					"type",
+					"thinking",
+					"thinkingSignature"
+				],
+				[
+					"type",
+					"text"
+				],
+				[
+					"type",
+					"id",
+					"name",
+					"arguments"
+				]
+			],
+			"usageKeys": [
+				"input",
+				"output",
+				"cacheRead",
+				"cacheWrite",
+				"reasoning",
+				"totalTokens",
+				"cost"
+			],
+			"message": {
+				"role": "assistant",
+				"content": [
+					{
+						"type": "thinking",
+						"thinking": "hmm",
+						"thinkingSignature": "reasoning_content"
+					},
+					{
+						"type": "text",
+						"text": "hi"
+					},
+					{
+						"type": "toolCall",
+						"id": "call_1",
+						"name": "read",
+						"arguments": {
+							"path": "a"
+						}
+					}
+				],
+				"api": "openai-completions",
+				"provider": "openai",
+				"model": "gpt-4o",
+				"usage": {
+					"input": 5,
+					"output": 3,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"reasoning": 0,
+					"totalTokens": 8,
+					"cost": {
+						"input": 0.0000049999999999999996,
+						"output": 0.000006,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0.000011
+					}
+				},
+				"stopReason": "toolUse",
+				"timestamp": 1792422909909,
+				"responseId": "chatcmpl_1",
+				"responseModel": "gpt-4o-2024",
+				"rawStopReason": "tool_calls",
+				"durationMs": 1,
+				"thinkingLevel": "low"
+			}
+		},
+		{
+			"name": "openai-completions/error",
+			"api": "openai-completions",
+			"scenario": "error",
+			"layer": "stream",
+			"keys": [
+				"role",
+				"content",
+				"api",
+				"provider",
+				"model",
+				"usage",
+				"stopReason",
+				"timestamp",
+				"errorMessage",
+				"durationMs"
+			],
+			"contentKeys": [],
+			"usageKeys": [
+				"input",
+				"output",
+				"cacheRead",
+				"cacheWrite",
+				"totalTokens",
+				"cost"
+			],
+			"message": {
+				"role": "assistant",
+				"content": [],
+				"api": "openai-completions",
+				"provider": "openai",
+				"model": "gpt-4o",
+				"usage": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"totalTokens": 0,
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0
+					}
+				},
+				"stopReason": "error",
+				"timestamp": 1792422909909,
+				"errorMessage": "400: {\"type\":\"invalid_request_error\",\"message\":\"bad request\"}",
+				"durationMs": 1
+			}
+		},
+		{
+			"name": "openai-completions/error/agent",
+			"api": "openai-completions",
+			"scenario": "error",
+			"layer": "agent",
+			"keys": [
+				"role",
+				"content",
+				"api",
+				"provider",
+				"model",
+				"usage",
+				"stopReason",
+				"timestamp",
+				"errorMessage",
+				"durationMs",
+				"thinkingLevel"
+			],
+			"contentKeys": [],
+			"usageKeys": [
+				"input",
+				"output",
+				"cacheRead",
+				"cacheWrite",
+				"totalTokens",
+				"cost"
+			],
+			"message": {
+				"role": "assistant",
+				"content": [],
+				"api": "openai-completions",
+				"provider": "openai",
+				"model": "gpt-4o",
+				"usage": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"totalTokens": 0,
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0
+					}
+				},
+				"stopReason": "error",
+				"timestamp": 1792422909910,
+				"errorMessage": "400: {\"type\":\"invalid_request_error\",\"message\":\"bad request\"}",
+				"durationMs": 0,
+				"thinkingLevel": "low"
+			}
+		},
+		{
+			"name": "openai-responses/success",
+			"api": "openai-responses",
+			"scenario": "success",
+			"layer": "stream",
+			"keys": [
+				"role",
+				"content",
+				"api",
+				"provider",
+				"model",
+				"providerThinkingLevel",
+				"usage",
+				"stopReason",
+				"timestamp",
+				"responseId",
+				"rawStopReason",
+				"durationMs"
+			],
+			"contentKeys": [
+				[
+					"type",
+					"thinking",
+					"thinkingSignature"
+				],
+				[
+					"type",
+					"text",
+					"textSignature"
+				],
+				[
+					"type",
+					"id",
+					"name",
+					"arguments"
+				]
+			],
+			"usageKeys": [
+				"input",
+				"output",
+				"cacheRead",
+				"cacheWrite",
+				"reasoning",
+				"totalTokens",
+				"cost"
+			],
+			"message": {
+				"role": "assistant",
+				"content": [
+					{
+						"type": "thinking",
+						"thinking": "hmm",
+						"thinkingSignature": "{\"type\":\"reasoning\",\"id\":\"rs_1\",\"summary\":[{\"type\":\"summary_text\",\"text\":\"hmm\"}]}"
+					},
+					{
+						"type": "text",
+						"text": "hi",
+						"textSignature": "{\"v\":1,\"id\":\"msg_1\"}"
+					},
+					{
+						"type": "toolCall",
+						"id": "call_1|fc_1",
+						"name": "read",
+						"arguments": {
+							"path": "a"
+						}
+					}
+				],
+				"api": "openai-responses",
+				"provider": "openai",
+				"model": "gpt-6-luna",
+				"providerThinkingLevel": "low",
+				"usage": {
+					"input": 5,
+					"output": 3,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"reasoning": 0,
+					"totalTokens": 8,
+					"cost": {
+						"input": 0.0000049999999999999996,
+						"output": 0.000006,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0.000011
+					}
+				},
+				"stopReason": "toolUse",
+				"timestamp": 1792422909915,
+				"responseId": "resp_1",
+				"rawStopReason": "completed",
+				"durationMs": 2
+			}
+		},
+		{
+			"name": "openai-responses/success/agent",
+			"api": "openai-responses",
+			"scenario": "success",
+			"layer": "agent",
+			"keys": [
+				"role",
+				"content",
+				"api",
+				"provider",
+				"model",
+				"providerThinkingLevel",
+				"usage",
+				"stopReason",
+				"timestamp",
+				"responseId",
+				"rawStopReason",
+				"durationMs",
+				"thinkingLevel"
+			],
+			"contentKeys": [
+				[
+					"type",
+					"thinking",
+					"thinkingSignature"
+				],
+				[
+					"type",
+					"text",
+					"textSignature"
+				],
+				[
+					"type",
+					"id",
+					"name",
+					"arguments"
+				]
+			],
+			"usageKeys": [
+				"input",
+				"output",
+				"cacheRead",
+				"cacheWrite",
+				"reasoning",
+				"totalTokens",
+				"cost"
+			],
+			"message": {
+				"role": "assistant",
+				"content": [
+					{
+						"type": "thinking",
+						"thinking": "hmm",
+						"thinkingSignature": "{\"type\":\"reasoning\",\"id\":\"rs_1\",\"summary\":[{\"type\":\"summary_text\",\"text\":\"hmm\"}]}"
+					},
+					{
+						"type": "text",
+						"text": "hi",
+						"textSignature": "{\"v\":1,\"id\":\"msg_1\"}"
+					},
+					{
+						"type": "toolCall",
+						"id": "call_1|fc_1",
+						"name": "read",
+						"arguments": {
+							"path": "a"
+						}
+					}
+				],
+				"api": "openai-responses",
+				"provider": "openai",
+				"model": "gpt-6-luna",
+				"providerThinkingLevel": "low",
+				"usage": {
+					"input": 5,
+					"output": 3,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"reasoning": 0,
+					"totalTokens": 8,
+					"cost": {
+						"input": 0.0000049999999999999996,
+						"output": 0.000006,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0.000011
+					}
+				},
+				"stopReason": "toolUse",
+				"timestamp": 1792422909917,
+				"responseId": "resp_1",
+				"rawStopReason": "completed",
+				"durationMs": 1,
+				"thinkingLevel": "low"
+			}
+		},
+		{
+			"name": "openai-responses/error",
+			"api": "openai-responses",
+			"scenario": "error",
+			"layer": "stream",
+			"keys": [
+				"role",
+				"content",
+				"api",
+				"provider",
+				"model",
+				"providerThinkingLevel",
+				"usage",
+				"stopReason",
+				"timestamp",
+				"errorMessage",
+				"durationMs"
+			],
+			"contentKeys": [],
+			"usageKeys": [
+				"input",
+				"output",
+				"cacheRead",
+				"cacheWrite",
+				"totalTokens",
+				"cost"
+			],
+			"message": {
+				"role": "assistant",
+				"content": [],
+				"api": "openai-responses",
+				"provider": "openai",
+				"model": "gpt-6-luna",
+				"providerThinkingLevel": "low",
+				"usage": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"totalTokens": 0,
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0
+					}
+				},
+				"stopReason": "error",
+				"timestamp": 1792422909918,
+				"errorMessage": "OpenAI API error (400): {\"type\":\"invalid_request_error\",\"message\":\"bad request\"}",
+				"durationMs": 1
+			}
+		},
+		{
+			"name": "openai-responses/error/agent",
+			"api": "openai-responses",
+			"scenario": "error",
+			"layer": "agent",
+			"keys": [
+				"role",
+				"content",
+				"api",
+				"provider",
+				"model",
+				"providerThinkingLevel",
+				"usage",
+				"stopReason",
+				"timestamp",
+				"errorMessage",
+				"durationMs",
+				"thinkingLevel"
+			],
+			"contentKeys": [],
+			"usageKeys": [
+				"input",
+				"output",
+				"cacheRead",
+				"cacheWrite",
+				"totalTokens",
+				"cost"
+			],
+			"message": {
+				"role": "assistant",
+				"content": [],
+				"api": "openai-responses",
+				"provider": "openai",
+				"model": "gpt-6-luna",
+				"providerThinkingLevel": "low",
+				"usage": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"totalTokens": 0,
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0
+					}
+				},
+				"stopReason": "error",
+				"timestamp": 1792422909918,
+				"errorMessage": "OpenAI API error (400): {\"type\":\"invalid_request_error\",\"message\":\"bad request\"}",
+				"durationMs": 0,
+				"thinkingLevel": "low"
+			}
+		},
+		{
+			"name": "google-generative-ai/success",
+			"api": "google-generative-ai",
+			"scenario": "success",
+			"layer": "stream",
+			"keys": [
+				"role",
+				"content",
+				"api",
+				"provider",
+				"model",
+				"usage",
+				"stopReason",
+				"timestamp",
+				"responseId",
+				"rawStopReason",
+				"durationMs"
+			],
+			"contentKeys": [
+				[
+					"type",
+					"thinking",
+					"thinkingSignature"
+				],
+				[
+					"type",
+					"text"
+				],
+				[
+					"type",
+					"id",
+					"name",
+					"arguments"
+				]
+			],
+			"usageKeys": [
+				"input",
+				"output",
+				"cacheRead",
+				"cacheWrite",
+				"reasoning",
+				"totalTokens",
+				"cost"
+			],
+			"message": {
+				"role": "assistant",
+				"content": [
+					{
+						"type": "thinking",
+						"thinking": "hmm",
+						"thinkingSignature": "c2ln"
+					},
+					{
+						"type": "text",
+						"text": "hi"
+					},
+					{
+						"type": "toolCall",
+						"id": "read_1792422910018_1",
+						"name": "read",
+						"arguments": {
+							"path": "a"
+						}
+					}
+				],
+				"api": "google-generative-ai",
+				"provider": "google",
+				"model": "gemini-2.5-pro",
+				"usage": {
+					"input": 5,
+					"output": 3,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"reasoning": 0,
+					"totalTokens": 8,
+					"cost": {
+						"input": 0.0000049999999999999996,
+						"output": 0.000006,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0.000011
+					}
+				},
+				"stopReason": "toolUse",
+				"timestamp": 1792422909991,
+				"responseId": "r_1",
+				"rawStopReason": "STOP",
+				"durationMs": 27
+			}
+		},
+		{
+			"name": "google-generative-ai/success/agent",
+			"api": "google-generative-ai",
+			"scenario": "success",
+			"layer": "agent",
+			"keys": [
+				"role",
+				"content",
+				"api",
+				"provider",
+				"model",
+				"usage",
+				"stopReason",
+				"timestamp",
+				"responseId",
+				"rawStopReason",
+				"durationMs",
+				"thinkingLevel"
+			],
+			"contentKeys": [
+				[
+					"type",
+					"thinking",
+					"thinkingSignature"
+				],
+				[
+					"type",
+					"text"
+				],
+				[
+					"type",
+					"id",
+					"name",
+					"arguments"
+				]
+			],
+			"usageKeys": [
+				"input",
+				"output",
+				"cacheRead",
+				"cacheWrite",
+				"reasoning",
+				"totalTokens",
+				"cost"
+			],
+			"message": {
+				"role": "assistant",
+				"content": [
+					{
+						"type": "thinking",
+						"thinking": "hmm",
+						"thinkingSignature": "c2ln"
+					},
+					{
+						"type": "text",
+						"text": "hi"
+					},
+					{
+						"type": "toolCall",
+						"id": "read_1792422910021_2",
+						"name": "read",
+						"arguments": {
+							"path": "a"
+						}
+					}
+				],
+				"api": "google-generative-ai",
+				"provider": "google",
+				"model": "gemini-2.5-pro",
+				"usage": {
+					"input": 5,
+					"output": 3,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"reasoning": 0,
+					"totalTokens": 8,
+					"cost": {
+						"input": 0.0000049999999999999996,
+						"output": 0.000006,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0.000011
+					}
+				},
+				"stopReason": "toolUse",
+				"timestamp": 1792422910018,
+				"responseId": "r_1",
+				"rawStopReason": "STOP",
+				"durationMs": 3,
+				"thinkingLevel": "low"
+			}
+		},
+		{
+			"name": "google-generative-ai/error",
+			"api": "google-generative-ai",
+			"scenario": "error",
+			"layer": "stream",
+			"keys": [
+				"role",
+				"content",
+				"api",
+				"provider",
+				"model",
+				"usage",
+				"stopReason",
+				"timestamp",
+				"errorMessage",
+				"durationMs"
+			],
+			"contentKeys": [],
+			"usageKeys": [
+				"input",
+				"output",
+				"cacheRead",
+				"cacheWrite",
+				"totalTokens",
+				"cost"
+			],
+			"message": {
+				"role": "assistant",
+				"content": [],
+				"api": "google-generative-ai",
+				"provider": "google",
+				"model": "gemini-2.5-pro",
+				"usage": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"totalTokens": 0,
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0
+					}
+				},
+				"stopReason": "error",
+				"timestamp": 1792422910021,
+				"errorMessage": "{\"error\":{\"code\":400,\"message\":\"bad request\",\"status\":\"INVALID_ARGUMENT\"}}",
+				"durationMs": 2
+			}
+		},
+		{
+			"name": "google-generative-ai/error/agent",
+			"api": "google-generative-ai",
+			"scenario": "error",
+			"layer": "agent",
+			"keys": [
+				"role",
+				"content",
+				"api",
+				"provider",
+				"model",
+				"usage",
+				"stopReason",
+				"timestamp",
+				"errorMessage",
+				"durationMs",
+				"thinkingLevel"
+			],
+			"contentKeys": [],
+			"usageKeys": [
+				"input",
+				"output",
+				"cacheRead",
+				"cacheWrite",
+				"totalTokens",
+				"cost"
+			],
+			"message": {
+				"role": "assistant",
+				"content": [],
+				"api": "google-generative-ai",
+				"provider": "google",
+				"model": "gemini-2.5-pro",
+				"usage": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"totalTokens": 0,
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0
+					}
+				},
+				"stopReason": "error",
+				"timestamp": 1792422910023,
+				"errorMessage": "{\"error\":{\"code\":400,\"message\":\"bad request\",\"status\":\"INVALID_ARGUMENT\"}}",
+				"durationMs": 4,
+				"thinkingLevel": "low"
+			}
+		},
+		{
+			"name": "pi-messages/success",
+			"api": "pi-messages",
+			"scenario": "success",
+			"layer": "stream",
+			"keys": [
+				"role",
+				"content",
+				"api",
+				"provider",
+				"model",
+				"usage",
+				"stopReason",
+				"timestamp",
+				"responseId",
+				"durationMs"
+			],
+			"contentKeys": [
+				[
+					"type",
+					"thinking"
+				],
+				[
+					"type",
+					"text"
+				],
+				[
+					"type",
+					"id",
+					"name",
+					"arguments"
+				]
+			],
+			"usageKeys": [
+				"input",
+				"output",
+				"cacheRead",
+				"cacheWrite",
+				"totalTokens",
+				"cost"
+			],
+			"message": {
+				"role": "assistant",
+				"content": [
+					{
+						"type": "thinking",
+						"thinking": "hmm"
+					},
+					{
+						"type": "text",
+						"text": "hi"
+					},
+					{
+						"type": "toolCall",
+						"id": "call_1",
+						"name": "read",
+						"arguments": {
+							"path": "a"
+						}
+					}
+				],
+				"api": "pi-messages",
+				"provider": "radius",
+				"model": "auto",
+				"usage": {
+					"input": 5,
+					"output": 3,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"totalTokens": 8,
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0
+					}
+				},
+				"stopReason": "toolUse",
+				"timestamp": 1792422910030,
+				"responseId": "r_1",
+				"durationMs": 0
+			}
+		},
+		{
+			"name": "pi-messages/success/agent",
+			"api": "pi-messages",
+			"scenario": "success",
+			"layer": "agent",
+			"keys": [
+				"role",
+				"content",
+				"api",
+				"provider",
+				"model",
+				"usage",
+				"stopReason",
+				"timestamp",
+				"responseId",
+				"durationMs",
+				"thinkingLevel"
+			],
+			"contentKeys": [
+				[
+					"type",
+					"thinking"
+				],
+				[
+					"type",
+					"text"
+				],
+				[
+					"type",
+					"id",
+					"name",
+					"arguments"
+				]
+			],
+			"usageKeys": [
+				"input",
+				"output",
+				"cacheRead",
+				"cacheWrite",
+				"totalTokens",
+				"cost"
+			],
+			"message": {
+				"role": "assistant",
+				"content": [
+					{
+						"type": "thinking",
+						"thinking": "hmm"
+					},
+					{
+						"type": "text",
+						"text": "hi"
+					},
+					{
+						"type": "toolCall",
+						"id": "call_1",
+						"name": "read",
+						"arguments": {
+							"path": "a"
+						}
+					}
+				],
+				"api": "pi-messages",
+				"provider": "radius",
+				"model": "auto",
+				"usage": {
+					"input": 5,
+					"output": 3,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"totalTokens": 8,
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0
+					}
+				},
+				"stopReason": "toolUse",
+				"timestamp": 1792422910031,
+				"responseId": "r_1",
+				"durationMs": 0,
+				"thinkingLevel": "low"
+			}
+		},
+		{
+			"name": "pi-messages/error",
+			"api": "pi-messages",
+			"scenario": "error",
+			"layer": "stream",
+			"keys": [
+				"role",
+				"content",
+				"api",
+				"provider",
+				"model",
+				"usage",
+				"stopReason",
+				"errorMessage",
+				"timestamp",
+				"diagnostics",
+				"durationMs"
+			],
+			"contentKeys": [],
+			"usageKeys": [
+				"input",
+				"output",
+				"cacheRead",
+				"cacheWrite",
+				"totalTokens",
+				"cost"
+			],
+			"message": {
+				"role": "assistant",
+				"content": [],
+				"api": "pi-messages",
+				"provider": "radius",
+				"model": "auto",
+				"usage": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"totalTokens": 0,
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0
+					}
+				},
+				"stopReason": "error",
+				"errorMessage": "400 : bad request",
+				"timestamp": 1792422910031,
+				"diagnostics": [
+					{
+						"type": "pi_messages_response_failure",
+						"timestamp": 1792422910031,
+						"error": {
+							"name": "PiMessagesResponseError",
+							"message": "400 : bad request",
+							"stack": "PiMessagesResponseError: 400 : bad request\n    at createPiMessagesResponseError (file:///private/tmp/claude-501/-Users-noam-work-skyvalley/a2afe6f8-9810-4fe0-b065-070ffdcced0e/scratchpad/npm-1.3.0/node_modules/@earendil-works/pi-ai/dist/api/pi-messages.js:50:12)\n    at file:///private/tmp/claude-501/-Users-noam-work-skyvalley/a2afe6f8-9810-4fe0-b065-070ffdcced0e/scratchpad/npm-1.3.0/node_modules/@earendil-works/pi-ai/dist/api/pi-messages.js:284:23\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+						},
+						"details": {
+							"version": 1,
+							"provider": "radius",
+							"model": "auto",
+							"url": "http://127.0.0.1:9/v1/messages",
+							"status": 400,
+							"statusText": "",
+							"error": {
+								"type": "invalid_request_error",
+								"message": "bad request"
+							},
+							"timestampMs": 1792422910031
+						}
+					}
+				],
+				"durationMs": 0
+			}
+		},
+		{
+			"name": "pi-messages/error/agent",
+			"api": "pi-messages",
+			"scenario": "error",
+			"layer": "agent",
+			"keys": [
+				"role",
+				"content",
+				"api",
+				"provider",
+				"model",
+				"usage",
+				"stopReason",
+				"errorMessage",
+				"timestamp",
+				"diagnostics",
+				"durationMs",
+				"thinkingLevel"
+			],
+			"contentKeys": [],
+			"usageKeys": [
+				"input",
+				"output",
+				"cacheRead",
+				"cacheWrite",
+				"totalTokens",
+				"cost"
+			],
+			"message": {
+				"role": "assistant",
+				"content": [],
+				"api": "pi-messages",
+				"provider": "radius",
+				"model": "auto",
+				"usage": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"totalTokens": 0,
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0
+					}
+				},
+				"stopReason": "error",
+				"errorMessage": "400 : bad request",
+				"timestamp": 1792422910031,
+				"diagnostics": [
+					{
+						"type": "pi_messages_response_failure",
+						"timestamp": 1792422910031,
+						"error": {
+							"name": "PiMessagesResponseError",
+							"message": "400 : bad request",
+							"stack": "PiMessagesResponseError: 400 : bad request\n    at createPiMessagesResponseError (file:///private/tmp/claude-501/-Users-noam-work-skyvalley/a2afe6f8-9810-4fe0-b065-070ffdcced0e/scratchpad/npm-1.3.0/node_modules/@earendil-works/pi-ai/dist/api/pi-messages.js:50:12)\n    at file:///private/tmp/claude-501/-Users-noam-work-skyvalley/a2afe6f8-9810-4fe0-b065-070ffdcced0e/scratchpad/npm-1.3.0/node_modules/@earendil-works/pi-ai/dist/api/pi-messages.js:284:23\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+						},
+						"details": {
+							"version": 1,
+							"provider": "radius",
+							"model": "auto",
+							"url": "http://127.0.0.1:9/v1/messages",
+							"status": 400,
+							"statusText": "",
+							"error": {
+								"type": "invalid_request_error",
+								"message": "bad request"
+							},
+							"timestampMs": 1792422910031
+						}
+					}
+				],
+				"durationMs": 0,
+				"thinkingLevel": "low"
+			}
+		}
+	]
+}

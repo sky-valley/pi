@@ -479,16 +479,9 @@ func (a *Agent) handleRunFailure(ctx context.Context, msg string, aborted bool) 
 	if aborted {
 		stop = ai.StopAborted
 	}
-	failure := &ai.AssistantMessage{
-		Content:      ai.ContentList{ai.TextContent{Text: ""}},
-		Api:          ai.Api(model.Api),
-		Provider:     ai.ProviderId(model.Provider),
-		Model:        model.ID,
-		Usage:        emptyUsage,
-		StopReason:   stop,
-		ErrorMessage: msg,
-		Timestamp:    nowMillis(),
-	}
+	failure := ai.NewErrorMessage(ai.Api(model.Api), ai.ProviderId(model.Provider), model.ID, stop, msg)
+	failure.Content = ai.ContentList{ai.TextContent{Text: ""}}
+	failure.Usage = emptyUsage
 	emit := a.processEvent(ctx)
 	for _, e := range []AgentEvent{
 		{Type: EvMessageStart, Message: failure},

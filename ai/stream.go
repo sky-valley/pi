@@ -163,14 +163,8 @@ func startStreamSetup() streamSetup {
 
 // fail ends the setup's stream with err (pi createSetupErrorMessage).
 func (s streamSetup) fail(model *Model, err error) *AssistantMessageEventStream {
-	msg := &AssistantMessage{
-		Api:          model.Api,
-		Provider:     model.Provider,
-		Model:        model.ID,
-		StopReason:   StopError,
-		ErrorMessage: err.Error(),
-		Timestamp:    s.startedAt,
-	}
+	msg := NewErrorMessage(model.Api, model.Provider, model.ID, StopError, err.Error())
+	msg.Timestamp = s.startedAt
 	s.stream.Push(AssistantMessageEvent{Type: EventError, Reason: StopError, Error: msg})
 	s.stream.End()
 	return s.stream

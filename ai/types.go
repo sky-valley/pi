@@ -486,12 +486,6 @@ type Usage struct {
 	Output     int `json:"output"`
 	CacheRead  int `json:"cacheRead"`
 	CacheWrite int `json:"cacheWrite"`
-	// CacheWrite1h is the part of the cache write done with 1h retention, meant
-	// as a subset of CacheWrite. Only Anthropic reports this split (pi:
-	// Usage.cacheWrite1h, optional). It is not guaranteed to be at most
-	// CacheWrite: a message_delta may carry the breakdown without the total
-	// (upstream 667fc3dd3), and the two are then taken as reported.
-	CacheWrite1h int `json:"cacheWrite1h,omitempty"`
 	// Reasoning is the count of reasoning/thinking tokens, when the provider
 	// reports them. This is a subset of Output: Output already includes these
 	// tokens. Set to a number (possibly 0) by providers that expose a reasoning
@@ -507,6 +501,13 @@ type Usage struct {
 	Reasoning   int           `json:"reasoning,omitempty"`
 	TotalTokens int           `json:"totalTokens"`
 	Cost        CostBreakdown `json:"cost"`
+	// CacheWrite1h is the part of the cache write done with 1h retention, meant
+	// as a subset of CacheWrite. Only Anthropic reports this split (pi:
+	// Usage.cacheWrite1h, optional). It is not guaranteed to be at most
+	// CacheWrite: a message_delta may carry the breakdown without the total
+	// (upstream 667fc3dd3), and the two are then taken as reported. pi assigns
+	// it after the usage object exists, so it is the last key.
+	CacheWrite1h int `json:"cacheWrite1h,omitempty"`
 }
 
 // ---------------------------------------------------------------------------
@@ -854,6 +855,9 @@ func NewUserText(text string, timestamp int64) UserMessage {
 }
 
 // AssistantMessage is a message authored by the model.
+//
+// It is written with its keys in the order pi's JSON.stringify writes them,
+// which is not this struct's field order (see MarshalJSON).
 type AssistantMessage struct {
 	Content  ContentList `json:"content"` // TextContent | ThinkingContent | ToolCall
 	Api      Api         `json:"api"`
@@ -904,19 +908,77 @@ type AssistantMessage struct {
 	// measured with the monotonic clock (pi `durationMs?`, upstream 36a686ee8).
 	// AssistantMessageEventStream sets it on the final message of a response it
 	// saw start; nil for legacy messages and for deferred results fetched
-	// later. pi assigns it last, so it is the last key.
+	// later.
 	DurationMs *int64 `json:"durationMs,omitempty"`
+
+	// errorLiteral marks a message built as pi's one-literal error message
+	// (NewErrorMessage), whose errorMessage precedes its timestamp.
+	errorLiteral bool
 }
 
 func (AssistantMessage) MessageRole() Role { return RoleAssistant }
 
-// MarshalJSON adds the role discriminator.
+// NewErrorMessage returns the assistant message pi builds as one object
+// literal for a failure outside a response's stream — lazyStream's setup
+// error, pi-messages' createErrorEvent, faux's createErrorMessage, the agent's
+// run failure: no content, zero usage, the stop reason, the error message and
+// the time, in that order. Unlike a message a stream fails part-way, whose
+// errorMessage is assigned after everything the stream learned, its
+// errorMessage is written before its timestamp.
+func NewErrorMessage(api Api, provider ProviderId, modelID string, stopReason StopReason, errorMessage string) *AssistantMessage {
+	return &AssistantMessage{
+		Content:      ContentList{},
+		Api:          api,
+		Provider:     provider,
+		Model:        modelID,
+		StopReason:   stopReason,
+		ErrorMessage: errorMessage,
+		Timestamp:    nowMillis(),
+		errorLiteral: true,
+	}
+}
+
+// MarshalJSON writes the message with the role discriminator and its keys in
+// the order pi's JSON.stringify writes them: the order pi's adapters build the
+// object in — the literal {role, content, api, provider, model, usage,
+// stopReason, timestamp}, then what the stream learned as it learned it
+// (providerThinkingLevel from the built params, responseId and responseModel
+// at the start, rawStopReason at the end, diagnostics, errorMessage when it
+// fails), durationMs when the stream ends, and thinkingLevel, which the agent
+// loop assigns to the stream's result (agent-loop.ts Object.assign). Two
+// literals differ: the Responses adapter's carries providerThinkingLevel right
+// after model, and the error literal of NewErrorMessage carries errorMessage
+// before timestamp. A deferred handle follows stopReason, as faux's literal
+// has it. Absent fields are left out, as pi's undefined is.
 func (m AssistantMessage) MarshalJSON() ([]byte, error) {
-	type alias AssistantMessage
-	return json.Marshal(struct {
-		Role Role `json:"role"`
-		alias
-	}{Role: RoleAssistant, alias: alias(m)})
+	o := make(OrderedObject, 0, 20)
+	add := func(key string, value any, present bool) {
+		if present {
+			o = append(o, OrderedField{Key: key, Value: value})
+		}
+	}
+	add("role", RoleAssistant, true)
+	add("content", m.Content, true)
+	add("api", m.Api, true)
+	add("provider", m.Provider, true)
+	add("model", m.Model, true)
+	levelFirst := m.Api == APIOpenAIResponses
+	add("providerThinkingLevel", m.ProviderThinkingLevel, levelFirst && m.ProviderThinkingLevel != "")
+	add("usage", m.Usage, true)
+	add("stopReason", m.StopReason, true)
+	add("deferred", m.Deferred, m.Deferred != nil)
+	add("errorMessage", m.ErrorMessage, m.errorLiteral && m.ErrorMessage != "")
+	add("timestamp", m.Timestamp, true)
+	add("providerThinkingLevel", m.ProviderThinkingLevel, !levelFirst && m.ProviderThinkingLevel != "")
+	add("responseId", m.ResponseID, m.ResponseID != "")
+	add("responseModel", m.ResponseModel, m.ResponseModel != "")
+	add("rawStopReason", m.RawStopReason, m.RawStopReason != "")
+	add("endTurn", m.EndTurn, m.EndTurn != nil)
+	add("diagnostics", m.Diagnostics, len(m.Diagnostics) > 0)
+	add("errorMessage", m.ErrorMessage, !m.errorLiteral && m.ErrorMessage != "")
+	add("durationMs", m.DurationMs, m.DurationMs != nil)
+	add("thinkingLevel", m.ThinkingLevel, m.ThinkingLevel != "")
+	return json.Marshal(o)
 }
 
 // ToolResultMessage is the result of executing a tool call.
