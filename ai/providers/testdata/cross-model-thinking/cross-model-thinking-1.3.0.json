@@ -1,0 +1,1539 @@
+{
+	"source": "pi-ai 1.3.0",
+	"transformRows": [
+		{
+			"name": "upstream/readable thinking from another model",
+			"model": {
+				"reasoning": true,
+				"input": [
+					"text",
+					"image"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 1048576,
+				"maxTokens": 32768,
+				"id": "moonshotai/Kimi-K3",
+				"name": "Kimi K3",
+				"api": "openai-completions",
+				"provider": "sference",
+				"baseUrl": "https://api.sference.com/v1"
+			},
+			"messages": [
+				{
+					"role": "user",
+					"content": "Why does curl work but node fails?",
+					"timestamp": 1
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "thinking",
+							"thinking": "The user asks about ECONNRESET. Candidates: proxy, IPv6, TLS.",
+							"thinkingSignature": "reasoning_content"
+						},
+						{
+							"type": "text",
+							"text": "Let me check the TLS versions."
+						},
+						{
+							"type": "toolCall",
+							"id": "call_1",
+							"name": "bash",
+							"arguments": {
+								"command": "curl -v"
+							}
+						}
+					],
+					"api": "openai-completions",
+					"provider": "sference",
+					"model": "zai-org/GLM-5.3",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "toolUse",
+					"timestamp": 2
+				},
+				{
+					"role": "toolResult",
+					"toolCallId": "call_1",
+					"toolName": "bash",
+					"content": [
+						{
+							"type": "text",
+							"text": "TLSv1.2"
+						}
+					],
+					"isError": false,
+					"timestamp": 3
+				}
+			],
+			"result": [
+				{
+					"role": "user",
+					"content": "Why does curl work but node fails?",
+					"timestamp": 1
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "text",
+							"text": "Let me check the TLS versions."
+						},
+						{
+							"type": "toolCall",
+							"id": "call_1",
+							"name": "bash",
+							"arguments": {
+								"command": "curl -v"
+							}
+						}
+					],
+					"api": "openai-completions",
+					"provider": "sference",
+					"model": "zai-org/GLM-5.3",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "toolUse",
+					"timestamp": 2
+				},
+				{
+					"role": "toolResult",
+					"toolCallId": "call_1",
+					"toolName": "bash",
+					"content": [
+						{
+							"type": "text",
+							"text": "TLSv1.2"
+						}
+					],
+					"isError": false,
+					"timestamp": 3
+				}
+			]
+		},
+		{
+			"name": "upstream/alternating models",
+			"model": {
+				"reasoning": true,
+				"input": [
+					"text",
+					"image"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 1048576,
+				"maxTokens": 32768,
+				"id": "moonshotai/Kimi-K3",
+				"name": "Kimi K3",
+				"api": "openai-completions",
+				"provider": "sference",
+				"baseUrl": "https://api.sference.com/v1"
+			},
+			"messages": [
+				{
+					"role": "user",
+					"content": "1",
+					"timestamp": 1
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "thinking",
+							"thinking": "kimi 1",
+							"thinkingSignature": "reasoning_content"
+						},
+						{
+							"type": "text",
+							"text": "a"
+						}
+					],
+					"api": "openai-completions",
+					"provider": "sference",
+					"model": "moonshotai/Kimi-K3",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "stop",
+					"timestamp": 2
+				},
+				{
+					"role": "user",
+					"content": "2",
+					"timestamp": 1
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "thinking",
+							"thinking": "glm 1",
+							"thinkingSignature": "reasoning_content"
+						},
+						{
+							"type": "text",
+							"text": "b"
+						}
+					],
+					"api": "openai-completions",
+					"provider": "sference",
+					"model": "zai-org/GLM-5.3",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "stop",
+					"timestamp": 2
+				},
+				{
+					"role": "user",
+					"content": "3",
+					"timestamp": 1
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "thinking",
+							"thinking": "kimi 2",
+							"thinkingSignature": "reasoning_content"
+						},
+						{
+							"type": "text",
+							"text": "c"
+						}
+					],
+					"api": "openai-completions",
+					"provider": "sference",
+					"model": "moonshotai/Kimi-K3",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "stop",
+					"timestamp": 2
+				},
+				{
+					"role": "user",
+					"content": "4",
+					"timestamp": 1
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "thinking",
+							"thinking": "glm 2",
+							"thinkingSignature": "reasoning_content"
+						},
+						{
+							"type": "text",
+							"text": "d"
+						}
+					],
+					"api": "openai-completions",
+					"provider": "sference",
+					"model": "zai-org/GLM-5.3",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "stop",
+					"timestamp": 2
+				},
+				{
+					"role": "user",
+					"content": "hi",
+					"timestamp": 1
+				}
+			],
+			"result": [
+				{
+					"role": "user",
+					"content": "1",
+					"timestamp": 1
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "thinking",
+							"thinking": "kimi 1",
+							"thinkingSignature": "reasoning_content"
+						},
+						{
+							"type": "text",
+							"text": "a"
+						}
+					],
+					"api": "openai-completions",
+					"provider": "sference",
+					"model": "moonshotai/Kimi-K3",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "stop",
+					"timestamp": 2
+				},
+				{
+					"role": "user",
+					"content": "2",
+					"timestamp": 1
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "text",
+							"text": "b"
+						}
+					],
+					"api": "openai-completions",
+					"provider": "sference",
+					"model": "zai-org/GLM-5.3",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "stop",
+					"timestamp": 2
+				},
+				{
+					"role": "user",
+					"content": "3",
+					"timestamp": 1
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "thinking",
+							"thinking": "kimi 2",
+							"thinkingSignature": "reasoning_content"
+						},
+						{
+							"type": "text",
+							"text": "c"
+						}
+					],
+					"api": "openai-completions",
+					"provider": "sference",
+					"model": "moonshotai/Kimi-K3",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "stop",
+					"timestamp": 2
+				},
+				{
+					"role": "user",
+					"content": "4",
+					"timestamp": 1
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "text",
+							"text": "d"
+						}
+					],
+					"api": "openai-completions",
+					"provider": "sference",
+					"model": "zai-org/GLM-5.3",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "stop",
+					"timestamp": 2
+				},
+				{
+					"role": "user",
+					"content": "hi",
+					"timestamp": 1
+				}
+			]
+		},
+		{
+			"name": "every kind from another model",
+			"model": {
+				"reasoning": true,
+				"input": [
+					"text",
+					"image"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 1048576,
+				"maxTokens": 32768,
+				"id": "moonshotai/Kimi-K3",
+				"name": "Kimi K3",
+				"api": "openai-completions",
+				"provider": "sference",
+				"baseUrl": "https://api.sference.com/v1"
+			},
+			"messages": [
+				{
+					"role": "user",
+					"content": "q",
+					"timestamp": 1
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "thinking",
+							"thinking": "readable"
+						},
+						{
+							"type": "thinking",
+							"thinking": "signed",
+							"thinkingSignature": "sig"
+						},
+						{
+							"type": "thinking",
+							"thinking": "",
+							"thinkingSignature": "opaque",
+							"redacted": true
+						},
+						{
+							"type": "thinking",
+							"thinking": "   "
+						},
+						{
+							"type": "thinking",
+							"thinking": "",
+							"thinkingSignature": "encrypted"
+						},
+						{
+							"type": "text",
+							"text": "answer"
+						}
+					],
+					"api": "openai-completions",
+					"provider": "sference",
+					"model": "zai-org/GLM-5.3",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "stop",
+					"timestamp": 2
+				},
+				{
+					"role": "user",
+					"content": "next",
+					"timestamp": 1
+				}
+			],
+			"result": [
+				{
+					"role": "user",
+					"content": "q",
+					"timestamp": 1
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "text",
+							"text": "answer"
+						}
+					],
+					"api": "openai-completions",
+					"provider": "sference",
+					"model": "zai-org/GLM-5.3",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "stop",
+					"timestamp": 2
+				},
+				{
+					"role": "user",
+					"content": "next",
+					"timestamp": 1
+				}
+			]
+		},
+		{
+			"name": "every kind from the same model",
+			"model": {
+				"reasoning": true,
+				"input": [
+					"text",
+					"image"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 1048576,
+				"maxTokens": 32768,
+				"id": "moonshotai/Kimi-K3",
+				"name": "Kimi K3",
+				"api": "openai-completions",
+				"provider": "sference",
+				"baseUrl": "https://api.sference.com/v1"
+			},
+			"messages": [
+				{
+					"role": "user",
+					"content": "q",
+					"timestamp": 1
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "thinking",
+							"thinking": "readable"
+						},
+						{
+							"type": "thinking",
+							"thinking": "signed",
+							"thinkingSignature": "sig"
+						},
+						{
+							"type": "thinking",
+							"thinking": "",
+							"thinkingSignature": "opaque",
+							"redacted": true
+						},
+						{
+							"type": "thinking",
+							"thinking": "   "
+						},
+						{
+							"type": "thinking",
+							"thinking": "",
+							"thinkingSignature": "encrypted"
+						},
+						{
+							"type": "text",
+							"text": "answer"
+						}
+					],
+					"api": "openai-completions",
+					"provider": "sference",
+					"model": "moonshotai/Kimi-K3",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "stop",
+					"timestamp": 2
+				},
+				{
+					"role": "user",
+					"content": "next",
+					"timestamp": 1
+				}
+			],
+			"result": [
+				{
+					"role": "user",
+					"content": "q",
+					"timestamp": 1
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "thinking",
+							"thinking": "readable"
+						},
+						{
+							"type": "thinking",
+							"thinking": "signed",
+							"thinkingSignature": "sig"
+						},
+						{
+							"type": "thinking",
+							"thinking": "",
+							"thinkingSignature": "opaque",
+							"redacted": true
+						},
+						{
+							"type": "thinking",
+							"thinking": "",
+							"thinkingSignature": "encrypted"
+						},
+						{
+							"type": "text",
+							"text": "answer"
+						}
+					],
+					"api": "openai-completions",
+					"provider": "sference",
+					"model": "moonshotai/Kimi-K3",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "stop",
+					"timestamp": 2
+				},
+				{
+					"role": "user",
+					"content": "next",
+					"timestamp": 1
+				}
+			]
+		},
+		{
+			"name": "same id, another provider",
+			"model": {
+				"reasoning": true,
+				"input": [
+					"text",
+					"image"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 1048576,
+				"maxTokens": 32768,
+				"id": "moonshotai/Kimi-K3",
+				"name": "Kimi K3",
+				"api": "openai-completions",
+				"provider": "sference",
+				"baseUrl": "https://api.sference.com/v1"
+			},
+			"messages": [
+				{
+					"role": "user",
+					"content": "q",
+					"timestamp": 1
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "thinking",
+							"thinking": "other provider",
+							"thinkingSignature": "reasoning_content"
+						},
+						{
+							"type": "text",
+							"text": "a"
+						}
+					],
+					"api": "openai-completions",
+					"provider": "together",
+					"model": "moonshotai/Kimi-K3",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "stop",
+					"timestamp": 2
+				},
+				{
+					"role": "user",
+					"content": "next",
+					"timestamp": 1
+				}
+			],
+			"result": [
+				{
+					"role": "user",
+					"content": "q",
+					"timestamp": 1
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "text",
+							"text": "a"
+						}
+					],
+					"api": "openai-completions",
+					"provider": "together",
+					"model": "moonshotai/Kimi-K3",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "stop",
+					"timestamp": 2
+				},
+				{
+					"role": "user",
+					"content": "next",
+					"timestamp": 1
+				}
+			]
+		},
+		{
+			"name": "same id, another api",
+			"model": {
+				"reasoning": true,
+				"input": [
+					"text",
+					"image"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 1048576,
+				"maxTokens": 32768,
+				"id": "moonshotai/Kimi-K3",
+				"name": "Kimi K3",
+				"api": "openai-completions",
+				"provider": "sference",
+				"baseUrl": "https://api.sference.com/v1"
+			},
+			"messages": [
+				{
+					"role": "user",
+					"content": "q",
+					"timestamp": 1
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "thinking",
+							"thinking": "other api",
+							"thinkingSignature": "reasoning_content"
+						},
+						{
+							"type": "text",
+							"text": "a"
+						}
+					],
+					"api": "openai-responses",
+					"provider": "sference",
+					"model": "moonshotai/Kimi-K3",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "stop",
+					"timestamp": 2
+				},
+				{
+					"role": "user",
+					"content": "next",
+					"timestamp": 1
+				}
+			],
+			"result": [
+				{
+					"role": "user",
+					"content": "q",
+					"timestamp": 1
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "text",
+							"text": "a"
+						}
+					],
+					"api": "openai-responses",
+					"provider": "sference",
+					"model": "moonshotai/Kimi-K3",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "stop",
+					"timestamp": 2
+				},
+				{
+					"role": "user",
+					"content": "next",
+					"timestamp": 1
+				}
+			]
+		}
+	],
+	"requestRows": [
+		{
+			"name": "anthropic-messages",
+			"model": {
+				"reasoning": false,
+				"input": [
+					"text",
+					"image"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 1048576,
+				"maxTokens": 32768,
+				"id": "claude-sonnet-4-5",
+				"name": "Claude Sonnet 4.5",
+				"api": "anthropic-messages",
+				"provider": "anthropic",
+				"baseUrl": "http://127.0.0.1:9"
+			},
+			"messages": [
+				{
+					"role": "user",
+					"content": "Look it up",
+					"timestamp": 1
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "thinking",
+							"thinking": "I should call the tool.",
+							"thinkingSignature": "claude-signature"
+						},
+						{
+							"type": "thinking",
+							"thinking": "",
+							"thinkingSignature": "redacted-payload",
+							"redacted": true
+						},
+						{
+							"type": "text",
+							"text": "Calling it."
+						},
+						{
+							"type": "toolCall",
+							"id": "toolu_01",
+							"name": "lookup",
+							"arguments": {
+								"q": "x"
+							}
+						}
+					],
+					"api": "anthropic-messages",
+					"provider": "anthropic",
+					"model": "claude-opus-5",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "toolUse",
+					"timestamp": 2
+				},
+				{
+					"role": "toolResult",
+					"toolCallId": "toolu_01",
+					"toolName": "lookup",
+					"content": [
+						{
+							"type": "text",
+							"text": "found"
+						}
+					],
+					"isError": false,
+					"timestamp": 3
+				},
+				{
+					"role": "user",
+					"content": "And now?",
+					"timestamp": 4
+				}
+			],
+			"payload": {
+				"model": "claude-sonnet-4-5",
+				"messages": [
+					{
+						"role": "user",
+						"content": "Look it up"
+					},
+					{
+						"role": "assistant",
+						"content": [
+							{
+								"type": "text",
+								"text": "Calling it."
+							},
+							{
+								"type": "tool_use",
+								"id": "toolu_01",
+								"name": "lookup",
+								"input": {
+									"q": "x"
+								}
+							}
+						]
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "tool_result",
+								"tool_use_id": "toolu_01",
+								"content": "found",
+								"is_error": false
+							}
+						]
+					},
+					{
+						"role": "user",
+						"content": "And now?"
+					}
+				],
+				"max_tokens": 32768,
+				"stream": true
+			}
+		},
+		{
+			"name": "openai-completions",
+			"model": {
+				"reasoning": true,
+				"input": [
+					"text",
+					"image"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 1048576,
+				"maxTokens": 32768,
+				"id": "moonshotai/Kimi-K3",
+				"name": "Kimi K3",
+				"api": "openai-completions",
+				"provider": "sference",
+				"baseUrl": "https://api.sference.com/v1"
+			},
+			"messages": [
+				{
+					"role": "user",
+					"content": "Look it up",
+					"timestamp": 1
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "thinking",
+							"thinking": "I should call the tool.",
+							"thinkingSignature": "claude-signature"
+						},
+						{
+							"type": "thinking",
+							"thinking": "",
+							"thinkingSignature": "redacted-payload",
+							"redacted": true
+						},
+						{
+							"type": "text",
+							"text": "Calling it."
+						},
+						{
+							"type": "toolCall",
+							"id": "toolu_01",
+							"name": "lookup",
+							"arguments": {
+								"q": "x"
+							}
+						}
+					],
+					"api": "anthropic-messages",
+					"provider": "anthropic",
+					"model": "claude-opus-5",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "toolUse",
+					"timestamp": 2
+				},
+				{
+					"role": "toolResult",
+					"toolCallId": "toolu_01",
+					"toolName": "lookup",
+					"content": [
+						{
+							"type": "text",
+							"text": "found"
+						}
+					],
+					"isError": false,
+					"timestamp": 3
+				},
+				{
+					"role": "user",
+					"content": "And now?",
+					"timestamp": 4
+				}
+			],
+			"payload": {
+				"model": "moonshotai/Kimi-K3",
+				"messages": [
+					{
+						"role": "user",
+						"content": "Look it up"
+					},
+					{
+						"role": "assistant",
+						"content": "Calling it.",
+						"tool_calls": [
+							{
+								"id": "toolu_01",
+								"type": "function",
+								"function": {
+									"name": "lookup",
+									"arguments": "{\"q\":\"x\"}"
+								}
+							}
+						]
+					},
+					{
+						"role": "tool",
+						"content": "found",
+						"tool_call_id": "toolu_01"
+					},
+					{
+						"role": "user",
+						"content": "And now?"
+					}
+				],
+				"stream": true,
+				"stream_options": {
+					"include_usage": true
+				},
+				"store": false,
+				"max_completion_tokens": 32768,
+				"tools": []
+			}
+		},
+		{
+			"name": "openai-responses",
+			"model": {
+				"reasoning": true,
+				"input": [
+					"text",
+					"image"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 1048576,
+				"maxTokens": 32768,
+				"id": "gpt-5",
+				"name": "GPT-5",
+				"api": "openai-responses",
+				"provider": "openai",
+				"baseUrl": "http://127.0.0.1:9"
+			},
+			"messages": [
+				{
+					"role": "user",
+					"content": "Look it up",
+					"timestamp": 1
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "thinking",
+							"thinking": "I should call the tool.",
+							"thinkingSignature": "claude-signature"
+						},
+						{
+							"type": "thinking",
+							"thinking": "",
+							"thinkingSignature": "redacted-payload",
+							"redacted": true
+						},
+						{
+							"type": "text",
+							"text": "Calling it."
+						},
+						{
+							"type": "toolCall",
+							"id": "toolu_01",
+							"name": "lookup",
+							"arguments": {
+								"q": "x"
+							}
+						}
+					],
+					"api": "anthropic-messages",
+					"provider": "anthropic",
+					"model": "claude-opus-5",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "toolUse",
+					"timestamp": 2
+				},
+				{
+					"role": "toolResult",
+					"toolCallId": "toolu_01",
+					"toolName": "lookup",
+					"content": [
+						{
+							"type": "text",
+							"text": "found"
+						}
+					],
+					"isError": false,
+					"timestamp": 3
+				},
+				{
+					"role": "user",
+					"content": "And now?",
+					"timestamp": 4
+				}
+			],
+			"payload": {
+				"model": "gpt-5",
+				"input": [
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "Look it up"
+							}
+						]
+					},
+					{
+						"type": "message",
+						"role": "assistant",
+						"content": [
+							{
+								"type": "output_text",
+								"text": "Calling it.",
+								"annotations": []
+							}
+						],
+						"status": "completed",
+						"id": "msg_pi_1"
+					},
+					{
+						"type": "function_call",
+						"call_id": "toolu_01",
+						"name": "lookup",
+						"arguments": "{\"q\":\"x\"}"
+					},
+					{
+						"type": "function_call_output",
+						"call_id": "toolu_01",
+						"output": "found"
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "And now?"
+							}
+						]
+					}
+				],
+				"stream": true,
+				"store": false,
+				"max_output_tokens": 32768,
+				"reasoning": {
+					"effort": "none"
+				}
+			}
+		},
+		{
+			"name": "google-generative-ai",
+			"model": {
+				"reasoning": true,
+				"input": [
+					"text",
+					"image"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 1048576,
+				"maxTokens": 32768,
+				"id": "gemini-2.5-pro",
+				"name": "Gemini 2.5 Pro",
+				"api": "google-generative-ai",
+				"provider": "google",
+				"baseUrl": "http://127.0.0.1:9"
+			},
+			"messages": [
+				{
+					"role": "user",
+					"content": "Look it up",
+					"timestamp": 1
+				},
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "thinking",
+							"thinking": "I should call the tool.",
+							"thinkingSignature": "claude-signature"
+						},
+						{
+							"type": "thinking",
+							"thinking": "",
+							"thinkingSignature": "redacted-payload",
+							"redacted": true
+						},
+						{
+							"type": "text",
+							"text": "Calling it."
+						},
+						{
+							"type": "toolCall",
+							"id": "toolu_01",
+							"name": "lookup",
+							"arguments": {
+								"q": "x"
+							}
+						}
+					],
+					"api": "anthropic-messages",
+					"provider": "anthropic",
+					"model": "claude-opus-5",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "toolUse",
+					"timestamp": 2
+				},
+				{
+					"role": "toolResult",
+					"toolCallId": "toolu_01",
+					"toolName": "lookup",
+					"content": [
+						{
+							"type": "text",
+							"text": "found"
+						}
+					],
+					"isError": false,
+					"timestamp": 3
+				},
+				{
+					"role": "user",
+					"content": "And now?",
+					"timestamp": 4
+				}
+			],
+			"payload": {
+				"model": "gemini-2.5-pro",
+				"contents": [
+					{
+						"role": "user",
+						"parts": [
+							{
+								"text": "Look it up"
+							}
+						]
+					},
+					{
+						"role": "model",
+						"parts": [
+							{
+								"text": "Calling it."
+							},
+							{
+								"functionCall": {
+									"name": "lookup",
+									"args": {
+										"q": "x"
+									}
+								}
+							}
+						]
+					},
+					{
+						"role": "user",
+						"parts": [
+							{
+								"functionResponse": {
+									"name": "lookup",
+									"response": {
+										"output": "found"
+									}
+								}
+							}
+						]
+					},
+					{
+						"role": "user",
+						"parts": [
+							{
+								"text": "And now?"
+							}
+						]
+					}
+				],
+				"config": {
+					"maxOutputTokens": 32768,
+					"thinkingConfig": {
+						"thinkingBudget": 0
+					}
+				}
+			}
+		}
+	]
+}

@@ -983,9 +983,9 @@ func googleContents(model *ai.Model, req ai.TranscriptContext) []any {
 						}
 						parts = append(parts, p)
 					} else {
-						// Unreachable: transformMessages (transform.go:122) already
-						// rewrites cross-model thinking to text and drops the empty
-						// ones before googleContents runs, and isSame here
+						// Unreachable: transformMessages already drops cross-model
+						// thinking (upstream 911309429) before googleContents runs,
+						// and isSame here
 						// (provider+model) is strictly weaker than transform's
 						// isSameModel (provider+api+model), so isSame == false implies
 						// no ThinkingContent survives to this branch. pi's converter has

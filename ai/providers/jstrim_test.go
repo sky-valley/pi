@@ -21,10 +21,10 @@ import (
 
 // Where pi trims, it trims with String.prototype.trim, which strips U+FEFF and
 // keeps U+0085 — the reverse of strings.TrimSpace. Every expectation here is
-// pi's own, captured under node at 2b0a123de (openai 7.19.0) by
+// pi's own, captured under node at 911309429 (openai 7.19.0) by
 // testdata/jstrim/capture-jstrim.mts; the contexts below are that script's.
 
-const jstrimCaptureFile = "testdata/jstrim/jstrim-2b0a123de.json"
+const jstrimCaptureFile = "testdata/jstrim/jstrim-911309429.json"
 
 const (
 	jsBOM = "\ufeff" // blank to JavaScript, not to strings.TrimSpace
@@ -43,6 +43,14 @@ type jstrimStream struct {
 	Text         string `json:"text"`
 }
 
+// jstrimBlock is a transformed content block: its type, and its text or
+// thinking.
+type jstrimBlock struct {
+	Type     string `json:"type"`
+	Text     string `json:"text"`
+	Thinking string `json:"thinking"`
+}
+
 type jstrimCapture struct {
 	Bodies struct {
 		Anthropic      jstrimOutcome   `json:"anthropic"`
@@ -51,9 +59,9 @@ type jstrimCapture struct {
 	} `json:"bodies"`
 	Auth      map[string]json.RawMessage         `json:"auth"`
 	Streams   map[string]map[string]jstrimStream `json:"streams"`
-	Transform []struct {
-		Type string `json:"type"`
-		Text string `json:"text"`
+	Transform struct {
+		SameModel  []jstrimBlock `json:"sameModel"`
+		OtherModel []jstrimBlock `json:"otherModel"`
 	} `json:"transform"`
 	Grammar map[string]struct {
 		Lark   string `json:"lark"`
@@ -115,7 +123,7 @@ func TestJSTrimAnthropicRequestBody(t *testing.T) {
 }
 
 // The same-model turn exercises the converter's own trims; the other model's
-// turn exercises transformMessages', which decides what becomes text first.
+// thinking is dropped by transformMessages before the converter runs.
 func TestJSTrimCompletionsRequestBody(t *testing.T) {
 	c := loadJSTrimCapture(t)
 	model := foldModel("gpt-4o", ai.APIOpenAICompletions, "openai", "")
@@ -295,42 +303,58 @@ func TestJSTrimStreamDecoding(t *testing.T) {
 	}
 }
 
-// transformMessages drops another model's blank thinking and turns the rest
-// into text. Every converter drops blank text afterwards, so only the
-// transformed content itself shows which blocks the trim let through.
+// transformMessages drops the model's own unsigned thinking when it is blank
+// to String.prototype.trim (U+FEFF is, U+0085 is not) and another model's
+// thinking whatever it holds (upstream 911309429). Every converter drops blank
+// text afterwards, so only the transformed content itself shows which blocks
+// the trim let through.
 func TestJSTrimTransformMessages(t *testing.T) {
 	want := loadJSTrimCapture(t).Transform
-	if len(want) == 0 {
+	if len(want.SameModel) == 0 || len(want.OtherModel) == 0 {
 		t.Fatalf("%s has no transform content; rerun capture-jstrim.mts", jstrimCaptureFile)
 	}
 	model := foldModel("gpt-4o", ai.APIOpenAICompletions, "openai", "")
-	out := transformMessages([]ai.Message{
-		ai.NewUserText("hi", 1),
-		jstrimAssistant(ai.APIAnthropicMessages, "anthropic", "claude-sonnet-4-5", 2,
-			ai.ThinkingContent{Thinking: jsBOM},
-			ai.ThinkingContent{Thinking: jsNEL},
-			ai.ThinkingContent{Thinking: "\u3000"},
-			ai.TextContent{Text: "visible"},
-		),
-	}, model, nil)
-	am, ok := asAssistantMsg(out[1])
-	if !ok {
-		t.Fatalf("transformed message 1 is %T, want an assistant message", out[1])
-	}
-	var got []string
-	for _, block := range am.Content {
-		if text, ok := block.(ai.TextContent); ok {
-			got = append(got, "text:"+text.Text)
-		} else {
-			got = append(got, fmt.Sprintf("%T", block))
-		}
-	}
-	var wantBlocks []string
-	for _, block := range want {
-		wantBlocks = append(wantBlocks, block.Type+":"+block.Text)
-	}
-	if !slices.Equal(got, wantBlocks) {
-		t.Fatalf("content = %+q, pi = %+q", got, wantBlocks)
+	for name, tc := range map[string]struct {
+		api            ai.Api
+		provider, from string
+		want           []jstrimBlock
+	}{
+		"same model":  {ai.APIOpenAICompletions, "openai", "gpt-4o", want.SameModel},
+		"other model": {ai.APIAnthropicMessages, "anthropic", "claude-sonnet-4-5", want.OtherModel},
+	} {
+		t.Run(name, func(t *testing.T) {
+			out := transformMessages([]ai.Message{
+				ai.NewUserText("hi", 1),
+				jstrimAssistant(tc.api, tc.provider, tc.from, 2,
+					ai.ThinkingContent{Thinking: jsBOM},
+					ai.ThinkingContent{Thinking: jsNEL},
+					ai.ThinkingContent{Thinking: "\u3000"},
+					ai.TextContent{Text: "visible"},
+				),
+			}, model, nil)
+			am, ok := asAssistantMsg(out[1])
+			if !ok {
+				t.Fatalf("transformed message 1 is %T, want an assistant message", out[1])
+			}
+			var got []string
+			for _, block := range am.Content {
+				switch b := block.(type) {
+				case ai.TextContent:
+					got = append(got, "text:"+b.Text)
+				case ai.ThinkingContent:
+					got = append(got, "thinking:"+b.Thinking)
+				default:
+					got = append(got, fmt.Sprintf("%T", block))
+				}
+			}
+			var wantBlocks []string
+			for _, block := range tc.want {
+				wantBlocks = append(wantBlocks, block.Type+":"+block.Text+block.Thinking)
+			}
+			if !slices.Equal(got, wantBlocks) {
+				t.Fatalf("content = %+q, pi = %+q", got, wantBlocks)
+			}
+		})
 	}
 }
 

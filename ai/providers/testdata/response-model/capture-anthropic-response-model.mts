@@ -3,7 +3,7 @@
 // TestAnthropicResponseModel* in this package (upstream 1283afd0d).
 //
 //   node --experimental-strip-types capture-anthropic-response-model.mts <extraction> <out.json> <sha>
-//   e.g. ... capture-anthropic-response-model.mts <dir> anthropic-response-model-dc939913f.json dc939913f
+//   e.g. ... capture-anthropic-response-model.mts <dir> anthropic-response-model-911309429.json 911309429
 //
 // <extraction> holds packages/ai at <sha> (`git archive <sha> packages/ai` from
 // the upstream clone), a node_modules resolving pi-ai's dependencies (the npm
@@ -52,6 +52,11 @@
 // KEY ORDER moved — providerThinkingLevel is assigned from the built params
 // after the reply object exists, so it now follows stopReason instead of
 // model.
+//
+// Re-captured at 911309429 on 2026-10-19: against 911309429^ (which reproduces
+// the dc939913f file) only the cross-model replay moves — the relabeled
+// reply's thinking, replayed to another model, is now dropped instead of sent
+// as text.
 //
 // `relabeled` and `fallbackCost` are the two cases 1283afd0d added to
 // packages/ai/test/anthropic-sse-parsing.test.ts, with the suite's model,

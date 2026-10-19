@@ -1,5 +1,5 @@
 {
-	"source": "src x-dc939913f",
+	"source": "pi-ai 1.3.0",
 	"streamRows": [
 		{
 			"name": "historical marker prefix/first",
@@ -838,10 +838,6 @@
 					{
 						"role": "assistant",
 						"content": [
-							{
-								"type": "text",
-								"text": "reasoning"
-							},
 							{
 								"type": "text",
 								"text": "answer"

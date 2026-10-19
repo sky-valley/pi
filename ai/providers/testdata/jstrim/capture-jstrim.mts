@@ -4,7 +4,7 @@
 // jstrim_test.go in this package.
 //
 //   node --experimental-strip-types capture-jstrim.mts <extraction> <out.json> <sha>
-//   e.g. ... capture-jstrim.mts <dir> jstrim-2b0a123de.json 2b0a123de
+//   e.g. ... capture-jstrim.mts <dir> jstrim-911309429.json 911309429
 //
 // <extraction> holds `git archive <sha> packages/ai package-lock.json` from the
 // upstream clone and a node_modules resolving pi-ai's dependencies (the npm
@@ -207,7 +207,8 @@ const completionsModel = {
 	provider: "openai",
 };
 // The second assistant turn is another model's: transformMessages drops its
-// blank thinking and turns the rest into text before the converter runs.
+// thinking before the converter runs (since 911309429; before, it dropped the
+// blank thinking and turned the rest into text).
 const completionsContext = {
 	systemPrompt: "base prompt",
 	messages: [
@@ -403,27 +404,34 @@ for (const [name, lark, regex] of grammarCases) {
 	}
 }
 
-// transformMessages on another model's turn: blank thinking is dropped, the
-// rest becomes text. Every converter then drops blank text too, so a request
-// body cannot tell a dropped block from a converted blank one.
-const transform = transformMessages(
-	[
-		{ role: "user", content: "hi", timestamp: 1 },
-		assistant(
-			"anthropic-messages",
-			"anthropic",
-			"claude-sonnet-4-5",
-			[
-				{ type: "thinking", thinking: BOM },
-				{ type: "thinking", thinking: NEL },
-				{ type: "thinking", thinking: "\u3000" },
-				{ type: "text", text: "visible" },
-			],
-			2,
-		),
-	],
-	completionsModel,
-)[1].content;
+// transformMessages on the model's own turn: unsigned thinking that is blank
+// to String.prototype.trim is dropped, the rest kept. Every converter then
+// drops blank text too, so a request body cannot tell what the trim let
+// through. Another model's thinking is dropped whatever it holds (since
+// 911309429; before, the trim decided which of it became text).
+const thinkingTurn = (api: string, provider: string, model: string) =>
+	assistant(
+		api,
+		provider,
+		model,
+		[
+			{ type: "thinking", thinking: BOM },
+			{ type: "thinking", thinking: NEL },
+			{ type: "thinking", thinking: "\u3000" },
+			{ type: "text", text: "visible" },
+		],
+		2,
+	);
+const transform = {
+	sameModel: transformMessages(
+		[{ role: "user", content: "hi", timestamp: 1 }, thinkingTurn("openai-completions", "openai", "gpt-4o")],
+		completionsModel,
+	)[1].content,
+	otherModel: transformMessages(
+		[{ role: "user", content: "hi", timestamp: 1 }, thinkingTurn("anthropic-messages", "anthropic", "claude-sonnet-4-5")],
+		completionsModel,
+	)[1].content,
+};
 
 const streamingJsonInputs = [
 	BOM,

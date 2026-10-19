@@ -140,8 +140,8 @@ func downgradeUnsupportedImages(messages []ai.Message, model *ai.Model) []ai.Mes
 }
 
 // transformMessages normalizes messages for cross-provider compatibility:
-// downgrades unsupported images, rewrites thinking blocks for cross-model
-// replay, normalizes tool-call ids, drops errored/aborted assistant turns,
+// downgrades unsupported images, drops thinking blocks from other models,
+// normalizes tool-call ids, drops errored/aborted assistant turns,
 // inserts synthetic results for orphaned tool calls, and holds a system message
 // that lands between a tool call and its results until they close.
 func transformMessages(messages []ai.Message, model *ai.Model, normalizeToolCallID func(id string) string) []ai.Message {
@@ -176,23 +176,17 @@ func transformMessages(messages []ai.Message, model *ai.Model, normalizeToolCall
 		for _, block := range am.Content {
 			switch b := block.(type) {
 			case ai.ThinkingContent:
-				if b.Redacted {
-					if isSameModel {
-						content = append(content, b)
-					}
+				// Thinking from another model is dropped (upstream 911309429).
+				// Signatures and encrypted reasoning are only valid for the model
+				// that produced them, and sending readable thinking as plain text
+				// makes the new model treat it as part of the visible reply.
+				if !isSameModel {
 					continue
 				}
-				if isSameModel && b.ThinkingSignature != "" {
+				// Keep redacted and signed blocks even if the thinking text is
+				// empty (OpenAI encrypted reasoning); they are needed for replay.
+				if b.Redacted || b.ThinkingSignature != "" || jstext.Trim(b.Thinking) != "" {
 					content = append(content, b)
-					continue
-				}
-				if jstext.Trim(b.Thinking) == "" {
-					continue
-				}
-				if isSameModel {
-					content = append(content, b)
-				} else {
-					content = append(content, ai.TextContent{Text: b.Thinking})
 				}
 			case ai.TextContent:
 				if isSameModel {
