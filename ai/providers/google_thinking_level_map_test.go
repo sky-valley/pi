@@ -285,10 +285,11 @@ func TestGoogleSimpleUnresolvableLevelFailsStream(t *testing.T) {
 }
 
 // googleThinkingCaptureFile holds pi's thinkingConfig for a table of models and
-// reasoning levels, captured under node at upstream 16235fd93 by
-// testdata/google-thinking/capture-thinking-config.mts. Each case carries its
-// own fixture, so both sides build the same model.
-const googleThinkingCaptureFile = "testdata/google-thinking/thinking-config-16235fd93.json"
+// reasoning levels, captured under node at upstream 1692bba63 by
+// testdata/google-thinking/capture-thinking-config.mts (pi-ai 1.3.0's dist
+// records the same file). Each case carries its own fixture, so both sides
+// build the same model.
+const googleThinkingCaptureFile = "testdata/google-thinking/thinking-config-1692bba63.json"
 
 type googleThinkingCase struct {
 	Name               string              `json:"name"`
@@ -375,5 +376,51 @@ func TestGoogleThinkingConfigMatchesPi(t *testing.T) {
 				t.Fatalf("%s: case %q records no outcome", googleThinkingCaptureFile, tc.Name)
 			}
 		})
+	}
+}
+
+// catalogGemini4CaptureFile is what testdata/google-thinking/
+// capture-catalog-gemini4.mjs recorded from pi-ai 1.3.0: the thinkingConfig
+// its streamSimple sends for every google-generative-ai catalog model whose
+// id is Gemini 4 or later, at every reasoning level.
+const catalogGemini4CaptureFile = "testdata/google-thinking/catalog-gemini4-1.3.0.json"
+
+// The shipped catalog's Gemini 4 models send thinkingLevel, not a token
+// budget (upstream 1692bba63, #10890): the catalog entries themselves, so a
+// catalog change that moved their maps or ids would show here. The capture
+// leaves out google-vertex's gemini-4-argon, which has no Go adapter yet
+// (Scope queue entry 5).
+func TestCatalogGemini4ThinkingConfigMatchesPi(t *testing.T) {
+	data, err := os.ReadFile(catalogGemini4CaptureFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var capture struct {
+		Rows []struct {
+			Provider       ai.ProviderId     `json:"provider"`
+			ID             string            `json:"id"`
+			Reasoning      *ai.ThinkingLevel `json:"reasoning"`
+			ThinkingConfig any               `json:"thinkingConfig"`
+		} `json:"rows"`
+	}
+	if err := json.Unmarshal(data, &capture); err != nil {
+		t.Fatalf("%s: %v", catalogGemini4CaptureFile, err)
+	}
+	if len(capture.Rows) == 0 {
+		t.Fatalf("%s has no rows; rerun capture-catalog-gemini4.mjs", catalogGemini4CaptureFile)
+	}
+	for _, row := range capture.Rows {
+		model := ai.GetModel(row.Provider, row.ID)
+		if model == nil {
+			t.Fatalf("the catalog has no %s/%s; rerun capture-catalog-gemini4.mjs", row.Provider, row.ID)
+		}
+		var reasoning ai.ThinkingLevel
+		if row.Reasoning != nil {
+			reasoning = *row.Reasoning
+		}
+		gen, _ := captureGoogleSimplePayload(t, model, reasoning, nil)["generationConfig"].(map[string]any)
+		if got := gen["thinkingConfig"]; !reflect.DeepEqual(got, row.ThinkingConfig) {
+			t.Errorf("%s/%s reasoning %q: thinkingConfig %v, pi %v", row.Provider, row.ID, reasoning, got, row.ThinkingConfig)
+		}
 	}
 }

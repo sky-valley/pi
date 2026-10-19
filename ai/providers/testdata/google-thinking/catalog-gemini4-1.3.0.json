@@ -1,0 +1,218 @@
+{
+	"piAi": "1.3.0",
+	"rows": [
+		{
+			"provider": "google",
+			"id": "gemini-4-argon",
+			"reasoning": null,
+			"thinkingConfig": {
+				"thinkingLevel": "LOW"
+			}
+		},
+		{
+			"provider": "google",
+			"id": "gemini-4-argon",
+			"reasoning": "off",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingLevel": "LOW"
+			}
+		},
+		{
+			"provider": "google",
+			"id": "gemini-4-argon",
+			"reasoning": "minimal",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingLevel": "LOW"
+			}
+		},
+		{
+			"provider": "google",
+			"id": "gemini-4-argon",
+			"reasoning": "low",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingLevel": "LOW"
+			}
+		},
+		{
+			"provider": "google",
+			"id": "gemini-4-argon",
+			"reasoning": "medium",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingLevel": "MEDIUM"
+			}
+		},
+		{
+			"provider": "google",
+			"id": "gemini-4-argon",
+			"reasoning": "high",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingLevel": "HIGH"
+			}
+		},
+		{
+			"provider": "google",
+			"id": "gemini-4-argon",
+			"reasoning": "xhigh",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingLevel": "HIGH"
+			}
+		},
+		{
+			"provider": "google",
+			"id": "gemini-4-argon",
+			"reasoning": "max",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingLevel": "HIGH"
+			}
+		},
+		{
+			"provider": "opencode",
+			"id": "gemini-4-argon",
+			"reasoning": null,
+			"thinkingConfig": {
+				"thinkingLevel": "LOW"
+			}
+		},
+		{
+			"provider": "opencode",
+			"id": "gemini-4-argon",
+			"reasoning": "off",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingLevel": "LOW"
+			}
+		},
+		{
+			"provider": "opencode",
+			"id": "gemini-4-argon",
+			"reasoning": "minimal",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingLevel": "LOW"
+			}
+		},
+		{
+			"provider": "opencode",
+			"id": "gemini-4-argon",
+			"reasoning": "low",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingLevel": "LOW"
+			}
+		},
+		{
+			"provider": "opencode",
+			"id": "gemini-4-argon",
+			"reasoning": "medium",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingLevel": "MEDIUM"
+			}
+		},
+		{
+			"provider": "opencode",
+			"id": "gemini-4-argon",
+			"reasoning": "high",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingLevel": "HIGH"
+			}
+		},
+		{
+			"provider": "opencode",
+			"id": "gemini-4-argon",
+			"reasoning": "xhigh",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingLevel": "HIGH"
+			}
+		},
+		{
+			"provider": "opencode",
+			"id": "gemini-4-argon",
+			"reasoning": "max",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingLevel": "HIGH"
+			}
+		},
+		{
+			"provider": "opencode-go",
+			"id": "gemini-4-argon-contributor",
+			"reasoning": null,
+			"thinkingConfig": {
+				"thinkingLevel": "LOW"
+			}
+		},
+		{
+			"provider": "opencode-go",
+			"id": "gemini-4-argon-contributor",
+			"reasoning": "off",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingLevel": "LOW"
+			}
+		},
+		{
+			"provider": "opencode-go",
+			"id": "gemini-4-argon-contributor",
+			"reasoning": "minimal",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingLevel": "LOW"
+			}
+		},
+		{
+			"provider": "opencode-go",
+			"id": "gemini-4-argon-contributor",
+			"reasoning": "low",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingLevel": "LOW"
+			}
+		},
+		{
+			"provider": "opencode-go",
+			"id": "gemini-4-argon-contributor",
+			"reasoning": "medium",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingLevel": "MEDIUM"
+			}
+		},
+		{
+			"provider": "opencode-go",
+			"id": "gemini-4-argon-contributor",
+			"reasoning": "high",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingLevel": "HIGH"
+			}
+		},
+		{
+			"provider": "opencode-go",
+			"id": "gemini-4-argon-contributor",
+			"reasoning": "xhigh",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingLevel": "HIGH"
+			}
+		},
+		{
+			"provider": "opencode-go",
+			"id": "gemini-4-argon-contributor",
+			"reasoning": "max",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingLevel": "HIGH"
+			}
+		}
+	]
+}

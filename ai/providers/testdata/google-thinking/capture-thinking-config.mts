@@ -3,13 +3,15 @@
 // the oracle behind TestGoogleThinkingConfigMatchesPi in this package.
 //
 //   node --experimental-strip-types capture-thinking-config.mts <extraction> <out.json> <sha>
-//   e.g. ... capture-thinking-config.mts <dir> thinking-config-16235fd93.json 16235fd93
+//   e.g. ... capture-thinking-config.mts <dir> thinking-config-1692bba63.json 1692bba63
 //
 // <extraction> holds packages/ai at <sha> (`git archive <sha> packages/ai` from
 // the upstream clone) and a node_modules resolving pi-ai's dependencies (the npm
-// build's). The npm build 0.85.1 predates upstream 16235fd93, so these are src
-// captures: re-verify them against the first build that ships it (the BUILD
-// wins).
+// build's: at 1692bba63 the lockfile's @google/genai 2.21.0 and typebox 1.3.27
+// are the npm 1.3.0 build's, integrity for integrity). <extraction> may instead
+// be a published @earendil-works/pi-ai package directory, whose dist is loaded:
+// the BUILD wins where the two disagree. 1.3.0's dist and 1692bba63's src
+// record the same file.
 //
 // Models are packages/ai/test/google-thinking-level-map.test.ts's googleModel
 // (synthetic, catalog-independent: each case carries its own thinkingLevelMap,
@@ -20,6 +22,7 @@
 // `thrown` (streamSimple threw before returning a stream) or `error` (the
 // stream ended in an error before any request was sent).
 import fs from "node:fs";
+import { createRequire } from "node:module";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -28,11 +31,22 @@ if (!extraction || !outFile || !sha) {
 	console.error("usage: node --experimental-strip-types capture-thinking-config.mts <extraction> <out.json> <sha>");
 	process.exit(2);
 }
-const src = path.join(extraction, "packages/ai/src");
-const load = (file: string) => import(pathToFileURL(path.join(src, file)).href);
-const { normalizeContext } = await load("utils/transcript.ts");
-const { streamSimple } = await load("api/google-generative-ai.ts");
-const { Type } = await import(pathToFileURL(path.join(extraction, "node_modules/typebox/build/index.mjs")).href);
+const fromSource = fs.existsSync(path.join(extraction, "packages/ai/src"));
+const load = (file: string) =>
+	import(
+		pathToFileURL(
+			fromSource ? path.join(extraction, "packages/ai/src", `${file}.ts`) : path.join(extraction, "dist", `${file}.js`),
+		).href
+	);
+const { normalizeContext } = await load("utils/transcript");
+const { streamSimple } = await load("api/google-generative-ai");
+// typebox as pi-ai resolves it: the first node_modules up from its package.
+const typebox = createRequire(path.join(fromSource ? path.join(extraction, "packages/ai") : extraction, "package.json"))
+	.resolve.paths("typebox")
+	?.map((dir) => path.join(dir, "typebox"))
+	.find((dir) => fs.existsSync(path.join(dir, "package.json")));
+if (!typebox) throw new Error("typebox does not resolve from pi-ai");
+const { Type } = await import(pathToFileURL(path.join(typebox, "build/index.mjs")).href);
 
 type Case = {
 	name: string;
@@ -156,8 +170,32 @@ const cases: Case[] = [
 	{ name: "id/gemini 3 after a path prefix uses levels", id: "models/gemini-3-pro-preview", reasoning: "low" },
 	{ name: "id/gemini 3 two-digit minor uses levels", id: "gemini-3.10-flash-lite", reasoning: "low" },
 	{ name: "id/gemini 3 non-digit minor uses budgets", id: "gemini-3.x-pro", reasoning: "low" },
-	{ name: "id/gemini 4 uses budgets", id: "gemini-4-pro", reasoning: "low" },
+	{ name: "id/gemini 4 pro uses levels", id: "gemini-4-pro", reasoning: "low" },
 	{ name: "id/gemma 4 inside a longer name uses levels", id: "codegemma4", reasoning: "low" },
+
+	// Gemini 4 and later use levels (1692bba63, #10890): a major version of 4 to
+	// 9, or two digits not starting with 0, anywhere in the id.
+	// google-thinking-level-map.test.ts @1692bba63, google adapter.
+	{ name: "upstream/gemini 4 uses thinking levels", id: "gemini-4-argon", thinkingLevelMap: {}, reasoning: "medium" },
+	// The shipped catalog's gemini-4-argon map, at every level.
+	{ name: "gemini4/catalog map disabled", id: "gemini-4-argon", thinkingLevelMap: effortMap },
+	{ name: "gemini4/catalog map off", id: "gemini-4-argon", thinkingLevelMap: effortMap, reasoning: "off" },
+	{ name: "gemini4/catalog map minimal", id: "gemini-4-argon", thinkingLevelMap: effortMap, reasoning: "minimal" },
+	{ name: "gemini4/catalog map low", id: "gemini-4-argon", thinkingLevelMap: effortMap, reasoning: "low" },
+	{ name: "gemini4/catalog map high", id: "gemini-4-argon", thinkingLevelMap: effortMap, reasoning: "high" },
+	{ name: "gemini4/catalog map xhigh", id: "gemini-4-argon", thinkingLevelMap: effortMap, reasoning: "xhigh" },
+	{ name: "gemini4/opencode-go id", id: "gemini-4-argon-contributor", thinkingLevelMap: effortMap, reasoning: "high" },
+	{ name: "gemini4/no map disabled", id: "gemini-4-argon" },
+	{ name: "id/gemini 5 uses levels", id: "gemini-5-flash", reasoning: "low" },
+	{ name: "id/gemini 9 uses levels", id: "gemini-9", reasoning: "low" },
+	{ name: "id/gemini 10 uses levels", id: "gemini-10-pro", reasoning: "low" },
+	{ name: "id/gemini 40 uses levels", id: "gemini-40", reasoning: "low" },
+	{ name: "id/gemini 4 after a path prefix uses levels", id: "models/gemini-4-argon", reasoning: "low" },
+	{ name: "id/mixed-case gemini 4 uses levels", id: "Gemini-4-Argon", reasoning: "low" },
+	{ name: "id/gemini 04 uses budgets", id: "gemini-04-pro", reasoning: "low" },
+	{ name: "id/gemini 1 uses budgets", id: "gemini-1-pro", reasoning: "low" },
+	{ name: "id/gemini 2.5 uses budgets", id: "gemini-2.5-pro", reasoning: "low" },
+	{ name: "id/gemini 3 lite uses budgets", id: "gemini-3-lite", reasoning: "low" },
 ];
 
 function googleModel(c: Case) {

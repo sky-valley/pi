@@ -128,17 +128,20 @@ var (
 	// Gemini 3 Pro/Flash ids with or without a minor version, such as
 	// gemini-3-flash-preview, gemini-3.1-pro-preview and gemini-3.8-flash.
 	gemini3LevelRe = regexp.MustCompile(`gemini-3(?:\.\d+)?-(?:pro|flash)`)
+	// Gemini 4 and later, such as gemini-4-argon (upstream 1692bba63, #10890).
+	gemini4PlusRe = regexp.MustCompile(`gemini-(?:[4-9]|[1-9]\d)`)
 	// Both hosted Gemma 4 naming forms: gemma-4-* and gemma4-*.
 	gemma4Re = regexp.MustCompile(`gemma-?4`)
 )
 
 // usesGoogleThinkingLevel reports whether the model uses Gemini's discrete
 // thinkingLevel control instead of the token-based thinkingBudget control (pi
-// google-shared.ts, upstream 16235fd93). It only selects the wire format: the
-// levels the model supports come from its thinkingLevelMap.
+// google-shared.ts, upstream 16235fd93, 1692bba63). It only selects the wire
+// format: the levels the model supports come from its thinkingLevelMap.
 func usesGoogleThinkingLevel(model *ai.Model) bool {
 	id := strings.ToLower(model.ID)
 	return gemini3LevelRe.MatchString(id) ||
+		gemini4PlusRe.MatchString(id) ||
 		id == "gemini-flash-latest" ||
 		id == "gemini-flash-lite-latest" ||
 		gemma4Re.MatchString(id)

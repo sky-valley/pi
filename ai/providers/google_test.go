@@ -174,7 +174,7 @@ func firstFunctionResponse(contents []any) map[string]any {
 // without includeThoughts. The maps below are the shipped catalog's shapes for
 // each family (inlined, so the test does not follow a catalog regen); the same
 // ids without a map keep "off" supported and disable with a budget. pi's values:
-// testdata/google-thinking/thinking-config-16235fd93.json "disabled/*".
+// testdata/google-thinking/thinking-config-1692bba63.json "disabled/*".
 func TestGoogleDisabledThinkingPerFamily(t *testing.T) {
 	proMap := ai.ThinkingLevelMap{"off": nil, "minimal": nil, "low": strPtr("LOW"), "medium": nil, "high": strPtr("HIGH")}
 	flashMap := ai.ThinkingLevelMap{"off": nil}

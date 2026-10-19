@@ -1,5 +1,5 @@
 {
-	"sha": "16235fd93",
+	"sha": "1692bba63",
 	"cases": [
 		{
 			"name": "upstream/omitted uses the lowest supported level",
@@ -485,12 +485,12 @@
 			}
 		},
 		{
-			"name": "id/gemini 4 uses budgets",
+			"name": "id/gemini 4 pro uses levels",
 			"id": "gemini-4-pro",
 			"reasoning": "low",
 			"thinkingConfig": {
 				"includeThoughts": true,
-				"thinkingBudget": -1
+				"thinkingLevel": "LOW"
 			}
 		},
 		{
@@ -500,6 +500,237 @@
 			"thinkingConfig": {
 				"includeThoughts": true,
 				"thinkingLevel": "LOW"
+			}
+		},
+		{
+			"name": "upstream/gemini 4 uses thinking levels",
+			"id": "gemini-4-argon",
+			"thinkingLevelMap": {},
+			"reasoning": "medium",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingLevel": "MEDIUM"
+			}
+		},
+		{
+			"name": "gemini4/catalog map disabled",
+			"id": "gemini-4-argon",
+			"thinkingLevelMap": {
+				"off": null,
+				"minimal": null,
+				"low": "low",
+				"medium": "medium",
+				"high": "high",
+				"xhigh": null,
+				"max": null
+			},
+			"thinkingConfig": {
+				"thinkingLevel": "LOW"
+			}
+		},
+		{
+			"name": "gemini4/catalog map off",
+			"id": "gemini-4-argon",
+			"thinkingLevelMap": {
+				"off": null,
+				"minimal": null,
+				"low": "low",
+				"medium": "medium",
+				"high": "high",
+				"xhigh": null,
+				"max": null
+			},
+			"reasoning": "off",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingLevel": "LOW"
+			}
+		},
+		{
+			"name": "gemini4/catalog map minimal",
+			"id": "gemini-4-argon",
+			"thinkingLevelMap": {
+				"off": null,
+				"minimal": null,
+				"low": "low",
+				"medium": "medium",
+				"high": "high",
+				"xhigh": null,
+				"max": null
+			},
+			"reasoning": "minimal",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingLevel": "LOW"
+			}
+		},
+		{
+			"name": "gemini4/catalog map low",
+			"id": "gemini-4-argon",
+			"thinkingLevelMap": {
+				"off": null,
+				"minimal": null,
+				"low": "low",
+				"medium": "medium",
+				"high": "high",
+				"xhigh": null,
+				"max": null
+			},
+			"reasoning": "low",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingLevel": "LOW"
+			}
+		},
+		{
+			"name": "gemini4/catalog map high",
+			"id": "gemini-4-argon",
+			"thinkingLevelMap": {
+				"off": null,
+				"minimal": null,
+				"low": "low",
+				"medium": "medium",
+				"high": "high",
+				"xhigh": null,
+				"max": null
+			},
+			"reasoning": "high",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingLevel": "HIGH"
+			}
+		},
+		{
+			"name": "gemini4/catalog map xhigh",
+			"id": "gemini-4-argon",
+			"thinkingLevelMap": {
+				"off": null,
+				"minimal": null,
+				"low": "low",
+				"medium": "medium",
+				"high": "high",
+				"xhigh": null,
+				"max": null
+			},
+			"reasoning": "xhigh",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingLevel": "HIGH"
+			}
+		},
+		{
+			"name": "gemini4/opencode-go id",
+			"id": "gemini-4-argon-contributor",
+			"thinkingLevelMap": {
+				"off": null,
+				"minimal": null,
+				"low": "low",
+				"medium": "medium",
+				"high": "high",
+				"xhigh": null,
+				"max": null
+			},
+			"reasoning": "high",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingLevel": "HIGH"
+			}
+		},
+		{
+			"name": "gemini4/no map disabled",
+			"id": "gemini-4-argon",
+			"thinkingConfig": {
+				"thinkingBudget": 0
+			}
+		},
+		{
+			"name": "id/gemini 5 uses levels",
+			"id": "gemini-5-flash",
+			"reasoning": "low",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingLevel": "LOW"
+			}
+		},
+		{
+			"name": "id/gemini 9 uses levels",
+			"id": "gemini-9",
+			"reasoning": "low",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingLevel": "LOW"
+			}
+		},
+		{
+			"name": "id/gemini 10 uses levels",
+			"id": "gemini-10-pro",
+			"reasoning": "low",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingLevel": "LOW"
+			}
+		},
+		{
+			"name": "id/gemini 40 uses levels",
+			"id": "gemini-40",
+			"reasoning": "low",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingLevel": "LOW"
+			}
+		},
+		{
+			"name": "id/gemini 4 after a path prefix uses levels",
+			"id": "models/gemini-4-argon",
+			"reasoning": "low",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingLevel": "LOW"
+			}
+		},
+		{
+			"name": "id/mixed-case gemini 4 uses levels",
+			"id": "Gemini-4-Argon",
+			"reasoning": "low",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingLevel": "LOW"
+			}
+		},
+		{
+			"name": "id/gemini 04 uses budgets",
+			"id": "gemini-04-pro",
+			"reasoning": "low",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingBudget": -1
+			}
+		},
+		{
+			"name": "id/gemini 1 uses budgets",
+			"id": "gemini-1-pro",
+			"reasoning": "low",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingBudget": -1
+			}
+		},
+		{
+			"name": "id/gemini 2.5 uses budgets",
+			"id": "gemini-2.5-pro",
+			"reasoning": "low",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingBudget": 2048
+			}
+		},
+		{
+			"name": "id/gemini 3 lite uses budgets",
+			"id": "gemini-3-lite",
+			"reasoning": "low",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingBudget": -1
 			}
 		}
 	]
