@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -469,6 +470,25 @@ func scenarios() []scenario {
 			},
 		},
 		{
+			// Rust's Command passes the environment it captured, sorted by name,
+			// once a variable was set, and the daemon's own (in its order)
+			// otherwise; values that are not strings set nothing. env(1) prints
+			// the environment in order; the payload is reduced to whether it is
+			// sorted and whether ZZ is set, since the rest is the machine's.
+			name:  "environment order",
+			skip:  unixOnly,
+			clean: []func(string) string{summarizeEnvironment},
+			run: func(r *recorder) {
+				// The harness appends HOME and the git variables to the daemon's
+				// environment, so it is not in name order to begin with.
+				r.do("inherited", `{"op":"exec","argv":["/usr/bin/env"],"cwd":"%R","env":{}}`)
+				r.do("inherited, a variable set", `{"op":"exec","argv":["/usr/bin/env"],"cwd":"%R","env":{"ZZ":"1"}}`)
+				r.do("inherited, only a non-string", `{"op":"exec","argv":["/usr/bin/env"],"cwd":"%R","env":{"ZZ":1}}`)
+				r.do("inherited, null env", `{"op":"exec","argv":["/usr/bin/env"],"cwd":"%R","env":null}`)
+				r.do("cleared", `{"op":"exec","argv":["/usr/bin/env"],"cwd":"%R","env":{"B":"2","ZZ":"3","A":"1"},"inheritEnv":false}`)
+			},
+		},
+		{
 			name: "watch",
 			skip: unixOnly,
 			run: func(r *recorder) {
@@ -491,6 +511,20 @@ func scenarios() []scenario {
 			},
 		},
 	}
+}
+
+// summarizeEnvironment reduces env(1) output to whether the variables are in
+// name order and whether ZZ is set.
+func summarizeEnvironment(text string) string {
+	if !strings.Contains(text, "HOME=") && !strings.Contains(text, "ZZ=") {
+		return text
+	}
+	var names []string
+	for _, line := range strings.Split(strings.TrimSuffix(text, "\n"), "\n") {
+		name, _, _ := strings.Cut(line, "=")
+		names = append(names, name)
+	}
+	return "sorted=" + strconv.FormatBool(slices.IsSorted(names)) + " ZZ=" + strconv.FormatBool(slices.Contains(names, "ZZ"))
 }
 
 // gitignoreFixture is a work tree whose ignore files exercise the gitignore

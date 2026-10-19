@@ -1,4 +1,61 @@
 {
+  "environment order": [
+    {
+      "label": "inherited",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "sorted=false ZZ=false"
+    },
+    {
+      "label": "inherited",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    },
+    {
+      "label": "inherited, a variable set",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "sorted=true ZZ=true"
+    },
+    {
+      "label": "inherited, a variable set",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    },
+    {
+      "label": "inherited, only a non-string",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "sorted=false ZZ=false"
+    },
+    {
+      "label": "inherited, only a non-string",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    },
+    {
+      "label": "inherited, null env",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "sorted=false ZZ=false"
+    },
+    {
+      "label": "inherited, null env",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    },
+    {
+      "label": "cleared",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "sorted=true ZZ=true"
+    },
+    {
+      "label": "cleared",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    }
+  ],
   "escaping": [
     {
       "label": "lstat odd name",

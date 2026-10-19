@@ -347,9 +347,17 @@ func resolveArgvProgram(program, _ string, _ object) (string, *failure) {
 
 // childEnvironment is the environment Rust's Command gives a child: the
 // daemon's, unless cleared, with the request's string values set over it.
-// Once anything changed, Rust passes it sorted by name.
+// Once anything changed (a value set, or the environment cleared), Rust
+// passes the environment it captured, sorted by name; otherwise the daemon's
+// own, in its order.
 func childEnvironment(env object, inheritEnv bool) []string {
-	if inheritEnv && len(env) == 0 {
+	set := map[string]string{}
+	for key, value := range env {
+		if s, ok := asString(value); ok {
+			set[key] = s
+		}
+	}
+	if inheritEnv && len(set) == 0 {
 		return os.Environ()
 	}
 	values := map[string]string{}
@@ -360,10 +368,8 @@ func childEnvironment(env object, inheritEnv bool) []string {
 			}
 		}
 	}
-	for key, value := range env {
-		if s, ok := asString(value); ok {
-			values[key] = s
-		}
+	for key, value := range set {
+		values[key] = value
 	}
 	keys := make([]string, 0, len(values))
 	for key := range values {
