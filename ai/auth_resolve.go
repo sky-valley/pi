@@ -202,11 +202,75 @@ const defaultOAuthMinimumValidityMs int64 = 5 * 60 * 1000
 // provider that never answers would wedge every other resolution behind it.
 const defaultOAuthRefreshTimeout = 15 * time.Second
 
+// refreshStoredOAuthCredential refreshes a stored OAuth credential under the
+// credential-store lock and persists the result before the lock is released.
+// needsRefresh is re-checked under the lock, so concurrent callers and
+// processes refresh only once.
+//
+// ctx cancels only the wait for the lock. Once a refresh starts, the provider
+// may already have rotated the refresh token, so the refresh and its
+// persistence run detached from ctx's cancellation (keeping its values) and
+// are bounded only by defaultOAuthRefreshTimeout. Otherwise a cancelled caller
+// could discard the only valid refresh token. Callers that must return
+// promptly on cancellation race this call with ctx.
+//
+// It returns the stored OAuth credential after the operation, or nil when the
+// provider no longer has an OAuth credential.
+func refreshStoredOAuthCredential(
+	ctx context.Context,
+	credentials CredentialStore,
+	providerID string,
+	oauth *OAuthAuth,
+	needsRefresh func(*Credential) bool,
+) (*Credential, error) {
+	lockWait, cancelLockWait := context.WithCancelCause(context.WithoutCancel(ctx))
+	defer cancelLockWait(nil)
+	stopLockWaitCancel := context.AfterFunc(ctx, func() { cancelLockWait(context.Cause(ctx)) })
+	defer stopLockWaitCancel()
+	if ctx.Err() != nil {
+		cancelLockWait(context.Cause(ctx))
+	}
+
+	post, err := credentials.Modify(lockWait, providerID, func(current *Credential) (*Credential, error) {
+		stopLockWaitCancel()
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+		if current == nil || current.Type != CredentialOAuth {
+			return nil, nil // logged out meanwhile
+		}
+		if !needsRefresh(current) {
+			return nil, nil // another process/request refreshed
+		}
+		refreshCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), defaultOAuthRefreshTimeout)
+		defer cancel()
+		refreshed, err := oauth.Refresh(refreshCtx, current.OAuthCredentials())
+		if err != nil {
+			return nil, newModelsError(ErrOAuth, "OAuth refresh failed for "+providerID, err)
+		}
+		return oauthCredential(refreshed), nil
+	})
+	if err != nil {
+		var me *ModelsError
+		if errors.As(err, &me) {
+			return nil, err
+		}
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return nil, ctxErr
+		}
+		return nil, newModelsError(ErrAuth, "Credential store modify failed for "+providerID, err)
+	}
+	if post == nil || post.Type != CredentialOAuth {
+		return nil, nil
+	}
+	return post, nil
+}
+
 // resolveStoredOAuth resolves OAuth with double-checked locking: tokens with
-// less than five minutes remaining lock, re-check expiry under the lock,
-// refresh once globally, and persist the rotated credential before release.
-// minOAuthValidityMs widens that window (never shrinks it) and, when non-nil,
-// additionally requires the refreshed token to clear it.
+// less than five minutes remaining are refreshed through
+// refreshStoredOAuthCredential. minOAuthValidityMs widens that window (never
+// shrinks it) and, when non-nil, additionally requires the refreshed token to
+// clear it.
 func resolveStoredOAuth(
 	ctx context.Context,
 	credentials CredentialStore,
@@ -219,40 +283,16 @@ func resolveStoredOAuth(
 	if minOAuthValidityMs != nil && *minOAuthValidityMs > minimumValidityMs {
 		minimumValidityMs = *minOAuthValidityMs
 	}
-	expiresSoon := func(expires int64) bool { return nowMillis()+minimumValidityMs >= expires }
+	expiresSoon := func(credential *Credential) bool { return nowMillis()+minimumValidityMs >= credential.Expires }
 	credential := stored.OAuthCredentials()
 
-	if expiresSoon(credential.Expires) {
+	if expiresSoon(stored) {
 		// Optimistic check said expired; the authoritative check runs under the lock.
-		post, err := credentials.Modify(ctx, providerID, func(current *Credential) (*Credential, error) {
-			if current == nil || current.Type != CredentialOAuth {
-				return nil, nil // logged out meanwhile
-			}
-			if !expiresSoon(current.Expires) {
-				return nil, nil // another request refreshed
-			}
-			// pi composes AbortSignal.any([signal, AbortSignal.timeout(...)]);
-			// a derived context is the same composition — caller cancellation
-			// or the timeout, whichever fires first.
-			refreshCtx, cancel := context.WithTimeout(ctx, defaultOAuthRefreshTimeout)
-			defer cancel()
-			refreshed, rerr := oauth.Refresh(refreshCtx, current.OAuthCredentials())
-			if rerr != nil {
-				return nil, newModelsError(ErrOAuth, "OAuth refresh failed for "+providerID, rerr)
-			}
-			return oauthCredential(refreshed), nil
-		})
+		post, err := refreshStoredOAuthCredential(ctx, credentials, providerID, oauth, expiresSoon)
 		if err != nil {
-			if isCancellation(ctx, err) {
-				return nil, ctx.Err()
-			}
-			var me *ModelsError
-			if errors.As(err, &me) {
-				return nil, err
-			}
-			return nil, newModelsError(ErrAuth, "Credential store modify failed for "+providerID, err)
+			return nil, err
 		}
-		if post == nil || post.Type != CredentialOAuth {
+		if post == nil {
 			return nil, nil // logged out meanwhile
 		}
 		credential = post.OAuthCredentials()
@@ -261,7 +301,7 @@ func resolveStoredOAuth(
 		// after the refresh. pi's such caller is its bearer-token export CLI, which
 		// is host-side and unported; here the branch is reachable only through the
 		// exported overrides.
-		if minOAuthValidityMs != nil && expiresSoon(credential.Expires) {
+		if minOAuthValidityMs != nil && expiresSoon(post) {
 			return nil, newModelsError(ErrOAuth,
 				"OAuth refresh returned a token that expires too soon for "+providerID, nil)
 		}

@@ -7,6 +7,7 @@ import (
 	"maps"
 	"reflect"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -373,37 +374,27 @@ func TestResolveProviderAuthOAuthRefreshFailure(t *testing.T) {
 	}
 }
 
-// TestResolveStoredOAuthBoundsRefreshDuration locks pi acbdc0d25: the refresh
-// runs under a context bounded by BOTH the caller's cancellation and a fifteen
-// second timeout, so a provider that never answers cannot hold the credential
-// store lock forever. Upstream's own test for this was removed the next commit
-// (b784c8096) as flaky; this one observes the bound through the context the
-// provider actually receives instead of waiting on wall-clock time.
+// TestResolveStoredOAuthBoundsRefreshDuration locks pi acbdc0d25's 15 s
+// refresh timeout. pi's own test of it was dropped upstream (b784c8096) as
+// flaky; this one observes the bound through the context the provider
+// actually receives instead of waiting on wall-clock time.
 func TestResolveStoredOAuthBoundsRefreshDuration(t *testing.T) {
 	store := seedOAuthStore(t, "oauthp", 0) // expired: forces a refresh
 
-	callerCtx, cancelCaller := context.WithCancel(context.Background())
-	defer cancelCaller()
-
 	var deadline time.Time
-	var hasDeadline, cancelPropagated bool
-	refreshed := make(chan struct{})
+	var hasDeadline bool
 	auth := ProviderAuth{OAuth: &OAuthAuth{
 		Refresh: func(ctx context.Context, c OAuthCredentials) (OAuthCredentials, error) {
-			defer close(refreshed)
 			deadline, hasDeadline = ctx.Deadline()
-			// The caller's cancellation must still reach the provider.
-			cancelCaller()
-			<-ctx.Done()
-			cancelPropagated = errors.Is(ctx.Err(), context.Canceled)
-			return OAuthCredentials{}, ctx.Err()
+			return OAuthCredentials{Refresh: "r1", Access: "new", Expires: nowMillis() + 3_600_000}, nil
 		},
 		ToAuth: func(c OAuthCredentials) (ModelAuth, error) { return ModelAuth{APIKey: c.Access}, nil },
 	}}
 
 	before := time.Now()
-	_, _ = resolveProviderAuth(callerCtx, "oauthp", auth, store, authCtx(), nil)
-	<-refreshed // resolution returns once the caller is cancelled
+	if _, err := resolveProviderAuth(context.Background(), "oauthp", auth, store, authCtx(), nil); err != nil {
+		t.Fatal(err)
+	}
 
 	if !hasDeadline {
 		t.Fatal("refresh context has no deadline: the refresh is unbounded")
@@ -411,52 +402,104 @@ func TestResolveStoredOAuthBoundsRefreshDuration(t *testing.T) {
 	if got := deadline.Sub(before); got > 16*time.Second || got < 14*time.Second {
 		t.Fatalf("refresh deadline is %v out, want ~15s", got)
 	}
-	if !cancelPropagated {
-		t.Fatal("caller cancellation did not reach the refresh context")
-	}
 }
 
-// TestResolveStoredOAuthRefreshContextIsComposite locks upstream 42a06f947 and
-// d3da2e968, which tightened pi's assertion from "the refresh signal IS the
-// caller's signal" to "the refresh signal is a DISTINCT composite that aborts
-// with the caller and carries the caller's abort reason". The Go composite is
-// context.WithTimeout(callerCtx, ...): a context of its own, done as soon as
-// the caller is done, and — because Go propagates a cancellation cause to every
-// derived context — reporting the caller's cause from context.Cause. Deriving
-// the refresh context from anything but the caller's (a detached background
-// context, say) would keep the deadline but lose both of the latter.
-func TestResolveStoredOAuthRefreshContextIsComposite(t *testing.T) {
+// TestResolveStoredOAuthRefreshOutlivesCaller locks upstream bde882c74 (pi
+// "does not cancel an extension OAuth refresh with the request"): once a
+// refresh has started, the provider may already have rotated the refresh
+// token, so the caller's cancellation no longer reaches the refresh. The
+// refresh context still carries the caller's values; it is detached from the
+// caller's cancellation only.
+func TestResolveStoredOAuthRefreshOutlivesCaller(t *testing.T) {
 	store := seedOAuthStore(t, "oauthp", 0) // expired: forces a refresh
-	reason := errors.New("caller went away")
-	callerCtx, cancelCaller := context.WithCancelCause(context.Background())
-	defer cancelCaller(nil)
+	callerCtx, cancelCaller := context.WithCancel(context.WithValue(context.Background(), ctxMarkerKey{}, "caller"))
+	defer cancelCaller()
 
-	var distinct bool
-	var refreshErr, refreshCause error
+	var refreshErr error
+	var marker string
 	refreshed := make(chan struct{})
 	auth := ProviderAuth{OAuth: &OAuthAuth{
 		Refresh: func(ctx context.Context, c OAuthCredentials) (OAuthCredentials, error) {
 			defer close(refreshed)
-			distinct = ctx != callerCtx
-			cancelCaller(reason)
-			<-ctx.Done()
-			refreshErr, refreshCause = ctx.Err(), context.Cause(ctx)
-			return OAuthCredentials{}, ctx.Err()
+			marker, _ = ctx.Value(ctxMarkerKey{}).(string)
+			cancelCaller()
+			select {
+			case <-ctx.Done():
+			case <-time.After(100 * time.Millisecond):
+			}
+			refreshErr = ctx.Err()
+			return OAuthCredentials{Refresh: "r1", Access: "new", Expires: nowMillis() + 3_600_000}, nil
 		},
 		ToAuth: func(c OAuthCredentials) (ModelAuth, error) { return ModelAuth{APIKey: c.Access}, nil },
 	}}
 
 	_, _ = resolveProviderAuth(callerCtx, "oauthp", auth, store, authCtx(), nil)
-	<-refreshed // resolution returns once the caller is cancelled
+	<-refreshed
 
-	if !distinct {
-		t.Fatal("refresh received the caller's own context, not a composite derived from it")
+	if refreshErr != nil {
+		t.Fatalf("the caller's cancellation reached a started refresh: %v", refreshErr)
 	}
-	if !errors.Is(refreshErr, context.Canceled) {
-		t.Fatalf("caller cancellation did not cancel the refresh context: %v", refreshErr)
+	if marker != "caller" {
+		t.Fatalf("the refresh context must carry the caller's values, marker=%q", marker)
 	}
-	if !errors.Is(refreshCause, reason) {
-		t.Fatalf("caller's cancellation cause did not reach the refresh context: %v", refreshCause)
+}
+
+// modifyEnteredStore reports when its first Modify call has been entered.
+type modifyEnteredStore struct {
+	CredentialStore
+	entered chan struct{}
+	once    sync.Once
+}
+
+func (s *modifyEnteredStore) Modify(ctx context.Context, providerID string, fn func(*Credential) (*Credential, error)) (*Credential, error) {
+	s.once.Do(func() { close(s.entered) })
+	return s.CredentialStore.Modify(ctx, providerID, fn)
+}
+
+// TestResolveStoredOAuthCancelsLockWait locks the other half of bde882c74's
+// refreshStoredOAuthCredential: the caller's cancellation still ends the wait
+// for the credential lock, and a refresh that had not started never starts.
+func TestResolveStoredOAuthCancelsLockWait(t *testing.T) {
+	store := seedOAuthStore(t, "oauthp", 0) // expired: forces a refresh
+	holding := make(chan struct{})
+	releaseLock := make(chan struct{})
+	held := make(chan struct{})
+	go func() {
+		defer close(held)
+		_, _ = store.Modify(context.Background(), "oauthp", func(*Credential) (*Credential, error) {
+			close(holding)
+			<-releaseLock
+			return nil, nil
+		})
+	}()
+	<-holding
+
+	var calls atomic.Int64
+	auth := oauthProviderAuth(&calls, 3_600_000)
+	waiting := &modifyEnteredStore{CredentialStore: store, entered: make(chan struct{})}
+	ctx, cancel := context.WithCancel(context.Background())
+	errs := make(chan error, 1)
+	go func() {
+		_, err := resolveProviderAuth(ctx, "oauthp", auth, waiting, authCtx(), nil)
+		errs <- err
+	}()
+	<-waiting.entered // queued behind the holder
+	cancel()
+	if err := <-errs; !errors.Is(err, context.Canceled) {
+		t.Fatalf("a cancelled lock wait must surface the cancellation, got %v", err)
+	}
+	close(releaseLock)
+	<-held
+	// Give a refresh that wrongly survived the cancelled wait its chance to run.
+	if _, err := store.Modify(context.Background(), "oauthp", func(*Credential) (*Credential, error) { return nil, nil }); err != nil {
+		t.Fatal(err)
+	}
+	if calls.Load() != 0 {
+		t.Fatalf("a refresh whose lock wait was cancelled must not run, calls=%d", calls.Load())
+	}
+	stored, _ := store.Read(context.Background(), "oauthp")
+	if stored == nil || stored.Access != "old" {
+		t.Fatalf("the stored credential must be untouched: %+v", stored)
 	}
 }
 

@@ -1358,74 +1358,128 @@ func TestModelsAuthCallbacksSeeCallerContext(t *testing.T) {
 	}
 }
 
-// TestModelsGetAuthCancelledOAuthRefreshPreservesCredential mirrors pi "passes
-// cancellation to OAuth refresh and preserves the previous credential": the
-// refresh sees the caller's context, and a refresh that ignores cancellation
-// and returns late must not have its result written to the store.
-//
-// Upstream d3da2e968 tightened what "sees the caller's context" means: the
-// refresh gets a distinct composite signal, not the caller's own object, and
-// that composite both aborts with the caller and reports the caller's abort
-// reason. Go's equivalent of the reason is the cancellation cause, which
-// propagates to every derived context — so the refresh context must report the
-// caller's cause, not a bare context.Canceled.
-func TestModelsGetAuthCancelledOAuthRefreshPreservesCredential(t *testing.T) {
+// TestModelsGetAuthPersistsOAuthRefreshStartedBeforeCancel mirrors pi
+// "persists an OAuth refresh that started before the request was cancelled"
+// (upstream bde882c74; Radius bug report: refresh_token_invalidated after a
+// cancelled refresh): the provider has rotated the refresh token by the time
+// the request is cancelled, so the rotated credential must still be stored.
+func TestModelsGetAuthPersistsOAuthRefreshStartedBeforeCancel(t *testing.T) {
 	creds := NewInMemoryCredentialStore()
-	previous := &Credential{Type: CredentialOAuth, Refresh: "old-refresh", Access: "old", Expires: 0}
 	if _, err := creds.Modify(context.Background(), "p1", func(*Credential) (*Credential, error) {
-		return previous, nil
+		return &Credential{Type: CredentialOAuth, Access: "old", Refresh: "old-refresh", Expires: 0}, nil
 	}); err != nil {
 		t.Fatalf("seed: %v", err)
 	}
+	ctx, cancel := context.WithCancel(context.Background())
+	m := modelsWithEnv(nil, &CreateModelsOptions{Credentials: creds})
+	m.SetProvider(CreateProvider(CreateProviderOptions{
+		ID:   "p1",
+		Auth: ProviderAuth{OAuth: rotatingOAuth(cancel)},
+		API:  stubAPI(),
+	}))
 
-	refreshStarted := make(chan struct{})
-	release := make(chan struct{})
-	var marker string
-	var refreshCtx context.Context
+	if _, err := m.GetProviderAuth(ctx, "p1", nil); !errors.Is(err, context.Canceled) {
+		t.Fatalf("a cancelled resolution must surface the cancellation, got %v", err)
+	}
+	waitForStoredRefresh(t, creds, "p1", "new-refresh")
+}
+
+// TestModelsRefreshPersistsOAuthRefreshStartedBeforeCancel mirrors pi
+// "persists an OAuth refresh that started before the model refresh was
+// cancelled" (upstream bde882c74): model-list refresh shares the request path's
+// refreshStoredOAuthCredential.
+func TestModelsRefreshPersistsOAuthRefreshStartedBeforeCancel(t *testing.T) {
+	creds := NewInMemoryCredentialStore()
+	if _, err := creds.Modify(context.Background(), "p1", func(*Credential) (*Credential, error) {
+		return &Credential{Type: CredentialOAuth, Access: "old", Refresh: "old-refresh", Expires: 0}, nil
+	}); err != nil {
+		t.Fatalf("seed: %v", err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	m := modelsWithEnv(nil, &CreateModelsOptions{Credentials: creds})
+	m.SetProvider(CreateProvider(CreateProviderOptions{
+		ID:          "p1",
+		Auth:        ProviderAuth{OAuth: rotatingOAuth(cancel)},
+		FetchModels: func(context.Context, RefreshModelsContext) ([]*Model, error) { return nil, nil },
+		API:         stubAPI(),
+	}))
+
+	if result := m.Refresh(ctx, nil); !result.Aborted {
+		t.Fatalf("a cancelled refresh must report aborted: %+v", result)
+	}
+	waitForStoredRefresh(t, creds, "p1", "new-refresh")
+}
+
+// TestModelsRefreshWrapsOAuthRefreshFailure locks the model-refresh path's
+// share of refreshStoredOAuthCredential (upstream bde882c74): a failed token
+// refresh is reported as pi's ModelsError "OAuth refresh failed for <id>",
+// where it used to surface the provider's error bare. pi at d2e7d8b7c
+// (src capture, models.refresh() errors.get("p1").message) reports
+// "OAuth refresh failed for p1: token refresh failed (400): invalid_grant".
+func TestModelsRefreshWrapsOAuthRefreshFailure(t *testing.T) {
+	creds := NewInMemoryCredentialStore()
+	if _, err := creds.Modify(context.Background(), "p1", func(*Credential) (*Credential, error) {
+		return &Credential{Type: CredentialOAuth, Access: "old", Refresh: "old-refresh", Expires: 0}, nil
+	}); err != nil {
+		t.Fatalf("seed: %v", err)
+	}
 	m := modelsWithEnv(nil, &CreateModelsOptions{Credentials: creds})
 	m.SetProvider(CreateProvider(CreateProviderOptions{
 		ID: "p1",
 		Auth: ProviderAuth{OAuth: &OAuthAuth{
 			Name: "p1",
-			Refresh: func(ctx context.Context, c OAuthCredentials) (OAuthCredentials, error) {
-				marker, _ = ctx.Value(ctxMarkerKey{}).(string)
-				refreshCtx = ctx
-				close(refreshStarted)
-				<-release
-				// Deliberately ignores cancellation and succeeds late.
-				return OAuthCredentials{Refresh: "rotated", Access: "new", Expires: nowMillis() + 60_000}, nil
+			Refresh: func(context.Context, OAuthCredentials) (OAuthCredentials, error) {
+				return OAuthCredentials{}, errors.New("token refresh failed (400): invalid_grant")
 			},
 			ToAuth: func(c OAuthCredentials) (ModelAuth, error) { return ModelAuth{APIKey: c.Access}, nil },
 		}},
-		API: stubAPI(),
+		FetchModels: func(context.Context, RefreshModelsContext) ([]*Model, error) { return nil, nil },
+		API:         stubAPI(),
 	}))
 
-	ctx, cancel := context.WithCancelCause(context.WithValue(context.Background(), ctxMarkerKey{}, "caller"))
-	reason := errors.New("caller went away")
-	errs := make(chan error, 1)
-	go func() {
-		_, err := m.GetProviderAuth(ctx, "p1", nil)
-		errs <- err
-	}()
-	<-refreshStarted
-	cancel(reason)
-	close(release)
+	err := m.Refresh(context.Background(), nil).Errors["p1"]
+	var me *ModelsError
+	if !errors.As(err, &me) || me.Code != ErrOAuth {
+		t.Fatalf("want an ErrOAuth ModelsError, got %v", err)
+	}
+	const want = "OAuth refresh failed for p1: token refresh failed (400): invalid_grant"
+	if err.Error() != want {
+		t.Fatalf("error = %q, want pi's %q", err.Error(), want)
+	}
+}
 
-	if err := <-errs; !errors.Is(err, context.Canceled) {
-		t.Fatalf("cancelled resolution must surface the cancellation, got %v", err)
+// rotatingOAuth is pi's test OAuth whose refresh cancels the caller, as if the
+// request were cancelled after the provider rotated the refresh token, and
+// then succeeds. It lingers after the cancel: Go delivers a cancellation to
+// derived and AfterFunc-linked contexts asynchronously, where pi's abort
+// listeners run synchronously, and a cancellation that wrongly reaches the
+// store's write must have landed by the time the refresh returns.
+func rotatingOAuth(cancelCaller context.CancelFunc) *OAuthAuth {
+	return &OAuthAuth{
+		Name: "p1",
+		Refresh: func(_ context.Context, c OAuthCredentials) (OAuthCredentials, error) {
+			cancelCaller()
+			time.Sleep(20 * time.Millisecond)
+			c.Access, c.Refresh, c.Expires = "new", "new-refresh", nowMillis()+60_000
+			return c, nil
+		},
+		ToAuth: func(c OAuthCredentials) (ModelAuth, error) { return ModelAuth{APIKey: c.Access}, nil },
 	}
-	if marker != "caller" {
-		t.Fatalf("OAuth refresh must receive the caller's context, marker=%q", marker)
-	}
-	if refreshCtx == ctx {
-		t.Fatal("refresh must receive a composite derived from the caller's context, not the caller's own")
-	}
-	if !errors.Is(context.Cause(refreshCtx), reason) {
-		t.Fatalf("caller's cancellation cause must reach the refresh context, got %v", context.Cause(refreshCtx))
-	}
-	stored, _ := creds.Read(context.Background(), "p1")
-	if stored == nil || stored.Access != "old" || stored.Refresh != "old-refresh" {
-		t.Fatalf("a cancelled refresh must leave the stored credential untouched: %+v", stored)
+}
+
+// waitForStoredRefresh is pi's vi.waitFor on the stored refresh token.
+func waitForStoredRefresh(t *testing.T, creds CredentialStore, providerID, want string) {
+	t.Helper()
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		stored, err := creds.Read(context.Background(), providerID)
+		if err == nil && stored != nil && stored.Refresh == want {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("stored credential = %+v (err %v), want refresh token %q", stored, err, want)
+		}
+		time.Sleep(5 * time.Millisecond)
 	}
 }
 
