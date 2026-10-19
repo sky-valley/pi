@@ -1,13 +1,19 @@
 package providers
 
 import (
+	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"os"
+	"reflect"
 	"testing"
 
 	"github.com/sky-valley/pi/ai"
 )
 
-// Mirrors pi's packages/ai/test/sampling-options.test.ts (upstream c01f687e5):
+// Mirrors pi's packages/ai/test/sampling-options.test.ts (upstream c01f687e5;
+// the per-thinking-level table of 76dfb88f6 is TestSamplingParamsMatchPi's):
 // arbitrary sampling parameters ride into the request body of the
 // OpenAI-compatible adapters, the model's defaults with the request's merged
 // over them per key and applied after the named request fields, while other
@@ -189,5 +195,92 @@ func TestSamplingParamsIgnoredByAnthropic(t *testing.T) {
 	})
 	if has(body, "top_p") || has(body, "top_k") {
 		t.Fatalf("anthropic must ignore sampling params, got top_p=%v top_k=%v", body["top_p"], body["top_k"])
+	}
+}
+
+// samplingParamsCaptureFile is what testdata/sampling-params/capture.mjs
+// recorded from pi-ai 1.3.0: the openai-completions and openai-responses
+// request bodies stream() and streamSimple() build from a model's sampling
+// parameters, its per-thinking-level table and the request's.
+const samplingParamsCaptureFile = "testdata/sampling-params/sampling-params-1.3.0.json"
+
+// The sampling parameters a request carries are the model's, overridden by the
+// model's samplingParamsByThinkingLevel entry for the effective level
+// (ClampThinkingLevel of the reasoning effort, "off" when there is none, and
+// "medium" for a summary-only Responses request), overridden by the request's
+// — and they override the named request fields (upstream 76dfb88f6).
+func TestSamplingParamsMatchPi(t *testing.T) {
+	data, err := os.ReadFile(samplingParamsCaptureFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var capture struct {
+		Rows []struct {
+			Name    string          `json:"name"`
+			API     string          `json:"api"`
+			Simple  bool            `json:"simple"`
+			Model   json.RawMessage `json:"model"`
+			Options struct {
+				SamplingParams   map[string]any `json:"samplingParams"`
+				Temperature      *float64       `json:"temperature"`
+				Reasoning        string         `json:"reasoning"`
+				ReasoningEffort  string         `json:"reasoningEffort"`
+				ReasoningSummary string         `json:"reasoningSummary"`
+			} `json:"options"`
+			Payload string `json:"payload"`
+		} `json:"rows"`
+	}
+	if err := json.Unmarshal(data, &capture); err != nil {
+		t.Fatalf("%s: %v; rerun capture.mjs", samplingParamsCaptureFile, err)
+	}
+	if len(capture.Rows) == 0 {
+		t.Fatalf("%s holds no rows; rerun capture.mjs", samplingParamsCaptureFile)
+	}
+	errCaptured := errors.New("captured")
+	for _, row := range capture.Rows {
+		var model ai.Model
+		if err := json.Unmarshal(row.Model, &model); err != nil {
+			t.Fatalf("%s: model: %v", row.Name, err)
+		}
+		var payload any
+		base := ai.StreamOptions{
+			ProviderRequestOptions: ai.ProviderRequestOptions{APIKey: "fake-key", OnPayload: func(p any, _ *ai.Model) (any, error) {
+				payload = p
+				return nil, errCaptured
+			}},
+			Temperature:    row.Options.Temperature,
+			SamplingParams: row.Options.SamplingParams,
+		}
+		req := ai.NormalizeContext(ai.Context{Messages: []ai.Message{ai.NewUserText("Hello", 0)}})
+		var final *ai.AssistantMessage
+		switch {
+		case row.Simple:
+			opts := &ai.SimpleStreamOptions{StreamOptions: base, Reasoning: ai.ThinkingLevel(row.Options.Reasoning)}
+			if row.API == "openai-completions" {
+				final = StreamSimpleOpenAICompletions(context.Background(), &model, req, opts).Result()
+			} else {
+				final = StreamSimpleOpenAIResponses(context.Background(), &model, req, opts).Result()
+			}
+		case row.API == "openai-completions":
+			final = StreamOpenAICompletions(context.Background(), &model, req, &OpenAIOptions{StreamOptions: base, ReasoningEffort: row.Options.ReasoningEffort}).Result()
+		default:
+			final = StreamOpenAIResponses(context.Background(), &model, req, &OpenAIResponsesOptions{StreamOptions: base, ReasoningEffort: row.Options.ReasoningEffort, ReasoningSummary: row.Options.ReasoningSummary}).Result()
+		}
+		if payload == nil {
+			t.Errorf("%s: no payload (%s %q)", row.Name, final.StopReason, final.ErrorMessage)
+			continue
+		}
+		got, err := json.Marshal(payload)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var gotValue, wantValue any
+		_ = json.Unmarshal(got, &gotValue)
+		if err := json.Unmarshal([]byte(row.Payload), &wantValue); err != nil {
+			t.Fatal(err)
+		}
+		if !reflect.DeepEqual(gotValue, wantValue) {
+			t.Errorf("%s: body\n%s\npi\n%s", row.Name, got, row.Payload)
+		}
 	}
 }

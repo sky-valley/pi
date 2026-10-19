@@ -271,11 +271,12 @@ func StreamSimpleOpenAIResponses(ctx context.Context, model *ai.Model, req ai.Tr
 			}
 		}
 	}
-	// pi buildBaseOptions: maxTokens = clamp(options?.maxTokens ?? model.maxTokens).
-	// The request's samplingParams pass through as they are; buildResponsesParams
-	// merges them over the model's (upstream c01f687e5).
+	// pi buildBaseOptions: maxTokens = clamp(options?.maxTokens ?? model.maxTokens),
+	// and samplingParams resolved for options?.reasoning ?? "off" — which
+	// buildResponsesParams resolves once more for the reasoning effort.
 	mt := ai.ClampMaxTokensToContext(model, req, ai.SimpleMaxTokensDefault(model, opts))
 	o.MaxTokens = &mt
+	o.SamplingParams = ai.SimpleSamplingParams(model, opts)
 	return StreamOpenAIResponses(ctx, model, req, o)
 }
 
@@ -1093,9 +1094,16 @@ func buildResponsesParams(model *ai.Model, req ai.TranscriptContext, opts *OpenA
 	if opts.ToolChoice != nil {
 		params["tool_choice"] = opts.ToolChoice
 	}
+	// pi: options?.reasoningEffort ?? (options?.reasoningSummary ? "medium" :
+	// undefined) — the effort a summary-only request runs at, and the level its
+	// sampling parameters are picked for (upstream 76dfb88f6).
+	reasoningEffort := opts.ReasoningEffort
+	if reasoningEffort == "" && opts.ReasoningSummary != "" {
+		reasoningEffort = "medium"
+	}
 	if model.Reasoning {
-		if opts.ReasoningEffort != "" || opts.ReasoningSummary != "" {
-			effort := "medium"
+		if reasoningEffort != "" {
+			effort := reasoningEffort
 			if opts.ReasoningEffort != "" {
 				effort = effortValue(model, opts.ReasoningEffort)
 			}
@@ -1122,10 +1130,14 @@ func buildResponsesParams(model *ai.Model, req ai.TranscriptContext, opts *OpenA
 		}
 	}
 
-	// Last so custom keys override the named request fields (upstream 25a2c8dc).
-	// Per-request keys override model defaults (upstream c01f687e5).
-	maps.Copy(params, model.SamplingParams)
-	maps.Copy(params, opts.SamplingParams)
+	// Last so model and request sampling parameters override named request
+	// fields (upstream 25a2c8dc, c01f687e5); the level picks the model's
+	// per-thinking-level entry (upstream 76dfb88f6).
+	level := ai.ModelThinkingLevel(reasoningEffort)
+	if level == "" {
+		level = "off"
+	}
+	maps.Copy(params, ai.ResolveSamplingParams(model, level, opts.SamplingParams))
 
 	return params, nil
 }

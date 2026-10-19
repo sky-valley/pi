@@ -47,11 +47,12 @@ func StreamSimpleOpenAICompletions(ctx context.Context, model *ai.Model, req ai.
 			}
 		}
 	}
-	// pi buildBaseOptions: maxTokens = clamp(options?.maxTokens ?? model.maxTokens).
-	// The request's samplingParams pass through as they are; buildOpenAIParams
-	// merges them over the model's (upstream c01f687e5).
+	// pi buildBaseOptions: maxTokens = clamp(options?.maxTokens ?? model.maxTokens),
+	// and samplingParams resolved for options?.reasoning ?? "off" — which
+	// buildOpenAIParams resolves once more for the reasoning effort.
 	mt := ai.ClampMaxTokensToContext(model, req, ai.SimpleMaxTokensDefault(model, opts))
 	o.MaxTokens = &mt
+	o.SamplingParams = ai.SimpleSamplingParams(model, opts)
 	return StreamOpenAICompletions(ctx, model, req, o)
 }
 
@@ -1144,10 +1145,14 @@ func buildOpenAIParams(model *ai.Model, req ai.TranscriptContext, opts *OpenAIOp
 		}
 	}
 
-	// Last so custom keys override the named request fields (upstream 25a2c8dc).
-	// Per-request keys override model defaults (upstream c01f687e5).
-	maps.Copy(params, model.SamplingParams)
-	maps.Copy(params, opts.SamplingParams)
+	// Last so model and request sampling parameters override named request
+	// fields (upstream 25a2c8dc, c01f687e5); the level picks the model's
+	// per-thinking-level entry (upstream 76dfb88f6).
+	level := ai.ModelThinkingLevel(opts.ReasoningEffort)
+	if level == "" {
+		level = "off"
+	}
+	maps.Copy(params, ai.ResolveSamplingParams(model, level, opts.SamplingParams))
 
 	return params, nil
 }

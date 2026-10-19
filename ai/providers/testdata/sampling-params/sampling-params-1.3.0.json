@@ -1,0 +1,1438 @@
+{
+	"piAi": "1.3.0",
+	"rows": [
+		{
+			"name": "openai-completions/request params",
+			"api": "openai-completions",
+			"simple": false,
+			"model": {
+				"id": "custom-model",
+				"name": "Custom Model",
+				"api": "openai-completions",
+				"provider": "custom-provider",
+				"baseUrl": "http://127.0.0.1:9/v1",
+				"reasoning": false,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 16384
+			},
+			"options": {
+				"samplingParams": {
+					"top_p": 0.95,
+					"top_k": 0,
+					"min_p": 0
+				}
+			},
+			"payload": "{\"model\":\"custom-model\",\"messages\":[{\"role\":\"user\",\"content\":\"Hello\"}],\"stream\":true,\"stream_options\":{\"include_usage\":true},\"store\":false,\"top_p\":0.95,\"top_k\":0,\"min_p\":0}"
+		},
+		{
+			"name": "openai-completions/none",
+			"api": "openai-completions",
+			"simple": false,
+			"model": {
+				"id": "custom-model",
+				"name": "Custom Model",
+				"api": "openai-completions",
+				"provider": "custom-provider",
+				"baseUrl": "http://127.0.0.1:9/v1",
+				"reasoning": false,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 16384
+			},
+			"options": {},
+			"payload": "{\"model\":\"custom-model\",\"messages\":[{\"role\":\"user\",\"content\":\"Hello\"}],\"stream\":true,\"stream_options\":{\"include_usage\":true},\"store\":false}"
+		},
+		{
+			"name": "openai-completions/model params under request params",
+			"api": "openai-completions",
+			"simple": false,
+			"model": {
+				"id": "custom-model",
+				"name": "Custom Model",
+				"api": "openai-completions",
+				"provider": "custom-provider",
+				"baseUrl": "http://127.0.0.1:9/v1",
+				"reasoning": false,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 16384,
+				"samplingParams": {
+					"top_p": 0.95,
+					"min_p": 0.05
+				}
+			},
+			"options": {
+				"samplingParams": {
+					"top_p": 0.5
+				}
+			},
+			"payload": "{\"model\":\"custom-model\",\"messages\":[{\"role\":\"user\",\"content\":\"Hello\"}],\"stream\":true,\"stream_options\":{\"include_usage\":true},\"store\":false,\"top_p\":0.5,\"min_p\":0.05}"
+		},
+		{
+			"name": "openai-completions/simple request params",
+			"api": "openai-completions",
+			"simple": true,
+			"model": {
+				"id": "custom-model",
+				"name": "Custom Model",
+				"api": "openai-completions",
+				"provider": "custom-provider",
+				"baseUrl": "http://127.0.0.1:9/v1",
+				"reasoning": false,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 16384
+			},
+			"options": {
+				"samplingParams": {
+					"top_p": 0.5
+				}
+			},
+			"payload": "{\"model\":\"custom-model\",\"messages\":[{\"role\":\"user\",\"content\":\"Hello\"}],\"stream\":true,\"stream_options\":{\"include_usage\":true},\"store\":false,\"max_completion_tokens\":16384,\"top_p\":0.5}"
+		},
+		{
+			"name": "openai-completions/simple clamped level over model params",
+			"api": "openai-completions",
+			"simple": true,
+			"model": {
+				"id": "custom-model",
+				"name": "Custom Model",
+				"api": "openai-completions",
+				"provider": "custom-provider",
+				"baseUrl": "http://127.0.0.1:9/v1",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 16384,
+				"samplingParams": {
+					"temperature": 1,
+					"top_p": 0.95
+				},
+				"thinkingLevelMap": {
+					"low": null,
+					"medium": null
+				},
+				"samplingParamsByThinkingLevel": {
+					"high": {
+						"temperature": 0.8,
+						"top_k": 64
+					}
+				}
+			},
+			"options": {
+				"reasoning": "low"
+			},
+			"payload": "{\"model\":\"custom-model\",\"messages\":[{\"role\":\"user\",\"content\":\"Hello\"}],\"stream\":true,\"stream_options\":{\"include_usage\":true},\"store\":false,\"max_completion_tokens\":16384,\"reasoning_effort\":\"high\",\"temperature\":0.8,\"top_p\":0.95,\"top_k\":64}"
+		},
+		{
+			"name": "openai-completions/simple off level",
+			"api": "openai-completions",
+			"simple": true,
+			"model": {
+				"id": "custom-model",
+				"name": "Custom Model",
+				"api": "openai-completions",
+				"provider": "custom-provider",
+				"baseUrl": "http://127.0.0.1:9/v1",
+				"reasoning": false,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 16384,
+				"samplingParamsByThinkingLevel": {
+					"off": {
+						"temperature": 0.7
+					}
+				}
+			},
+			"options": {},
+			"payload": "{\"model\":\"custom-model\",\"messages\":[{\"role\":\"user\",\"content\":\"Hello\"}],\"stream\":true,\"stream_options\":{\"include_usage\":true},\"store\":false,\"max_completion_tokens\":16384,\"temperature\":0.7}"
+		},
+		{
+			"name": "openai-completions/simple request params over level params",
+			"api": "openai-completions",
+			"simple": true,
+			"model": {
+				"id": "custom-model",
+				"name": "Custom Model",
+				"api": "openai-completions",
+				"provider": "custom-provider",
+				"baseUrl": "http://127.0.0.1:9/v1",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 16384,
+				"samplingParamsByThinkingLevel": {
+					"low": {
+						"temperature": 0.6,
+						"top_p": 0.95
+					}
+				}
+			},
+			"options": {
+				"reasoning": "low",
+				"samplingParams": {
+					"top_p": 0.5
+				}
+			},
+			"payload": "{\"model\":\"custom-model\",\"messages\":[{\"role\":\"user\",\"content\":\"Hello\"}],\"stream\":true,\"stream_options\":{\"include_usage\":true},\"store\":false,\"max_completion_tokens\":16384,\"reasoning_effort\":\"low\",\"temperature\":0.6,\"top_p\":0.5}"
+		},
+		{
+			"name": "openai-completions/level params between model and request params",
+			"api": "openai-completions",
+			"simple": false,
+			"model": {
+				"id": "custom-model",
+				"name": "Custom Model",
+				"api": "openai-completions",
+				"provider": "custom-provider",
+				"baseUrl": "http://127.0.0.1:9/v1",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 16384,
+				"samplingParams": {
+					"temperature": 1,
+					"top_p": 0.95
+				},
+				"samplingParamsByThinkingLevel": {
+					"low": {
+						"temperature": 0.6,
+						"top_k": 64
+					}
+				}
+			},
+			"options": {
+				"reasoningEffort": "low",
+				"samplingParams": {
+					"top_p": 0.5
+				}
+			},
+			"payload": "{\"model\":\"custom-model\",\"messages\":[{\"role\":\"user\",\"content\":\"Hello\"}],\"stream\":true,\"stream_options\":{\"include_usage\":true},\"store\":false,\"reasoning_effort\":\"low\",\"temperature\":0.6,\"top_p\":0.5,\"top_k\":64}"
+		},
+		{
+			"name": "openai-completions/request params over named fields",
+			"api": "openai-completions",
+			"simple": false,
+			"model": {
+				"id": "custom-model",
+				"name": "Custom Model",
+				"api": "openai-completions",
+				"provider": "custom-provider",
+				"baseUrl": "http://127.0.0.1:9/v1",
+				"reasoning": false,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 16384
+			},
+			"options": {
+				"temperature": 0,
+				"samplingParams": {
+					"temperature": 1
+				}
+			},
+			"payload": "{\"model\":\"custom-model\",\"messages\":[{\"role\":\"user\",\"content\":\"Hello\"}],\"stream\":true,\"stream_options\":{\"include_usage\":true},\"store\":false,\"temperature\":1}"
+		},
+		{
+			"name": "openai-completions/direct off on a model that cannot turn off",
+			"api": "openai-completions",
+			"simple": false,
+			"model": {
+				"id": "custom-model",
+				"name": "Custom Model",
+				"api": "openai-completions",
+				"provider": "custom-provider",
+				"baseUrl": "http://127.0.0.1:9/v1",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 16384,
+				"thinkingLevelMap": {
+					"off": null
+				},
+				"samplingParamsByThinkingLevel": {
+					"off": {
+						"temperature": 0.1
+					},
+					"minimal": {
+						"temperature": 0.2
+					},
+					"low": {
+						"temperature": 0.3
+					},
+					"medium": {
+						"temperature": 0.4
+					},
+					"high": {
+						"temperature": 0.5
+					},
+					"xhigh": {
+						"temperature": 0.6
+					}
+				}
+			},
+			"options": {},
+			"payload": "{\"model\":\"custom-model\",\"messages\":[{\"role\":\"user\",\"content\":\"Hello\"}],\"stream\":true,\"stream_options\":{\"include_usage\":true},\"store\":false,\"temperature\":0.2}"
+		},
+		{
+			"name": "openai-completions/simple off on a model that cannot turn off",
+			"api": "openai-completions",
+			"simple": true,
+			"model": {
+				"id": "custom-model",
+				"name": "Custom Model",
+				"api": "openai-completions",
+				"provider": "custom-provider",
+				"baseUrl": "http://127.0.0.1:9/v1",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 16384,
+				"thinkingLevelMap": {
+					"off": null
+				},
+				"samplingParamsByThinkingLevel": {
+					"off": {
+						"temperature": 0.1
+					},
+					"minimal": {
+						"temperature": 0.2
+					},
+					"low": {
+						"temperature": 0.3
+					},
+					"medium": {
+						"temperature": 0.4
+					},
+					"high": {
+						"temperature": 0.5
+					},
+					"xhigh": {
+						"temperature": 0.6
+					}
+				}
+			},
+			"options": {
+				"reasoning": "off"
+			},
+			"payload": "{\"model\":\"custom-model\",\"messages\":[{\"role\":\"user\",\"content\":\"Hello\"}],\"stream\":true,\"stream_options\":{\"include_usage\":true},\"store\":false,\"max_completion_tokens\":16384,\"reasoning_effort\":\"minimal\",\"temperature\":0.2}"
+		},
+		{
+			"name": "openai-completions/simple unset on a model that cannot turn off",
+			"api": "openai-completions",
+			"simple": true,
+			"model": {
+				"id": "custom-model",
+				"name": "Custom Model",
+				"api": "openai-completions",
+				"provider": "custom-provider",
+				"baseUrl": "http://127.0.0.1:9/v1",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 16384,
+				"thinkingLevelMap": {
+					"off": null
+				},
+				"samplingParamsByThinkingLevel": {
+					"off": {
+						"temperature": 0.1
+					},
+					"minimal": {
+						"temperature": 0.2
+					},
+					"low": {
+						"temperature": 0.3
+					},
+					"medium": {
+						"temperature": 0.4
+					},
+					"high": {
+						"temperature": 0.5
+					},
+					"xhigh": {
+						"temperature": 0.6
+					}
+				}
+			},
+			"options": {},
+			"payload": "{\"model\":\"custom-model\",\"messages\":[{\"role\":\"user\",\"content\":\"Hello\"}],\"stream\":true,\"stream_options\":{\"include_usage\":true},\"store\":false,\"max_completion_tokens\":16384,\"temperature\":0.2}"
+		},
+		{
+			"name": "openai-completions/simple xhigh on a model without it",
+			"api": "openai-completions",
+			"simple": true,
+			"model": {
+				"id": "custom-model",
+				"name": "Custom Model",
+				"api": "openai-completions",
+				"provider": "custom-provider",
+				"baseUrl": "http://127.0.0.1:9/v1",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 16384,
+				"samplingParamsByThinkingLevel": {
+					"off": {
+						"temperature": 0.1
+					},
+					"minimal": {
+						"temperature": 0.2
+					},
+					"low": {
+						"temperature": 0.3
+					},
+					"medium": {
+						"temperature": 0.4
+					},
+					"high": {
+						"temperature": 0.5
+					},
+					"xhigh": {
+						"temperature": 0.6
+					}
+				}
+			},
+			"options": {
+				"reasoning": "xhigh"
+			},
+			"payload": "{\"model\":\"custom-model\",\"messages\":[{\"role\":\"user\",\"content\":\"Hello\"}],\"stream\":true,\"stream_options\":{\"include_usage\":true},\"store\":false,\"max_completion_tokens\":16384,\"reasoning_effort\":\"high\",\"temperature\":0.5}"
+		},
+		{
+			"name": "openai-completions/direct xhigh on a model without it",
+			"api": "openai-completions",
+			"simple": false,
+			"model": {
+				"id": "custom-model",
+				"name": "Custom Model",
+				"api": "openai-completions",
+				"provider": "custom-provider",
+				"baseUrl": "http://127.0.0.1:9/v1",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 16384,
+				"samplingParamsByThinkingLevel": {
+					"off": {
+						"temperature": 0.1
+					},
+					"minimal": {
+						"temperature": 0.2
+					},
+					"low": {
+						"temperature": 0.3
+					},
+					"medium": {
+						"temperature": 0.4
+					},
+					"high": {
+						"temperature": 0.5
+					},
+					"xhigh": {
+						"temperature": 0.6
+					}
+				}
+			},
+			"options": {
+				"reasoningEffort": "xhigh"
+			},
+			"payload": "{\"model\":\"custom-model\",\"messages\":[{\"role\":\"user\",\"content\":\"Hello\"}],\"stream\":true,\"stream_options\":{\"include_usage\":true},\"store\":false,\"reasoning_effort\":\"xhigh\",\"temperature\":0.5}"
+		},
+		{
+			"name": "openai-completions/simple high on a model without reasoning",
+			"api": "openai-completions",
+			"simple": true,
+			"model": {
+				"id": "custom-model",
+				"name": "Custom Model",
+				"api": "openai-completions",
+				"provider": "custom-provider",
+				"baseUrl": "http://127.0.0.1:9/v1",
+				"reasoning": false,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 16384,
+				"samplingParams": {
+					"top_p": 0.9
+				},
+				"samplingParamsByThinkingLevel": {
+					"off": {
+						"temperature": 0.1
+					},
+					"minimal": {
+						"temperature": 0.2
+					},
+					"low": {
+						"temperature": 0.3
+					},
+					"medium": {
+						"temperature": 0.4
+					},
+					"high": {
+						"temperature": 0.5
+					},
+					"xhigh": {
+						"temperature": 0.6
+					}
+				}
+			},
+			"options": {
+				"reasoning": "high"
+			},
+			"payload": "{\"model\":\"custom-model\",\"messages\":[{\"role\":\"user\",\"content\":\"Hello\"}],\"stream\":true,\"stream_options\":{\"include_usage\":true},\"store\":false,\"max_completion_tokens\":16384,\"top_p\":0.9,\"temperature\":0.1}"
+		},
+		{
+			"name": "openai-completions/a null level entry",
+			"api": "openai-completions",
+			"simple": false,
+			"model": {
+				"id": "custom-model",
+				"name": "Custom Model",
+				"api": "openai-completions",
+				"provider": "custom-provider",
+				"baseUrl": "http://127.0.0.1:9/v1",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 16384,
+				"samplingParams": {
+					"top_p": 0.9
+				},
+				"samplingParamsByThinkingLevel": {
+					"low": null
+				}
+			},
+			"options": {
+				"reasoningEffort": "low"
+			},
+			"payload": "{\"model\":\"custom-model\",\"messages\":[{\"role\":\"user\",\"content\":\"Hello\"}],\"stream\":true,\"stream_options\":{\"include_usage\":true},\"store\":false,\"reasoning_effort\":\"low\",\"top_p\":0.9}"
+		},
+		{
+			"name": "openai-completions/an empty model table",
+			"api": "openai-completions",
+			"simple": false,
+			"model": {
+				"id": "custom-model",
+				"name": "Custom Model",
+				"api": "openai-completions",
+				"provider": "custom-provider",
+				"baseUrl": "http://127.0.0.1:9/v1",
+				"reasoning": false,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 16384,
+				"samplingParams": {},
+				"samplingParamsByThinkingLevel": {}
+			},
+			"options": {},
+			"payload": "{\"model\":\"custom-model\",\"messages\":[{\"role\":\"user\",\"content\":\"Hello\"}],\"stream\":true,\"stream_options\":{\"include_usage\":true},\"store\":false}"
+		},
+		{
+			"name": "openai-responses/request params",
+			"api": "openai-responses",
+			"simple": false,
+			"model": {
+				"id": "custom-model",
+				"name": "Custom Model",
+				"api": "openai-responses",
+				"provider": "custom-provider",
+				"baseUrl": "http://127.0.0.1:9/v1",
+				"reasoning": false,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 16384
+			},
+			"options": {
+				"samplingParams": {
+					"top_p": 0.95,
+					"top_k": 0,
+					"min_p": 0
+				}
+			},
+			"payload": "{\"model\":\"custom-model\",\"input\":[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"Hello\"}]}],\"stream\":true,\"store\":false,\"top_p\":0.95,\"top_k\":0,\"min_p\":0}"
+		},
+		{
+			"name": "openai-responses/none",
+			"api": "openai-responses",
+			"simple": false,
+			"model": {
+				"id": "custom-model",
+				"name": "Custom Model",
+				"api": "openai-responses",
+				"provider": "custom-provider",
+				"baseUrl": "http://127.0.0.1:9/v1",
+				"reasoning": false,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 16384
+			},
+			"options": {},
+			"payload": "{\"model\":\"custom-model\",\"input\":[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"Hello\"}]}],\"stream\":true,\"store\":false}"
+		},
+		{
+			"name": "openai-responses/model params under request params",
+			"api": "openai-responses",
+			"simple": false,
+			"model": {
+				"id": "custom-model",
+				"name": "Custom Model",
+				"api": "openai-responses",
+				"provider": "custom-provider",
+				"baseUrl": "http://127.0.0.1:9/v1",
+				"reasoning": false,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 16384,
+				"samplingParams": {
+					"top_p": 0.95,
+					"min_p": 0.05
+				}
+			},
+			"options": {
+				"samplingParams": {
+					"top_p": 0.5
+				}
+			},
+			"payload": "{\"model\":\"custom-model\",\"input\":[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"Hello\"}]}],\"stream\":true,\"store\":false,\"top_p\":0.5,\"min_p\":0.05}"
+		},
+		{
+			"name": "openai-responses/simple request params",
+			"api": "openai-responses",
+			"simple": true,
+			"model": {
+				"id": "custom-model",
+				"name": "Custom Model",
+				"api": "openai-responses",
+				"provider": "custom-provider",
+				"baseUrl": "http://127.0.0.1:9/v1",
+				"reasoning": false,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 16384
+			},
+			"options": {
+				"samplingParams": {
+					"top_p": 0.5
+				}
+			},
+			"payload": "{\"model\":\"custom-model\",\"input\":[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"Hello\"}]}],\"stream\":true,\"store\":false,\"max_output_tokens\":16384,\"top_p\":0.5}"
+		},
+		{
+			"name": "openai-responses/simple clamped level over model params",
+			"api": "openai-responses",
+			"simple": true,
+			"model": {
+				"id": "custom-model",
+				"name": "Custom Model",
+				"api": "openai-responses",
+				"provider": "custom-provider",
+				"baseUrl": "http://127.0.0.1:9/v1",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 16384,
+				"samplingParams": {
+					"temperature": 1,
+					"top_p": 0.95
+				},
+				"thinkingLevelMap": {
+					"low": null,
+					"medium": null
+				},
+				"samplingParamsByThinkingLevel": {
+					"high": {
+						"temperature": 0.8,
+						"top_k": 64
+					}
+				}
+			},
+			"options": {
+				"reasoning": "low"
+			},
+			"payload": "{\"model\":\"custom-model\",\"input\":[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"Hello\"}]}],\"stream\":true,\"store\":false,\"max_output_tokens\":16384,\"reasoning\":{\"effort\":\"high\",\"summary\":\"auto\"},\"include\":[\"reasoning.encrypted_content\"],\"temperature\":0.8,\"top_p\":0.95,\"top_k\":64}"
+		},
+		{
+			"name": "openai-responses/simple off level",
+			"api": "openai-responses",
+			"simple": true,
+			"model": {
+				"id": "custom-model",
+				"name": "Custom Model",
+				"api": "openai-responses",
+				"provider": "custom-provider",
+				"baseUrl": "http://127.0.0.1:9/v1",
+				"reasoning": false,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 16384,
+				"samplingParamsByThinkingLevel": {
+					"off": {
+						"temperature": 0.7
+					}
+				}
+			},
+			"options": {},
+			"payload": "{\"model\":\"custom-model\",\"input\":[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"Hello\"}]}],\"stream\":true,\"store\":false,\"max_output_tokens\":16384,\"temperature\":0.7}"
+		},
+		{
+			"name": "openai-responses/simple request params over level params",
+			"api": "openai-responses",
+			"simple": true,
+			"model": {
+				"id": "custom-model",
+				"name": "Custom Model",
+				"api": "openai-responses",
+				"provider": "custom-provider",
+				"baseUrl": "http://127.0.0.1:9/v1",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 16384,
+				"samplingParamsByThinkingLevel": {
+					"low": {
+						"temperature": 0.6,
+						"top_p": 0.95
+					}
+				}
+			},
+			"options": {
+				"reasoning": "low",
+				"samplingParams": {
+					"top_p": 0.5
+				}
+			},
+			"payload": "{\"model\":\"custom-model\",\"input\":[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"Hello\"}]}],\"stream\":true,\"store\":false,\"max_output_tokens\":16384,\"reasoning\":{\"effort\":\"low\",\"summary\":\"auto\"},\"include\":[\"reasoning.encrypted_content\"],\"temperature\":0.6,\"top_p\":0.5}"
+		},
+		{
+			"name": "openai-responses/level params between model and request params",
+			"api": "openai-responses",
+			"simple": false,
+			"model": {
+				"id": "custom-model",
+				"name": "Custom Model",
+				"api": "openai-responses",
+				"provider": "custom-provider",
+				"baseUrl": "http://127.0.0.1:9/v1",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 16384,
+				"samplingParams": {
+					"temperature": 1,
+					"top_p": 0.95
+				},
+				"samplingParamsByThinkingLevel": {
+					"low": {
+						"temperature": 0.6,
+						"top_k": 64
+					}
+				}
+			},
+			"options": {
+				"reasoningEffort": "low",
+				"samplingParams": {
+					"top_p": 0.5
+				}
+			},
+			"payload": "{\"model\":\"custom-model\",\"input\":[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"Hello\"}]}],\"stream\":true,\"store\":false,\"reasoning\":{\"effort\":\"low\",\"summary\":\"auto\"},\"include\":[\"reasoning.encrypted_content\"],\"temperature\":0.6,\"top_p\":0.5,\"top_k\":64}"
+		},
+		{
+			"name": "openai-responses/request params over named fields",
+			"api": "openai-responses",
+			"simple": false,
+			"model": {
+				"id": "custom-model",
+				"name": "Custom Model",
+				"api": "openai-responses",
+				"provider": "custom-provider",
+				"baseUrl": "http://127.0.0.1:9/v1",
+				"reasoning": false,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 16384
+			},
+			"options": {
+				"temperature": 0,
+				"samplingParams": {
+					"temperature": 1
+				}
+			},
+			"payload": "{\"model\":\"custom-model\",\"input\":[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"Hello\"}]}],\"stream\":true,\"store\":false,\"temperature\":1}"
+		},
+		{
+			"name": "openai-responses/direct off on a model that cannot turn off",
+			"api": "openai-responses",
+			"simple": false,
+			"model": {
+				"id": "custom-model",
+				"name": "Custom Model",
+				"api": "openai-responses",
+				"provider": "custom-provider",
+				"baseUrl": "http://127.0.0.1:9/v1",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 16384,
+				"thinkingLevelMap": {
+					"off": null
+				},
+				"samplingParamsByThinkingLevel": {
+					"off": {
+						"temperature": 0.1
+					},
+					"minimal": {
+						"temperature": 0.2
+					},
+					"low": {
+						"temperature": 0.3
+					},
+					"medium": {
+						"temperature": 0.4
+					},
+					"high": {
+						"temperature": 0.5
+					},
+					"xhigh": {
+						"temperature": 0.6
+					}
+				}
+			},
+			"options": {},
+			"payload": "{\"model\":\"custom-model\",\"input\":[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"Hello\"}]}],\"stream\":true,\"store\":false,\"temperature\":0.2}"
+		},
+		{
+			"name": "openai-responses/simple off on a model that cannot turn off",
+			"api": "openai-responses",
+			"simple": true,
+			"model": {
+				"id": "custom-model",
+				"name": "Custom Model",
+				"api": "openai-responses",
+				"provider": "custom-provider",
+				"baseUrl": "http://127.0.0.1:9/v1",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 16384,
+				"thinkingLevelMap": {
+					"off": null
+				},
+				"samplingParamsByThinkingLevel": {
+					"off": {
+						"temperature": 0.1
+					},
+					"minimal": {
+						"temperature": 0.2
+					},
+					"low": {
+						"temperature": 0.3
+					},
+					"medium": {
+						"temperature": 0.4
+					},
+					"high": {
+						"temperature": 0.5
+					},
+					"xhigh": {
+						"temperature": 0.6
+					}
+				}
+			},
+			"options": {
+				"reasoning": "off"
+			},
+			"payload": "{\"model\":\"custom-model\",\"input\":[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"Hello\"}]}],\"stream\":true,\"store\":false,\"max_output_tokens\":16384,\"reasoning\":{\"effort\":\"minimal\",\"summary\":\"auto\"},\"include\":[\"reasoning.encrypted_content\"],\"temperature\":0.2}"
+		},
+		{
+			"name": "openai-responses/simple unset on a model that cannot turn off",
+			"api": "openai-responses",
+			"simple": true,
+			"model": {
+				"id": "custom-model",
+				"name": "Custom Model",
+				"api": "openai-responses",
+				"provider": "custom-provider",
+				"baseUrl": "http://127.0.0.1:9/v1",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 16384,
+				"thinkingLevelMap": {
+					"off": null
+				},
+				"samplingParamsByThinkingLevel": {
+					"off": {
+						"temperature": 0.1
+					},
+					"minimal": {
+						"temperature": 0.2
+					},
+					"low": {
+						"temperature": 0.3
+					},
+					"medium": {
+						"temperature": 0.4
+					},
+					"high": {
+						"temperature": 0.5
+					},
+					"xhigh": {
+						"temperature": 0.6
+					}
+				}
+			},
+			"options": {},
+			"payload": "{\"model\":\"custom-model\",\"input\":[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"Hello\"}]}],\"stream\":true,\"store\":false,\"max_output_tokens\":16384,\"temperature\":0.2}"
+		},
+		{
+			"name": "openai-responses/simple xhigh on a model without it",
+			"api": "openai-responses",
+			"simple": true,
+			"model": {
+				"id": "custom-model",
+				"name": "Custom Model",
+				"api": "openai-responses",
+				"provider": "custom-provider",
+				"baseUrl": "http://127.0.0.1:9/v1",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 16384,
+				"samplingParamsByThinkingLevel": {
+					"off": {
+						"temperature": 0.1
+					},
+					"minimal": {
+						"temperature": 0.2
+					},
+					"low": {
+						"temperature": 0.3
+					},
+					"medium": {
+						"temperature": 0.4
+					},
+					"high": {
+						"temperature": 0.5
+					},
+					"xhigh": {
+						"temperature": 0.6
+					}
+				}
+			},
+			"options": {
+				"reasoning": "xhigh"
+			},
+			"payload": "{\"model\":\"custom-model\",\"input\":[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"Hello\"}]}],\"stream\":true,\"store\":false,\"max_output_tokens\":16384,\"reasoning\":{\"effort\":\"high\",\"summary\":\"auto\"},\"include\":[\"reasoning.encrypted_content\"],\"temperature\":0.5}"
+		},
+		{
+			"name": "openai-responses/direct xhigh on a model without it",
+			"api": "openai-responses",
+			"simple": false,
+			"model": {
+				"id": "custom-model",
+				"name": "Custom Model",
+				"api": "openai-responses",
+				"provider": "custom-provider",
+				"baseUrl": "http://127.0.0.1:9/v1",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 16384,
+				"samplingParamsByThinkingLevel": {
+					"off": {
+						"temperature": 0.1
+					},
+					"minimal": {
+						"temperature": 0.2
+					},
+					"low": {
+						"temperature": 0.3
+					},
+					"medium": {
+						"temperature": 0.4
+					},
+					"high": {
+						"temperature": 0.5
+					},
+					"xhigh": {
+						"temperature": 0.6
+					}
+				}
+			},
+			"options": {
+				"reasoningEffort": "xhigh"
+			},
+			"payload": "{\"model\":\"custom-model\",\"input\":[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"Hello\"}]}],\"stream\":true,\"store\":false,\"reasoning\":{\"effort\":\"xhigh\",\"summary\":\"auto\"},\"include\":[\"reasoning.encrypted_content\"],\"temperature\":0.5}"
+		},
+		{
+			"name": "openai-responses/simple high on a model without reasoning",
+			"api": "openai-responses",
+			"simple": true,
+			"model": {
+				"id": "custom-model",
+				"name": "Custom Model",
+				"api": "openai-responses",
+				"provider": "custom-provider",
+				"baseUrl": "http://127.0.0.1:9/v1",
+				"reasoning": false,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 16384,
+				"samplingParams": {
+					"top_p": 0.9
+				},
+				"samplingParamsByThinkingLevel": {
+					"off": {
+						"temperature": 0.1
+					},
+					"minimal": {
+						"temperature": 0.2
+					},
+					"low": {
+						"temperature": 0.3
+					},
+					"medium": {
+						"temperature": 0.4
+					},
+					"high": {
+						"temperature": 0.5
+					},
+					"xhigh": {
+						"temperature": 0.6
+					}
+				}
+			},
+			"options": {
+				"reasoning": "high"
+			},
+			"payload": "{\"model\":\"custom-model\",\"input\":[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"Hello\"}]}],\"stream\":true,\"store\":false,\"max_output_tokens\":16384,\"top_p\":0.9,\"temperature\":0.1}"
+		},
+		{
+			"name": "openai-responses/a null level entry",
+			"api": "openai-responses",
+			"simple": false,
+			"model": {
+				"id": "custom-model",
+				"name": "Custom Model",
+				"api": "openai-responses",
+				"provider": "custom-provider",
+				"baseUrl": "http://127.0.0.1:9/v1",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 16384,
+				"samplingParams": {
+					"top_p": 0.9
+				},
+				"samplingParamsByThinkingLevel": {
+					"low": null
+				}
+			},
+			"options": {
+				"reasoningEffort": "low"
+			},
+			"payload": "{\"model\":\"custom-model\",\"input\":[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"Hello\"}]}],\"stream\":true,\"store\":false,\"reasoning\":{\"effort\":\"low\",\"summary\":\"auto\"},\"include\":[\"reasoning.encrypted_content\"],\"top_p\":0.9}"
+		},
+		{
+			"name": "openai-responses/an empty model table",
+			"api": "openai-responses",
+			"simple": false,
+			"model": {
+				"id": "custom-model",
+				"name": "Custom Model",
+				"api": "openai-responses",
+				"provider": "custom-provider",
+				"baseUrl": "http://127.0.0.1:9/v1",
+				"reasoning": false,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 16384,
+				"samplingParams": {},
+				"samplingParamsByThinkingLevel": {}
+			},
+			"options": {},
+			"payload": "{\"model\":\"custom-model\",\"input\":[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"Hello\"}]}],\"stream\":true,\"store\":false}"
+		},
+		{
+			"name": "openai-responses/summary only uses medium",
+			"api": "openai-responses",
+			"simple": false,
+			"model": {
+				"id": "custom-model",
+				"name": "Custom Model",
+				"api": "openai-responses",
+				"provider": "custom-provider",
+				"baseUrl": "http://127.0.0.1:9/v1",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 16384,
+				"samplingParamsByThinkingLevel": {
+					"off": {
+						"temperature": 0.7
+					},
+					"medium": {
+						"temperature": 0.8
+					}
+				}
+			},
+			"options": {
+				"reasoningSummary": "auto"
+			},
+			"payload": "{\"model\":\"custom-model\",\"input\":[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"Hello\"}]}],\"stream\":true,\"store\":false,\"reasoning\":{\"effort\":\"medium\",\"summary\":\"auto\"},\"include\":[\"reasoning.encrypted_content\"],\"temperature\":0.8}"
+		},
+		{
+			"name": "openai-responses/effort and summary",
+			"api": "openai-responses",
+			"simple": false,
+			"model": {
+				"id": "custom-model",
+				"name": "Custom Model",
+				"api": "openai-responses",
+				"provider": "custom-provider",
+				"baseUrl": "http://127.0.0.1:9/v1",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 16384,
+				"samplingParamsByThinkingLevel": {
+					"medium": {
+						"temperature": 0.8
+					},
+					"high": {
+						"temperature": 0.9
+					}
+				}
+			},
+			"options": {
+				"reasoningEffort": "high",
+				"reasoningSummary": "detailed"
+			},
+			"payload": "{\"model\":\"custom-model\",\"input\":[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"Hello\"}]}],\"stream\":true,\"store\":false,\"reasoning\":{\"effort\":\"high\",\"summary\":\"detailed\"},\"include\":[\"reasoning.encrypted_content\"],\"temperature\":0.9}"
+		},
+		{
+			"name": "openai-responses/summary only without reasoning",
+			"api": "openai-responses",
+			"simple": false,
+			"model": {
+				"id": "custom-model",
+				"name": "Custom Model",
+				"api": "openai-responses",
+				"provider": "custom-provider",
+				"baseUrl": "http://127.0.0.1:9/v1",
+				"reasoning": false,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 128000,
+				"maxTokens": 16384,
+				"samplingParamsByThinkingLevel": {
+					"off": {
+						"temperature": 0.7
+					},
+					"medium": {
+						"temperature": 0.8
+					}
+				}
+			},
+			"options": {
+				"reasoningSummary": "auto"
+			},
+			"payload": "{\"model\":\"custom-model\",\"input\":[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"Hello\"}]}],\"stream\":true,\"store\":false,\"temperature\":0.7}"
+		}
+	]
+}

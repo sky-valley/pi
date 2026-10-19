@@ -1263,8 +1263,11 @@ type Model struct {
 	MaxTokens     int               `json:"maxTokens"`
 	// SamplingParams are this model's default sampling parameters. See
 	// StreamOptions.SamplingParams; per-request keys override these.
-	SamplingParams map[string]any  `json:"samplingParams,omitempty"`
-	Headers        ProviderHeaders `json:"headers,omitempty"`
+	SamplingParams map[string]any `json:"samplingParams,omitempty"`
+	// SamplingParamsByThinkingLevel overrides SamplingParams for the
+	// effective thinking level (ResolveSamplingParams).
+	SamplingParamsByThinkingLevel map[ModelThinkingLevel]map[string]any `json:"samplingParamsByThinkingLevel,omitempty"`
+	Headers                       ProviderHeaders                       `json:"headers,omitempty"`
 	// Compat carries API-specific compatibility overrides (decoded per-api).
 	Compat json.RawMessage `json:"compat,omitempty"`
 }
