@@ -206,6 +206,35 @@ func scenarios() []scenario {
 			},
 		},
 		{
+			// The Rust daemon's Linux builds are static musl: realpath(3) is
+			// musl's, not glibc's.
+			name: "musl",
+			skip: muslOnly,
+			run: func(r *recorder) {
+				writeFixture(t(r), r.root, map[string]string{"file": "", "dir/sub/": ""})
+				symlink(t(r), "file", filepath.Join(r.root, "flink"))
+				symlink(t(r), "dir/", filepath.Join(r.root, "dslash"))
+				symlink(t(r), "nowhere", filepath.Join(r.root, "dangling"))
+				// chainN is a chain of N links ending at file.
+				for _, n := range []int{39, 40, 41} {
+					previous := "file"
+					for i := n; i >= 1; i-- {
+						link := "chain" + strconv.Itoa(n) + "-" + strconv.Itoa(i)
+						symlink(t(r), previous, filepath.Join(r.root, link))
+						previous = link
+					}
+				}
+				for _, path := range []string{
+					"%R/chain39-1", "%R/chain40-1", "%R/chain41-1", "//", "//tmp", "///tmp", "//tmp/", "//%R", "/%R//dir",
+					"%R/file/", "%R/file/.", "%R/file/..", "%R/file/x/..", "%R/missing/..", "%R/dangling/..", "%R/flink/",
+					"%R/flink/.", "%R/dslash", "%R/dslash/sub/..", "%R/dir/sub/../..", "%R/dir/../file", "%R/.", "%R/..",
+					"/..", "/../..", "%R/dir/sub/", "%R/dir//sub/.//", "%R/dangling",
+				} {
+					r.do("realpath "+path, `{"op":"realpath","path":"`+path+`"}`)
+				}
+			},
+		},
+		{
 			// musl's execvp searches /usr/local/bin:/bin:/usr/bin when PATH is
 			// unset, glibc /bin:/usr/bin.
 			name: "musl default PATH",

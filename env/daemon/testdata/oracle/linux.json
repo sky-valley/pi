@@ -627,6 +627,148 @@
       "json": "{\"code\":\"ENOTDIR\",\"message\":\"ENOTDIR: not a directory, mkdtemp '\u003croot\u003e/file/pre-XXXXXX'\",\"path\":\"\u003croot\u003e/file/pre-XXXXXX\",\"syscall\":\"mkdtemp\"}"
     }
   ],
+  "musl": [
+    {
+      "label": "realpath %R/chain39-1",
+      "kind": 2,
+      "json": "{\"path\":\"\u003croot\u003e/file\"}"
+    },
+    {
+      "label": "realpath %R/chain40-1",
+      "kind": 3,
+      "json": "{\"code\":\"ELOOP\",\"message\":\"ELOOP: too many symbolic links encountered, realpath '\u003croot\u003e/chain40-1'\",\"path\":\"\u003croot\u003e/chain40-1\",\"syscall\":\"realpath\"}"
+    },
+    {
+      "label": "realpath %R/chain41-1",
+      "kind": 3,
+      "json": "{\"code\":\"ELOOP\",\"message\":\"ELOOP: too many symbolic links encountered, realpath '\u003croot\u003e/chain41-1'\",\"path\":\"\u003croot\u003e/chain41-1\",\"syscall\":\"realpath\"}"
+    },
+    {
+      "label": "realpath //",
+      "kind": 2,
+      "json": "{\"path\":\"//\"}"
+    },
+    {
+      "label": "realpath //tmp",
+      "kind": 2,
+      "json": "{\"path\":\"//tmp\"}"
+    },
+    {
+      "label": "realpath ///tmp",
+      "kind": 2,
+      "json": "{\"path\":\"/tmp\"}"
+    },
+    {
+      "label": "realpath //tmp/",
+      "kind": 2,
+      "json": "{\"path\":\"//tmp\"}"
+    },
+    {
+      "label": "realpath //%R",
+      "kind": 2,
+      "json": "{\"path\":\"\u003croot\u003e\"}"
+    },
+    {
+      "label": "realpath /%R//dir",
+      "kind": 2,
+      "json": "{\"path\":\"/\u003croot\u003e/dir\"}"
+    },
+    {
+      "label": "realpath %R/file/",
+      "kind": 3,
+      "json": "{\"code\":\"ENOTDIR\",\"message\":\"ENOTDIR: not a directory, realpath '\u003croot\u003e/file/'\",\"path\":\"\u003croot\u003e/file/\",\"syscall\":\"realpath\"}"
+    },
+    {
+      "label": "realpath %R/file/.",
+      "kind": 3,
+      "json": "{\"code\":\"ENOTDIR\",\"message\":\"ENOTDIR: not a directory, realpath '\u003croot\u003e/file/.'\",\"path\":\"\u003croot\u003e/file/.\",\"syscall\":\"realpath\"}"
+    },
+    {
+      "label": "realpath %R/file/..",
+      "kind": 3,
+      "json": "{\"code\":\"ENOTDIR\",\"message\":\"ENOTDIR: not a directory, realpath '\u003croot\u003e/file/..'\",\"path\":\"\u003croot\u003e/file/..\",\"syscall\":\"realpath\"}"
+    },
+    {
+      "label": "realpath %R/file/x/..",
+      "kind": 3,
+      "json": "{\"code\":\"ENOTDIR\",\"message\":\"ENOTDIR: not a directory, realpath '\u003croot\u003e/file/x/..'\",\"path\":\"\u003croot\u003e/file/x/..\",\"syscall\":\"realpath\"}"
+    },
+    {
+      "label": "realpath %R/missing/..",
+      "kind": 3,
+      "json": "{\"code\":\"ENOENT\",\"message\":\"ENOENT: no such file or directory, realpath '\u003croot\u003e/missing/..'\",\"path\":\"\u003croot\u003e/missing/..\",\"syscall\":\"realpath\"}"
+    },
+    {
+      "label": "realpath %R/dangling/..",
+      "kind": 3,
+      "json": "{\"code\":\"ENOENT\",\"message\":\"ENOENT: no such file or directory, realpath '\u003croot\u003e/dangling/..'\",\"path\":\"\u003croot\u003e/dangling/..\",\"syscall\":\"realpath\"}"
+    },
+    {
+      "label": "realpath %R/flink/",
+      "kind": 3,
+      "json": "{\"code\":\"ENOTDIR\",\"message\":\"ENOTDIR: not a directory, realpath '\u003croot\u003e/flink/'\",\"path\":\"\u003croot\u003e/flink/\",\"syscall\":\"realpath\"}"
+    },
+    {
+      "label": "realpath %R/flink/.",
+      "kind": 3,
+      "json": "{\"code\":\"ENOTDIR\",\"message\":\"ENOTDIR: not a directory, realpath '\u003croot\u003e/flink/.'\",\"path\":\"\u003croot\u003e/flink/.\",\"syscall\":\"realpath\"}"
+    },
+    {
+      "label": "realpath %R/dslash",
+      "kind": 2,
+      "json": "{\"path\":\"\u003croot\u003e/dir\"}"
+    },
+    {
+      "label": "realpath %R/dslash/sub/..",
+      "kind": 2,
+      "json": "{\"path\":\"\u003croot\u003e/dir\"}"
+    },
+    {
+      "label": "realpath %R/dir/sub/../..",
+      "kind": 2,
+      "json": "{\"path\":\"\u003croot\u003e\"}"
+    },
+    {
+      "label": "realpath %R/dir/../file",
+      "kind": 2,
+      "json": "{\"path\":\"\u003croot\u003e/file\"}"
+    },
+    {
+      "label": "realpath %R/.",
+      "kind": 2,
+      "json": "{\"path\":\"\u003croot\u003e\"}"
+    },
+    {
+      "label": "realpath %R/..",
+      "kind": 2,
+      "json": "{\"path\":\"/tmp\"}"
+    },
+    {
+      "label": "realpath /..",
+      "kind": 2,
+      "json": "{\"path\":\"/\"}"
+    },
+    {
+      "label": "realpath /../..",
+      "kind": 2,
+      "json": "{\"path\":\"/\"}"
+    },
+    {
+      "label": "realpath %R/dir/sub/",
+      "kind": 2,
+      "json": "{\"path\":\"\u003croot\u003e/dir/sub\"}"
+    },
+    {
+      "label": "realpath %R/dir//sub/.//",
+      "kind": 2,
+      "json": "{\"path\":\"\u003croot\u003e/dir/sub\"}"
+    },
+    {
+      "label": "realpath %R/dangling",
+      "kind": 3,
+      "json": "{\"code\":\"ENOENT\",\"message\":\"ENOENT: no such file or directory, realpath '\u003croot\u003e/dangling'\",\"path\":\"\u003croot\u003e/dangling\",\"syscall\":\"realpath\"}"
+    }
+  ],
   "musl default PATH": [
     {
       "label": "no PATH",

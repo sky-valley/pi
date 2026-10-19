@@ -84,9 +84,15 @@ func startWithEmptySignalMask(program string, argv []string, attr *os.ProcAttr) 
 	return os.StartProcess(program, argv, attr)
 }
 
-// realpath is glibc's realpath(3) (and bionic's, which agrees): see
-// realpathWalk.
-func realpath(name string) (string, error) { return realpathWalk(name) }
+// realpath is the realpath(3) of the C library the Rust daemon links: musl's
+// on Linux; bionic's on Android, taken to agree with glibc's walk (no Android
+// oracle has been run).
+func realpath(name string) (string, error) {
+	if onAndroid {
+		return realpathWalk(name)
+	}
+	return realpathMusl(name)
+}
 
 // processName is a process's name from /proc, if it still runs.
 func processName(pid int) (string, bool) {

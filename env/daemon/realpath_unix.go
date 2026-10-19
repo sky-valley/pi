@@ -13,8 +13,8 @@ const eloopThreshold = 40
 
 // realpathWalk is glibc's realpath(3): symbolic links resolved and "." and
 // ".." removed, failing on a missing component, a file used as a directory,
-// or too many links. It is Linux's realpath; it builds everywhere so that
-// macOS can test it against its own realpath(3).
+// or too many links. It is Android's realpath (bionic's is taken to agree);
+// it builds on macOS too, which tests it against its own realpath(3).
 func realpathWalk(name string) (string, error) {
 	if name == "" {
 		return "", unix.ENOENT
