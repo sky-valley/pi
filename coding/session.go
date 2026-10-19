@@ -247,7 +247,7 @@ func invalidToolsOptionError(problem string) error {
 // Not ported: 04b97ef00's MCP retention (an allowlist without `mcp__` entries
 // keeping MCP tools registered for codemode and tool_search), which needs MCP
 // and tool exposure — Scope rows 21 and 20.
-func resolveTools(cwd string, opts SessionOptions, sessionEnv sessionEnvFn, resize imageResizeFn) ([]agent.AgentTool, error) {
+func resolveTools(cwd string, opts SessionOptions, sessionEnv sessionEnvFn, model toolModelFn) ([]agent.AgentTool, error) {
 	if problem := toolListError(opts.ToolNames); problem != "" {
 		return nil, invalidToolsOptionError(problem)
 	}
@@ -317,7 +317,7 @@ func resolveTools(cwd string, opts SessionOptions, sessionEnv sessionEnvFn, resi
 			if !isAllowed(name) {
 				continue
 			}
-			if t, err := createTool(name, cwd, sessionEnv, resize); err == nil {
+			if t, err := createTool(name, cwd, sessionEnv, model); err == nil {
 				addReg(t)
 			}
 		}
@@ -327,7 +327,7 @@ func resolveTools(cwd string, opts SessionOptions, sessionEnv sessionEnvFn, resi
 			if _, ok := registry[name]; ok || !isAllowed(name) {
 				continue
 			}
-			if t, err := createTool(name, cwd, sessionEnv, resize); err == nil {
+			if t, err := createTool(name, cwd, sessionEnv, model); err == nil {
 				addReg(t)
 			}
 		}
@@ -468,22 +468,16 @@ func (s *Session) bashSessionEnv() map[string]string {
 	return env
 }
 
-// imageResizeOptions is the resize profile of the session's CURRENT model —
-// pi's `this.model?.inputLimits?.images?.resize` (agent-session.ts), read per
-// call rather than captured so SetModel reaches the next image without
-// rebuilding the tools. Like bashSessionEnv it runs on the tool-execution
-// goroutine while the caller may be switching models, so it reads the model
-// from ONE snapshot of the agent's guarded state — pi reads
+// currentModel is the session's CURRENT model — pi's `this.model`
+// (agent-session.ts) and the model of the request a tool runs for — read per
+// call rather than captured so SetModel reaches the next tool call and image
+// without rebuilding the tools. Like bashSessionEnv it runs on the
+// tool-execution goroutine while the caller may be switching models, so it
+// reads the model from ONE snapshot of the agent's guarded state — pi reads
 // `this.agent.state.model` for the same reason — and never the plain
-// Session.Model field, which SetModel writes without a lock. Reading that
-// field raced, and reading it more than once could see two different models
-// between the nil checks and the dereference.
-func (s *Session) imageResizeOptions() *ai.ModelImageResizeOptions {
-	m := s.Agent.State().Model
-	if m == nil || m.InputLimits == nil || m.InputLimits.Images == nil {
-		return nil
-	}
-	return m.InputLimits.Images.Resize
+// Session.Model field, which SetModel writes without a lock.
+func (s *Session) currentModel() *ai.Model {
+	return s.Agent.State().Model
 }
 
 // recorder reads the attached SessionRecorder under recMu. Every read goes
@@ -607,7 +601,7 @@ func NewSession(opts SessionOptions) (*Session, error) {
 	// allocated up front so the closure captures a stable, non-nil pointer; its
 	// Agent is filled in below, before NewSession returns and any tool can run.
 	sess := &Session{Cwd: cwd, Model: opts.Model, apiKey: opts.APIKey, models: opts.Models}
-	tools, err := resolveTools(cwd, opts, sess.bashSessionEnv, sess.imageResizeOptions)
+	tools, err := resolveTools(cwd, opts, sess.bashSessionEnv, sess.currentModel)
 	if err != nil {
 		return nil, err
 	}
@@ -673,7 +667,7 @@ func NewSession(opts SessionOptions) (*Session, error) {
 		OnPayload:       opts.OnPayload,
 		OnResponse:      opts.OnResponse,
 		BeforeToolCall:  opts.BeforeToolCall,
-		AfterToolCall:   withToolResultImageNormalization(opts.AfterToolCall, sess.imageResizeOptions),
+		AfterToolCall:   withToolResultImageNormalization(opts.AfterToolCall, sess.currentModel),
 
 		// pi's createAgentSession wires the extension runner's
 		// provider_stream_event handler here, beside onPayload/onResponse.
@@ -766,7 +760,7 @@ func (s *Session) projectForcedPrompt(_ context.Context, transformed []agent.Age
 // it after the tool_result extension hook — so images the hook injects or
 // replaces are normalized too. When there is no hook result and normalization
 // changed nothing, the tool result is left untouched.
-func withToolResultImageNormalization(hook agent.AfterToolCallFunc, resize imageResizeFn) agent.AfterToolCallFunc {
+func withToolResultImageNormalization(hook agent.AfterToolCallFunc, model toolModelFn) agent.AfterToolCallFunc {
 	return func(ctx context.Context, c agent.AfterToolCallContext) *agent.AfterToolCallResult {
 		var hookResult *agent.AfterToolCallResult
 		if hook != nil {
@@ -777,7 +771,7 @@ func withToolResultImageNormalization(hook agent.AfterToolCallFunc, resize image
 		if hookResult != nil && hookResult.HasContent {
 			content = hookResult.Content
 		}
-		normalized, changed := normalizeToolResultImages(content, resize.get())
+		normalized, changed := normalizeToolResultImages(content, imageResizeOptionsOf(model.get()))
 		if hookResult == nil && !changed {
 			return nil
 		}
@@ -863,7 +857,7 @@ func (s *Session) normalizePromptImages(images []ai.ImageContent) ([]ai.ImageCon
 	if len(images) == 0 {
 		return nil, nil
 	}
-	resize := s.imageResizeOptions()
+	resize := imageResizeOptionsOf(s.currentModel())
 	var out []ai.ImageContent
 	var hints []string
 	for _, img := range images {

@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"image"
 	"image/color"
 	"image/png"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -428,7 +430,7 @@ func TestSessionResizesToolResultImagesToModelProfile(t *testing.T) {
 // TestReadToolUsesSessionModelProfile pins f5c946480's read.ts:117 site. pi
 // reads the profile off the tool execution context's model; the port's
 // AgentTool.Execute has no model, so NewSession installs a getter instead
-// (imageResizeFn). Reading it per call is what keeps a mid-session SetModel
+// (toolModelFn). Reading it per call is what keeps a mid-session SetModel
 // from leaving the tool on a stale profile.
 func TestReadToolUsesSessionModelProfile(t *testing.T) {
 	maxWidth, maxHeight := 40, 40
@@ -625,4 +627,77 @@ func TestImageResizeProfileIsRaceFreeAcrossSetModel(t *testing.T) {
 		}
 	}
 	<-done
+}
+
+// TestReadImageNoteFollowsTheModel replays testdata/readimagenote
+// (pi-coding-agent 1.3.0's read tool): when the request's model does not take
+// images, the text that goes with an image — processed or not — ends with
+// getNonVisionImageNote's line, and the structured content's note carries it
+// too. A vision model, or no model at all, adds nothing.
+func TestReadImageNoteFollowsTheModel(t *testing.T) {
+	data, err := os.ReadFile("testdata/readimagenote/readimagenote-1.3.0.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var capture struct {
+		Rows []struct {
+			File       string          `json:"file"`
+			Model      string          `json:"model"`
+			ModelInput []string        `json:"modelInput"`
+			Text       string          `json:"text"`
+			Blocks     []string        `json:"blocks"`
+			Structured json.RawMessage `json:"structured"`
+		} `json:"rows"`
+	}
+	if err := json.Unmarshal(data, &capture); err != nil {
+		t.Fatal(err)
+	}
+	if len(capture.Rows) == 0 {
+		t.Fatal("the readimagenote capture holds no rows")
+	}
+	dir := t.TempDir()
+	os.WriteFile(filepath.Join(dir, "pixel.png"), minimalPNG(), 0o644)
+	os.WriteFile(filepath.Join(dir, "broken.png"), minimalPNG()[:33], 0o644)
+	for _, row := range capture.Rows {
+		t.Run(row.File+"/"+row.Model, func(t *testing.T) {
+			var model *ai.Model
+			if row.ModelInput != nil {
+				model = &ai.Model{ID: row.Model, Provider: "p", Api: "a", Input: row.ModelInput}
+			}
+			res, err := readToolOps(dir, nil, func() *ai.Model { return model }).Execute(context.Background(), "id", map[string]any{"path": row.File}, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var blocks []string
+			text := ""
+			for _, block := range res.Content {
+				switch b := block.(type) {
+				case ai.TextContent:
+					blocks = append(blocks, "text")
+					text = b.Text
+				case ai.ImageContent:
+					blocks = append(blocks, "image")
+				}
+			}
+			if text != row.Text || !slices.Equal(blocks, row.Blocks) {
+				t.Fatalf("text %q blocks %q, pi %q %q", text, blocks, row.Text, row.Blocks)
+			}
+			structured := res.StructuredContent
+			if image, ok := structured.(ReadToolImage); ok {
+				image.Data = "string" // the capture records the data's type, not its bytes
+				structured = image
+			}
+			got, err := json.Marshal(structured)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var want bytes.Buffer
+			if err := json.Compact(&want, row.Structured); err != nil {
+				t.Fatal(err)
+			}
+			if string(got) != want.String() {
+				t.Fatalf("structured content %s, pi %s", got, want.String())
+			}
+		})
+	}
 }

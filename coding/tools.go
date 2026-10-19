@@ -178,10 +178,10 @@ func CreateTool(name, cwd string) (agent.AgentTool, error) {
 
 // createTool is CreateTool with the session-metadata provider the coding
 // session threads into the bash tool (nil for standalone construction).
-func createTool(name, cwd string, sessionEnv sessionEnvFn, resize imageResizeFn) (agent.AgentTool, error) {
+func createTool(name, cwd string, sessionEnv sessionEnvFn, model toolModelFn) (agent.AgentTool, error) {
 	switch name {
 	case "read":
-		return readToolOps(cwd, nil, resize), nil
+		return readToolOps(cwd, nil, model), nil
 	case "bash":
 		return bashTool(cwd, sessionEnv), nil
 	case "powershell":
@@ -478,9 +478,9 @@ func readTool(cwd string) agent.AgentTool { return readToolOps(cwd, nil, nil) }
 // pi's ReadOperations seam (core/tools/read.ts:49). pi's own words: "Override
 // these to delegate file reading to remote systems (for example SSH)." A nil
 // member falls back to the local default, which is pi's spread-over-defaults.
-func readToolOps(cwd string, custom *ReadOperations, resize imageResizeFn) agent.AgentTool {
+func readToolOps(cwd string, custom *ReadOperations, model toolModelFn) agent.AgentTool {
 	ops := resolveReadOperations(custom)
-	read := readFile(cwd, ops, resize)
+	read := readFile(cwd, ops, model)
 	return agent.AgentTool{
 		Name:        "read",
 		Label:       "read",
@@ -508,7 +508,7 @@ func readToolOps(cwd string, custom *ReadOperations, resize imageResizeFn) agent
 
 // readFile is the read tool's execution, before pi's `.then` adds the
 // structured content to its result.
-func readFile(cwd string, ops ReadOperations, resize imageResizeFn) func(ctx context.Context, params map[string]any) (agent.AgentToolResult, error) {
+func readFile(cwd string, ops ReadOperations, model toolModelFn) func(ctx context.Context, params map[string]any) (agent.AgentToolResult, error) {
 	return func(ctx context.Context, params map[string]any) (agent.AgentToolResult, error) {
 		path := argStr(params, "path")
 		abs := resolveReadPath(path, cwd)
@@ -533,15 +533,22 @@ func readFile(cwd string, ops ReadOperations, resize imageResizeFn) func(ctx con
 			// model's inline image limits, and apply EXIF orientation (port of
 			// pi's processImage). The note text matches pi's read tool exactly
 			// (utils/image-process.ts).
-			processed := processImage(data, mime, true, resize.get())
+			requestModel := model.get()
+			nonVisionNote := nonVisionImageNote(requestModel)
+			processed := processImage(data, mime, true, imageResizeOptionsOf(requestModel))
 			if !processed.Ok {
-				return agent.AgentToolResult{Content: ai.ContentList{ai.TextContent{
-					Text: fmt.Sprintf("Read image file [%s]\n%s", mime, processed.Message),
-				}}}, nil
+				text := fmt.Sprintf("Read image file [%s]\n%s", mime, processed.Message)
+				if nonVisionNote != "" {
+					text += "\n" + nonVisionNote
+				}
+				return agent.AgentToolResult{Content: ai.ContentList{ai.TextContent{Text: text}}}, nil
 			}
 			note := fmt.Sprintf("Read image file [%s]", processed.MimeType)
 			if len(processed.Hints) > 0 {
 				note += "\n" + strings.Join(processed.Hints, "\n")
+			}
+			if nonVisionNote != "" {
+				note += "\n" + nonVisionNote
 			}
 			// pi's read never assigns `details` on the image branches
 			// (read.ts:108-131), so it stays undefined and off the wire.
@@ -860,23 +867,44 @@ var maxBashTimeoutSeconds = strconv.FormatFloat(float64(maxBashTimeoutMs)/1000, 
 // is reflected, mirroring pi reading them off the live ExtensionContext.
 type sessionEnvFn func() map[string]string
 
-// imageResizeFn supplies the resize profile of the model a request is being
-// built for. pi reads it straight off the tool execution context
-// (`ctx?.model?.inputLimits?.images?.resize`, read.ts) and falls back to a
-// construction-time option when the context carries no model. The port's
-// AgentTool.Execute has no model, so this getter — installed by NewSession,
-// the same shape as sessionEnvFn — is that seam, and reading it per call keeps
-// a mid-session SetModel from leaving a stale profile behind. Scope queue entry
-// 18 covers giving the execution context a model outright.
-type imageResizeFn func() *ai.ModelImageResizeOptions
+// toolModelFn supplies the model of the request a tool runs for. pi's tools
+// read it straight off the execution context (ctx?.model): the read tool takes
+// its image resize profile from it (`ctx?.model?.inputLimits?.images?.resize`,
+// read.ts), falling back to a construction-time option when the context
+// carries no model, and its non-vision note (getNonVisionImageNote). The
+// port's AgentTool.Execute has no model, so this getter — installed by
+// NewSession, the same shape as sessionEnvFn — is that seam, and reading it
+// per call keeps a mid-session SetModel from leaving a stale model behind.
+// Scope queue entry 18 covers giving the execution context a model outright.
+type toolModelFn func() *ai.Model
 
-// get resolves the profile, treating a nil getter as "no model metadata" — pi's
-// undefined ctx.model, which falls through to the pipeline defaults.
-func (f imageResizeFn) get() *ai.ModelImageResizeOptions {
+// get resolves the model, treating a nil getter as pi's undefined ctx.model.
+func (f toolModelFn) get() *ai.Model {
 	if f == nil {
 		return nil
 	}
 	return f()
+}
+
+// nonVisionImageNote is pi's getNonVisionImageNote (upstream 2f4f283cc): the
+// line the read tool adds to an image's text when the request's model does
+// not take images, whose image block the provider then leaves out. No model
+// adds nothing.
+func nonVisionImageNote(m *ai.Model) string {
+	if m == nil || slices.Contains(m.Input, "image") {
+		return ""
+	}
+	return "[Current model does not support images. The image will be omitted from this request.]"
+}
+
+// imageResizeOptionsOf is a model's image resize profile
+// (model?.inputLimits?.images?.resize): nil for no model or no profile, which
+// falls through to the pipeline defaults.
+func imageResizeOptionsOf(m *ai.Model) *ai.ModelImageResizeOptions {
+	if m == nil || m.InputLimits == nil || m.InputLimits.Images == nil {
+		return nil
+	}
+	return m.InputLimits.Images.Resize
 }
 
 // piSessionEnvKeys are the session metadata variables pi manages for bash

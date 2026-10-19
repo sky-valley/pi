@@ -1,0 +1,93 @@
+{
+	"piCodingAgentVersion": "1.3.0",
+	"rows": [
+		{
+			"file": "pixel.png",
+			"model": "vision",
+			"modelInput": [
+				"text",
+				"image"
+			],
+			"text": "Read image file [image/png]",
+			"blocks": [
+				"text",
+				"image"
+			],
+			"structured": {
+				"type": "image",
+				"data": "string",
+				"mimeType": "image/png",
+				"note": "Read image file [image/png]"
+			}
+		},
+		{
+			"file": "pixel.png",
+			"model": "text-only",
+			"modelInput": [
+				"text"
+			],
+			"text": "Read image file [image/png]\n[Current model does not support images. The image will be omitted from this request.]",
+			"blocks": [
+				"text",
+				"image"
+			],
+			"structured": {
+				"type": "image",
+				"data": "string",
+				"mimeType": "image/png",
+				"note": "Read image file [image/png]\n[Current model does not support images. The image will be omitted from this request.]"
+			}
+		},
+		{
+			"file": "pixel.png",
+			"model": "none",
+			"modelInput": null,
+			"text": "Read image file [image/png]",
+			"blocks": [
+				"text",
+				"image"
+			],
+			"structured": {
+				"type": "image",
+				"data": "string",
+				"mimeType": "image/png",
+				"note": "Read image file [image/png]"
+			}
+		},
+		{
+			"file": "broken.png",
+			"model": "vision",
+			"modelInput": [
+				"text",
+				"image"
+			],
+			"text": "Read image file [image/png]\n[Image omitted: could not be resized below the inline image size limit.]",
+			"blocks": [
+				"text"
+			],
+			"structured": "Read image file [image/png]\n[Image omitted: could not be resized below the inline image size limit.]"
+		},
+		{
+			"file": "broken.png",
+			"model": "text-only",
+			"modelInput": [
+				"text"
+			],
+			"text": "Read image file [image/png]\n[Image omitted: could not be resized below the inline image size limit.]\n[Current model does not support images. The image will be omitted from this request.]",
+			"blocks": [
+				"text"
+			],
+			"structured": "Read image file [image/png]\n[Image omitted: could not be resized below the inline image size limit.]\n[Current model does not support images. The image will be omitted from this request.]"
+		},
+		{
+			"file": "broken.png",
+			"model": "none",
+			"modelInput": null,
+			"text": "Read image file [image/png]\n[Image omitted: could not be resized below the inline image size limit.]",
+			"blocks": [
+				"text"
+			],
+			"structured": "Read image file [image/png]\n[Image omitted: could not be resized below the inline image size limit.]"
+		}
+	]
+}
