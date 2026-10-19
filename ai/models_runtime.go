@@ -1532,13 +1532,13 @@ func (m *modelsImpl) Stream(ctx context.Context, model *Model, req Context, opts
 	if opts != nil {
 		parent = opts.Telemetry
 	}
-	setup := startStreamSetup(observeModelRequest(model, parent, "", false))
+	setup := startStreamSetup(model, observeModelRequest(model, parent, "", false))
 	if err := AssertChatModel(model); err != nil {
-		return setup.fail(model, err)
+		return setup.fail(err)
 	}
 	p := m.GetProvider(model.Provider)
 	if p == nil {
-		return setup.fail(model, newModelsError(ErrProvider, "Unknown provider: "+model.Provider, nil))
+		return setup.fail(newModelsError(ErrProvider, "Unknown provider: "+model.Provider, nil))
 	}
 	var base *ProviderRequestOptions
 	var transforms ModelsRequestTransforms
@@ -1548,7 +1548,7 @@ func (m *modelsImpl) Stream(ctx context.Context, model *Model, req Context, opts
 	}
 	requestModel, requestOptions, err := m.applyAuth(ctx, model, base, transforms)
 	if err != nil {
-		return setup.fail(model, err)
+		return setup.fail(err)
 	}
 	stream := StreamOptions{}
 	if opts != nil {
@@ -1569,13 +1569,13 @@ func (m *modelsImpl) StreamSimple(ctx context.Context, model *Model, req Context
 	if opts != nil {
 		parent, reasoning = opts.Telemetry, opts.Reasoning
 	}
-	setup := startStreamSetup(observeModelRequest(model, parent, reasoning, false))
+	setup := startStreamSetup(model, observeModelRequest(model, parent, reasoning, false))
 	if err := AssertChatModel(model); err != nil {
-		return setup.fail(model, err)
+		return setup.fail(err)
 	}
 	p := m.GetProvider(model.Provider)
 	if p == nil {
-		return setup.fail(model, newModelsError(ErrProvider, "Unknown provider: "+model.Provider, nil))
+		return setup.fail(newModelsError(ErrProvider, "Unknown provider: "+model.Provider, nil))
 	}
 	var base *ProviderRequestOptions
 	var transforms ModelsRequestTransforms
@@ -1585,7 +1585,7 @@ func (m *modelsImpl) StreamSimple(ctx context.Context, model *Model, req Context
 	}
 	requestModel, requestOptions, err := m.applyAuth(ctx, model, base, transforms)
 	if err != nil {
-		return setup.fail(model, err)
+		return setup.fail(err)
 	}
 	simple := SimpleStreamOptions{}
 	if opts != nil {
@@ -1604,14 +1604,14 @@ func (m *modelsImpl) StreamDeferred(ctx context.Context, model *Model, handle De
 	if opts != nil {
 		parent = opts.Telemetry
 	}
-	setup := startStreamSetup(observeModelRequest(model, parent, "", true))
+	setup := startStreamSetup(model, observeModelRequest(model, parent, "", true))
 	if err := AssertChatModel(model); err != nil {
-		return setup.fail(model, err)
+		return setup.fail(err)
 	}
 	p := m.GetProvider(model.Provider)
 	fetcher, ok := p.(DeferredFetcher)
 	if !ok {
-		return setup.fail(model, deferredUnsupported(p, model.Provider))
+		return setup.fail(deferredUnsupported(p, model.Provider))
 	}
 	var base *ProviderRequestOptions
 	var transforms ModelsRequestTransforms
@@ -1621,7 +1621,7 @@ func (m *modelsImpl) StreamDeferred(ctx context.Context, model *Model, handle De
 	}
 	requestModel, requestOptions, err := m.applyAuth(ctx, model, base, transforms)
 	if err != nil {
-		return setup.fail(model, err)
+		return setup.fail(err)
 	}
 	deferredOptions := DeferredFetchOptions{}
 	if opts != nil {

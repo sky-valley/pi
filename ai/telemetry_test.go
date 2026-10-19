@@ -161,10 +161,10 @@ func telemetryRequest(m Models, entry string, span telemetry.Span, reasoning Thi
 	return delivered, stream.Result()
 }
 
-// waitSettled waits for every span the recorder holds to settle: pi settles
-// a request span after the stream ended (lazy.ts observes the result after
-// end()), so a caller can see the result first — upstream's tests wait the
-// same way (vi.waitFor).
+// waitSettled waits for every span the recorder holds to settle: a request
+// span settles once onResult released its callback, which a caller holding
+// the result does not wait for, and a caller span once its own callback
+// returned — upstream's tests wait the same way (vi.waitFor).
 func waitSettled(t *testing.T, recorder *telemetry.InMemoryContext) {
 	t.Helper()
 	deadline := time.Now().Add(5 * time.Second)
@@ -499,6 +499,81 @@ func TestModelsTelemetryCreatesInstrumentsOncePerMetrics(t *testing.T) {
 	}
 }
 
+// slowSpan delays its own and its children's recording, so an observer that
+// ran behind the consumer would be caught with the event or result
+// unrecorded.
+type slowSpan struct{ telemetry.Span }
+
+const slowSpanDelay = 20 * time.Millisecond
+
+func (s slowSpan) StartSpan(options telemetry.SpanOptions, callback func(telemetry.Span) error) error {
+	return s.Span.StartSpan(options, func(child telemetry.Span) error { return callback(slowSpan{child}) })
+}
+
+func (s slowSpan) AddEvent(name string, attributes telemetry.SpanAttributes) {
+	time.Sleep(slowSpanDelay)
+	s.Span.AddEvent(name, attributes)
+}
+
+func (s slowSpan) SetAttributes(attributes telemetry.SpanAttributes) {
+	time.Sleep(slowSpanDelay)
+	s.Span.SetAttributes(attributes)
+}
+
+// TestModelsTelemetryObservesBeforeDelivery pins what pi's lazyStream
+// guarantees a consumer that iterates the stream: onEvent runs synchronously
+// right after push, before the consumer's loop resumes, and onResult runs
+// before that loop sees the terminal event. Probed against pi at d2e7d8b7c
+// (InMemoryTelemetryContext, a buffered and a live provider stream): at
+// each delivered event the request span already holds that event's
+// telemetry, at "done" all seven measurements are recorded, and at the
+// result the end attributes. A consumer that changes an event it was handed
+// therefore cannot change what was recorded (the tool name here). The
+// adapter below records slowly, so a Go observer running behind the
+// consumer is caught.
+func TestModelsTelemetryObservesBeforeDelivery(t *testing.T) {
+	result := telemetryTestMessage(StopStop, "")
+	m := telemetryModels(telemetryBlockEvents(result), result)
+	recorder := telemetry.NewInMemoryContext()
+	_ = recorder.StartSpan(telemetry.SpanOptions{Name: "caller"}, func(parent telemetry.Span) error {
+		stream := m.Stream(context.Background(), telemetryTestModel, Context{}, &ModelsStreamOptions{
+			StreamOptions: StreamOptions{ProviderRequestOptions: ProviderRequestOptions{Telemetry: slowSpan{parent}}},
+		})
+		blocks := 0
+		for event := range stream.Events() {
+			switch event.Type {
+			case EventTextEnd, EventThinkingEnd, EventToolCallEnd:
+				blocks++
+			}
+			request := recorder.Spans()[1]
+			if got := len(request.Events); got < 1+blocks {
+				t.Errorf("at %s the request span holds %d events, want first_chunk and %d blocks", event.Type, got, blocks)
+			}
+			if event.Type == EventToolCallEnd {
+				event.ToolCall.Name = "changed-by-the-consumer"
+			}
+			if event.Type == EventDone {
+				if got := len(recorder.Measurements()); got != 7 {
+					t.Errorf("at done %d measurements are recorded, want 7", got)
+				}
+			}
+		}
+		stream.Result()
+		if got := len(recorder.Measurements()); got != 7 {
+			t.Errorf("at the result %d measurements are recorded, want 7", got)
+		}
+		if got := recorder.Spans()[1].Attributes["stop"]; got != "stop" {
+			t.Errorf("at the result the request span's stop = %v, want stop", got)
+		}
+		return nil
+	})
+	waitSettled(t, recorder)
+	events := recorder.Spans()[1].Events
+	if got := events[len(events)-1].Attributes["tool"]; got != "lookup" {
+		t.Errorf("recorded tool = %v, want lookup: the observer read the event after the consumer changed it", got)
+	}
+}
+
 // TestModelsTelemetryBoundsPollErrorMessage mirrors pi "bounds poll error
 // messages, including missing messages": the provider_error status carries
 // the first 500 characters of the error message, or "" when there is none.
@@ -588,8 +663,9 @@ func TestRequestTelemetryRecordsMonotonicDurations(t *testing.T) {
 	}
 }
 
-// recordingObserver logs what a streamSetup shows it, and whether the
-// stream had already delivered the terminal event or ended at that point.
+// recordingObserver logs what a streamSetup shows it. Like upstream's test
+// observer, its onEvent starts a waiter on the stream's result, which logs
+// "resolved" once the result is available.
 type recordingObserver struct {
 	stream *AssistantMessageEventStream
 	mu     sync.Mutex
@@ -609,11 +685,13 @@ func (o *recordingObserver) entries() []string {
 }
 
 func (o *recordingObserver) onEvent(event AssistantMessageEvent) {
-	entry := "event " + string(event.Type)
-	if o.stream != nil && o.stream.isDone() {
-		entry += " (delivered)"
+	o.record("event " + string(event.Type))
+	if o.stream != nil {
+		go func() {
+			o.stream.Result()
+			o.record("resolved")
+		}()
 	}
-	o.record(entry)
 }
 
 func (o *recordingObserver) onResult(result *AssistantMessage) {
@@ -621,26 +699,31 @@ func (o *recordingObserver) onResult(result *AssistantMessage) {
 	if result != nil {
 		entry = "result " + string(result.StopReason)
 	}
-	if o.stream != nil && o.stream.isDone() {
-		entry += " (ended)"
-	}
 	o.record(entry)
 }
 
-// TestStreamSetupObservesAfterDelivery mirrors pi lazyStream observation
+// TestStreamSetupObservesBeforeDelivery mirrors pi lazyStream observation
 // "uses one source iterator and observes after push, once per terminal
-// result" and "observes a result-only source once": the observer sees each
-// event after the stream delivered it and the result once, after the stream
-// ended.
-func TestStreamSetupObservesAfterDelivery(t *testing.T) {
+// result" and "observes a result-only source once": the observer sees the
+// event, then the result, once each, and a result-only source's result is
+// observed by the time the consumer has it.
+//
+// pi's order is ["event", "resolved", "result"]: its onEvent runs right after
+// push, so a result() reaction registered there is queued before
+// forwardStream reaches onResult, while a consumer iterating the stream sees
+// the terminal event only after onResult. Go cannot order a Result waiter
+// apart from an iterating consumer — both wait on the terminal event — so it
+// takes the iterating consumer's order for both, observes first and delivers
+// after, and the waiter logs "resolved" last (see streamObserver).
+func TestStreamSetupObservesBeforeDelivery(t *testing.T) {
 	result := telemetryTestMessage(StopStop, "")
 	for _, tc := range []struct {
 		name   string
 		events []AssistantMessageEvent
 		want   []string
 	}{
-		{"terminal event", []AssistantMessageEvent{{Type: EventDone, Reason: StopStop, Message: result}}, []string{"event done (delivered)", "result stop (ended)"}},
-		{"result only", nil, []string{"result stop (ended)"}},
+		{"terminal event", []AssistantMessageEvent{{Type: EventDone, Reason: StopStop, Message: result}}, []string{"event done", "result stop", "resolved"}},
+		{"result only", nil, []string{"result stop"}},
 	} {
 		inner := NewAssistantMessageEventStream()
 		for _, event := range tc.events {
@@ -648,11 +731,14 @@ func TestStreamSetupObservesAfterDelivery(t *testing.T) {
 		}
 		inner.End(result)
 		observer := &recordingObserver{}
-		setup := startStreamSetup(observer)
+		setup := startStreamSetup(telemetryTestModel, observer)
 		observer.stream = setup.stream
 		stream := setup.forward(inner)
 		if got := stream.Result(); got != result {
 			t.Errorf("%s: Result = %p, want %p", tc.name, got, result)
+		}
+		if got := observer.entries(); !slices.Contains(got, "result stop") {
+			t.Errorf("%s: at the result the observer had seen %q, want the result observed", tc.name, got)
 		}
 		for range stream.Events() {
 		}
@@ -670,8 +756,8 @@ func TestStreamSetupObservesAfterDelivery(t *testing.T) {
 // events and the result once".
 func TestStreamSetupObservesSetupFailureOnce(t *testing.T) {
 	observer := &recordingObserver{}
-	setup := startStreamSetup(observer)
-	stream := setup.fail(telemetryTestModel, errors.New("setup-secret"))
+	setup := startStreamSetup(telemetryTestModel, observer)
+	stream := setup.fail(errors.New("setup-secret"))
 	if got := stream.Result(); got.ErrorMessage != "setup-secret" {
 		t.Errorf("errorMessage = %q", got.ErrorMessage)
 	}

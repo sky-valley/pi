@@ -140,7 +140,7 @@ func CompleteSimple(ctx context.Context, model *Model, req Context, opts *Simple
 // created, as pi's lazyStream stamps a setup error (3ba22ce17), so the stream
 // times it only when both readings fall in the same millisecond.
 func ErrorStream(model *Model, err error) *AssistantMessageEventStream {
-	return startStreamSetup(nil).fail(model, err)
+	return startStreamSetup(model, nil).fail(err)
 }
 
 // streamSetup is pi's lazyStream around setup the port runs inline before it
@@ -154,6 +154,7 @@ func ErrorStream(model *Model, err error) *AssistantMessageEventStream {
 // observer, when set, sees each event the stream delivers and then its
 // result, once.
 type streamSetup struct {
+	model     *Model
 	startedAt int64
 	stream    *AssistantMessageEventStream
 	observer  streamObserver
@@ -161,54 +162,69 @@ type streamSetup struct {
 
 // streamObserver is a synchronous, read-only view of a streamSetup's
 // delivery (pi LazyStreamObserver, upstream 2ec55d808): onEvent sees each
-// event right after the stream delivered it, and onResult sees the result —
-// nil when there is none — after the stream ended.
+// event and onResult the result — nil when there is none — before a
+// consumer can.
+//
+// pi calls onEvent right after push and onResult right after end, but both
+// run before a consumer iterating the stream resumes: an event loop runs the
+// observer to completion first. Goroutines give no such ordering, so the
+// setup observes first and delivers after — an observer never reads an event
+// a consumer already holds, and a consumer never sees a result whose
+// telemetry is not yet recorded.
 type streamObserver interface {
 	onEvent(event AssistantMessageEvent)
 	onResult(result *AssistantMessage)
 }
 
 // startStreamSetup reads the call's start, then creates the stream.
-func startStreamSetup(observer streamObserver) streamSetup {
+func startStreamSetup(model *Model, observer streamObserver) streamSetup {
 	startedAt := nowMillis()
-	return streamSetup{startedAt: startedAt, stream: NewAssistantMessageEventStream(), observer: observer}
+	return streamSetup{model: model, startedAt: startedAt, stream: NewAssistantMessageEventStream(), observer: observer}
 }
 
 // fail ends the setup's stream with err (pi createSetupErrorMessage).
-func (s streamSetup) fail(model *Model, err error) *AssistantMessageEventStream {
-	msg := NewErrorMessage(model.Api, model.Provider, model.ID, StopError, err.Error())
+func (s streamSetup) fail(err error) *AssistantMessageEventStream {
+	msg := NewErrorMessage(s.model.Api, s.model.Provider, s.model.ID, StopError, err.Error())
 	msg.Timestamp = s.startedAt
 	event := AssistantMessageEvent{Type: EventError, Reason: StopError, Error: msg}
-	s.stream.Push(event)
 	if s.observer != nil {
 		s.observer.onEvent(event)
-	}
-	s.stream.End()
-	if s.observer != nil {
 		s.observer.onResult(msg)
 	}
+	s.stream.Push(event)
+	s.stream.End()
 	return s.stream
 }
 
 // forward delivers inner's events through the setup's stream, then ends it
-// with inner's result (pi forwardStream). The observer sees each event after
-// it was delivered and the result after the stream ended.
+// with inner's result (pi forwardStream). The observer sees each event before
+// it is delivered, and the result before the terminal event and the end:
+// pushing the terminal event is what makes the result available.
 func (s streamSetup) forward(inner *AssistantMessageEventStream) *AssistantMessageEventStream {
 	go func() {
+		var terminal *AssistantMessageEvent
 		for event := range inner.Events() {
-			s.stream.Push(event)
 			if s.observer != nil {
 				s.observer.onEvent(event)
 			}
+			if event.Type == EventDone || event.Type == EventError {
+				// The last event: a done stream drops later pushes.
+				terminal = &event
+				continue
+			}
+			s.stream.Push(event)
 		}
 		result := inner.Result()
+		if s.observer != nil {
+			s.observer.onResult(result)
+		}
+		if terminal != nil {
+			s.stream.Push(*terminal)
+		}
 		if result != nil {
 			s.stream.End(result)
 		} else {
 			s.stream.End()
-		}
-		if s.observer != nil {
-			s.observer.onResult(result)
 		}
 	}()
 	return s.stream
