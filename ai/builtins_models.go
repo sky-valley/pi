@@ -72,12 +72,19 @@ func BuiltinModels() MutableModels {
 // resolver that defers to GetEnvApiKey, preserving the exact ambient-detection
 // behavior of the compat path.
 func builtinProviderAuth(providerID string) ProviderAuth {
-	if providerID == "anthropic" {
+	switch providerID {
+	case "anthropic":
 		// Anthropic resolves auth in a custom order (upstream 24e5cc04): a stored
 		// key wins, then ANTHROPIC_AUTH_TOKEN authenticates via an Authorization
 		// header, then the oauth/api-key env vars. The generic EnvAPIKeyAuth would
 		// wrongly surface the auth token as an api key (→ x-api-key).
 		return ProviderAuth{APIKey: anthropicAPIKeyAuth()}
+	case "cloudflare-workers-ai":
+		// The key alone does not configure Cloudflare: the account id (and, for
+		// the gateway, the gateway id) is required too (cloudflare_auth.go).
+		return ProviderAuth{APIKey: cloudflareWorkersAIAuth()}
+	case "cloudflare-ai-gateway":
+		return ProviderAuth{APIKey: cloudflareAIGatewayAuth()}
 	}
 	if vars := apiKeyEnvVars(providerID); len(vars) > 0 {
 		return ProviderAuth{APIKey: EnvAPIKeyAuth(providerID, vars...)}
