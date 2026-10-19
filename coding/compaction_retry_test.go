@@ -156,3 +156,24 @@ func TestCompactionRetriesTransientSummaryErrors(t *testing.T) {
 		}
 	})
 }
+
+// pi's AgentSession compacts under settingsManager.getRetrySettings(), which
+// is SETTINGS_DEFAULTS.retry unless configured (settings-defaults.ts at
+// d2e7d8b7c: enabled, maxRetries 3, baseDelayMs 2000, maxAgentDelayMs
+// DEFAULT_MAX_AGENT_RETRY_DELAY_MS). A caller of DefaultCompactionSettings,
+// cmd/pi among them, retries a dropped summary stream as pi's session does.
+func TestDefaultCompactionSettingsRetryAsPiDoes(t *testing.T) {
+	success := &ai.AssistantMessage{Content: ai.ContentList{ai.TextContent{Text: "recovered summary"}}, StopReason: ai.StopStop}
+	sess, calls := retryScriptSession(t, []*ai.AssistantMessage{retryErrorMessage("terminated"), success})
+	settings := DefaultCompactionSettings
+	settings.KeepRecentTokens = 1
+	state := &compactionState{settings: settings}
+	sess.compact(context.Background(), state, retryCompactable())
+	if state.checkpoint == nil || calls() != 2 {
+		t.Fatalf("checkpoint %+v after %d summary requests; want the summary recovered by one retry", state.checkpoint, calls())
+	}
+	want := ai.RetryPolicy{Enabled: true, MaxRetries: 3, BaseDelayMs: 2000}
+	if got := DefaultCompactionSettings.Retry; *got != want || ai.RetryDelayMs(*got, 10) != ai.DefaultMaxAgentRetryDelayMs {
+		t.Errorf("default retry %+v, want pi's %+v capped at %dms", *got, want, ai.DefaultMaxAgentRetryDelayMs)
+	}
+}

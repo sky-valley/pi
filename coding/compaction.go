@@ -33,19 +33,24 @@ type CompactionSettings struct {
 	// Retry, when set and enabled, retries a summary request that fails with
 	// a transient error, with backoff (pi compact()'s retry param:
 	// completeSummarization wraps each call in retryAssistantCall, upstream
-	// 8e53e0e49). Nil sends each request once. pi's AgentSession passes its
-	// settings.retry here; the port's session has no settings, so a caller
-	// that wants pi's behaviour sets it.
+	// 8e53e0e49). Nil sends each request once, as pi's compact() does
+	// without the param. pi's AgentSession always passes its settings.retry;
+	// DefaultCompactionSettings carries that setting's default.
 	Retry *ai.RetryPolicy
 	// RetryCallbacks observe those retries (pi compact()'s callbacks).
 	RetryCallbacks *ai.RetryCallbacks
 }
 
-// DefaultCompactionSettings mirrors pi's defaults.
+// DefaultCompactionSettings mirrors pi's defaults: SETTINGS_DEFAULTS.compaction,
+// and the retry policy pi's AgentSession compacts under unless configured
+// (SETTINGS_DEFAULTS.retry: enabled, 3 retries, a 2s base backoff capped at
+// DefaultMaxAgentRetryDelayMs). Copy it to change a field; its Retry is
+// shared, so replace that policy rather than write through it.
 var DefaultCompactionSettings = CompactionSettings{
 	Enabled:          true,
 	ReserveTokens:    16384,
 	KeepRecentTokens: 20000,
+	Retry:            &ai.RetryPolicy{Enabled: true, MaxRetries: 3, BaseDelayMs: 2000},
 }
 
 // estimatedImageChars mirrors pi's ESTIMATED_IMAGE_CHARS (compaction.ts):
