@@ -536,13 +536,6 @@ func StreamAnthropic(ctx context.Context, model *ai.Model, req ai.TranscriptCont
 			Content: ai.ContentList{}, Api: model.Api, Provider: model.Provider, Model: model.ID,
 			StopReason: ai.StopPending, Timestamp: nowMillis(),
 		}
-		// A managed-effort response records the effort it ran at, so the NEXT
-		// request can replay this turn at the same level rather than at the
-		// current one (pi 4e69b0c28). Unmanaged models leave it empty, pi's
-		// `undefined`.
-		if getAnthropicCompat(model).supportsMidConvoEffort {
-			output.ProviderThinkingLevel = anthropicActiveEffort(opts)
-		}
 		fail := func(err error) {
 			if ctx != nil && ctx.Err() != nil {
 				output.StopReason = ai.StopAborted
@@ -608,6 +601,14 @@ func StreamAnthropic(ctx context.Context, model *ai.Model, req ai.TranscriptCont
 			built, err := buildAnthropicParams(model, normalized, oauth, opts, disablePreferredStrictTools)
 			if err != nil {
 				return nil, nil, false, err
+			}
+			// A response that ran with effort markers records the effort of the
+			// last one, so the NEXT request can replay this turn at the same
+			// level rather than at the current one (pi 4e69b0c28). pi reads it
+			// off the params built (upstream dc939913f), before onPayload; a
+			// request without markers leaves it empty, pi's `undefined`.
+			if built.providerThinkingLevel != "" {
+				output.ProviderThinkingLevel = built.providerThinkingLevel
 			}
 			body := built.body
 			if opts.OnPayload != nil {
@@ -1498,12 +1499,14 @@ func isAnthropicStrictToolLimitError(status int, body []byte, message string) bo
 	})
 }
 
-// anthropicParams is what pi's buildParams returns: the params, and whether a
+// anthropicParams is what pi's buildParams returns: the params; whether a
 // strict:"prefer" tool went out strict — the precondition for the strict-tool
-// fallback (upstream d4d53612b).
+// fallback (upstream d4d53612b); and the effort of the final effort marker, ""
+// when the request carries none (upstream dc939913f).
 type anthropicParams struct {
 	body                    map[string]any
 	hasPreferredStrictTools bool
+	providerThinkingLevel   string
 }
 
 // buildAnthropicParams is pi's buildParams. With disablePreferredStrictTools
@@ -1571,13 +1574,26 @@ func buildAnthropicParams(model *ai.Model, req ai.TranscriptContext, oauth bool,
 		inlineDefinitions = func(tools []ai.Tool) ([]map[string]any, error) { return convertToolDefinitions(tools, nil) }
 	}
 
-	// A managed-effort model replays each historical turn's own effort, so the
-	// conversion records which converted message each recorded level belongs to.
-	// The provider is passed in only for such a model — pi's
-	// `supportsMidConvoEffort ? model.provider : undefined` — which is also what
-	// switches the recording off entirely for every other model.
+	// pi: `model.reasoning && options?.thinkingEnabled === false &&
+	// model.thinkingLevelMap?.off !== null` — an explicit off (not unset) on a
+	// reasoning model whose map does not mark off unsupported (an explicit
+	// off:null, present-nil here; pi 9ccfcd7c).
+	thinkingDisabled := false
+	if model.Reasoning && opts != nil && opts.ThinkingProvided && !opts.ThinkingEnabled {
+		off, present := model.ThinkingLevelMap["off"]
+		thinkingDisabled = !present || off != nil
+	}
+	// Effort cannot change between messages while thinking is disabled, so
+	// "off" sends no effort markers (upstream dc939913f).
+	effortMessages := compat.supportsMidConvoEffort && !thinkingDisabled
+
+	// A request with effort markers replays each historical turn's own effort,
+	// so the conversion records which converted message each recorded level
+	// belongs to. The provider is passed in only then — pi's
+	// `effortMessages ? model.provider : undefined` — which is also what
+	// switches the recording off entirely for every other request.
 	managedProvider := ""
-	if compat.supportsMidConvoEffort {
+	if effortMessages {
 		managedProvider = model.Provider
 	}
 	messages, assistantLevels, err := convertAnthropicMessages(
@@ -1585,8 +1601,11 @@ func buildAnthropicParams(model *ai.Model, req ai.TranscriptContext, oauth bool,
 	if err != nil {
 		return anthropicParams{}, err
 	}
-	if compat.supportsMidConvoEffort {
-		messages = insertAnthropicThinkingLevelMessages(messages, assistantLevels, anthropicActiveEffort(opts))
+	activeEffort := anthropicActiveEffort(opts)
+	providerThinkingLevel := ""
+	if effortMessages {
+		messages = insertAnthropicThinkingLevelMessages(messages, assistantLevels, activeEffort)
+		providerThinkingLevel = activeEffort
 	}
 
 	params := map[string]any{
@@ -1650,13 +1669,18 @@ func buildAnthropicParams(model *ai.Model, req ai.TranscriptContext, oauth bool,
 	// explicit off:null (present-nil), which marks "disabled" as unsupported
 	// and omits the key too (pi 9ccfcd7c: `thinkingLevelMap?.off !== null`).
 	//
-	// A managed-effort model short-circuits all of that: it is ALWAYS adaptive,
-	// with block_binding so a prefix mismatch drops the offending block instead
-	// of surfacing as a persistent 400, and its output_config effort is the
-	// literal "high" — the per-turn effort rides in the trailing system message
+	// Disabled thinking comes first, on a managed-effort model too (upstream
+	// dc939913f): no effort is sent, so the model default applies, and
+	// Anthropic rejects block_binding with disabled thinking. Otherwise a
+	// managed-effort model is adaptive, with block_binding so a prefix
+	// mismatch drops the offending block instead of surfacing as a persistent
+	// 400, and its output_config effort is the literal "high" — the per-turn
+	// effort rides in the trailing system message
 	// insertAnthropicThinkingLevelMessages appended, not here (upstream
-	// 4e69b0c28). It does not consult model.Reasoning or the thinking tri-state.
-	if compat.supportsMidConvoEffort {
+	// 4e69b0c28).
+	if thinkingDisabled {
+		params["thinking"] = map[string]any{"type": "disabled"}
+	} else if effortMessages {
 		display := ""
 		if opts != nil {
 			display = opts.ThinkingDisplay
@@ -1670,27 +1694,22 @@ func buildAnthropicParams(model *ai.Model, req ai.TranscriptContext, oauth bool,
 			"block_binding": map[string]any{"prefix_mismatch_behavior": "drop_block"},
 		}
 		params["output_config"] = map[string]any{"effort": "high"}
-	} else if model.Reasoning && opts != nil && opts.ThinkingProvided {
-		if opts.ThinkingEnabled {
-			display := opts.ThinkingDisplay
-			if display == "" {
-				display = "summarized"
+	} else if model.Reasoning && thinkingOn {
+		display := opts.ThinkingDisplay
+		if display == "" {
+			display = "summarized"
+		}
+		if compat.forceAdaptiveThinking {
+			params["thinking"] = map[string]any{"type": "adaptive", "display": display}
+			if opts.Effort != "" {
+				params["output_config"] = map[string]any{"effort": opts.Effort}
 			}
-			if compat.forceAdaptiveThinking {
-				thinking := map[string]any{"type": "adaptive", "display": display}
-				params["thinking"] = thinking
-				if opts.Effort != "" {
-					params["output_config"] = map[string]any{"effort": opts.Effort}
-				}
-			} else {
-				budget := opts.ThinkingBudgetTokens
-				if budget == 0 {
-					budget = 1024
-				}
-				params["thinking"] = map[string]any{"type": "enabled", "budget_tokens": budget, "display": display}
+		} else {
+			budget := opts.ThinkingBudgetTokens
+			if budget == 0 {
+				budget = 1024
 			}
-		} else if off, present := model.ThinkingLevelMap["off"]; !present || off != nil {
-			params["thinking"] = map[string]any{"type": "disabled"}
+			params["thinking"] = map[string]any{"type": "enabled", "budget_tokens": budget, "display": display}
 		}
 	}
 
@@ -1727,7 +1746,7 @@ func buildAnthropicParams(model *ai.Model, req ai.TranscriptContext, oauth bool,
 		params["fallbacks"] = wire
 	}
 
-	return anthropicParams{body: params, hasPreferredStrictTools: hasPreferredStrictTools}, nil
+	return anthropicParams{body: params, hasPreferredStrictTools: hasPreferredStrictTools, providerThinkingLevel: providerThinkingLevel}, nil
 }
 
 // isPreferredStrictTool is pi's `config.type === "json_schema" &&

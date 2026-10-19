@@ -290,10 +290,11 @@ const userStringSurrogates = {
 	],
 };
 
-async function capturePayload(model: any, ctx: unknown, apiKey = "test-key"): Promise<unknown> {
+async function capturePayload(model: any, ctx: unknown, apiKey = "test-key", reasoning?: string): Promise<unknown> {
 	let captured: unknown;
 	const stream = anthropic.streamSimple(model, normalizeContext(ctx), {
 		apiKey,
+		...(reasoning ? { reasoning } : {}),
 		onPayload: (payload: unknown) => {
 			captured = payload;
 			throw new Error("payload captured");
@@ -309,7 +310,11 @@ const out = {
 	native: await capturePayload(nativeModel, context),
 	nativeInitial: await capturePayload(nativeModel, { messages: context.messages.slice(0, 2) }),
 	nativeOAuth: await capturePayload(nativeModel, oauthContext, "sk-ant-oat-test"),
+	// Since dc939913f no reasoning on a reasoning model is "off", which sends
+	// disabled thinking and no effort messages; with a reasoning level the
+	// managed-effort messages come back.
 	nativeEffort: await capturePayload(effortModel, effortContext),
+	nativeEffortReasoning: await capturePayload(effortModel, effortContext, "test-key", "low"),
 	// Mid-conversation system messages without native tool changes: updates are
 	// sent in place as text, and the request declares the current tools.
 	systemMessagesOnly: await capturePayload(

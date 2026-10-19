@@ -30,7 +30,7 @@ import (
 // node_modules and catalog data. Re-captured at every regen: each time the
 // behavioural entries came back identical and only the catalog model moved.
 
-const anthropicResponseModelCaptureFile = "testdata/response-model/anthropic-response-model-f284a2460.json"
+const anthropicResponseModelCaptureFile = "testdata/response-model/anthropic-response-model-dc939913f.json"
 
 // anthropicResponseModelCapture decodes one captured entry into plain JSON
 // values.

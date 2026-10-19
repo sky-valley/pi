@@ -19,10 +19,11 @@ import (
 // anthropic cases of packages/ai/test/transcript-tool-changes.test.ts at
 // b271b0a52 (the fifth, "folds … without native support", is
 // TestFoldsAnthropicUpdatesInto…); the full request bodies are pi's, captured
-// under node at b271b0a52 by testdata/transcript/capture-anthropic-native.mts
-// (at b271b0a52^ it reproduces the 9e05370b2 capture this file replaced).
+// under node at dc939913f by testdata/transcript/capture-anthropic-native.mts
+// (at b271b0a52^ it reproduces the 9e05370b2 capture; at dc939913f^ the
+// b271b0a52 one, and dc939913f moves only nativeEffort, now "off").
 
-const anthropicNativeCaptureFile = "testdata/transcript/anthropic-native-b271b0a52.json"
+const anthropicNativeCaptureFile = "testdata/transcript/anthropic-native-dc939913f.json"
 
 const wantToolChangesBeta = "inline-tools-2026-09-15"
 
@@ -36,10 +37,10 @@ func anthropicNativeModel() *ai.Model {
 
 // captureAnthropicPayload is captureStreamSimplePayload with a chosen key, so
 // an OAuth token can select the Claude Code request shape.
-func captureAnthropicPayload(t *testing.T, model *ai.Model, req ai.Context, apiKey string) map[string]any {
+func captureAnthropicPayload(t *testing.T, model *ai.Model, req ai.Context, apiKey string, reasoning ai.ThinkingLevel) map[string]any {
 	t.Helper()
 	var captured map[string]any
-	opts := &ai.SimpleStreamOptions{}
+	opts := &ai.SimpleStreamOptions{Reasoning: reasoning}
 	opts.APIKey = apiKey
 	opts.OnPayload = func(payload any, _ *ai.Model) (any, error) {
 		captured, _ = payload.(map[string]any)
@@ -491,31 +492,33 @@ func TestAnthropicNativeRequestBodies(t *testing.T) {
 	captureRedefinition, captureNoInitialTool := nativeCaptureFallbackContexts()
 
 	cases := []struct {
-		key    string
-		model  *ai.Model
-		req    ai.Context
-		apiKey string
+		key       string
+		model     *ai.Model
+		req       ai.Context
+		apiKey    string
+		reasoning ai.ThinkingLevel
 	}{
-		{"native", native, full, "test-key"},
-		{"nativeInitial", native, ai.Context{Messages: full.Messages[:2]}, "test-key"},
-		{"nativeOAuth", native, anthropicNativeOAuthContext(), "sk-ant-oat-test"},
-		{"nativeEffort", effort, anthropicNativeEffortContext(), "test-key"},
-		{"systemMessagesOnly", systemOnly, full, "test-key"},
-		{"redefinition", native, captureRedefinition, "test-key"},
-		{"fallbackNoInitialTools", native, captureNoInitialTool, "test-key"},
-		{"userContentForms", plain, anthropicUserContentFormsContext(), "test-key"},
-		{"nativeSurrogates", native, anthropicNativeSurrogateContext(), "test-key"},
-		{"systemMessagesOnlyToolsOnlyUpdate", systemOnly, anthropicToolsOnlyUpdateContext(true), "test-key"},
-		{"fallbackToolsOnlyUpdate", native, anthropicToolsOnlyUpdateContext(false), "test-key"},
-		{"nativeApiKeyClaudeCodeNames", native, anthropicAPIKeyClaudeCodeNamesContext(), "test-key"},
-		{"nativeNoToolCacheControl", noToolCacheControl, full, "test-key"},
-		{"nativeEmptyAssistant", native, anthropicNativeEmptyAssistantContext(), "test-key"},
-		{"userStringSurrogates", plain, anthropicUserStringSurrogatesContext(), "test-key"},
-		{"nativeConfiguredBetaHeader", configuredBetas, full, "test-key"},
+		{"native", native, full, "test-key", ""},
+		{"nativeInitial", native, ai.Context{Messages: full.Messages[:2]}, "test-key", ""},
+		{"nativeOAuth", native, anthropicNativeOAuthContext(), "sk-ant-oat-test", ""},
+		{"nativeEffort", effort, anthropicNativeEffortContext(), "test-key", ""},
+		{"nativeEffortReasoning", effort, anthropicNativeEffortContext(), "test-key", ai.ThinkingLow},
+		{"systemMessagesOnly", systemOnly, full, "test-key", ""},
+		{"redefinition", native, captureRedefinition, "test-key", ""},
+		{"fallbackNoInitialTools", native, captureNoInitialTool, "test-key", ""},
+		{"userContentForms", plain, anthropicUserContentFormsContext(), "test-key", ""},
+		{"nativeSurrogates", native, anthropicNativeSurrogateContext(), "test-key", ""},
+		{"systemMessagesOnlyToolsOnlyUpdate", systemOnly, anthropicToolsOnlyUpdateContext(true), "test-key", ""},
+		{"fallbackToolsOnlyUpdate", native, anthropicToolsOnlyUpdateContext(false), "test-key", ""},
+		{"nativeApiKeyClaudeCodeNames", native, anthropicAPIKeyClaudeCodeNamesContext(), "test-key", ""},
+		{"nativeNoToolCacheControl", noToolCacheControl, full, "test-key", ""},
+		{"nativeEmptyAssistant", native, anthropicNativeEmptyAssistantContext(), "test-key", ""},
+		{"userStringSurrogates", plain, anthropicUserStringSurrogatesContext(), "test-key", ""},
+		{"nativeConfiguredBetaHeader", configuredBetas, full, "test-key", ""},
 	}
 	for _, tc := range cases {
 		t.Run(tc.key, func(t *testing.T) {
-			body := captureAnthropicPayload(t, tc.model, tc.req, tc.apiKey)
+			body := captureAnthropicPayload(t, tc.model, tc.req, tc.apiKey, tc.reasoning)
 			assertRequestBody(t, body, anthropicNativeCapture(t, tc.key))
 		})
 	}

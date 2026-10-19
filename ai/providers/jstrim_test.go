@@ -111,7 +111,7 @@ func TestJSTrimAnthropicRequestBody(t *testing.T) {
 		),
 		ai.NewUserText("last", 5),
 	}}
-	assertRequestBody(t, captureAnthropicPayload(t, model, req, "test-key"), c.Bodies.Anthropic.Payload)
+	assertRequestBody(t, captureAnthropicPayload(t, model, req, "test-key", ""), c.Bodies.Anthropic.Payload)
 }
 
 // The same-model turn exercises the converter's own trims; the other model's
