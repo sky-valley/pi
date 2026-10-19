@@ -16,8 +16,18 @@ var (
 )
 
 // RegisterModel adds a model to the catalog, keyed by provider and id. A
-// model registered again replaces the old one in its place.
+// model registered again replaces the old one in its place, as an assignment
+// to an existing key of pi's MODELS object does, and a new one comes after
+// every model already there. The built-in catalog loads first, so a host's
+// model is never overwritten by it and never listed ahead of it.
 func RegisterModel(m *Model) {
+	LoadBuiltinModels()
+	registerModel(m)
+}
+
+// registerModel is RegisterModel for the catalog loader, which runs inside
+// LoadBuiltinModels.
+func registerModel(m *Model) {
 	modelRegMu.Lock()
 	defer modelRegMu.Unlock()
 	registerProviderLocked(m.Provider)

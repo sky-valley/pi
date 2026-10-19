@@ -29,7 +29,7 @@ func LoadBuiltinModels() {
 			if m.ID == "" {
 				m.ID = id
 			}
-			RegisterModel(m)
+			registerModel(m)
 		})
 		if err != nil {
 			// The catalog is a compile-time embed regenerated from pi's npm
