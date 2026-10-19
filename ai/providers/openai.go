@@ -60,12 +60,24 @@ func StreamSimpleOpenAICompletions(ctx context.Context, model *ai.Model, req ai.
 // The transcript is resolved for the model first: a model with
 // compat.supportsMidConvoSystemMessages keeps later system messages in place,
 // any other has them folded into the leading one. The request, the grammar
-// tools and the Copilot headers all read the resolved transcript.
+// tools and the Copilot headers all read the resolved transcript. An azure
+// model's endpoint and deployment are resolved first, as pi's azure provider
+// does (streamAzureCompletions).
 func StreamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.TranscriptContext, opts *OpenAIOptions) *ai.AssistantMessageEventStream {
-	stream := ai.NewAssistantMessageEventStream()
 	if opts == nil {
 		opts = &OpenAIOptions{}
 	}
+	if model.Provider == azureProvider {
+		return streamAzureCompletions(ctx, model, req, opts)
+	}
+	return streamOpenAICompletions(ctx, model, req, opts)
+}
+
+// streamOpenAICompletions is the Chat Completions stream itself, pi's
+// openai-completions stream: StreamOpenAICompletions after any provider
+// wrapper has resolved the model's endpoint.
+func streamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.TranscriptContext, opts *OpenAIOptions) *ai.AssistantMessageEventStream {
+	stream := ai.NewAssistantMessageEventStream()
 	normalized := ai.ResolveTranscript(req, getOpenAICompat(model).SupportsMidConvoSystemMessages)
 
 	go func() {
@@ -121,13 +133,6 @@ func StreamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Transc
 			output.ErrorMessage = err.Error()
 			stream.Push(ai.AssistantMessageEvent{Type: ai.EventError, Reason: output.StopReason, Error: output})
 			stream.End()
-		}
-
-		// pi resolves an azure model's endpoint in its provider wrapper, ahead
-		// of the stream and so of the key check; the port has no wrapper yet.
-		if model.Provider == azureProvider {
-			fail(azureChatCompletionsError(model))
-			return
 		}
 
 		apiKey, keyErr := clientAPIKey(model.Provider, opts.APIKey, opts.Headers)

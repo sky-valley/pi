@@ -1,0 +1,721 @@
+{
+	"piAi": "1.3.0",
+	"registered": {
+		"id": "your-deployment",
+		"name": "your-deployment",
+		"api": "openai-completions",
+		"provider": "azure",
+		"baseUrl": "https://your-resource.services.ai.azure.com",
+		"reasoning": false,
+		"input": [
+			"text"
+		],
+		"cost": {
+			"input": 0,
+			"output": 0,
+			"cacheRead": 0,
+			"cacheWrite": 0
+		},
+		"contextWindow": 128000,
+		"maxTokens": 16384
+	},
+	"rows": [
+		{
+			"name": "catalog model, no endpoint configured",
+			"model": "catalog",
+			"env": {},
+			"request": null,
+			"seenModel": null,
+			"result": {
+				"model": "deepseek-v4-pro",
+				"stopReason": "error",
+				"errorMessage": "Azure OpenAI base URL is required. Set AZURE_OPENAI_BASE_URL or AZURE_OPENAI_RESOURCE_NAME, or pass azureBaseUrl, azureResourceName, or model.baseUrl."
+			}
+		},
+		{
+			"name": "catalog model, no endpoint and no key",
+			"model": "catalog",
+			"env": {},
+			"noKey": true,
+			"request": null,
+			"seenModel": null,
+			"result": {
+				"model": "deepseek-v4-pro",
+				"stopReason": "error",
+				"errorMessage": "Azure OpenAI base URL is required. Set AZURE_OPENAI_BASE_URL or AZURE_OPENAI_RESOURCE_NAME, or pass azureBaseUrl, azureResourceName, or model.baseUrl."
+			}
+		},
+		{
+			"name": "catalog model, no key",
+			"model": "catalog",
+			"env": {
+				"AZURE_OPENAI_BASE_URL": "https://my-resource.services.ai.azure.com"
+			},
+			"noKey": true,
+			"request": null,
+			"seenModel": null,
+			"result": {
+				"model": "deepseek-v4-pro",
+				"stopReason": "error",
+				"errorMessage": "No API key for provider: azure"
+			}
+		},
+		{
+			"name": "base URL: resource root",
+			"model": "catalog",
+			"env": {
+				"AZURE_OPENAI_BASE_URL": "https://my-resource.services.ai.azure.com"
+			},
+			"request": {
+				"url": "https://my-resource.services.ai.azure.com/openai/v1/chat/completions",
+				"authorization": "Bearer azure-key",
+				"body": {
+					"model": "deepseek-v4-pro",
+					"messages": [
+						{
+							"role": "system",
+							"content": "sys"
+						},
+						{
+							"role": "user",
+							"content": "hi"
+						}
+					],
+					"stream": true,
+					"stream_options": {
+						"include_usage": true
+					},
+					"store": false
+				}
+			},
+			"seenModel": null,
+			"result": {
+				"model": "deepseek-v4-pro",
+				"stopReason": "error",
+				"errorMessage": "400: {\"message\":\"stop here\"}"
+			}
+		},
+		{
+			"name": "base URL: simple stream at high",
+			"model": "catalog",
+			"env": {
+				"AZURE_OPENAI_BASE_URL": "https://my-resource.services.ai.azure.com"
+			},
+			"simple": true,
+			"reasoning": "high",
+			"request": {
+				"url": "https://my-resource.services.ai.azure.com/openai/v1/chat/completions",
+				"authorization": "Bearer azure-key",
+				"body": {
+					"model": "deepseek-v4-pro",
+					"messages": [
+						{
+							"role": "system",
+							"content": "sys"
+						},
+						{
+							"role": "user",
+							"content": "hi"
+						}
+					],
+					"stream": true,
+					"stream_options": {
+						"include_usage": true
+					},
+					"store": false,
+					"max_completion_tokens": 384000,
+					"reasoning_effort": "high"
+				}
+			},
+			"seenModel": null,
+			"result": {
+				"model": "deepseek-v4-pro",
+				"stopReason": "error",
+				"errorMessage": "400: {\"message\":\"stop here\"}"
+			}
+		},
+		{
+			"name": "base URL: /openai",
+			"model": "catalog",
+			"env": {
+				"AZURE_OPENAI_BASE_URL": "https://r.openai.azure.com/openai/"
+			},
+			"request": {
+				"url": "https://r.openai.azure.com/openai/v1/chat/completions",
+				"authorization": "Bearer azure-key",
+				"body": {
+					"model": "deepseek-v4-pro",
+					"messages": [
+						{
+							"role": "system",
+							"content": "sys"
+						},
+						{
+							"role": "user",
+							"content": "hi"
+						}
+					],
+					"stream": true,
+					"stream_options": {
+						"include_usage": true
+					},
+					"store": false
+				}
+			},
+			"seenModel": null,
+			"result": {
+				"model": "deepseek-v4-pro",
+				"stopReason": "error",
+				"errorMessage": "400: {\"message\":\"stop here\"}"
+			}
+		},
+		{
+			"name": "base URL: /openai/v1/responses with a query",
+			"model": "catalog",
+			"env": {
+				"AZURE_OPENAI_BASE_URL": "https://r.cognitiveservices.azure.com/openai/v1/responses?api-version=preview"
+			},
+			"request": {
+				"url": "https://r.cognitiveservices.azure.com/openai/v1/chat/completions",
+				"authorization": "Bearer azure-key",
+				"body": {
+					"model": "deepseek-v4-pro",
+					"messages": [
+						{
+							"role": "system",
+							"content": "sys"
+						},
+						{
+							"role": "user",
+							"content": "hi"
+						}
+					],
+					"stream": true,
+					"stream_options": {
+						"include_usage": true
+					},
+					"store": false
+				}
+			},
+			"seenModel": null,
+			"result": {
+				"model": "deepseek-v4-pro",
+				"stopReason": "error",
+				"errorMessage": "400: {\"message\":\"stop here\"}"
+			}
+		},
+		{
+			"name": "base URL: another Azure path is kept",
+			"model": "catalog",
+			"env": {
+				"AZURE_OPENAI_BASE_URL": "https://r.openai.azure.com/openai/deployments/x"
+			},
+			"request": {
+				"url": "https://r.openai.azure.com/openai/deployments/x/chat/completions",
+				"authorization": "Bearer azure-key",
+				"body": {
+					"model": "deepseek-v4-pro",
+					"messages": [
+						{
+							"role": "system",
+							"content": "sys"
+						},
+						{
+							"role": "user",
+							"content": "hi"
+						}
+					],
+					"stream": true,
+					"stream_options": {
+						"include_usage": true
+					},
+					"store": false
+				}
+			},
+			"seenModel": null,
+			"result": {
+				"model": "deepseek-v4-pro",
+				"stopReason": "error",
+				"errorMessage": "400: {\"message\":\"stop here\"}"
+			}
+		},
+		{
+			"name": "base URL: padded, upper case, trailing slashes",
+			"model": "catalog",
+			"env": {
+				"AZURE_OPENAI_BASE_URL": "  https://R.OpenAI.Azure.com//  "
+			},
+			"request": {
+				"url": "https://r.openai.azure.com/openai/v1/chat/completions",
+				"authorization": "Bearer azure-key",
+				"body": {
+					"model": "deepseek-v4-pro",
+					"messages": [
+						{
+							"role": "system",
+							"content": "sys"
+						},
+						{
+							"role": "user",
+							"content": "hi"
+						}
+					],
+					"stream": true,
+					"stream_options": {
+						"include_usage": true
+					},
+					"store": false
+				}
+			},
+			"seenModel": null,
+			"result": {
+				"model": "deepseek-v4-pro",
+				"stopReason": "error",
+				"errorMessage": "400: {\"message\":\"stop here\"}"
+			}
+		},
+		{
+			"name": "base URL: not an Azure host",
+			"model": "catalog",
+			"env": {
+				"AZURE_OPENAI_BASE_URL": "https://proxy.example.com/v1/"
+			},
+			"request": {
+				"url": "https://proxy.example.com/v1/chat/completions",
+				"authorization": "Bearer azure-key",
+				"body": {
+					"model": "deepseek-v4-pro",
+					"messages": [
+						{
+							"role": "system",
+							"content": "sys"
+						},
+						{
+							"role": "user",
+							"content": "hi"
+						}
+					],
+					"stream": true,
+					"stream_options": {
+						"include_usage": true
+					},
+					"store": false
+				}
+			},
+			"seenModel": null,
+			"result": {
+				"model": "deepseek-v4-pro",
+				"stopReason": "error",
+				"errorMessage": "400: {\"message\":\"stop here\"}"
+			}
+		},
+		{
+			"name": "base URL: not a URL",
+			"model": "catalog",
+			"env": {
+				"AZURE_OPENAI_BASE_URL": "not a url"
+			},
+			"request": null,
+			"seenModel": null,
+			"result": {
+				"model": "deepseek-v4-pro",
+				"stopReason": "error",
+				"errorMessage": "Invalid Azure OpenAI base URL: not a url"
+			}
+		},
+		{
+			"name": "resource name",
+			"model": "catalog",
+			"env": {
+				"AZURE_OPENAI_RESOURCE_NAME": "my-res"
+			},
+			"request": {
+				"url": "https://my-res.openai.azure.com/openai/v1/chat/completions",
+				"authorization": "Bearer azure-key",
+				"body": {
+					"model": "deepseek-v4-pro",
+					"messages": [
+						{
+							"role": "system",
+							"content": "sys"
+						},
+						{
+							"role": "user",
+							"content": "hi"
+						}
+					],
+					"stream": true,
+					"stream_options": {
+						"include_usage": true
+					},
+					"store": false
+				}
+			},
+			"seenModel": null,
+			"result": {
+				"model": "deepseek-v4-pro",
+				"stopReason": "error",
+				"errorMessage": "400: {\"message\":\"stop here\"}"
+			}
+		},
+		{
+			"name": "base URL wins over resource name",
+			"model": "catalog",
+			"env": {
+				"AZURE_OPENAI_BASE_URL": "https://b.ai.azure.com",
+				"AZURE_OPENAI_RESOURCE_NAME": "my-res"
+			},
+			"request": {
+				"url": "https://b.ai.azure.com/openai/v1/chat/completions",
+				"authorization": "Bearer azure-key",
+				"body": {
+					"model": "deepseek-v4-pro",
+					"messages": [
+						{
+							"role": "system",
+							"content": "sys"
+						},
+						{
+							"role": "user",
+							"content": "hi"
+						}
+					],
+					"stream": true,
+					"stream_options": {
+						"include_usage": true
+					},
+					"store": false
+				}
+			},
+			"seenModel": null,
+			"result": {
+				"model": "deepseek-v4-pro",
+				"stopReason": "error",
+				"errorMessage": "400: {\"message\":\"stop here\"}"
+			}
+		},
+		{
+			"name": "blank base URL falls to resource name",
+			"model": "catalog",
+			"env": {
+				"AZURE_OPENAI_BASE_URL": "   ",
+				"AZURE_OPENAI_RESOURCE_NAME": "my-res"
+			},
+			"request": {
+				"url": "https://my-res.openai.azure.com/openai/v1/chat/completions",
+				"authorization": "Bearer azure-key",
+				"body": {
+					"model": "deepseek-v4-pro",
+					"messages": [
+						{
+							"role": "system",
+							"content": "sys"
+						},
+						{
+							"role": "user",
+							"content": "hi"
+						}
+					],
+					"stream": true,
+					"stream_options": {
+						"include_usage": true
+					},
+					"store": false
+				}
+			},
+			"seenModel": null,
+			"result": {
+				"model": "deepseek-v4-pro",
+				"stopReason": "error",
+				"errorMessage": "400: {\"message\":\"stop here\"}"
+			}
+		},
+		{
+			"name": "deployment map",
+			"model": "catalog",
+			"env": {
+				"AZURE_OPENAI_BASE_URL": "https://my-resource.services.ai.azure.com",
+				"AZURE_OPENAI_DEPLOYMENT_NAME_MAP": "deepseek-v4-pro=my-deepseek"
+			},
+			"request": {
+				"url": "https://my-resource.services.ai.azure.com/openai/v1/chat/completions",
+				"authorization": "Bearer azure-key",
+				"body": {
+					"model": "my-deepseek",
+					"messages": [
+						{
+							"role": "system",
+							"content": "sys"
+						},
+						{
+							"role": "user",
+							"content": "hi"
+						}
+					],
+					"stream": true,
+					"stream_options": {
+						"include_usage": true
+					},
+					"store": false
+				}
+			},
+			"seenModel": null,
+			"result": {
+				"model": "deepseek-v4-pro",
+				"stopReason": "error",
+				"errorMessage": "400: {\"message\":\"stop here\"}"
+			}
+		},
+		{
+			"name": "deployment map: simple stream",
+			"model": "catalog",
+			"env": {
+				"AZURE_OPENAI_BASE_URL": "https://my-resource.services.ai.azure.com",
+				"AZURE_OPENAI_DEPLOYMENT_NAME_MAP": "deepseek-v4-pro=my-deepseek"
+			},
+			"simple": true,
+			"request": {
+				"url": "https://my-resource.services.ai.azure.com/openai/v1/chat/completions",
+				"authorization": "Bearer azure-key",
+				"body": {
+					"model": "my-deepseek",
+					"messages": [
+						{
+							"role": "system",
+							"content": "sys"
+						},
+						{
+							"role": "user",
+							"content": "hi"
+						}
+					],
+					"stream": true,
+					"stream_options": {
+						"include_usage": true
+					},
+					"store": false,
+					"max_completion_tokens": 384000
+				}
+			},
+			"seenModel": null,
+			"result": {
+				"model": "deepseek-v4-pro",
+				"stopReason": "error",
+				"errorMessage": "400: {\"message\":\"stop here\"}"
+			}
+		},
+		{
+			"name": "deployment map: split at most twice, trimmed, the last entry wins",
+			"model": "catalog",
+			"env": {
+				"AZURE_OPENAI_BASE_URL": "https://my-resource.services.ai.azure.com",
+				"AZURE_OPENAI_DEPLOYMENT_NAME_MAP": " a=b ,, =z, w=, deepseek-v4-pro=first, deepseek-v4-pro = dep-x=y "
+			},
+			"request": {
+				"url": "https://my-resource.services.ai.azure.com/openai/v1/chat/completions",
+				"authorization": "Bearer azure-key",
+				"body": {
+					"model": "dep-x",
+					"messages": [
+						{
+							"role": "system",
+							"content": "sys"
+						},
+						{
+							"role": "user",
+							"content": "hi"
+						}
+					],
+					"stream": true,
+					"stream_options": {
+						"include_usage": true
+					},
+					"store": false
+				}
+			},
+			"seenModel": null,
+			"result": {
+				"model": "deepseek-v4-pro",
+				"stopReason": "error",
+				"errorMessage": "400: {\"message\":\"stop here\"}"
+			}
+		},
+		{
+			"name": "deployment map: a blank deployment keeps the id",
+			"model": "catalog",
+			"env": {
+				"AZURE_OPENAI_BASE_URL": "https://my-resource.services.ai.azure.com",
+				"AZURE_OPENAI_DEPLOYMENT_NAME_MAP": "deepseek-v4-pro= "
+			},
+			"request": {
+				"url": "https://my-resource.services.ai.azure.com/openai/v1/chat/completions",
+				"authorization": "Bearer azure-key",
+				"body": {
+					"model": "deepseek-v4-pro",
+					"messages": [
+						{
+							"role": "system",
+							"content": "sys"
+						},
+						{
+							"role": "user",
+							"content": "hi"
+						}
+					],
+					"stream": true,
+					"stream_options": {
+						"include_usage": true
+					},
+					"store": false
+				}
+			},
+			"seenModel": null,
+			"result": {
+				"model": "deepseek-v4-pro",
+				"stopReason": "error",
+				"errorMessage": "400: {\"message\":\"stop here\"}"
+			}
+		},
+		{
+			"name": "deployment map: through a caller's onPayload",
+			"model": "catalog",
+			"env": {
+				"AZURE_OPENAI_BASE_URL": "https://my-resource.services.ai.azure.com",
+				"AZURE_OPENAI_DEPLOYMENT_NAME_MAP": "deepseek-v4-pro=my-deepseek"
+			},
+			"onPayload": true,
+			"request": {
+				"url": "https://my-resource.services.ai.azure.com/openai/v1/chat/completions",
+				"authorization": "Bearer azure-key",
+				"body": {
+					"model": "my-deepseek",
+					"messages": [
+						{
+							"role": "system",
+							"content": "sys"
+						},
+						{
+							"role": "user",
+							"content": "hi"
+						}
+					],
+					"stream": true,
+					"stream_options": {
+						"include_usage": true
+					},
+					"store": false,
+					"temperature": 0.1
+				}
+			},
+			"seenModel": "my-deepseek",
+			"result": {
+				"model": "deepseek-v4-pro",
+				"stopReason": "error",
+				"errorMessage": "400: {\"message\":\"stop here\"}"
+			}
+		},
+		{
+			"name": "registered model with a baseUrl",
+			"model": "registered",
+			"env": {},
+			"request": {
+				"url": "https://your-resource.services.ai.azure.com/openai/v1/chat/completions",
+				"authorization": "Bearer azure-key",
+				"body": {
+					"model": "your-deployment",
+					"messages": [
+						{
+							"role": "system",
+							"content": "sys"
+						},
+						{
+							"role": "user",
+							"content": "hi"
+						}
+					],
+					"stream": true,
+					"stream_options": {
+						"include_usage": true
+					},
+					"store": false
+				}
+			},
+			"seenModel": null,
+			"result": {
+				"model": "your-deployment",
+				"stopReason": "error",
+				"errorMessage": "400: {\"message\":\"stop here\"}"
+			}
+		},
+		{
+			"name": "registered model: the environment wins",
+			"model": "registered",
+			"env": {
+				"AZURE_OPENAI_RESOURCE_NAME": "my-res"
+			},
+			"request": {
+				"url": "https://my-res.openai.azure.com/openai/v1/chat/completions",
+				"authorization": "Bearer azure-key",
+				"body": {
+					"model": "your-deployment",
+					"messages": [
+						{
+							"role": "system",
+							"content": "sys"
+						},
+						{
+							"role": "user",
+							"content": "hi"
+						}
+					],
+					"stream": true,
+					"stream_options": {
+						"include_usage": true
+					},
+					"store": false
+				}
+			},
+			"seenModel": null,
+			"result": {
+				"model": "your-deployment",
+				"stopReason": "error",
+				"errorMessage": "400: {\"message\":\"stop here\"}"
+			}
+		},
+		{
+			"name": "registered model: simple stream",
+			"model": "registered",
+			"env": {},
+			"simple": true,
+			"request": {
+				"url": "https://your-resource.services.ai.azure.com/openai/v1/chat/completions",
+				"authorization": "Bearer azure-key",
+				"body": {
+					"model": "your-deployment",
+					"messages": [
+						{
+							"role": "system",
+							"content": "sys"
+						},
+						{
+							"role": "user",
+							"content": "hi"
+						}
+					],
+					"stream": true,
+					"stream_options": {
+						"include_usage": true
+					},
+					"store": false,
+					"max_completion_tokens": 16384
+				}
+			},
+			"seenModel": null,
+			"result": {
+				"model": "your-deployment",
+				"stopReason": "error",
+				"errorMessage": "400: {\"message\":\"stop here\"}"
+			}
+		}
+	]
+}
