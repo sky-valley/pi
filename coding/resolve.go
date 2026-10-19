@@ -219,17 +219,14 @@ func resolveCliModel(opts cliModelOptions) (ResolvedModel, error) {
 	}, nil
 }
 
-// allCatalogModels lists every registered model in deterministic order
-// (providers and ids sorted; pi's registry order is models.json order, which
-// resolveModelReference never lets decide).
+// allCatalogModels lists every registered model in registration order, as
+// pi's modelRuntime.getModels() does. resolveModelReference never lets that
+// order choose a provider, but buildFallbackModel templates a custom id from
+// the provider's first model when its default is not in the catalog.
 func allCatalogModels() []*ai.Model {
-	providers := ai.GetProviders()
-	sort.Strings(providers)
 	var out []*ai.Model
-	for _, p := range providers {
-		models := ai.GetModels(p)
-		sort.Slice(models, func(i, j int) bool { return models[i].ID < models[j].ID })
-		out = append(out, models...)
+	for _, p := range ai.GetProviders() {
+		out = append(out, ai.GetModels(p)...)
 	}
 	return out
 }

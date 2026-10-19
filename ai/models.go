@@ -1,18 +1,28 @@
 package ai
 
-import "sync"
+import (
+	"slices"
+	"sync"
+)
 
 var (
 	modelRegMu sync.RWMutex
 	modelReg   = map[string]map[string]*Model{} // provider -> id -> model
+	// providerOrder and modelOrder keep registration order, as pi's registry
+	// does: providers in the order they were registered, each provider's
+	// models in theirs (the catalog's, for a built-in provider).
+	providerOrder []string
+	modelOrder    = map[string][]string{} // provider -> ids
 )
 
-// RegisterModel adds a model to the catalog, keyed by provider and id.
+// RegisterModel adds a model to the catalog, keyed by provider and id. A
+// model registered again replaces the old one in its place.
 func RegisterModel(m *Model) {
 	modelRegMu.Lock()
 	defer modelRegMu.Unlock()
-	if modelReg[m.Provider] == nil {
-		modelReg[m.Provider] = map[string]*Model{}
+	registerProviderLocked(m.Provider)
+	if _, ok := modelReg[m.Provider][m.ID]; !ok {
+		modelOrder[m.Provider] = append(modelOrder[m.Provider], m.ID)
 	}
 	modelReg[m.Provider][m.ID] = m
 }
@@ -21,8 +31,13 @@ func RegisterModel(m *Model) {
 func registerProvider(provider string) {
 	modelRegMu.Lock()
 	defer modelRegMu.Unlock()
+	registerProviderLocked(provider)
+}
+
+func registerProviderLocked(provider string) {
 	if modelReg[provider] == nil {
 		modelReg[provider] = map[string]*Model{}
+		providerOrder = append(providerOrder, provider)
 	}
 }
 
@@ -37,27 +52,25 @@ func GetModel(provider, id string) *Model {
 	return nil
 }
 
-// GetProviders returns the registered provider names.
+// GetProviders returns the registered provider names, in registration order
+// (the catalog's for the built-in ones).
 func GetProviders() []string {
 	LoadBuiltinModels()
 	modelRegMu.RLock()
 	defer modelRegMu.RUnlock()
-	out := make([]string, 0, len(modelReg))
-	for p := range modelReg {
-		out = append(out, p)
-	}
-	return out
+	return slices.Clone(providerOrder)
 }
 
-// GetModels returns all registered models for a provider.
+// GetModels returns all registered models for a provider, in registration
+// order (the catalog's for a built-in provider).
 func GetModels(provider string) []*Model {
 	LoadBuiltinModels()
 	modelRegMu.RLock()
 	defer modelRegMu.RUnlock()
-	pm := modelReg[provider]
-	out := make([]*Model, 0, len(pm))
-	for _, m := range pm {
-		out = append(out, m)
+	ids := modelOrder[provider]
+	out := make([]*Model, 0, len(ids))
+	for _, id := range ids {
+		out = append(out, modelReg[provider][id])
 	}
 	return out
 }

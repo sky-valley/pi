@@ -391,3 +391,24 @@ func TestResolveModelPatternConfiguredAuthBreaksTies(t *testing.T) {
 		t.Fatalf("with an Anthropic key: %+v, %v; want anthropic/claude-haiku-4-5 at high", r, err)
 	}
 }
+
+// pi's resolveCliModel reads modelRuntime.getModels(): providers in
+// registration order, each provider's models in the order they were
+// registered (the catalog's, for a built-in one). A custom id under a
+// provider without a default in defaultModelPerProvider is templated from
+// that provider's first model (model-resolver.ts buildFallbackModel; the
+// capture's "fallback with no default uses the provider's first model"), so
+// registration order, not id order, picks the template.
+func TestResolveModelPatternFallbackKeepsRegistrationOrder(t *testing.T) {
+	first := &ai.Model{ID: "c2-order-zeta", Name: "zeta", Api: "openai-completions", Provider: "c2-registration-order", ContextWindow: 1111, Input: []string{"text"}}
+	second := &ai.Model{ID: "c2-order-alpha", Name: "alpha", Api: "openai-completions", Provider: "c2-registration-order", ContextWindow: 2222, Input: []string{"text"}}
+	ai.RegisterModel(first)
+	ai.RegisterModel(second)
+	r, err := ResolveModelPattern("c2-registration-order/custom-id")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if r.Model.ID != "custom-id" || r.Model.ContextWindow != first.ContextWindow {
+		t.Fatalf("fallback %s with context window %d, want custom-id templated from the first registered model (%d)", r.Model.ID, r.Model.ContextWindow, first.ContextWindow)
+	}
+}
