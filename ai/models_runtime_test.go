@@ -1712,3 +1712,83 @@ func stubAPI() *ProviderStreams {
 		},
 	}
 }
+
+// TestModelsGetAuthStopsWaitingOnCancel locks pi resolveProviderAuth's
+// raceWithAbortSignal (upstream fed6009cc): a resolver that ignores its context
+// cannot hold a cancelled caller hostage.
+func TestModelsGetAuthStopsWaitingOnCancel(t *testing.T) {
+	started := make(chan struct{})
+	release := make(chan struct{})
+	defer close(release)
+	m := modelsWithEnv(nil, nil)
+	m.SetProvider(CreateProvider(CreateProviderOptions{
+		ID: "cmd",
+		Auth: ProviderAuth{APIKey: &ApiKeyAuth{
+			Name: "cmd",
+			Resolve: func(context.Context, AuthContext, *Credential) (*AuthResult, error) {
+				close(started)
+				<-release // ignores its context
+				return &AuthResult{Auth: ModelAuth{APIKey: "late"}}, nil
+			},
+		}},
+		API: stubAPI(),
+	}))
+
+	ctx, cancel := context.WithCancel(context.Background())
+	errs := make(chan error, 1)
+	go func() {
+		_, err := m.GetProviderAuth(ctx, "cmd", nil)
+		errs <- err
+	}()
+	<-started
+	cancel()
+
+	select {
+	case err := <-errs:
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("a cancelled resolution must surface the cancellation, got %v", err)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("a cancelled resolution must return without waiting for a stalled resolver")
+	}
+}
+
+// TestModelsRefreshStopsWaitingOnSupersede locks pi's per-provider
+// raceWithAbortSignal(operation, signal) in refresh(): a superseded provider's
+// refresh settles at once, so the older sweep returns without waiting for a
+// provider that ignores its context.
+func TestModelsRefreshStopsWaitingOnSupersede(t *testing.T) {
+	firstStarted := make(chan struct{})
+	release := make(chan struct{})
+	defer close(release)
+	var fetches atomic.Int64
+	m := modelsWithEnv(map[string]string{"K": "key"}, nil)
+	m.SetProvider(CreateProvider(CreateProviderOptions{
+		ID:   "dynamic",
+		Auth: ProviderAuth{APIKey: EnvAPIKeyAuth("dynamic", "K")},
+		FetchModels: func(context.Context, RefreshModelsContext) ([]*Model, error) {
+			if fetches.Add(1) == 1 {
+				close(firstStarted)
+				<-release // ignores its context
+			}
+			return nil, nil
+		},
+		API: stubAPI(),
+	}))
+
+	firstResults := make(chan ModelsRefreshResult, 1)
+	go func() { firstResults <- m.Refresh(context.Background(), nil) }()
+	<-firstStarted
+	if second := m.Refresh(context.Background(), nil); second.Aborted || len(second.Errors) != 0 {
+		t.Fatalf("the superseding refresh must succeed: %+v", second)
+	}
+
+	select {
+	case first := <-firstResults:
+		if first.Aborted || len(first.Errors) != 0 {
+			t.Fatalf("a superseded refresh is neither aborted nor failed: %+v", first)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("a superseded refresh must return without waiting for a stalled provider")
+	}
+}

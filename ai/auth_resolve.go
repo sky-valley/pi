@@ -99,7 +99,23 @@ type AuthResolutionOverrides struct {
 // credential owns the provider: ambient/env is consulted only when nothing is
 // stored. No silent env fallback after a failed refresh or for a credential
 // type without a matching handler. Returns (nil, nil) when unconfigured.
+//
+// It returns as soon as ctx is done, even while a resolver that ignores ctx
+// is still running (pi's raceWithAbortSignal around the resolution).
 func resolveProviderAuth(
+	ctx context.Context,
+	providerID string,
+	auth ProviderAuth,
+	credentials CredentialStore,
+	authCtx AuthContext,
+	overrides *AuthResolutionOverrides,
+) (*AuthResult, error) {
+	return raceContext(ctx, func() (*AuthResult, error) {
+		return resolveProviderAuthWithContext(ctx, providerID, auth, credentials, authCtx, overrides)
+	})
+}
+
+func resolveProviderAuthWithContext(
 	ctx context.Context,
 	providerID string,
 	auth ProviderAuth,

@@ -1023,9 +1023,10 @@ func (m *modelsImpl) runProviderRefreshPhase(
 // restores its stored catalog before any auth resolution or network access,
 // then — when the network is allowed and the provider is configured — a network
 // phase. Failures are collected per provider unless that provider's refresh was
-// cancelled or superseded. The sweep stops waiting as soon as ctx is done and
-// returns a snapshot of the errors collected so far; provider work abandoned
-// that way cannot publish, because its generation is no longer current.
+// cancelled or superseded; a provider's refresh settles as soon as it is, and
+// the sweep stops waiting as soon as ctx is done, returning a snapshot of the
+// errors collected so far. Provider work abandoned either way cannot publish,
+// because its generation is no longer current.
 func (m *modelsImpl) Refresh(ctx context.Context, options *ModelsRefreshOptions) ModelsRefreshResult {
 	allowNetwork := true
 	force := false
@@ -1062,7 +1063,12 @@ func (m *modelsImpl) Refresh(ctx context.Context, options *ModelsRefreshOptions)
 			defer wg.Done()
 			defer m.endProviderRefresh(p.ID(), entry)
 
-			err := m.refreshProvider(refreshCtx, p, allowNetwork, force, generation)
+			// Settles as soon as this provider's refresh is cancelled or
+			// superseded, even while the provider ignores refreshCtx (pi's
+			// raceWithAbortSignal(operation, signal)).
+			_, err := raceContext(refreshCtx, func() (struct{}, error) {
+				return struct{}{}, m.refreshProvider(refreshCtx, p, allowNetwork, force, generation)
+			})
 			if err != nil && refreshCtx.Err() == nil {
 				errsMu.Lock()
 				errs[p.ID()] = err
@@ -1221,7 +1227,8 @@ func (m *modelsImpl) checkProviderAuth(ctx context.Context, p Provider, credenti
 
 // raceContext runs op and returns as soon as either op finishes or ctx is
 // cancelled — pi's raceWithAbortSignal (utils/abort.ts), which every public auth
-// entry point wraps around its operation (models.ts:502,524,558).
+// entry point, resolveProviderAuth and each provider's model refresh wrap
+// around their operation.
 //
 // It is load-bearing rather than belt-and-braces: a provider's Resolve/Check is
 // free to ignore the ctx it is handed (ApiKeyAuth.Resolve is documented as

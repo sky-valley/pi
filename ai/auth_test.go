@@ -387,8 +387,10 @@ func TestResolveStoredOAuthBoundsRefreshDuration(t *testing.T) {
 
 	var deadline time.Time
 	var hasDeadline, cancelPropagated bool
+	refreshed := make(chan struct{})
 	auth := ProviderAuth{OAuth: &OAuthAuth{
 		Refresh: func(ctx context.Context, c OAuthCredentials) (OAuthCredentials, error) {
+			defer close(refreshed)
 			deadline, hasDeadline = ctx.Deadline()
 			// The caller's cancellation must still reach the provider.
 			cancelCaller()
@@ -401,6 +403,7 @@ func TestResolveStoredOAuthBoundsRefreshDuration(t *testing.T) {
 
 	before := time.Now()
 	_, _ = resolveProviderAuth(callerCtx, "oauthp", auth, store, authCtx(), nil)
+	<-refreshed // resolution returns once the caller is cancelled
 
 	if !hasDeadline {
 		t.Fatal("refresh context has no deadline: the refresh is unbounded")
@@ -430,8 +433,10 @@ func TestResolveStoredOAuthRefreshContextIsComposite(t *testing.T) {
 
 	var distinct bool
 	var refreshErr, refreshCause error
+	refreshed := make(chan struct{})
 	auth := ProviderAuth{OAuth: &OAuthAuth{
 		Refresh: func(ctx context.Context, c OAuthCredentials) (OAuthCredentials, error) {
+			defer close(refreshed)
 			distinct = ctx != callerCtx
 			cancelCaller(reason)
 			<-ctx.Done()
@@ -442,6 +447,7 @@ func TestResolveStoredOAuthRefreshContextIsComposite(t *testing.T) {
 	}}
 
 	_, _ = resolveProviderAuth(callerCtx, "oauthp", auth, store, authCtx(), nil)
+	<-refreshed // resolution returns once the caller is cancelled
 
 	if !distinct {
 		t.Fatal("refresh received the caller's own context, not a composite derived from it")
