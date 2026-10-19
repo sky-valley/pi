@@ -46,6 +46,15 @@ var features = []string{"listFiles"}
 // handle is an open file or directory of the connection, valid until close.
 type handle interface{ close() }
 
+// entry is a handle in the connection's table and its users: the table, until
+// close, and each request using it. The handle closes when its last user lets
+// go, as the Rust daemon's closes when its last Arc drops: a request in flight
+// finishes on an open handle, and close does not wait for it.
+type entry struct {
+	handle handle
+	users  int // guarded by server.mu
+}
+
 // fileHandle is an open file.
 type fileHandle struct {
 	file *os.File
@@ -74,17 +83,13 @@ type dirHandle struct {
 	done     bool
 }
 
-func (h *dirHandle) close() {
-	h.mu.Lock()
-	defer h.mu.Unlock()
-	h.dir.Close()
-}
+func (h *dirHandle) close() { h.dir.Close() }
 
 type server struct {
 	out        *output
 	tmpdir     string
 	mu         sync.Mutex
-	handles    map[uint64]handle
+	handles    map[uint64]*entry
 	nextHandle atomic.Uint64
 	controls   map[uint32]*control
 	jobs       *jobQueue
@@ -117,21 +122,35 @@ func boolField(json any, key string) bool {
 	return b
 }
 
-func (s *server) file(json any) (*fileHandle, *failure) {
+// file is the file handle a request names, held open until release is
+// called.
+func (s *server) file(json any) (handle *fileHandle, release func(), fail *failure) {
 	id, fail := number(json, "handle")
 	if fail != nil {
-		return nil, fail
+		return nil, nil, fail
 	}
 	s.mu.Lock()
-	h := s.handles[id]
+	defer s.mu.Unlock()
+	e := s.handles[id]
+	if e == nil {
+		return nil, nil, newFailure("EBADF", "unknown handle")
+	}
+	handle, ok := e.handle.(*fileHandle)
+	if !ok {
+		return nil, nil, newFailure("EBADF", "not a file handle")
+	}
+	e.users++
+	return handle, func() { s.release(e) }, nil
+}
+
+// release lets go of a handle, closing it if that was its last user.
+func (s *server) release(e *entry) {
+	s.mu.Lock()
+	e.users--
+	last := e.users == 0
 	s.mu.Unlock()
-	switch h := h.(type) {
-	case *fileHandle:
-		return h, nil
-	case *dirHandle:
-		return nil, newFailure("EBADF", "not a file handle")
-	default:
-		return nil, newFailure("EBADF", "unknown handle")
+	if last {
+		e.handle.close()
 	}
 }
 
@@ -142,7 +161,7 @@ func (s *server) insert(h handle) (uint64, *failure) {
 		return 0, newFailure("EMFILE", "EMFILE: too many open files")
 	}
 	id := s.nextHandle.Add(1) - 1
-	s.handles[id] = h
+	s.handles[id] = &entry{handle: h, users: 1}
 	return id, nil
 }
 
@@ -159,14 +178,30 @@ func (s *server) dispatch(id uint32, json any, payload []byte, ctl *control) (ob
 	if json == nil {
 		return nil, nil, newFailure("EINVAL", "invalid JSON")
 	}
-	op, _ := asString(get(json, "op"))
-	plain := func(result object, fail *failure) (object, []byte, *failure) {
+	switch op, _ := asString(get(json, "op")); op {
+	case "pread":
+		return s.pread(json)
+	case "listFiles":
+		return listFilesOp(json, ctl.aborted.Load)
+	default:
+		result, fail := s.run(id, op, json, payload, ctl)
 		return result, nil, fail
 	}
-	path := func() (string, *failure) { return field(json, "path") }
+}
+
+// run runs a request whose reply carries no payload.
+func (s *server) run(id uint32, op string, json any, payload []byte, ctl *control) (object, *failure) {
+	// onPath runs an operation on the request's path.
+	onPath := func(operation func(path string) (object, *failure)) (object, *failure) {
+		path, fail := field(json, "path")
+		if fail != nil {
+			return nil, fail
+		}
+		return operation(path)
+	}
 	switch op {
 	case "hello":
-		return plain(object{
+		return object{
 			"protocol":  uint64(protocolVersion),
 			"version":   Version,
 			"os":        osName(),
@@ -178,187 +213,176 @@ func (s *server) dispatch(id uint32, json any, payload []byte, ctl *control) (ob
 			"driveCwds": driveCwds(),
 			"pid":       int64(os.Getpid()),
 			"features":  features,
-		}, nil)
+		}, nil
 	case "lstat":
-		p, fail := path()
-		if fail != nil {
-			return plain(nil, fail)
-		}
-		return plain(lstatOp(p))
+		return onPath(lstatOp)
 	case "realpath":
-		p, fail := path()
-		if fail != nil {
-			return plain(nil, fail)
-		}
-		return plain(realpathOp(p))
+		return onPath(realpathOp)
 	case "write":
-		p, fail := path()
-		if fail != nil {
-			return plain(nil, fail)
-		}
-		parents := true
-		if value, ok := asBool(get(json, "parents")); ok {
-			parents = value
-		}
-		f, fail := writeOp(p, boolField(json, "append"), parents, payload)
-		if fail != nil {
-			return plain(nil, fail)
-		}
-		if !boolField(json, "keep") {
-			f.Close()
-			return plain(object{}, nil)
-		}
-		handle, fail := s.insertFile(f, p)
-		if fail != nil {
-			return plain(nil, fail)
-		}
-		return plain(object{"handle": handle}, nil)
+		return onPath(func(path string) (object, *failure) { return s.write(path, json, payload) })
 	case "writeChunk":
-		handle, fail := s.file(json)
-		if fail != nil {
-			return plain(nil, fail)
-		}
-		if handle.failed.Load() {
-			return plain(nil, newFailure("EBADF", "an earlier write failed"))
-		}
-		if err := writeAll(handle.file, payload); err != nil {
-			handle.failed.Store(true)
-			return plain(nil, ioFailure(err, "write", handle.path))
-		}
-		return plain(object{}, nil)
+		return s.writeChunk(json, payload)
 	case "truncate":
-		p, fail := path()
-		if fail != nil {
-			return plain(nil, fail)
-		}
-		size, fail := number(json, "size")
-		if fail != nil {
-			return plain(nil, fail)
-		}
-		return plain(truncateOp(p, size))
+		return onPath(func(path string) (object, *failure) {
+			size, fail := number(json, "size")
+			if fail != nil {
+				return nil, fail
+			}
+			return truncateOp(path, size)
+		})
 	case "fsync":
-		p, fail := path()
-		if fail != nil {
-			return plain(nil, fail)
-		}
-		return plain(fsyncOp(p))
+		return onPath(fsyncOp)
 	case "rename":
-		p, fail := path()
-		if fail != nil {
-			return plain(nil, fail)
-		}
-		to, fail := field(json, "to")
-		if fail != nil {
-			return plain(nil, fail)
-		}
-		return plain(renameOp(p, to))
+		return onPath(func(path string) (object, *failure) {
+			to, fail := field(json, "to")
+			if fail != nil {
+				return nil, fail
+			}
+			return renameOp(path, to)
+		})
 	case "mkdir":
-		p, fail := path()
-		if fail != nil {
-			return plain(nil, fail)
-		}
-		return plain(mkdirOp(p, boolField(json, "recursive")))
+		return onPath(func(path string) (object, *failure) { return mkdirOp(path, boolField(json, "recursive")) })
 	case "rm":
-		p, fail := path()
-		if fail != nil {
-			return plain(nil, fail)
-		}
-		return plain(rmOp(p, boolField(json, "recursive"), boolField(json, "force")))
+		return onPath(func(path string) (object, *failure) {
+			return rmOp(path, boolField(json, "recursive"), boolField(json, "force"))
+		})
 	case "mkdtemp":
-		p, fail := path()
-		if fail != nil {
-			return plain(nil, fail)
-		}
-		return plain(mkdtempOp(p))
+		return onPath(mkdtempOp)
 	case "open":
-		return plain(s.open(json))
-	case "pread":
-		handle, fail := s.file(json)
-		if fail != nil {
-			return plain(nil, fail)
-		}
-		length, fail := number(json, "length")
-		if fail != nil {
-			return plain(nil, fail)
-		}
-		length = min(length, frame.MaxPayload)
-		var data []byte
-		if offset, ok := asU64(get(json, "offset")); ok {
-			data, fail = pread(handle.file, handle.path, offset, int(length))
-		} else {
-			data, fail = readCurrent(handle.file, handle.path, int(length))
-		}
-		if fail != nil {
-			return nil, nil, fail
-		}
-		return object{}, data, nil
+		return s.open(json)
 	case "fstat":
-		handle, fail := s.file(json)
+		handle, release, fail := s.file(json)
 		if fail != nil {
-			return plain(nil, fail)
+			return nil, fail
 		}
+		defer release()
 		st, err := fstatFile(handle.file)
 		if err != nil {
-			return plain(nil, ioFailure(err, "fstat", handle.path))
+			return nil, ioFailure(err, "fstat", handle.path)
 		}
-		return plain(info(handle.path, st), nil)
+		return info(handle.path, st), nil
 	case "scanLines":
-		handle, fail := s.file(json)
+		handle, release, fail := s.file(json)
 		if fail != nil {
-			return plain(nil, fail)
+			return nil, fail
 		}
-		return plain(scanLines(handle.file, handle.path, json, ctl))
+		defer release()
+		return scanLines(handle.file, handle.path, json, ctl)
 	case "opendir":
-		p, fail := path()
-		if fail != nil {
-			return plain(nil, fail)
-		}
-		dir, err := openDir(p)
-		if err != nil {
-			return plain(nil, ioFailure(err, "opendir", p))
-		}
-		handle, fail := s.insert(&dirHandle{dir: dir, path: p})
-		if fail != nil {
-			dir.Close()
-			return plain(nil, fail)
-		}
-		return plain(object{"handle": handle}, nil)
+		return onPath(s.openDir)
 	case "readdir":
-		return plain(s.readDir(json))
-	case "listFiles":
-		return listFilesOp(json, ctl.aborted.Load)
+		return s.readDir(json)
 	case "close":
 		id, fail := number(json, "handle")
 		if fail != nil {
-			return plain(nil, fail)
+			return nil, fail
 		}
 		s.mu.Lock()
-		h := s.handles[id]
+		e := s.handles[id]
 		delete(s.handles, id)
 		s.mu.Unlock()
-		if h != nil {
-			// Closed once no request uses it any more, as dropping the last
-			// reference does: a read blocked on a FIFO does not hold up the
-			// reply.
-			go h.close()
+		if e != nil {
+			s.release(e)
 		}
-		return plain(object{}, nil)
+		return object{}, nil
 	case "exec":
 		request, fail := execRequestFromJSON(json)
 		if fail != nil {
-			return plain(nil, fail)
+			return nil, fail
 		}
-		return plain(runExec(id, request, s.tmpdir, s.out, ctl, s.running))
+		return runExec(id, request, s.tmpdir, s.out, ctl, s.running)
 	case "watch":
-		return plain(runWatch(id, json, s.out, ctl))
+		return runWatch(id, json, s.out, ctl)
 	case "pty":
 		request, fail := ptyRequestFromJSON(json)
 		if fail != nil {
-			return plain(nil, fail)
+			return nil, fail
 		}
-		return plain(runPty(id, request, s.out, ctl, s.running, s.terminals))
+		return runPty(id, request, s.out, ctl, s.running, s.terminals)
 	}
-	return plain(nil, newFailure("EINVAL", "unknown operation "+op))
+	return nil, newFailure("EINVAL", "unknown operation "+op)
+}
+
+// write writes a file (creating its parents unless parents is false), and
+// with keep leaves it open for writeChunk.
+func (s *server) write(path string, json any, payload []byte) (object, *failure) {
+	parents := true
+	if value, ok := asBool(get(json, "parents")); ok {
+		parents = value
+	}
+	f, fail := writeOp(path, boolField(json, "append"), parents, payload)
+	if fail != nil {
+		return nil, fail
+	}
+	if !boolField(json, "keep") {
+		f.Close()
+		return object{}, nil
+	}
+	handle, fail := s.insertFile(f, path)
+	if fail != nil {
+		return nil, fail
+	}
+	return object{"handle": handle}, nil
+}
+
+// writeChunk appends a chunk to a kept file; a failed chunk poisons the
+// handle.
+func (s *server) writeChunk(json any, payload []byte) (object, *failure) {
+	handle, release, fail := s.file(json)
+	if fail != nil {
+		return nil, fail
+	}
+	defer release()
+	if handle.failed.Load() {
+		return nil, newFailure("EBADF", "an earlier write failed")
+	}
+	if err := writeAll(handle.file, payload); err != nil {
+		handle.failed.Store(true)
+		return nil, ioFailure(err, "write", handle.path)
+	}
+	return object{}, nil
+}
+
+// pread reads up to length bytes at offset, or at the current position
+// without one.
+func (s *server) pread(json any) (object, []byte, *failure) {
+	handle, release, fail := s.file(json)
+	if fail != nil {
+		return nil, nil, fail
+	}
+	defer release()
+	length, fail := number(json, "length")
+	if fail != nil {
+		return nil, nil, fail
+	}
+	length = min(length, frame.MaxPayload)
+	var data []byte
+	if offset, ok := asU64(get(json, "offset")); ok {
+		data, fail = pread(handle.file, handle.path, offset, int(length))
+	} else {
+		data, fail = readCurrent(handle.file, handle.path, int(length))
+	}
+	if fail != nil {
+		return nil, nil, fail
+	}
+	return object{}, data, nil
+}
+
+// openDir opens a directory handle for readdir.
+func (s *server) openDir(path string) (object, *failure) {
+	if hasNul(path) {
+		return nil, ioFailure(nulError, "opendir", path)
+	}
+	dir, err := openDir(path)
+	if err != nil {
+		return nil, ioFailure(err, "opendir", path)
+	}
+	handle, fail := s.insert(&dirHandle{dir: dir, path: path})
+	if fail != nil {
+		dir.Close()
+		return nil, fail
+	}
+	return object{"handle": handle}, nil
 }
 
 // open is Node's open(path, "r") with mode "read": any kind of file,
@@ -413,14 +437,21 @@ func (s *server) readDir(json any) (object, *failure) {
 	if fail != nil {
 		return nil, fail
 	}
-	// Lock only this directory, so other requests are not held up by a slow
-	// listing.
 	s.mu.Lock()
-	dir, ok := s.handles[id].(*dirHandle)
-	s.mu.Unlock()
-	if !ok {
+	e := s.handles[id]
+	var dir *dirHandle
+	if e != nil {
+		dir, _ = e.handle.(*dirHandle)
+	}
+	if dir == nil {
+		s.mu.Unlock()
 		return nil, newFailure("EBADF", "not a directory handle")
 	}
+	e.users++
+	s.mu.Unlock()
+	defer s.release(e)
+	// Lock only this directory, so other requests are not held up by a slow
+	// listing.
 	dir.mu.Lock()
 	defer dir.mu.Unlock()
 	entries := []any{}
@@ -608,7 +639,8 @@ func (s *server) serveFrames(input io.Reader) error {
 				// Commands and watchers last; they get their own goroutines.
 				go respond()
 			case "writeChunk":
-				if handle, fail := s.file(json); fail == nil {
+				if handle, release, fail := s.file(json); fail == nil {
+					release()
 					s.runInOrder(handle, respond)
 				} else {
 					s.jobs.send(respond)
@@ -668,7 +700,7 @@ func serve(token string, stdin io.Reader, stdout io.Writer) error {
 	s := &server{
 		out:       out,
 		tmpdir:    tmpdir(),
-		handles:   map[uint64]handle{},
+		handles:   map[uint64]*entry{},
 		controls:  map[uint32]*control{},
 		jobs:      startWorkers(),
 		running:   newGroups(),

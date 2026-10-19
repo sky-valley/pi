@@ -44,6 +44,10 @@ var (
 )
 
 func TestMain(m *testing.M) {
+	if daemon := os.Getenv(seccompExecVariable); daemon != "" {
+		// Started by TestAndroidBuildRunsCommandsWithoutPidfd to run a daemon.
+		execUnderSeccomp(daemon)
+	}
 	flag.Parse()
 	dir, err := os.MkdirTemp("", "pi-env-test-")
 	if err != nil {

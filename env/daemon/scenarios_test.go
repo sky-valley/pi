@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/sky-valley/pi/env/internal/frame"
 )
@@ -103,6 +104,166 @@ func scenarios() []scenario {
 				r.do("opendir odd", `{"op":"opendir","path":"%R"}`)
 				r.do("readdir odd", `{"op":"readdir","handle":1,"max":10}`)
 			},
+		},
+		{
+			// Rust refuses a NUL byte in a path, argument or variable before
+			// any system call, with an error that has no OS code.
+			name: "nul",
+			skip: unixOnly,
+			run: func(r *recorder) {
+				writeFixture(t(r), r.root, map[string]string{"file": "x", "dir/": ""})
+				r.do("lstat", `{"op":"lstat","path":"%R/a\u0000b"}`)
+				r.do("realpath", `{"op":"realpath","path":"%R/a\u0000b"}`)
+				r.do("write", `{"op":"write","path":"%R/a\u0000b"}`, []byte("x")...)
+				r.do("truncate", `{"op":"truncate","path":"%R/a\u0000b","size":0}`)
+				r.do("fsync", `{"op":"fsync","path":"%R/a\u0000b"}`)
+				r.do("rename from", `{"op":"rename","path":"%R/a\u0000b","to":"%R/c"}`)
+				r.do("rename to", `{"op":"rename","path":"%R/file","to":"%R/a\u0000b"}`)
+				r.do("mkdir", `{"op":"mkdir","path":"%R/a\u0000b","recursive":true}`)
+				r.do("rm", `{"op":"rm","path":"%R/a\u0000b","force":true}`)
+				r.do("mkdtemp", `{"op":"mkdtemp","path":"%R/a\u0000b"}`)
+				r.do("open", `{"op":"open","path":"%R/a\u0000b"}`)
+				r.do("open read mode", `{"op":"open","path":"%R/a\u0000b","mode":"read"}`)
+				r.do("opendir", `{"op":"opendir","path":"%R/a\u0000b"}`)
+				r.do("opendir trailing nul", `{"op":"opendir","path":"%R/dir\u0000"}`)
+				r.do("listFiles", `{"op":"listFiles","path":"%R/a\u0000b"}`)
+				r.do("exec cwd", `{"op":"exec","argv":["true"],"cwd":"%R/a\u0000b","env":{}}`)
+				r.do("exec argument", `{"op":"exec","argv":["echo","a\u0000b"],"cwd":"%R","env":{}}`)
+				r.do("exec variable", `{"op":"exec","argv":["true"],"cwd":"%R","env":{"A":"a\u0000b"}}`)
+				r.do("exec variable name", `{"op":"exec","argv":["true"],"cwd":"%R","env":{"A\u0000B":"x"}}`)
+				r.do("pty cwd", `{"op":"pty","argv":["true"],"cwd":"%R/a\u0000b","env":{},"cols":80,"rows":24}`)
+				r.do("pty argument", `{"op":"pty","argv":["echo","a\u0000b"],"cwd":"%R","env":{},"cols":80,"rows":24}`)
+				r.do("pty variable", `{"op":"pty","argv":["true"],"cwd":"%R","env":{"A":"a\u0000b"},"cols":80,"rows":24}`)
+				id := r.start(strings.ReplaceAll(`{"op":"watch","targets":[{"path":"%R/a\u0000b"}],"mode":"polling"}`, "%R", jsonEscape(r.root)), nil)
+				r.keep("watch", r.wait(id, func(f []frame.Frame) bool { return len(f) > 0 }))
+				r.send(frame.Cancel, id, nil, nil)
+				r.keep("watch closed", r.wait(id, finished)[1:])
+			},
+		},
+		{
+			// Rust reads its own variables with env::var, which passes over
+			// values that are not UTF-8, and decodes paths lossily, so replies
+			// never carry raw bytes. File names cannot be other than UTF-8 on
+			// macOS, so the working directory, the shell and the watched file
+			// below are not UTF-8 on Linux only.
+			name:   "not UTF-8",
+			skip:   needsPython,
+			launch: notUTF8Launch,
+			clean:  []func(string) string{func(s string) string { return foreignCwd.ReplaceAllString(s, `"cwd":"*"`) }},
+			run: func(r *recorder) {
+				r.do("hello", `{"op":"hello","protocol":1}`)
+				// $SHELL, when it is not UTF-8, names a script that is not a
+				// login shell: the default /bin/sh runs instead and exits 7.
+				id := r.start(strings.ReplaceAll(`{"op":"pty","cwd":"%R","env":{},"cols":80,"rows":24}`, "%R", jsonEscape(r.root)), nil)
+				r.wait(id, func(f []frame.Frame) bool { return len(f) > 0 })
+				time.Sleep(500 * time.Millisecond)
+				r.do("exit", `{"op":"ptyWrite","target":`+strconv.Itoa(int(id))+`}`, []byte("exit 7\n")...)
+				frames := r.wait(id, finished)
+				r.keep("login shell", frames[len(frames)-1:])
+				if runtime.GOOS != "linux" {
+					return
+				}
+				writeFixture(t(r), r.root, map[string]string{"w/a\xffb": "x"})
+				id = r.start(strings.ReplaceAll(`{"op":"watch","targets":[{"path":"%R/w","recursive":true}],"mode":"native"}`, "%R", jsonEscape(r.root)), nil)
+				r.keep("watch ready", r.wait(id, func(f []frame.Frame) bool { return len(f) > 0 }))
+				f, err := os.OpenFile(filepath.Join(r.root, "w", "a\xffb"), os.O_APPEND|os.O_WRONLY, 0)
+				if err != nil {
+					t(r).Fatal(err)
+				}
+				f.WriteString("y")
+				f.Close()
+				r.keep("watch change", r.wait(id, func(f []frame.Frame) bool { return len(f) > 1 })[1:2])
+				r.send(frame.Cancel, id, nil, nil)
+				all := r.wait(id, finished)
+				r.keep("watch closed", all[len(all)-1:])
+			},
+		},
+		{
+			// Command runs the program through the C library's execvp(3): which
+			// failures move the search on to the next PATH entry, and whether a
+			// file the kernel cannot execute runs through sh, is the library's
+			// (macOS and bionic run it; musl, which the Linux builds use, fails).
+			name: "execvp",
+			skip: unixOnly,
+			run: func(r *recorder) {
+				writeFixture(t(r), r.root, map[string]string{
+					"bin/script": "echo from script\n", "bin/dir/": "", "bin/plain": "x",
+					"dirs/script/": "", "plains/script": "x", "later/script": "#!/bin/sh\necho later\n",
+				})
+				os.Chmod(filepath.Join(r.root, "bin", "script"), 0o755)
+				os.Chmod(filepath.Join(r.root, "later", "script"), 0o755)
+				r.do("script without shebang", `{"op":"exec","argv":["%R/bin/script"],"cwd":"%R","env":{}}`)
+				r.do("relative script without shebang", `{"op":"exec","argv":["bin/script"],"cwd":"%R","env":{}}`)
+				r.do("script in PATH", `{"op":"exec","argv":["script"],"cwd":"%R","env":{"PATH":"%R/bin:%R/later"}}`)
+				r.do("directory in PATH", `{"op":"exec","argv":["dir"],"cwd":"%R","env":{"PATH":"%R/bin"}}`)
+				r.do("directory then program", `{"op":"exec","argv":["script"],"cwd":"%R","env":{"PATH":"%R/dirs:%R/later"}}`)
+				r.do("not executable in PATH", `{"op":"exec","argv":["plain"],"cwd":"%R","env":{"PATH":"%R/bin"}}`)
+				r.do("not executable then program", `{"op":"exec","argv":["script"],"cwd":"%R","env":{"PATH":"%R/plains:%R/later"}}`)
+				r.do("file as directory then program", `{"op":"exec","argv":["script"],"cwd":"%R","env":{"PATH":"%R/bin/plain:%R/later"}}`)
+				r.do("missing then program", `{"op":"exec","argv":["script"],"cwd":"%R","env":{"PATH":"%R/nope:%R/later"}}`)
+				r.do("missing everywhere", `{"op":"exec","argv":["nothing"],"cwd":"%R","env":{"PATH":"%R/nope:%R/bin"}}`)
+				r.do("pty script without shebang", `{"op":"pty","argv":["%R/bin/script"],"cwd":"%R","env":{},"cols":80,"rows":24}`)
+			},
+		},
+		{
+			// The Rust daemon's Linux builds are static musl: realpath(3) is
+			// musl's, not glibc's.
+			name: "musl",
+			skip: muslOnly,
+			run: func(r *recorder) {
+				writeFixture(t(r), r.root, map[string]string{"file": "", "dir/sub/": ""})
+				symlink(t(r), "file", filepath.Join(r.root, "flink"))
+				symlink(t(r), "dir/", filepath.Join(r.root, "dslash"))
+				symlink(t(r), "nowhere", filepath.Join(r.root, "dangling"))
+				// chainN is a chain of N links ending at file.
+				for _, n := range []int{39, 40, 41} {
+					previous := "file"
+					for i := n; i >= 1; i-- {
+						link := "chain" + strconv.Itoa(n) + "-" + strconv.Itoa(i)
+						symlink(t(r), previous, filepath.Join(r.root, link))
+						previous = link
+					}
+				}
+				for _, path := range []string{
+					"%R/chain39-1", "%R/chain40-1", "%R/chain41-1", "//", "//tmp", "///tmp", "//tmp/", "//%R", "/%R//dir",
+					"%R/file/", "%R/file/.", "%R/file/..", "%R/file/x/..", "%R/missing/..", "%R/dangling/..", "%R/flink/",
+					"%R/flink/.", "%R/dslash", "%R/dslash/sub/..", "%R/dir/sub/../..", "%R/dir/../file", "%R/.", "%R/..",
+					"/..", "/../..", "%R/dir/sub/", "%R/dir//sub/.//", "%R/dangling",
+				} {
+					r.do("realpath "+path, `{"op":"realpath","path":"`+path+`"}`)
+				}
+			},
+		},
+		{
+			// musl's execvp searches /usr/local/bin:/bin:/usr/bin when PATH is
+			// unset, glibc /bin:/usr/bin.
+			name: "musl default PATH",
+			skip: func() string {
+				if reason := muslOnly(); reason != "" {
+					return reason
+				}
+				f, err := os.CreateTemp("/usr/local/bin", ".pi-env-oracle-")
+				if err != nil {
+					return "needs to write a program into /usr/local/bin (run as root, as in a container)"
+				}
+				f.Close()
+				os.Remove(f.Name())
+				return ""
+			},
+			run: func(r *recorder) {
+				program := "/usr/local/bin/pi-env-oracle-local"
+				if err := os.WriteFile(program, []byte("#!/bin/sh\necho local\n"), 0o755); err != nil {
+					t(r).Fatal(err)
+				}
+				defer os.Remove(program)
+				r.do("no PATH", `{"op":"exec","argv":["pi-env-oracle-local"],"cwd":"%R","env":{},"inheritEnv":false}`)
+				r.do("PATH set", `{"op":"exec","argv":["pi-env-oracle-local"],"cwd":"%R","env":{"PATH":"/bin"},"inheritEnv":false}`)
+			},
+		},
+		{
+			name: "watch through links",
+			skip: unixOnly,
+			run:  watchThroughLinks,
 		},
 		{
 			name: "stat",
@@ -281,6 +442,23 @@ func scenarios() []scenario {
 				r.do("read null", `{"op":"pread","handle":5,"length":10}`)
 				r.do("read mode missing", `{"op":"open","path":"%R/missing","mode":"read"}`)
 				r.do("fstat dir handle", `{"op":"fstat","handle":4}`)
+			},
+		},
+		{
+			// A handle closed while a request uses it stays open until that
+			// request is done, as dropping the Rust daemon's last Arc closes it:
+			// an endless scan goes on after close until it is cancelled.
+			name: "close in flight",
+			skip: unixOnly,
+			run: func(r *recorder) {
+				r.do("open", `{"op":"open","path":"/dev/zero","mode":"read"}`)
+				scan := r.start(`{"op":"scanLines","handle":1,"startLine":0}`, nil)
+				time.Sleep(300 * time.Millisecond)
+				r.do("close", `{"op":"close","handle":1}`)
+				time.Sleep(300 * time.Millisecond)
+				r.send(frame.Cancel, scan, nil, nil)
+				r.keep("scan", r.wait(scan, finished))
+				r.do("closed", `{"op":"fstat","handle":1}`)
 			},
 		},
 		{
@@ -519,6 +697,90 @@ func scenarios() []scenario {
 			},
 		},
 	}
+}
+
+// notUTF8Launch starts the daemon with HOME, TMPDIR and SHELL not UTF-8
+// (TMP is the first temporary directory variable that is) and, where file
+// names may be any bytes, in a working directory whose name is not UTF-8.
+const notUTF8Launch = `root = os.path.dirname(os.environb[b'HOME'])
+os.environb[b'HOME'] = b'/h\xffome'
+os.environb[b'TMPDIR'] = b'/t\xffmp'
+os.environb[b'TMP'] = b'/second'
+os.environb[b'SHELL'] = root + b'/s\xffh'
+try:
+    with open(root + b'/s\xffh', 'wb') as script:
+        script.write(b'#!/bin/sh\necho not the login shell\n')
+    os.chmod(root + b'/s\xffh', 0o755)
+    os.mkdir(root + b'/c\xffwd')
+    os.chdir(root + b'/c\xffwd')
+except OSError:
+    pass`
+
+// foreignCwd is a working directory outside the scenario's directory, the
+// test's own.
+var foreignCwd = regexp.MustCompile(`"cwd":"[^<"][^"]*"`)
+
+func muslOnly() string {
+	if runtime.GOOS != "linux" || onAndroid {
+		return "musl's realpath(3) and execvp(3): the Rust daemon's Linux builds are static musl"
+	}
+	return ""
+}
+
+func needsPython() string {
+	if reason := unixOnly(); reason != "" {
+		return reason
+	}
+	if _, err := os.Stat("/usr/bin/python3"); err != nil {
+		return "needs /usr/bin/python3 to start the daemon"
+	}
+	return ""
+}
+
+// watchThroughLinks watches a tree whose links lead out of it: what changes
+// behind a link is not a change of the tree (FSEvents and inotify do not
+// follow links), while the links themselves coming and going are. Steps are a
+// second apart, so each reports on its own.
+func watchThroughLinks(r *recorder) {
+	t := r.t
+	writeFixture(t, r.root, map[string]string{"P/plain": "x", "Q/file": "x"})
+	symlink(t, filepath.Join(r.root, "Q"), filepath.Join(r.root, "P", "dlink"))
+	symlink(t, filepath.Join(r.root, "Q", "file"), filepath.Join(r.root, "P", "flink"))
+	appendTo := func(path string) {
+		f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0)
+		if err != nil {
+			t.Fatal(err)
+		}
+		f.WriteString("y")
+		f.Close()
+	}
+	// Outside every target, below an ancestor that is a link on macOS (/tmp
+	// is private/tmp there).
+	missing := "/tmp/pi-env-oracle-missing-" + filepath.Base(r.root)
+	elsewhere := "/tmp/pi-env-oracle-elsewhere-" + filepath.Base(r.root)
+	// FSEvents may still deliver the fixture's creation after the watch
+	// starts: what arrives before the first step is not kept.
+	time.Sleep(time.Second)
+	id := r.start(strings.ReplaceAll(`{"op":"watch","targets":[{"path":"%R/P","recursive":true},{"path":"`+missing+`"}],"mode":"native"}`, "%R", jsonEscape(r.root)), nil)
+	r.wait(id, func(f []frame.Frame) bool { return len(f) > 0 })
+	step := func(change func()) {
+		change()
+		time.Sleep(time.Second)
+	}
+	time.Sleep(time.Second)
+	settled := len(r.wait(id, func([]frame.Frame) bool { return true }))
+	step(func() { writeFixture(t, r.root, map[string]string{"Q/new": ""}) })
+	step(func() { appendTo(filepath.Join(r.root, "Q", "file")) })
+	step(func() { os.Remove(filepath.Join(r.root, "Q", "new")) })
+	step(func() { os.WriteFile(elsewhere, nil, 0o644) })
+	step(func() { os.Remove(elsewhere) })
+	step(func() { symlink(t, filepath.Join(r.root, "Q"), filepath.Join(r.root, "P", "l2")) })
+	step(func() { os.Remove(filepath.Join(r.root, "P", "l2")) })
+	step(func() { appendTo(filepath.Join(r.root, "P", "plain")) })
+	step(func() { os.Remove(filepath.Join(r.root, "Q", "file")) })
+	step(func() { os.Rename(filepath.Join(r.root, "P", "flink"), filepath.Join(r.root, "P", "flink2")) })
+	r.send(frame.Cancel, id, nil, nil)
+	r.keep("watch", r.wait(id, finished)[settled:])
 }
 
 // summarizeEnvironment reduces env(1) output to whether the variables are in

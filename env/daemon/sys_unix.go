@@ -5,11 +5,14 @@ package daemon
 import (
 	"bytes"
 	"errors"
+	"io"
 	"os"
-	"os/exec"
+	"runtime"
+	"slices"
 	"sort"
 	"strings"
 	"syscall"
+	"unicode/utf8"
 
 	"golang.org/x/sys/unix"
 )
@@ -161,18 +164,27 @@ func fstatFile(f *os.File) (fileStat, error) {
 	return statOf(&st), pathError("fstat", f.Name(), statErr)
 }
 
+// envVar is Rust's env::var: the value of a variable that is set and UTF-8.
+func envVar(key string) (string, bool) {
+	value, ok := os.LookupEnv(key)
+	if !ok || !utf8.ValidString(value) {
+		return "", false
+	}
+	return value, true
+}
+
 // tmpdir is Node's os.tmpdir(); Termux's Node falls back to $PREFIX/tmp.
 func tmpdir() string {
 	path := ""
 	for _, key := range []string{"TMPDIR", "TMP", "TEMP"} {
-		if value := os.Getenv(key); value != "" {
+		if value, _ := envVar(key); value != "" {
 			path = value
 			break
 		}
 	}
 	if path == "" {
 		if onAndroid {
-			prefix, ok := os.LookupEnv("PREFIX")
+			prefix, ok := envVar("PREFIX")
 			if !ok {
 				prefix = "/data/data/com.termux/files/usr"
 			}
@@ -187,7 +199,10 @@ func tmpdir() string {
 	return path
 }
 
-func home() string { return os.Getenv("HOME") }
+func home() string {
+	home, _ := envVar("HOME")
+	return home
+}
 
 // cwd is the daemon's working directory, the process.cwd() Node's
 // path.resolve falls back to: getcwd(3), never $PWD.
@@ -196,7 +211,7 @@ func cwd() string {
 	if err != nil {
 		return ""
 	}
-	return dir
+	return decodeUTF8([]byte(dir))
 }
 
 // tempCharacters are the characters mkdtemp(3) fills its template with.
@@ -303,12 +318,25 @@ func pathIdentity(_ string, st fileStat, _ bool) (uint64, uint64) {
 // with a dot.
 func isHiddenEntry(name, _ string) bool { return strings.HasPrefix(name, ".") }
 
+// whichBash is the first line `which bash` prints, if that names a file.
 func whichBash() string {
-	command := exec.Command("which", "bash")
-	command.Stdin = nil
-	command.Stderr = nil
-	out, err := command.Output()
+	null, err := os.OpenFile(os.DevNull, os.O_RDWR, 0)
 	if err != nil {
+		return ""
+	}
+	defer null.Close()
+	r, w, err := os.Pipe()
+	if err != nil {
+		return ""
+	}
+	defer r.Close()
+	process, err := startProcess("which", []string{"which", "bash"}, os.Environ(), "", []*os.File{null, w, null}, false)
+	w.Close()
+	if err != nil {
+		return ""
+	}
+	out, _ := io.ReadAll(r)
+	if code, err := process.wait(); err != nil || code != 0 {
 		return ""
 	}
 	first, _, _ := strings.Cut(strings.TrimSpace(string(out)), "\n")
@@ -383,75 +411,179 @@ func childEnvironment(env object, inheritEnv bool) []string {
 	return out
 }
 
-// lookPath finds program as execvp(3) does: a name with a slash as given,
-// otherwise in each directory of the child environment's PATH (the system's
-// default path when it has none, an empty entry meaning the working
-// directory). EACCES from a candidate is remembered while the search goes on.
-func lookPath(program string, env []string, dir string) (string, error) {
-	if strings.Contains(program, "/") {
-		return program, nil
-	}
-	if program == "" {
-		return "", unix.ENOENT
-	}
-	path, found := "", false
-	for _, entry := range env {
-		if value, ok := strings.CutPrefix(entry, "PATH="); ok {
-			path, found = value, true
-		}
-	}
-	if !found {
-		path = defaultPath
-	}
-	denied := false
-	for _, entry := range strings.Split(path, ":") {
-		candidate := program
-		if entry != "" {
-			candidate = entry + "/" + program
-		}
-		check := candidate
-		if !strings.HasPrefix(check, "/") {
-			check = dir + "/" + check
-		}
-		var st unix.Stat_t
-		if unix.Stat(check, &st) != nil || st.Mode&unix.S_IFMT == unix.S_IFDIR {
-			continue
-		}
-		if unix.Access(check, unix.X_OK) != nil {
-			denied = true
-			continue
-		}
-		return candidate, nil
-	}
-	if denied {
-		return "", unix.EACCES
-	}
-	return "", unix.ENOENT
+// searchStep is what execvp(3) does once a candidate failed to execute.
+type searchStep int
+
+const (
+	// nextCandidate tries the next PATH entry.
+	nextCandidate searchStep = iota
+	// nextDenied tries the next, failing with EACCES if none runs.
+	nextDenied
+	// runThroughShell runs the file with the library's shell.
+	runThroughShell
+	// stopSearch fails with the candidate's error.
+	stopSearch
+)
+
+// execvpRules are how a C library's execvp(3) searches PATH; the Rust
+// daemon's Command runs programs through it (execvp in sys_*.go).
+type execvpRules struct {
+	// defaultPath is searched when the environment has no PATH.
+	defaultPath string
+	// emptyEntry is the candidate an empty PATH entry gives.
+	emptyEntry func(name string) string
+	// nameMax, if not 0, is the longest name searched (ENAMETOOLONG).
+	nameMax int
+	// shell runs a file the kernel does not recognize as an executable.
+	shell string
+	// step is the library's answer to a candidate's failure; resolved is the
+	// candidate against the working directory.
+	step func(err syscall.Errno, resolved string) searchStep
+	// exhausted is the error once no candidate ran and none was denied.
+	exhausted func(last syscall.Errno) syscall.Errno
 }
 
-// startProcess starts argv[0] (searched as execvp does) with argv, the
-// environment env and the working directory dir, its standard streams
-// files, as the leader of a new session (and with ctty, with stdin as its
-// controlling terminal). A file the kernel does not recognize as an
-// executable runs through /bin/sh, as execvp runs it.
-func startProcess(path string, argv []string, env []string, dir string, files []*os.File, ctty bool) (*os.Process, error) {
-	program, err := lookPath(path, env, dir)
-	if err != nil {
-		return nil, &os.PathError{Op: "fork/exec", Path: path, Err: err}
+// lookupEnv is getenv(3) of an environment: the first entry for key.
+func lookupEnv(env []string, key string) (string, bool) {
+	for _, entry := range env {
+		if value, ok := strings.CutPrefix(entry, key+"="); ok {
+			return value, true
+		}
 	}
-	attr := &os.ProcAttr{
+	return "", false
+}
+
+// startProcess runs name as execvp(3) runs it in the Rust daemon's child: a
+// name with a slash as given, otherwise each candidate from the child
+// environment's PATH in turn, until one runs or fails in a way that ends the
+// search. What execve(2) would say of a candidate is foreseen from its
+// metadata (execFailure), and only a candidate expected to run is started:
+// on macOS a session leader that dies with a controlling terminal revokes
+// it, so a pty's failed attempt would spoil the next. The process gets argv,
+// the environment env and the working directory dir, its standard streams
+// files, and leads a new session (with ctty, with stdin as its controlling
+// terminal).
+func startProcess(name string, argv []string, env []string, dir string, files []*os.File, ctty bool) (child, error) {
+	if slices.ContainsFunc(argv, hasNul) || slices.ContainsFunc(env, hasNul) {
+		return child{}, errNulData
+	}
+	fds := make([]uintptr, len(files))
+	for i, f := range files {
+		fds[i] = f.Fd()
+	}
+	defer runtime.KeepAlive(files)
+	attr := &syscall.ProcAttr{
 		Dir:   dir,
 		Env:   env,
-		Files: files,
+		Files: fds,
 		Sys:   &syscall.SysProcAttr{Setsid: true, Setctty: ctty, Ctty: 0},
 	}
-	process, err := startWithEmptySignalMask(program, argv, attr)
-	var errno syscall.Errno
-	if errors.As(err, &errno) && errno == unix.ENOEXEC {
-		shellArgv := append([]string{"sh", program}, argv[1:]...)
-		return startWithEmptySignalMask("/bin/sh", shellArgv, attr)
+	start := func(program string, argv []string) (child, error) {
+		pid, err := startWithEmptySignalMask(program, argv, attr)
+		if err != nil {
+			return child{}, &os.PathError{Op: "fork/exec", Path: program, Err: err}
+		}
+		return child{pid: pid}, nil
 	}
-	return process, err
+	fail := func(errno syscall.Errno) (child, error) {
+		return child{}, &os.PathError{Op: "fork/exec", Path: name, Err: errno}
+	}
+	// The child enters its working directory before execvp(3) searches.
+	if errno := chdirFailure(dir); errno != 0 {
+		return fail(errno)
+	}
+	var candidates []string
+	switch {
+	case name == "":
+		return fail(unix.ENOENT)
+	case strings.Contains(name, "/"):
+		candidates = []string{name}
+	case execvp.nameMax > 0 && len(name) > execvp.nameMax:
+		return fail(unix.ENAMETOOLONG)
+	default:
+		path, ok := lookupEnv(env, "PATH")
+		if !ok {
+			path = execvp.defaultPath
+		}
+		for _, entry := range strings.Split(path, ":") {
+			if entry == "" {
+				candidates = append(candidates, execvp.emptyEntry(name))
+			} else {
+				candidates = append(candidates, entry+"/"+name)
+			}
+		}
+	}
+	denied, last := false, unix.ENOENT
+	for _, candidate := range candidates {
+		resolved := candidate
+		if dir != "" && !strings.HasPrefix(resolved, "/") {
+			resolved = dir + "/" + resolved
+		}
+		errno := execFailure(resolved)
+		if errno == 0 {
+			// What fails now failed in the child (or execve found the format
+			// unknown); the search ends there, as with a failure before execvp.
+			process, err := start(candidate, argv)
+			if err == nil || !errors.As(err, &errno) || errno != unix.ENOEXEC {
+				return process, err
+			}
+		}
+		switch execvp.step(errno, resolved) {
+		case runThroughShell:
+			return start(execvp.shell, append([]string{"sh", candidate}, argv[1:]...))
+		case stopSearch:
+			return fail(errno)
+		case nextDenied:
+			denied = true
+		}
+		last = errno
+	}
+	if denied {
+		return fail(unix.EACCES)
+	}
+	return fail(execvp.exhausted(last))
+}
+
+// chdirFailure is the error chdir(2) is expected to give for dir, 0 if none.
+func chdirFailure(dir string) syscall.Errno {
+	if dir == "" {
+		return 0
+	}
+	var st unix.Stat_t
+	if err := unix.Stat(dir, &st); err != nil {
+		if errno, ok := err.(syscall.Errno); ok {
+			return errno
+		}
+		return unix.ENOENT
+	}
+	if st.Mode&unix.S_IFMT != unix.S_IFDIR {
+		return unix.ENOTDIR
+	}
+	if unix.Access(dir, unix.X_OK) != nil {
+		return unix.EACCES
+	}
+	return 0
+}
+
+// execFailure is the error execve(2) is expected to give for path: the
+// error reaching it, EACCES for what is not an executable regular file, and
+// ENOEXEC for a format the kernel does not run (where that is known, see
+// knownFormat); 0 if it should run.
+func execFailure(path string) syscall.Errno {
+	var st unix.Stat_t
+	if err := unix.Stat(path, &st); err != nil {
+		if errno, ok := err.(syscall.Errno); ok {
+			return errno
+		}
+		return unix.ENOENT
+	}
+	if st.Mode&unix.S_IFMT != unix.S_IFREG || unix.Access(path, unix.X_OK) != nil {
+		return unix.EACCES
+	}
+	if !knownFormat(path) {
+		return unix.ENOEXEC
+	}
+	return 0
 }
 
 // killTree kills the command's process group, or the process if the group is
@@ -463,17 +595,29 @@ func killTree(pid int) {
 	}
 }
 
-// exitCode is the command's exit code; a process killed by a signal has none
-// and reports 128 + the signal, as the shell does.
-func exitCode(state *os.ProcessState) int64 {
-	status, ok := state.Sys().(syscall.WaitStatus)
-	if !ok {
-		return int64(state.ExitCode())
+// child is a started command; its pid is also its process group's. Commands
+// start through syscall.ForkExec and are reaped with wait4(2), not through
+// os.StartProcess and os.Process: on Linux their first use probes pidfd
+// support, and Android before 12 kills a process that calls pidfd_open
+// (SIGSYS), which Go guards against for GOOS=android only, not in the
+// android/amd64 daemon (a linux build with the pienv_android tag).
+type child struct{ pid int }
+
+// wait waits for the command to exit: its exit code, or 128 + the signal
+// that killed it, as the shell reports it.
+func (c child) wait() (int64, error) {
+	var status syscall.WaitStatus
+	err := retry(func() (err error) {
+		_, err = syscall.Wait4(c.pid, &status, 0, nil)
+		return err
+	})
+	if err != nil {
+		return 0, os.NewSyscallError("wait", err)
 	}
 	if status.Signaled() {
-		return 128 + int64(status.Signal())
+		return 128 + int64(status.Signal()), nil
 	}
-	return int64(status.ExitStatus())
+	return int64(status.ExitStatus()), nil
 }
 
 // nulError is how Rust refuses a path or argument with a NUL byte before any
@@ -607,14 +751,8 @@ func removeTree(parent int, name string, root bool) error {
 // spawnProcess starts program with args (argv[0] is program as given), the
 // environment Rust's Command builds, its working directory, and files as its
 // standard streams.
-func spawnProcess(program string, args []string, cwd string, env object, inheritEnv bool, files []*os.File) (*os.Process, error) {
-	argv := append([]string{program}, args...)
-	for _, arg := range argv {
-		if hasNul(arg) {
-			return nil, errors.New("nul byte found in provided data")
-		}
-	}
-	return startProcess(program, argv, childEnvironment(env, inheritEnv), cwd, files, false)
+func spawnProcess(program string, args []string, cwd string, env object, inheritEnv bool, files []*os.File) (child, error) {
+	return startProcess(program, append([]string{program}, args...), childEnvironment(env, inheritEnv), cwd, files, false)
 }
 
 // irregularKind: Unix listings report no irregular entries.

@@ -2,6 +2,7 @@ package daemon
 
 import (
 	"crypto/rand"
+	"errors"
 	"os"
 	"runtime"
 )
@@ -18,6 +19,10 @@ type shellConfig struct {
 	args           []string
 	commandOnStdin bool
 }
+
+// errNulData is how Rust's Command refuses a NUL byte in the program, an
+// argument or the environment, before it starts anything.
+var errNulData = errors.New("nul byte found in provided data")
 
 // openMode is how Node opens files: open(path, "r"), writeFile ("w"),
 // appendFile ("a"), and "r+" for truncate and fsync.

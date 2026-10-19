@@ -10,7 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/fsnotify/fsnotify"
 	"github.com/sky-valley/pi/env/internal/frame"
 )
 
@@ -21,9 +20,9 @@ import (
 // request, which lasts until it is cancelled.
 //
 // The Rust daemon's native events come from the notify crate (inotify on
-// Linux, FSEvents on macOS); here they come from fsnotify (inotify on Linux,
-// kqueue on macOS). kqueue is not recursive, so macOS watches every directory
-// below a recursive target, as Linux does.
+// Linux, FSEvents on macOS); here they come from fsnotify on Linux (inotify)
+// and from kqueue on macOS (watch_darwin.go). kqueue is not recursive, so
+// macOS watches every directory below a recursive target, as Linux does.
 
 const (
 	debounce = 50 * time.Millisecond
@@ -676,68 +675,30 @@ type nativeEvent struct {
 	err  error
 }
 
-// nativeWatcher is an fsnotify watcher whose events are queued without
-// bound, as the notify crate's callback queues them, so a long rescan never
-// makes the kernel drop events.
-type nativeWatcher struct {
-	watcher *fsnotify.Watcher
-	mu      sync.Mutex
-	queue   []nativeEvent
-	ready   chan struct{}
-	done    chan struct{}
+// eventQueue holds native events without bound, as the notify crate's
+// callback queues them, so a long rescan never makes the kernel drop events.
+type eventQueue struct {
+	mu    sync.Mutex
+	queue []nativeEvent
+	ready chan struct{}
 }
 
-func newNativeWatcher() (*nativeWatcher, error) {
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		return nil, err
-	}
-	n := &nativeWatcher{watcher: watcher, ready: make(chan struct{}, 1), done: make(chan struct{})}
-	go n.pump()
-	return n, nil
-}
+func newEventQueue() eventQueue { return eventQueue{ready: make(chan struct{}, 1)} }
 
-func (n *nativeWatcher) pump() {
-	defer close(n.done)
-	for {
-		var event nativeEvent
-		select {
-		case e, ok := <-n.watcher.Events:
-			if !ok {
-				return
-			}
-			event.path = e.Name
-		case err, ok := <-n.watcher.Errors:
-			if !ok {
-				return
-			}
-			event.err = err
-		}
-		n.mu.Lock()
-		n.queue = append(n.queue, event)
-		n.mu.Unlock()
-		select {
-		case n.ready <- struct{}{}:
-		default:
-		}
+func (q *eventQueue) push(event nativeEvent) {
+	q.mu.Lock()
+	q.queue = append(q.queue, event)
+	q.mu.Unlock()
+	select {
+	case q.ready <- struct{}{}:
+	default:
 	}
 }
 
-func (n *nativeWatcher) take() []nativeEvent {
-	n.mu.Lock()
-	defer n.mu.Unlock()
-	events := n.queue
-	n.queue = nil
+func (q *eventQueue) take() []nativeEvent {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	events := q.queue
+	q.queue = nil
 	return events
-}
-
-func (n *nativeWatcher) add(path string) error { return n.watcher.Add(path) }
-
-// remove stops watching path; a watch the kernel already dropped (its
-// directory is gone) is not an error, as notify's unwatch result is ignored.
-func (n *nativeWatcher) remove(path string) { _ = n.watcher.Remove(path) }
-
-func (n *nativeWatcher) close() {
-	_ = n.watcher.Close()
-	<-n.done
 }

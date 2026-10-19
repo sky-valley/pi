@@ -1,4 +1,4 @@
-//go:build darwin || linux
+//go:build darwin
 
 package daemon
 
@@ -7,9 +7,12 @@ import (
 	"testing"
 )
 
-// realpathWalk is Linux's realpath(3). On macOS it runs here against the
-// system's own realpath(3) port (pinned to the Rust daemon by TestOracle):
-// for names spelled as stored, the two must agree on every result and error.
+// realpathWalk is Android's realpath(3) (glibc's walk; bionic is taken to
+// agree, unverified). On macOS it runs here against the system's own
+// realpath(3) port (pinned to the Rust daemon by TestOracle): for names
+// spelled as stored, the two must agree on every result and error. This
+// checks the walk's mechanics only; Linux's realpath is musl's, pinned by
+// TestOracle/musl and TestRealpathAgainstRust.
 func TestRealpathWalkAgreesWithTheSystemRealpath(t *testing.T) {
 	root := t.TempDir()
 	writeFixture(t, root, map[string]string{"dir/sub/x": "", "file": ""})

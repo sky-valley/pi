@@ -1,4 +1,26 @@
 {
+  "close in flight": [
+    {
+      "label": "open",
+      "kind": 2,
+      "json": "{\"handle\":1,\"stat\":{\"dev\":0,\"ino\":0,\"kind\":\"other\",\"mtimeNsec\":0,\"mtimeSec\":0,\"name\":\"zero\",\"size\":0}}"
+    },
+    {
+      "label": "close",
+      "kind": 2,
+      "json": "{}"
+    },
+    {
+      "label": "scan",
+      "kind": 3,
+      "json": "{\"code\":\"aborted\",\"message\":\"aborted\"}"
+    },
+    {
+      "label": "closed",
+      "kind": 3,
+      "json": "{\"code\":\"EBADF\",\"message\":\"unknown handle\"}"
+    }
+  ],
   "environment order": [
     {
       "label": "inherited",
@@ -308,6 +330,116 @@
       "json": "{\"exitCode\":137}"
     }
   ],
+  "execvp": [
+    {
+      "label": "script without shebang",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "from script\n"
+    },
+    {
+      "label": "script without shebang",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    },
+    {
+      "label": "relative script without shebang",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "from script\n"
+    },
+    {
+      "label": "relative script without shebang",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    },
+    {
+      "label": "script in PATH",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "from script\n"
+    },
+    {
+      "label": "script in PATH",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    },
+    {
+      "label": "directory in PATH",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"Permission denied (os error 13)\"}"
+    },
+    {
+      "label": "directory then program",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "later\n"
+    },
+    {
+      "label": "directory then program",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    },
+    {
+      "label": "not executable in PATH",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"Permission denied (os error 13)\"}"
+    },
+    {
+      "label": "not executable then program",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "later\n"
+    },
+    {
+      "label": "not executable then program",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    },
+    {
+      "label": "file as directory then program",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "later\n"
+    },
+    {
+      "label": "file as directory then program",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    },
+    {
+      "label": "missing then program",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "later\n"
+    },
+    {
+      "label": "missing then program",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    },
+    {
+      "label": "missing everywhere",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"No such file or directory (os error 2)\"}"
+    },
+    {
+      "label": "pty script without shebang",
+      "kind": 4,
+      "json": "{\"kind\":\"started\",\"pid\":0}"
+    },
+    {
+      "label": "pty script without shebang",
+      "kind": 4,
+      "json": "{\"kind\":\"output\"}",
+      "payload": "from script\r\n"
+    },
+    {
+      "label": "pty script without shebang",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    }
+  ],
   "gitignore": [
     {
       "label": "repo",
@@ -522,6 +654,145 @@
       "label": "parent is file",
       "kind": 3,
       "json": "{\"code\":\"ENOTDIR\",\"message\":\"ENOTDIR: not a directory, mkdtemp '\u003croot\u003e/file/pre-XXXXXX'\",\"path\":\"\u003croot\u003e/file/pre-XXXXXX\",\"syscall\":\"mkdtemp\"}"
+    }
+  ],
+  "not UTF-8": [
+    {
+      "label": "hello",
+      "kind": 2,
+      "json": "{\"arch\":\"aarch64\",\"cwd\":\"*\",\"driveCwds\":{},\"features\":[\"listFiles\"],\"home\":\"\",\"os\":\"macos\",\"pid\":0,\"protocol\":1,\"separator\":\"/\",\"tmpdir\":\"/second\",\"version\":\"1.3.0\"}"
+    },
+    {
+      "label": "exit",
+      "kind": 2,
+      "json": "{}"
+    },
+    {
+      "label": "login shell",
+      "kind": 2,
+      "json": "{\"exitCode\":7}"
+    }
+  ],
+  "nul": [
+    {
+      "label": "lstat",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, lstat '\u003croot\u003e/a\\u0000b'\",\"path\":\"\u003croot\u003e/a\\u0000b\",\"syscall\":\"lstat\"}"
+    },
+    {
+      "label": "realpath",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, realpath '\u003croot\u003e/a\\u0000b'\",\"path\":\"\u003croot\u003e/a\\u0000b\",\"syscall\":\"realpath\"}"
+    },
+    {
+      "label": "write",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, open '\u003croot\u003e/a\\u0000b'\",\"path\":\"\u003croot\u003e/a\\u0000b\",\"syscall\":\"open\"}"
+    },
+    {
+      "label": "truncate",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, open '\u003croot\u003e/a\\u0000b'\",\"path\":\"\u003croot\u003e/a\\u0000b\",\"syscall\":\"open\"}"
+    },
+    {
+      "label": "fsync",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, open '\u003croot\u003e/a\\u0000b'\",\"path\":\"\u003croot\u003e/a\\u0000b\",\"syscall\":\"open\"}"
+    },
+    {
+      "label": "rename from",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, rename '\u003croot\u003e/a\\u0000b' -\u003e '\u003croot\u003e/c'\",\"path\":\"\u003croot\u003e/a\\u0000b\",\"syscall\":\"rename\"}"
+    },
+    {
+      "label": "rename to",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, rename '\u003croot\u003e/file' -\u003e '\u003croot\u003e/a\\u0000b'\",\"path\":\"\u003croot\u003e/file\",\"syscall\":\"rename\"}"
+    },
+    {
+      "label": "mkdir",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, mkdir '\u003croot\u003e/a\\u0000b'\",\"path\":\"\u003croot\u003e/a\\u0000b\",\"syscall\":\"mkdir\"}"
+    },
+    {
+      "label": "rm",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, lstat '\u003croot\u003e/a\\u0000b'\",\"path\":\"\u003croot\u003e/a\\u0000b\",\"syscall\":\"lstat\"}"
+    },
+    {
+      "label": "mkdtemp",
+      "kind": 3,
+      "json": "{\"code\":\"EINVAL\",\"message\":\"EINVAL: invalid argument, mkdtemp '\u003croot\u003e/a\\u0000bXXXXXX'\",\"path\":\"\u003croot\u003e/a\\u0000bXXXXXX\",\"syscall\":\"mkdtemp\"}"
+    },
+    {
+      "label": "open",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, open '\u003croot\u003e/a\\u0000b'\",\"path\":\"\u003croot\u003e/a\\u0000b\",\"syscall\":\"open\"}"
+    },
+    {
+      "label": "open read mode",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, open '\u003croot\u003e/a\\u0000b'\",\"path\":\"\u003croot\u003e/a\\u0000b\",\"syscall\":\"open\"}"
+    },
+    {
+      "label": "opendir",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, opendir '\u003croot\u003e/a\\u0000b'\",\"path\":\"\u003croot\u003e/a\\u0000b\",\"syscall\":\"opendir\"}"
+    },
+    {
+      "label": "opendir trailing nul",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, opendir '\u003croot\u003e/dir\\u0000'\",\"path\":\"\u003croot\u003e/dir\\u0000\",\"syscall\":\"opendir\"}"
+    },
+    {
+      "label": "listFiles",
+      "kind": 3,
+      "json": "{\"code\":\"UNKNOWN\",\"message\":\"UNKNOWN: file name contained an unexpected nul byte, scandir '\u003croot\u003e/a\\u0000b'\",\"path\":\"\u003croot\u003e/a\\u0000b\",\"syscall\":\"scandir\"}"
+    },
+    {
+      "label": "exec cwd",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"Working directory does not exist: \u003croot\u003e/a\\u0000b\\nCannot execute bash commands.\"}"
+    },
+    {
+      "label": "exec argument",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"nul byte found in provided data\"}"
+    },
+    {
+      "label": "exec variable",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"nul byte found in provided data\"}"
+    },
+    {
+      "label": "exec variable name",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"nul byte found in provided data\"}"
+    },
+    {
+      "label": "pty cwd",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"Working directory does not exist: \u003croot\u003e/a\\u0000b\"}"
+    },
+    {
+      "label": "pty argument",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"nul byte found in provided data\"}"
+    },
+    {
+      "label": "pty variable",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"nul byte found in provided data\"}"
+    },
+    {
+      "label": "watch",
+      "kind": 4,
+      "json": "{\"kind\":\"ready\",\"mode\":\"polling\"}"
+    },
+    {
+      "label": "watch closed",
+      "kind": 2,
+      "json": "{}"
     }
   ],
   "protocol": [
@@ -1510,6 +1781,33 @@
     },
     {
       "label": "polling closed",
+      "kind": 2,
+      "json": "{}"
+    }
+  ],
+  "watch through links": [
+    {
+      "label": "watch",
+      "kind": 4,
+      "json": "{\"kind\":\"change\",\"paths\":[\"\u003croot\u003e/P/l2\"]}"
+    },
+    {
+      "label": "watch",
+      "kind": 4,
+      "json": "{\"kind\":\"change\",\"paths\":[\"\u003croot\u003e/P/l2\"]}"
+    },
+    {
+      "label": "watch",
+      "kind": 4,
+      "json": "{\"kind\":\"change\",\"paths\":[\"\u003croot\u003e/P/plain\"]}"
+    },
+    {
+      "label": "watch",
+      "kind": 4,
+      "json": "{\"kind\":\"change\",\"paths\":[\"\u003croot\u003e/P/flink\",\"\u003croot\u003e/P/flink2\"]}"
+    },
+    {
+      "label": "watch",
       "kind": 2,
       "json": "{}"
     }

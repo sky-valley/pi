@@ -184,3 +184,69 @@ func TestRequestParsingAgainstRust(t *testing.T) {
 		}
 	}
 }
+
+// TestRealpathAgainstRust resolves random spellings of paths through random
+// links (chains, loops, links to files, to "..", with trailing slashes) with
+// both daemons and compares the replies: on Linux musl's realpath(3), which
+// the Rust daemon's static builds call. It needs the Rust daemon:
+//
+//	PI_ENV_RUST_DAEMON=/path/to/rust/pi-env go test ./daemon -run TestRealpathAgainstRust
+func TestRealpathAgainstRust(t *testing.T) {
+	rust := os.Getenv("PI_ENV_RUST_DAEMON")
+	if rust == "" {
+		t.Skip("set PI_ENV_RUST_DAEMON to the Rust pi-env to compare realpath with it")
+	}
+	if runtime.GOOS == "windows" {
+		t.Skip("Unix links")
+	}
+	seeds, _ := strconv.Atoi(os.Getenv("PI_ENV_SEEDS"))
+	if seeds == 0 {
+		seeds = 200
+	}
+	root, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	daemons := []*daemonSession{startDaemon(t, rust), startDaemon(t, goDaemon)}
+	names := []string{"a", "b", "f", "l0", "l1", "l2", "l3", "l4", "x", ".", "..", ""}
+	compared, failed := 0, 0
+	for seed := 1; seed <= seeds; seed++ {
+		random := rand.New(rand.NewSource(int64(seed)))
+		dir := filepath.Join(root, "s"+strconv.Itoa(seed))
+		writeFixture(t, dir, map[string]string{"a/b/f": "", "f": "", "a/f": ""})
+		for i := range 5 {
+			targets := []string{"a", "a/b", "f", "a/f", "x", "..", "../a", "l" + strconv.Itoa((i+1)%5), "l" + strconv.Itoa(random.Intn(5)), "a/", "f/", "a/../f", dir + "/a", dir + "//f", "/", "//", "."}
+			target := targets[random.Intn(len(targets))]
+			at := filepath.Join(dir, []string{"", "a", "a/b"}[random.Intn(3)], "l"+strconv.Itoa(i))
+			if err := os.Symlink(target, at); err != nil {
+				t.Fatal(err)
+			}
+		}
+		for range 40 {
+			var path strings.Builder
+			path.WriteString([]string{dir, "/" + dir, dir + "/", "//" + strings.TrimPrefix(dir, "/")}[random.Intn(4)])
+			for range random.Intn(6) {
+				path.WriteString([]string{"/", "/", "/", "//"}[random.Intn(4)])
+				path.WriteString(names[random.Intn(len(names))])
+			}
+			request := `{"op":"realpath","path":` + strconv.Quote(path.String()) + `}`
+			var replies [2]string
+			for i, d := range daemons {
+				for _, f := range d.request(request, nil) {
+					replies[i] += strconv.Itoa(int(f.Kind)) + " " + string(f.JSON)
+				}
+			}
+			compared++
+			if replies[0] != replies[1] {
+				failed++
+				if failed <= 20 {
+					t.Errorf("seed %d %s\nrust: %s\ngo:   %s", seed, request, replies[0], replies[1])
+				}
+			}
+		}
+	}
+	if failed > 0 {
+		t.Fatalf("%d of %d paths differ", failed, compared)
+	}
+	t.Logf("%d paths", compared)
+}

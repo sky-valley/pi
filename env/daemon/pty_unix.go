@@ -135,7 +135,7 @@ func ptyCommand(request ptyRequest) (string, []string) {
 	}
 	shell, ok := asString(request.env["SHELL"])
 	if !ok {
-		shell, ok = os.LookupEnv("SHELL")
+		shell, ok = envVar("SHELL")
 	}
 	if !ok || shell == "" || !pathExists(shell) {
 		shell = "/bin/sh"
@@ -146,10 +146,10 @@ func ptyCommand(request ptyRequest) (string, []string) {
 
 // spawnPty starts the program in a new terminal, as the leader of a new
 // session with the terminal as its controlling terminal.
-func spawnPty(request ptyRequest) (*os.File, *os.Process, error) {
+func spawnPty(request ptyRequest) (*os.File, child, error) {
 	master, slave, err := openpty(request.cols, request.rows)
 	if err != nil {
-		return nil, nil, err
+		return nil, child{}, err
 	}
 	program, argv := ptyCommand(request)
 	files := []*os.File{slave, slave, slave}
@@ -159,7 +159,7 @@ func spawnPty(request ptyRequest) (*os.File, *os.Process, error) {
 	slave.Close()
 	if err != nil {
 		master.Close()
-		return nil, nil, err
+		return nil, child{}, err
 	}
 	// Reads and writes poll instead of blocking.
 	var nonblockErr error
@@ -171,9 +171,10 @@ func spawnPty(request ptyRequest) (*os.File, *os.Process, error) {
 		err = nonblockErr
 	}
 	if err != nil {
-		killTree(process.Pid)
+		killTree(process.pid)
+		go process.wait()
 		master.Close()
-		return nil, nil, err
+		return nil, child{}, err
 	}
 	return master, process, nil
 }
@@ -191,7 +192,7 @@ func runPty(id uint32, request ptyRequest, out *output, ctl *control, running *g
 	if err != nil {
 		return nil, newFailure("spawn_error", ioErrorText(unwrapPathError(err)))
 	}
-	pid := process.Pid
+	pid := process.pid
 	running.add(pid)
 	term := &terminal{input: newInputQueue(), master: master, pid: pid}
 	terms.mu.Lock()
@@ -231,9 +232,9 @@ func runPty(id uint32, request ptyRequest, out *output, ctl *control, running *g
 		}
 	}()
 	go func() {
-		state, err := process.Wait()
+		code, err := process.wait()
 		select {
-		case messages <- commandMessage{exited: true, state: state, err: err}:
+		case messages <- commandMessage{exited: true, code: code, err: err}:
 		case <-done:
 		}
 	}()
@@ -241,7 +242,8 @@ func runPty(id uint32, request ptyRequest, out *output, ctl *control, running *g
 	var (
 		exited    bool
 		ended     bool
-		state     *os.ProcessState
+		reported  bool
+		code      int64
 		waitErr   error
 		idleUntil time.Time
 		aborted   bool
@@ -290,7 +292,7 @@ loop:
 					waitErr = message.err
 					idleUntil = time.Now()
 				} else {
-					state = message.state
+					reported, code = true, message.code
 					idleUntil = time.Now().Add(ptyExitGrace)
 				}
 			}
@@ -322,8 +324,8 @@ loop:
 	if waitErr != nil {
 		return nil, newFailure("spawn_error", waitErr.Error())
 	}
-	if state == nil {
+	if !reported {
 		return nil, newFailure("spawn_error", "process did not report its exit")
 	}
-	return object{"exitCode": exitCode(state)}, nil
+	return object{"exitCode": code}, nil
 }
