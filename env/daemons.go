@@ -27,6 +27,12 @@ var embeddedDaemons embed.FS
 var (
 	unpackMu sync.Mutex
 	unpacked = map[string][]byte{}
+
+	// localDaemons are the paths LocalDaemon returned. A Connection starting
+	// one verifies it first, and writes it again if it is missing or
+	// changed: the user's cache directory may be cleaned (macOS purges
+	// ~/Library/Caches) while a connection lives.
+	localDaemons sync.Map
 )
 
 type daemonManifest struct {
@@ -99,14 +105,12 @@ func localPlatform() (RemotePlatform, error) {
 // LocalDaemon is the path of the daemon for the machine this program runs
 // on, e.g. for terminals of local sessions and LocalExecutionEnv's
 // ListFiles: NewConnection(ConnectionOptions{Command: []string{path}}). The
-// embedded daemon is written once to the user's cache directory, named by
-// its SHA-256 like a deployed one, and verified before every use.
+// embedded daemon is written to the user's cache directory, named by its
+// SHA-256 like a deployed one, and verified before every use: each call, and
+// each start of a Connection running it, writes it again if it is missing or
+// changed.
 func LocalDaemon() (string, error) {
-	remote, err := localPlatform()
-	if err != nil {
-		return "", err
-	}
-	binary, err := PackagedDaemon(remote)
+	binary, err := localDaemonBinary()
 	if err != nil {
 		return "", err
 	}
@@ -116,22 +120,55 @@ func LocalDaemon() (string, error) {
 	}
 	sum := sha256.Sum256(binary)
 	name := "pi-env-" + hex.EncodeToString(sum[:])[:32]
-	if remote.Platform == "windows" {
+	if runtime.GOOS == "windows" {
 		name += ".exe"
 	}
-	dir := filepath.Join(cache, "pi-env")
-	path := filepath.Join(dir, name)
-	if existing, err := os.ReadFile(path); err == nil && bytes.Equal(existing, binary) {
-		return path, nil
-	} else if err != nil && !errors.Is(err, fs.ErrNotExist) {
-		return "", fmt.Errorf("reading %s: %w; remove it to have it written again", path, err)
+	path := filepath.Join(cache, "pi-env", name)
+	if err := writeLocalDaemon(path, binary); err != nil {
+		return "", err
 	}
+	localDaemons.Store(path, true)
+	return path, nil
+}
+
+// localDaemonBinary is the embedded daemon for this machine.
+func localDaemonBinary() ([]byte, error) {
+	remote, err := localPlatform()
+	if err != nil {
+		return nil, err
+	}
+	return PackagedDaemon(remote)
+}
+
+// verifyLocalDaemon writes the daemon at path again, before a Connection
+// starts it, if path is one LocalDaemon returned and it is missing or
+// changed.
+func verifyLocalDaemon(path string) error {
+	if _, ok := localDaemons.Load(path); !ok {
+		return nil
+	}
+	binary, err := localDaemonBinary()
+	if err != nil {
+		return err
+	}
+	return writeLocalDaemon(path, binary)
+}
+
+// writeLocalDaemon writes binary to path (0700, through a temporary file)
+// unless it is there already.
+func writeLocalDaemon(path string, binary []byte) error {
+	if existing, err := os.ReadFile(path); err == nil && bytes.Equal(existing, binary) {
+		return nil
+	} else if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return fmt.Errorf("reading %s: %w; remove it to have it written again", path, err)
+	}
+	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, 0o700); err != nil {
-		return "", fmt.Errorf("creating %s for the pi-env daemon: %w", dir, err)
+		return fmt.Errorf("creating %s for the pi-env daemon: %w", dir, err)
 	}
 	temporary, err := os.CreateTemp(dir, ".pi-env-*.tmp")
 	if err != nil {
-		return "", fmt.Errorf("writing the pi-env daemon to %s: %w", dir, err)
+		return fmt.Errorf("writing the pi-env daemon to %s: %w", dir, err)
 	}
 	_, err = temporary.Write(binary)
 	if closeErr := temporary.Close(); err == nil {
@@ -145,7 +182,7 @@ func LocalDaemon() (string, error) {
 	}
 	if err != nil {
 		os.Remove(temporary.Name())
-		return "", fmt.Errorf("writing the pi-env daemon to %s: %w", path, err)
+		return fmt.Errorf("writing the pi-env daemon to %s: %w", path, err)
 	}
-	return path, nil
+	return nil
 }

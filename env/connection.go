@@ -417,6 +417,9 @@ func (c *Connection) startSession() (RemoteInfo, *session, error) {
 	if len(command) == 0 {
 		return RemoteInfo{}, nil, newRemoteError(map[string]any{"code": "spawn_error", "message": "No daemon command"})
 	}
+	if err := verifyLocalDaemon(command[0]); err != nil {
+		return RemoteInfo{}, nil, newRemoteError(map[string]any{"code": "spawn_error", "message": err.Error(), "lost": true})
+	}
 	tokenBytes := make([]byte, 16)
 	_, _ = rand.Read(tokenBytes)
 	token := hex.EncodeToString(tokenBytes)

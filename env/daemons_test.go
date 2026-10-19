@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/sky-valley/pi/env/internal/daemonsource"
 )
@@ -145,5 +146,31 @@ func TestLocalDaemonRunsTheEmbeddedDaemon(t *testing.T) {
 	mustDo(t, err)
 	if info.Protocol != 1 || !info.hasFeature("listFiles") {
 		t.Fatalf("hello %+v", info)
+	}
+}
+
+// TestLocalDaemonSurvivesACacheCleanup: the user's cache directory may be
+// cleaned (macOS purges ~/Library/Caches) while a connection to the local
+// daemon lives; its next start writes the daemon again.
+func TestLocalDaemonSurvivesACacheCleanup(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	t.Setenv("XDG_CACHE_HOME", "")
+	t.Setenv("LocalAppData", os.Getenv("HOME"))
+	path, err := LocalDaemon()
+	mustDo(t, err)
+	connection := NewConnection(ConnectionOptions{Command: []string{path}})
+	defer connection.Close()
+	info, err := connection.Info(background())
+	mustDo(t, err)
+	mustDo(t, os.RemoveAll(filepath.Dir(path)))
+	killPID(t, info.PID)
+	for deadline := time.Now().Add(5 * time.Second); ; time.Sleep(20 * time.Millisecond) {
+		again, err := connection.Info(background())
+		if err == nil && again.PID != info.PID {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("the daemon did not start again: %v", err)
+		}
 	}
 }
