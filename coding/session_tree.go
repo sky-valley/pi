@@ -35,12 +35,6 @@ type SessionEntry struct {
 	// boundary (pi CompactionEntry.systemMessage); BuildContext replays it ahead
 	// of the summary. Nil when the entry carries none.
 	SystemMessage *ai.SystemMessage
-	// RetainedTail holds the compaction's kept tail inlined on the entry (pi
-	// CompactionEntry.retainedTail, upstream 9e7582aa). When set, it replaces the
-	// firstKeptEntryId walk: the reconstructed context is the summary followed by
-	// these messages. Already filtered through convertToLlm (excluded entries drop
-	// out during parse).
-	RetainedTail []agent.AgentMessage
 	// Details is a compaction's extension data as written (pi
 	// CompactionEntry.details): pi's own compactions store their file lists
 	// there. Nil when absent.
@@ -111,26 +105,25 @@ func LoadSessionTree(path string) (*SessionTree, error) {
 			}
 		}
 		var head struct {
-			Type             string            `json:"type"`
-			ID               string            `json:"id"`
-			ParentID         *string           `json:"parentId"`
-			Timestamp        string            `json:"timestamp"`
-			Cwd              string            `json:"cwd"`
-			Message          json.RawMessage   `json:"message"`
-			Provider         string            `json:"provider"`
-			ModelID          string            `json:"modelId"`
-			ThinkingLevel    string            `json:"thinkingLevel"`
-			Summary          string            `json:"summary"`
-			FromID           string            `json:"fromId"`
-			FirstKeptEntryID string            `json:"firstKeptEntryId"`
-			SystemMessage    json.RawMessage   `json:"systemMessage"`
-			RetainedTail     []json.RawMessage `json:"retainedTail"`
-			Details          json.RawMessage   `json:"details"`
-			FromHook         json.RawMessage   `json:"fromHook"`
-			CustomType       string            `json:"customType"`
-			Content          json.RawMessage   `json:"content"`
-			TargetID         string            `json:"targetId"`
-			Replacement      json.RawMessage   `json:"replacement"`
+			Type             string          `json:"type"`
+			ID               string          `json:"id"`
+			ParentID         *string         `json:"parentId"`
+			Timestamp        string          `json:"timestamp"`
+			Cwd              string          `json:"cwd"`
+			Message          json.RawMessage `json:"message"`
+			Provider         string          `json:"provider"`
+			ModelID          string          `json:"modelId"`
+			ThinkingLevel    string          `json:"thinkingLevel"`
+			Summary          string          `json:"summary"`
+			FromID           string          `json:"fromId"`
+			FirstKeptEntryID string          `json:"firstKeptEntryId"`
+			SystemMessage    json.RawMessage `json:"systemMessage"`
+			Details          json.RawMessage `json:"details"`
+			FromHook         json.RawMessage `json:"fromHook"`
+			CustomType       string          `json:"customType"`
+			Content          json.RawMessage `json:"content"`
+			TargetID         string          `json:"targetId"`
+			Replacement      json.RawMessage `json:"replacement"`
 		}
 		if json.Unmarshal(line, &head) != nil {
 			continue
@@ -157,13 +150,6 @@ func LoadSessionTree(path string) (*SessionTree, error) {
 				var system ai.SystemMessage
 				if json.Unmarshal(head.SystemMessage, &system) == nil {
 					e.SystemMessage = &system
-				}
-			}
-			// Parse the inlined kept tail, applying the same convertToLlm filtering
-			// as message entries (excluded/undecodable messages drop out).
-			for _, raw := range head.RetainedTail {
-				if m, ok := unmarshalSessionMessage(raw); ok {
-					e.RetainedTail = append(e.RetainedTail, m)
 				}
 			}
 			if len(head.Details) > 0 && string(head.Details) != "null" {
@@ -378,17 +364,13 @@ func contextEntries(path []*SessionEntry) []*SessionEntry {
 	}
 	compaction := path[compactionIdx]
 	selected := []*SessionEntry{compaction}
-	// A retainedTail inlined on the entry (upstream 9e7582aa) replaces the
-	// firstKeptEntryId walk: the compaction's own messages carry the kept tail.
-	if len(compaction.RetainedTail) == 0 {
-		foundFirstKept := false
-		for _, e := range path[:compactionIdx] {
-			if e.ID == compaction.FirstKeptEntryID {
-				foundFirstKept = true
-			}
-			if foundFirstKept && !(e.Type == "message" && e.Message != nil && e.Message.MessageRole() == ai.RoleSystem) {
-				selected = append(selected, e)
-			}
+	foundFirstKept := false
+	for _, e := range path[:compactionIdx] {
+		if e.ID == compaction.FirstKeptEntryID {
+			foundFirstKept = true
+		}
+		if foundFirstKept && !(e.Type == "message" && e.Message != nil && e.Message.MessageRole() == ai.RoleSystem) {
+			selected = append(selected, e)
 		}
 	}
 	return append(selected, path[compactionIdx+1:]...)
@@ -413,13 +395,12 @@ func sessionEntryMessages(e *SessionEntry) []agent.AgentMessage {
 		}
 	case "compaction":
 		// The prompt and tool state it stored, when it stored one, then its
-		// summary, then any inlined kept tail.
+		// summary.
 		var msgs []agent.AgentMessage
 		if e.SystemMessage != nil {
 			msgs = append(msgs, *e.SystemMessage)
 		}
-		msgs = append(msgs, compactionSummaryMessage(e.Summary, entryMillis(e.Timestamp)))
-		return append(msgs, e.RetainedTail...)
+		return append(msgs, compactionSummaryMessage(e.Summary, entryMillis(e.Timestamp)))
 	}
 	return nil
 }

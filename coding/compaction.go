@@ -518,10 +518,10 @@ func (s *Session) setCompaction(c *compactionCheckpoint, usageFrom int) {
 // The projection's messages open with the compaction's own: the replayed
 // system message when it stored one, then the summary, which fall before
 // prefixLen, where the next cut search starts (pi boundaryStart). The messages
-// it kept follow (an inlined retainedTail is its own), then the messages
-// recorded after it, from compactedLen: the first of those entries is the
-// compaction entry's child on the path, and from it on the entries keep the
-// path's order. Applying the checkpoint rebuilds the same view.
+// it kept follow, then the messages recorded after it, from compactedLen: the
+// first of those entries is the compaction entry's child on the path, and from
+// it on the entries keep the path's order. Applying the checkpoint rebuilds the
+// same view.
 //
 // pi's estimateProjectedContextTokens trusts a usage only when its entry comes
 // after the branch's latest compaction or context_edit, omitted or not, so

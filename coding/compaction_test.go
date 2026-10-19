@@ -11,6 +11,22 @@ import (
 	"github.com/sky-valley/pi/ai/providers"
 )
 
+// userText is a user message's text blocks joined, or "<non-user>" for any
+// other role.
+func userText(m interface{ MessageRole() ai.Role }) string {
+	um, ok := m.(ai.UserMessage)
+	if !ok {
+		return "<non-user>"
+	}
+	var b strings.Builder
+	for _, c := range um.Content {
+		if tc, ok := c.(ai.TextContent); ok {
+			b.WriteString(tc.Text)
+		}
+	}
+	return b.String()
+}
+
 func TestShouldCompactThreshold(t *testing.T) {
 	s := CompactionSettings{Enabled: true, ReserveTokens: 16384, KeepRecentTokens: 20000}
 	if shouldCompact(100, 200000, s) {

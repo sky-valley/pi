@@ -1,0 +1,40 @@
+{
+  "thinkingLevel": "off",
+  "model": null,
+  "messages": [
+    {
+      "role": "user",
+      "text": "The conversation history before this point was compacted into the following summary:\n\n<summary>\nSUM\n</summary>"
+    },
+    {
+      "role": "user",
+      "text": "kept by firstKeptEntryId"
+    },
+    {
+      "role": "user",
+      "text": "also kept"
+    },
+    {
+      "role": "user",
+      "text": "after compaction"
+    }
+  ],
+  "entries": [
+    {
+      "id": "r3",
+      "messages": 1
+    },
+    {
+      "id": "r1",
+      "messages": 1
+    },
+    {
+      "id": "r2",
+      "messages": 1
+    },
+    {
+      "id": "r4",
+      "messages": 1
+    }
+  ]
+}

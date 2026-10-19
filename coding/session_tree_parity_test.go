@@ -15,11 +15,11 @@ import (
 // The .json scenarios in testdata/sessparity and their .golden.json expected
 // outputs were captured by running pi's own buildSessionContext+convertToLlm
 // over the same scenarios (testdata/sessparity/capture.mts, npm build 0.87.0 of
-// @earendil-works/pi-coding-agent). This test reconstructs each scenario through
-// the Go port and asserts the {role,text,stringContent} projection — plus the
-// whole message for a system message — matches pi byte-for-byte, as does
-// BuildProjection's per-entry provenance, so any drift from pi's behaviour
-// fails the build.
+// @earendil-works/pi-coding-agent; one scenario from 1.3.0, see capture.mts).
+// This test reconstructs each scenario through the Go port and asserts the
+// {role,text,stringContent} projection — plus the whole message for a system
+// message — matches pi byte-for-byte, as does BuildProjection's per-entry
+// provenance, so any drift from pi's behaviour fails the build.
 
 type parityScenario struct {
 	LeafID  json.RawMessage   `json:"leafId"`

@@ -17,7 +17,9 @@
 //
 // Every golden was captured from the npm build of pi-coding-agent 0.87.0, the
 // first build carrying context_edit entries and the newest-compaction-only
-// checkpoint (upstream 466db0fec).
+// checkpoint (upstream 466db0fec), except 22_compaction_retained_tail, captured
+// from 1.3.0; 13 and 19 re-captured under 1.3.0 as controls came out
+// byte-identical.
 //
 // Projection: role and the text of the content (a string as is; blocks joined
 // with no separator, an image as <image>, any other block as <other>), plus
