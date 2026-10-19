@@ -1,9 +1,12 @@
 package ai
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	"github.com/sky-valley/pi/internal/jstext"
 )
 
 // ValidateToolArguments validates (and coerces) tool-call arguments against the
@@ -34,11 +37,8 @@ func ValidateToolArguments(tool Tool, toolCall ToolCall) (map[string]any, error)
 		for _, e := range errs {
 			lines = append(lines, fmt.Sprintf("  - %s: %s", e.Path, e.Message))
 		}
-		// pi stringifies the arguments object, so the model sees the keys back
-		// in the order it wrote them.
-		received, _ := json.MarshalIndent(toolCall.OrderedArguments(), "", "  ")
-		return nil, fmt.Errorf("Validation failed for tool %q:\n%s\n\nReceived arguments:\n%s",
-			toolCall.Name, strings.Join(lines, "\n"), string(received))
+		return nil, fmt.Errorf("Validation failed for tool \"%s\":\n%s\n\nReceived arguments:\n%s",
+			toolCall.Name, strings.Join(lines, "\n"), receivedArguments(toolCall))
 	}
 	return args, nil
 }
@@ -92,5 +92,21 @@ func ValidateToolCall(tools []Tool, toolCall ToolCall) (map[string]any, error) {
 			return ValidateToolArguments(t, toolCall)
 		}
 	}
-	return nil, fmt.Errorf("Tool %q not found", toolCall.Name)
+	return nil, fmt.Errorf("Tool \"%s\" not found", toolCall.Name)
+}
+
+// receivedArguments writes a call's arguments as pi's
+// JSON.stringify(toolCall.arguments, null, 2) does: the keys in the order the
+// model wrote them (OrderedArguments), JavaScript's string escapes and
+// numbers (jstext.Stringify), indented by two spaces.
+func receivedArguments(toolCall ToolCall) string {
+	compact, err := jstext.Stringify(toolCall.OrderedArguments())
+	if err != nil {
+		return fmt.Sprint(toolCall.Arguments)
+	}
+	var indented bytes.Buffer
+	if err := json.Indent(&indented, []byte(compact), "", "  "); err != nil {
+		return compact
+	}
+	return indented.String()
 }

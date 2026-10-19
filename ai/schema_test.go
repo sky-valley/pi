@@ -3,6 +3,7 @@ package ai
 import (
 	"encoding/json"
 	"math"
+	"os"
 	"reflect"
 	"strings"
 	"testing"
@@ -594,6 +595,55 @@ func TestValidateToolArgumentsReportsArgumentsError(t *testing.T) {
 		_, err := ValidateToolArguments(tool, tc)
 		if err == nil || err.Error() != `Invalid arguments for tool "echo": Unexpected token` {
 			t.Errorf("ValidateToolArguments = %v, want pi's Invalid arguments for tool \"echo\": Unexpected token", err)
+		}
+	}
+}
+
+// validationErrorsCaptureFile is what testdata/validation-errors/capture.mjs
+// recorded from pi-ai 1.3.0's validateToolCall / validateToolArguments.
+const validationErrorsCaptureFile = "testdata/validation-errors/validation-errors-1.3.0.json"
+
+// The validation error is the tool result the model reads, so its text is
+// pi's to the byte: the tool name between plain quotes (no Go escaping) and
+// the received arguments as JSON.stringify(arguments, null, 2) writes them
+// (<, > and & unescaped, JavaScript numbers, the object's own key order).
+func TestValidationErrorTextMatchesPi(t *testing.T) {
+	data, err := os.ReadFile(validationErrorsCaptureFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var capture struct {
+		Parameters *Schema `json:"parameters"`
+		Rows       []struct {
+			Name  string   `json:"name"`
+			Args  string   `json:"args"`
+			Tools []string `json:"tools"`
+			Error string   `json:"error"`
+		} `json:"rows"`
+	}
+	if err := json.Unmarshal(data, &capture); err != nil {
+		t.Fatalf("%s: %v; rerun capture.mjs", validationErrorsCaptureFile, err)
+	}
+	if len(capture.Rows) == 0 {
+		t.Fatalf("%s holds no rows; rerun capture.mjs", validationErrorsCaptureFile)
+	}
+	for _, row := range capture.Rows {
+		args, order, err := DecodeOrderedObject([]byte(row.Args))
+		if err != nil {
+			t.Fatal(err)
+		}
+		tc := ToolCall{ID: "1", Name: row.Name, Arguments: args, ArgumentsOrder: order}
+		if row.Tools != nil {
+			var tools []Tool
+			for _, name := range row.Tools {
+				tools = append(tools, Tool{Name: name, Description: "d", Parameters: capture.Parameters})
+			}
+			_, err = ValidateToolCall(tools, tc)
+		} else {
+			_, err = ValidateToolArguments(Tool{Name: row.Name, Description: "d", Parameters: capture.Parameters}, tc)
+		}
+		if err == nil || err.Error() != row.Error {
+			t.Errorf("%q %s: error\n%v\npi\n%s", row.Name, row.Args, err, row.Error)
 		}
 	}
 }

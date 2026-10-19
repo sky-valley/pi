@@ -1,0 +1,44 @@
+{
+	"piAi": "1.3.0",
+	"parameters": {
+		"type": "object",
+		"properties": {
+			"value": {
+				"type": "string"
+			}
+		},
+		"required": [
+			"value"
+		]
+	},
+	"rows": [
+		{
+			"name": "echo",
+			"args": "{\"note\":\"<a & b>\"}",
+			"error": "Validation failed for tool \"echo\":\n  - value: must have required properties value\n\nReceived arguments:\n{\n  \"note\": \"<a & b>\"\n}"
+		},
+		{
+			"name": "we\"ird\\name",
+			"args": "{\"note\":1}",
+			"error": "Validation failed for tool \"we\"ird\\name\":\n  - value: must have required properties value\n\nReceived arguments:\n{\n  \"note\": 1\n}"
+		},
+		{
+			"name": "echo",
+			"args": "{\"n\":1e21,\"z\":-0,\"f\":0.1,\"big\":123456789012345680000,\"tiny\":1e-7,\"line\":\"a b\"}",
+			"error": "Validation failed for tool \"echo\":\n  - value: must have required properties value\n\nReceived arguments:\n{\n  \"n\": 1e+21,\n  \"z\": 0,\n  \"f\": 0.1,\n  \"big\": 123456789012345680000,\n  \"tiny\": 1e-7,\n  \"line\": \"a b\"\n}"
+		},
+		{
+			"name": "echo",
+			"args": "{\"nested\":{\"b\":1,\"2\":[1,{\"y\":\"<>\"}],\"a\":[],\"o\":{}}}",
+			"error": "Validation failed for tool \"echo\":\n  - value: must have required properties value\n\nReceived arguments:\n{\n  \"nested\": {\n    \"2\": [\n      1,\n      {\n        \"y\": \"<>\"\n      }\n    ],\n    \"b\": 1,\n    \"a\": [],\n    \"o\": {}\n  }\n}"
+		},
+		{
+			"name": "mi\"ssé",
+			"args": "{}",
+			"tools": [
+				"echo"
+			],
+			"error": "Tool \"mi\"ssé\" not found"
+		}
+	]
+}
