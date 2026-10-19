@@ -1,0 +1,83 @@
+{
+	"piAi": "1.3.0",
+	"rows": [
+		{
+			"name": "stream/slow auth finds no key",
+			"entry": "stream",
+			"setup": "slow auth finds no key",
+			"waitMs": 80,
+			"events": [
+				"error"
+			],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: slow",
+			"timestampOffset": 0,
+			"durationMs": 82
+		},
+		{
+			"name": "stream/transformHeaders fails after a wait",
+			"entry": "stream",
+			"setup": "transformHeaders fails after a wait",
+			"waitMs": 80,
+			"events": [
+				"error"
+			],
+			"stopReason": "error",
+			"errorMessage": "headers refused",
+			"timestampOffset": 0,
+			"durationMs": 81
+		},
+		{
+			"name": "streamSimple/slow auth finds no key",
+			"entry": "streamSimple",
+			"setup": "slow auth finds no key",
+			"waitMs": 80,
+			"events": [
+				"error"
+			],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: slow",
+			"timestampOffset": 1,
+			"durationMs": 81
+		},
+		{
+			"name": "streamSimple/transformHeaders fails after a wait",
+			"entry": "streamSimple",
+			"setup": "transformHeaders fails after a wait",
+			"waitMs": 80,
+			"events": [
+				"error"
+			],
+			"stopReason": "error",
+			"errorMessage": "headers refused",
+			"timestampOffset": 0,
+			"durationMs": 82
+		},
+		{
+			"name": "streamDeferred/slow auth finds no key",
+			"entry": "streamDeferred",
+			"setup": "slow auth finds no key",
+			"waitMs": 80,
+			"events": [
+				"error"
+			],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: slow",
+			"timestampOffset": 1,
+			"durationMs": 82
+		},
+		{
+			"name": "streamDeferred/transformHeaders fails after a wait",
+			"entry": "streamDeferred",
+			"setup": "transformHeaders fails after a wait",
+			"waitMs": 80,
+			"events": [
+				"error"
+			],
+			"stopReason": "error",
+			"errorMessage": "headers refused",
+			"timestampOffset": 0,
+			"durationMs": 86
+		}
+	]
+}

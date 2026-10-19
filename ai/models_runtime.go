@@ -20,7 +20,8 @@ import (
 // pi defers provider resolution into the returned stream via lazyStream
 // (async). The Go port keeps its existing contract (G3, stream.go): resolution
 // runs synchronously and failures are encoded as a terminal stream error, so
-// applyAuth runs inline and errors flow through errorStream.
+// applyAuth runs inline and errors flow through a streamSetup started before
+// it, which stamps and times them as lazyStream does.
 
 // ProviderStreams binds an API's stream implementations (pi ProviderStreams).
 // FetchDeferred and CancelDeferred are nil unless the api supports deferred
@@ -1524,12 +1525,13 @@ func (m *modelsImpl) applyAuth(
 
 func (m *modelsImpl) Stream(ctx context.Context, model *Model, req Context, opts *ModelsStreamOptions) *AssistantMessageEventStream {
 	transcript := NormalizeContext(req)
+	setup := startStreamSetup()
 	if err := AssertChatModel(model); err != nil {
-		return ErrorStream(model, err)
+		return setup.fail(model, err)
 	}
 	p := m.GetProvider(model.Provider)
 	if p == nil {
-		return ErrorStream(model, newModelsError(ErrProvider, "Unknown provider: "+model.Provider, nil))
+		return setup.fail(model, newModelsError(ErrProvider, "Unknown provider: "+model.Provider, nil))
 	}
 	var base *ProviderRequestOptions
 	var transforms ModelsRequestTransforms
@@ -1539,7 +1541,7 @@ func (m *modelsImpl) Stream(ctx context.Context, model *Model, req Context, opts
 	}
 	requestModel, requestOptions, err := m.applyAuth(ctx, model, base, transforms)
 	if err != nil {
-		return ErrorStream(model, err)
+		return setup.fail(model, err)
 	}
 	stream := StreamOptions{}
 	if opts != nil {
@@ -1555,12 +1557,13 @@ func (m *modelsImpl) Complete(ctx context.Context, model *Model, req Context, op
 
 func (m *modelsImpl) StreamSimple(ctx context.Context, model *Model, req Context, opts *ModelsSimpleStreamOptions) *AssistantMessageEventStream {
 	transcript := NormalizeContext(req)
+	setup := startStreamSetup()
 	if err := AssertChatModel(model); err != nil {
-		return ErrorStream(model, err)
+		return setup.fail(model, err)
 	}
 	p := m.GetProvider(model.Provider)
 	if p == nil {
-		return ErrorStream(model, newModelsError(ErrProvider, "Unknown provider: "+model.Provider, nil))
+		return setup.fail(model, newModelsError(ErrProvider, "Unknown provider: "+model.Provider, nil))
 	}
 	var base *ProviderRequestOptions
 	var transforms ModelsRequestTransforms
@@ -1570,7 +1573,7 @@ func (m *modelsImpl) StreamSimple(ctx context.Context, model *Model, req Context
 	}
 	requestModel, requestOptions, err := m.applyAuth(ctx, model, base, transforms)
 	if err != nil {
-		return ErrorStream(model, err)
+		return setup.fail(model, err)
 	}
 	simple := SimpleStreamOptions{}
 	if opts != nil {
@@ -1585,13 +1588,14 @@ func (m *modelsImpl) CompleteSimple(ctx context.Context, model *Model, req Conte
 }
 
 func (m *modelsImpl) StreamDeferred(ctx context.Context, model *Model, handle DeferredHandle, opts *ModelsDeferredFetchOptions) *AssistantMessageEventStream {
+	setup := startStreamSetup()
 	if err := AssertChatModel(model); err != nil {
-		return ErrorStream(model, err)
+		return setup.fail(model, err)
 	}
 	p := m.GetProvider(model.Provider)
 	fetcher, ok := p.(DeferredFetcher)
 	if !ok {
-		return ErrorStream(model, deferredUnsupported(p, model.Provider))
+		return setup.fail(model, deferredUnsupported(p, model.Provider))
 	}
 	var base *ProviderRequestOptions
 	var transforms ModelsRequestTransforms
@@ -1601,7 +1605,7 @@ func (m *modelsImpl) StreamDeferred(ctx context.Context, model *Model, handle De
 	}
 	requestModel, requestOptions, err := m.applyAuth(ctx, model, base, transforms)
 	if err != nil {
-		return ErrorStream(model, err)
+		return setup.fail(model, err)
 	}
 	deferredOptions := DeferredFetchOptions{}
 	if opts != nil {

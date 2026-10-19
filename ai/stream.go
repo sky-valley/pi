@@ -140,17 +140,38 @@ func CompleteSimple(ctx context.Context, model *Model, req Context, opts *Simple
 // created, as pi's lazyStream stamps a setup error (3ba22ce17), so the stream
 // times it only when both readings fall in the same millisecond.
 func ErrorStream(model *Model, err error) *AssistantMessageEventStream {
+	return startStreamSetup().fail(model, err)
+}
+
+// streamSetup is pi's lazyStream around setup the port runs inline before it
+// hands back a provider's stream: the call's start is read and the stream
+// created BEFORE setup runs, so a setup failure is stamped at the call's start
+// and timed across the setup — a slow credential resolution or OAuth refresh
+// that then fails reads as the long failure it was. On success the provider's
+// own stream is returned and this one is dropped, as pi's forwarding stream
+// keeps the inner stream's timing.
+type streamSetup struct {
+	startedAt int64
+	stream    *AssistantMessageEventStream
+}
+
+// startStreamSetup reads the call's start, then creates the stream.
+func startStreamSetup() streamSetup {
 	startedAt := nowMillis()
-	s := NewAssistantMessageEventStream()
+	return streamSetup{startedAt: startedAt, stream: NewAssistantMessageEventStream()}
+}
+
+// fail ends the setup's stream with err (pi createSetupErrorMessage).
+func (s streamSetup) fail(model *Model, err error) *AssistantMessageEventStream {
 	msg := &AssistantMessage{
 		Api:          model.Api,
 		Provider:     model.Provider,
 		Model:        model.ID,
 		StopReason:   StopError,
 		ErrorMessage: err.Error(),
-		Timestamp:    startedAt,
+		Timestamp:    s.startedAt,
 	}
-	s.Push(AssistantMessageEvent{Type: EventError, Reason: StopError, Error: msg})
-	s.End()
-	return s
+	s.stream.Push(AssistantMessageEvent{Type: EventError, Reason: StopError, Error: msg})
+	s.stream.End()
+	return s.stream
 }
