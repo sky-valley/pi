@@ -13,12 +13,12 @@ import (
 
 // The system prompt goldens are pi's: testdata/systemprompt/capture.mts feeds
 // the Go port's inputs (ToolSnippets, the default tools' PromptGuidelines, and
-// fixture paths) to upstream buildSystemPrompt, buildSystemPromptSections,
-// buildSystemPromptState and diffSystemPromptSections at e4c75a732 under node
-// and records what they return. npm 0.85.1 predates the sectioned prompt, so
-// these are src captures: re-verify them against the first build that ships it.
+// fixture paths) to the published build's buildSystemPrompt,
+// buildSystemPromptSections, buildSystemPromptState and
+// diffSystemPromptSections (pi-coding-agent 1.3.0) under node and records what
+// they return.
 
-const systemPromptCaptureFile = "testdata/systemprompt/systemprompt-4259686d9.json"
+const systemPromptCaptureFile = "testdata/systemprompt/systemprompt-1.3.0.json"
 
 // sectionPairs is a JS object written as [name, value] pairs, so its key order
 // survives JSON.
@@ -132,7 +132,7 @@ type promptCaptureDiff struct {
 }
 
 type promptCapture struct {
-	Sha string `json:"sha"`
+	Version string `json:"version"`
 	// ObjectPrototypeNames are Object.getOwnPropertyNames(Object.prototype)
 	// under the capturing node.
 	ObjectPrototypeNames []string             `json:"objectPrototypeNames"`

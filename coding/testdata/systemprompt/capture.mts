@@ -1,41 +1,38 @@
 // Captures what real pi's system-prompt.ts builds — the oracle behind
 // coding/systemprompt_golden_test.go.
 //
-//   node --experimental-strip-types capture.mts <extraction> <out.json> <sha>
-//   e.g. ... capture.mts <dir> systemprompt-4259686d9.json 4259686d9
+//   node capture.mts <pi-coding-agent package dir> <out.json> <version>
+//   e.g. ... capture.mts <npm>/node_modules/@earendil-works/pi-coding-agent systemprompt-1.3.0.json 1.3.0
 //
-// <extraction> holds packages/ai and packages/coding-agent at <sha>
-// (`git archive <sha> packages/ai packages/coding-agent` from the upstream
-// clone), a node_modules resolving their dependencies (the npm build's), and
-// packages/coding-agent/node_modules/@earendil-works/pi-ai resolving to
-// packages/ai/src. The npm build 0.85.1 predates upstream 9e05370b2 and
-// e4c75a732, so these are src captures: re-verify them against the first build
-// that ships them (the BUILD wins).
+// The package dir is the published build (its dist/core/system-prompt.js and
+// the @earendil-works/pi-ai it resolves). 1.3.0 is the first build that ships
+// the codemode docs line (upstream 6f1072cc0) and hiddenTools (c30840c2e);
+// the earlier goldens were src captures at e4c75a732/4259686d9, from before
+// any build shipped the sectioned prompt.
 //
-// Each build case calls buildSystemPrompt, buildSystemPromptSections and (from
-// e4c75a732) buildSystemPromptState on its own, recording the value or the
-// message it throws; a state keeps its `sections` key only when pi sets it.
+// Each build case calls buildSystemPrompt, buildSystemPromptSections and
+// buildSystemPromptState on its own, recording the value or the message it
+// throws; a state keeps its `sections` key only when pi sets it.
 //
 // The inputs are the Go port's: toolSnippets is coding.ToolSnippets and
 // toolGuidelines is what NewSession collects from the default tools'
-// PromptGuidelines (core/tools/* is unchanged in range, so the TS definitions
-// agree; the Go test checks the inputs against the Go values). PI_PACKAGE_DIR
-// pins the documentation paths to /pkg, which the Go test passes as
-// ReadmePath/DocsPath/ExamplesPath. JS objects whose key order matters
-// (sections) are written as [name, value] pairs and built with
+// PromptGuidelines (the Go test checks the inputs against the Go values).
+// PI_PACKAGE_DIR pins the documentation paths to /pkg, which the Go test
+// passes as ReadmePath/DocsPath/ExamplesPath. JS objects whose key order
+// matters (sections) are written as [name, value] pairs and built with
 // Object.fromEntries.
 import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
-const [extraction, outFile, sha] = process.argv.slice(2);
-if (!extraction || !outFile || !sha) {
-	console.error("usage: node --experimental-strip-types capture.mts <extraction> <out.json> <sha>");
+const [pkg, outFile, version] = process.argv.slice(2);
+if (!pkg || !outFile || !version) {
+	console.error("usage: node capture.mts <pi-coding-agent package dir> <out.json> <version>");
 	process.exit(2);
 }
 process.env.PI_PACKAGE_DIR = "/pkg";
 const { buildSystemPrompt, buildSystemPromptSections, buildSystemPromptState, diffSystemPromptSections } = await import(
-	pathToFileURL(path.join(extraction, "packages/coding-agent/src/core/system-prompt.ts")).href
+	pathToFileURL(path.join(pkg, "dist/core/system-prompt.js")).href
 );
 
 const toolSnippets = {
@@ -250,7 +247,7 @@ const attempt = (key: string, build: () => unknown) => {
 };
 
 const out = {
-	sha,
+	version,
 	objectPrototypeNames,
 	builds: builds.map(({ name, input }) => ({
 		name,
