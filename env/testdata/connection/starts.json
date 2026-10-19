@@ -537,5 +537,43 @@
 			"input": "join a .. b c/d",
 			"result": "b\\c\\d"
 		}
+	],
+	"abortedPaths": [
+		{
+			"operation": "absolutePath ~/a",
+			"result": "/home/me/a"
+		},
+		{
+			"operation": "joinPath a b",
+			"result": "a/b"
+		}
+	],
+	"lost": [
+		{
+			"name": "request above a frame",
+			"outcome": {
+				"code": "unknown",
+				"message": "pi-env connection lost",
+				"lost": true
+			},
+			"restarted": true
+		},
+		{
+			"name": "command above a frame",
+			"outcome": {
+				"code": "unknown",
+				"message": "pi-env connection lost"
+			},
+			"restarted": true
+		},
+		{
+			"name": "daemon stops reading",
+			"outcome": {
+				"code": "unknown",
+				"message": "pi-env connection timed out",
+				"lost": true
+			},
+			"afterSilenceLimit": true
+		}
 	]
 }

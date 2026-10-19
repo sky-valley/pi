@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -17,8 +18,9 @@ import (
 
 // startsGolden is testdata/connection/starts.json: how upstream's TypeScript
 // Connection fails to start against misbehaving daemons (fakedaemon.sh) and
-// bad commands, and how its RemoteExecutionEnv resolves paths against a POSIX
-// and a Windows daemon (capture.mts).
+// bad commands, how its RemoteExecutionEnv resolves paths against a POSIX and
+// a Windows daemon, and how requests fail when the connection is lost
+// (capture.mts).
 type startsGolden struct {
 	Starts []struct {
 		Name    string          `json:"name"`
@@ -31,6 +33,16 @@ type startsGolden struct {
 		Input  string          `json:"input"`
 		Result json.RawMessage `json:"result"`
 	} `json:"paths"`
+	AbortedPaths []struct {
+		Operation string          `json:"operation"`
+		Result    json.RawMessage `json:"result"`
+	} `json:"abortedPaths"`
+	Lost []struct {
+		Name              string          `json:"name"`
+		Outcome           json.RawMessage `json:"outcome"`
+		Restarted         *bool           `json:"restarted"`
+		AfterSilenceLimit *bool           `json:"afterSilenceLimit"`
+	} `json:"lost"`
 }
 
 func loadStarts(t *testing.T) startsGolden {
@@ -39,7 +51,7 @@ func loadStarts(t *testing.T) startsGolden {
 	mustDo(t, err)
 	var golden startsGolden
 	mustDo(t, json.Unmarshal(data, &golden))
-	if len(golden.Starts) == 0 || len(golden.Paths) == 0 {
+	if len(golden.Starts) == 0 || len(golden.Paths) == 0 || len(golden.AbortedPaths) == 0 || len(golden.Lost) == 0 {
 		t.Fatal("testdata/connection/starts.json is incomplete; recapture it with capture.mts")
 	}
 	return golden
@@ -232,5 +244,101 @@ func TestResolvesPathsLikeUpstream(t *testing.T) {
 			got = resolved
 		}
 		compareJSON(t, want.Mode+" "+want.Input, got, want.Result)
+	}
+}
+
+// TestFailsRequestsLikeUpstreamWhenTheConnectionIsLost: a request larger than
+// a frame loses the connection (the daemon refuses it and exits), and so does
+// a daemon that stops reading and pinging, even while a write to it is
+// blocked and the request's context has ended.
+func TestFailsRequestsLikeUpstreamWhenTheConnectionIsLost(t *testing.T) {
+	golden := loadStarts(t)
+	script, err := filepath.Abs("testdata/connection/fakedaemon.sh")
+	mustDo(t, err)
+	type outcome struct {
+		err     error
+		elapsed time.Duration
+	}
+	// settle runs request and waits a bounded time for it to settle.
+	settle := func(t *testing.T, request func() error) outcome {
+		t.Helper()
+		done := make(chan outcome, 1)
+		started := time.Now()
+		go func() {
+			err := request()
+			done <- outcome{err, time.Since(started)}
+		}()
+		select {
+		case result := <-done:
+			return result
+		case <-time.After(10 * time.Second):
+			t.Fatal("the request is still pending after 10 s")
+			return outcome{}
+		}
+	}
+	remoteOutcome := func(t *testing.T, err error) any {
+		t.Helper()
+		var remote *RemoteError
+		if !errors.As(err, &remote) {
+			t.Fatalf("not a RemoteError: %#v", err)
+		}
+		return map[string]any{"code": remote.Code, "message": remote.Message, "lost": IsConnectionLost(err)}
+	}
+	for _, want := range golden.Lost {
+		t.Run(want.Name, func(t *testing.T) {
+			switch want.Name {
+			case "request above a frame", "command above a frame":
+				connection := newConnection(t)
+				env := NewRemoteExecutionEnv(RemoteExecutionEnvOptions{Connection: connection, ID: "pi-env:lost", Cwd: "/"})
+				info, err := connection.Info(background())
+				mustDo(t, err)
+				var got any
+				if want.Name == "request above a frame" {
+					result := settle(t, func() error {
+						_, err := connection.Request(background(), "lstat", object{}.with("path", "/"), &RequestOptions{Payload: make([]byte, 17*1024*1024)})
+						return err
+					})
+					got = remoteOutcome(t, result.err)
+				} else {
+					result := settle(t, func() error {
+						_, err := env.RunShell(background(), strings.Repeat("x", 17*1024*1024), nil)
+						return err
+					})
+					var failure *ExecutionError
+					if !errors.As(result.err, &failure) {
+						t.Fatalf("not an ExecutionError: %#v", result.err)
+					}
+					got = map[string]any{"code": failure.Code, "message": failure.Message}
+				}
+				compareJSON(t, "outcome", got, want.Outcome)
+				again, err := connection.Info(background())
+				mustDo(t, err)
+				if restarted := again.PID != info.PID; want.Restarted == nil || restarted != *want.Restarted {
+					t.Errorf("restarted %v, want %v", restarted, *want.Restarted)
+				}
+			case "daemon stops reading":
+				if runtime.GOOS == "windows" {
+					t.Skip("fakedaemon.sh needs a POSIX shell")
+				}
+				connection := NewConnection(ConnectionOptions{Command: []string{"sh", script, "silent"}})
+				t.Cleanup(connection.Close)
+				connection.timing = timing{ping: 50 * time.Millisecond, silence: 500 * time.Millisecond}
+				_, err := connection.Info(background())
+				mustDo(t, err)
+				ctx, cancel := context.WithTimeout(background(), 100*time.Millisecond)
+				defer cancel()
+				result := settle(t, func() error {
+					fields := object{}.with("path", "/nonexistent/x").with("append", false).with("parents", false)
+					_, err := connection.Request(ctx, "write", fields, &RequestOptions{Payload: make([]byte, 4*1024*1024)})
+					return err
+				})
+				compareJSON(t, "outcome", remoteOutcome(t, result.err), want.Outcome)
+				if after := result.elapsed >= connection.timing.silence; want.AfterSilenceLimit == nil || after != *want.AfterSilenceLimit {
+					t.Errorf("settled after %v (silence limit %v)", result.elapsed, connection.timing.silence)
+				}
+			default:
+				t.Fatalf("unknown case %q", want.Name)
+			}
+		})
 	}
 }

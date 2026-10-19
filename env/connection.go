@@ -33,6 +33,12 @@ const (
 	startTimeout = 60 * time.Second
 )
 
+// timing is how often a Connection pings and how much silence loses it;
+// tests shorten them.
+type timing struct {
+	ping, silence time.Duration
+}
+
 // RemoteError is a failure reported by the daemon, with its Node-style code,
 // or a failure of the connection itself (IsConnectionLost).
 type RemoteError struct {
@@ -183,6 +189,8 @@ type Connection struct {
 	life     context.Context
 	stopLife context.CancelFunc
 
+	timing timing
+
 	mu       sync.Mutex
 	session  *session
 	ready    *starting
@@ -195,7 +203,7 @@ type Connection struct {
 // request.
 func NewConnection(options ConnectionOptions) *Connection {
 	life, stop := context.WithCancel(context.Background())
-	return &Connection{options: options, life: life, stopLife: stop, nextID: 1}
+	return &Connection{options: options, life: life, stopLife: stop, timing: timing{pingInterval, silenceLimit}, nextID: 1}
 }
 
 // starting is a start in progress, shared by the requests that wait for it.
@@ -548,6 +556,9 @@ func (c *Connection) send(s *session, body []byte, options *RequestOptions) (*ca
 	return call, nil
 }
 
+// write writes f to the daemon. A write to a daemon that exited fails; its
+// requests fail with the exit. A frame above the protocol's limit loses the
+// connection, as upstream's daemon refuses it and exits.
 func (c *Connection) write(s *session, f frame.Frame) {
 	c.mu.Lock()
 	live := s.live
@@ -556,24 +567,41 @@ func (c *Connection) write(s *session, f frame.Frame) {
 		return
 	}
 	s.writeMu.Lock()
-	defer s.writeMu.Unlock()
-	// A write to a daemon that exited fails; its requests fail with the exit.
 	w := bufio.NewWriterSize(s.stdin, 13+len(f.JSON)+min(len(f.Payload), 64*1024))
-	if frame.Write(w, f) == nil {
+	err := frame.Write(w, f)
+	if err == nil {
 		_ = w.Flush()
+	}
+	s.writeMu.Unlock()
+	if errors.Is(err, frame.ErrTooLarge) {
+		c.teardown(s, lost("pi-env connection lost"))
 	}
 }
 
+// ping pings the daemon and loses the connection after the silence limit
+// without input from it. A ping waits behind a write in progress, as it
+// queues behind it in upstream's stdin buffer; the silence check does not, so
+// a daemon that stopped reading cannot hold a blocked write forever: the
+// teardown closes stdin, which ends that write.
 func (c *Connection) ping(s *session) {
-	ticker := time.NewTicker(pingInterval)
+	ticker := time.NewTicker(c.timing.ping)
 	defer ticker.Stop()
+	pinging := make(chan struct{}, 1)
 	for {
 		select {
 		case <-s.stop:
 			return
 		case <-ticker.C:
-			c.write(s, frame.Frame{Kind: frame.Ping, JSON: []byte("{}")})
-			if time.Since(time.Unix(0, s.lastSeen.Load())) > silenceLimit {
+			select {
+			case pinging <- struct{}{}:
+				go func() {
+					defer func() { <-pinging }()
+					c.write(s, frame.Frame{Kind: frame.Ping, JSON: []byte("{}")})
+				}()
+			default:
+				// The last ping still waits to be written.
+			}
+			if time.Since(time.Unix(0, s.lastSeen.Load())) > c.timing.silence {
 				c.teardown(s, lost("pi-env connection timed out"))
 				return
 			}

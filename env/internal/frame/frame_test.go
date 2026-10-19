@@ -90,7 +90,7 @@ func TestFramingErrors(t *testing.T) {
 			t.Errorf("%s: %v, want %v", c.name, err, c.want)
 		}
 	}
-	if err := Write(io.Discard, Frame{Payload: make([]byte, MaxFrame)}); err != errTooLarge {
+	if err := Write(io.Discard, Frame{Payload: make([]byte, MaxFrame)}); err != ErrTooLarge {
 		t.Errorf("oversized write: %v", err)
 	}
 	f, err := Read(bytes.NewReader([]byte{0, 0, 0, 9, 1, 0, 0, 0, 3, 0, 0, 0, 0}))

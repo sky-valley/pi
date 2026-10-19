@@ -65,5 +65,11 @@ windows)
 	printf 'PI-ENV %s\n' "$token"
 	frame 2 1 '{"protocol":1,"version":"0.0.0","os":"windows","arch":"x86_64","home":"C:\\Users\\me","tmpdir":"C:\\Temp","separator":"\\","cwd":"D:\\daemon","driveCwds":{"E:":"E:\\e-cwd","F:":"C:\\elsewhere"},"pid":1}'
 	;;
+silent)
+	# A daemon that hangs once it answered: it neither reads nor pings.
+	printf 'PI-ENV %s\n' "$token"
+	frame 2 1 "$hello"
+	exec sleep 3600
+	;;
 esac
 cat > /dev/null

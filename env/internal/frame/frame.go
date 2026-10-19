@@ -48,10 +48,13 @@ var (
 	// length or JSON length out of range. Other errors are the reader's.
 	ErrCorrupt = errors.New("corrupt frame")
 
+	// ErrTooLarge is what Write reports for a frame above MaxFrame, which it
+	// does not write: the other side would refuse it and end the connection.
+	ErrTooLarge = errors.New("frame too large")
+
 	// The daemon prints these as the Rust daemon does ("pi-env: <text>").
 	errLength     error = corruptError("frame length out of range")
 	errJSONLength error = corruptError("JSON length out of range")
-	errTooLarge         = errors.New("frame too large")
 )
 
 // corruptError is a framing failure: its own text, matching ErrCorrupt.
@@ -96,12 +99,12 @@ func Read(r io.Reader) (Frame, error) {
 	return f, nil
 }
 
-// Write writes f as one frame. It fails without writing when the frame would
-// exceed MaxFrame; the caller flushes buffered writers.
+// Write writes f as one frame. It fails with ErrTooLarge, without writing,
+// when the frame would exceed MaxFrame; the caller flushes buffered writers.
 func Write(w io.Writer, f Frame) error {
 	length := headerLength + len(f.JSON) + len(f.Payload)
 	if length > MaxFrame {
-		return errTooLarge
+		return ErrTooLarge
 	}
 	var header [4 + headerLength]byte
 	binary.BigEndian.PutUint32(header[0:4], uint32(length))
