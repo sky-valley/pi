@@ -199,6 +199,47 @@ const builds: Array<{ name: string; input: Input }> = [
 	{ name: "invalid-section-empty-content", input: { cwd: "/tmp", sections: [["Bad", ""]] } },
 	{ name: "skills-hidden-only", input: { selectedTools: ["read"], toolSnippets, cwd: "/proj", skills: [hiddenSkill] } },
 	{ name: "empty-custom-prompt", input: { customPrompt: "", selectedTools: [], cwd: "/proj" } },
+	// system-prompt.test.ts "hidden tools" (upstream c30840c2e): hidden tools leave the
+	// tool list and the rules, and a hidden reader keeps skills with an indirect hint.
+	...([
+		["hidden-tools-readers", ["read", "bash"]],
+		["hidden-tools-read", ["read"]],
+		["hidden-tools-none", []],
+		["hidden-tools-unselected", ["grep", "run-not-selected"]],
+	] as const).map(([name, hiddenTools]) => ({
+		name,
+		input: {
+			selectedTools: ["read", "bash", "run"],
+			hiddenTools: [...hiddenTools],
+			toolSnippets: { read: "Read files", bash: "Run commands", run: "Run a task" },
+			toolGuidelines: { read: ["Use read for files."], run: ["Prefer run."] },
+			skills: [demoSkill],
+			cwd: "/proj",
+		},
+	})),
+	{
+		name: "hidden-bash-only-custom-prompt",
+		input: {
+			customPrompt: "You are a custom agent.",
+			selectedTools: ["bash", "edit"],
+			hiddenTools: ["bash"],
+			toolSnippets,
+			toolGuidelines: defaultToolGuidelines,
+			cwd: "/proj",
+			skills: [demoSkill],
+		},
+	},
+	{
+		name: "hidden-everything-default-prompt",
+		input: {
+			selectedTools: ["read", "bash", "edit", "write"],
+			hiddenTools: ["read", "bash", "edit", "write"],
+			toolSnippets,
+			toolGuidelines: defaultToolGuidelines,
+			cwd: "/proj",
+			skills: [demoSkill, hiddenSkill],
+		},
+	},
 	{
 		name: "windows-cwd-and-context-files",
 		input: {

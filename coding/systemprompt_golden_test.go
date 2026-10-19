@@ -55,6 +55,7 @@ type promptCaptureInput struct {
 	CustomPrompt       string              `json:"customPrompt"`
 	ForceSystemPrompt  *string             `json:"forceSystemPrompt"`
 	SelectedTools      []string            `json:"selectedTools"`
+	HiddenTools        []string            `json:"hiddenTools"`
 	ToolSnippets       map[string]string   `json:"toolSnippets"`
 	ToolGuidelines     map[string][]string `json:"toolGuidelines"`
 	PromptGuidelines   []string            `json:"promptGuidelines"`
@@ -80,6 +81,7 @@ func (in promptCaptureInput) options() BuildSystemPromptOptions {
 		CustomPrompt:       in.CustomPrompt,
 		ForceSystemPrompt:  in.ForceSystemPrompt,
 		SelectedTools:      in.SelectedTools,
+		HiddenTools:        in.HiddenTools,
 		ToolSnippets:       in.ToolSnippets,
 		ToolGuidelines:     in.ToolGuidelines,
 		PromptGuidelines:   in.PromptGuidelines,
@@ -525,6 +527,7 @@ func TestSystemPromptSectionUpdatesUpstreamCases(t *testing.T) {
 // objects), and an absent tool selection becomes pi's default.
 func TestNormalizeBuildSystemPromptOptionsCopies(t *testing.T) {
 	in := BuildSystemPromptOptions{
+		HiddenTools:      []string{"bash"},
 		ToolSnippets:     map[string]string{"read": "r"},
 		ToolGuidelines:   map[string][]string{"read": {"g"}},
 		PromptGuidelines: []string{"p"},
@@ -537,13 +540,14 @@ func TestNormalizeBuildSystemPromptOptionsCopies(t *testing.T) {
 	if !reflect.DeepEqual(out.SelectedTools, []string{"read", "bash", "edit", "write"}) {
 		t.Fatalf("default selectedTools = %v", out.SelectedTools)
 	}
+	in.HiddenTools[0] = "changed"
 	in.ToolSnippets["read"] = "changed"
 	in.ToolGuidelines["read"][0] = "changed"
 	in.PromptGuidelines[0] = "changed"
 	*in.Sections[0].Value = "changed"
 	in.ContextFiles[0].Content = "changed"
 	in.Skills[0].Name = "changed"
-	if out.ToolSnippets["read"] != "r" || out.ToolGuidelines["read"][0] != "g" || out.PromptGuidelines[0] != "p" ||
+	if out.HiddenTools[0] != "bash" || out.ToolSnippets["read"] != "r" || out.ToolGuidelines["read"][0] != "g" || out.PromptGuidelines[0] != "p" ||
 		*out.Sections[0].Value != "1" || out.ContextFiles[0].Content != "c" || out.Skills[0].Name != "s" {
 		t.Fatalf("normalized options alias the input: %+v", out)
 	}
@@ -552,7 +556,7 @@ func TestNormalizeBuildSystemPromptOptionsCopies(t *testing.T) {
 	if empty.SelectedTools == nil || len(empty.SelectedTools) != 0 {
 		t.Fatalf("an explicit empty selection must stay empty, got %v", empty.SelectedTools)
 	}
-	if empty.ToolSnippets == nil || empty.ToolGuidelines == nil || empty.Sections == nil {
+	if empty.HiddenTools == nil || empty.ToolSnippets == nil || empty.ToolGuidelines == nil || empty.Sections == nil {
 		t.Fatalf("normalized collections must be non-nil: %+v", empty)
 	}
 }

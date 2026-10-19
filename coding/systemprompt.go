@@ -39,6 +39,12 @@ type BuildSystemPromptOptions struct {
 	// SelectedTools are the active tool names. Nil means pi's default
 	// [read, bash, edit, write]; an empty, non-nil slice means no tools.
 	SelectedTools []string
+	// HiddenTools are selected tools whose declarations requests leave out
+	// (pi's prepareLoadout hidden declarations). They are reachable only
+	// through another tool, so the tool list and the rules leave them out too;
+	// a hidden read or bash still offers skills, with a hint that names no
+	// tool (upstream c30840c2e).
+	HiddenTools []string
 	// ToolSnippets are optional one-line tool snippets keyed by tool name. A
 	// selected tool appears in the tools section only when it has one.
 	ToolSnippets map[string]string
@@ -78,7 +84,8 @@ var systemPromptSectionName = regexp.MustCompile(`^[a-z][a-z0-9_-]*$`)
 
 // NormalizeBuildSystemPromptOptions returns opts in pi's normalized,
 // collection-complete shape (normalizeBuildSystemPromptOptions): SelectedTools
-// defaults to [read, bash, edit, write] only when nil, every collection is
+// defaults to [read, bash, edit, write] only when nil, HiddenTools to none,
+// every collection is
 // non-nil, and every collection is a copy, so mutating the result cannot reach
 // the caller's inputs or the other way round. Go has one options type for both
 // shapes; the normalized one is the result of this function.
@@ -89,6 +96,7 @@ func NormalizeBuildSystemPromptOptions(opts BuildSystemPromptOptions) BuildSyste
 	} else {
 		out.SelectedTools = slices.Clone(opts.SelectedTools)
 	}
+	out.HiddenTools = append([]string{}, opts.HiddenTools...)
 	out.ToolSnippets = maps.Clone(opts.ToolSnippets)
 	if out.ToolSnippets == nil {
 		out.ToolSnippets = map[string]string{}
@@ -199,6 +207,11 @@ func BuildSystemPromptSections(input BuildSystemPromptOptions) (ai.SystemSection
 		}
 	}
 
+	// The declared tools are the selected ones whose declarations reach the
+	// model; only they appear in the tool list and contribute rules.
+	declaredTools := slices.DeleteFunc(slices.Clone(opts.SelectedTools), func(name string) bool {
+		return slices.Contains(opts.HiddenTools, name)
+	})
 	// promptSections is pi's plain object: assigning an existing name keeps its
 	// slot, which is how a custom section replaces a built-in one in place.
 	promptSections := ai.SystemSections{}
@@ -208,7 +221,7 @@ func BuildSystemPromptSections(input BuildSystemPromptOptions) (ai.SystemSection
 	} else {
 		set("preamble", defaultPromptPreamble)
 		var visible []string
-		for _, name := range opts.SelectedTools {
+		for _, name := range declaredTools {
 			if snippet := opts.ToolSnippets[name]; snippet != "" {
 				visible = append(visible, "- "+name+": "+snippet)
 			}
@@ -218,7 +231,7 @@ func BuildSystemPromptSections(input BuildSystemPromptOptions) (ai.SystemSection
 			tools = strings.Join(visible, "\n")
 		}
 		set("tools", tools+"\n\nIn addition to the tools above, you may have access to other custom tools depending on the project.")
-		set("rules", buildRules(opts.SelectedTools, opts.ToolGuidelines, opts.PromptGuidelines))
+		set("rules", buildRules(declaredTools, opts.ToolGuidelines, opts.PromptGuidelines))
 		set("docs", docsSection(opts))
 	}
 
@@ -229,14 +242,17 @@ func BuildSystemPromptSections(input BuildSystemPromptOptions) (ai.SystemSection
 		set("project_context", renderProjectContext(opts.ContextFiles))
 	}
 	// Skills are offered as soon as some tool can load their files, and the
-	// block names that tool: the first of read and bash that is selected
-	// (upstream 1d6dbf9e3).
+	// block names that tool: the first of read and bash that is declared
+	// (upstream 1d6dbf9e3). A hidden reader is still reachable through another
+	// tool, so skills stay but the hint names no tool (upstream c30840c2e).
 	skillFileReadTool := SkillFileReadTool("")
 	switch {
-	case slices.Contains(opts.SelectedTools, "read"):
+	case slices.Contains(declaredTools, "read"):
 		skillFileReadTool = SkillFileReadToolRead
-	case slices.Contains(opts.SelectedTools, "bash"):
+	case slices.Contains(declaredTools, "bash"):
 		skillFileReadTool = SkillFileReadToolBash
+	case slices.Contains(opts.SelectedTools, "read") || slices.Contains(opts.SelectedTools, "bash"):
+		skillFileReadTool = SkillFileReadToolIndirect
 	}
 	if skillFileReadTool != "" && len(opts.Skills) > 0 {
 		if skills := jstext.Trim(FormatSkillsForPromptWithTool(opts.Skills, skillFileReadTool)); skills != "" {

@@ -1127,8 +1127,9 @@ func gitignoreMatchPath(pattern string, anchored bool, path string) bool {
 }
 
 // SkillFileReadTool names the tool the skills block tells the model to use to
-// load a skill file (pi skills.ts `fileReadTool: "read" | "bash"`). The zero
-// value is SkillFileReadToolRead, pi's default argument.
+// load a skill file (pi skills.ts `fileReadTool: "read" | "bash" |
+// "indirect"`). The zero value reads as SkillFileReadToolRead, pi's default
+// argument.
 type SkillFileReadTool string
 
 const (
@@ -1137,6 +1138,9 @@ const (
 	// SkillFileReadToolBash points the model at bash, for tool sets that have
 	// no read tool (upstream 1d6dbf9e3).
 	SkillFileReadToolBash SkillFileReadTool = "bash"
+	// SkillFileReadToolIndirect names no tool, for a reader that is reachable
+	// only through another tool (upstream c30840c2e).
+	SkillFileReadToolIndirect SkillFileReadTool = "indirect"
 )
 
 // FormatSkillsForPrompt renders visible skills as the Agent Skills XML block,
@@ -1147,9 +1151,9 @@ func FormatSkillsForPrompt(skills []Skill) string {
 }
 
 // FormatSkillsForPromptWithTool renders visible skills as the Agent Skills XML
-// block, naming fileReadTool as the way to load a skill's file. Any value
-// other than SkillFileReadToolBash reads as "read"; pi's union has no third
-// member, so the zero value stays on its default arm.
+// block, naming fileReadTool as the way to load a skill's file. The zero value
+// is pi's default argument, "read"; any value other than read and bash takes
+// pi's last arm, the indirect hint that names no tool.
 func FormatSkillsForPromptWithTool(skills []Skill, fileReadTool SkillFileReadTool) string {
 	var visible []Skill
 	for _, s := range skills {
@@ -1160,9 +1164,14 @@ func FormatSkillsForPromptWithTool(skills []Skill, fileReadTool SkillFileReadToo
 	if len(visible) == 0 {
 		return ""
 	}
-	loadInstruction := "Use the read tool to load a skill's file when the task matches its description."
-	if fileReadTool == SkillFileReadToolBash {
+	var loadInstruction string
+	switch fileReadTool {
+	case "", SkillFileReadToolRead:
+		loadInstruction = "Use the read tool to load a skill's file when the task matches its description."
+	case SkillFileReadToolBash:
 		loadInstruction = "Use bash to load a skill's file when the task matches its description."
+	default:
+		loadInstruction = "Load a skill's file when the task matches its description."
 	}
 	lines := []string{
 		"\n\nThe following skills provide specialized instructions for specific tasks.",
