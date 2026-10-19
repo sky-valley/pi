@@ -3,16 +3,17 @@
 // generator (internal/gendaemons) and for the test that fails when the
 // embedded daemons are stale.
 //
-// Builds are reproducible: -trimpath, no VCS stamp, no build id, cgo off, and
-// the env module's own go.mod (GOWORK=off), so the same source and toolchain
-// give the same bytes, and the SHA-256 that names a deployed daemon is
-// stable.
+// Builds are reproducible: -trimpath, no VCS stamp, no build id, cgo off, the
+// env module's own go.mod (GOWORK=off), and a pinned go environment (see
+// pinned), so the same source and toolchain give the same bytes whoever
+// builds them, and the SHA-256 that names a deployed daemon is stable.
 package daemonsource
 
 import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -49,8 +50,27 @@ var Targets = []Target{
 // buildFlags are the flags of every daemon build.
 var buildFlags = []string{"-trimpath", "-buildvcs=false", "-ldflags=-s -w -buildid="}
 
+// pinned is the go environment of every go command here, over the caller's:
+// no go env file (go env -w could set GOFLAGS or GOEXPERIMENT; an empty
+// variable does not override the file), no workspace, no cgo, the baseline
+// instruction sets (x86-64-v1 and ARMv8.0 run on every machine of their
+// architecture), the toolchain's default experiments, no FIPS 140 module, and
+// the linker's own choice of linking.
+var pinned = []string{
+	"GOENV=off", "GOWORK=off", "CGO_ENABLED=0", "GOFLAGS=", "GOAMD64=v1", "GOARM64=v8.0", "GOEXPERIMENT=",
+	"GOFIPS140=off", "GO_EXTLINK_ENABLED=",
+}
+
+// callerSettings are the caller's go settings that decide where the
+// toolchain and modules come from, not what is built: GOENV=off would drop
+// those set with go env -w, so they are passed on.
+var callerSettings = []string{
+	"GOTOOLCHAIN", "GOPATH", "GOMODCACHE", "GOCACHE", "GOPROXY", "GOPRIVATE", "GONOPROXY", "GONOSUMDB", "GOSUMDB",
+	"GOINSECURE", "GOAUTH", "GOVCS",
+}
+
 // Recipe is how the daemons are built, part of the source fingerprint.
-var Recipe = "GOWORK=off CGO_ENABLED=0 go build " + strings.Join(buildFlags, " ") + " ./cmd/pi-env"
+var Recipe = strings.Join(pinned, " ") + " go build " + strings.Join(buildFlags, " ") + " ./cmd/pi-env"
 
 // Manifest is env/bin/manifest.json: what the embedded daemons were built
 // from and what they are.
@@ -69,12 +89,32 @@ type Daemon struct {
 	Size   int    `json:"size"`
 }
 
-// goCommand runs the go command in the env module without a workspace.
-func goCommand(moduleDir string, environment []string, args ...string) *exec.Cmd {
+// goCommand runs the go command in the env module with the caller's
+// toolchain and module settings and the pinned environment.
+func goCommand(moduleDir string, environment []string, args ...string) (*exec.Cmd, error) {
+	settings := exec.Command("go", append([]string{"env", "-json"}, callerSettings...)...)
+	settings.Dir = moduleDir
+	settings.Env = append(os.Environ(), "GOWORK=off")
+	var stderr bytes.Buffer
+	settings.Stderr = &stderr
+	out, err := settings.Output()
+	var values map[string]string
+	if err == nil {
+		err = json.Unmarshal(out, &values)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("reading the go settings (go env -json): %v\n%s", err, stderr.String())
+	}
 	cmd := exec.Command("go", args...)
 	cmd.Dir = moduleDir
-	cmd.Env = append(os.Environ(), append([]string{"GOWORK=off", "CGO_ENABLED=0", "GOFLAGS="}, environment...)...)
-	return cmd
+	cmd.Env = os.Environ()
+	for _, key := range callerSettings {
+		if values[key] != "" {
+			cmd.Env = append(cmd.Env, key+"="+values[key])
+		}
+	}
+	cmd.Env = append(append(cmd.Env, pinned...), environment...)
+	return cmd, nil
 }
 
 // Build builds the daemon for t into out.
@@ -84,7 +124,10 @@ func Build(moduleDir string, t Target, out string) error {
 		args = append(args, "-tags", t.Tags)
 	}
 	args = append(args, "-o", out, "./cmd/pi-env")
-	cmd := goCommand(moduleDir, []string{"GOOS=" + t.GOOS, "GOARCH=" + t.GOARCH}, args...)
+	cmd, err := goCommand(moduleDir, []string{"GOOS=" + t.GOOS, "GOARCH=" + t.GOARCH}, args...)
+	if err != nil {
+		return err
+	}
 	var stderr bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &stderr, &stderr
 	if err := cmd.Run(); err != nil {
@@ -95,7 +138,11 @@ func Build(moduleDir string, t Target, out string) error {
 
 // GoVersion is the toolchain the go command uses.
 func GoVersion(moduleDir string) (string, error) {
-	out, err := goCommand(moduleDir, nil, "env", "GOVERSION").Output()
+	cmd, err := goCommand(moduleDir, nil, "env", "GOVERSION")
+	if err != nil {
+		return "", err
+	}
+	out, err := cmd.Output()
 	if err != nil {
 		return "", fmt.Errorf("go env GOVERSION: %v", err)
 	}
@@ -108,7 +155,11 @@ func GoVersion(moduleDir string) (string, error) {
 // is not part of it: another Go version builds other bytes from the same
 // source, and the manifest records which one built the embedded daemons.
 func Digest(moduleDir string) (string, error) {
-	root, err := goCommand(moduleDir, nil, "list", "-m", "-f", "{{.Dir}}").Output()
+	list, err := goCommand(moduleDir, nil, "list", "-m", "-f", "{{.Dir}}")
+	if err != nil {
+		return "", err
+	}
+	root, err := list.Output()
 	if err != nil {
 		return "", fmt.Errorf("go list -m: %v", err)
 	}
@@ -122,7 +173,10 @@ func Digest(moduleDir string) (string, error) {
 		if t.Tags != "" {
 			args = append(args, "-tags", t.Tags)
 		}
-		cmd := goCommand(moduleDir, []string{"GOOS=" + t.GOOS, "GOARCH=" + t.GOARCH}, append(args, "./cmd/pi-env")...)
+		cmd, err := goCommand(moduleDir, []string{"GOOS=" + t.GOOS, "GOARCH=" + t.GOARCH}, append(args, "./cmd/pi-env")...)
+		if err != nil {
+			return "", err
+		}
 		var stderr bytes.Buffer
 		cmd.Stderr = &stderr
 		out, err := cmd.Output()

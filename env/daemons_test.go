@@ -71,6 +71,45 @@ func TestEmbeddedDaemonsRebuildIdentically(t *testing.T) {
 	}
 }
 
+// TestDaemonBuildsIgnoreTheCallersGoEnvironment: the embedded daemons must
+// not depend on who runs go generate. A GOAMD64 or GOARM64 level, or a go env
+// file (go env -w) with GOFLAGS or GOEXPERIMENT, must give the same source
+// digest and the same bytes; a daemon built for x86-64-v3 would not run on
+// older machines.
+func TestDaemonBuildsIgnoreTheCallersGoEnvironment(t *testing.T) {
+	requireGo(t)
+	manifest := readManifest(t)
+	version, err := daemonsource.GoVersion(".")
+	mustDo(t, err)
+	if version != manifest.Go {
+		t.Skipf("the embedded daemons were built with %s, this is %s", manifest.Go, version)
+	}
+	goenv := filepath.Join(t.TempDir(), "env")
+	mustDo(t, os.WriteFile(goenv, []byte("GOFLAGS=-gcflags=all=-N\nGOEXPERIMENT=nogreenteagc\n"), 0o600))
+	t.Setenv("GOENV", goenv)
+	t.Setenv("GOAMD64", "v3")
+	t.Setenv("GOARM64", "v9.0")
+	t.Setenv("GOFLAGS", "")
+	t.Setenv("GOEXPERIMENT", "")
+	digest, err := daemonsource.Digest(".")
+	mustDo(t, err)
+	if digest != manifest.Source {
+		t.Errorf("source digest %.12s with the caller's go environment, manifest %.12s", digest, manifest.Source)
+	}
+	for _, target := range daemonsource.Targets {
+		if target.Platform != "linux" {
+			continue
+		}
+		out := filepath.Join(t.TempDir(), target.Name())
+		mustDo(t, daemonsource.Build(".", target, out))
+		binary, err := os.ReadFile(out)
+		mustDo(t, err)
+		if sum := sha256.Sum256(binary); hex.EncodeToString(sum[:]) != manifest.Daemons[target.Name()].SHA256 {
+			t.Errorf("%s built with the caller's go environment differs from the embedded one", target.Name())
+		}
+	}
+}
+
 func TestEveryEmbeddedDaemonUnpacksToItsManifestEntry(t *testing.T) {
 	manifest := readManifest(t)
 	if len(manifest.Daemons) != len(daemonsource.Targets) {
