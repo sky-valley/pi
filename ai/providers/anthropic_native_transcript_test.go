@@ -14,16 +14,17 @@ import (
 
 // Anthropic models that accept system messages and tool changes
 // mid-conversation get later system messages in place and tool changes as
-// tool_removal/tool_addition blocks (upstream 9e05370b2). The first three tests
-// transliterate the anthropic cases of
-// packages/ai/test/transcript-tool-changes.test.ts at the sha (the fourth,
-// "folds … without native support", is TestFoldsAnthropicUpdatesInto…); the
-// full request bodies are pi's, captured under node at 9e05370b2 by
-// testdata/transcript/capture-anthropic-native.mts.
+// tool_removal/tool_addition blocks (upstream 9e05370b2), each later tool
+// defined inline (upstream b271b0a52). The first four tests transliterate the
+// anthropic cases of packages/ai/test/transcript-tool-changes.test.ts at
+// b271b0a52 (the fifth, "folds … without native support", is
+// TestFoldsAnthropicUpdatesInto…); the full request bodies are pi's, captured
+// under node at b271b0a52 by testdata/transcript/capture-anthropic-native.mts
+// (at b271b0a52^ it reproduces the 9e05370b2 capture this file replaced).
 
-const anthropicNativeCaptureFile = "testdata/transcript/anthropic-native-9e05370b2.json"
+const anthropicNativeCaptureFile = "testdata/transcript/anthropic-native-b271b0a52.json"
 
-const wantToolChangesBeta = "mid-conversation-tool-changes-2026-07-01"
+const wantToolChangesBeta = "inline-tools-2026-09-15"
 
 // anthropicNativeModel is the suite's anthropicNativeModel.
 func anthropicNativeModel() *ai.Model {
@@ -126,30 +127,31 @@ func TestSendsAnthropicUpdatesAndToolChangesInNativeSystemMessages(t *testing.T)
 	if want := []string{"base prompt\n\n<rules>\nold rules\n</rules>\n\n<docs>\nread docs\n</docs>"}; !slices.Equal(system, want) {
 		t.Fatalf("system = %q, want %q", system, want)
 	}
-	// Initial tools stay active and carry the cache breakpoint; the placeholder
-	// and every later declaration are deferred; the removed tool stays declared.
+	if betas := payloadBetas(payload); slices.Contains(betas, "mid-conversation-tool-changes-2026-07-01") {
+		t.Fatalf("betas = %v, must not carry the retired mid-conversation-tool-changes beta", betas)
+	}
+	// The top-level list holds only the initial tools (with the cache breakpoint)
+	// and the deferred placeholder; later tools never appear there.
 	tools := jsonItems(payload["tools"])
 	var names []string
 	for _, tool := range tools {
 		name, _ := tool["name"].(string)
 		names = append(names, name)
 	}
-	if want := []string{"base_tool", "__pi_deferred_placeholder__", "late_tool"}; !slices.Equal(names, want) {
+	if want := []string{"base_tool", "__pi_deferred_placeholder__"}; !slices.Equal(names, want) {
 		t.Fatalf("tools = %v, want %v", names, want)
 	}
 	if cc, _ := tools[0]["cache_control"].(map[string]any); cc["type"] != "ephemeral" {
 		t.Fatalf("tools[0].cache_control = %v, want {type: ephemeral}", tools[0]["cache_control"])
 	}
-	if tools[1]["defer_loading"] != true || tools[2]["defer_loading"] != true {
-		t.Fatalf("tools[1..2].defer_loading = %v, %v, want true", tools[1]["defer_loading"], tools[2]["defer_loading"])
+	if tools[1]["defer_loading"] != true {
+		t.Fatalf("tools[1].defer_loading = %v, want true", tools[1]["defer_loading"])
 	}
 	if _, ok := tools[0]["defer_loading"]; ok {
 		t.Fatalf("tools[0].defer_loading = %v, want undefined", tools[0]["defer_loading"])
 	}
-	for _, i := range []int{1, 2} {
-		if _, ok := tools[i]["cache_control"]; ok {
-			t.Fatalf("tools[%d].cache_control = %v, want undefined", i, tools[i]["cache_control"])
-		}
+	if _, ok := tools[1]["cache_control"]; ok {
+		t.Fatalf("tools[1].cache_control = %v, want undefined", tools[1]["cache_control"])
 	}
 	messages := jsonItems(payload["messages"])
 	if len(messages) == 0 {
@@ -160,8 +162,26 @@ func TestSendsAnthropicUpdatesAndToolChangesInNativeSystemMessages(t *testing.T)
 	if update["role"] != "system" || len(content) != 3 ||
 		content[0]["type"] != "text" ||
 		content[1]["type"] != "tool_removal" || toolReferenceName(content[1]) != "base_tool" ||
-		content[2]["type"] != "tool_addition" || toolReferenceName(content[2]) != "late_tool" {
-		t.Fatalf("last message = %v, want a system message [text, tool_removal base_tool, tool_addition late_tool]", update)
+		content[2]["type"] != "tool_addition" {
+		t.Fatalf("last message = %v, want a system message [text, tool_removal base_tool, tool_addition]", update)
+	}
+	if ref, _ := content[1]["tool"].(map[string]any); ref["type"] != "tool_reference" {
+		t.Fatalf("tool_removal.tool = %v, want a tool_reference", content[1]["tool"])
+	}
+	// The addition defines late_tool by value; cache control goes on the block,
+	// never on the inline definition, and nothing is deferred.
+	addition, _ := content[2]["tool"].(map[string]any)
+	definition, _ := addition["definition"].(map[string]any)
+	if addition["type"] != "tool_definition" || definition["name"] != "late_tool" || definition["description"] != "late_tool tool" {
+		t.Fatalf("tool_addition.tool = %v, want a tool_definition of late_tool", addition)
+	}
+	if cc, _ := content[2]["cache_control"].(map[string]any); cc["type"] != "ephemeral" {
+		t.Fatalf("tool_addition.cache_control = %v, want {type: ephemeral}", content[2]["cache_control"])
+	}
+	for _, key := range []string{"cache_control", "defer_loading"} {
+		if _, ok := definition[key]; ok {
+			t.Fatalf("definition.%s = %v, want undefined", key, definition[key])
+		}
 	}
 	text, _ := content[0]["text"].(string)
 	for _, want := range []string{"updated guidance", "<rules>\nnew rules\n</rules>", `Removed system prompt section "docs"`} {
@@ -184,61 +204,95 @@ func TestSendsAnthropicUpdatesAndToolChangesInNativeSystemMessages(t *testing.T)
 	}
 }
 
-// fallbackToolContexts are the suite's two histories native tool changes
-// cannot express.
-func fallbackToolContexts() map[string]ai.Context {
+// redefinitionContext is the suite's same-name redefinition: the update
+// removes base_tool and re-adds it with a new description.
+func redefinitionContext() ai.Context {
+	baseTool := transcriptTool("base_tool")
+	redefinedTool := baseTool
+	redefinedTool.Description = "changed"
+	leading := ai.NewSystemText("base prompt", 0)
+	leading.ToolsAdded = []ai.Tool{baseTool}
+	redefinition := ai.NewSystemText("", 2)
+	redefinition.ToolsRemoved = []ai.ToolReference{{Name: "base_tool"}}
+	redefinition.ToolsAdded = []ai.Tool{redefinedTool}
+	return ai.Context{Messages: []ai.Message{leading, ai.NewUserText("before", 1), redefinition}}
+}
+
+// nativeCaptureFallbackContexts are the capture's redefinition and
+// fallbackNoInitialTools: the two histories that fell back at 9e05370b2, with
+// no user message. Since b271b0a52 only the second still falls back.
+func nativeCaptureFallbackContexts() (redefinition, noInitialTool ai.Context) {
 	baseTool := transcriptTool("base_tool")
 	redefinedTool := baseTool
 	redefinedTool.Description = "changed"
 
-	// Same-name redefinition: blocks reference tools by name only.
 	leading := ai.NewSystemText("base prompt", 0)
 	leading.ToolsAdded = []ai.Tool{baseTool}
-	redefinition := ai.NewSystemText("updated guidance", 2)
-	redefinition.ToolsRemoved = []ai.ToolReference{{Name: "base_tool"}}
-	redefinition.ToolsAdded = []ai.Tool{redefinedTool}
+	update := ai.NewSystemText("updated guidance", 2)
+	update.ToolsRemoved = []ai.ToolReference{{Name: "base_tool"}}
+	update.ToolsAdded = []ai.Tool{redefinedTool}
 
-	// No initial tool: Anthropic rejects an all-deferred tool list.
-	untooled := ai.NewSystemText("base prompt", 0)
 	addition := ai.NewSystemText("updated guidance", 2)
 	addition.ToolsAdded = []ai.Tool{redefinedTool}
+	return ai.Context{Messages: []ai.Message{leading, update}},
+		ai.Context{Messages: []ai.Message{ai.NewSystemText("base prompt", 0), addition}}
+}
 
-	return map[string]ai.Context{
-		"fallbackRedefinition":   {Messages: []ai.Message{leading, redefinition}},
-		"fallbackNoInitialTools": {Messages: []ai.Message{untooled, addition}},
+func TestRedefinesAnAnthropicToolByValueUnderTheSameName(t *testing.T) {
+	payload := payloadJSON(t, captureStreamSimplePayload(t, anthropicNativeModel(), redefinitionContext()))
+	if betas := payloadBetas(payload); !slices.Contains(betas, wantToolChangesBeta) {
+		t.Fatalf("betas = %v, want %s", betas, wantToolChangesBeta)
+	}
+	// The top-level declaration keeps the original definition, so the cached
+	// prefix survives.
+	tools := jsonItems(payload["tools"])
+	if len(tools) != 2 || tools[0]["name"] != "base_tool" || tools[0]["description"] != "base_tool tool" ||
+		tools[1]["name"] != "__pi_deferred_placeholder__" {
+		t.Fatalf("tools = %v, want [base_tool (base_tool tool), __pi_deferred_placeholder__]", tools)
+	}
+	// The new definition replaces the old one in place; no removal block is
+	// sent for it.
+	messages := jsonItems(payload["messages"])
+	last := messages[len(messages)-1]
+	content := jsonItems(last["content"])
+	addition, _ := content[0]["tool"].(map[string]any)
+	definition, _ := addition["definition"].(map[string]any)
+	if last["role"] != "system" || len(content) != 1 || content[0]["type"] != "tool_addition" ||
+		addition["type"] != "tool_definition" || definition["name"] != "base_tool" || definition["description"] != "changed" {
+		t.Fatalf("last message = %v, want a system message [tool_addition defining base_tool (changed)]", last)
 	}
 }
 
-func TestSendsTheCurrentAnthropicToolListWhenNativeToolChangesCannotExpressTheHistory(t *testing.T) {
-	for name, req := range fallbackToolContexts() {
-		t.Run(name, func(t *testing.T) {
-			payload := payloadJSON(t, captureStreamSimplePayload(t, anthropicNativeModel(), req))
-			if betas := payloadBetas(payload); slices.Contains(betas, wantToolChangesBeta) {
-				t.Fatalf("betas = %v, must not carry %s", betas, wantToolChangesBeta)
-			}
-			tools := jsonItems(payload["tools"])
-			if len(tools) != 1 || tools[0]["name"] != "base_tool" || tools[0]["description"] != "changed" {
-				t.Fatalf("tools = %v, want [base_tool (changed)]", tools)
-			}
-			if cc, _ := tools[0]["cache_control"].(map[string]any); cc["type"] != "ephemeral" {
-				t.Fatalf("tools[0].cache_control = %v, want {type: ephemeral}", tools[0]["cache_control"])
-			}
-			if _, ok := tools[0]["defer_loading"]; ok {
-				t.Fatalf("tools[0].defer_loading = %v, want undefined", tools[0]["defer_loading"])
-			}
-			messages := jsonItems(payload["messages"])
-			if len(messages) == 0 {
-				t.Fatalf("messages = [], want the update as a system message")
-			}
-			var kinds []string
-			for _, block := range jsonItems(messages[len(messages)-1]["content"]) {
-				kind, _ := block["type"].(string)
-				kinds = append(kinds, kind)
-			}
-			if !slices.Equal(kinds, []string{"text"}) {
-				t.Fatalf("last message block types = %v, want [text]", kinds)
-			}
-		})
+// Anthropic rejects a tool list where every tool (here: the placeholder) is
+// deferred, so a history without an initial tool sends the current list.
+func TestSendsTheCurrentAnthropicToolListWithoutAnInitialTool(t *testing.T) {
+	leading := ai.NewSystemText("base prompt", 0)
+	update := ai.NewSystemText("updated guidance", 2)
+	update.ToolsAdded = []ai.Tool{transcriptTool("late_tool")}
+	req := ai.Context{Messages: []ai.Message{leading, ai.NewUserText("before", 1), update}}
+
+	payload := payloadJSON(t, captureStreamSimplePayload(t, anthropicNativeModel(), req))
+	if betas := payloadBetas(payload); slices.Contains(betas, wantToolChangesBeta) {
+		t.Fatalf("betas = %v, must not carry %s", betas, wantToolChangesBeta)
+	}
+	tools := jsonItems(payload["tools"])
+	if len(tools) != 1 || tools[0]["name"] != "late_tool" {
+		t.Fatalf("tools = %v, want [late_tool]", tools)
+	}
+	if cc, _ := tools[0]["cache_control"].(map[string]any); cc["type"] != "ephemeral" {
+		t.Fatalf("tools[0].cache_control = %v, want {type: ephemeral}", tools[0]["cache_control"])
+	}
+	if _, ok := tools[0]["defer_loading"]; ok {
+		t.Fatalf("tools[0].defer_loading = %v, want undefined", tools[0]["defer_loading"])
+	}
+	messages := jsonItems(payload["messages"])
+	var kinds []string
+	for _, block := range jsonItems(messages[len(messages)-1]["content"]) {
+		kind, _ := block["type"].(string)
+		kinds = append(kinds, kind)
+	}
+	if !slices.Equal(kinds, []string{"text"}) {
+		t.Fatalf("last message block types = %v, want [text]", kinds)
 	}
 }
 
@@ -434,7 +488,7 @@ func TestAnthropicNativeRequestBodies(t *testing.T) {
 	configuredBetas := anthropicNativeModel()
 	configuredBetas.Headers = ai.ProviderHeaders{"anthropic-beta": foldStr("x-beta, x-beta ,y-beta")}
 	full := transcriptChangesContext()
-	fallbacks := fallbackToolContexts()
+	captureRedefinition, captureNoInitialTool := nativeCaptureFallbackContexts()
 
 	cases := []struct {
 		key    string
@@ -447,8 +501,8 @@ func TestAnthropicNativeRequestBodies(t *testing.T) {
 		{"nativeOAuth", native, anthropicNativeOAuthContext(), "sk-ant-oat-test"},
 		{"nativeEffort", effort, anthropicNativeEffortContext(), "test-key"},
 		{"systemMessagesOnly", systemOnly, full, "test-key"},
-		{"fallbackRedefinition", native, fallbacks["fallbackRedefinition"], "test-key"},
-		{"fallbackNoInitialTools", native, fallbacks["fallbackNoInitialTools"], "test-key"},
+		{"redefinition", native, captureRedefinition, "test-key"},
+		{"fallbackNoInitialTools", native, captureNoInitialTool, "test-key"},
 		{"userContentForms", plain, anthropicUserContentFormsContext(), "test-key"},
 		{"nativeSurrogates", native, anthropicNativeSurrogateContext(), "test-key"},
 		{"systemMessagesOnlyToolsOnlyUpdate", systemOnly, anthropicToolsOnlyUpdateContext(true), "test-key"},

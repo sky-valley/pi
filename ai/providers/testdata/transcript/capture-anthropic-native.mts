@@ -86,9 +86,11 @@ const context = {
 		},
 	],
 };
-// The suite's two fallback contexts.
+// The suite's two fallback contexts at 9e05370b2. Since b271b0a52 the
+// redefinition is sent natively (the new definition inline, no removal for the
+// re-added name); only the history without an initial tool still falls back.
 const redefinedTool = { ...baseTool, description: "changed" };
-const fallbackRedefinition = {
+const redefinition = {
 	messages: [
 		{ role: "system", content: "base prompt", toolsAdded: [baseTool], timestamp: 0 },
 		{
@@ -108,7 +110,8 @@ const fallbackNoInitialTools = {
 };
 
 // OAuth: tool names Claude Code knows are renamed on the wire, in the tool list,
-// in tool_use blocks, and in tool_removal/tool_addition references. The update
+// in tool_use blocks, in tool_removal references and in the inline definitions
+// of tool_addition blocks. The update
 // lands between a tool call and its result, so transformMessages holds it past
 // the result and convertMessages holds it again until the end of the
 // transcript, where it follows the last user message.
@@ -313,7 +316,7 @@ const out = {
 		{ ...nativeModel, compat: { supportsMidConvoSystemMessages: true } },
 		context,
 	),
-	fallbackRedefinition: await capturePayload(nativeModel, fallbackRedefinition),
+	redefinition: await capturePayload(nativeModel, redefinition),
 	fallbackNoInitialTools: await capturePayload(nativeModel, fallbackNoInitialTools),
 	userContentForms: await capturePayload(plainModel, userContentForms),
 	nativeSurrogates: await capturePayload(nativeModel, surrogateContext),
@@ -332,7 +335,7 @@ const out = {
 	nativeEmptyAssistant: await capturePayload(nativeModel, emptyAssistantContext),
 	userStringSurrogates: await capturePayload(plainModel, userStringSurrogates),
 	// A configured anthropic-beta header replaces the computed beta list, so the
-	// tool-changes beta is not added, while the native blocks are still sent.
+	// inline-tools beta is not added, while the native blocks are still sent.
 	nativeConfiguredBetaHeader: await capturePayload(
 		{ ...nativeModel, headers: { "anthropic-beta": "x-beta, x-beta ,y-beta" } },
 		context,

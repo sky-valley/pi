@@ -296,7 +296,7 @@ func TestAnthropicBetasHeaderBeatsConsumerSpelling(t *testing.T) {
 // list with "," in that order, so the header is an ordered string rather than a
 // set. Only a request that arranges ALL of them at once pins the OAuth pair's
 // position, which is first, and the native tool-changes beta's, which is last
-// (upstream 9e05370b2).
+// (upstream 9e05370b2; inline-tools since b271b0a52).
 func TestAnthropicBetaOrderAcrossEverySource(t *testing.T) {
 	model := anthropicMidConvoModel()
 	model.Compat = json.RawMessage(`{"supportsMidConvoEffort":true,"supportsEagerToolInputStreaming":false,
@@ -314,7 +314,7 @@ func TestAnthropicBetaOrderAcrossEverySource(t *testing.T) {
 		interleavedThinkingBeta,
 		serverSideFallbackBeta,
 		midConvoOutputConfigBeta, thinkingBindingBeta,
-		"mid-conversation-tool-changes-2026-07-01",
+		"inline-tools-2026-09-15",
 	}
 	if got := bodyStrings(t, params, "betas"); !reflect.DeepEqual(got, want) {
 		t.Fatalf("betas = %#v, want %#v", got, want)

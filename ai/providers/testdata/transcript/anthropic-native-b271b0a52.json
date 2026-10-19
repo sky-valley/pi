@@ -1,5 +1,5 @@
 {
-	"sha": "9e05370b2",
+	"sha": "b271b0a52",
 	"native": {
 		"model": "claude-opus-5",
 		"messages": [
@@ -24,8 +24,17 @@
 					{
 						"type": "tool_addition",
 						"tool": {
-							"type": "tool_reference",
-							"name": "late_tool"
+							"type": "tool_definition",
+							"definition": {
+								"name": "late_tool",
+								"description": "late_tool tool",
+								"eager_input_streaming": true,
+								"input_schema": {
+									"type": "object",
+									"properties": {},
+									"required": []
+								}
+							}
 						},
 						"cache_control": {
 							"type": "ephemeral"
@@ -37,7 +46,7 @@
 		"max_tokens": 1000,
 		"stream": true,
 		"betas": [
-			"mid-conversation-tool-changes-2026-07-01"
+			"inline-tools-2026-09-15"
 		],
 		"system": [
 			{
@@ -71,17 +80,6 @@
 					"required": []
 				},
 				"defer_loading": true
-			},
-			{
-				"name": "late_tool",
-				"description": "late_tool tool",
-				"eager_input_streaming": true,
-				"input_schema": {
-					"type": "object",
-					"properties": {},
-					"required": []
-				},
-				"defer_loading": true
 			}
 		],
 		"thinking": {
@@ -107,7 +105,7 @@
 		"max_tokens": 1000,
 		"stream": true,
 		"betas": [
-			"mid-conversation-tool-changes-2026-07-01"
+			"inline-tools-2026-09-15"
 		],
 		"system": [
 			{
@@ -199,8 +197,17 @@
 					{
 						"type": "tool_addition",
 						"tool": {
-							"type": "tool_reference",
-							"name": "Bash"
+							"type": "tool_definition",
+							"definition": {
+								"name": "Bash",
+								"description": "bash tool",
+								"eager_input_streaming": true,
+								"input_schema": {
+									"type": "object",
+									"properties": {},
+									"required": []
+								}
+							}
 						},
 						"cache_control": {
 							"type": "ephemeral"
@@ -214,7 +221,7 @@
 		"betas": [
 			"claude-code-20250219",
 			"oauth-2025-04-20",
-			"mid-conversation-tool-changes-2026-07-01"
+			"inline-tools-2026-09-15"
 		],
 		"system": [
 			{
@@ -265,17 +272,6 @@
 					"required": []
 				},
 				"defer_loading": true
-			},
-			{
-				"name": "Bash",
-				"description": "bash tool",
-				"eager_input_streaming": true,
-				"input_schema": {
-					"type": "object",
-					"properties": {},
-					"required": []
-				},
-				"defer_loading": true
 			}
 		],
 		"thinking": {
@@ -299,8 +295,17 @@
 					{
 						"type": "tool_addition",
 						"tool": {
-							"type": "tool_reference",
-							"name": "late_tool"
+							"type": "tool_definition",
+							"definition": {
+								"name": "late_tool",
+								"description": "late_tool tool",
+								"eager_input_streaming": true,
+								"input_schema": {
+									"type": "object",
+									"properties": {},
+									"required": []
+								}
+							}
 						}
 					}
 				]
@@ -357,7 +362,7 @@
 		"betas": [
 			"mid-conversation-output-config-2026-07-01",
 			"thinking-binding-controls-2026-08-01",
-			"mid-conversation-tool-changes-2026-07-01"
+			"inline-tools-2026-09-15"
 		],
 		"system": [
 			{
@@ -385,17 +390,6 @@
 			{
 				"name": "__pi_deferred_placeholder__",
 				"description": "Reserved placeholder. Never available. Never call this.",
-				"input_schema": {
-					"type": "object",
-					"properties": {},
-					"required": []
-				},
-				"defer_loading": true
-			},
-			{
-				"name": "late_tool",
-				"description": "late_tool tool",
-				"eager_input_streaming": true,
 				"input_schema": {
 					"type": "object",
 					"properties": {},
@@ -465,7 +459,7 @@
 			"type": "disabled"
 		}
 	},
-	"fallbackRedefinition": {
+	"redefinition": {
 		"model": "claude-opus-5",
 		"messages": [
 			{
@@ -473,7 +467,23 @@
 				"content": [
 					{
 						"type": "text",
-						"text": "updated guidance",
+						"text": "updated guidance"
+					},
+					{
+						"type": "tool_addition",
+						"tool": {
+							"type": "tool_definition",
+							"definition": {
+								"name": "base_tool",
+								"description": "changed",
+								"eager_input_streaming": true,
+								"input_schema": {
+									"type": "object",
+									"properties": {},
+									"required": []
+								}
+							}
+						},
 						"cache_control": {
 							"type": "ephemeral"
 						}
@@ -483,6 +493,9 @@
 		],
 		"max_tokens": 1000,
 		"stream": true,
+		"betas": [
+			"inline-tools-2026-09-15"
+		],
 		"system": [
 			{
 				"type": "text",
@@ -495,7 +508,7 @@
 		"tools": [
 			{
 				"name": "base_tool",
-				"description": "changed",
+				"description": "base_tool tool",
 				"eager_input_streaming": true,
 				"input_schema": {
 					"type": "object",
@@ -505,6 +518,16 @@
 				"cache_control": {
 					"type": "ephemeral"
 				}
+			},
+			{
+				"name": "__pi_deferred_placeholder__",
+				"description": "Reserved placeholder. Never available. Never call this.",
+				"input_schema": {
+					"type": "object",
+					"properties": {},
+					"required": []
+				},
+				"defer_loading": true
 			}
 		],
 		"thinking": {
@@ -636,8 +659,17 @@
 					{
 						"type": "tool_addition",
 						"tool": {
-							"type": "tool_reference",
-							"name": "late_tool"
+							"type": "tool_definition",
+							"definition": {
+								"name": "late_tool",
+								"description": "late_tool tool",
+								"eager_input_streaming": true,
+								"input_schema": {
+									"type": "object",
+									"properties": {},
+									"required": []
+								}
+							}
 						},
 						"cache_control": {
 							"type": "ephemeral"
@@ -649,7 +681,7 @@
 		"max_tokens": 1000,
 		"stream": true,
 		"betas": [
-			"mid-conversation-tool-changes-2026-07-01"
+			"inline-tools-2026-09-15"
 		],
 		"system": [
 			{
@@ -677,17 +709,6 @@
 			{
 				"name": "__pi_deferred_placeholder__",
 				"description": "Reserved placeholder. Never available. Never call this.",
-				"input_schema": {
-					"type": "object",
-					"properties": {},
-					"required": []
-				},
-				"defer_loading": true
-			},
-			{
-				"name": "late_tool",
-				"description": "late_tool tool",
-				"eager_input_streaming": true,
 				"input_schema": {
 					"type": "object",
 					"properties": {},
@@ -822,8 +843,17 @@
 					{
 						"type": "tool_addition",
 						"tool": {
-							"type": "tool_reference",
-							"name": "bash"
+							"type": "tool_definition",
+							"definition": {
+								"name": "bash",
+								"description": "bash tool",
+								"eager_input_streaming": true,
+								"input_schema": {
+									"type": "object",
+									"properties": {},
+									"required": []
+								}
+							}
 						},
 						"cache_control": {
 							"type": "ephemeral"
@@ -835,7 +865,7 @@
 		"max_tokens": 1000,
 		"stream": true,
 		"betas": [
-			"mid-conversation-tool-changes-2026-07-01"
+			"inline-tools-2026-09-15"
 		],
 		"system": [
 			{
@@ -863,17 +893,6 @@
 			{
 				"name": "__pi_deferred_placeholder__",
 				"description": "Reserved placeholder. Never available. Never call this.",
-				"input_schema": {
-					"type": "object",
-					"properties": {},
-					"required": []
-				},
-				"defer_loading": true
-			},
-			{
-				"name": "bash",
-				"description": "bash tool",
-				"eager_input_streaming": true,
 				"input_schema": {
 					"type": "object",
 					"properties": {},
@@ -910,8 +929,17 @@
 					{
 						"type": "tool_addition",
 						"tool": {
-							"type": "tool_reference",
-							"name": "late_tool"
+							"type": "tool_definition",
+							"definition": {
+								"name": "late_tool",
+								"description": "late_tool tool",
+								"eager_input_streaming": true,
+								"input_schema": {
+									"type": "object",
+									"properties": {},
+									"required": []
+								}
+							}
 						},
 						"cache_control": {
 							"type": "ephemeral"
@@ -923,7 +951,7 @@
 		"max_tokens": 1000,
 		"stream": true,
 		"betas": [
-			"mid-conversation-tool-changes-2026-07-01"
+			"inline-tools-2026-09-15"
 		],
 		"system": [
 			{
@@ -954,17 +982,6 @@
 					"required": []
 				},
 				"defer_loading": true
-			},
-			{
-				"name": "late_tool",
-				"description": "late_tool tool",
-				"eager_input_streaming": true,
-				"input_schema": {
-					"type": "object",
-					"properties": {},
-					"required": []
-				},
-				"defer_loading": true
 			}
 		],
 		"thinking": {
@@ -988,8 +1005,17 @@
 					{
 						"type": "tool_addition",
 						"tool": {
-							"type": "tool_reference",
-							"name": "late_tool"
+							"type": "tool_definition",
+							"definition": {
+								"name": "late_tool",
+								"description": "late_tool tool",
+								"eager_input_streaming": true,
+								"input_schema": {
+									"type": "object",
+									"properties": {},
+									"required": []
+								}
+							}
 						}
 					}
 				]
@@ -1010,7 +1036,7 @@
 		"max_tokens": 1000,
 		"stream": true,
 		"betas": [
-			"mid-conversation-tool-changes-2026-07-01"
+			"inline-tools-2026-09-15"
 		],
 		"system": [
 			{
@@ -1038,17 +1064,6 @@
 			{
 				"name": "__pi_deferred_placeholder__",
 				"description": "Reserved placeholder. Never available. Never call this.",
-				"input_schema": {
-					"type": "object",
-					"properties": {},
-					"required": []
-				},
-				"defer_loading": true
-			},
-			{
-				"name": "late_tool",
-				"description": "late_tool tool",
-				"eager_input_streaming": true,
 				"input_schema": {
 					"type": "object",
 					"properties": {},
@@ -1129,8 +1144,17 @@
 					{
 						"type": "tool_addition",
 						"tool": {
-							"type": "tool_reference",
-							"name": "late_tool"
+							"type": "tool_definition",
+							"definition": {
+								"name": "late_tool",
+								"description": "late_tool tool",
+								"eager_input_streaming": true,
+								"input_schema": {
+									"type": "object",
+									"properties": {},
+									"required": []
+								}
+							}
 						},
 						"cache_control": {
 							"type": "ephemeral"
@@ -1171,17 +1195,6 @@
 			{
 				"name": "__pi_deferred_placeholder__",
 				"description": "Reserved placeholder. Never available. Never call this.",
-				"input_schema": {
-					"type": "object",
-					"properties": {},
-					"required": []
-				},
-				"defer_loading": true
-			},
-			{
-				"name": "late_tool",
-				"description": "late_tool tool",
-				"eager_input_streaming": true,
 				"input_schema": {
 					"type": "object",
 					"properties": {},
