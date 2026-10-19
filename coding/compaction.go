@@ -18,7 +18,11 @@ import (
 // CompactionSettings configures automatic context-window compaction (port of
 // pi's CompactionSettings / DEFAULT_COMPACTION_SETTINGS).
 type CompactionSettings struct {
-	Enabled          bool
+	Enabled bool
+	// ReserveTokens is the headroom kept free of the context window: a
+	// context past ContextWindow-ReserveTokens compacts. It only decides when
+	// compaction starts; summary requests set no output limit of their own
+	// (upstream 6fcb48670).
 	ReserveTokens    int
 	KeepRecentTokens int
 	// SessionID, when set, is the routing session ID summarization requests
@@ -698,19 +702,19 @@ func (s *Session) compact(ctx context.Context, state *compactionState, messages 
 			historyResult = previous.summary
 		}
 		if len(history) > 0 {
-			hr, ok := s.generateSummary(ctx, history, settings.ReserveTokens, previousSummary, settings.SessionID)
+			hr, ok := s.generateSummary(ctx, history, previousSummary, settings.SessionID)
 			if !ok {
 				return current // summarization failed; keep current view
 			}
 			historyResult = hr
 		}
-		tp, ok := s.generateTurnPrefixSummary(ctx, turnPrefix, settings.ReserveTokens, settings.SessionID)
+		tp, ok := s.generateTurnPrefixSummary(ctx, turnPrefix, settings.SessionID)
 		if !ok {
 			return current
 		}
 		newSummary = historyResult + "\n\n---\n\n**Turn Context (split turn):**\n\n" + tp
 	} else {
-		ns, ok := s.generateSummary(ctx, history, settings.ReserveTokens, previousSummary, settings.SessionID)
+		ns, ok := s.generateSummary(ctx, history, previousSummary, settings.SessionID)
 		if !ok {
 			return current
 		}
@@ -776,8 +780,8 @@ func (s *Session) compact(ctx context.Context, state *compactionState, messages 
 // those messages (the non-split path of pi compact).
 // Branch-summary-style callers carry no routing session ID (pi generateSummary's
 // optional sessionId stays undefined for them), so each request gets a fresh one.
-func (s *Session) summarize(ctx context.Context, older []agent.AgentMessage, reserveTokens int) string {
-	text, ok := s.generateSummary(ctx, older, reserveTokens, "", "")
+func (s *Session) summarize(ctx context.Context, older []agent.AgentMessage) string {
+	text, ok := s.generateSummary(ctx, older, "", "")
 	if !ok {
 		return ""
 	}
@@ -789,12 +793,12 @@ func (s *Session) summarize(ctx context.Context, older []agent.AgentMessage, res
 // serialized to text, wrapped in <conversation>...</conversation> (followed by
 // <previous-summary>...</previous-summary> and the update prompt variant when a
 // previous summary is non-empty), and sent with the dedicated
-// SUMMARIZATION_SYSTEM_PROMPT and a capped maxTokens. Only this history request
+// SUMMARIZATION_SYSTEM_PROMPT. Only this history request
 // keeps the tag wrapper; a split turn's prefix is framed in Markdown (see
 // generateTurnPrefixSummary). Returns ok=false where pi fails the summarization
 // (stopReason "error" or "length"); an aborted response returns the text
 // produced so far, like pi.
-func (s *Session) generateSummary(ctx context.Context, older []agent.AgentMessage, reserveTokens int, previousSummary, sessionID string) (string, bool) {
+func (s *Session) generateSummary(ctx context.Context, older []agent.AgentMessage, previousSummary, sessionID string) (string, bool) {
 	conversationText := serializeConversation(messagesAsLlm(older))
 
 	promptText := "<conversation>\n" + conversationText + "\n</conversation>\n\n"
@@ -805,27 +809,18 @@ func (s *Session) generateSummary(ctx context.Context, older []agent.AgentMessag
 		promptText += summarizationPrompt
 	}
 
-	return s.completeSummarization(ctx, promptText, s.summaryMaxTokens(0.8, reserveTokens), sessionID)
+	return s.completeSummarization(ctx, promptText, sessionID)
 }
 
 // generateTurnPrefixSummary ports pi's generateTurnPrefixSummary: the prefix of
-// a split turn is summarized with the dedicated turn-prefix prompt and a smaller
-// (0.5 * reserve) token budget. The serialized prefix goes under a
+// a split turn is summarized with the dedicated turn-prefix prompt. The
+// serialized prefix goes under a
 // "# Conversation" heading and the prompt under "# Instructions" — not the
 // history request's <conversation> tags (pi #9652, upstream d192bd6dc).
-func (s *Session) generateTurnPrefixSummary(ctx context.Context, messages []agent.AgentMessage, reserveTokens int, sessionID string) (string, bool) {
+func (s *Session) generateTurnPrefixSummary(ctx context.Context, messages []agent.AgentMessage, sessionID string) (string, bool) {
 	conversationText := serializeConversation(messagesAsLlm(messages))
 	promptText := "# Conversation\n" + conversationText + "\n\n# Instructions\n" + turnPrefixSummarizationPrompt
-	return s.completeSummarization(ctx, promptText, s.summaryMaxTokens(0.5, reserveTokens), sessionID)
-}
-
-// summaryMaxTokens = min(floor(frac * reserveTokens), model.maxTokens if > 0).
-func (s *Session) summaryMaxTokens(frac float64, reserveTokens int) int {
-	maxTokens := int(math.Floor(frac * float64(reserveTokens)))
-	if s.Model != nil && s.Model.MaxTokens > 0 && s.Model.MaxTokens < maxTokens {
-		maxTokens = s.Model.MaxTokens
-	}
-	return maxTokens
+	return s.completeSummarization(ctx, promptText, sessionID)
 }
 
 // messagesAsLlm filters agent messages down to LLM roles (pi convertToLlm, which
@@ -893,11 +888,14 @@ func summarizationFailed(reason ai.StopReason) bool {
 // completeSummarization sends one summarization request (pi completeSummarization
 // + createSummarizationOptions): the session's API key, headers, and — when the
 // model supports reasoning and the session's thinking level is set and not off —
-// the thinking level are passed through. Returns ok=false where pi fails the
+// the thinking level are passed through. It sets no maxTokens (upstream
+// 6fcb48670): the provider sizes the output from the actual request, the
+// model's output limit reduced to fit the remaining context, as for normal
+// turns, so ReserveTokens only decides when compaction starts. Returns ok=false where pi fails the
 // summarization (see summarizationFailed); otherwise the response's text blocks
 // joined with "\n" (pi-ai contentText), which for an aborted response is the
 // text produced so far.
-func (s *Session) completeSummarization(ctx context.Context, promptText string, maxTokens int, sessionID string) (string, bool) {
+func (s *Session) completeSummarization(ctx context.Context, promptText, sessionID string) (string, bool) {
 	summarizationMessages := []ai.Message{ai.NewUserText(promptText, nowMillisCoding())}
 
 	// Avoid cache writes for one-off summaries (pi 9b3a2059): retention "none".
@@ -915,7 +913,6 @@ func (s *Session) completeSummarization(ctx context.Context, promptText string, 
 			APIKey:  s.apiKey,
 			Headers: s.Agent.Headers,
 		},
-		MaxTokens:      &maxTokens,
 		CacheRetention: ai.CacheNone,
 		SessionID:      sessionID,
 	}}

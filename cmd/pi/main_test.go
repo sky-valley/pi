@@ -16,10 +16,10 @@ import (
 // Resuming a session file resumes its compaction: the next compaction extends
 // the file's with the update prompt, its summary as <previous-summary>, as pi's
 // does. A resume that loaded only the messages would summarize the old summary
-// as a [User] turn under the initial prompt. The file is one pi 0.87.1 wrote
-// (coding/testdata/compaction/capture-resume.mts).
+// as a [User] turn under the initial prompt. The file is one pi wrote at
+// d2e7d8b7c (coding/testdata/compaction/capture-resume.mts).
 func TestResumeExtendsTheSessionsCompaction(t *testing.T) {
-	data, err := os.ReadFile("../../coding/testdata/compaction/resume-0.87.1.json")
+	data, err := os.ReadFile("../../coding/testdata/compaction/resume-d2e7d8b7c.json")
 	if err != nil {
 		t.Fatal(err)
 	}

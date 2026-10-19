@@ -549,22 +549,22 @@ func TestCompactionStaysCompactedDuringToolLoop(t *testing.T) {
 }
 
 // TestCompactionSplitTurnSummaries locks the TURN_PREFIX flow (pi compact): a
-// cut landing mid-turn produces a history summary (0.8*reserve budget) and a
-// turn-prefix summary (TURN_PREFIX prompt, 0.5*reserve budget) merged with pi's
-// exact separator.
+// cut landing mid-turn produces a history summary and a turn-prefix summary
+// (TURN_PREFIX prompt) merged with pi's exact separator. Neither request sets
+// maxTokens (upstream 6fcb48670).
 func TestCompactionSplitTurnSummaries(t *testing.T) {
 	sess, reg := newCompactionTestSession(t)
 
 	type call struct {
 		text      string
-		maxTokens int
+		maxTokens *int
 	}
 	var calls []call
 	step := func(text string) providers.FauxResponseStep {
 		return func(req ai.TranscriptContext, opts *ai.SimpleStreamOptions, st *providers.FauxState, m *ai.Model) *ai.AssistantMessage {
 			c := call{text: textOf(ai.WithoutInitialSystemMessage(req.Messages)[0].(ai.UserMessage).Content)}
-			if opts != nil && opts.MaxTokens != nil {
-				c.maxTokens = *opts.MaxTokens
+			if opts != nil {
+				c.maxTokens = opts.MaxTokens
 			}
 			calls = append(calls, c)
 			return providers.FauxAssistantMessage(ai.ContentList{ai.TextContent{Text: text}}, ai.StopStop)
@@ -583,19 +583,17 @@ func TestCompactionSplitTurnSummaries(t *testing.T) {
 	if len(calls) != 2 {
 		t.Fatalf("expected 2 summarization calls, got %d", len(calls))
 	}
-	// History request: initial prompt, 0.8 * reserve budget.
+	// History request: initial prompt; turn-prefix request: TURN_PREFIX prompt.
 	if !strings.HasSuffix(calls[0].text, summarizationPrompt) {
 		t.Fatal("history request must use the initial summarization prompt")
 	}
-	if calls[0].maxTokens != 160 { // floor(0.8*200)
-		t.Fatalf("history maxTokens = %d, want 160", calls[0].maxTokens)
-	}
-	// Turn-prefix request: TURN_PREFIX prompt, 0.5 * reserve budget.
 	if !strings.HasSuffix(calls[1].text, turnPrefixSummarizationPrompt) {
 		t.Fatal("turn-prefix request must use the turn-prefix prompt")
 	}
-	if calls[1].maxTokens != 100 { // floor(0.5*200)
-		t.Fatalf("turn-prefix maxTokens = %d, want 100", calls[1].maxTokens)
+	for i, c := range calls {
+		if c.maxTokens != nil {
+			t.Fatalf("request %d maxTokens = %d, want none", i+1, *c.maxTokens)
+		}
 	}
 
 	// Merged summary format (pi compact).
@@ -639,7 +637,7 @@ func TestCompactionRoutingSessionIDForwarded(t *testing.T) {
 	}
 
 	// Without a caller id, each request mints a fresh one.
-	sess.summarize(context.Background(), []agent.AgentMessage{ai.NewUserText("hi", 1)}, 16384)
+	sess.summarize(context.Background(), []agent.AgentMessage{ai.NewUserText("hi", 1)})
 	if len(sessionIDs) != 2 || sessionIDs[1] == "" || sessionIDs[1] == "routing-session-1" {
 		t.Fatalf("callers without a session id must get a fresh one, got %v", sessionIDs)
 	}
@@ -656,7 +654,7 @@ func TestSummaryTextBlocksJoinedWithNewline(t *testing.T) {
 			ai.TextContent{Text: "part two"},
 		}, ai.StopStop)),
 	})
-	got := sess.summarize(context.Background(), []agent.AgentMessage{ai.NewUserText("hi", 1)}, 16384)
+	got := sess.summarize(context.Background(), []agent.AgentMessage{ai.NewUserText("hi", 1)})
 	if got != "part one\npart two" {
 		t.Fatalf("text blocks not joined with newline: %q", got)
 	}
@@ -749,7 +747,7 @@ func TestSummarizationPassesReasoningAndHeaders(t *testing.T) {
 		Headers: ai.ProviderHeaders{"X-Parity": ai.HeaderValue("1")},
 	})
 
-	sess.summarize(context.Background(), []agent.AgentMessage{ai.NewUserText("hi", 1)}, 16384)
+	sess.summarize(context.Background(), []agent.AgentMessage{ai.NewUserText("hi", 1)})
 	if gotReasoning != ai.ThinkingMedium { // session default thinking level
 		t.Fatalf("reasoning level not passed: %q", gotReasoning)
 	}
@@ -759,7 +757,7 @@ func TestSummarizationPassesReasoningAndHeaders(t *testing.T) {
 
 	// thinkingLevel off => no reasoning option (pi: thinkingLevel !== "off").
 	sess.SetThinkingLevel(agent.ThinkOff)
-	sess.summarize(context.Background(), []agent.AgentMessage{ai.NewUserText("hi", 2)}, 16384)
+	sess.summarize(context.Background(), []agent.AgentMessage{ai.NewUserText("hi", 2)})
 	if gotReasoning != "" {
 		t.Fatalf("reasoning must be omitted when thinking level is off, got %q", gotReasoning)
 	}
@@ -773,7 +771,7 @@ func TestSummarizationAbortedReturnsPartialText(t *testing.T) {
 	reg.SetResponses([]providers.FauxResponseStep{
 		providers.FauxStatic(providers.FauxAssistantMessage(ai.ContentList{ai.TextContent{Text: "partial so far"}}, ai.StopAborted)),
 	})
-	got := sess.summarize(context.Background(), []agent.AgentMessage{ai.NewUserText("hi", 1)}, 16384)
+	got := sess.summarize(context.Background(), []agent.AgentMessage{ai.NewUserText("hi", 1)})
 	if got != "partial so far" {
 		t.Fatalf("aborted summarization should return partial text, got %q", got)
 	}
@@ -784,7 +782,7 @@ func TestSummarizationAbortedReturnsPartialText(t *testing.T) {
 			Content: ai.ContentList{ai.TextContent{Text: "junk"}}, StopReason: ai.StopError, ErrorMessage: "boom",
 		}),
 	})
-	if got := sess.summarize(context.Background(), []agent.AgentMessage{ai.NewUserText("hi", 2)}, 16384); got != "" {
+	if got := sess.summarize(context.Background(), []agent.AgentMessage{ai.NewUserText("hi", 2)}); got != "" {
 		t.Fatalf("error summarization must fail, got %q", got)
 	}
 }
@@ -803,7 +801,7 @@ func TestSummarizationLengthStopRejected(t *testing.T) {
 	}
 
 	lengthStopped()
-	if got := sess.summarize(context.Background(), []agent.AgentMessage{ai.NewUserText("hi", 1)}, 16384); got != "" {
+	if got := sess.summarize(context.Background(), []agent.AgentMessage{ai.NewUserText("hi", 1)}); got != "" {
 		t.Fatalf("length-stopped summarization must fail, got %q", got)
 	}
 

@@ -69,7 +69,7 @@ func TestSessionSummarizationRejectsNonChatModel(t *testing.T) {
 	sess := newTestSession(t, SessionOptions{Model: imageSessionModel(), Cwd: t.TempDir(), NoTools: NoToolsAll,
 		StreamFn: countingStream(&dispatches)})
 
-	if summary, ok := sess.completeSummarization(context.Background(), "summarize", 1000, "s-1"); ok {
+	if summary, ok := sess.completeSummarization(context.Background(), "summarize", "s-1"); ok {
 		t.Fatalf("summarization succeeded with %q, want it to fail on the chat assertion", summary)
 	}
 	if dispatches != 0 {
@@ -82,7 +82,7 @@ func TestSessionSummarizationRejectsNonChatModel(t *testing.T) {
 	chat.Type = ""
 	sess = newTestSession(t, SessionOptions{Model: &chat, Cwd: t.TempDir(), NoTools: NoToolsAll,
 		StreamFn: countingStream(&dispatches)})
-	if _, ok := sess.completeSummarization(context.Background(), "summarize", 1000, "s-1"); !ok {
+	if _, ok := sess.completeSummarization(context.Background(), "summarize", "s-1"); !ok {
 		t.Fatal("summarization over a chat model must succeed")
 	}
 	if dispatches != 1 {

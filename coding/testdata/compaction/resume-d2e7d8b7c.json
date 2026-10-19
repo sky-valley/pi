@@ -1,0 +1,772 @@
+{
+	"version": "d2e7d8b7c",
+	"reserveTokens": 2000,
+	"contextWindow": 2000,
+	"modelMaxTokens": 8192,
+	"scenarios": [
+		{
+			"name": "previous-summary-empty",
+			"file": "{\"type\":\"session\",\"version\":3,\"id\":\"01a154ec-a568-70f7-bede-eefa45de6be8\",\"timestamp\":\"2026-10-19T16:09:17.417Z\",\"cwd\":\"/tmp/capture-resume\"}\n{\"type\":\"message\",\"id\":\"d5b70b70\",\"parentId\":null,\"timestamp\":\"2026-10-19T16:09:17.422Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q1\"}],\"timestamp\":1789603200001}}\n{\"type\":\"message\",\"id\":\"525e5fdf\",\"parentId\":\"d5b70b70\",\"timestamp\":\"2026-10-19T16:09:17.422Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a1\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200002}}\n{\"type\":\"message\",\"id\":\"1a571fa6\",\"parentId\":\"525e5fdf\",\"timestamp\":\"2026-10-19T16:09:17.422Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q2\"}],\"timestamp\":1789603200003}}\n{\"type\":\"message\",\"id\":\"f567375c\",\"parentId\":\"1a571fa6\",\"timestamp\":\"2026-10-19T16:09:17.422Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a2\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200004}}\n{\"type\":\"compaction\",\"id\":\"ccb9370b\",\"parentId\":\"f567375c\",\"timestamp\":\"2026-10-19T16:09:17.422Z\",\"summary\":\"\",\"firstKeptEntryId\":\"1a571fa6\",\"tokensBefore\":100,\"details\":{\"readFiles\":[],\"modifiedFiles\":[]},\"fromHook\":false}\n{\"type\":\"message\",\"id\":\"9328f07b\",\"parentId\":\"ccb9370b\",\"timestamp\":\"2026-10-19T16:09:17.422Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q3\"}],\"timestamp\":1789603200005}}\n{\"type\":\"message\",\"id\":\"aa65e47c\",\"parentId\":\"9328f07b\",\"timestamp\":\"2026-10-19T16:09:17.422Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a3\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200006}}\n{\"type\":\"message\",\"id\":\"824459db\",\"parentId\":\"aa65e47c\",\"timestamp\":\"2026-10-19T16:09:17.422Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q4\"}],\"timestamp\":1789603200007}}\n",
+			"resumed": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\n\n</summary>",
+				"user:q2",
+				"assistant:a2",
+				"user:q3",
+				"assistant:a3",
+				"user:q4"
+			],
+			"previousSummary": "",
+			"requests": [
+				{
+					"systemPrompt": "You are a context summarization assistant. Your task is to read a conversation between a user and an AI assistant, then produce a structured summary following the exact format specified.\n\nDo NOT continue the conversation. Do NOT respond to any questions in the conversation. ONLY output the structured summary.",
+					"text": "<conversation>\n[User]: q2\n\n[Assistant]: a2\n\n[User]: q3\n\n[Assistant]: a3\n</conversation>\n\nThe messages above are a conversation to summarize. Create a structured context checkpoint summary that another LLM will use to continue the work.\n\nUse this EXACT format:\n\n## Goal\n[What is the user trying to accomplish? Can be multiple items if the session covers different tasks.]\n\n## Constraints & Preferences\n- [Any constraints, preferences, or requirements mentioned by user]\n- [Or \"(none)\" if none were mentioned]\n\n## Progress\n### Done\n- [x] [Completed tasks/changes]\n\n### In Progress\n- [ ] [Current work]\n\n### Blocked\n- [Issues preventing progress, if any]\n\n## Key Decisions\n- **[Decision]**: [Brief rationale]\n\n## Next Steps\n1. [Ordered list of what should happen next]\n\n## Critical Context\n- [Any data, examples, or references needed to continue]\n- [Or \"(none)\" if not applicable]\n\nKeep each section concise. Preserve exact file paths, function names, and error messages.",
+					"maxTokens": null
+				}
+			],
+			"summary": "SUMMARY 1",
+			"details": {
+				"readFiles": [],
+				"modifiedFiles": []
+			},
+			"compacted": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\nSUMMARY 1\n</summary>",
+				"user:q4"
+			]
+		},
+		{
+			"name": "previous-summary-with-files",
+			"file": "{\"type\":\"session\",\"version\":3,\"id\":\"01a154ec-a571-70f7-bede-eeff74dd15c1\",\"timestamp\":\"2026-10-19T16:09:17.425Z\",\"cwd\":\"/tmp/capture-resume\"}\n{\"type\":\"message\",\"id\":\"c2accb07\",\"parentId\":null,\"timestamp\":\"2026-10-19T16:09:17.425Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q1\"}],\"timestamp\":1789603200008}}\n{\"type\":\"message\",\"id\":\"c92631e7\",\"parentId\":\"c2accb07\",\"timestamp\":\"2026-10-19T16:09:17.425Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"reading\"},{\"type\":\"toolCall\",\"id\":\"r1\",\"name\":\"read\",\"arguments\":{\"path\":\"/a/old.go\"}}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"toolUse\",\"timestamp\":1789603200009}}\n{\"type\":\"message\",\"id\":\"b7f66094\",\"parentId\":\"c92631e7\",\"timestamp\":\"2026-10-19T16:09:17.425Z\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"r1\",\"toolName\":\"read\",\"content\":[{\"type\":\"text\",\"text\":\"package old\"}],\"isError\":false,\"timestamp\":1789603200010}}\n{\"type\":\"message\",\"id\":\"bb71ccb9\",\"parentId\":\"b7f66094\",\"timestamp\":\"2026-10-19T16:09:17.425Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a1\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200011}}\n{\"type\":\"message\",\"id\":\"14502bc2\",\"parentId\":\"bb71ccb9\",\"timestamp\":\"2026-10-19T16:09:17.425Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q2\"}],\"timestamp\":1789603200012}}\n{\"type\":\"message\",\"id\":\"ba2e5b13\",\"parentId\":\"14502bc2\",\"timestamp\":\"2026-10-19T16:09:17.425Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a2\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200013}}\n{\"type\":\"compaction\",\"id\":\"b4ab80f8\",\"parentId\":\"ba2e5b13\",\"timestamp\":\"2026-10-19T16:09:17.425Z\",\"summary\":\"## Goal\\nold work\\n\\n<read-files>\\n/a/old.go\\n</read-files>\\n\\n<modified-files>\\n/a/changed.go\\n</modified-files>\",\"firstKeptEntryId\":\"14502bc2\",\"tokensBefore\":100,\"details\":{\"readFiles\":[\"/a/old.go\"],\"modifiedFiles\":[\"/a/changed.go\"]},\"fromHook\":false}\n{\"type\":\"message\",\"id\":\"28edd600\",\"parentId\":\"b4ab80f8\",\"timestamp\":\"2026-10-19T16:09:17.425Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q3\"}],\"timestamp\":1789603200014}}\n{\"type\":\"message\",\"id\":\"d9fb265c\",\"parentId\":\"28edd600\",\"timestamp\":\"2026-10-19T16:09:17.425Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"editing\"},{\"type\":\"toolCall\",\"id\":\"e1\",\"name\":\"edit\",\"arguments\":{\"path\":\"/a/new.go\",\"oldText\":\"a\",\"newText\":\"b\"}}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"toolUse\",\"timestamp\":1789603200015}}\n{\"type\":\"message\",\"id\":\"12a04ebb\",\"parentId\":\"d9fb265c\",\"timestamp\":\"2026-10-19T16:09:17.425Z\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"e1\",\"toolName\":\"edit\",\"content\":[{\"type\":\"text\",\"text\":\"ok\"}],\"isError\":false,\"timestamp\":1789603200016}}\n{\"type\":\"message\",\"id\":\"7d646ad2\",\"parentId\":\"12a04ebb\",\"timestamp\":\"2026-10-19T16:09:17.425Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a3\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200017}}\n{\"type\":\"message\",\"id\":\"e31610cb\",\"parentId\":\"7d646ad2\",\"timestamp\":\"2026-10-19T16:09:17.425Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q4\"}],\"timestamp\":1789603200018}}\n",
+			"resumed": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\n## Goal\nold work\n\n<read-files>\n/a/old.go\n</read-files>\n\n<modified-files>\n/a/changed.go\n</modified-files>\n</summary>",
+				"user:q2",
+				"assistant:a2",
+				"user:q3",
+				"assistant:editing [edit {\"path\":\"/a/new.go\",\"oldText\":\"a\",\"newText\":\"b\"}]",
+				"toolResult:ok",
+				"assistant:a3",
+				"user:q4"
+			],
+			"previousSummary": "## Goal\nold work\n\n<read-files>\n/a/old.go\n</read-files>\n\n<modified-files>\n/a/changed.go\n</modified-files>",
+			"requests": [
+				{
+					"systemPrompt": "You are a context summarization assistant. Your task is to read a conversation between a user and an AI assistant, then produce a structured summary following the exact format specified.\n\nDo NOT continue the conversation. Do NOT respond to any questions in the conversation. ONLY output the structured summary.",
+					"text": "<conversation>\n[User]: q2\n\n[Assistant]: a2\n\n[User]: q3\n\n[Assistant]: editing\n\n[Assistant tool calls]: edit(path=\"/a/new.go\", oldText=\"a\", newText=\"b\")\n\n[Tool result]: ok\n\n[Assistant]: a3\n</conversation>\n\n<previous-summary>\n## Goal\nold work\n\n<read-files>\n/a/old.go\n</read-files>\n\n<modified-files>\n/a/changed.go\n</modified-files>\n</previous-summary>\n\nThe messages above are NEW conversation messages to incorporate into the existing summary provided in <previous-summary> tags.\n\nUpdate the existing structured summary with new information. RULES:\n- PRESERVE all existing information from the previous summary\n- ADD new progress, decisions, and context from the new messages\n- UPDATE the Progress section: move items from \"In Progress\" to \"Done\" when completed\n- UPDATE \"Next Steps\" based on what was accomplished\n- PRESERVE exact file paths, function names, and error messages\n- If something is no longer relevant, you may remove it\n\nUse this EXACT format:\n\n## Goal\n[Preserve existing goals, add new ones if the task expanded]\n\n## Constraints & Preferences\n- [Preserve existing, add new ones discovered]\n\n## Progress\n### Done\n- [x] [Include previously done items AND newly completed items]\n\n### In Progress\n- [ ] [Current work - update based on progress]\n\n### Blocked\n- [Current blockers - remove if resolved]\n\n## Key Decisions\n- **[Decision]**: [Brief rationale] (preserve all previous, add new)\n\n## Next Steps\n1. [Update based on current state]\n\n## Critical Context\n- [Preserve important context, add new if needed]\n\nKeep each section concise. Preserve exact file paths, function names, and error messages.",
+					"maxTokens": null
+				}
+			],
+			"summary": "SUMMARY 1\n\n<read-files>\n/a/old.go\n</read-files>\n\n<modified-files>\n/a/changed.go\n/a/new.go\n</modified-files>",
+			"details": {
+				"readFiles": [
+					"/a/old.go"
+				],
+				"modifiedFiles": [
+					"/a/changed.go",
+					"/a/new.go"
+				]
+			},
+			"compacted": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\nSUMMARY 1\n\n<read-files>\n/a/old.go\n</read-files>\n\n<modified-files>\n/a/changed.go\n/a/new.go\n</modified-files>\n</summary>",
+				"user:q4"
+			]
+		},
+		{
+			"name": "previous-summary-from-hook",
+			"file": "{\"type\":\"session\",\"version\":3,\"id\":\"01a154ec-a572-70f7-bede-ef03163496f7\",\"timestamp\":\"2026-10-19T16:09:17.426Z\",\"cwd\":\"/tmp/capture-resume\"}\n{\"type\":\"message\",\"id\":\"acb191fb\",\"parentId\":null,\"timestamp\":\"2026-10-19T16:09:17.426Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q1\"}],\"timestamp\":1789603200019}}\n{\"type\":\"message\",\"id\":\"76842669\",\"parentId\":\"acb191fb\",\"timestamp\":\"2026-10-19T16:09:17.426Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a1\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200020}}\n{\"type\":\"message\",\"id\":\"bd4a2955\",\"parentId\":\"76842669\",\"timestamp\":\"2026-10-19T16:09:17.426Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q2\"}],\"timestamp\":1789603200021}}\n{\"type\":\"message\",\"id\":\"b5a4b110\",\"parentId\":\"bd4a2955\",\"timestamp\":\"2026-10-19T16:09:17.426Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a2\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200022}}\n{\"type\":\"compaction\",\"id\":\"5db9a9d4\",\"parentId\":\"b5a4b110\",\"timestamp\":\"2026-10-19T16:09:17.426Z\",\"summary\":\"## Goal\\nhook work\",\"firstKeptEntryId\":\"bd4a2955\",\"tokensBefore\":100,\"details\":{\"readFiles\":[\"/a/hook.go\"],\"modifiedFiles\":[]},\"fromHook\":true}\n{\"type\":\"message\",\"id\":\"612fad4a\",\"parentId\":\"5db9a9d4\",\"timestamp\":\"2026-10-19T16:09:17.426Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q3\"}],\"timestamp\":1789603200023}}\n{\"type\":\"message\",\"id\":\"d1ea7d9f\",\"parentId\":\"612fad4a\",\"timestamp\":\"2026-10-19T16:09:17.426Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a3\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200024}}\n{\"type\":\"message\",\"id\":\"76f34564\",\"parentId\":\"d1ea7d9f\",\"timestamp\":\"2026-10-19T16:09:17.426Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q4\"}],\"timestamp\":1789603200025}}\n",
+			"resumed": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\n## Goal\nhook work\n</summary>",
+				"user:q2",
+				"assistant:a2",
+				"user:q3",
+				"assistant:a3",
+				"user:q4"
+			],
+			"previousSummary": "## Goal\nhook work",
+			"requests": [
+				{
+					"systemPrompt": "You are a context summarization assistant. Your task is to read a conversation between a user and an AI assistant, then produce a structured summary following the exact format specified.\n\nDo NOT continue the conversation. Do NOT respond to any questions in the conversation. ONLY output the structured summary.",
+					"text": "<conversation>\n[User]: q2\n\n[Assistant]: a2\n\n[User]: q3\n\n[Assistant]: a3\n</conversation>\n\n<previous-summary>\n## Goal\nhook work\n</previous-summary>\n\nThe messages above are NEW conversation messages to incorporate into the existing summary provided in <previous-summary> tags.\n\nUpdate the existing structured summary with new information. RULES:\n- PRESERVE all existing information from the previous summary\n- ADD new progress, decisions, and context from the new messages\n- UPDATE the Progress section: move items from \"In Progress\" to \"Done\" when completed\n- UPDATE \"Next Steps\" based on what was accomplished\n- PRESERVE exact file paths, function names, and error messages\n- If something is no longer relevant, you may remove it\n\nUse this EXACT format:\n\n## Goal\n[Preserve existing goals, add new ones if the task expanded]\n\n## Constraints & Preferences\n- [Preserve existing, add new ones discovered]\n\n## Progress\n### Done\n- [x] [Include previously done items AND newly completed items]\n\n### In Progress\n- [ ] [Current work - update based on progress]\n\n### Blocked\n- [Current blockers - remove if resolved]\n\n## Key Decisions\n- **[Decision]**: [Brief rationale] (preserve all previous, add new)\n\n## Next Steps\n1. [Update based on current state]\n\n## Critical Context\n- [Preserve important context, add new if needed]\n\nKeep each section concise. Preserve exact file paths, function names, and error messages.",
+					"maxTokens": null
+				}
+			],
+			"summary": "SUMMARY 1",
+			"details": {
+				"readFiles": [],
+				"modifiedFiles": []
+			},
+			"compacted": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\nSUMMARY 1\n</summary>",
+				"user:q4"
+			]
+		},
+		{
+			"name": "previous-summary-from-hook-truthy",
+			"file": "{\"type\":\"session\",\"version\":3,\"id\":\"01a154ec-a572-70f7-bede-ef06bf85afce\",\"timestamp\":\"2026-10-19T16:09:17.426Z\",\"cwd\":\"/tmp/capture-resume\"}\n{\"type\":\"message\",\"id\":\"4ef901d1\",\"parentId\":null,\"timestamp\":\"2026-10-19T16:09:17.426Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q1\"}],\"timestamp\":1789603200026}}\n{\"type\":\"message\",\"id\":\"28465392\",\"parentId\":\"4ef901d1\",\"timestamp\":\"2026-10-19T16:09:17.426Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a1\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200027}}\n{\"type\":\"message\",\"id\":\"fe0e71c9\",\"parentId\":\"28465392\",\"timestamp\":\"2026-10-19T16:09:17.426Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q2\"}],\"timestamp\":1789603200028}}\n{\"type\":\"message\",\"id\":\"a68f6887\",\"parentId\":\"fe0e71c9\",\"timestamp\":\"2026-10-19T16:09:17.426Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a2\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200029}}\n{\"type\":\"compaction\",\"id\":\"e2317f6a\",\"parentId\":\"a68f6887\",\"timestamp\":\"2026-10-19T16:09:17.426Z\",\"summary\":\"## Goal\\nhook work\",\"firstKeptEntryId\":\"fe0e71c9\",\"tokensBefore\":100,\"details\":{\"readFiles\":[\"/a/hook.go\"],\"modifiedFiles\":[]},\"fromHook\":1}\n{\"type\":\"message\",\"id\":\"5e508102\",\"parentId\":\"e2317f6a\",\"timestamp\":\"2026-10-19T16:09:17.426Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q3\"}],\"timestamp\":1789603200030}}\n{\"type\":\"message\",\"id\":\"52d11496\",\"parentId\":\"5e508102\",\"timestamp\":\"2026-10-19T16:09:17.426Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a3\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200031}}\n{\"type\":\"message\",\"id\":\"b43a80ed\",\"parentId\":\"52d11496\",\"timestamp\":\"2026-10-19T16:09:17.426Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q4\"}],\"timestamp\":1789603200032}}\n",
+			"resumed": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\n## Goal\nhook work\n</summary>",
+				"user:q2",
+				"assistant:a2",
+				"user:q3",
+				"assistant:a3",
+				"user:q4"
+			],
+			"previousSummary": "## Goal\nhook work",
+			"requests": [
+				{
+					"systemPrompt": "You are a context summarization assistant. Your task is to read a conversation between a user and an AI assistant, then produce a structured summary following the exact format specified.\n\nDo NOT continue the conversation. Do NOT respond to any questions in the conversation. ONLY output the structured summary.",
+					"text": "<conversation>\n[User]: q2\n\n[Assistant]: a2\n\n[User]: q3\n\n[Assistant]: a3\n</conversation>\n\n<previous-summary>\n## Goal\nhook work\n</previous-summary>\n\nThe messages above are NEW conversation messages to incorporate into the existing summary provided in <previous-summary> tags.\n\nUpdate the existing structured summary with new information. RULES:\n- PRESERVE all existing information from the previous summary\n- ADD new progress, decisions, and context from the new messages\n- UPDATE the Progress section: move items from \"In Progress\" to \"Done\" when completed\n- UPDATE \"Next Steps\" based on what was accomplished\n- PRESERVE exact file paths, function names, and error messages\n- If something is no longer relevant, you may remove it\n\nUse this EXACT format:\n\n## Goal\n[Preserve existing goals, add new ones if the task expanded]\n\n## Constraints & Preferences\n- [Preserve existing, add new ones discovered]\n\n## Progress\n### Done\n- [x] [Include previously done items AND newly completed items]\n\n### In Progress\n- [ ] [Current work - update based on progress]\n\n### Blocked\n- [Current blockers - remove if resolved]\n\n## Key Decisions\n- **[Decision]**: [Brief rationale] (preserve all previous, add new)\n\n## Next Steps\n1. [Update based on current state]\n\n## Critical Context\n- [Preserve important context, add new if needed]\n\nKeep each section concise. Preserve exact file paths, function names, and error messages.",
+					"maxTokens": null
+				}
+			],
+			"summary": "SUMMARY 1",
+			"details": {
+				"readFiles": [],
+				"modifiedFiles": []
+			},
+			"compacted": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\nSUMMARY 1\n</summary>",
+				"user:q4"
+			]
+		},
+		{
+			"name": "previous-summary-from-hook-falsy",
+			"file": "{\"type\":\"session\",\"version\":3,\"id\":\"01a154ec-a573-70f7-bede-ef0a6d49646b\",\"timestamp\":\"2026-10-19T16:09:17.427Z\",\"cwd\":\"/tmp/capture-resume\"}\n{\"type\":\"message\",\"id\":\"c2e30a0a\",\"parentId\":null,\"timestamp\":\"2026-10-19T16:09:17.427Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q1\"}],\"timestamp\":1789603200033}}\n{\"type\":\"message\",\"id\":\"6b919abc\",\"parentId\":\"c2e30a0a\",\"timestamp\":\"2026-10-19T16:09:17.427Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a1\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200034}}\n{\"type\":\"message\",\"id\":\"0706cf45\",\"parentId\":\"6b919abc\",\"timestamp\":\"2026-10-19T16:09:17.427Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q2\"}],\"timestamp\":1789603200035}}\n{\"type\":\"message\",\"id\":\"1f4dd174\",\"parentId\":\"0706cf45\",\"timestamp\":\"2026-10-19T16:09:17.427Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a2\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200036}}\n{\"type\":\"compaction\",\"id\":\"b0d28b20\",\"parentId\":\"1f4dd174\",\"timestamp\":\"2026-10-19T16:09:17.427Z\",\"summary\":\"## Goal\\nown work\",\"firstKeptEntryId\":\"0706cf45\",\"tokensBefore\":100,\"details\":{\"readFiles\":[\"/a/own.go\"],\"modifiedFiles\":[]},\"fromHook\":\"\"}\n{\"type\":\"message\",\"id\":\"a77a007e\",\"parentId\":\"b0d28b20\",\"timestamp\":\"2026-10-19T16:09:17.427Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q3\"}],\"timestamp\":1789603200037}}\n{\"type\":\"message\",\"id\":\"7583d80c\",\"parentId\":\"a77a007e\",\"timestamp\":\"2026-10-19T16:09:17.427Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a3\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200038}}\n{\"type\":\"message\",\"id\":\"448b1d7c\",\"parentId\":\"7583d80c\",\"timestamp\":\"2026-10-19T16:09:17.427Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q4\"}],\"timestamp\":1789603200039}}\n",
+			"resumed": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\n## Goal\nown work\n</summary>",
+				"user:q2",
+				"assistant:a2",
+				"user:q3",
+				"assistant:a3",
+				"user:q4"
+			],
+			"previousSummary": "## Goal\nown work",
+			"requests": [
+				{
+					"systemPrompt": "You are a context summarization assistant. Your task is to read a conversation between a user and an AI assistant, then produce a structured summary following the exact format specified.\n\nDo NOT continue the conversation. Do NOT respond to any questions in the conversation. ONLY output the structured summary.",
+					"text": "<conversation>\n[User]: q2\n\n[Assistant]: a2\n\n[User]: q3\n\n[Assistant]: a3\n</conversation>\n\n<previous-summary>\n## Goal\nown work\n</previous-summary>\n\nThe messages above are NEW conversation messages to incorporate into the existing summary provided in <previous-summary> tags.\n\nUpdate the existing structured summary with new information. RULES:\n- PRESERVE all existing information from the previous summary\n- ADD new progress, decisions, and context from the new messages\n- UPDATE the Progress section: move items from \"In Progress\" to \"Done\" when completed\n- UPDATE \"Next Steps\" based on what was accomplished\n- PRESERVE exact file paths, function names, and error messages\n- If something is no longer relevant, you may remove it\n\nUse this EXACT format:\n\n## Goal\n[Preserve existing goals, add new ones if the task expanded]\n\n## Constraints & Preferences\n- [Preserve existing, add new ones discovered]\n\n## Progress\n### Done\n- [x] [Include previously done items AND newly completed items]\n\n### In Progress\n- [ ] [Current work - update based on progress]\n\n### Blocked\n- [Current blockers - remove if resolved]\n\n## Key Decisions\n- **[Decision]**: [Brief rationale] (preserve all previous, add new)\n\n## Next Steps\n1. [Update based on current state]\n\n## Critical Context\n- [Preserve important context, add new if needed]\n\nKeep each section concise. Preserve exact file paths, function names, and error messages.",
+					"maxTokens": null
+				}
+			],
+			"summary": "SUMMARY 1\n\n<read-files>\n/a/own.go\n</read-files>",
+			"details": {
+				"readFiles": [
+					"/a/own.go"
+				],
+				"modifiedFiles": []
+			},
+			"compacted": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\nSUMMARY 1\n\n<read-files>\n/a/own.go\n</read-files>\n</summary>",
+				"user:q4"
+			]
+		},
+		{
+			"name": "previous-summary-system-messages",
+			"file": "{\"type\":\"session\",\"version\":3,\"id\":\"01a154ec-a574-70f7-bede-ef0e520490a5\",\"timestamp\":\"2026-10-19T16:09:17.428Z\",\"cwd\":\"/tmp/capture-resume\"}\n{\"type\":\"message\",\"id\":\"2bd22ebf\",\"parentId\":null,\"timestamp\":\"2026-10-19T16:09:17.428Z\",\"message\":{\"role\":\"system\",\"content\":\"\",\"sections\":{\"preamble\":\"v1\"},\"timestamp\":1789603200040}}\n{\"type\":\"message\",\"id\":\"5ed5bd34\",\"parentId\":\"2bd22ebf\",\"timestamp\":\"2026-10-19T16:09:17.428Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q1\"}],\"timestamp\":1789603200041}}\n{\"type\":\"message\",\"id\":\"e885e55e\",\"parentId\":\"5ed5bd34\",\"timestamp\":\"2026-10-19T16:09:17.428Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a1\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200042}}\n{\"type\":\"message\",\"id\":\"4ee4521e\",\"parentId\":\"e885e55e\",\"timestamp\":\"2026-10-19T16:09:17.428Z\",\"message\":{\"role\":\"system\",\"content\":\"\",\"sections\":{\"preamble\":\"v2\"},\"timestamp\":1789603200043}}\n{\"type\":\"message\",\"id\":\"93477737\",\"parentId\":\"4ee4521e\",\"timestamp\":\"2026-10-19T16:09:17.428Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q2\"}],\"timestamp\":1789603200044}}\n{\"type\":\"message\",\"id\":\"0d4d0b31\",\"parentId\":\"93477737\",\"timestamp\":\"2026-10-19T16:09:17.428Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a2\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200045}}\n{\"type\":\"compaction\",\"id\":\"5e1c06ad\",\"parentId\":\"0d4d0b31\",\"timestamp\":\"2026-10-19T16:09:17.428Z\",\"summary\":\"## Goal\\nprompted work\",\"firstKeptEntryId\":\"93477737\",\"tokensBefore\":100,\"details\":{\"readFiles\":[],\"modifiedFiles\":[]},\"fromHook\":false,\"systemMessage\":{\"role\":\"system\",\"content\":\"\",\"sections\":{\"preamble\":\"v2\"},\"timestamp\":1792426157428}}\n{\"type\":\"message\",\"id\":\"2c171e34\",\"parentId\":\"5e1c06ad\",\"timestamp\":\"2026-10-19T16:09:17.428Z\",\"message\":{\"role\":\"system\",\"content\":\"\",\"sections\":{\"preamble\":\"v3\"},\"timestamp\":1789603200046}}\n{\"type\":\"message\",\"id\":\"86710883\",\"parentId\":\"2c171e34\",\"timestamp\":\"2026-10-19T16:09:17.428Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q3\"}],\"timestamp\":1789603200047}}\n{\"type\":\"message\",\"id\":\"6f984373\",\"parentId\":\"86710883\",\"timestamp\":\"2026-10-19T16:09:17.428Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a3\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200048}}\n{\"type\":\"message\",\"id\":\"15b1331c\",\"parentId\":\"6f984373\",\"timestamp\":\"2026-10-19T16:09:17.428Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q4\"}],\"timestamp\":1789603200049}}\n",
+			"resumed": [
+				"system:v2",
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\n## Goal\nprompted work\n</summary>",
+				"user:q2",
+				"assistant:a2",
+				"system:v3",
+				"user:q3",
+				"assistant:a3",
+				"user:q4"
+			],
+			"previousSummary": "## Goal\nprompted work",
+			"requests": [
+				{
+					"systemPrompt": "You are a context summarization assistant. Your task is to read a conversation between a user and an AI assistant, then produce a structured summary following the exact format specified.\n\nDo NOT continue the conversation. Do NOT respond to any questions in the conversation. ONLY output the structured summary.",
+					"text": "<conversation>\n[User]: q2\n\n[Assistant]: a2\n\n[User]: q3\n\n[Assistant]: a3\n</conversation>\n\n<previous-summary>\n## Goal\nprompted work\n</previous-summary>\n\nThe messages above are NEW conversation messages to incorporate into the existing summary provided in <previous-summary> tags.\n\nUpdate the existing structured summary with new information. RULES:\n- PRESERVE all existing information from the previous summary\n- ADD new progress, decisions, and context from the new messages\n- UPDATE the Progress section: move items from \"In Progress\" to \"Done\" when completed\n- UPDATE \"Next Steps\" based on what was accomplished\n- PRESERVE exact file paths, function names, and error messages\n- If something is no longer relevant, you may remove it\n\nUse this EXACT format:\n\n## Goal\n[Preserve existing goals, add new ones if the task expanded]\n\n## Constraints & Preferences\n- [Preserve existing, add new ones discovered]\n\n## Progress\n### Done\n- [x] [Include previously done items AND newly completed items]\n\n### In Progress\n- [ ] [Current work - update based on progress]\n\n### Blocked\n- [Current blockers - remove if resolved]\n\n## Key Decisions\n- **[Decision]**: [Brief rationale] (preserve all previous, add new)\n\n## Next Steps\n1. [Update based on current state]\n\n## Critical Context\n- [Preserve important context, add new if needed]\n\nKeep each section concise. Preserve exact file paths, function names, and error messages.",
+					"maxTokens": null
+				}
+			],
+			"summary": "SUMMARY 1",
+			"details": {
+				"readFiles": [],
+				"modifiedFiles": []
+			},
+			"compacted": [
+				"system:v3",
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\nSUMMARY 1\n</summary>",
+				"user:q4"
+			]
+		},
+		{
+			"name": "previous-summary-split-turn",
+			"file": "{\"type\":\"session\",\"version\":3,\"id\":\"01a154ec-a574-70f7-bede-ef135b62879e\",\"timestamp\":\"2026-10-19T16:09:17.428Z\",\"cwd\":\"/tmp/capture-resume\"}\n{\"type\":\"message\",\"id\":\"c81ce1a0\",\"parentId\":null,\"timestamp\":\"2026-10-19T16:09:17.428Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q1\"}],\"timestamp\":1789603200050}}\n{\"type\":\"message\",\"id\":\"6cfdfabf\",\"parentId\":\"c81ce1a0\",\"timestamp\":\"2026-10-19T16:09:17.428Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a1\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200051}}\n{\"type\":\"message\",\"id\":\"626430dc\",\"parentId\":\"6cfdfabf\",\"timestamp\":\"2026-10-19T16:09:17.428Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q2\"}],\"timestamp\":1789603200052}}\n{\"type\":\"message\",\"id\":\"79ca3885\",\"parentId\":\"626430dc\",\"timestamp\":\"2026-10-19T16:09:17.428Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a2\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200053}}\n{\"type\":\"compaction\",\"id\":\"1895f943\",\"parentId\":\"79ca3885\",\"timestamp\":\"2026-10-19T16:09:17.428Z\",\"summary\":\"## Goal\\nold work\",\"firstKeptEntryId\":\"626430dc\",\"tokensBefore\":100,\"details\":{\"readFiles\":[],\"modifiedFiles\":[]},\"fromHook\":false}\n{\"type\":\"message\",\"id\":\"60216800\",\"parentId\":\"1895f943\",\"timestamp\":\"2026-10-19T16:09:17.428Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q3\"}],\"timestamp\":1789603200054}}\n{\"type\":\"message\",\"id\":\"216284a1\",\"parentId\":\"60216800\",\"timestamp\":\"2026-10-19T16:09:17.428Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a3\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200055}}\n{\"type\":\"message\",\"id\":\"72970ea1\",\"parentId\":\"216284a1\",\"timestamp\":\"2026-10-19T16:09:17.428Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q4\"}],\"timestamp\":1789603200056}}\n{\"type\":\"message\",\"id\":\"41f30352\",\"parentId\":\"72970ea1\",\"timestamp\":\"2026-10-19T16:09:17.428Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a4\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200057}}\n",
+			"resumed": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\n## Goal\nold work\n</summary>",
+				"user:q2",
+				"assistant:a2",
+				"user:q3",
+				"assistant:a3",
+				"user:q4",
+				"assistant:a4"
+			],
+			"previousSummary": "## Goal\nold work",
+			"requests": [
+				{
+					"systemPrompt": "You are a context summarization assistant. Your task is to read a conversation between a user and an AI assistant, then produce a structured summary following the exact format specified.\n\nDo NOT continue the conversation. Do NOT respond to any questions in the conversation. ONLY output the structured summary.",
+					"text": "<conversation>\n[User]: q2\n\n[Assistant]: a2\n\n[User]: q3\n\n[Assistant]: a3\n</conversation>\n\n<previous-summary>\n## Goal\nold work\n</previous-summary>\n\nThe messages above are NEW conversation messages to incorporate into the existing summary provided in <previous-summary> tags.\n\nUpdate the existing structured summary with new information. RULES:\n- PRESERVE all existing information from the previous summary\n- ADD new progress, decisions, and context from the new messages\n- UPDATE the Progress section: move items from \"In Progress\" to \"Done\" when completed\n- UPDATE \"Next Steps\" based on what was accomplished\n- PRESERVE exact file paths, function names, and error messages\n- If something is no longer relevant, you may remove it\n\nUse this EXACT format:\n\n## Goal\n[Preserve existing goals, add new ones if the task expanded]\n\n## Constraints & Preferences\n- [Preserve existing, add new ones discovered]\n\n## Progress\n### Done\n- [x] [Include previously done items AND newly completed items]\n\n### In Progress\n- [ ] [Current work - update based on progress]\n\n### Blocked\n- [Current blockers - remove if resolved]\n\n## Key Decisions\n- **[Decision]**: [Brief rationale] (preserve all previous, add new)\n\n## Next Steps\n1. [Update based on current state]\n\n## Critical Context\n- [Preserve important context, add new if needed]\n\nKeep each section concise. Preserve exact file paths, function names, and error messages.",
+					"maxTokens": null
+				},
+				{
+					"systemPrompt": "You are a context summarization assistant. Your task is to read a conversation between a user and an AI assistant, then produce a structured summary following the exact format specified.\n\nDo NOT continue the conversation. Do NOT respond to any questions in the conversation. ONLY output the structured summary.",
+					"text": "# Conversation\n[User]: q4\n\n# Instructions\nThe messages above are earlier context from an ongoing conversation. Later messages are stored separately and do not need to be reconstructed.\n\nCreate a concise checkpoint of the user's request and the progress shown above. This checkpoint will be placed before the later messages so the conversation can continue with the necessary context.\n\n## Original Request\n[What did the user ask for?]\n\n## Progress So Far\n- [Key decisions and work completed in these messages]\n\n## Context Needed to Continue\n- [Information from these messages needed to understand the later work]\n\nOnly summarize information explicitly present above. Do not infer or recreate later messages.",
+					"maxTokens": null
+				}
+			],
+			"summary": "SUMMARY 1\n\n---\n\n**Turn Context (split turn):**\n\nSUMMARY 2",
+			"details": {
+				"readFiles": [],
+				"modifiedFiles": []
+			},
+			"compacted": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\nSUMMARY 1\n\n---\n\n**Turn Context (split turn):**\n\nSUMMARY 2\n</summary>",
+				"assistant:a4"
+			]
+		},
+		{
+			"name": "previous-summary-empty-retain-none-split-turn",
+			"file": "{\"type\":\"session\",\"version\":3,\"id\":\"01a154ec-a575-70f7-bede-ef19674df501\",\"timestamp\":\"2026-10-19T16:09:17.429Z\",\"cwd\":\"/tmp/capture-resume\"}\n{\"type\":\"message\",\"id\":\"c6320328\",\"parentId\":null,\"timestamp\":\"2026-10-19T16:09:17.429Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q1\"}],\"timestamp\":1789603200058}}\n{\"type\":\"message\",\"id\":\"7ca469c0\",\"parentId\":\"c6320328\",\"timestamp\":\"2026-10-19T16:09:17.429Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a1\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200059}}\n{\"type\":\"compaction\",\"id\":\"5cde7d4a\",\"parentId\":\"7ca469c0\",\"timestamp\":\"2026-10-19T16:09:17.429Z\",\"summary\":\"\",\"firstKeptEntryId\":\"5cde7d4a\",\"tokensBefore\":100,\"details\":{\"readFiles\":[],\"modifiedFiles\":[]},\"fromHook\":false}\n{\"type\":\"message\",\"id\":\"43cbad77\",\"parentId\":\"5cde7d4a\",\"timestamp\":\"2026-10-19T16:09:17.429Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q2\"}],\"timestamp\":1789603200060}}\n{\"type\":\"message\",\"id\":\"d2a1ffb4\",\"parentId\":\"43cbad77\",\"timestamp\":\"2026-10-19T16:09:17.429Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a2\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200061}}\n",
+			"resumed": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\n\n</summary>",
+				"user:q2",
+				"assistant:a2"
+			],
+			"previousSummary": "",
+			"requests": [
+				{
+					"systemPrompt": "You are a context summarization assistant. Your task is to read a conversation between a user and an AI assistant, then produce a structured summary following the exact format specified.\n\nDo NOT continue the conversation. Do NOT respond to any questions in the conversation. ONLY output the structured summary.",
+					"text": "# Conversation\n[User]: q2\n\n# Instructions\nThe messages above are earlier context from an ongoing conversation. Later messages are stored separately and do not need to be reconstructed.\n\nCreate a concise checkpoint of the user's request and the progress shown above. This checkpoint will be placed before the later messages so the conversation can continue with the necessary context.\n\n## Original Request\n[What did the user ask for?]\n\n## Progress So Far\n- [Key decisions and work completed in these messages]\n\n## Context Needed to Continue\n- [Information from these messages needed to understand the later work]\n\nOnly summarize information explicitly present above. Do not infer or recreate later messages.",
+					"maxTokens": null
+				}
+			],
+			"summary": "\n\n---\n\n**Turn Context (split turn):**\n\nSUMMARY 1",
+			"details": {
+				"readFiles": [],
+				"modifiedFiles": []
+			},
+			"compacted": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\n\n\n---\n\n**Turn Context (split turn):**\n\nSUMMARY 1\n</summary>",
+				"assistant:a2"
+			]
+		},
+		{
+			"name": "compaction-omitted-by-context-edit",
+			"file": "{\"type\":\"session\",\"version\":3,\"id\":\"01a154ec-a575-70f7-bede-ef1c16177863\",\"timestamp\":\"2026-10-19T16:09:17.429Z\",\"cwd\":\"/tmp/capture-resume\"}\n{\"type\":\"message\",\"id\":\"44c53a47\",\"parentId\":null,\"timestamp\":\"2026-10-19T16:09:17.429Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q1\"}],\"timestamp\":1789603200062}}\n{\"type\":\"message\",\"id\":\"72c986c5\",\"parentId\":\"44c53a47\",\"timestamp\":\"2026-10-19T16:09:17.429Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a1\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200063}}\n{\"type\":\"message\",\"id\":\"cac6c90c\",\"parentId\":\"72c986c5\",\"timestamp\":\"2026-10-19T16:09:17.429Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q2\"}],\"timestamp\":1789603200064}}\n{\"type\":\"message\",\"id\":\"3ba514a9\",\"parentId\":\"cac6c90c\",\"timestamp\":\"2026-10-19T16:09:17.429Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a2\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200065}}\n{\"type\":\"compaction\",\"id\":\"5f211e74\",\"parentId\":\"3ba514a9\",\"timestamp\":\"2026-10-19T16:09:17.429Z\",\"summary\":\"## Goal\\nhidden work\",\"firstKeptEntryId\":\"cac6c90c\",\"tokensBefore\":100,\"details\":{\"readFiles\":[\"/a/hidden.go\"],\"modifiedFiles\":[]},\"fromHook\":false}\n{\"type\":\"context_edit\",\"id\":\"0mit0000\",\"parentId\":\"5f211e74\",\"timestamp\":\"2026-10-19T16:09:17.429Z\",\"targetId\":\"5f211e74\",\"replacement\":null}\n{\"type\":\"message\",\"id\":\"e04b149e\",\"parentId\":\"0mit0000\",\"timestamp\":\"2026-10-19T16:09:17.429Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q3\"}],\"timestamp\":1789603200066}}\n{\"type\":\"message\",\"id\":\"9df9fc13\",\"parentId\":\"e04b149e\",\"timestamp\":\"2026-10-19T16:09:17.429Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a3\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200067}}\n{\"type\":\"message\",\"id\":\"7e181bb0\",\"parentId\":\"9df9fc13\",\"timestamp\":\"2026-10-19T16:09:17.429Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q4\"}],\"timestamp\":1789603200068}}\n",
+			"resumed": [
+				"user:q2",
+				"assistant:a2",
+				"user:q3",
+				"assistant:a3",
+				"user:q4"
+			],
+			"requests": [
+				{
+					"systemPrompt": "You are a context summarization assistant. Your task is to read a conversation between a user and an AI assistant, then produce a structured summary following the exact format specified.\n\nDo NOT continue the conversation. Do NOT respond to any questions in the conversation. ONLY output the structured summary.",
+					"text": "<conversation>\n[User]: q2\n\n[Assistant]: a2\n\n[User]: q3\n\n[Assistant]: a3\n</conversation>\n\nThe messages above are a conversation to summarize. Create a structured context checkpoint summary that another LLM will use to continue the work.\n\nUse this EXACT format:\n\n## Goal\n[What is the user trying to accomplish? Can be multiple items if the session covers different tasks.]\n\n## Constraints & Preferences\n- [Any constraints, preferences, or requirements mentioned by user]\n- [Or \"(none)\" if none were mentioned]\n\n## Progress\n### Done\n- [x] [Completed tasks/changes]\n\n### In Progress\n- [ ] [Current work]\n\n### Blocked\n- [Issues preventing progress, if any]\n\n## Key Decisions\n- **[Decision]**: [Brief rationale]\n\n## Next Steps\n1. [Ordered list of what should happen next]\n\n## Critical Context\n- [Any data, examples, or references needed to continue]\n- [Or \"(none)\" if not applicable]\n\nKeep each section concise. Preserve exact file paths, function names, and error messages.",
+					"maxTokens": null
+				}
+			],
+			"summary": "SUMMARY 1",
+			"details": {
+				"readFiles": [],
+				"modifiedFiles": []
+			},
+			"compacted": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\nSUMMARY 1\n</summary>",
+				"user:q4"
+			]
+		},
+		{
+			"name": "previous-summary-from-hook-null",
+			"file": "{\"type\":\"session\",\"version\":3,\"id\":\"01a154ec-a576-70f7-bede-ef2062ab39be\",\"timestamp\":\"2026-10-19T16:09:17.430Z\",\"cwd\":\"/tmp/capture-resume\"}\n{\"type\":\"message\",\"id\":\"b6e5523d\",\"parentId\":null,\"timestamp\":\"2026-10-19T16:09:17.430Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q1\"}],\"timestamp\":1789603200069}}\n{\"type\":\"message\",\"id\":\"93e9b346\",\"parentId\":\"b6e5523d\",\"timestamp\":\"2026-10-19T16:09:17.430Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a1\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200070}}\n{\"type\":\"message\",\"id\":\"c2e8a9e0\",\"parentId\":\"93e9b346\",\"timestamp\":\"2026-10-19T16:09:17.430Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q2\"}],\"timestamp\":1789603200071}}\n{\"type\":\"message\",\"id\":\"149e4c7f\",\"parentId\":\"c2e8a9e0\",\"timestamp\":\"2026-10-19T16:09:17.430Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a2\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200072}}\n{\"type\":\"compaction\",\"id\":\"91e56cf0\",\"parentId\":\"149e4c7f\",\"timestamp\":\"2026-10-19T16:09:17.430Z\",\"summary\":\"## Goal\\nwork\",\"firstKeptEntryId\":\"c2e8a9e0\",\"tokensBefore\":100,\"details\":{\"readFiles\":[\"/a/null.go\"],\"modifiedFiles\":[]},\"fromHook\":null}\n{\"type\":\"message\",\"id\":\"456acc53\",\"parentId\":\"91e56cf0\",\"timestamp\":\"2026-10-19T16:09:17.430Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q3\"}],\"timestamp\":1789603200073}}\n{\"type\":\"message\",\"id\":\"ea37067d\",\"parentId\":\"456acc53\",\"timestamp\":\"2026-10-19T16:09:17.430Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a3\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200074}}\n{\"type\":\"message\",\"id\":\"357e1b4f\",\"parentId\":\"ea37067d\",\"timestamp\":\"2026-10-19T16:09:17.430Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q4\"}],\"timestamp\":1789603200075}}\n",
+			"resumed": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\n## Goal\nwork\n</summary>",
+				"user:q2",
+				"assistant:a2",
+				"user:q3",
+				"assistant:a3",
+				"user:q4"
+			],
+			"previousSummary": "## Goal\nwork",
+			"requests": [
+				{
+					"systemPrompt": "You are a context summarization assistant. Your task is to read a conversation between a user and an AI assistant, then produce a structured summary following the exact format specified.\n\nDo NOT continue the conversation. Do NOT respond to any questions in the conversation. ONLY output the structured summary.",
+					"text": "<conversation>\n[User]: q2\n\n[Assistant]: a2\n\n[User]: q3\n\n[Assistant]: a3\n</conversation>\n\n<previous-summary>\n## Goal\nwork\n</previous-summary>\n\nThe messages above are NEW conversation messages to incorporate into the existing summary provided in <previous-summary> tags.\n\nUpdate the existing structured summary with new information. RULES:\n- PRESERVE all existing information from the previous summary\n- ADD new progress, decisions, and context from the new messages\n- UPDATE the Progress section: move items from \"In Progress\" to \"Done\" when completed\n- UPDATE \"Next Steps\" based on what was accomplished\n- PRESERVE exact file paths, function names, and error messages\n- If something is no longer relevant, you may remove it\n\nUse this EXACT format:\n\n## Goal\n[Preserve existing goals, add new ones if the task expanded]\n\n## Constraints & Preferences\n- [Preserve existing, add new ones discovered]\n\n## Progress\n### Done\n- [x] [Include previously done items AND newly completed items]\n\n### In Progress\n- [ ] [Current work - update based on progress]\n\n### Blocked\n- [Current blockers - remove if resolved]\n\n## Key Decisions\n- **[Decision]**: [Brief rationale] (preserve all previous, add new)\n\n## Next Steps\n1. [Update based on current state]\n\n## Critical Context\n- [Preserve important context, add new if needed]\n\nKeep each section concise. Preserve exact file paths, function names, and error messages.",
+					"maxTokens": null
+				}
+			],
+			"summary": "SUMMARY 1\n\n<read-files>\n/a/null.go\n</read-files>",
+			"details": {
+				"readFiles": [
+					"/a/null.go"
+				],
+				"modifiedFiles": []
+			},
+			"compacted": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\nSUMMARY 1\n\n<read-files>\n/a/null.go\n</read-files>\n</summary>",
+				"user:q4"
+			]
+		},
+		{
+			"name": "previous-summary-from-hook-0",
+			"file": "{\"type\":\"session\",\"version\":3,\"id\":\"01a154ec-a577-70f7-bede-ef24fa15dcd4\",\"timestamp\":\"2026-10-19T16:09:17.431Z\",\"cwd\":\"/tmp/capture-resume\"}\n{\"type\":\"message\",\"id\":\"97dd4f0d\",\"parentId\":null,\"timestamp\":\"2026-10-19T16:09:17.431Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q1\"}],\"timestamp\":1789603200076}}\n{\"type\":\"message\",\"id\":\"248e9380\",\"parentId\":\"97dd4f0d\",\"timestamp\":\"2026-10-19T16:09:17.431Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a1\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200077}}\n{\"type\":\"message\",\"id\":\"cac0a233\",\"parentId\":\"248e9380\",\"timestamp\":\"2026-10-19T16:09:17.431Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q2\"}],\"timestamp\":1789603200078}}\n{\"type\":\"message\",\"id\":\"c224f240\",\"parentId\":\"cac0a233\",\"timestamp\":\"2026-10-19T16:09:17.431Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a2\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200079}}\n{\"type\":\"compaction\",\"id\":\"89a8bd1a\",\"parentId\":\"c224f240\",\"timestamp\":\"2026-10-19T16:09:17.431Z\",\"summary\":\"## Goal\\nwork\",\"firstKeptEntryId\":\"cac0a233\",\"tokensBefore\":100,\"details\":{\"readFiles\":[\"/a/0.go\"],\"modifiedFiles\":[]},\"fromHook\":0}\n{\"type\":\"message\",\"id\":\"6b34fc61\",\"parentId\":\"89a8bd1a\",\"timestamp\":\"2026-10-19T16:09:17.431Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q3\"}],\"timestamp\":1789603200080}}\n{\"type\":\"message\",\"id\":\"4e983e10\",\"parentId\":\"6b34fc61\",\"timestamp\":\"2026-10-19T16:09:17.431Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a3\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200081}}\n{\"type\":\"message\",\"id\":\"99f34e4c\",\"parentId\":\"4e983e10\",\"timestamp\":\"2026-10-19T16:09:17.431Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q4\"}],\"timestamp\":1789603200082}}\n",
+			"resumed": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\n## Goal\nwork\n</summary>",
+				"user:q2",
+				"assistant:a2",
+				"user:q3",
+				"assistant:a3",
+				"user:q4"
+			],
+			"previousSummary": "## Goal\nwork",
+			"requests": [
+				{
+					"systemPrompt": "You are a context summarization assistant. Your task is to read a conversation between a user and an AI assistant, then produce a structured summary following the exact format specified.\n\nDo NOT continue the conversation. Do NOT respond to any questions in the conversation. ONLY output the structured summary.",
+					"text": "<conversation>\n[User]: q2\n\n[Assistant]: a2\n\n[User]: q3\n\n[Assistant]: a3\n</conversation>\n\n<previous-summary>\n## Goal\nwork\n</previous-summary>\n\nThe messages above are NEW conversation messages to incorporate into the existing summary provided in <previous-summary> tags.\n\nUpdate the existing structured summary with new information. RULES:\n- PRESERVE all existing information from the previous summary\n- ADD new progress, decisions, and context from the new messages\n- UPDATE the Progress section: move items from \"In Progress\" to \"Done\" when completed\n- UPDATE \"Next Steps\" based on what was accomplished\n- PRESERVE exact file paths, function names, and error messages\n- If something is no longer relevant, you may remove it\n\nUse this EXACT format:\n\n## Goal\n[Preserve existing goals, add new ones if the task expanded]\n\n## Constraints & Preferences\n- [Preserve existing, add new ones discovered]\n\n## Progress\n### Done\n- [x] [Include previously done items AND newly completed items]\n\n### In Progress\n- [ ] [Current work - update based on progress]\n\n### Blocked\n- [Current blockers - remove if resolved]\n\n## Key Decisions\n- **[Decision]**: [Brief rationale] (preserve all previous, add new)\n\n## Next Steps\n1. [Update based on current state]\n\n## Critical Context\n- [Preserve important context, add new if needed]\n\nKeep each section concise. Preserve exact file paths, function names, and error messages.",
+					"maxTokens": null
+				}
+			],
+			"summary": "SUMMARY 1\n\n<read-files>\n/a/0.go\n</read-files>",
+			"details": {
+				"readFiles": [
+					"/a/0.go"
+				],
+				"modifiedFiles": []
+			},
+			"compacted": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\nSUMMARY 1\n\n<read-files>\n/a/0.go\n</read-files>\n</summary>",
+				"user:q4"
+			]
+		},
+		{
+			"name": "previous-summary-from-hook-raw-negative-0",
+			"file": "{\"type\":\"session\",\"version\":3,\"id\":\"01a154ec-a577-70f7-bede-ef286cb7968d\",\"timestamp\":\"2026-10-19T16:09:17.431Z\",\"cwd\":\"/tmp/capture-resume\"}\n{\"type\":\"message\",\"id\":\"c61e8a6c\",\"parentId\":null,\"timestamp\":\"2026-10-19T16:09:17.431Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q1\"}],\"timestamp\":1789603200083}}\n{\"type\":\"message\",\"id\":\"59b9f816\",\"parentId\":\"c61e8a6c\",\"timestamp\":\"2026-10-19T16:09:17.431Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a1\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200084}}\n{\"type\":\"message\",\"id\":\"16b4ebc2\",\"parentId\":\"59b9f816\",\"timestamp\":\"2026-10-19T16:09:17.431Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q2\"}],\"timestamp\":1789603200085}}\n{\"type\":\"message\",\"id\":\"92221900\",\"parentId\":\"16b4ebc2\",\"timestamp\":\"2026-10-19T16:09:17.431Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a2\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200086}}\n{\"type\":\"compaction\",\"id\":\"1a357979\",\"parentId\":\"92221900\",\"timestamp\":\"2026-10-19T16:09:17.431Z\",\"summary\":\"## Goal\\nwork\",\"firstKeptEntryId\":\"16b4ebc2\",\"tokensBefore\":100,\"details\":{\"readFiles\":[\"/a/raw-negative-0.go\"],\"modifiedFiles\":[]},\"fromHook\":-0}\n{\"type\":\"message\",\"id\":\"88641810\",\"parentId\":\"1a357979\",\"timestamp\":\"2026-10-19T16:09:17.431Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q3\"}],\"timestamp\":1789603200087}}\n{\"type\":\"message\",\"id\":\"c6f6aff4\",\"parentId\":\"88641810\",\"timestamp\":\"2026-10-19T16:09:17.431Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a3\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200088}}\n{\"type\":\"message\",\"id\":\"57075003\",\"parentId\":\"c6f6aff4\",\"timestamp\":\"2026-10-19T16:09:17.431Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q4\"}],\"timestamp\":1789603200089}}\n",
+			"resumed": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\n## Goal\nwork\n</summary>",
+				"user:q2",
+				"assistant:a2",
+				"user:q3",
+				"assistant:a3",
+				"user:q4"
+			],
+			"previousSummary": "## Goal\nwork",
+			"requests": [
+				{
+					"systemPrompt": "You are a context summarization assistant. Your task is to read a conversation between a user and an AI assistant, then produce a structured summary following the exact format specified.\n\nDo NOT continue the conversation. Do NOT respond to any questions in the conversation. ONLY output the structured summary.",
+					"text": "<conversation>\n[User]: q2\n\n[Assistant]: a2\n\n[User]: q3\n\n[Assistant]: a3\n</conversation>\n\n<previous-summary>\n## Goal\nwork\n</previous-summary>\n\nThe messages above are NEW conversation messages to incorporate into the existing summary provided in <previous-summary> tags.\n\nUpdate the existing structured summary with new information. RULES:\n- PRESERVE all existing information from the previous summary\n- ADD new progress, decisions, and context from the new messages\n- UPDATE the Progress section: move items from \"In Progress\" to \"Done\" when completed\n- UPDATE \"Next Steps\" based on what was accomplished\n- PRESERVE exact file paths, function names, and error messages\n- If something is no longer relevant, you may remove it\n\nUse this EXACT format:\n\n## Goal\n[Preserve existing goals, add new ones if the task expanded]\n\n## Constraints & Preferences\n- [Preserve existing, add new ones discovered]\n\n## Progress\n### Done\n- [x] [Include previously done items AND newly completed items]\n\n### In Progress\n- [ ] [Current work - update based on progress]\n\n### Blocked\n- [Current blockers - remove if resolved]\n\n## Key Decisions\n- **[Decision]**: [Brief rationale] (preserve all previous, add new)\n\n## Next Steps\n1. [Update based on current state]\n\n## Critical Context\n- [Preserve important context, add new if needed]\n\nKeep each section concise. Preserve exact file paths, function names, and error messages.",
+					"maxTokens": null
+				}
+			],
+			"summary": "SUMMARY 1\n\n<read-files>\n/a/raw-negative-0.go\n</read-files>",
+			"details": {
+				"readFiles": [
+					"/a/raw-negative-0.go"
+				],
+				"modifiedFiles": []
+			},
+			"compacted": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\nSUMMARY 1\n\n<read-files>\n/a/raw-negative-0.go\n</read-files>\n</summary>",
+				"user:q4"
+			]
+		},
+		{
+			"name": "previous-summary-from-hook-empty-array",
+			"file": "{\"type\":\"session\",\"version\":3,\"id\":\"01a154ec-a578-70f7-bede-ef2dfde43077\",\"timestamp\":\"2026-10-19T16:09:17.432Z\",\"cwd\":\"/tmp/capture-resume\"}\n{\"type\":\"message\",\"id\":\"2cdd8d20\",\"parentId\":null,\"timestamp\":\"2026-10-19T16:09:17.432Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q1\"}],\"timestamp\":1789603200090}}\n{\"type\":\"message\",\"id\":\"b8946270\",\"parentId\":\"2cdd8d20\",\"timestamp\":\"2026-10-19T16:09:17.432Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a1\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200091}}\n{\"type\":\"message\",\"id\":\"2f8a8ab0\",\"parentId\":\"b8946270\",\"timestamp\":\"2026-10-19T16:09:17.432Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q2\"}],\"timestamp\":1789603200092}}\n{\"type\":\"message\",\"id\":\"f11caa27\",\"parentId\":\"2f8a8ab0\",\"timestamp\":\"2026-10-19T16:09:17.432Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a2\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200093}}\n{\"type\":\"compaction\",\"id\":\"c1b31a27\",\"parentId\":\"f11caa27\",\"timestamp\":\"2026-10-19T16:09:17.432Z\",\"summary\":\"## Goal\\nwork\",\"firstKeptEntryId\":\"2f8a8ab0\",\"tokensBefore\":100,\"details\":{\"readFiles\":[\"/a/empty-array.go\"],\"modifiedFiles\":[]},\"fromHook\":[]}\n{\"type\":\"message\",\"id\":\"013f1d1e\",\"parentId\":\"c1b31a27\",\"timestamp\":\"2026-10-19T16:09:17.432Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q3\"}],\"timestamp\":1789603200094}}\n{\"type\":\"message\",\"id\":\"a3b81673\",\"parentId\":\"013f1d1e\",\"timestamp\":\"2026-10-19T16:09:17.432Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a3\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200095}}\n{\"type\":\"message\",\"id\":\"559c1928\",\"parentId\":\"a3b81673\",\"timestamp\":\"2026-10-19T16:09:17.432Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q4\"}],\"timestamp\":1789603200096}}\n",
+			"resumed": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\n## Goal\nwork\n</summary>",
+				"user:q2",
+				"assistant:a2",
+				"user:q3",
+				"assistant:a3",
+				"user:q4"
+			],
+			"previousSummary": "## Goal\nwork",
+			"requests": [
+				{
+					"systemPrompt": "You are a context summarization assistant. Your task is to read a conversation between a user and an AI assistant, then produce a structured summary following the exact format specified.\n\nDo NOT continue the conversation. Do NOT respond to any questions in the conversation. ONLY output the structured summary.",
+					"text": "<conversation>\n[User]: q2\n\n[Assistant]: a2\n\n[User]: q3\n\n[Assistant]: a3\n</conversation>\n\n<previous-summary>\n## Goal\nwork\n</previous-summary>\n\nThe messages above are NEW conversation messages to incorporate into the existing summary provided in <previous-summary> tags.\n\nUpdate the existing structured summary with new information. RULES:\n- PRESERVE all existing information from the previous summary\n- ADD new progress, decisions, and context from the new messages\n- UPDATE the Progress section: move items from \"In Progress\" to \"Done\" when completed\n- UPDATE \"Next Steps\" based on what was accomplished\n- PRESERVE exact file paths, function names, and error messages\n- If something is no longer relevant, you may remove it\n\nUse this EXACT format:\n\n## Goal\n[Preserve existing goals, add new ones if the task expanded]\n\n## Constraints & Preferences\n- [Preserve existing, add new ones discovered]\n\n## Progress\n### Done\n- [x] [Include previously done items AND newly completed items]\n\n### In Progress\n- [ ] [Current work - update based on progress]\n\n### Blocked\n- [Current blockers - remove if resolved]\n\n## Key Decisions\n- **[Decision]**: [Brief rationale] (preserve all previous, add new)\n\n## Next Steps\n1. [Update based on current state]\n\n## Critical Context\n- [Preserve important context, add new if needed]\n\nKeep each section concise. Preserve exact file paths, function names, and error messages.",
+					"maxTokens": null
+				}
+			],
+			"summary": "SUMMARY 1",
+			"details": {
+				"readFiles": [],
+				"modifiedFiles": []
+			},
+			"compacted": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\nSUMMARY 1\n</summary>",
+				"user:q4"
+			]
+		},
+		{
+			"name": "previous-summary-from-hook-empty-object",
+			"file": "{\"type\":\"session\",\"version\":3,\"id\":\"01a154ec-a579-70f7-bede-ef319f7246f1\",\"timestamp\":\"2026-10-19T16:09:17.433Z\",\"cwd\":\"/tmp/capture-resume\"}\n{\"type\":\"message\",\"id\":\"6c7898fb\",\"parentId\":null,\"timestamp\":\"2026-10-19T16:09:17.433Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q1\"}],\"timestamp\":1789603200097}}\n{\"type\":\"message\",\"id\":\"14525f7c\",\"parentId\":\"6c7898fb\",\"timestamp\":\"2026-10-19T16:09:17.433Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a1\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200098}}\n{\"type\":\"message\",\"id\":\"2a808e8c\",\"parentId\":\"14525f7c\",\"timestamp\":\"2026-10-19T16:09:17.433Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q2\"}],\"timestamp\":1789603200099}}\n{\"type\":\"message\",\"id\":\"34dcebab\",\"parentId\":\"2a808e8c\",\"timestamp\":\"2026-10-19T16:09:17.433Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a2\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200100}}\n{\"type\":\"compaction\",\"id\":\"6bed7ca5\",\"parentId\":\"34dcebab\",\"timestamp\":\"2026-10-19T16:09:17.433Z\",\"summary\":\"## Goal\\nwork\",\"firstKeptEntryId\":\"2a808e8c\",\"tokensBefore\":100,\"details\":{\"readFiles\":[\"/a/empty-object.go\"],\"modifiedFiles\":[]},\"fromHook\":{}}\n{\"type\":\"message\",\"id\":\"a3236f37\",\"parentId\":\"6bed7ca5\",\"timestamp\":\"2026-10-19T16:09:17.433Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q3\"}],\"timestamp\":1789603200101}}\n{\"type\":\"message\",\"id\":\"73ba36c9\",\"parentId\":\"a3236f37\",\"timestamp\":\"2026-10-19T16:09:17.433Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a3\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200102}}\n{\"type\":\"message\",\"id\":\"cbbabc2c\",\"parentId\":\"73ba36c9\",\"timestamp\":\"2026-10-19T16:09:17.433Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q4\"}],\"timestamp\":1789603200103}}\n",
+			"resumed": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\n## Goal\nwork\n</summary>",
+				"user:q2",
+				"assistant:a2",
+				"user:q3",
+				"assistant:a3",
+				"user:q4"
+			],
+			"previousSummary": "## Goal\nwork",
+			"requests": [
+				{
+					"systemPrompt": "You are a context summarization assistant. Your task is to read a conversation between a user and an AI assistant, then produce a structured summary following the exact format specified.\n\nDo NOT continue the conversation. Do NOT respond to any questions in the conversation. ONLY output the structured summary.",
+					"text": "<conversation>\n[User]: q2\n\n[Assistant]: a2\n\n[User]: q3\n\n[Assistant]: a3\n</conversation>\n\n<previous-summary>\n## Goal\nwork\n</previous-summary>\n\nThe messages above are NEW conversation messages to incorporate into the existing summary provided in <previous-summary> tags.\n\nUpdate the existing structured summary with new information. RULES:\n- PRESERVE all existing information from the previous summary\n- ADD new progress, decisions, and context from the new messages\n- UPDATE the Progress section: move items from \"In Progress\" to \"Done\" when completed\n- UPDATE \"Next Steps\" based on what was accomplished\n- PRESERVE exact file paths, function names, and error messages\n- If something is no longer relevant, you may remove it\n\nUse this EXACT format:\n\n## Goal\n[Preserve existing goals, add new ones if the task expanded]\n\n## Constraints & Preferences\n- [Preserve existing, add new ones discovered]\n\n## Progress\n### Done\n- [x] [Include previously done items AND newly completed items]\n\n### In Progress\n- [ ] [Current work - update based on progress]\n\n### Blocked\n- [Current blockers - remove if resolved]\n\n## Key Decisions\n- **[Decision]**: [Brief rationale] (preserve all previous, add new)\n\n## Next Steps\n1. [Update based on current state]\n\n## Critical Context\n- [Preserve important context, add new if needed]\n\nKeep each section concise. Preserve exact file paths, function names, and error messages.",
+					"maxTokens": null
+				}
+			],
+			"summary": "SUMMARY 1",
+			"details": {
+				"readFiles": [],
+				"modifiedFiles": []
+			},
+			"compacted": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\nSUMMARY 1\n</summary>",
+				"user:q4"
+			]
+		},
+		{
+			"name": "previous-summary-from-hook-string-0",
+			"file": "{\"type\":\"session\",\"version\":3,\"id\":\"01a154ec-a579-70f7-bede-ef34bb349d6c\",\"timestamp\":\"2026-10-19T16:09:17.433Z\",\"cwd\":\"/tmp/capture-resume\"}\n{\"type\":\"message\",\"id\":\"47892049\",\"parentId\":null,\"timestamp\":\"2026-10-19T16:09:17.433Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q1\"}],\"timestamp\":1789603200104}}\n{\"type\":\"message\",\"id\":\"a6983df6\",\"parentId\":\"47892049\",\"timestamp\":\"2026-10-19T16:09:17.433Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a1\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200105}}\n{\"type\":\"message\",\"id\":\"7551cada\",\"parentId\":\"a6983df6\",\"timestamp\":\"2026-10-19T16:09:17.433Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q2\"}],\"timestamp\":1789603200106}}\n{\"type\":\"message\",\"id\":\"94d3d066\",\"parentId\":\"7551cada\",\"timestamp\":\"2026-10-19T16:09:17.433Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a2\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200107}}\n{\"type\":\"compaction\",\"id\":\"940887a0\",\"parentId\":\"94d3d066\",\"timestamp\":\"2026-10-19T16:09:17.433Z\",\"summary\":\"## Goal\\nwork\",\"firstKeptEntryId\":\"7551cada\",\"tokensBefore\":100,\"details\":{\"readFiles\":[\"/a/string-0.go\"],\"modifiedFiles\":[]},\"fromHook\":\"0\"}\n{\"type\":\"message\",\"id\":\"18832723\",\"parentId\":\"940887a0\",\"timestamp\":\"2026-10-19T16:09:17.433Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q3\"}],\"timestamp\":1789603200108}}\n{\"type\":\"message\",\"id\":\"2cc3636c\",\"parentId\":\"18832723\",\"timestamp\":\"2026-10-19T16:09:17.433Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a3\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200109}}\n{\"type\":\"message\",\"id\":\"64177cd1\",\"parentId\":\"2cc3636c\",\"timestamp\":\"2026-10-19T16:09:17.433Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q4\"}],\"timestamp\":1789603200110}}\n",
+			"resumed": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\n## Goal\nwork\n</summary>",
+				"user:q2",
+				"assistant:a2",
+				"user:q3",
+				"assistant:a3",
+				"user:q4"
+			],
+			"previousSummary": "## Goal\nwork",
+			"requests": [
+				{
+					"systemPrompt": "You are a context summarization assistant. Your task is to read a conversation between a user and an AI assistant, then produce a structured summary following the exact format specified.\n\nDo NOT continue the conversation. Do NOT respond to any questions in the conversation. ONLY output the structured summary.",
+					"text": "<conversation>\n[User]: q2\n\n[Assistant]: a2\n\n[User]: q3\n\n[Assistant]: a3\n</conversation>\n\n<previous-summary>\n## Goal\nwork\n</previous-summary>\n\nThe messages above are NEW conversation messages to incorporate into the existing summary provided in <previous-summary> tags.\n\nUpdate the existing structured summary with new information. RULES:\n- PRESERVE all existing information from the previous summary\n- ADD new progress, decisions, and context from the new messages\n- UPDATE the Progress section: move items from \"In Progress\" to \"Done\" when completed\n- UPDATE \"Next Steps\" based on what was accomplished\n- PRESERVE exact file paths, function names, and error messages\n- If something is no longer relevant, you may remove it\n\nUse this EXACT format:\n\n## Goal\n[Preserve existing goals, add new ones if the task expanded]\n\n## Constraints & Preferences\n- [Preserve existing, add new ones discovered]\n\n## Progress\n### Done\n- [x] [Include previously done items AND newly completed items]\n\n### In Progress\n- [ ] [Current work - update based on progress]\n\n### Blocked\n- [Current blockers - remove if resolved]\n\n## Key Decisions\n- **[Decision]**: [Brief rationale] (preserve all previous, add new)\n\n## Next Steps\n1. [Update based on current state]\n\n## Critical Context\n- [Preserve important context, add new if needed]\n\nKeep each section concise. Preserve exact file paths, function names, and error messages.",
+					"maxTokens": null
+				}
+			],
+			"summary": "SUMMARY 1",
+			"details": {
+				"readFiles": [],
+				"modifiedFiles": []
+			},
+			"compacted": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\nSUMMARY 1\n</summary>",
+				"user:q4"
+			]
+		},
+		{
+			"name": "previous-summary-from-hook-string-false",
+			"file": "{\"type\":\"session\",\"version\":3,\"id\":\"01a154ec-a57a-70f7-bede-ef38ea530aa3\",\"timestamp\":\"2026-10-19T16:09:17.434Z\",\"cwd\":\"/tmp/capture-resume\"}\n{\"type\":\"message\",\"id\":\"972ba4d2\",\"parentId\":null,\"timestamp\":\"2026-10-19T16:09:17.434Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q1\"}],\"timestamp\":1789603200111}}\n{\"type\":\"message\",\"id\":\"27f074aa\",\"parentId\":\"972ba4d2\",\"timestamp\":\"2026-10-19T16:09:17.434Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a1\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200112}}\n{\"type\":\"message\",\"id\":\"20b1f2bc\",\"parentId\":\"27f074aa\",\"timestamp\":\"2026-10-19T16:09:17.434Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q2\"}],\"timestamp\":1789603200113}}\n{\"type\":\"message\",\"id\":\"9dca713d\",\"parentId\":\"20b1f2bc\",\"timestamp\":\"2026-10-19T16:09:17.434Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a2\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200114}}\n{\"type\":\"compaction\",\"id\":\"40fc0a15\",\"parentId\":\"9dca713d\",\"timestamp\":\"2026-10-19T16:09:17.434Z\",\"summary\":\"## Goal\\nwork\",\"firstKeptEntryId\":\"20b1f2bc\",\"tokensBefore\":100,\"details\":{\"readFiles\":[\"/a/string-false.go\"],\"modifiedFiles\":[]},\"fromHook\":\"false\"}\n{\"type\":\"message\",\"id\":\"65a94cf1\",\"parentId\":\"40fc0a15\",\"timestamp\":\"2026-10-19T16:09:17.434Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q3\"}],\"timestamp\":1789603200115}}\n{\"type\":\"message\",\"id\":\"8d6d352a\",\"parentId\":\"65a94cf1\",\"timestamp\":\"2026-10-19T16:09:17.434Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a3\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200116}}\n{\"type\":\"message\",\"id\":\"51fca72e\",\"parentId\":\"8d6d352a\",\"timestamp\":\"2026-10-19T16:09:17.434Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q4\"}],\"timestamp\":1789603200117}}\n",
+			"resumed": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\n## Goal\nwork\n</summary>",
+				"user:q2",
+				"assistant:a2",
+				"user:q3",
+				"assistant:a3",
+				"user:q4"
+			],
+			"previousSummary": "## Goal\nwork",
+			"requests": [
+				{
+					"systemPrompt": "You are a context summarization assistant. Your task is to read a conversation between a user and an AI assistant, then produce a structured summary following the exact format specified.\n\nDo NOT continue the conversation. Do NOT respond to any questions in the conversation. ONLY output the structured summary.",
+					"text": "<conversation>\n[User]: q2\n\n[Assistant]: a2\n\n[User]: q3\n\n[Assistant]: a3\n</conversation>\n\n<previous-summary>\n## Goal\nwork\n</previous-summary>\n\nThe messages above are NEW conversation messages to incorporate into the existing summary provided in <previous-summary> tags.\n\nUpdate the existing structured summary with new information. RULES:\n- PRESERVE all existing information from the previous summary\n- ADD new progress, decisions, and context from the new messages\n- UPDATE the Progress section: move items from \"In Progress\" to \"Done\" when completed\n- UPDATE \"Next Steps\" based on what was accomplished\n- PRESERVE exact file paths, function names, and error messages\n- If something is no longer relevant, you may remove it\n\nUse this EXACT format:\n\n## Goal\n[Preserve existing goals, add new ones if the task expanded]\n\n## Constraints & Preferences\n- [Preserve existing, add new ones discovered]\n\n## Progress\n### Done\n- [x] [Include previously done items AND newly completed items]\n\n### In Progress\n- [ ] [Current work - update based on progress]\n\n### Blocked\n- [Current blockers - remove if resolved]\n\n## Key Decisions\n- **[Decision]**: [Brief rationale] (preserve all previous, add new)\n\n## Next Steps\n1. [Update based on current state]\n\n## Critical Context\n- [Preserve important context, add new if needed]\n\nKeep each section concise. Preserve exact file paths, function names, and error messages.",
+					"maxTokens": null
+				}
+			],
+			"summary": "SUMMARY 1",
+			"details": {
+				"readFiles": [],
+				"modifiedFiles": []
+			},
+			"compacted": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\nSUMMARY 1\n</summary>",
+				"user:q4"
+			]
+		},
+		{
+			"name": "previous-summary-from-hook-raw-1e400",
+			"file": "{\"type\":\"session\",\"version\":3,\"id\":\"01a154ec-a57a-70f7-bede-ef3cadfc3b81\",\"timestamp\":\"2026-10-19T16:09:17.434Z\",\"cwd\":\"/tmp/capture-resume\"}\n{\"type\":\"message\",\"id\":\"70c082df\",\"parentId\":null,\"timestamp\":\"2026-10-19T16:09:17.434Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q1\"}],\"timestamp\":1789603200118}}\n{\"type\":\"message\",\"id\":\"951cc7ad\",\"parentId\":\"70c082df\",\"timestamp\":\"2026-10-19T16:09:17.434Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a1\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200119}}\n{\"type\":\"message\",\"id\":\"78354caa\",\"parentId\":\"951cc7ad\",\"timestamp\":\"2026-10-19T16:09:17.434Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q2\"}],\"timestamp\":1789603200120}}\n{\"type\":\"message\",\"id\":\"0a0ffc94\",\"parentId\":\"78354caa\",\"timestamp\":\"2026-10-19T16:09:17.434Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a2\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200121}}\n{\"type\":\"compaction\",\"id\":\"db4ef951\",\"parentId\":\"0a0ffc94\",\"timestamp\":\"2026-10-19T16:09:17.434Z\",\"summary\":\"## Goal\\nwork\",\"firstKeptEntryId\":\"78354caa\",\"tokensBefore\":100,\"details\":{\"readFiles\":[\"/a/raw-1e400.go\"],\"modifiedFiles\":[]},\"fromHook\":1e400}\n{\"type\":\"message\",\"id\":\"6809f76f\",\"parentId\":\"db4ef951\",\"timestamp\":\"2026-10-19T16:09:17.434Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q3\"}],\"timestamp\":1789603200122}}\n{\"type\":\"message\",\"id\":\"2bf6489b\",\"parentId\":\"6809f76f\",\"timestamp\":\"2026-10-19T16:09:17.434Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a3\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200123}}\n{\"type\":\"message\",\"id\":\"f4f1deb4\",\"parentId\":\"2bf6489b\",\"timestamp\":\"2026-10-19T16:09:17.434Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q4\"}],\"timestamp\":1789603200124}}\n",
+			"resumed": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\n## Goal\nwork\n</summary>",
+				"user:q2",
+				"assistant:a2",
+				"user:q3",
+				"assistant:a3",
+				"user:q4"
+			],
+			"previousSummary": "## Goal\nwork",
+			"requests": [
+				{
+					"systemPrompt": "You are a context summarization assistant. Your task is to read a conversation between a user and an AI assistant, then produce a structured summary following the exact format specified.\n\nDo NOT continue the conversation. Do NOT respond to any questions in the conversation. ONLY output the structured summary.",
+					"text": "<conversation>\n[User]: q2\n\n[Assistant]: a2\n\n[User]: q3\n\n[Assistant]: a3\n</conversation>\n\n<previous-summary>\n## Goal\nwork\n</previous-summary>\n\nThe messages above are NEW conversation messages to incorporate into the existing summary provided in <previous-summary> tags.\n\nUpdate the existing structured summary with new information. RULES:\n- PRESERVE all existing information from the previous summary\n- ADD new progress, decisions, and context from the new messages\n- UPDATE the Progress section: move items from \"In Progress\" to \"Done\" when completed\n- UPDATE \"Next Steps\" based on what was accomplished\n- PRESERVE exact file paths, function names, and error messages\n- If something is no longer relevant, you may remove it\n\nUse this EXACT format:\n\n## Goal\n[Preserve existing goals, add new ones if the task expanded]\n\n## Constraints & Preferences\n- [Preserve existing, add new ones discovered]\n\n## Progress\n### Done\n- [x] [Include previously done items AND newly completed items]\n\n### In Progress\n- [ ] [Current work - update based on progress]\n\n### Blocked\n- [Current blockers - remove if resolved]\n\n## Key Decisions\n- **[Decision]**: [Brief rationale] (preserve all previous, add new)\n\n## Next Steps\n1. [Update based on current state]\n\n## Critical Context\n- [Preserve important context, add new if needed]\n\nKeep each section concise. Preserve exact file paths, function names, and error messages.",
+					"maxTokens": null
+				}
+			],
+			"summary": "SUMMARY 1",
+			"details": {
+				"readFiles": [],
+				"modifiedFiles": []
+			},
+			"compacted": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\nSUMMARY 1\n</summary>",
+				"user:q4"
+			]
+		},
+		{
+			"name": "previous-summary-from-hook-raw-1e-400",
+			"file": "{\"type\":\"session\",\"version\":3,\"id\":\"01a154ec-a57b-70f7-bede-ef40daee3409\",\"timestamp\":\"2026-10-19T16:09:17.435Z\",\"cwd\":\"/tmp/capture-resume\"}\n{\"type\":\"message\",\"id\":\"d6e08978\",\"parentId\":null,\"timestamp\":\"2026-10-19T16:09:17.435Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q1\"}],\"timestamp\":1789603200125}}\n{\"type\":\"message\",\"id\":\"3a4cdc4a\",\"parentId\":\"d6e08978\",\"timestamp\":\"2026-10-19T16:09:17.435Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a1\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200126}}\n{\"type\":\"message\",\"id\":\"9e3bd90d\",\"parentId\":\"3a4cdc4a\",\"timestamp\":\"2026-10-19T16:09:17.435Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q2\"}],\"timestamp\":1789603200127}}\n{\"type\":\"message\",\"id\":\"70e294ea\",\"parentId\":\"9e3bd90d\",\"timestamp\":\"2026-10-19T16:09:17.435Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a2\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200128}}\n{\"type\":\"compaction\",\"id\":\"b0b6d636\",\"parentId\":\"70e294ea\",\"timestamp\":\"2026-10-19T16:09:17.435Z\",\"summary\":\"## Goal\\nwork\",\"firstKeptEntryId\":\"9e3bd90d\",\"tokensBefore\":100,\"details\":{\"readFiles\":[\"/a/raw-1e-400.go\"],\"modifiedFiles\":[]},\"fromHook\":1e-400}\n{\"type\":\"message\",\"id\":\"52396a22\",\"parentId\":\"b0b6d636\",\"timestamp\":\"2026-10-19T16:09:17.435Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q3\"}],\"timestamp\":1789603200129}}\n{\"type\":\"message\",\"id\":\"3168777f\",\"parentId\":\"52396a22\",\"timestamp\":\"2026-10-19T16:09:17.435Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a3\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200130}}\n{\"type\":\"message\",\"id\":\"0c7e2c9f\",\"parentId\":\"3168777f\",\"timestamp\":\"2026-10-19T16:09:17.435Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q4\"}],\"timestamp\":1789603200131}}\n",
+			"resumed": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\n## Goal\nwork\n</summary>",
+				"user:q2",
+				"assistant:a2",
+				"user:q3",
+				"assistant:a3",
+				"user:q4"
+			],
+			"previousSummary": "## Goal\nwork",
+			"requests": [
+				{
+					"systemPrompt": "You are a context summarization assistant. Your task is to read a conversation between a user and an AI assistant, then produce a structured summary following the exact format specified.\n\nDo NOT continue the conversation. Do NOT respond to any questions in the conversation. ONLY output the structured summary.",
+					"text": "<conversation>\n[User]: q2\n\n[Assistant]: a2\n\n[User]: q3\n\n[Assistant]: a3\n</conversation>\n\n<previous-summary>\n## Goal\nwork\n</previous-summary>\n\nThe messages above are NEW conversation messages to incorporate into the existing summary provided in <previous-summary> tags.\n\nUpdate the existing structured summary with new information. RULES:\n- PRESERVE all existing information from the previous summary\n- ADD new progress, decisions, and context from the new messages\n- UPDATE the Progress section: move items from \"In Progress\" to \"Done\" when completed\n- UPDATE \"Next Steps\" based on what was accomplished\n- PRESERVE exact file paths, function names, and error messages\n- If something is no longer relevant, you may remove it\n\nUse this EXACT format:\n\n## Goal\n[Preserve existing goals, add new ones if the task expanded]\n\n## Constraints & Preferences\n- [Preserve existing, add new ones discovered]\n\n## Progress\n### Done\n- [x] [Include previously done items AND newly completed items]\n\n### In Progress\n- [ ] [Current work - update based on progress]\n\n### Blocked\n- [Current blockers - remove if resolved]\n\n## Key Decisions\n- **[Decision]**: [Brief rationale] (preserve all previous, add new)\n\n## Next Steps\n1. [Update based on current state]\n\n## Critical Context\n- [Preserve important context, add new if needed]\n\nKeep each section concise. Preserve exact file paths, function names, and error messages.",
+					"maxTokens": null
+				}
+			],
+			"summary": "SUMMARY 1\n\n<read-files>\n/a/raw-1e-400.go\n</read-files>",
+			"details": {
+				"readFiles": [
+					"/a/raw-1e-400.go"
+				],
+				"modifiedFiles": []
+			},
+			"compacted": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\nSUMMARY 1\n\n<read-files>\n/a/raw-1e-400.go\n</read-files>\n</summary>",
+				"user:q4"
+			]
+		},
+		{
+			"name": "previous-summary-details-odd-types",
+			"file": "{\"type\":\"session\",\"version\":3,\"id\":\"01a154ec-a57b-70f7-bede-ef450ce5f5e6\",\"timestamp\":\"2026-10-19T16:09:17.435Z\",\"cwd\":\"/tmp/capture-resume\"}\n{\"type\":\"message\",\"id\":\"8dabaa9e\",\"parentId\":null,\"timestamp\":\"2026-10-19T16:09:17.435Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q1\"}],\"timestamp\":1789603200132}}\n{\"type\":\"message\",\"id\":\"b27acfcd\",\"parentId\":\"8dabaa9e\",\"timestamp\":\"2026-10-19T16:09:17.435Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a1\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200133}}\n{\"type\":\"message\",\"id\":\"1d87cf7a\",\"parentId\":\"b27acfcd\",\"timestamp\":\"2026-10-19T16:09:17.435Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q2\"}],\"timestamp\":1789603200134}}\n{\"type\":\"message\",\"id\":\"4c508bc1\",\"parentId\":\"1d87cf7a\",\"timestamp\":\"2026-10-19T16:09:17.435Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a2\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200135}}\n{\"type\":\"compaction\",\"id\":\"ad01b68d\",\"parentId\":\"4c508bc1\",\"timestamp\":\"2026-10-19T16:09:17.435Z\",\"summary\":\"## Goal\\nodd work\",\"firstKeptEntryId\":\"1d87cf7a\",\"tokensBefore\":100,\"details\":{\"readFiles\":[5,\"/a/r.go\",null,{\"x\":1},[\"b\",\"c\"],true,\"/a/m.go\",\"5\",5.0,-0,0,[null,\"x\",[\"y\",2]],{},1e+21,0.1,1e400,\"Infinity\",\"/a/😀.go\",\"/a/｡.go\"],\"modifiedFiles\":[\"/a/m.go\",7,0]},\"fromHook\":false}\n{\"type\":\"message\",\"id\":\"ce9130b1\",\"parentId\":\"ad01b68d\",\"timestamp\":\"2026-10-19T16:09:17.435Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q3\"}],\"timestamp\":1789603200136}}\n{\"type\":\"message\",\"id\":\"389e3502\",\"parentId\":\"ce9130b1\",\"timestamp\":\"2026-10-19T16:09:17.435Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"editing\"},{\"type\":\"toolCall\",\"id\":\"e1\",\"name\":\"edit\",\"arguments\":{\"path\":\"/a/r.go\",\"oldText\":\"a\",\"newText\":\"b\"}}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"toolUse\",\"timestamp\":1789603200137}}\n{\"type\":\"message\",\"id\":\"de256a1c\",\"parentId\":\"389e3502\",\"timestamp\":\"2026-10-19T16:09:17.435Z\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"e1\",\"toolName\":\"edit\",\"content\":[{\"type\":\"text\",\"text\":\"ok\"}],\"isError\":false,\"timestamp\":1789603200138}}\n{\"type\":\"message\",\"id\":\"9f9bad0a\",\"parentId\":\"de256a1c\",\"timestamp\":\"2026-10-19T16:09:17.435Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a3\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200139}}\n{\"type\":\"message\",\"id\":\"ebefcb5a\",\"parentId\":\"9f9bad0a\",\"timestamp\":\"2026-10-19T16:09:17.435Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q4\"}],\"timestamp\":1789603200140}}\n",
+			"resumed": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\n## Goal\nodd work\n</summary>",
+				"user:q2",
+				"assistant:a2",
+				"user:q3",
+				"assistant:editing [edit {\"path\":\"/a/r.go\",\"oldText\":\"a\",\"newText\":\"b\"}]",
+				"toolResult:ok",
+				"assistant:a3",
+				"user:q4"
+			],
+			"previousSummary": "## Goal\nodd work",
+			"requests": [
+				{
+					"systemPrompt": "You are a context summarization assistant. Your task is to read a conversation between a user and an AI assistant, then produce a structured summary following the exact format specified.\n\nDo NOT continue the conversation. Do NOT respond to any questions in the conversation. ONLY output the structured summary.",
+					"text": "<conversation>\n[User]: q2\n\n[Assistant]: a2\n\n[User]: q3\n\n[Assistant]: editing\n\n[Assistant tool calls]: edit(path=\"/a/r.go\", oldText=\"a\", newText=\"b\")\n\n[Tool result]: ok\n\n[Assistant]: a3\n</conversation>\n\n<previous-summary>\n## Goal\nodd work\n</previous-summary>\n\nThe messages above are NEW conversation messages to incorporate into the existing summary provided in <previous-summary> tags.\n\nUpdate the existing structured summary with new information. RULES:\n- PRESERVE all existing information from the previous summary\n- ADD new progress, decisions, and context from the new messages\n- UPDATE the Progress section: move items from \"In Progress\" to \"Done\" when completed\n- UPDATE \"Next Steps\" based on what was accomplished\n- PRESERVE exact file paths, function names, and error messages\n- If something is no longer relevant, you may remove it\n\nUse this EXACT format:\n\n## Goal\n[Preserve existing goals, add new ones if the task expanded]\n\n## Constraints & Preferences\n- [Preserve existing, add new ones discovered]\n\n## Progress\n### Done\n- [x] [Include previously done items AND newly completed items]\n\n### In Progress\n- [ ] [Current work - update based on progress]\n\n### Blocked\n- [Current blockers - remove if resolved]\n\n## Key Decisions\n- **[Decision]**: [Brief rationale] (preserve all previous, add new)\n\n## Next Steps\n1. [Update based on current state]\n\n## Critical Context\n- [Preserve important context, add new if needed]\n\nKeep each section concise. Preserve exact file paths, function names, and error messages.",
+					"maxTokens": null
+				}
+			],
+			"summary": "SUMMARY 1\n\n<read-files>\n,x,y,2\n/a/😀.go\n/a/｡.go\n0.1\n1e+21\n5\n5\nInfinity\nInfinity\n[object Object]\n[object Object]\nb,c\n\ntrue\n</read-files>\n\n<modified-files>\n/a/m.go\n/a/r.go\n0\n7\n</modified-files>",
+			"details": {
+				"readFiles": [
+					[
+						null,
+						"x",
+						[
+							"y",
+							2
+						]
+					],
+					"/a/😀.go",
+					"/a/｡.go",
+					0.1,
+					1e+21,
+					5,
+					"5",
+					null,
+					"Infinity",
+					{
+						"x": 1
+					},
+					{},
+					[
+						"b",
+						"c"
+					],
+					null,
+					true
+				],
+				"modifiedFiles": [
+					"/a/m.go",
+					"/a/r.go",
+					0,
+					7
+				]
+			},
+			"compacted": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\nSUMMARY 1\n\n<read-files>\n,x,y,2\n/a/😀.go\n/a/｡.go\n0.1\n1e+21\n5\n5\nInfinity\nInfinity\n[object Object]\n[object Object]\nb,c\n\ntrue\n</read-files>\n\n<modified-files>\n/a/m.go\n/a/r.go\n0\n7\n</modified-files>\n</summary>",
+				"user:q4"
+			]
+		},
+		{
+			"name": "previous-summary-details-no-string-form",
+			"file": "{\"type\":\"session\",\"version\":3,\"id\":\"01a154ec-a57c-70f7-bede-ef4840c46897\",\"timestamp\":\"2026-10-19T16:09:17.436Z\",\"cwd\":\"/tmp/capture-resume\"}\n{\"type\":\"message\",\"id\":\"ca541c83\",\"parentId\":null,\"timestamp\":\"2026-10-19T16:09:17.436Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q1\"}],\"timestamp\":1789603200141}}\n{\"type\":\"message\",\"id\":\"b569f27e\",\"parentId\":\"ca541c83\",\"timestamp\":\"2026-10-19T16:09:17.436Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a1\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200142}}\n{\"type\":\"message\",\"id\":\"1570eec5\",\"parentId\":\"b569f27e\",\"timestamp\":\"2026-10-19T16:09:17.436Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q2\"}],\"timestamp\":1789603200143}}\n{\"type\":\"message\",\"id\":\"e8fffe95\",\"parentId\":\"1570eec5\",\"timestamp\":\"2026-10-19T16:09:17.436Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a2\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200144}}\n{\"type\":\"compaction\",\"id\":\"c3e46901\",\"parentId\":\"e8fffe95\",\"timestamp\":\"2026-10-19T16:09:17.436Z\",\"summary\":\"## Goal\\nwork\",\"firstKeptEntryId\":\"1570eec5\",\"tokensBefore\":100,\"details\":{\"readFiles\":[{\"toString\":1},\"/a/r.go\"],\"modifiedFiles\":[]},\"fromHook\":false}\n{\"type\":\"message\",\"id\":\"8f314307\",\"parentId\":\"c3e46901\",\"timestamp\":\"2026-10-19T16:09:17.436Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q3\"}],\"timestamp\":1789603200145}}\n{\"type\":\"message\",\"id\":\"03711a4f\",\"parentId\":\"8f314307\",\"timestamp\":\"2026-10-19T16:09:17.436Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a3\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200146}}\n{\"type\":\"message\",\"id\":\"a7a5260e\",\"parentId\":\"03711a4f\",\"timestamp\":\"2026-10-19T16:09:17.436Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q4\"}],\"timestamp\":1789603200147}}\n",
+			"resumed": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\n## Goal\nwork\n</summary>",
+				"user:q2",
+				"assistant:a2",
+				"user:q3",
+				"assistant:a3",
+				"user:q4"
+			],
+			"previousSummary": "## Goal\nwork",
+			"requests": [
+				{
+					"systemPrompt": "You are a context summarization assistant. Your task is to read a conversation between a user and an AI assistant, then produce a structured summary following the exact format specified.\n\nDo NOT continue the conversation. Do NOT respond to any questions in the conversation. ONLY output the structured summary.",
+					"text": "<conversation>\n[User]: q2\n\n[Assistant]: a2\n\n[User]: q3\n\n[Assistant]: a3\n</conversation>\n\n<previous-summary>\n## Goal\nwork\n</previous-summary>\n\nThe messages above are NEW conversation messages to incorporate into the existing summary provided in <previous-summary> tags.\n\nUpdate the existing structured summary with new information. RULES:\n- PRESERVE all existing information from the previous summary\n- ADD new progress, decisions, and context from the new messages\n- UPDATE the Progress section: move items from \"In Progress\" to \"Done\" when completed\n- UPDATE \"Next Steps\" based on what was accomplished\n- PRESERVE exact file paths, function names, and error messages\n- If something is no longer relevant, you may remove it\n\nUse this EXACT format:\n\n## Goal\n[Preserve existing goals, add new ones if the task expanded]\n\n## Constraints & Preferences\n- [Preserve existing, add new ones discovered]\n\n## Progress\n### Done\n- [x] [Include previously done items AND newly completed items]\n\n### In Progress\n- [ ] [Current work - update based on progress]\n\n### Blocked\n- [Current blockers - remove if resolved]\n\n## Key Decisions\n- **[Decision]**: [Brief rationale] (preserve all previous, add new)\n\n## Next Steps\n1. [Update based on current state]\n\n## Critical Context\n- [Preserve important context, add new if needed]\n\nKeep each section concise. Preserve exact file paths, function names, and error messages.",
+					"maxTokens": null
+				}
+			],
+			"error": "Cannot convert object to primitive value",
+			"compacted": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\n## Goal\nwork\n</summary>",
+				"user:q2",
+				"assistant:a2",
+				"user:q3",
+				"assistant:a3",
+				"user:q4"
+			]
+		},
+		{
+			"name": "previous-summary-details-nested-no-string-form",
+			"file": "{\"type\":\"session\",\"version\":3,\"id\":\"01a154ec-a57c-70f7-bede-ef4cb5361d65\",\"timestamp\":\"2026-10-19T16:09:17.436Z\",\"cwd\":\"/tmp/capture-resume\"}\n{\"type\":\"message\",\"id\":\"92aa1b2a\",\"parentId\":null,\"timestamp\":\"2026-10-19T16:09:17.436Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q1\"}],\"timestamp\":1789603200148}}\n{\"type\":\"message\",\"id\":\"f928fefb\",\"parentId\":\"92aa1b2a\",\"timestamp\":\"2026-10-19T16:09:17.436Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a1\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200149}}\n{\"type\":\"message\",\"id\":\"5a84fc88\",\"parentId\":\"f928fefb\",\"timestamp\":\"2026-10-19T16:09:17.436Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q2\"}],\"timestamp\":1789603200150}}\n{\"type\":\"message\",\"id\":\"ae1b4772\",\"parentId\":\"5a84fc88\",\"timestamp\":\"2026-10-19T16:09:17.436Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a2\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200151}}\n{\"type\":\"compaction\",\"id\":\"2e4c4d94\",\"parentId\":\"ae1b4772\",\"timestamp\":\"2026-10-19T16:09:17.436Z\",\"summary\":\"## Goal\\nwork\",\"firstKeptEntryId\":\"5a84fc88\",\"tokensBefore\":100,\"details\":{\"readFiles\":[\"/a/r.go\"],\"modifiedFiles\":[[{\"toString\":\"x\"}]]},\"fromHook\":false}\n{\"type\":\"message\",\"id\":\"3c5771ba\",\"parentId\":\"2e4c4d94\",\"timestamp\":\"2026-10-19T16:09:17.436Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q3\"}],\"timestamp\":1789603200152}}\n{\"type\":\"message\",\"id\":\"1e6baaf0\",\"parentId\":\"3c5771ba\",\"timestamp\":\"2026-10-19T16:09:17.436Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a3\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200153}}\n{\"type\":\"message\",\"id\":\"482d4c3c\",\"parentId\":\"1e6baaf0\",\"timestamp\":\"2026-10-19T16:09:17.436Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q4\"}],\"timestamp\":1789603200154}}\n",
+			"resumed": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\n## Goal\nwork\n</summary>",
+				"user:q2",
+				"assistant:a2",
+				"user:q3",
+				"assistant:a3",
+				"user:q4"
+			],
+			"previousSummary": "## Goal\nwork",
+			"requests": [
+				{
+					"systemPrompt": "You are a context summarization assistant. Your task is to read a conversation between a user and an AI assistant, then produce a structured summary following the exact format specified.\n\nDo NOT continue the conversation. Do NOT respond to any questions in the conversation. ONLY output the structured summary.",
+					"text": "<conversation>\n[User]: q2\n\n[Assistant]: a2\n\n[User]: q3\n\n[Assistant]: a3\n</conversation>\n\n<previous-summary>\n## Goal\nwork\n</previous-summary>\n\nThe messages above are NEW conversation messages to incorporate into the existing summary provided in <previous-summary> tags.\n\nUpdate the existing structured summary with new information. RULES:\n- PRESERVE all existing information from the previous summary\n- ADD new progress, decisions, and context from the new messages\n- UPDATE the Progress section: move items from \"In Progress\" to \"Done\" when completed\n- UPDATE \"Next Steps\" based on what was accomplished\n- PRESERVE exact file paths, function names, and error messages\n- If something is no longer relevant, you may remove it\n\nUse this EXACT format:\n\n## Goal\n[Preserve existing goals, add new ones if the task expanded]\n\n## Constraints & Preferences\n- [Preserve existing, add new ones discovered]\n\n## Progress\n### Done\n- [x] [Include previously done items AND newly completed items]\n\n### In Progress\n- [ ] [Current work - update based on progress]\n\n### Blocked\n- [Current blockers - remove if resolved]\n\n## Key Decisions\n- **[Decision]**: [Brief rationale] (preserve all previous, add new)\n\n## Next Steps\n1. [Update based on current state]\n\n## Critical Context\n- [Preserve important context, add new if needed]\n\nKeep each section concise. Preserve exact file paths, function names, and error messages.",
+					"maxTokens": null
+				}
+			],
+			"error": "Cannot convert object to primitive value",
+			"compacted": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\n## Goal\nwork\n</summary>",
+				"user:q2",
+				"assistant:a2",
+				"user:q3",
+				"assistant:a3",
+				"user:q4"
+			]
+		},
+		{
+			"name": "previous-summary-details-value-of",
+			"file": "{\"type\":\"session\",\"version\":3,\"id\":\"01a154ec-a57d-70f7-bede-ef50dee7ff23\",\"timestamp\":\"2026-10-19T16:09:17.437Z\",\"cwd\":\"/tmp/capture-resume\"}\n{\"type\":\"message\",\"id\":\"4acbac95\",\"parentId\":null,\"timestamp\":\"2026-10-19T16:09:17.437Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q1\"}],\"timestamp\":1789603200155}}\n{\"type\":\"message\",\"id\":\"dc47e5cb\",\"parentId\":\"4acbac95\",\"timestamp\":\"2026-10-19T16:09:17.437Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a1\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200156}}\n{\"type\":\"message\",\"id\":\"ad4958a1\",\"parentId\":\"dc47e5cb\",\"timestamp\":\"2026-10-19T16:09:17.437Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q2\"}],\"timestamp\":1789603200157}}\n{\"type\":\"message\",\"id\":\"ba5ac8a9\",\"parentId\":\"ad4958a1\",\"timestamp\":\"2026-10-19T16:09:17.437Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a2\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200158}}\n{\"type\":\"compaction\",\"id\":\"e6926a90\",\"parentId\":\"ba5ac8a9\",\"timestamp\":\"2026-10-19T16:09:17.437Z\",\"summary\":\"## Goal\\nwork\",\"firstKeptEntryId\":\"ad4958a1\",\"tokensBefore\":100,\"details\":{\"readFiles\":[{\"valueOf\":1},\"/a/r.go\"],\"modifiedFiles\":[]},\"fromHook\":false}\n{\"type\":\"message\",\"id\":\"c555d1af\",\"parentId\":\"e6926a90\",\"timestamp\":\"2026-10-19T16:09:17.437Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q3\"}],\"timestamp\":1789603200159}}\n{\"type\":\"message\",\"id\":\"b4c384b3\",\"parentId\":\"c555d1af\",\"timestamp\":\"2026-10-19T16:09:17.437Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a3\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200160}}\n{\"type\":\"message\",\"id\":\"8d42eaba\",\"parentId\":\"b4c384b3\",\"timestamp\":\"2026-10-19T16:09:17.437Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q4\"}],\"timestamp\":1789603200161}}\n",
+			"resumed": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\n## Goal\nwork\n</summary>",
+				"user:q2",
+				"assistant:a2",
+				"user:q3",
+				"assistant:a3",
+				"user:q4"
+			],
+			"previousSummary": "## Goal\nwork",
+			"requests": [
+				{
+					"systemPrompt": "You are a context summarization assistant. Your task is to read a conversation between a user and an AI assistant, then produce a structured summary following the exact format specified.\n\nDo NOT continue the conversation. Do NOT respond to any questions in the conversation. ONLY output the structured summary.",
+					"text": "<conversation>\n[User]: q2\n\n[Assistant]: a2\n\n[User]: q3\n\n[Assistant]: a3\n</conversation>\n\n<previous-summary>\n## Goal\nwork\n</previous-summary>\n\nThe messages above are NEW conversation messages to incorporate into the existing summary provided in <previous-summary> tags.\n\nUpdate the existing structured summary with new information. RULES:\n- PRESERVE all existing information from the previous summary\n- ADD new progress, decisions, and context from the new messages\n- UPDATE the Progress section: move items from \"In Progress\" to \"Done\" when completed\n- UPDATE \"Next Steps\" based on what was accomplished\n- PRESERVE exact file paths, function names, and error messages\n- If something is no longer relevant, you may remove it\n\nUse this EXACT format:\n\n## Goal\n[Preserve existing goals, add new ones if the task expanded]\n\n## Constraints & Preferences\n- [Preserve existing, add new ones discovered]\n\n## Progress\n### Done\n- [x] [Include previously done items AND newly completed items]\n\n### In Progress\n- [ ] [Current work - update based on progress]\n\n### Blocked\n- [Current blockers - remove if resolved]\n\n## Key Decisions\n- **[Decision]**: [Brief rationale] (preserve all previous, add new)\n\n## Next Steps\n1. [Update based on current state]\n\n## Critical Context\n- [Preserve important context, add new if needed]\n\nKeep each section concise. Preserve exact file paths, function names, and error messages.",
+					"maxTokens": null
+				}
+			],
+			"summary": "SUMMARY 1\n\n<read-files>\n/a/r.go\n[object Object]\n</read-files>",
+			"details": {
+				"readFiles": [
+					"/a/r.go",
+					{
+						"valueOf": 1
+					}
+				],
+				"modifiedFiles": []
+			},
+			"compacted": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\nSUMMARY 1\n\n<read-files>\n/a/r.go\n[object Object]\n</read-files>\n</summary>",
+				"user:q4"
+			]
+		},
+		{
+			"name": "previous-summary-details-duplicate-primitives",
+			"file": "{\"type\":\"session\",\"version\":3,\"id\":\"01a154ec-a57d-70f7-bede-ef5523b1755a\",\"timestamp\":\"2026-10-19T16:09:17.437Z\",\"cwd\":\"/tmp/capture-resume\"}\n{\"type\":\"message\",\"id\":\"95a04f0b\",\"parentId\":null,\"timestamp\":\"2026-10-19T16:09:17.437Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q1\"}],\"timestamp\":1789603200162}}\n{\"type\":\"message\",\"id\":\"9b5fef8b\",\"parentId\":\"95a04f0b\",\"timestamp\":\"2026-10-19T16:09:17.437Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a1\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200163}}\n{\"type\":\"message\",\"id\":\"b8764777\",\"parentId\":\"9b5fef8b\",\"timestamp\":\"2026-10-19T16:09:17.437Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q2\"}],\"timestamp\":1789603200164}}\n{\"type\":\"message\",\"id\":\"e7a4e91f\",\"parentId\":\"b8764777\",\"timestamp\":\"2026-10-19T16:09:17.437Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a2\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200165}}\n{\"type\":\"compaction\",\"id\":\"d81054a0\",\"parentId\":\"e7a4e91f\",\"timestamp\":\"2026-10-19T16:09:17.437Z\",\"summary\":\"## Goal\\nwork\",\"firstKeptEntryId\":\"b8764777\",\"tokensBefore\":100,\"details\":{\"readFiles\":[true,true,null,null,false,\"/a/r.go\"],\"modifiedFiles\":[false,null,null]},\"fromHook\":false}\n{\"type\":\"message\",\"id\":\"7ad15d55\",\"parentId\":\"d81054a0\",\"timestamp\":\"2026-10-19T16:09:17.437Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q3\"}],\"timestamp\":1789603200166}}\n{\"type\":\"message\",\"id\":\"8e87dec7\",\"parentId\":\"7ad15d55\",\"timestamp\":\"2026-10-19T16:09:17.437Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a3\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200167}}\n{\"type\":\"message\",\"id\":\"1ea779d6\",\"parentId\":\"8e87dec7\",\"timestamp\":\"2026-10-19T16:09:17.437Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q4\"}],\"timestamp\":1789603200168}}\n",
+			"resumed": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\n## Goal\nwork\n</summary>",
+				"user:q2",
+				"assistant:a2",
+				"user:q3",
+				"assistant:a3",
+				"user:q4"
+			],
+			"previousSummary": "## Goal\nwork",
+			"requests": [
+				{
+					"systemPrompt": "You are a context summarization assistant. Your task is to read a conversation between a user and an AI assistant, then produce a structured summary following the exact format specified.\n\nDo NOT continue the conversation. Do NOT respond to any questions in the conversation. ONLY output the structured summary.",
+					"text": "<conversation>\n[User]: q2\n\n[Assistant]: a2\n\n[User]: q3\n\n[Assistant]: a3\n</conversation>\n\n<previous-summary>\n## Goal\nwork\n</previous-summary>\n\nThe messages above are NEW conversation messages to incorporate into the existing summary provided in <previous-summary> tags.\n\nUpdate the existing structured summary with new information. RULES:\n- PRESERVE all existing information from the previous summary\n- ADD new progress, decisions, and context from the new messages\n- UPDATE the Progress section: move items from \"In Progress\" to \"Done\" when completed\n- UPDATE \"Next Steps\" based on what was accomplished\n- PRESERVE exact file paths, function names, and error messages\n- If something is no longer relevant, you may remove it\n\nUse this EXACT format:\n\n## Goal\n[Preserve existing goals, add new ones if the task expanded]\n\n## Constraints & Preferences\n- [Preserve existing, add new ones discovered]\n\n## Progress\n### Done\n- [x] [Include previously done items AND newly completed items]\n\n### In Progress\n- [ ] [Current work - update based on progress]\n\n### Blocked\n- [Current blockers - remove if resolved]\n\n## Key Decisions\n- **[Decision]**: [Brief rationale] (preserve all previous, add new)\n\n## Next Steps\n1. [Update based on current state]\n\n## Critical Context\n- [Preserve important context, add new if needed]\n\nKeep each section concise. Preserve exact file paths, function names, and error messages.",
+					"maxTokens": null
+				}
+			],
+			"summary": "SUMMARY 1\n\n<read-files>\n/a/r.go\ntrue\n</read-files>\n\n<modified-files>\nfalse\n\n</modified-files>",
+			"details": {
+				"readFiles": [
+					"/a/r.go",
+					true
+				],
+				"modifiedFiles": [
+					false,
+					null
+				]
+			},
+			"compacted": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\nSUMMARY 1\n\n<read-files>\n/a/r.go\ntrue\n</read-files>\n\n<modified-files>\nfalse\n\n</modified-files>\n</summary>",
+				"user:q4"
+			]
+		},
+		{
+			"name": "previous-summary-from-hook-absent",
+			"file": "{\"type\":\"session\",\"version\":3,\"id\":\"01a154ec-a57e-70f7-bede-ef583e03dd67\",\"timestamp\":\"2026-10-19T16:09:17.438Z\",\"cwd\":\"/tmp/capture-resume\"}\n{\"type\":\"message\",\"id\":\"fe3c907e\",\"parentId\":null,\"timestamp\":\"2026-10-19T16:09:17.438Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q1\"}],\"timestamp\":1789603200169}}\n{\"type\":\"message\",\"id\":\"f25175ef\",\"parentId\":\"fe3c907e\",\"timestamp\":\"2026-10-19T16:09:17.438Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a1\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200170}}\n{\"type\":\"message\",\"id\":\"c91550f7\",\"parentId\":\"f25175ef\",\"timestamp\":\"2026-10-19T16:09:17.438Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q2\"}],\"timestamp\":1789603200171}}\n{\"type\":\"message\",\"id\":\"d7663eb2\",\"parentId\":\"c91550f7\",\"timestamp\":\"2026-10-19T16:09:17.438Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a2\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200172}}\n{\"type\":\"compaction\",\"id\":\"bd156f2d\",\"parentId\":\"d7663eb2\",\"timestamp\":\"2026-10-19T16:09:17.438Z\",\"summary\":\"## Goal\\nwork\",\"firstKeptEntryId\":\"c91550f7\",\"tokensBefore\":100,\"details\":{\"readFiles\":[\"/a/absent.go\"],\"modifiedFiles\":[]}}\n{\"type\":\"message\",\"id\":\"9bba949a\",\"parentId\":\"bd156f2d\",\"timestamp\":\"2026-10-19T16:09:17.438Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q3\"}],\"timestamp\":1789603200173}}\n{\"type\":\"message\",\"id\":\"5a450748\",\"parentId\":\"9bba949a\",\"timestamp\":\"2026-10-19T16:09:17.438Z\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"a3\"}],\"api\":\"openai-completions\",\"provider\":\"p\",\"model\":\"m\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1789603200174}}\n{\"type\":\"message\",\"id\":\"5fb32038\",\"parentId\":\"5a450748\",\"timestamp\":\"2026-10-19T16:09:17.438Z\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"q4\"}],\"timestamp\":1789603200175}}\n",
+			"resumed": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\n## Goal\nwork\n</summary>",
+				"user:q2",
+				"assistant:a2",
+				"user:q3",
+				"assistant:a3",
+				"user:q4"
+			],
+			"previousSummary": "## Goal\nwork",
+			"requests": [
+				{
+					"systemPrompt": "You are a context summarization assistant. Your task is to read a conversation between a user and an AI assistant, then produce a structured summary following the exact format specified.\n\nDo NOT continue the conversation. Do NOT respond to any questions in the conversation. ONLY output the structured summary.",
+					"text": "<conversation>\n[User]: q2\n\n[Assistant]: a2\n\n[User]: q3\n\n[Assistant]: a3\n</conversation>\n\n<previous-summary>\n## Goal\nwork\n</previous-summary>\n\nThe messages above are NEW conversation messages to incorporate into the existing summary provided in <previous-summary> tags.\n\nUpdate the existing structured summary with new information. RULES:\n- PRESERVE all existing information from the previous summary\n- ADD new progress, decisions, and context from the new messages\n- UPDATE the Progress section: move items from \"In Progress\" to \"Done\" when completed\n- UPDATE \"Next Steps\" based on what was accomplished\n- PRESERVE exact file paths, function names, and error messages\n- If something is no longer relevant, you may remove it\n\nUse this EXACT format:\n\n## Goal\n[Preserve existing goals, add new ones if the task expanded]\n\n## Constraints & Preferences\n- [Preserve existing, add new ones discovered]\n\n## Progress\n### Done\n- [x] [Include previously done items AND newly completed items]\n\n### In Progress\n- [ ] [Current work - update based on progress]\n\n### Blocked\n- [Current blockers - remove if resolved]\n\n## Key Decisions\n- **[Decision]**: [Brief rationale] (preserve all previous, add new)\n\n## Next Steps\n1. [Update based on current state]\n\n## Critical Context\n- [Preserve important context, add new if needed]\n\nKeep each section concise. Preserve exact file paths, function names, and error messages.",
+					"maxTokens": null
+				}
+			],
+			"summary": "SUMMARY 1\n\n<read-files>\n/a/absent.go\n</read-files>",
+			"details": {
+				"readFiles": [
+					"/a/absent.go"
+				],
+				"modifiedFiles": []
+			},
+			"compacted": [
+				"user:The conversation history before this point was compacted into the following summary:\n\n<summary>\nSUMMARY 1\n\n<read-files>\n/a/absent.go\n</read-files>\n</summary>",
+				"user:q4"
+			]
+		}
+	]
+}

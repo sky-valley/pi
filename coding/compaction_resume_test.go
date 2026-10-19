@@ -27,7 +27,7 @@ import (
 // requests (a details value with no string form), the port's compaction fails
 // too, and the resumed checkpoint keeps rebuilding the context pi keeps.
 func TestResumedCompactionMatchesPiCapture(t *testing.T) {
-	data, err := os.ReadFile("testdata/compaction/resume-0.87.1.json")
+	data, err := os.ReadFile("testdata/compaction/resume-d2e7d8b7c.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -46,7 +46,7 @@ func TestResumedCompactionMatchesPiCapture(t *testing.T) {
 			Requests        []struct {
 				SystemPrompt string `json:"systemPrompt"`
 				Text         string `json:"text"`
-				MaxTokens    int    `json:"maxTokens"`
+				MaxTokens    *int   `json:"maxTokens"` // nil: the request sets none
 			} `json:"requests"`
 			Summary string `json:"summary"`
 			// Error is compact()'s message when it threw; nothing was appended.
@@ -77,14 +77,14 @@ func TestResumedCompactionMatchesPiCapture(t *testing.T) {
 			t.Cleanup(reg.Unregister)
 			type request struct {
 				systemPrompt, text string
-				maxTokens          int
+				maxTokens          *int
 			}
 			var got []request
 			record := func(req ai.TranscriptContext, opts *ai.SimpleStreamOptions, _ *providers.FauxState, _ *ai.Model) *ai.AssistantMessage {
 				lead, _ := ai.GetInitialSystemMessage(req.Messages)
 				r := request{systemPrompt: ai.GetSystemMessageText(lead), text: userText(ai.WithoutInitialSystemMessage(req.Messages)[0])}
-				if opts != nil && opts.MaxTokens != nil {
-					r.maxTokens = *opts.MaxTokens
+				if opts != nil {
+					r.maxTokens = opts.MaxTokens
 				}
 				got = append(got, r)
 				return providers.FauxAssistantMessage(ai.ContentList{ai.TextContent{Text: fmt.Sprintf("SUMMARY %d", len(got))}}, ai.StopStop)
@@ -118,8 +118,8 @@ func TestResumedCompactionMatchesPiCapture(t *testing.T) {
 				if got[i].text != want.Text {
 					t.Errorf("request %d text drifts from pi.\n--- got ---\n%s\n--- pi ---\n%s", i+1, got[i].text, want.Text)
 				}
-				if got[i].maxTokens != want.MaxTokens {
-					t.Errorf("request %d maxTokens = %d, pi %d", i+1, got[i].maxTokens, want.MaxTokens)
+				if formatMaxTokens(got[i].maxTokens) != formatMaxTokens(want.MaxTokens) {
+					t.Errorf("request %d maxTokens = %s, pi %s", i+1, formatMaxTokens(got[i].maxTokens), formatMaxTokens(want.MaxTokens))
 				}
 			}
 			if scenario.Error != "" {

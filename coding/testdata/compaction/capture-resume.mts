@@ -2,11 +2,14 @@
 // the oracle behind TestResumedCompactionMatchesPiCapture in
 // coding/compaction_resume_test.go.
 //
-//   node capture-resume.mts <npm-root> <out.json> <version>
-//   e.g. node capture-resume.mts ~/.cache/pi-npm/0.87.1 resume-0.87.1.json 0.87.1
+//   node capture-resume.mts <root> <out.json> <version>
+//   e.g. node capture-resume.mts <npm>/1.3.0 resume-1.3.0.json 1.3.0
 //
-// <npm-root> holds node_modules/@earendil-works/{pi-ai,pi-coding-agent} at
-// <version>.
+// <root> is an npm root holding node_modules/@earendil-works/{pi-ai,
+// pi-coding-agent} at <version>, or a src extraction holding
+// packages/{ai,coding-agent}/src (and a node_modules resolving their
+// dependencies) when no build ships the change yet: the summary requests
+// stopped setting maxTokens in upstream 6fcb48670, after 1.3.0.
 //
 // Each scenario builds a session with pi's own SessionManager: messages, one
 // compaction entry (summary, firstKeptEntryId, details, fromHook, and the
@@ -16,7 +19,8 @@
 // compacts that branch again, as _runAutoCompaction does: prepareCompaction
 // reads the previous summary, the boundary and the file lists from the entry,
 // and compact() runs with a stub streamFn that records each request's system
-// prompt, user text and maxTokens and answers "SUMMARY n". The new compaction is
+// prompt, user text and maxTokens (null when it sets none) and answers
+// "SUMMARY n". The new compaction is
 // appended with compact()'s result, and the context pi sends next
 // (buildSessionContext, then convertToLlm) is recorded one line per message.
 // When compact() throws, as _runAutoCompaction catches it, its message is
@@ -32,8 +36,14 @@ if (!root || !outFile || !version) {
 	console.error("usage: node capture-resume.mts <npm-root> <out.json> <version>");
 	process.exit(2);
 }
+const srcPackages: Record<string, string> = { "pi-ai": "packages/ai", "pi-coding-agent": "packages/coding-agent" };
+const fromSrc = fs.existsSync(path.join(root, "packages/coding-agent/src"));
 const dist = (pkg: string, file: string) =>
-	pathToFileURL(path.join(path.resolve(root), "node_modules/@earendil-works", pkg, "dist", file)).href;
+	pathToFileURL(
+		fromSrc
+			? path.join(path.resolve(root), srcPackages[pkg], "src", file.replace(/\.js$/, ".ts"))
+			: path.join(path.resolve(root), "node_modules/@earendil-works", pkg, "dist", file),
+	).href;
 const { SessionManager } = await import(dist("pi-coding-agent", "core/session-manager.js"));
 const { compact, prepareCompaction } = await import(dist("pi-coding-agent", "core/compaction/index.js"));
 const { convertToLlm } = await import(dist("pi-coding-agent", "core/messages.js"));
@@ -369,14 +379,14 @@ for (const scenario of scenarios) {
 	const resumed = convertToLlm(sm.buildSessionContext().messages).map(describe);
 
 	const preparation = prepareCompaction(sm.getBranch(), { enabled: true, reserveTokens, keepRecentTokens: 1 });
-	const requests: Array<{ systemPrompt: string; text: string; maxTokens: number }> = [];
-	const streamFn = (_model: unknown, context: { messages: Array<{ role: string; content: unknown }> }, options: { maxTokens: number }) => {
+	const requests: Array<{ systemPrompt: string; text: string; maxTokens: number | null }> = [];
+	const streamFn = (_model: unknown, context: { messages: Array<{ role: string; content: unknown }> }, options: { maxTokens?: number }) => {
 		const systemMessages = context.messages.filter((message) => message.role === "system");
 		const users = context.messages.filter((message) => message.role === "user");
 		if (systemMessages.length !== 1 || users.length !== 1 || context.messages.length !== 2) {
 			throw new Error(`${scenario.name}: unexpected request shape ${JSON.stringify(context.messages.map((message) => message.role))}`);
 		}
-		requests.push({ systemPrompt: getSystemMessageText(systemMessages[0]), text: textOf(users[0].content), maxTokens: options.maxTokens });
+		requests.push({ systemPrompt: getSystemMessageText(systemMessages[0]), text: textOf(users[0].content), maxTokens: options.maxTokens ?? null });
 		const response = { ...assistant(`SUMMARY ${requests.length}`), timestamp: 0 };
 		return { result: async () => response };
 	};

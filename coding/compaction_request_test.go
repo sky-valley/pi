@@ -20,7 +20,8 @@ import (
 // TestSummarizationRequestShape pins the faithful summarization request builder
 // (pi compaction.ts generateSummary + utils.ts): a dedicated system prompt, the
 // serialized conversation wrapped in <conversation>...</conversation>, tool-result
-// truncation to 2000 chars, a capped maxTokens, and the read/modified file lists
+// truncation to 2000 chars, no maxTokens of its own (upstream 6fcb48670: the
+// provider's context-clamped default applies), and the read/modified file lists
 // appended to the returned summary text.
 func TestSummarizationRequestShape(t *testing.T) {
 	reg := providers.RegisterFauxProvider(providers.RegisterFauxProviderOptions{
@@ -28,16 +29,14 @@ func TestSummarizationRequestShape(t *testing.T) {
 	})
 	defer reg.Unregister()
 	model := reg.GetModel()
-	model.MaxTokens = 1_000_000 // large so the 0.8*reserve cap wins
+	model.MaxTokens = 1_000_000
 
 	var captured ai.TranscriptContext
-	var capturedMax int
+	var capturedMax *int
 	reg.SetResponses([]providers.FauxResponseStep{
 		func(req ai.TranscriptContext, opts *ai.SimpleStreamOptions, st *providers.FauxState, m *ai.Model) *ai.AssistantMessage {
 			captured = req
-			if opts != nil && opts.MaxTokens != nil {
-				capturedMax = *opts.MaxTokens
-			}
+			capturedMax = opts.MaxTokens
 			return providers.FauxAssistantMessage(ai.ContentList{ai.TextContent{Text: "## Goal\ncheckpoint"}}, ai.StopStop)
 		},
 	})
@@ -60,7 +59,7 @@ func TestSummarizationRequestShape(t *testing.T) {
 	}
 
 	const reserve = 16384
-	summary := sess.summarize(context.Background(), older, reserve)
+	summary := sess.summarize(context.Background(), older)
 
 	// System prompt present and exact, as the transcript's leading system message.
 	leading, hasLeading := ai.GetInitialSystemMessage(captured.Messages)
@@ -99,9 +98,9 @@ func TestSummarizationRequestShape(t *testing.T) {
 		t.Fatalf("tool result kept too many chars (truncation failed)")
 	}
 
-	// maxTokens = floor(0.8 * reserve) since model.MaxTokens is huge.
-	if capturedMax != 13107 {
-		t.Fatalf("maxTokens = floor(0.8*%d) expected 13107, got %d", reserve, capturedMax)
+	// The request sets no maxTokens: reserveTokens only triggers compaction.
+	if capturedMax != nil {
+		t.Fatalf("maxTokens = %d, want none (reserve %d no longer caps the summary)", *capturedMax, reserve)
 	}
 
 	// File lists appended to the summary: only_read.go is read-only; changed.go
@@ -132,7 +131,7 @@ func TestSummarizationRequestShape(t *testing.T) {
 // leave a checkpoint behind. A previous summary that is present but empty is not
 // an absent one: `previousSummary ?? "No prior history."` keeps it.
 func TestSummarizationRequestsMatchPiCapture(t *testing.T) {
-	data, err := os.ReadFile("testdata/compaction/requests-1.3.0.json")
+	data, err := os.ReadFile("testdata/compaction/requests-d2e7d8b7c.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -261,34 +260,6 @@ func formatMaxTokens(maxTokens *int) string {
 	return fmt.Sprint(*maxTokens)
 }
 
-// TestSummarizationMaxTokensClampedByModel verifies model.maxTokens caps the
-// 0.8*reserve budget when it is smaller.
-func TestSummarizationMaxTokensClampedByModel(t *testing.T) {
-	reg := providers.RegisterFauxProvider(providers.RegisterFauxProviderOptions{
-		Models: []providers.FauxModelDefinition{{ID: "faux-1", ContextWindow: 200000}},
-	})
-	defer reg.Unregister()
-	model := reg.GetModel()
-	model.MaxTokens = 4096 // smaller than floor(0.8*16384)=13107
-
-	var capturedMax int
-	reg.SetResponses([]providers.FauxResponseStep{
-		func(req ai.TranscriptContext, opts *ai.SimpleStreamOptions, st *providers.FauxState, m *ai.Model) *ai.AssistantMessage {
-			if opts != nil && opts.MaxTokens != nil {
-				capturedMax = *opts.MaxTokens
-			}
-			return providers.FauxAssistantMessage(ai.ContentList{ai.TextContent{Text: "ok"}}, ai.StopStop)
-		},
-	})
-
-	sess := newTestSession(t, SessionOptions{Model: model, Cwd: t.TempDir(), NoTools: NoToolsAll})
-	sess.summarize(context.Background(), []agent.AgentMessage{ai.NewUserText("hi", 1)}, 16384)
-
-	if capturedMax != 4096 {
-		t.Fatalf("expected maxTokens clamped to model.MaxTokens 4096, got %d", capturedMax)
-	}
-}
-
 // TestSummarizationIsolatesRouting mirrors pi's "uses fresh routing sessions
 // without prompt caching" (9b3a2059): every summarization request carries
 // cacheRetention "none" and its own session id, so summaries neither reuse nor
@@ -311,8 +282,8 @@ func TestSummarizationIsolatesRouting(t *testing.T) {
 
 	sess := newTestSession(t, SessionOptions{Model: model, Cwd: t.TempDir(), NoTools: NoToolsAll, SessionID: "main-session"})
 	older := []agent.AgentMessage{ai.NewUserText("hi", 1)}
-	sess.summarize(context.Background(), older, 16384)
-	sess.summarize(context.Background(), older, 16384)
+	sess.summarize(context.Background(), older)
+	sess.summarize(context.Background(), older)
 
 	if len(retentions) != 2 {
 		t.Fatalf("expected 2 summarization requests, got %d", len(retentions))
@@ -422,7 +393,7 @@ func TestSummarizationUsesAuthResolvedBaseURL(t *testing.T) {
 		ai.NewUserText("summarize me", 1),
 		ai.AssistantMessage{Content: ai.ContentList{ai.TextContent{Text: "ok"}}, StopReason: ai.StopStop, Timestamp: 2},
 	}
-	if summary := sess.summarize(context.Background(), older, 16384); summary == "" {
+	if summary := sess.summarize(context.Background(), older); summary == "" {
 		t.Fatal("summarization produced no summary")
 	}
 
@@ -502,7 +473,7 @@ func TestSummarizationFallbacksComeFromTheCatalog(t *testing.T) {
 				ai.NewUserText("summarize me", 1),
 				ai.AssistantMessage{Content: ai.ContentList{ai.TextContent{Text: "ok"}}, StopReason: ai.StopStop, Timestamp: 2},
 			}
-			if summary := sess.summarize(context.Background(), older, 16384); summary == "" {
+			if summary := sess.summarize(context.Background(), older); summary == "" {
 				t.Fatal("summarization produced no summary")
 			}
 
@@ -551,7 +522,7 @@ func TestSummarizationDoesNotOverrideToolChoice(t *testing.T) {
 	sess := newTestSession(t, SessionOptions{Model: model, Cwd: t.TempDir(), NoTools: NoToolsAll})
 	older := []agent.AgentMessage{ai.NewUserText("do the thing", 1)}
 
-	if got := sess.summarize(context.Background(), older, 16384); got == "" {
+	if got := sess.summarize(context.Background(), older); got == "" {
 		t.Fatal("expected a summary from a text-only response")
 	}
 	if capturedChoice != "" {
@@ -567,7 +538,7 @@ func TestSummarizationDoesNotOverrideToolChoice(t *testing.T) {
 			}, ai.StopToolUse)
 		},
 	})
-	if got := sess.summarize(context.Background(), older, 16384); got != "" {
+	if got := sess.summarize(context.Background(), older); got != "" {
 		t.Fatalf("a tool call must fail the summarization, got %q", got)
 	}
 }
