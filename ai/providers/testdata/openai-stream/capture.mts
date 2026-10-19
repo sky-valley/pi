@@ -2,7 +2,7 @@
 // read an SSE body — the oracle behind openai_stream_test.go in this package.
 //
 //   node --experimental-strip-types capture.mts <extraction> <out.json> <sha>
-//   e.g. ... capture.mts <dir> openai-stream-2b0a123de.json 2b0a123de
+//   e.g. ... capture.mts <dir> openai-stream-87f9a3641.json 87f9a3641
 //
 // <extraction> holds `git archive <sha> packages/ai package-lock.json` from the
 // upstream clone (prefix kept) and a node_modules resolving pi-ai's
@@ -12,9 +12,10 @@
 // lockfile nests pi-ai's openai (7.19.0, integrity
 // sha512-MX2s3u2L5racTO0CC/SWpCOasJQBCJrqLKXK+l82cAhdeF8mPMBEe/gxMm0ZFa2xpKpOFLRjxv5afYEZbBXmbQ==)
 // at packages/ai/node_modules/openai, while the root node_modules keeps 6.40.0
-// for the other workspaces. With the npm 0.87.1 build's node_modules as the
-// root (6.40.0), unpack `npm pack openai@7.19.0` (check its sha512 against the
-// lockfile) to packages/ai/node_modules/openai and record that integrity in
+// for the other workspaces. With an npm build's node_modules as the root,
+// put openai 7.19.0 at packages/ai/node_modules/openai (`npm pack
+// openai@7.19.0`, its sha512 checked against the lockfile, or the npm 1.3.0
+// build's root copy, which is that package) and record that integrity in
 // packages/ai/node_modules/.package-lock.json under "node_modules/openai", as
 // npm records an installed package. The version, integrity and node version are
 // recorded in the output.

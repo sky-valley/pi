@@ -8,8 +8,12 @@ import (
 
 // ValidateToolArguments validates (and coerces) tool-call arguments against the
 // tool's schema, returning the validated arguments or an error formatted like
-// pi's validateToolArguments.
+// pi's validateToolArguments. A call whose arguments text was malformed fails
+// with its ArgumentsError before the arguments are looked at.
 func ValidateToolArguments(tool Tool, toolCall ToolCall) (map[string]any, error) {
+	if toolCall.ArgumentsError != "" {
+		return nil, fmt.Errorf(`Invalid arguments for tool "%s": %s`, toolCall.Name, toolCall.ArgumentsError)
+	}
 	if tool.Parameters == nil {
 		return toolCall.Arguments, nil
 	}

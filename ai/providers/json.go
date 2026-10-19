@@ -410,6 +410,52 @@ func parseStreamingJSON(partial string) (map[string]any, ai.OrderedObject) {
 	return obj.Plain(), obj
 }
 
+// parseToolCallArguments is pi's parseToolCallArguments: the arguments of a
+// FINISHED tool call, read from the model's complete arguments text. Unlike
+// parseStreamingJSON it never keeps a partially parsed prefix: the text is
+// JSON.parse'd, then its repair (repairJSON) when that differs, and kept only
+// when it is an object. Otherwise the arguments are {} and the third return —
+// the call's ArgumentsError — is JSON.parse's SyntaxError message (of the
+// repaired text when the repair changed it, as parseJsonWithRepair throws), or
+// "Tool arguments must be a JSON object", followed by the text the model sent.
+// A text that is blank by JS trim is {} with no error.
+func parseToolCallArguments(text string) (map[string]any, ai.OrderedObject, string) {
+	if jstext.Trim(text) == "" {
+		return map[string]any{}, nil, ""
+	}
+	value, err := parseJSONValueWithRepair(text)
+	if err == nil {
+		if obj, isObject := value.(ai.OrderedObject); isObject {
+			nullNonFinite(obj)
+			return obj.Plain(), obj, ""
+		}
+		err = errors.New("Tool arguments must be a JSON object")
+	}
+	return map[string]any{}, nil, err.Error() + "\n\nReceived arguments:\n" + text
+}
+
+// parseJSONValueWithRepair is pi's parseJsonWithRepair for any JSON value:
+// JSON.parse of text, else of its repair when the repair changed it. The error
+// is the SyntaxError JSON.parse throws for the last text it read.
+func parseJSONValueWithRepair(text string) (any, error) {
+	value, err := ai.DecodeOrderedValue([]byte(text))
+	if err == nil {
+		return value, nil
+	}
+	parsed := text
+	if repaired := repairJSON(text); repaired != text {
+		if value, err = ai.DecodeOrderedValue([]byte(repaired)); err == nil {
+			return value, nil
+		}
+		parsed = repaired
+	}
+	if syntaxErr := jstext.JSONSyntaxError(parsed); syntaxErr != nil {
+		return nil, syntaxErr
+	}
+	// JSON.parse accepts what the decoder refused: a port bug, not the model's.
+	return nil, fmt.Errorf("%v (JSON.parse accepts this text; report it as a port bug)", err)
+}
+
 // nullNonFinite replaces every number in v that is not finite with nil, in
 // place, at any depth, and returns v. The trees it is given are freshly
 // parsed and so shared with nothing.

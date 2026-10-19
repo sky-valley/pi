@@ -285,3 +285,27 @@ func TestLoopRecordsToolExecutionDuration(t *testing.T) {
 		t.Fatalf("blocked tool_execution_end durationMs = %d, want none", *end.DurationMs)
 	}
 }
+
+// pi's prepareToolCallArguments spreads the call (`{...toolCall, arguments}`),
+// so a call whose arguments text was malformed (upstream 87f9a3641
+// argumentsError) still fails validation with that error after a tool's
+// prepareArguments hook has run — the tool never runs with the empty
+// arguments, even when its schema accepts them.
+func TestRunToolCallReportsArgumentsErrorAfterPrepareArguments(t *testing.T) {
+	ran := false
+	tool := AgentTool{
+		Name:             "echo",
+		Parameters:       ai.Object(ai.Opt("value", ai.String())),
+		PrepareArguments: func(args map[string]any) map[string]any { return map[string]any{"value": "prepared"} },
+		Execute: func(ctx context.Context, id string, params map[string]any, onUpdate ToolUpdateFunc) (AgentToolResult, error) {
+			ran = true
+			return AgentToolResult{Content: ai.ContentList{ai.TextContent{Text: "ran"}}}, nil
+		},
+	}
+	call := ai.ToolCall{ID: "a", Name: "echo", Arguments: map[string]any{}, ArgumentsError: "Unexpected end of JSON input\n\nReceived arguments:\n{\"value\":"}
+	out := RunToolCall(context.Background(), call, RunToolCallOptions{Tools: []AgentTool{tool}, AssistantMessage: &ai.AssistantMessage{}, Context: &AgentContext{}})
+	want := "Invalid arguments for tool \"echo\": Unexpected end of JSON input\n\nReceived arguments:\n{\"value\":"
+	if ran || !out.IsError || outcomeText(out) != want {
+		t.Errorf("RunToolCall = %+v (ran %v), want an error outcome %q", out, ran, want)
+	}
+}

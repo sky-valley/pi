@@ -1,5 +1,5 @@
 {
-	"sha": "2b0a123de",
+	"sha": "87f9a3641",
 	"openai": "7.19.0",
 	"openaiIntegrity": "sha512-MX2s3u2L5racTO0CC/SWpCOasJQBCJrqLKXK+l82cAhdeF8mPMBEe/gxMm0ZFa2xpKpOFLRjxv5afYEZbBXmbQ==",
 	"node": "v26.4.0",
@@ -8133,7 +8133,7 @@
 					"totalTokens": "0"
 				},
 				"toolCalls": [
-					"{\"id\":\"c1\",\"name\":\"f\",\"arguments\":{\"path\":\"a.txt\",\"overwrite\":true}}"
+					"{\"id\":\"c1\",\"name\":\"f\",\"arguments\":{}}"
 				],
 				"thinking": []
 			}
@@ -8161,7 +8161,7 @@
 					"totalTokens": "0"
 				},
 				"toolCalls": [
-					"{\"id\":\"c1\",\"name\":\"f\",\"arguments\":{\"path\":\"a.txt\",\"n\":1}}"
+					"{\"id\":\"c1\",\"name\":\"f\",\"arguments\":{}}"
 				],
 				"thinking": []
 			}
@@ -8189,7 +8189,7 @@
 					"totalTokens": "0"
 				},
 				"toolCalls": [
-					"{\"id\":\"c1\",\"name\":\"f\",\"arguments\":{\"path\":\"a.txt\"}}"
+					"{\"id\":\"c1\",\"name\":\"f\",\"arguments\":{}}"
 				],
 				"thinking": []
 			}
@@ -8217,7 +8217,7 @@
 					"totalTokens": "0"
 				},
 				"toolCalls": [
-					"{\"id\":\"c1\",\"name\":\"f\",\"arguments\":{\"path\":\"C:\"}}"
+					"{\"id\":\"c1\",\"name\":\"f\",\"arguments\":{}}"
 				],
 				"thinking": []
 			}
@@ -8245,7 +8245,7 @@
 					"totalTokens": "0"
 				},
 				"toolCalls": [
-					"{\"id\":\"c1\",\"name\":\"f\",\"arguments\":{\"path\":\"a.txt\",\"s\":\"x\"}}"
+					"{\"id\":\"c1\",\"name\":\"f\",\"arguments\":{}}"
 				],
 				"thinking": []
 			}
@@ -8273,7 +8273,7 @@
 					"totalTokens": "0"
 				},
 				"toolCalls": [
-					"{\"id\":\"c1\",\"name\":\"f\",\"arguments\":{\"path\":\"a.txt\"}}"
+					"{\"id\":\"c1\",\"name\":\"f\",\"arguments\":{}}"
 				],
 				"thinking": []
 			}
@@ -8301,7 +8301,7 @@
 					"totalTokens": "0"
 				},
 				"toolCalls": [
-					"{\"id\":\"c1\",\"name\":\"f\",\"arguments\":{\"path\":\"a.txt\",\"n\":null,\"m\":null,\"k\":null}}"
+					"{\"id\":\"c1\",\"name\":\"f\",\"arguments\":{}}"
 				],
 				"thinking": []
 			}

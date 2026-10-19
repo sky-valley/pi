@@ -296,6 +296,11 @@ type ToolCall struct {
 	// Plain string like ThoughtSignature: pi's guard is `!== undefined`, so a
 	// provider-sent empty string would replay there and is dropped here.
 	Namespace string `json:"namespace,omitempty"`
+	// ArgumentsError is set when the model's complete arguments text was not
+	// a valid JSON object (pi 87f9a3641 `argumentsError?`); Arguments is then
+	// empty. It names the problem and quotes the text the model sent, and
+	// ValidateToolArguments fails with it, so the model sees what it sent.
+	ArgumentsError string `json:"argumentsError,omitempty"`
 }
 
 func (ToolCall) contentType() string { return "toolCall" }
@@ -319,12 +324,14 @@ func (t ToolCall) MarshalJSON() ([]byte, error) {
 		Arguments        any    `json:"arguments"`
 		ThoughtSignature string `json:"thoughtSignature,omitempty"`
 		Namespace        string `json:"namespace,omitempty"`
+		ArgumentsError   string `json:"argumentsError,omitempty"`
 	}{
 		ID:               t.ID,
 		Name:             t.Name,
 		Arguments:        t.OrderedArguments(),
 		ThoughtSignature: t.ThoughtSignature,
 		Namespace:        t.Namespace,
+		ArgumentsError:   t.ArgumentsError,
 	})
 }
 
@@ -338,11 +345,12 @@ func (t *ToolCall) UnmarshalJSON(data []byte) error {
 		Arguments        json.RawMessage `json:"arguments"`
 		ThoughtSignature string          `json:"thoughtSignature,omitempty"`
 		Namespace        string          `json:"namespace,omitempty"`
+		ArgumentsError   string          `json:"argumentsError,omitempty"`
 	}
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return err
 	}
-	*t = ToolCall{ID: raw.ID, Name: raw.Name, ThoughtSignature: raw.ThoughtSignature, Namespace: raw.Namespace}
+	*t = ToolCall{ID: raw.ID, Name: raw.Name, ThoughtSignature: raw.ThoughtSignature, Namespace: raw.Namespace, ArgumentsError: raw.ArgumentsError}
 	if len(raw.Arguments) == 0 {
 		return nil
 	}

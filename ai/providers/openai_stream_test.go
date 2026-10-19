@@ -24,10 +24,10 @@ import (
 )
 
 // openaiStreamCaptureFile is what testdata/openai-stream/capture.mts recorded
-// from pi's source at 2b0a123de and the openai SDK its lockfile pins for pi-ai
+// from pi's source at 87f9a3641 and the openai SDK its lockfile pins for pi-ai
 // (7.19.0, nested under packages/ai since ab30693d6): how the
 // SDK's stream iterator and pi's two openai adapters read the same SSE bodies.
-const openaiStreamCaptureFile = "testdata/openai-stream/openai-stream-2b0a123de.json"
+const openaiStreamCaptureFile = "testdata/openai-stream/openai-stream-87f9a3641.json"
 
 type openaiStreamOutcome struct {
 	Observed        []string `json:"observed"`
@@ -144,7 +144,7 @@ func loadOpenAIStreamCapture(t *testing.T) openaiStreamCapture {
 		t.Fatalf("%s: %v; rerun capture.mts", openaiStreamCaptureFile, err)
 	}
 	if c.OpenAI != "7.19.0" {
-		t.Fatalf("%s was captured with openai %s; 2b0a123de's package-lock.json locks 7.19.0 for pi-ai", openaiStreamCaptureFile, c.OpenAI)
+		t.Fatalf("%s was captured with openai %s; 87f9a3641's package-lock.json locks 7.19.0 for pi-ai", openaiStreamCaptureFile, c.OpenAI)
 	}
 	return c
 }

@@ -20,7 +20,7 @@ import (
 // anthropicSSEEventsCaptureFile is written by
 // testdata/anthropic-sse/capture-anthropic-sse-events.mts, which streams pi's
 // anthropic-messages adapter from source at the named sha.
-const anthropicSSEEventsCaptureFile = "testdata/anthropic-sse/anthropic-sse-events-49681e1b7.json"
+const anthropicSSEEventsCaptureFile = "testdata/anthropic-sse/anthropic-sse-events-87f9a3641.json"
 
 type anthropicSSEEventsRow struct {
 	Name string `json:"name"`

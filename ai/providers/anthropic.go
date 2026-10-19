@@ -1015,9 +1015,9 @@ func StreamAnthropic(ctx context.Context, model *ai.Model, req ai.TranscriptCont
 				case "toolCall":
 					partial := b.partialJSON.String()
 					if b.partialDeleted {
-						partial = "" // parseStreamingJson(undefined) is {}
+						partial = "" // parseToolCallArguments(undefined) is {}
 					}
-					b.args, b.argsOrder = parseStreamingJSON(partial)
+					b.args, b.argsOrder, b.argsErr = parseToolCallArguments(partial)
 					b.partialDeleted = true // pi: delete block.partialJson
 					materialize()
 					tc := b.toContent().(ai.ToolCall)
@@ -1112,6 +1112,9 @@ type blockBuilder struct {
 	// argsOrder is args in the order pi's JS object lists their keys
 	// (ai.ToolCall.ArgumentsOrder).
 	argsOrder ai.OrderedObject
+	// argsErr is the finished call's ai.ToolCall.ArgumentsError, set by
+	// parseToolCallArguments when the final arguments text is not an object.
+	argsErr string
 	// grammar is set on custom (grammar-constrained) tool calls, whose raw input
 	// is re-synthesized into JSON deltas instead of being parsed from partialJSON.
 	grammar *grammarInputBuffer
@@ -1134,7 +1137,7 @@ func (b *blockBuilder) toContent() ai.Content {
 		if args == nil {
 			args = map[string]any{}
 		}
-		return ai.ToolCall{ID: b.toolID, Name: b.toolName, Arguments: args, ArgumentsOrder: b.argsOrder, Namespace: b.toolNamespace}
+		return ai.ToolCall{ID: b.toolID, Name: b.toolName, Arguments: args, ArgumentsOrder: b.argsOrder, Namespace: b.toolNamespace, ArgumentsError: b.argsErr}
 	}
 	return ai.TextContent{}
 }

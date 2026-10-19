@@ -5,16 +5,17 @@
 // iterateAnthropicEvents parse-failure message).
 //
 //   node --experimental-strip-types capture-anthropic-sse-events.mts <extraction> <pi npm dir> <out.json> <sha>
-//   e.g. ... capture-anthropic-sse-events.mts <dir> ~/.cache/pi-npm/0.87.1 anthropic-sse-events-49681e1b7.json 49681e1b7
+//   e.g. ... capture-anthropic-sse-events.mts <dir> <npm-1.3.0 dir> anthropic-sse-events-87f9a3641.json 87f9a3641
 //
 // <extraction> holds packages/ai at <sha> (`git archive <sha> packages/ai |
 // tar -x -C <dir>` from the upstream clone), with packages/ai/node_modules
 // resolving pi-ai's dependencies. The npm build's node_modules serves once its
-// copies match what <sha>'s package-lock.json locks; at 49681e1b7 (as at
-// 8676a0dcd) that is @anthropic-ai/sdk 0.124.0 and partial-json 0.1.7,
-// integrity-identical to ~/.cache/pi-npm/0.87.1's. The adapter runs from SOURCE: onProviderStreamEvent
-// is in no published build yet. The model is the npm build's MODELS entry the
-// upstream suite uses (anthropic/claude-haiku-4-5).
+// copies match what <sha>'s package-lock.json locks; at 87f9a3641 that is
+// @anthropic-ai/sdk 0.129.0 and partial-json 0.1.7, integrity-identical to
+// the npm 1.3.0 build's (at 49681e1b7 it was 0.124.0, 0.87.1's). The adapter
+// runs from SOURCE, so a row moves with the sha that moved it. The model is
+// the npm build's MODELS entry the upstream suite uses
+// (anthropic/claude-haiku-4-5).
 //
 // Every row streams through the upstream suite's fake client
 // (anthropic-sse-parsing.test.ts createFakeAnthropicClient), so neither side

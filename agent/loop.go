@@ -773,10 +773,12 @@ func prepareToolCall(ctx context.Context, current *AgentContext, msg *ai.Assista
 		}
 	}()
 
+	// pi spreads the call (`{...toolCall, arguments}`), so everything but the
+	// arguments — an ArgumentsError above all — carries over.
 	prepared := tc
 	if tool.PrepareArguments != nil {
 		if newArgs := tool.PrepareArguments(tc.Arguments); newArgs != nil {
-			prepared = ai.ToolCall{ID: tc.ID, Name: tc.Name, Arguments: newArgs, ThoughtSignature: tc.ThoughtSignature}
+			prepared.Arguments = newArgs
 		}
 	}
 

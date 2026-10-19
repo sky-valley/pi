@@ -676,7 +676,7 @@ func StreamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Transc
 						stream.Push(ai.AssistantMessageEvent{Type: ai.EventToolCallDelta, ContentIndex: indexOf(b), Delta: delta, Partial: output.Clone()})
 					}
 				} else {
-					b.args, b.argsOrder = parseStreamingJSON(b.partialJSON.String())
+					b.args, b.argsOrder, b.argsErr = parseToolCallArguments(b.partialJSON.String())
 				}
 				materialize()
 				tc := b.toContent().(ai.ToolCall)

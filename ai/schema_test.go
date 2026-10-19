@@ -579,3 +579,21 @@ func TestSchemaRoundTripPreservesOrder(t *testing.T) {
 		t.Fatalf("round-trip changed schema:\n %s\n %s", raw, raw2)
 	}
 }
+
+// Port of "reports malformed arguments JSON instead of validating empty
+// arguments" (validation.test.ts, upstream 87f9a3641): a call whose arguments
+// text was not a JSON object fails validation with its argumentsError, before
+// the (empty) arguments are looked at — even against a schema they satisfy,
+// and against a tool that declares no parameters.
+func TestValidateToolArgumentsReportsArgumentsError(t *testing.T) {
+	tc := ToolCall{ID: "tool-1", Name: "echo", Arguments: map[string]any{}, ArgumentsError: "Unexpected token"}
+	for _, tool := range []Tool{
+		{Name: "echo", Description: "Echo tool", Parameters: Object(Opt("value", String()))},
+		{Name: "echo", Description: "Echo tool"},
+	} {
+		_, err := ValidateToolArguments(tool, tc)
+		if err == nil || err.Error() != `Invalid arguments for tool "echo": Unexpected token` {
+			t.Errorf("ValidateToolArguments = %v, want pi's Invalid arguments for tool \"echo\": Unexpected token", err)
+		}
+	}
+}
