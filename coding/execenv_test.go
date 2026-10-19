@@ -356,7 +356,8 @@ func slicesContains(haystack []string, needle string) bool {
 // file ends after its last line, with no phantom empty entry. Both of pi's
 // implementations agree on that — the readline loop it used through
 // `96617628e`, and the strict-LF `NodeTextLineReader` that replaced it in
-// `3e4bc2680` (packages/agent/src/harness/env/nodejs.ts).
+// `3e4bc2680` (then packages/agent/src/harness/env/nodejs.ts, now
+// packages/durable/src/env/node.ts).
 //
 // The port had reused splitLines here, whose trailing-empty element is the
 // READ TOOL's line counting (`content.split("\n")`), not readTextLines'. The
@@ -395,7 +396,9 @@ func TestLocalEnvReadTextLinesKeepsUnterminatedFinalLine(t *testing.T) {
 }
 
 // Transliterated from pi's own packages/agent/test/harness/text-line-reader.test.ts
-// at 3e4bc2680 — the commit that introduced the reader. The cases pi chose are
+// at 3e4bc2680 — the commit that introduced the reader. 7fd478a2e deleted that
+// file, and pi's line-reader cases now live in
+// packages/durable/test/env-node.test.ts. The cases pi chose are
 // the contract: what counts as a line, what "terminated" means, and how the
 // decoder behaves at a chunk boundary and on malformed input.
 func TestTextLineReaderMatchesPiContract(t *testing.T) {

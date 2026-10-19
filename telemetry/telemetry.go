@@ -14,8 +14,8 @@
 // The schema-definition half of the upstream package is deliberately
 // unported: defineTelemetrySchema and the attribute type-inference machinery
 // around it (TelemetrySchemaDefinition, InferStartAttributes,
-// SchemaTelemetrySpan and friends) are compile-time TypeScript typing whose
-// only consumer is the unported agent harness.
+// SchemaTelemetrySpan and friends) are compile-time TypeScript typing with
+// no Go counterpart.
 package telemetry
 
 // AttributeValue is a single telemetry attribute value. pi types it as the

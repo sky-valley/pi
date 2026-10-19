@@ -392,10 +392,12 @@ func TestCodecEmptyBatches(t *testing.T) {
 // last base batch": the wire pi writes for the stream, rebased at i == 5, and
 // the replica a fresh decoder rebuilds from that base batch on. The immutable
 // tracker has no rebase; a producer publishes a base batch by sending the
-// committed revision as one Replace, as pico3's legacy tracker does
-// (upstream 9a139c62b). That Replace IS revision 5, which the replay must not
-// modify: pi's recovery, run the same way with apply, throws "TypeError Cannot
-// redefine property: deep" on the frozen revision.
+// committed revision as one Replace, as pi-durable's buffered watch does when
+// it rebaselines (packages/durable/src/session/observation.ts; first pico3's
+// legacy tracker, upstream 9a139c62b, which 7fd478a2e deleted). That Replace
+// IS revision 5, which the replay must not modify: pi's recovery, run the same
+// way with apply, throws "TypeError Cannot redefine property: deep" on the
+// frozen revision.
 func TestCodecSurvivesRecoveryFromTheLastBaseBatch(t *testing.T) {
 	var enc Encoder
 	tr := mustTrack(t, `{"a": {"deep": ""}, "b": {"deep": ""}}`)

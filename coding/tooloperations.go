@@ -39,9 +39,10 @@ import (
 // than a porting choice, it cannot be avoided without taking a ripgrep
 // dependency, and it is stated on the member so nobody has to rediscover it.
 //
-// Note these are the CODING-AGENT seams. pi's separate harness tools take a
-// single broad ExecutionEnv instead (see execenv.go); the port carries both,
-// with EnvReadOperations and friends bridging one to the other.
+// Note these are the CODING-AGENT seams. pi-durable's separate tools
+// (packages/durable/src/tools) take a single broad ExecutionEnv instead (see
+// execenv.go); the port carries both, with EnvReadOperations and friends
+// bridging one to the other.
 
 // ReadOperations are the file operations the read tool performs.
 type ReadOperations struct {
@@ -404,13 +405,13 @@ func resolveLsOperations(ops *LsOperations) LsOperations {
 // --- the bridge: an ExecutionEnv can back the coding-agent seams ---
 //
 // pi has two injection designs for the same tools — coding-agent's narrow
-// per-tool Operations and the harness's broad ExecutionEnv — and they meet
+// per-tool Operations and pi-durable's broad ExecutionEnv — and they meet
 // here rather than being duplicated into two tool trees.
 //
-// NOTE (2026-09-03): this bridge predates the mirror ruling, which grows
-// agent/harness/** beside coding/ (see docs/UPSTREAM.md "Harness shape"). The
-// ExecutionEnv half of it relocates to agent/harness at that point; these
-// seven Env*Operations bridges are what absorbs the break.
+// NOTE: under the mirror ruling ExecutionEnv belongs with its upstream home,
+// packages/durable/src/env, so it moves out of package coding when the Go
+// durable package lands. These seven Env*Operations bridges are what absorbs
+// that break.
 
 // EnvReadOperations backs the read tool with an ExecutionEnv.
 func EnvReadOperations(env ExecutionEnv) ReadOperations {

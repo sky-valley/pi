@@ -13,8 +13,13 @@ import (
 )
 
 // ExecutionEnv is the filesystem and process-execution environment the agent
-// runs against, ported from pi's `ExecutionEnv extends FileSystem, Shell`
-// (packages/agent/src/harness/types.ts:231-315 at ccfe79ed2).
+// runs against, ported from pi's `ExecutionEnv extends FileSystem, Shell`.
+// It was ported from packages/agent/src/harness/types.ts:231-315 at
+// ccfe79ed2; upstream 7fd478a2e deleted that harness, and the interface now
+// lives in packages/durable/src/env/index.ts (@earendil-works/pi-durable/env),
+// with LocalEnv's counterpart, NodeExecutionEnv, in env/node.ts. This type
+// still has the harness shape. The members the durable env has added since
+// then are queued with the durable port.
 //
 // It exists so that "where do files live and how do commands run" is an
 // injected capability rather than a hard-coded call to the local OS: a host can
@@ -496,8 +501,9 @@ func (f writerFunc) Write(p []byte) (int, error) { return f(p) }
 // LocalEnv satisfies the full ExecutionEnv contract.
 var _ ExecutionEnv = (*LocalEnv)(nil)
 
-// TextLine is one UTF-8 line read from a text file (pi TextLine,
-// packages/agent/src/harness/types.ts at 3e4bc2680).
+// TextLine is one UTF-8 line read from a text file (pi TextLine, now
+// packages/durable/src/env/index.ts; ported from the harness's types.ts at
+// 3e4bc2680).
 type TextLine struct {
 	Text string
 	// Terminated reports whether the line ended with "\n". A reader that is
