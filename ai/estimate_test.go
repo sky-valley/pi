@@ -26,6 +26,17 @@ func TestJSStringLength(t *testing.T) {
 			t.Errorf("jsStringLength(%q) = %d, want %d", c.s, got, c.want)
 		}
 	}
+	// Invalid UTF-8 reads as U+FFFD per byte, one unit each, as a JSON
+	// decoder hands pi the same bytes.
+	if got := jsStringLength("a\xffb\xed\xa0\x80"); got != 6 {
+		t.Errorf("jsStringLength of invalid UTF-8 = %d, want 6", got)
+	}
+	// Request telemetry measures every completed block with it: counting must
+	// not copy the text.
+	long := strings.Repeat("a😀b", 1_000)
+	if allocs := testing.AllocsPerRun(10, func() { jsStringLength(long) }); allocs != 0 {
+		t.Errorf("jsStringLength allocates %v times per call, want none", allocs)
+	}
 }
 
 func TestEstimateContextTokensEmpty(t *testing.T) {

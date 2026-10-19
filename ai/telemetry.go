@@ -157,16 +157,30 @@ func createRequestInstruments(adapter telemetry.Metrics) *requestInstruments {
 // per capability in a WeakMap). Go has no ephemeron map — a map holding the
 // instruments would hold the adapter they record into for good — so the
 // cache keeps one slot; a program alternating between adapters re-creates
-// them on each switch. The no-op capability's instruments cost nothing and
-// never take the slot.
+// them on each switch. Two caveats follow from the slot: it keeps the last
+// adapter alive, and with it whatever that adapter recorded, until another
+// one takes the slot; and it compares adapters with ==, so equal values of a
+// comparable value type share one entry where pi's WeakMap, keyed by object
+// identity, would keep one per object. An adapter that is not comparable is
+// never cached. The no-op capability's instruments are shared and never take
+// the slot.
 var instrumentCache struct {
 	mu          sync.Mutex
 	metrics     telemetry.Metrics
 	instruments *requestInstruments
 }
 
+// noopInstruments record nothing, for every request whose parent has no
+// metric capability.
+var noopInstruments = sync.OnceValue(func() *requestInstruments {
+	return createRequestInstruments(telemetry.NoopMetrics)
+})
+
 func instrumentsFor(adapter telemetry.Metrics) *requestInstruments {
-	if adapter == telemetry.NoopMetrics || !reflect.ValueOf(adapter).Comparable() {
+	if adapter == telemetry.NoopMetrics {
+		return noopInstruments()
+	}
+	if !reflect.ValueOf(adapter).Comparable() {
 		return createRequestInstruments(adapter)
 	}
 	instrumentCache.mu.Lock()
@@ -199,8 +213,14 @@ type requestObserver struct {
 }
 
 // observeModelRequest starts the pi.ai.request span — pi.ai.poll for a
-// deferred poll — under parent, which is NoopContext when nil.
-func observeModelRequest(model *Model, parent telemetry.Span, reasoning ThinkingLevel, poll bool) *requestObserver {
+// deferred poll — under parent. A request without telemetry (a nil parent,
+// or NoopContext) is not observed: pi observes it into the no-op span and
+// instruments, which discard everything, so skipping it changes nothing but
+// the cost.
+func observeModelRequest(model *Model, parent telemetry.Span, reasoning ThinkingLevel, poll bool) streamObserver {
+	if parent == nil || parent == telemetry.NoopContext {
+		return nil
+	}
 	return startRequestObservation(model, parent, reasoning, poll, time.Now)
 }
 
@@ -213,9 +233,6 @@ func startRequestObservation(model *Model, parent telemetry.Span, reasoning Thin
 		model:     model.ID,
 		first:     true,
 		toolChars: map[int]int{},
-	}
-	if parent == nil {
-		parent = telemetry.NoopContext
 	}
 	adapter := parent.Metrics()
 	if adapter == nil {
@@ -238,11 +255,6 @@ func startRequestObservation(model *Model, parent telemetry.Span, reasoning Thin
 		options.Attributes["reasoning"] = string(reasoning)
 	}
 
-	// The no-op parent's span is itself, and starting it has no effect.
-	if parent == telemetry.NoopContext {
-		o.span, o.finish = telemetry.NoopContext, func() {}
-		return o
-	}
 	// pi's span stays open until the promise its callback returned settles.
 	// StartSpan closes the span when the callback returns, so the callback
 	// hands its span over and blocks until the result is observed. An adapter

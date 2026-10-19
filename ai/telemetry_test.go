@@ -663,6 +663,18 @@ func TestModelsTelemetrySpanNeverStarted(t *testing.T) {
 	}
 }
 
+// TestModelsTelemetryNoopIsNotObserved: pi observes every request, but with
+// no telemetry, or the no-op context, its span and instruments discard
+// everything, so Go skips the observation outright — no instruments,
+// attribute maps or block lengths per request.
+func TestModelsTelemetryNoopIsNotObserved(t *testing.T) {
+	for _, parent := range []telemetry.Span{nil, telemetry.NoopContext} {
+		if observer := observeModelRequest(telemetryTestModel, parent, "", false); observer != nil {
+			t.Errorf("parent %v: a request without telemetry is observed by %T", parent, observer)
+		}
+	}
+}
+
 // TestModelsTelemetryDefaultsToNoop mirrors pi "defaults to no-op
 // telemetry": a request without a telemetry span runs as before, and the
 // exported schema is plain data.

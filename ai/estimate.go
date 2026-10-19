@@ -36,9 +36,14 @@ const (
 
 // jsStringLength returns the JS String.prototype.length of s — the number of
 // UTF-16 code units, matching `text.length` in pi. This is neither byte length
-// nor rune count: characters outside the BMP count as 2.
+// nor rune count: characters outside the BMP count as 2. Each byte of invalid
+// UTF-8 is a U+FFFD, one unit. It counts without copying s.
 func jsStringLength(s string) int {
-	return len(utf16.Encode([]rune(s)))
+	n := 0
+	for _, r := range s {
+		n += utf16.RuneLen(r)
+	}
+	return n
 }
 
 // calculateContextTokens mirrors pi's calculateContextTokens: prefer the
