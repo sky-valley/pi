@@ -36,7 +36,7 @@ func TestSDKOptionsReachProvider(t *testing.T) {
 	maxTok := 256
 	onPayloadCalled := false
 
-	sess := NewSession(SessionOptions{
+	sess := newTestSession(t, SessionOptions{
 		Model:       model,
 		Cwd:         t.TempDir(),
 		NoTools:     NoToolsAll,
@@ -84,7 +84,7 @@ func TestSDKOptionsForwardProviderStreamEvents(t *testing.T) {
 	}
 	var events []event
 	var hadObserver bool
-	sess := NewSession(SessionOptions{
+	sess := newTestSession(t, SessionOptions{
 		Model:   model,
 		Cwd:     t.TempDir(),
 		NoTools: NoToolsAll,
@@ -142,7 +142,7 @@ func TestProviderErrorFormatting(t *testing.T) {
 	defer server.Close()
 
 	model := &ai.Model{ID: "bad", Api: ai.APIOpenAICompletions, Provider: "openai", BaseURL: server.URL, MaxTokens: 100}
-	sess := NewSession(SessionOptions{Model: model, Cwd: t.TempDir(), NoTools: NoToolsAll, APIKey: "k", MaxRetries: 1})
+	sess := newTestSession(t, SessionOptions{Model: model, Cwd: t.TempDir(), NoTools: NoToolsAll, APIKey: "k", MaxRetries: 1})
 	_, err := sess.Run(context.Background(), "hi")
 	if err == nil || !strings.Contains(err.Error(), "Invalid 'model' parameter") || !strings.Contains(err.Error(), "model_not_found") {
 		t.Fatalf("expected parsed provider error, got: %v", err)

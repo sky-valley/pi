@@ -65,7 +65,7 @@ func livePermissionGate(t *testing.T, model *ai.Model, key string) {
 			return agent.AgentToolResult{Content: ai.ContentList{ai.TextContent{Text: "deleted"}}}, nil
 		},
 	}
-	sess := NewSession(SessionOptions{
+	sess := newTestSession(t, SessionOptions{
 		Model: model, Cwd: t.TempDir(), Tools: []agent.AgentTool{danger}, APIKey: key,
 		SystemPrompt: "Use the provided tool when asked.",
 		BeforeToolCall: func(ctx context.Context, c agent.BeforeToolCallContext) *agent.BeforeToolCallResult {
@@ -104,7 +104,7 @@ func liveImageMultimodal(t *testing.T, model *ai.Model, key string) {
 	}
 	data := base64.StdEncoding.EncodeToString(buf.Bytes())
 
-	sess := NewSession(SessionOptions{Model: model, Cwd: t.TempDir(), NoTools: NoToolsAll, APIKey: key,
+	sess := newTestSession(t, SessionOptions{Model: model, Cwd: t.TempDir(), NoTools: NoToolsAll, APIKey: key,
 		SystemPrompt: "You can see images. Answer concisely."})
 	res, err := sess.Run(ctx(t), "What is the dominant color of this image? Answer with one word.",
 		ai.ImageContent{Data: data, MimeType: "image/png"})
@@ -126,7 +126,7 @@ func liveCodeResearch(t *testing.T, model *ai.Model, key string) {
 
 	used := map[string]int{}
 	var mu sync.Mutex
-	sess := NewSession(SessionOptions{Model: model, Cwd: dir, ToolNames: []string{"find", "grep", "ls", "read"}, APIKey: key,
+	sess := newTestSession(t, SessionOptions{Model: model, Cwd: dir, ToolNames: []string{"find", "grep", "ls", "read"}, APIKey: key,
 		SystemPrompt: "You are a code-research agent. Use find, grep, and ls to explore."})
 	sess.Subscribe(func(ctx context.Context, e agent.AgentEvent) error {
 		if e.Type == agent.EvToolExecutionStart {
@@ -168,7 +168,7 @@ func liveCodingWorkflow(t *testing.T, model *ai.Model, key string) {
 
 		usedTools := map[string]int{}
 		var mu sync.Mutex
-		sess := NewSession(SessionOptions{Model: model, Cwd: dir, APIKey: key,
+		sess := newTestSession(t, SessionOptions{Model: model, Cwd: dir, APIKey: key,
 			SystemPrompt: "You are a coding agent. Use the provided tools to complete the task. Be efficient."})
 		sess.Subscribe(func(ctx context.Context, e agent.AgentEvent) error {
 			if e.Type == agent.EvToolExecutionStart {
@@ -224,7 +224,7 @@ func liveCodingWorkflow(t *testing.T, model *ai.Model, key string) {
 
 // --- abort: cancelling mid-run must stop promptly and not hang ---
 func liveAbort(t *testing.T, model *ai.Model, key string) {
-	sess := NewSession(SessionOptions{Model: model, Cwd: t.TempDir(), NoTools: NoToolsAll,
+	sess := newTestSession(t, SessionOptions{Model: model, Cwd: t.TempDir(), NoTools: NoToolsAll,
 		SystemPrompt: "You are verbose.", APIKey: key})
 
 	runCtx, cancel := context.WithCancel(context.Background())
@@ -287,7 +287,7 @@ func liveReasoningRoundtrip(t *testing.T, key string) {
 	}
 
 	var sawThinking bool
-	sess := NewSession(SessionOptions{
+	sess := newTestSession(t, SessionOptions{
 		Model: model, Cwd: t.TempDir(), Tools: []agent.AgentTool{tool},
 		SystemPrompt:  "Use the get_value tool to look up values, then answer.",
 		ThinkingLevel: agent.ThinkMedium, APIKey: key,
@@ -328,7 +328,7 @@ func liveToolLoop(t *testing.T, model *ai.Model, key string) {
 			return agent.AgentToolResult{Content: ai.ContentList{ai.TextContent{Text: "The secret number is 4242."}}}, nil
 		},
 	}
-	sess := NewSession(SessionOptions{Model: model, Cwd: t.TempDir(), Tools: []agent.AgentTool{tool},
+	sess := newTestSession(t, SessionOptions{Model: model, Cwd: t.TempDir(), Tools: []agent.AgentTool{tool},
 		SystemPrompt: "You are a tool-using assistant. Always use tools when relevant.", APIKey: key})
 	res, err := sess.Run(ctx(t), "What is today's secret number? Use the tool, then tell me.")
 	if err != nil {
@@ -348,7 +348,7 @@ func liveToolLoop(t *testing.T, model *ai.Model, key string) {
 
 // --- in-session memory: a fact stated in turn 1 is recalled in turn 2 ---
 func liveMemoryInSession(t *testing.T, model *ai.Model, key string) {
-	sess := NewSession(SessionOptions{Model: model, Cwd: t.TempDir(), NoTools: NoToolsAll,
+	sess := newTestSession(t, SessionOptions{Model: model, Cwd: t.TempDir(), NoTools: NoToolsAll,
 		SystemPrompt: "You are a concise assistant.", APIKey: key})
 	if _, err := sess.Run(ctx(t), "Remember this: my project codename is Zephyr-9. Reply OK."); err != nil {
 		t.Fatal(err)
@@ -368,7 +368,7 @@ func liveMemoryResume(t *testing.T, model *ai.Model, key string) {
 	t.Setenv("HOME", t.TempDir())
 	cwd := t.TempDir()
 
-	s1 := NewSession(SessionOptions{Model: model, Cwd: cwd, NoTools: NoToolsAll, APIKey: key})
+	s1 := newTestSession(t, SessionOptions{Model: model, Cwd: cwd, NoTools: NoToolsAll, APIKey: key})
 	rec, err := StartSession(cwd, model)
 	if err != nil {
 		t.Fatal(err)
@@ -388,7 +388,7 @@ func liveMemoryResume(t *testing.T, model *ai.Model, key string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	s2 := NewSession(SessionOptions{Model: model, Cwd: cwd, NoTools: NoToolsAll, APIKey: key})
+	s2 := newTestSession(t, SessionOptions{Model: model, Cwd: cwd, NoTools: NoToolsAll, APIKey: key})
 	s2.LoadHistory(history)
 	res, err := s2.Run(ctx(t), "What is the vault password?")
 	if err != nil {
@@ -414,7 +414,7 @@ func liveSkills(t *testing.T, model *ai.Model, key string) {
 
 	// Default system prompt (built by NewSession) folds in the discovered skill;
 	// the read tool lets the model load it.
-	sess := NewSession(SessionOptions{Model: model, Cwd: cwd, ToolNames: []string{"read"}, APIKey: key})
+	sess := newTestSession(t, SessionOptions{Model: model, Cwd: cwd, ToolNames: []string{"read"}, APIKey: key})
 
 	var readSkill bool
 	sess.Subscribe(func(ctx context.Context, e agent.AgentEvent) error {
@@ -453,7 +453,7 @@ func liveCompaction(t *testing.T, base *ai.Model, key string) {
 	var mu sync.Mutex
 	var sentCounts []int
 	var sawSummary bool
-	sess := NewSession(SessionOptions{
+	sess := newTestSession(t, SessionOptions{
 		Model: model, Cwd: t.TempDir(), NoTools: NoToolsAll, APIKey: key,
 		Compaction: &CompactionSettings{Enabled: true, ReserveTokens: 500, KeepRecentTokens: 700},
 		OnPayload: func(payload any, _ *ai.Model) (any, error) {
@@ -528,7 +528,7 @@ func livePromptCaching(t *testing.T, model *ai.Model, key string) {
 	systemPrompt := b.String()
 
 	newSess := func() *Session {
-		return NewSession(SessionOptions{Model: model, Cwd: t.TempDir(), NoTools: NoToolsAll,
+		return newTestSession(t, SessionOptions{Model: model, Cwd: t.TempDir(), NoTools: NoToolsAll,
 			SystemPrompt: systemPrompt, APIKey: key, SessionID: "cache-mechanics-test",
 			CacheRetention: ai.CacheShort})
 	}

@@ -24,7 +24,7 @@ func TestSessionRunAggregatesUsageAcrossToolLoop(t *testing.T) {
 		}, ai.StopStop)),
 	})
 
-	sess := NewSession(SessionOptions{Model: reg.GetModel(), Cwd: dir, Tools: CreateAllTools(dir)})
+	sess := newTestSession(t, SessionOptions{Model: reg.GetModel(), Cwd: dir, Tools: CreateAllTools(dir)})
 	res, err := sess.Run(context.Background(), "list files")
 	if err != nil {
 		t.Fatal(err)
@@ -61,7 +61,7 @@ func TestSessionRunSurfacesError(t *testing.T) {
 	reg.SetResponses([]providers.FauxResponseStep{
 		providers.FauxStatic(&ai.AssistantMessage{StopReason: ai.StopError, ErrorMessage: "kaboom"}),
 	})
-	sess := NewSession(SessionOptions{Model: reg.GetModel(), Cwd: t.TempDir(), Tools: nil})
+	sess := newTestSession(t, SessionOptions{Model: reg.GetModel(), Cwd: t.TempDir(), Tools: nil})
 	res, err := sess.Run(context.Background(), "go")
 	if err == nil {
 		t.Fatal("expected error from Run")

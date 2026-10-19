@@ -42,7 +42,7 @@ func TestSummarizationRequestShape(t *testing.T) {
 		},
 	})
 
-	sess := NewSession(SessionOptions{Model: model, Cwd: t.TempDir(), NoTools: NoToolsAll})
+	sess := newTestSession(t, SessionOptions{Model: model, Cwd: t.TempDir(), NoTools: NoToolsAll})
 
 	bigResult := strings.Repeat("z", 5000) // > 2000 chars, must be truncated
 	older := []agent.AgentMessage{
@@ -216,7 +216,7 @@ func TestSummarizationRequestsMatchPiCapture(t *testing.T) {
 			}
 			reg.SetResponses(steps)
 
-			sess := NewSession(SessionOptions{Model: reg.GetModel(), Cwd: t.TempDir(), NoTools: NoToolsAll})
+			sess := newTestSession(t, SessionOptions{Model: reg.GetModel(), Cwd: t.TempDir(), NoTools: NoToolsAll})
 			state := &compactionState{
 				settings: CompactionSettings{Enabled: true, ReserveTokens: capture.ReserveTokens, KeepRecentTokens: 1},
 			}
@@ -273,7 +273,7 @@ func TestSummarizationMaxTokensClampedByModel(t *testing.T) {
 		},
 	})
 
-	sess := NewSession(SessionOptions{Model: model, Cwd: t.TempDir(), NoTools: NoToolsAll})
+	sess := newTestSession(t, SessionOptions{Model: model, Cwd: t.TempDir(), NoTools: NoToolsAll})
 	sess.summarize(context.Background(), []agent.AgentMessage{ai.NewUserText("hi", 1)}, 16384)
 
 	if capturedMax != 4096 {
@@ -301,7 +301,7 @@ func TestSummarizationIsolatesRouting(t *testing.T) {
 	}
 	reg.SetResponses([]providers.FauxResponseStep{capture, capture})
 
-	sess := NewSession(SessionOptions{Model: model, Cwd: t.TempDir(), NoTools: NoToolsAll, SessionID: "main-session"})
+	sess := newTestSession(t, SessionOptions{Model: model, Cwd: t.TempDir(), NoTools: NoToolsAll, SessionID: "main-session"})
 	older := []agent.AgentMessage{ai.NewUserText("hi", 1)}
 	sess.summarize(context.Background(), older, 16384)
 	sess.summarize(context.Background(), older, 16384)
@@ -406,7 +406,7 @@ func TestSummarizationUsesAuthResolvedBaseURL(t *testing.T) {
 		return models.StreamSimple(ctx, m, ai.Context{Messages: req.Messages}, &runtimeOpts)
 	}
 
-	sess := NewSession(SessionOptions{
+	sess := newTestSession(t, SessionOptions{
 		Model: catalogModel, APIKey: "session-key", Cwd: t.TempDir(),
 		NoTools: NoToolsAll, StreamFn: streamFn, Models: models,
 	})
@@ -486,7 +486,7 @@ func TestSummarizationFallbacksComeFromTheCatalog(t *testing.T) {
 			if tc.compat != "" {
 				model.Compat = []byte(tc.compat)
 			}
-			sess := NewSession(SessionOptions{
+			sess := newTestSession(t, SessionOptions{
 				Model: model, APIKey: "k", Cwd: t.TempDir(), NoTools: NoToolsAll,
 				StreamFn: providers.StreamSimpleAnthropic,
 			})
@@ -540,7 +540,7 @@ func TestSummarizationDoesNotOverrideToolChoice(t *testing.T) {
 		},
 	})
 
-	sess := NewSession(SessionOptions{Model: model, Cwd: t.TempDir(), NoTools: NoToolsAll})
+	sess := newTestSession(t, SessionOptions{Model: model, Cwd: t.TempDir(), NoTools: NoToolsAll})
 	older := []agent.AgentMessage{ai.NewUserText("do the thing", 1)}
 
 	if got := sess.summarize(context.Background(), older, 16384); got == "" {

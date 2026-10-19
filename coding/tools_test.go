@@ -328,7 +328,7 @@ func TestBashSessionEnvStripsInherited(t *testing.T) {
 // model switch after the tools were built must be visible to the next command.
 func TestSessionBashEnvIsLive(t *testing.T) {
 	model := &ai.Model{ID: "model-a", Provider: "prov-a", Name: "A"}
-	sess := NewSession(SessionOptions{Model: model, Cwd: t.TempDir(), ThinkingLevel: agent.ThinkOff})
+	sess := newTestSession(t, SessionOptions{Model: model, Cwd: t.TempDir(), ThinkingLevel: agent.ThinkOff})
 
 	env := sess.bashSessionEnv()
 	if env["PI_MODEL"] != "model-a" || env["PI_PROVIDER"] != "prov-a" {
@@ -350,7 +350,7 @@ func TestSessionBashEnvIsLive(t *testing.T) {
 // through a nil provider.
 func TestSessionBashToolExposesEnv(t *testing.T) {
 	model := &ai.Model{ID: "model-a", Provider: "prov-a", Name: "A"}
-	sess := NewSession(SessionOptions{Model: model, Cwd: t.TempDir(), ThinkingLevel: agent.ThinkOff})
+	sess := newTestSession(t, SessionOptions{Model: model, Cwd: t.TempDir(), ThinkingLevel: agent.ThinkOff})
 
 	bash, ok := sessionTool(sess, "bash")
 	if !ok {
@@ -380,7 +380,7 @@ func sessionTool(sess *Session, name string) (agent.AgentTool, bool) {
 // switches models and attaches a recorder, which is exactly what an embedder
 // with a live UI does. Meaningful under -race.
 func TestBashSessionEnvRaceWithSetModel(t *testing.T) {
-	sess := NewSession(SessionOptions{
+	sess := newTestSession(t, SessionOptions{
 		Model: &ai.Model{ID: "model-a", Provider: "prov-a", Name: "A"},
 		Cwd:   t.TempDir(),
 	})

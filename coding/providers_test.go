@@ -37,7 +37,7 @@ func TestResolvedCatalogModelIsStreamable(t *testing.T) {
 	}
 	clone := *model
 	clone.BaseURL = "http://127.0.0.1:1" // unroutable: fail fast at dial
-	sess := NewSession(SessionOptions{Model: &clone, Cwd: t.TempDir(), APIKey: "test-key", MaxRetries: 0})
+	sess := newTestSession(t, SessionOptions{Model: &clone, Cwd: t.TempDir(), APIKey: "test-key", MaxRetries: 0})
 	res, err := sess.Run(t.Context(), "hello")
 	if err != nil {
 		if strings.Contains(err.Error(), "No API provider registered") {

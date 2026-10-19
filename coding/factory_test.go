@@ -1,6 +1,7 @@
 package coding
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/sky-valley/pi/agent"
@@ -19,7 +20,7 @@ func toolNamesOf(s *Session) []string {
 func TestSessionDefaultToolSet(t *testing.T) {
 	reg := providers.RegisterFauxProvider(providers.RegisterFauxProviderOptions{})
 	defer reg.Unregister()
-	s := NewSession(SessionOptions{Model: reg.GetModel(), Cwd: t.TempDir()})
+	s := newTestSession(t, SessionOptions{Model: reg.GetModel(), Cwd: t.TempDir()})
 	got := toolNamesOf(s)
 	want := []string{"read", "bash", "edit", "write"}
 	if len(got) != len(want) {
@@ -30,7 +31,7 @@ func TestSessionDefaultToolSet(t *testing.T) {
 func TestSessionToolAllowlistAndExclude(t *testing.T) {
 	reg := providers.RegisterFauxProvider(providers.RegisterFauxProviderOptions{})
 	defer reg.Unregister()
-	s := NewSession(SessionOptions{
+	s := newTestSession(t, SessionOptions{
 		Model:        reg.GetModel(),
 		Cwd:          t.TempDir(),
 		ToolNames:    []string{"read", "grep", "bash"},
@@ -51,7 +52,7 @@ func TestSessionNoToolsAll(t *testing.T) {
 	reg := providers.RegisterFauxProvider(providers.RegisterFauxProviderOptions{})
 	defer reg.Unregister()
 	custom := agent.AgentTool{Name: "custom", Parameters: ai.Object()}
-	s := NewSession(SessionOptions{
+	s := newTestSession(t, SessionOptions{
 		Model:       reg.GetModel(),
 		Cwd:         t.TempDir(),
 		NoTools:     NoToolsAll,
@@ -68,7 +69,7 @@ func TestSessionNoToolsBuiltinKeepsCustom(t *testing.T) {
 	reg := providers.RegisterFauxProvider(providers.RegisterFauxProviderOptions{})
 	defer reg.Unregister()
 	custom := agent.AgentTool{Name: "custom", Parameters: ai.Object()}
-	s := NewSession(SessionOptions{
+	s := newTestSession(t, SessionOptions{
 		Model:       reg.GetModel(),
 		Cwd:         t.TempDir(),
 		NoTools:     NoToolsBuiltin,
@@ -88,7 +89,7 @@ func TestSessionAllowlistConstrainsCustom(t *testing.T) {
 	defer reg.Unregister()
 	inList := agent.AgentTool{Name: "allowed_custom", Parameters: ai.Object()}
 	outOfList := agent.AgentTool{Name: "blocked_custom", Parameters: ai.Object()}
-	s := NewSession(SessionOptions{
+	s := newTestSession(t, SessionOptions{
 		Model:       reg.GetModel(),
 		Cwd:         t.TempDir(),
 		ToolNames:   []string{"read", "allowed_custom"},
@@ -106,7 +107,7 @@ func TestSessionExcludeAppliesToCustom(t *testing.T) {
 	defer reg.Unregister()
 	custom := agent.AgentTool{Name: "custom", Parameters: ai.Object()}
 	keep := agent.AgentTool{Name: "keep", Parameters: ai.Object()}
-	s := NewSession(SessionOptions{
+	s := newTestSession(t, SessionOptions{
 		Model:        reg.GetModel(),
 		Cwd:          t.TempDir(),
 		ExcludeTools: []string{"custom", "bash"},
@@ -130,7 +131,7 @@ func TestSessionClampsThinkingLevel(t *testing.T) {
 		Models: []providers.FauxModelDefinition{{ID: "faux-1", Reasoning: false}},
 	})
 	defer reg.Unregister()
-	s := NewSession(SessionOptions{Model: reg.GetModel(), Cwd: t.TempDir(), ThinkingLevel: agent.ThinkHigh})
+	s := newTestSession(t, SessionOptions{Model: reg.GetModel(), Cwd: t.TempDir(), ThinkingLevel: agent.ThinkHigh})
 	if lvl := s.Agent.State().ThinkingLevel; lvl != agent.ThinkOff {
 		t.Fatalf("expected thinking clamped to off for non-reasoning model, got %s", lvl)
 	}
@@ -141,7 +142,7 @@ func TestSessionClampsThinkingLevel(t *testing.T) {
 func TestSessionAllowlistOptInWebFetch(t *testing.T) {
 	reg := providers.RegisterFauxProvider(providers.RegisterFauxProviderOptions{})
 	defer reg.Unregister()
-	s := NewSession(SessionOptions{
+	s := newTestSession(t, SessionOptions{
 		Model:     reg.GetModel(),
 		Cwd:       t.TempDir(),
 		ToolNames: []string{"read", "web_fetch"},
@@ -149,5 +150,25 @@ func TestSessionAllowlistOptInWebFetch(t *testing.T) {
 	got := toolNamesOf(s)
 	if len(got) != 2 || got[0] != "read" || got[1] != "web_fetch" {
 		t.Fatalf("web_fetch opt-in via ToolNames broken: %v", got)
+	}
+}
+
+// web_fetch, the Go-port extra, is admitted by its exact name only: a
+// +web_fetch modifier adds it to the default selection, and a pattern that
+// would match it does not opt in (pi has no such tool, so `*` selects pi's
+// eight built-ins).
+func TestSessionWebFetchOptInByNameOnly(t *testing.T) {
+	for _, tc := range []struct {
+		names []string
+		want  []string
+	}{
+		{[]string{"+web_fetch"}, []string{"read", "bash", "edit", "write", "web_fetch"}},
+		{[]string{"read", "web_*"}, []string{"read"}},
+		{[]string{"*"}, []string{"read", "bash", "powershell", "edit", "write", "grep", "find", "ls"}},
+	} {
+		s := newTestSession(t, SessionOptions{Cwd: t.TempDir(), ToolNames: tc.names})
+		if got := toolNamesOf(s); !slices.Equal(got, tc.want) {
+			t.Errorf("ToolNames %q: tools = %q, want %q", tc.names, got, tc.want)
+		}
 	}
 }

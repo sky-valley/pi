@@ -32,7 +32,7 @@ func TestSessionEndToEndWithFauxProvider(t *testing.T) {
 		}, ai.StopStop)),
 	})
 
-	sess := NewSession(SessionOptions{
+	sess := newTestSession(t, SessionOptions{
 		Model: reg.GetModel(),
 		Cwd:   dir,
 		Tools: CreateAllTools(dir),
@@ -66,7 +66,7 @@ func TestSessionUsesCodingSystemPrompt(t *testing.T) {
 			return providers.FauxAssistantMessage(ai.ContentList{ai.TextContent{Text: "ok"}}, ai.StopStop)
 		},
 	})
-	sess := NewSession(SessionOptions{Model: reg.GetModel(), Cwd: "/tmp/proj", Tools: CreateCodingTools("/tmp/proj")})
+	sess := newTestSession(t, SessionOptions{Model: reg.GetModel(), Cwd: "/tmp/proj", Tools: CreateCodingTools("/tmp/proj")})
 	if _, err := sess.RunPrint(context.Background(), &bytes.Buffer{}, "hi"); err != nil {
 		t.Fatal(err)
 	}

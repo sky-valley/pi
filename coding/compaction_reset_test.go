@@ -32,7 +32,7 @@ func TestNewTranscriptDropsTheCompaction(t *testing.T) {
 				Models: []providers.FauxModelDefinition{{ID: "faux-1", ContextWindow: 1000}},
 			})
 			t.Cleanup(reg.Unregister)
-			sess := NewSession(SessionOptions{Model: reg.GetModel(), Cwd: t.TempDir(), NoTools: NoToolsAll,
+			sess := newTestSession(t, SessionOptions{Model: reg.GetModel(), Cwd: t.TempDir(), NoTools: NoToolsAll,
 				Compaction: &CompactionSettings{Enabled: true, ReserveTokens: 200, KeepRecentTokens: 150}})
 
 			summarizations := 0

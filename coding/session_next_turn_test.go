@@ -174,7 +174,7 @@ func TestSessionDeclaresPromptAcrossTurnsLikePi(t *testing.T) {
 				Models: []providers.FauxModelDefinition{{ID: "faux-1", Reasoning: true}, {ID: "faux-2", Reasoning: true}},
 			})
 			defer reg.Unregister()
-			sess := NewSession(SessionOptions{Model: reg.GetModel("faux-1"), Cwd: t.TempDir()})
+			sess := newTestSession(t, SessionOptions{Model: reg.GetModel("faux-1"), Cwd: t.TempDir()})
 
 			var requests [][]promptProjection
 			var states []requestState
@@ -313,7 +313,7 @@ func TestSessionSystemPromptBeforeTheFirstRun(t *testing.T) {
 	reg := providers.RegisterFauxProvider(providers.RegisterFauxProviderOptions{})
 	defer reg.Unregister()
 	cwd := t.TempDir()
-	sess := NewSession(SessionOptions{Model: reg.GetModel(), Cwd: cwd})
+	sess := newTestSession(t, SessionOptions{Model: reg.GetModel(), Cwd: cwd})
 
 	before, err := sess.SystemPrompt()
 	if err != nil {

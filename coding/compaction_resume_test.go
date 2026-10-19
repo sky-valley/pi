@@ -90,7 +90,7 @@ func TestResumedCompactionMatchesPiCapture(t *testing.T) {
 				return providers.FauxAssistantMessage(ai.ContentList{ai.TextContent{Text: fmt.Sprintf("SUMMARY %d", len(got))}}, ai.StopStop)
 			}
 			reg.SetResponses([]providers.FauxResponseStep{record, record, record})
-			sess := NewSession(SessionOptions{Model: reg.GetModel(), Cwd: t.TempDir(), NoTools: NoToolsAll,
+			sess := newTestSession(t, SessionOptions{Model: reg.GetModel(), Cwd: t.TempDir(), NoTools: NoToolsAll,
 				Compaction: &CompactionSettings{Enabled: true, ReserveTokens: capture.ReserveTokens, KeepRecentTokens: 1}})
 			sess.LoadBranch(branch)
 			checkpoint := sess.compactState.checkpoint
@@ -198,7 +198,7 @@ func TestResumedCompactionTriggerMatchesPi(t *testing.T) {
 			}
 			reg.SetResponses([]providers.FauxResponseStep{record, record, record, record})
 			settings := CompactionSettings{Enabled: capture.Settings.Enabled, ReserveTokens: capture.Settings.ReserveTokens, KeepRecentTokens: capture.Settings.KeepRecentTokens}
-			sess := NewSession(SessionOptions{Model: reg.GetModel(), Cwd: t.TempDir(), SystemPrompt: "test", NoTools: NoToolsAll, Compaction: &settings})
+			sess := newTestSession(t, SessionOptions{Model: reg.GetModel(), Cwd: t.TempDir(), SystemPrompt: "test", NoTools: NoToolsAll, Compaction: &settings})
 			sess.LoadBranch(tree.BuildProjection())
 			if _, err := sess.Run(context.Background(), scenario.Prompt); err != nil {
 				t.Fatal(err)
@@ -244,7 +244,7 @@ func TestResumedCompactionPreparesWhatPiPrepares(t *testing.T) {
 				return providers.FauxAssistantMessage(ai.ContentList{ai.TextContent{Text: "SUMMARY"}}, ai.StopStop)
 			}
 			reg.SetResponses([]providers.FauxResponseStep{step, step})
-			sess := NewSession(SessionOptions{Model: reg.GetModel(), Cwd: t.TempDir(), NoTools: NoToolsAll,
+			sess := newTestSession(t, SessionOptions{Model: reg.GetModel(), Cwd: t.TempDir(), NoTools: NoToolsAll,
 				Compaction: &CompactionSettings{Enabled: true, ReserveTokens: capture.ContextWindow, KeepRecentTokens: capture.Settings.KeepRecentTokens}})
 			sess.LoadBranch(tree.BuildProjection())
 			sess.compact(context.Background(), sess.compactState, sess.History())

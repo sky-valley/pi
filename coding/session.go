@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"regexp"
 	"slices"
 	"strings"
 	"sync"
@@ -40,10 +41,15 @@ type SessionOptions struct {
 
 	// Tools, when non-nil, is used verbatim and bypasses name-based selection.
 	Tools []agent.AgentTool
-	// ToolNames is an allowlist of built-in tool names. When nil and NoTools is
-	// off, the default set [read, bash, edit, write] is used.
+	// ToolNames is an allowlist of tool names or patterns, where `*` matches
+	// any characters (pi createAgentSession's tools). When nil and NoTools is
+	// off, the default set [read, bash, edit, write] is used. A list of only
+	// `+name` and `-name` entries is not an allowlist: it adds tools to or
+	// removes them from the default selection, and takes exact names; mixing
+	// them with plain entries makes NewSession fail.
 	ToolNames []string
-	// ExcludeTools is a denylist applied after ToolNames.
+	// ExcludeTools is a denylist of tool names or patterns applied after
+	// ToolNames.
 	ExcludeTools []string
 	// NoTools suppresses the default built-in tools ("all" or "builtin").
 	NoTools NoToolsMode
@@ -136,32 +142,156 @@ func sessionStreamFn(next agent.StreamFn) agent.StreamFn {
 	}
 }
 
+// defaultActiveToolNames is pi's DEFAULT_TOOL_NAMES: the tools enabled at
+// startup when nothing changes them.
 var defaultActiveToolNames = []string{"read", "bash", "edit", "write"}
 
-// resolveTools builds the active tool set, porting pi's allow/exclude semantics:
-// sdk.ts:245 computes allowedToolNames = options.tools ?? (noTools === "all" ?
-// [] : undefined), and agent-session.ts _refreshToolRegistry (2285-2298) passes
-// EVERY tool — built-in and custom — through isAllowedTool (allowlist check,
-// then excludeTools denylist). Consequences: NoTools "all" disables custom
-// tools too; a ToolNames allowlist constrains custom tools; ExcludeTools
-// applies to custom tools.
-func resolveTools(cwd string, opts SessionOptions, sessionEnv sessionEnvFn, resize imageResizeFn) []agent.AgentTool {
-	// allowlist: nil = everything allowed (pi: undefined); empty = nothing.
-	var allowed map[string]bool
-	if opts.ToolNames != nil {
-		allowed = make(map[string]bool, len(opts.ToolNames))
-		for _, n := range opts.ToolNames {
-			allowed[n] = true
+// toolPatternRegexp is pi's toolPatternRegExp (core/mcp-servers.ts): `*`
+// matches any characters, every other character is literal, and the whole
+// name must match. JS's `.` stops at a line terminator, so `*` does too.
+func toolPatternRegexp(pattern string) *regexp.Regexp {
+	parts := strings.Split(pattern, "*")
+	for i, part := range parts {
+		parts[i] = regexp.QuoteMeta(part)
+	}
+	return regexp.MustCompile(`^` + strings.Join(parts, `[^\n\r\x{2028}\x{2029}]*`) + `$`)
+}
+
+// toolNameMatcher is pi's createToolNameMatcher (upstream 04b97ef00): whether
+// a tool name matches any of the entries, each an exact name or a pattern
+// where `*` matches any characters.
+func toolNameMatcher(entries []string) func(name string) bool {
+	names := map[string]bool{}
+	var patterns []*regexp.Regexp
+	for _, entry := range entries {
+		if strings.Contains(entry, "*") {
+			patterns = append(patterns, toolPatternRegexp(entry))
+		} else {
+			names[entry] = true
 		}
-	} else if opts.NoTools == NoToolsAll {
-		allowed = map[string]bool{}
 	}
-	excluded := make(map[string]bool, len(opts.ExcludeTools))
-	for _, e := range opts.ExcludeTools {
-		excluded[e] = true
+	return func(name string) bool {
+		return names[name] || slices.ContainsFunc(patterns, func(pattern *regexp.Regexp) bool {
+			return pattern.MatchString(name)
+		})
 	}
+}
+
+// isToolModifier is pi's isToolModifier: whether a tool list entry is a
+// `+name` or `-name` modifier.
+func isToolModifier(entry string) bool {
+	return strings.HasPrefix(entry, "+") || strings.HasPrefix(entry, "-")
+}
+
+// toolListError is pi's getToolListError (upstream ddaa0a034): a tool list is
+// either an allowlist of names and patterns or only `+name`/`-name` entries
+// with exact names. It returns the problem, or "" for a valid list.
+func toolListError(entries []string) string {
+	modifiers := 0
+	for _, entry := range entries {
+		if isToolModifier(entry) {
+			modifiers++
+		}
+	}
+	if modifiers == 0 {
+		return ""
+	}
+	if modifiers < len(entries) {
+		return "tool names cannot be mixed with +name or -name entries"
+	}
+	for _, entry := range entries {
+		if strings.Contains(entry, "*") {
+			return "+name and -name entries take exact tool names, not patterns: " + entry
+		}
+	}
+	return ""
+}
+
+// applyToolModifiers is pi's applyToolModifiers: the `+name` and `-name`
+// entries applied to base in order — `+name` adds a tool not yet there,
+// `-name` removes one. Other entries are ignored.
+func applyToolModifiers(base, entries []string) []string {
+	tools := slices.Clone(base)
+	for _, entry := range entries {
+		if !isToolModifier(entry) {
+			continue
+		}
+		name := entry[1:]
+		index := slices.Index(tools, name)
+		if strings.HasPrefix(entry, "+") && index == -1 && name != "" {
+			tools = append(tools, name)
+		} else if strings.HasPrefix(entry, "-") && index != -1 {
+			tools = slices.Delete(tools, index, index+1)
+		}
+	}
+	return tools
+}
+
+// invalidToolsOptionError is pi's "Invalid tools option" throw, with how to
+// write a valid list.
+func invalidToolsOptionError(problem string) error {
+	return fmt.Errorf("Invalid tools option: %s (pass either tool names and * patterns, or only +name/-name entries naming exact tools, e.g. [\"+grep\", \"-write\"])", problem)
+}
+
+// resolveTools builds the active tool set, porting pi's selection:
+// createAgentSession (sdk.ts) validates the tools list and resolves the
+// initial selection, and agent-session.ts _refreshToolRegistry passes EVERY
+// tool — built-in and custom — through _isAllowedTool (allowlist, then the
+// excludeTools denylist). Consequences: NoTools "all" disables custom tools
+// too; a ToolNames allowlist constrains custom tools; ExcludeTools applies to
+// custom tools. ToolNames and ExcludeTools entries are names or `*` patterns
+// (upstream 04b97ef00). A ToolNames list of only `+name`/`-name` entries is not
+// an allowlist: it adds tools to or removes them from the default selection
+// (upstream ddaa0a034). An invalid list fails with pi's message.
+//
+// Not ported: 04b97ef00's MCP retention (an allowlist without `mcp__` entries
+// keeping MCP tools registered for codemode and tool_search), which needs MCP
+// and tool exposure — Scope rows 21 and 20.
+func resolveTools(cwd string, opts SessionOptions, sessionEnv sessionEnvFn, resize imageResizeFn) ([]agent.AgentTool, error) {
+	if problem := toolListError(opts.ToolNames); problem != "" {
+		return nil, invalidToolsOptionError(problem)
+	}
+	var baseNames []string
+	for _, t := range opts.Tools {
+		baseNames = append(baseNames, t.Name)
+	}
+	// The default selection: none under NoTools, the Tools override's names
+	// (it plays pi's baseToolsOverride, agent-session.ts _buildRuntime), else
+	// pi's DEFAULT_TOOL_NAMES. The port has no defaultTools setting.
+	var defaultNames []string
+	switch {
+	case opts.NoTools != NoToolsOff:
+	case opts.Tools != nil:
+		defaultNames = baseNames
+	default:
+		defaultNames = defaultActiveToolNames
+	}
+	// sdk.ts: a list of only modifiers changes the default selection instead
+	// of replacing it, and is an allowlist only under NoTools "all".
+	var toolModifiers []string
+	if slices.ContainsFunc(opts.ToolNames, isToolModifier) {
+		toolModifiers = opts.ToolNames
+	}
+	selected := opts.ToolNames
+	var allowedEntries []string // nil = everything allowed (pi: undefined)
+	switch {
+	case toolModifiers != nil:
+		selected = applyToolModifiers(defaultNames, toolModifiers)
+		if opts.NoTools == NoToolsAll {
+			allowedEntries = selected
+		}
+	case opts.ToolNames != nil:
+		allowedEntries = opts.ToolNames
+	case opts.NoTools == NoToolsAll:
+		allowedEntries = []string{}
+	}
+	var allowed func(string) bool
+	if allowedEntries != nil {
+		allowed = toolNameMatcher(allowedEntries)
+	}
+	excluded := toolNameMatcher(opts.ExcludeTools)
 	isAllowed := func(name string) bool {
-		return (allowed == nil || allowed[name]) && !excluded[name]
+		return !excluded(name) && (allowed == nil || allowed(name))
 	}
 
 	// Registry: base definitions (the verbatim Tools override, like pi's
@@ -176,10 +306,8 @@ func resolveTools(cwd string, opts SessionOptions, sessionEnv sessionEnvFn, resi
 		}
 		registry[t.Name] = t
 	}
-	var baseNames []string
 	if opts.Tools != nil {
 		for _, t := range opts.Tools {
-			baseNames = append(baseNames, t.Name)
 			if isAllowed(t.Name) {
 				addReg(t)
 			}
@@ -193,9 +321,9 @@ func resolveTools(cwd string, opts SessionOptions, sessionEnv sessionEnvFn, resi
 				addReg(t)
 			}
 		}
-		// Extra built-ins beyond pi's core set (e.g. web_fetch) are opt-in via
-		// ToolNames; admit allowlisted names CreateTool knows.
-		for _, name := range opts.ToolNames {
+		// Extra built-ins beyond pi's core set (e.g. web_fetch) are opt-in: a
+		// selected name CreateTool knows admits one. A pattern never does.
+		for _, name := range selected {
 			if _, ok := registry[name]; ok || !isAllowed(name) {
 				continue
 			}
@@ -213,24 +341,17 @@ func resolveTools(cwd string, opts SessionOptions, sessionEnv sessionEnvFn, resi
 		customNames = append(customNames, t.Name)
 	}
 
-	// Initial active names (sdk.ts:248-250): tools ?? (noTools ? [] : default),
-	// filtered by excludeTools. The Tools override plays pi's baseToolsOverride
-	// role: its keys become the default active set (agent-session.ts:2419-2421).
-	var initial []string
-	switch {
-	case opts.ToolNames != nil:
-		initial = opts.ToolNames
-	case opts.NoTools != NoToolsOff:
-		initial = nil
-	case opts.Tools != nil:
-		initial = baseNames
-	default:
-		initial = defaultActiveToolNames
+	// Initial active names (sdk.ts): the selection, else the default one,
+	// filtered by excludeTools. A pattern names no registry tool, so it adds
+	// nothing here; the allowlist pass below activates what it matches.
+	initial := selected
+	if initial == nil {
+		initial = defaultNames
 	}
 
 	// _refreshToolRegistry: start from the initial names (filtered through
-	// isAllowedTool); with an allowlist, every registry tool in the allowlist is
-	// activated; without one, all custom tools are activated
+	// isAllowedTool); with an allowlist, every registry tool it names or
+	// matches is activated; without one, all custom tools are activated
 	// (includeAllExtensionTools on session construction). Dedupe keeps first.
 	seen := map[string]bool{}
 	var active []agent.AgentTool
@@ -250,7 +371,7 @@ func resolveTools(cwd string, opts SessionOptions, sessionEnv sessionEnvFn, resi
 	}
 	if allowed != nil {
 		for _, n := range registryOrder {
-			if allowed[n] {
+			if allowed(n) {
 				push(n)
 			}
 		}
@@ -259,7 +380,7 @@ func resolveTools(cwd string, opts SessionOptions, sessionEnv sessionEnvFn, resi
 			push(n)
 		}
 	}
-	return active
+	return active, nil
 }
 
 // toolPromptGuidelines maps each tool with prompt guidelines to them, as
@@ -472,8 +593,10 @@ func (s *Session) LastAssistantText() string {
 
 // NewSession builds a Session. If Tools is nil, the default coding tools are used;
 // if SystemPrompt is empty, the default prompt is built from the tool set. The
-// prompt is not part of the transcript until the first prompt declares it.
-func NewSession(opts SessionOptions) *Session {
+// prompt is not part of the transcript until the first prompt declares it. It
+// fails, as pi's createAgentSession throws, when ToolNames mixes tool names
+// with +name/-name entries or a modifier names a pattern.
+func NewSession(opts SessionOptions) (*Session, error) {
 	cwd := opts.Cwd
 	if cwd == "" {
 		cwd, _ = os.Getwd()
@@ -484,7 +607,10 @@ func NewSession(opts SessionOptions) *Session {
 	// allocated up front so the closure captures a stable, non-nil pointer; its
 	// Agent is filled in below, before NewSession returns and any tool can run.
 	sess := &Session{Cwd: cwd, Model: opts.Model, apiKey: opts.APIKey, models: opts.Models}
-	tools := resolveTools(cwd, opts, sess.bashSessionEnv, sess.imageResizeOptions)
+	tools, err := resolveTools(cwd, opts, sess.bashSessionEnv, sess.imageResizeOptions)
+	if err != nil {
+		return nil, err
+	}
 	// A custom SystemPrompt still goes through the prompt builder with discovery:
 	// pi adds project context files, skills and cwd to custom prompts too; only
 	// the tools, rules and docs sections are exclusive to the default prompt.
@@ -560,7 +686,7 @@ func NewSession(opts SessionOptions) *Session {
 	if opts.Compaction != nil && opts.Compaction.Enabled {
 		sess.EnableCompaction(*opts.Compaction)
 	}
-	return sess
+	return sess, nil
 }
 
 // installTransformContext installs the session's single per-request transform,

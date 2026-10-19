@@ -23,7 +23,7 @@ func sessionSystemPrompt(t *testing.T, s *Session) string {
 // the session's system prompt, in tool order.
 func TestNewSessionCollectsPromptGuidelines(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
-	s := NewSession(SessionOptions{Cwd: t.TempDir()})
+	s := newTestSession(t, SessionOptions{Cwd: t.TempDir()})
 	prompt := sessionSystemPrompt(t, s)
 
 	wantOrder := []string{
@@ -60,7 +60,7 @@ func TestNewSessionBashOnlyKeepsSkills(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	s := NewSession(SessionOptions{
+	s := newTestSession(t, SessionOptions{
 		Cwd:          cwd,
 		ToolNames:    []string{"bash"},
 		TrustProject: true,
@@ -95,7 +95,7 @@ func TestNewSessionCustomPromptStillAssembles(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	s := NewSession(SessionOptions{
+	s := newTestSession(t, SessionOptions{
 		Cwd:          cwd,
 		SystemPrompt: "You are a custom agent.",
 		// The fixture skill lives in <cwd>/.pi/skills, which is gated on

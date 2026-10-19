@@ -90,11 +90,11 @@ func TestPowerShellToolNotInDefaultSession(t *testing.T) {
 		}
 		return out
 	}
-	if got, want := names(resolveTools("/proj", SessionOptions{}, nil, nil)), []string{"read", "bash", "edit", "write"}; !reflect.DeepEqual(got, want) {
+	if got, want := names(resolveTestTools(t, "/proj", SessionOptions{})), []string{"read", "bash", "edit", "write"}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("default active tools\n got: %#v\nwant: %#v", got, want)
 	}
 	opts := SessionOptions{ToolNames: []string{"read", "powershell", "edit", "write"}}
-	if got, want := names(resolveTools("/proj", opts, nil, nil)), []string{"read", "powershell", "edit", "write"}; !reflect.DeepEqual(got, want) {
+	if got, want := names(resolveTestTools(t, "/proj", opts)), []string{"read", "powershell", "edit", "write"}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("powershell-selected tools\n got: %#v\nwant: %#v", got, want)
 	}
 }

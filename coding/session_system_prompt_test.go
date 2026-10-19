@@ -42,7 +42,7 @@ func sectionNames(sections ai.SystemSections) []string {
 // tools in cwd, built independently of the Session.
 func expectedSessionPrompt(t *testing.T, cwd string) string {
 	t.Helper()
-	tools := resolveTools(cwd, SessionOptions{}, nil, nil)
+	tools := resolveTestTools(t, cwd, SessionOptions{})
 	names := make([]string, 0, len(tools))
 	for _, tool := range tools {
 		names = append(names, tool.Name)
@@ -68,7 +68,7 @@ func TestSessionDeclaresPromptAndToolsOnce(t *testing.T) {
 	reg := providers.RegisterFauxProvider(providers.RegisterFauxProviderOptions{})
 	defer reg.Unregister()
 	cwd := t.TempDir()
-	sess := NewSession(SessionOptions{Model: reg.GetModel(), Cwd: cwd})
+	sess := newTestSession(t, SessionOptions{Model: reg.GetModel(), Cwd: cwd})
 
 	reg.SetResponses([]providers.FauxResponseStep{fauxText("first"), fauxText("second")})
 	if _, err := sess.Run(context.Background(), "one"); err != nil {
@@ -111,13 +111,13 @@ func TestSessionResumedTranscriptDeclaresNothingNew(t *testing.T) {
 	reg := providers.RegisterFauxProvider(providers.RegisterFauxProviderOptions{})
 	defer reg.Unregister()
 	cwd := t.TempDir()
-	sess := NewSession(SessionOptions{Model: reg.GetModel(), Cwd: cwd})
+	sess := newTestSession(t, SessionOptions{Model: reg.GetModel(), Cwd: cwd})
 	reg.SetResponses([]providers.FauxResponseStep{fauxText("first"), fauxText("second")})
 	if _, err := sess.Run(context.Background(), "one"); err != nil {
 		t.Fatal(err)
 	}
 
-	resumed := NewSession(SessionOptions{Model: reg.GetModel(), Cwd: cwd})
+	resumed := newTestSession(t, SessionOptions{Model: reg.GetModel(), Cwd: cwd})
 	var decoded []agent.AgentMessage
 	for _, m := range sess.History() {
 		raw, err := json.Marshal(m)
@@ -146,13 +146,13 @@ func TestSessionResumedTranscriptDeclaresOnlyTheDifference(t *testing.T) {
 	reg := providers.RegisterFauxProvider(providers.RegisterFauxProviderOptions{})
 	defer reg.Unregister()
 	cwd := t.TempDir()
-	declaring := NewSession(SessionOptions{Model: reg.GetModel(), Cwd: cwd})
+	declaring := newTestSession(t, SessionOptions{Model: reg.GetModel(), Cwd: cwd})
 	reg.SetResponses([]providers.FauxResponseStep{fauxText("first"), fauxText("second")})
 	if _, err := declaring.Run(context.Background(), "one"); err != nil {
 		t.Fatal(err)
 	}
 
-	resumed := NewSession(SessionOptions{Model: reg.GetModel(), Cwd: cwd, NoTools: NoToolsAll})
+	resumed := newTestSession(t, SessionOptions{Model: reg.GetModel(), Cwd: cwd, NoTools: NoToolsAll})
 	resumed.LoadHistory(declaring.History())
 	result, err := resumed.Run(context.Background(), "two")
 	if err != nil {
@@ -191,7 +191,7 @@ func TestSessionDeclaresPromptForTranscriptWithoutSystemMessage(t *testing.T) {
 	reg := providers.RegisterFauxProvider(providers.RegisterFauxProviderOptions{})
 	defer reg.Unregister()
 	cwd := t.TempDir()
-	sess := NewSession(SessionOptions{Model: reg.GetModel(), Cwd: cwd})
+	sess := newTestSession(t, SessionOptions{Model: reg.GetModel(), Cwd: cwd})
 	sess.LoadHistory([]agent.AgentMessage{ai.NewUserText("existing", 1)})
 	if got := messageRoles(sess.History()); !reflect.DeepEqual(got, []string{"user"}) {
 		t.Fatalf("roles after load = %v, want [user]", got)
@@ -231,7 +231,7 @@ func TestSessionRunPrintDeclaresPrompt(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
 	reg := providers.RegisterFauxProvider(providers.RegisterFauxProviderOptions{})
 	defer reg.Unregister()
-	sess := NewSession(SessionOptions{Model: reg.GetModel(), Cwd: t.TempDir()})
+	sess := newTestSession(t, SessionOptions{Model: reg.GetModel(), Cwd: t.TempDir()})
 	reg.SetResponses([]providers.FauxResponseStep{fauxText("ok")})
 	if _, err := sess.RunPrint(context.Background(), &bytes.Buffer{}, "hi"); err != nil {
 		t.Fatal(err)
@@ -257,7 +257,7 @@ func TestSessionRecordSkipsUIOnlyMessages(t *testing.T) {
 	reg := providers.RegisterFauxProvider(providers.RegisterFauxProviderOptions{})
 	defer reg.Unregister()
 	cwd := t.TempDir()
-	sess := NewSession(SessionOptions{Model: reg.GetModel(), Cwd: cwd, Tools: CreateAllTools(cwd)})
+	sess := newTestSession(t, SessionOptions{Model: reg.GetModel(), Cwd: cwd, Tools: CreateAllTools(cwd)})
 	rec, err := StartSession(cwd, reg.GetModel(), "off")
 	if err != nil {
 		t.Fatal(err)
@@ -290,7 +290,7 @@ func TestSessionRecordsDeclaredSystemMessage(t *testing.T) {
 	reg := providers.RegisterFauxProvider(providers.RegisterFauxProviderOptions{})
 	defer reg.Unregister()
 	cwd := t.TempDir()
-	sess := NewSession(SessionOptions{Model: reg.GetModel(), Cwd: cwd})
+	sess := newTestSession(t, SessionOptions{Model: reg.GetModel(), Cwd: cwd})
 	rec, err := StartSession(cwd, reg.GetModel(), "off")
 	if err != nil {
 		t.Fatal(err)
@@ -394,7 +394,7 @@ func TestSessionForcedPromptIsSentButNeverRecorded(t *testing.T) {
 	reg := providers.RegisterFauxProvider(providers.RegisterFauxProviderOptions{})
 	defer reg.Unregister()
 	cwd := t.TempDir()
-	sess := NewSession(SessionOptions{Model: reg.GetModel(), Cwd: cwd})
+	sess := newTestSession(t, SessionOptions{Model: reg.GetModel(), Cwd: cwd})
 	rec, err := StartSession(cwd, reg.GetModel(), "off")
 	if err != nil {
 		t.Fatal(err)
@@ -542,7 +542,7 @@ func TestSessionForcedPromptProjectionDropsPointerSystemMessages(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
 	reg := providers.RegisterFauxProvider(providers.RegisterFauxProviderOptions{})
 	defer reg.Unregister()
-	sess := NewSession(SessionOptions{Model: reg.GetModel(), Cwd: t.TempDir()})
+	sess := newTestSession(t, SessionOptions{Model: reg.GetModel(), Cwd: t.TempDir()})
 	force := "Exact forced prompt."
 	sess.systemPromptOptions.ForceSystemPrompt = &force
 
@@ -571,7 +571,7 @@ func TestSessionEnableCompactionKeepsAnEmbeddersTransform(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
 	reg := providers.RegisterFauxProvider(providers.RegisterFauxProviderOptions{})
 	defer reg.Unregister()
-	sess := NewSession(SessionOptions{Model: reg.GetModel(), Cwd: t.TempDir()})
+	sess := newTestSession(t, SessionOptions{Model: reg.GetModel(), Cwd: t.TempDir()})
 
 	called := false
 	previous := sess.Agent.TransformContext
@@ -593,7 +593,7 @@ func TestSessionReEnableCompactionKeepsTheCheckpoint(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
 	reg := providers.RegisterFauxProvider(providers.RegisterFauxProviderOptions{})
 	defer reg.Unregister()
-	sess := NewSession(SessionOptions{Model: reg.GetModel(), Cwd: t.TempDir()})
+	sess := newTestSession(t, SessionOptions{Model: reg.GetModel(), Cwd: t.TempDir()})
 
 	sess.EnableCompaction(CompactionSettings{Enabled: true, ReserveTokens: 1000})
 	first := sess.compactState

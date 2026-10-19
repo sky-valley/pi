@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"testing"
+
+	"github.com/sky-valley/pi/agent"
 )
 
 // TestMain gives the package's tests a temp directory of their own, removed
@@ -22,4 +24,26 @@ func TestMain(m *testing.M) {
 	code := m.Run()
 	os.RemoveAll(dir)
 	os.Exit(code)
+}
+
+// newTestSession is NewSession for a test that expects the options to be
+// valid: an error fails the test.
+func newTestSession(t testing.TB, opts SessionOptions) *Session {
+	t.Helper()
+	sess, err := NewSession(opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return sess
+}
+
+// resolveTestTools is resolveTools with no session behind the tools, for
+// options the test expects to be valid.
+func resolveTestTools(t testing.TB, cwd string, opts SessionOptions) []agent.AgentTool {
+	t.Helper()
+	tools, err := resolveTools(cwd, opts, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return tools
 }

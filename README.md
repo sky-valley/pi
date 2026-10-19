@@ -81,10 +81,13 @@ import (
 )
 
 model, _ := coding.ResolveModel("anthropic/claude-sonnet-4-5")
-sess := coding.NewSession(coding.SessionOptions{
+sess, err := coding.NewSession(coding.SessionOptions{
     Model:  model,
     APIKey: ai.GetEnvApiKey(model.Provider, nil),
 })
+if err != nil {
+    return err
+}
 text, err := sess.RunPrint(ctx, os.Stdout, "list the Go files and summarize them")
 ```
 
@@ -103,11 +106,13 @@ tools, streaming via `Subscribe`, and exposes the full provider control surface.
 ```go
 model, _ := coding.ResolveModel("openai/gpt-5")            // uses the Responses API
 
-sess := coding.NewSession(coding.SessionOptions{
+sess, err := coding.NewSession(coding.SessionOptions{
     Model:  model,
     APIKey: ai.GetEnvApiKey(model.Provider, nil),          // OPENAI_API_KEY
 
     // Tool selection (allow/deny/none + your own tools), mirrors createAgentSession.
+    // Entries may be * patterns; a list of only +name/-name entries edits the
+    // default set instead, and mixing the two forms is an error.
     ToolNames:   []string{"read", "bash"},                 // or NoTools: coding.NoToolsAll
     CustomTools: []agent.AgentTool{myTool},
 
@@ -122,6 +127,9 @@ sess := coding.NewSession(coding.SessionOptions{
     OnPayload:      func(p any, m *ai.Model) (any, error) { return p, nil }, // inspect/rewrite request
     Compaction:     &coding.DefaultCompactionSettings,      // auto context-window compaction
 })
+if err != nil {
+    return err                                             // e.g. an invalid ToolNames list
+}
 
 sess.Subscribe(func(ctx context.Context, e agent.AgentEvent) error {
     if e.Type == agent.EvMessageUpdate && e.AssistantMessageEvent != nil &&

@@ -142,7 +142,7 @@ func TestCompactionSummarizesAndKeepsRecent(t *testing.T) {
 		providers.FauxStatic(providers.FauxAssistantMessage(ai.ContentList{ai.TextContent{Text: "## Goal\nfinish the port"}}, ai.StopStop)),
 	})
 
-	sess := NewSession(SessionOptions{Model: model, Cwd: t.TempDir(), NoTools: NoToolsAll})
+	sess := newTestSession(t, SessionOptions{Model: model, Cwd: t.TempDir(), NoTools: NoToolsAll})
 	sess.EnableCompaction(CompactionSettings{Enabled: true, ReserveTokens: 200, KeepRecentTokens: 1500})
 
 	// Build a transcript large enough to exceed the 1000-token window. With
@@ -197,7 +197,7 @@ func newCompactionTestSession(t *testing.T) (*Session, *providers.FauxProviderRe
 		Models: []providers.FauxModelDefinition{{ID: "faux-1", ContextWindow: 1000}},
 	})
 	t.Cleanup(reg.Unregister)
-	sess := NewSession(SessionOptions{Model: reg.GetModel(), Cwd: t.TempDir(), NoTools: NoToolsAll})
+	sess := newTestSession(t, SessionOptions{Model: reg.GetModel(), Cwd: t.TempDir(), NoTools: NoToolsAll})
 	return sess, reg
 }
 
@@ -420,7 +420,7 @@ func TestCompactionAbortedDoesNotCheckpoint(t *testing.T) {
 				return s
 			}
 			model := &ai.Model{ID: "m", Api: "faux", Provider: "faux", ContextWindow: tc.window, MaxTokens: 8192}
-			sess := NewSession(SessionOptions{Model: model, Cwd: t.TempDir(), NoTools: NoToolsAll, StreamFn: abortMidStream})
+			sess := newTestSession(t, SessionOptions{Model: model, Cwd: t.TempDir(), NoTools: NoToolsAll, StreamFn: abortMidStream})
 
 			state := &compactionState{settings: tc.settings}
 			out := sess.compact(ctx, state, tc.messages)
@@ -744,7 +744,7 @@ func TestSummarizationPassesReasoningAndHeaders(t *testing.T) {
 	}
 	reg.SetResponses([]providers.FauxResponseStep{capture, capture})
 
-	sess := NewSession(SessionOptions{
+	sess := newTestSession(t, SessionOptions{
 		Model: reg.GetModel(), Cwd: t.TempDir(), NoTools: NoToolsAll,
 		Headers: ai.ProviderHeaders{"X-Parity": ai.HeaderValue("1")},
 	})

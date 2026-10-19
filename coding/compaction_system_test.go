@@ -46,7 +46,7 @@ func TestCompactionKeepsPromptAndToolsOnTheNextRequest(t *testing.T) {
 		Models: []providers.FauxModelDefinition{{ID: "faux-1", ContextWindow: 1000}},
 	})
 	defer reg.Unregister()
-	sess := NewSession(SessionOptions{Model: reg.GetModel(), Cwd: t.TempDir()})
+	sess := newTestSession(t, SessionOptions{Model: reg.GetModel(), Cwd: t.TempDir()})
 	sess.EnableCompaction(compactionTestSettings)
 
 	var requests []ai.TranscriptContext
@@ -433,7 +433,7 @@ func TestCompactionCheckpointFoldsSummarizedAndRetainedSystemPatches(t *testing.
 		Models: []providers.FauxModelDefinition{{ID: "faux-1", ContextWindow: 1000}},
 	})
 	defer reg.Unregister()
-	sess := NewSession(SessionOptions{Model: reg.GetModel(), Cwd: t.TempDir()})
+	sess := newTestSession(t, SessionOptions{Model: reg.GetModel(), Cwd: t.TempDir()})
 	reg.SetResponses([]providers.FauxResponseStep{fauxText("declared")})
 	if _, err := sess.Run(context.Background(), "declare the prompt"); err != nil {
 		t.Fatal(err)

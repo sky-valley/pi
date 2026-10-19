@@ -44,7 +44,7 @@ func main() {
 	//    context files, skills and cwd still follow it, exactly as in pi. The
 	//    first prompt declares it into the transcript.
 	cwd, _ := os.Getwd()
-	sess := coding.NewSession(coding.SessionOptions{
+	sess, err := coding.NewSession(coding.SessionOptions{
 		Model:        model,
 		Cwd:          cwd,
 		Tools:        []agent.AgentTool{weather},
@@ -52,6 +52,9 @@ func main() {
 		APIKey:       apiKey,
 		SessionID:    "demo-session", // enables OpenAI prompt caching across turns
 	})
+	if err != nil {
+		fail(err)
+	}
 
 	// 4. (Optional) stream tokens/tool activity into your app UI.
 	sess.Subscribe(func(ctx context.Context, e agent.AgentEvent) error {

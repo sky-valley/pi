@@ -70,7 +70,7 @@ func runLiveToolCall(t *testing.T, model *ai.Model, key string) {
 		},
 	}
 
-	sess := NewSession(SessionOptions{
+	sess := newTestSession(t, SessionOptions{
 		Model:        model,
 		Cwd:          t.TempDir(),
 		Tools:        []agent.AgentTool{weather},

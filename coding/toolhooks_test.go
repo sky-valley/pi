@@ -24,7 +24,7 @@ func TestBeforeToolCallPermissionGate(t *testing.T) {
 	})
 
 	var blocked bool
-	sess := NewSession(SessionOptions{
+	sess := newTestSession(t, SessionOptions{
 		Model: reg.GetModel(),
 		Cwd:   dir,
 		BeforeToolCall: func(ctx context.Context, c agent.BeforeToolCallContext) *agent.BeforeToolCallResult {

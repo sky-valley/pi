@@ -25,7 +25,7 @@ func TestSessionPersistenceRoundTrip(t *testing.T) {
 	})
 	model := reg.GetModel()
 
-	sess := NewSession(SessionOptions{Model: model, Cwd: cwd, Tools: CreateAllTools(cwd)})
+	sess := newTestSession(t, SessionOptions{Model: model, Cwd: cwd, Tools: CreateAllTools(cwd)})
 	rec, err := StartSession(cwd, model)
 	if err != nil {
 		t.Fatal(err)
@@ -78,7 +78,7 @@ func TestResumeContinuesConversation(t *testing.T) {
 	reg.SetResponses([]providers.FauxResponseStep{
 		providers.FauxStatic(providers.FauxAssistantMessage(ai.ContentList{ai.TextContent{Text: "first reply"}}, ai.StopStop)),
 	})
-	s1 := NewSession(SessionOptions{Model: model, Cwd: cwd, Tools: nil})
+	s1 := newTestSession(t, SessionOptions{Model: model, Cwd: cwd, Tools: nil})
 	rec1, _ := StartSession(cwd, model)
 	s1.Record(rec1)
 	s1.RunPrint(context.Background(), &strings.Builder{}, "first question")
@@ -98,7 +98,7 @@ func TestResumeContinuesConversation(t *testing.T) {
 		t.Fatal("no latest session found")
 	}
 	history, _ := LoadSessionMessages(latest.Path)
-	s2 := NewSession(SessionOptions{Model: model, Cwd: cwd, Tools: nil})
+	s2 := newTestSession(t, SessionOptions{Model: model, Cwd: cwd, Tools: nil})
 	s2.LoadHistory(history)
 	s2.RunPrint(context.Background(), &strings.Builder{}, "second question")
 

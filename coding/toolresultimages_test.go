@@ -193,7 +193,7 @@ func runScreenshotSession(t *testing.T, opts SessionOptions) []ai.ImageContent {
 	opts.Model = reg.GetModel()
 	opts.Cwd = t.TempDir()
 
-	res, err := NewSession(opts).Run(context.Background(), "take a screenshot")
+	res, err := newTestSession(t, opts).Run(context.Background(), "take a screenshot")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -309,7 +309,7 @@ func TestSessionNormalizesPromptImages(t *testing.T) {
 		providers.FauxStatic(providers.FauxAssistantMessage(ai.ContentList{ai.TextContent{Text: "ok"}}, ai.StopStop)),
 	})
 
-	sess := NewSession(SessionOptions{Model: reg.GetModel(), Cwd: t.TempDir(), NoTools: NoToolsAll})
+	sess := newTestSession(t, SessionOptions{Model: reg.GetModel(), Cwd: t.TempDir(), NoTools: NoToolsAll})
 
 	// A 300x240 BMP: outside the model's 40px profile AND not an inline type, so
 	// the pipeline both converts and downscales it, and says so.
@@ -398,7 +398,7 @@ func TestSessionResizesToolResultImagesToModelProfile(t *testing.T) {
 	})
 
 	// 300x240 is comfortably inside the 2000px default and outside the model's.
-	sess := NewSession(SessionOptions{
+	sess := newTestSession(t, SessionOptions{
 		Model:       reg.GetModel(),
 		Cwd:         t.TempDir(),
 		CustomTools: []agent.AgentTool{screenshotTool(grayPNGBase64(t, 300, 240))},
@@ -459,7 +459,7 @@ func TestReadToolUsesSessionModelProfile(t *testing.T) {
 		wide, narrowModel = models[1], models[0]
 	}
 
-	sess := NewSession(SessionOptions{Model: wide, Cwd: cwd, ToolNames: []string{"read"}})
+	sess := newTestSession(t, SessionOptions{Model: wide, Cwd: cwd, ToolNames: []string{"read"}})
 	readImage := func() (int, int) {
 		t.Helper()
 		var tool agent.AgentTool
@@ -549,7 +549,7 @@ func TestSessionReportsUnprocessablePromptImages(t *testing.T) {
 	reg.SetResponses([]providers.FauxResponseStep{
 		providers.FauxStatic(providers.FauxAssistantMessage(ai.ContentList{ai.TextContent{Text: "ok"}}, ai.StopStop)),
 	})
-	sess := NewSession(SessionOptions{Model: reg.GetModel(), Cwd: t.TempDir(), NoTools: NoToolsAll})
+	sess := newTestSession(t, SessionOptions{Model: reg.GetModel(), Cwd: t.TempDir(), NoTools: NoToolsAll})
 
 	const garbage = "bm90IGFuIGltYWdl" // base64("not an image")
 	if _, err := sess.Run(context.Background(), "look",
@@ -604,7 +604,7 @@ func TestImageResizeProfileIsRaceFreeAcrossSetModel(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(cwd, "shot.png"), buf.Bytes(), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	sess := NewSession(SessionOptions{Model: reg.Models[0], Cwd: cwd, ToolNames: []string{"read"}})
+	sess := newTestSession(t, SessionOptions{Model: reg.Models[0], Cwd: cwd, ToolNames: []string{"read"}})
 	var read agent.AgentTool
 	for _, tool := range sess.Agent.State().Tools {
 		if tool.Name == "read" {

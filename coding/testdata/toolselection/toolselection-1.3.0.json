@@ -1,0 +1,757 @@
+{
+	"piCodingAgentVersion": "1.3.0",
+	"matcherNames": [
+		"read",
+		"bash",
+		"powershell",
+		"write",
+		"",
+		"dynamic_tool",
+		"ask_question",
+		"a.bc",
+		"aXbc",
+		"abc",
+		"aXbYc",
+		"mcp__docs__search",
+		"mcp__docs__fail",
+		"(x)|[y]",
+		"(x)|[y]z",
+		"x",
+		"a+b?",
+		"a+b?!",
+		"aab",
+		"^$\\{}",
+		"a\nb",
+		"a\rb",
+		"a b",
+		"a b",
+		"a\tb",
+		"ab"
+	],
+	"matcher": [
+		{
+			"entries": [],
+			"matched": []
+		},
+		{
+			"entries": [
+				"read"
+			],
+			"matched": [
+				"read"
+			]
+		},
+		{
+			"entries": [
+				"*"
+			],
+			"matched": [
+				"read",
+				"bash",
+				"powershell",
+				"write",
+				"",
+				"dynamic_tool",
+				"ask_question",
+				"a.bc",
+				"aXbc",
+				"abc",
+				"aXbYc",
+				"mcp__docs__search",
+				"mcp__docs__fail",
+				"(x)|[y]",
+				"(x)|[y]z",
+				"x",
+				"a+b?",
+				"a+b?!",
+				"aab",
+				"^$\\{}",
+				"a\tb",
+				"ab"
+			]
+		},
+		{
+			"entries": [
+				"re*"
+			],
+			"matched": [
+				"read"
+			]
+		},
+		{
+			"entries": [
+				"*_tool",
+				"ask_*"
+			],
+			"matched": [
+				"dynamic_tool",
+				"ask_question"
+			]
+		},
+		{
+			"entries": [
+				"a.b*"
+			],
+			"matched": [
+				"a.bc"
+			]
+		},
+		{
+			"entries": [
+				"a*b*c"
+			],
+			"matched": [
+				"a.bc",
+				"aXbc",
+				"abc",
+				"aXbYc"
+			]
+		},
+		{
+			"entries": [
+				"mcp__docs__s*"
+			],
+			"matched": [
+				"mcp__docs__search"
+			]
+		},
+		{
+			"entries": [
+				"(x)|[y]*"
+			],
+			"matched": [
+				"(x)|[y]",
+				"(x)|[y]z"
+			]
+		},
+		{
+			"entries": [
+				"a+b?*",
+				"^$\\{}"
+			],
+			"matched": [
+				"a+b?",
+				"a+b?!",
+				"^$\\{}"
+			]
+		},
+		{
+			"entries": [
+				"**"
+			],
+			"matched": [
+				"read",
+				"bash",
+				"powershell",
+				"write",
+				"",
+				"dynamic_tool",
+				"ask_question",
+				"a.bc",
+				"aXbc",
+				"abc",
+				"aXbYc",
+				"mcp__docs__search",
+				"mcp__docs__fail",
+				"(x)|[y]",
+				"(x)|[y]z",
+				"x",
+				"a+b?",
+				"a+b?!",
+				"aab",
+				"^$\\{}",
+				"a\tb",
+				"ab"
+			]
+		},
+		{
+			"entries": [
+				"a*b"
+			],
+			"matched": [
+				"aab",
+				"a\tb",
+				"ab"
+			]
+		},
+		{
+			"entries": [
+				"read",
+				"*sh*"
+			],
+			"matched": [
+				"read",
+				"bash",
+				"powershell"
+			]
+		}
+	],
+	"lists": [
+		{
+			"entries": [
+				"read",
+				"bash"
+			],
+			"error": null,
+			"applied": [
+				"read",
+				"bash",
+				"edit",
+				"write"
+			]
+		},
+		{
+			"entries": [
+				"+grep"
+			],
+			"error": null,
+			"applied": [
+				"read",
+				"bash",
+				"edit",
+				"write",
+				"grep"
+			]
+		},
+		{
+			"entries": [
+				"+grep",
+				"-write"
+			],
+			"error": null,
+			"applied": [
+				"read",
+				"bash",
+				"edit",
+				"grep"
+			]
+		},
+		{
+			"entries": [
+				"-read",
+				"-bash",
+				"-edit",
+				"-write"
+			],
+			"error": null,
+			"applied": []
+		},
+		{
+			"entries": [
+				"+read"
+			],
+			"error": null,
+			"applied": [
+				"read",
+				"bash",
+				"edit",
+				"write"
+			]
+		},
+		{
+			"entries": [
+				"+grep",
+				"+grep",
+				"-grep",
+				"+grep"
+			],
+			"error": null,
+			"applied": [
+				"read",
+				"bash",
+				"edit",
+				"write",
+				"grep"
+			]
+		},
+		{
+			"entries": [
+				"+",
+				"-"
+			],
+			"error": null,
+			"applied": [
+				"read",
+				"bash",
+				"edit",
+				"write"
+			]
+		},
+		{
+			"entries": [
+				"-missing"
+			],
+			"error": null,
+			"applied": [
+				"read",
+				"bash",
+				"edit",
+				"write"
+			]
+		},
+		{
+			"entries": [
+				"read",
+				"+grep"
+			],
+			"error": "tool names cannot be mixed with +name or -name entries",
+			"applied": [
+				"read",
+				"bash",
+				"edit",
+				"write",
+				"grep"
+			]
+		},
+		{
+			"entries": [
+				"",
+				"+grep"
+			],
+			"error": "tool names cannot be mixed with +name or -name entries",
+			"applied": [
+				"read",
+				"bash",
+				"edit",
+				"write",
+				"grep"
+			]
+		},
+		{
+			"entries": [
+				"-gr*"
+			],
+			"error": "+name and -name entries take exact tool names, not patterns: -gr*",
+			"applied": [
+				"read",
+				"bash",
+				"edit",
+				"write"
+			]
+		},
+		{
+			"entries": [
+				"+grep",
+				"+mcp__radius__*"
+			],
+			"error": "+name and -name entries take exact tool names, not patterns: +mcp__radius__*",
+			"applied": [
+				"read",
+				"bash",
+				"edit",
+				"write",
+				"grep",
+				"mcp__radius__*"
+			]
+		},
+		{
+			"entries": [
+				"*"
+			],
+			"error": null,
+			"applied": [
+				"read",
+				"bash",
+				"edit",
+				"write"
+			]
+		}
+	],
+	"sessions": [
+		{
+			"name": "default",
+			"options": {},
+			"customTools": [
+				"ask_question",
+				"dynamic_tool"
+			],
+			"active": [
+				"read",
+				"bash",
+				"edit",
+				"write",
+				"ask_question",
+				"dynamic_tool"
+			],
+			"registered": [
+				"read",
+				"bash",
+				"powershell",
+				"edit",
+				"write",
+				"grep",
+				"find",
+				"ls",
+				"ask_question",
+				"dynamic_tool"
+			]
+		},
+		{
+			"name": "allow-star",
+			"options": {
+				"tools": [
+					"*"
+				]
+			},
+			"customTools": [],
+			"active": [
+				"read",
+				"bash",
+				"powershell",
+				"edit",
+				"write",
+				"grep",
+				"find",
+				"ls"
+			],
+			"registered": [
+				"read",
+				"bash",
+				"powershell",
+				"edit",
+				"write",
+				"grep",
+				"find",
+				"ls"
+			]
+		},
+		{
+			"name": "patterns-5109",
+			"options": {
+				"tools": [
+					"*_tool",
+					"ask_*",
+					"re*"
+				],
+				"excludeTools": [
+					"ask*"
+				]
+			},
+			"customTools": [
+				"ask_question",
+				"dynamic_tool"
+			],
+			"active": [
+				"read",
+				"dynamic_tool"
+			],
+			"registered": [
+				"read",
+				"dynamic_tool"
+			]
+		},
+		{
+			"name": "exclude-pattern",
+			"options": {
+				"excludeTools": [
+					"*sh*"
+				]
+			},
+			"customTools": [
+				"fish_tool",
+				"plain"
+			],
+			"active": [
+				"read",
+				"edit",
+				"write",
+				"plain"
+			],
+			"registered": [
+				"read",
+				"edit",
+				"write",
+				"grep",
+				"find",
+				"ls",
+				"plain"
+			]
+		},
+		{
+			"name": "pattern-metachars",
+			"options": {
+				"tools": [
+					"read",
+					"a.b*"
+				]
+			},
+			"customTools": [
+				"a.bc",
+				"aXbc",
+				"a.b"
+			],
+			"active": [
+				"read",
+				"a.bc",
+				"a.b"
+			],
+			"registered": [
+				"read",
+				"a.bc",
+				"a.b"
+			]
+		},
+		{
+			"name": "exclude-star",
+			"options": {
+				"tools": [
+					"*"
+				],
+				"excludeTools": [
+					"*"
+				]
+			},
+			"customTools": [
+				"dynamic_tool"
+			],
+			"active": [],
+			"registered": []
+		},
+		{
+			"name": "allow-empty",
+			"options": {
+				"tools": []
+			},
+			"customTools": [
+				"dynamic_tool"
+			],
+			"active": [],
+			"registered": []
+		},
+		{
+			"name": "modifiers",
+			"options": {
+				"tools": [
+					"+grep",
+					"-write"
+				]
+			},
+			"customTools": [
+				"dynamic_tool"
+			],
+			"active": [
+				"read",
+				"bash",
+				"edit",
+				"grep",
+				"dynamic_tool"
+			],
+			"registered": [
+				"read",
+				"bash",
+				"powershell",
+				"edit",
+				"write",
+				"grep",
+				"find",
+				"ls",
+				"dynamic_tool"
+			]
+		},
+		{
+			"name": "modifiers-add-custom",
+			"options": {
+				"tools": [
+					"+dynamic_tool",
+					"-bash"
+				]
+			},
+			"customTools": [
+				"dynamic_tool",
+				"other_tool"
+			],
+			"active": [
+				"read",
+				"edit",
+				"write",
+				"dynamic_tool",
+				"other_tool"
+			],
+			"registered": [
+				"read",
+				"bash",
+				"powershell",
+				"edit",
+				"write",
+				"grep",
+				"find",
+				"ls",
+				"dynamic_tool",
+				"other_tool"
+			]
+		},
+		{
+			"name": "modifiers-no-tools-all",
+			"options": {
+				"tools": [
+					"+grep",
+					"-write"
+				],
+				"noTools": "all"
+			},
+			"customTools": [
+				"dynamic_tool"
+			],
+			"active": [
+				"grep"
+			],
+			"registered": [
+				"grep"
+			]
+		},
+		{
+			"name": "modifiers-no-tools-builtin",
+			"options": {
+				"tools": [
+					"+grep"
+				],
+				"noTools": "builtin"
+			},
+			"customTools": [
+				"dynamic_tool"
+			],
+			"active": [
+				"grep",
+				"dynamic_tool"
+			],
+			"registered": [
+				"read",
+				"bash",
+				"powershell",
+				"edit",
+				"write",
+				"grep",
+				"find",
+				"ls",
+				"dynamic_tool"
+			]
+		},
+		{
+			"name": "modifiers-remove-all",
+			"options": {
+				"tools": [
+					"-read",
+					"-bash",
+					"-edit",
+					"-write"
+				]
+			},
+			"customTools": [
+				"dynamic_tool"
+			],
+			"active": [
+				"dynamic_tool"
+			],
+			"registered": [
+				"read",
+				"bash",
+				"powershell",
+				"edit",
+				"write",
+				"grep",
+				"find",
+				"ls",
+				"dynamic_tool"
+			]
+		},
+		{
+			"name": "modifiers-excluded",
+			"options": {
+				"tools": [
+					"+grep",
+					"+ls"
+				],
+				"excludeTools": [
+					"g*"
+				]
+			},
+			"customTools": [],
+			"active": [
+				"read",
+				"bash",
+				"edit",
+				"write",
+				"ls"
+			],
+			"registered": [
+				"read",
+				"bash",
+				"powershell",
+				"edit",
+				"write",
+				"find",
+				"ls"
+			]
+		},
+		{
+			"name": "modifiers-empty-names",
+			"options": {
+				"tools": [
+					"+",
+					"-"
+				]
+			},
+			"customTools": [],
+			"active": [
+				"read",
+				"bash",
+				"edit",
+				"write"
+			],
+			"registered": [
+				"read",
+				"bash",
+				"powershell",
+				"edit",
+				"write",
+				"grep",
+				"find",
+				"ls"
+			]
+		},
+		{
+			"name": "error-mixed",
+			"options": {
+				"tools": [
+					"read",
+					"+grep"
+				]
+			},
+			"customTools": [],
+			"error": "Invalid tools option: tool names cannot be mixed with +name or -name entries"
+		},
+		{
+			"name": "error-mixed-empty-entry",
+			"options": {
+				"tools": [
+					"",
+					"+grep"
+				]
+			},
+			"customTools": [],
+			"error": "Invalid tools option: tool names cannot be mixed with +name or -name entries"
+		},
+		{
+			"name": "error-pattern-modifier",
+			"options": {
+				"tools": [
+					"-gr*"
+				]
+			},
+			"customTools": [],
+			"error": "Invalid tools option: +name and -name entries take exact tool names, not patterns: -gr*"
+		},
+		{
+			"name": "error-mixed-with-no-tools",
+			"options": {
+				"tools": [
+					"read",
+					"-bash"
+				],
+				"noTools": "all"
+			},
+			"customTools": [],
+			"error": "Invalid tools option: tool names cannot be mixed with +name or -name entries"
+		}
+	]
+}

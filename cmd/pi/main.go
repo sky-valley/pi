@@ -157,7 +157,7 @@ func main() {
 		think = resumeBranch.ThinkingLevel
 	}
 
-	sess := coding.NewSession(coding.SessionOptions{
+	sess, err := coding.NewSession(coding.SessionOptions{
 		Model:         model,
 		Cwd:           cwd,
 		SystemPrompt:  system,
@@ -166,6 +166,9 @@ func main() {
 		// pi enables compaction by default (settings compaction.enabled ?? true).
 		Compaction: &coding.DefaultCompactionSettings,
 	})
+	if err != nil {
+		fatal(err)
+	}
 
 	if resumePath != "" {
 		if rec := resume(sess, resumePath, *resumeBranch, resumeHasThinkingEntry); rec != nil {

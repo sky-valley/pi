@@ -118,12 +118,12 @@ func TestNewSessionDefaultsToUntrustedProject(t *testing.T) {
 		"---\nname: repo-skill\ndescription: "+marker+"\n---\n")
 
 	// Zero value for TrustProject — the default every embedder gets.
-	untrusted := NewSession(SessionOptions{Cwd: cwd})
+	untrusted := newTestSession(t, SessionOptions{Cwd: cwd})
 	if strings.Contains(sessionSystemPrompt(t, untrusted), marker) {
 		t.Fatalf("NewSession must default to an untrusted project")
 	}
 
-	trusted := NewSession(SessionOptions{Cwd: cwd, TrustProject: true})
+	trusted := newTestSession(t, SessionOptions{Cwd: cwd, TrustProject: true})
 	if !strings.Contains(sessionSystemPrompt(t, trusted), marker) {
 		t.Fatalf("NewSession with TrustProject must load the project skill")
 	}

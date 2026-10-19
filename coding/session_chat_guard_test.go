@@ -36,7 +36,7 @@ func countingStream(dispatches *int) func(context.Context, *ai.Model, ai.Transcr
 
 func TestSessionRejectsNonChatModelBeforeDispatch(t *testing.T) {
 	dispatches := 0
-	sess := NewSession(SessionOptions{Model: imageSessionModel(), Cwd: t.TempDir(), NoTools: NoToolsAll,
+	sess := newTestSession(t, SessionOptions{Model: imageSessionModel(), Cwd: t.TempDir(), NoTools: NoToolsAll,
 		StreamFn: countingStream(&dispatches)})
 
 	res, err := sess.Run(context.Background(), "hi")
@@ -55,7 +55,7 @@ func TestSessionRejectsNonChatModelBeforeDispatch(t *testing.T) {
 // would fail for a different reason — no provider is registered for "faux" —
 // so the message tells the two apart.
 func TestSessionDefaultStreamRejectsNonChatModel(t *testing.T) {
-	sess := NewSession(SessionOptions{Model: imageSessionModel(), Cwd: t.TempDir(), NoTools: NoToolsAll})
+	sess := newTestSession(t, SessionOptions{Model: imageSessionModel(), Cwd: t.TempDir(), NoTools: NoToolsAll})
 	_, err := sess.Run(context.Background(), "hi")
 	if err == nil || err.Error() != imageSessionModelError {
 		t.Fatalf("Run error = %v, want %q", err, imageSessionModelError)
@@ -66,7 +66,7 @@ func TestSessionDefaultStreamRejectsNonChatModel(t *testing.T) {
 // so they meet the same assertion: the summary fails without a request.
 func TestSessionSummarizationRejectsNonChatModel(t *testing.T) {
 	dispatches := 0
-	sess := NewSession(SessionOptions{Model: imageSessionModel(), Cwd: t.TempDir(), NoTools: NoToolsAll,
+	sess := newTestSession(t, SessionOptions{Model: imageSessionModel(), Cwd: t.TempDir(), NoTools: NoToolsAll,
 		StreamFn: countingStream(&dispatches)})
 
 	if summary, ok := sess.completeSummarization(context.Background(), "summarize", 1000, "s-1"); ok {
@@ -80,7 +80,7 @@ func TestSessionSummarizationRejectsNonChatModel(t *testing.T) {
 	// the assertion and not an unreachable stream function.
 	chat := *imageSessionModel()
 	chat.Type = ""
-	sess = NewSession(SessionOptions{Model: &chat, Cwd: t.TempDir(), NoTools: NoToolsAll,
+	sess = newTestSession(t, SessionOptions{Model: &chat, Cwd: t.TempDir(), NoTools: NoToolsAll,
 		StreamFn: countingStream(&dispatches)})
 	if _, ok := sess.completeSummarization(context.Background(), "summarize", 1000, "s-1"); !ok {
 		t.Fatal("summarization over a chat model must succeed")

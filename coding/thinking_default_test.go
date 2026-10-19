@@ -17,7 +17,7 @@ func TestUnsetThinkingDefaultsToMediumOnReasoningModel(t *testing.T) {
 	defer reg.Unregister()
 	model := reg.GetModel()
 
-	sess := NewSession(SessionOptions{Model: model, Cwd: t.TempDir(), NoTools: NoToolsAll})
+	sess := newTestSession(t, SessionOptions{Model: model, Cwd: t.TempDir(), NoTools: NoToolsAll})
 	if got := sess.Agent.State().ThinkingLevel; got != agent.ThinkMedium {
 		t.Fatalf("unset thinking on a reasoning model = %q, want medium", got)
 	}
@@ -32,7 +32,7 @@ func TestUnsetThinkingClampsToOffOnNonReasoningModel(t *testing.T) {
 	defer reg.Unregister()
 	model := reg.GetModel()
 
-	sess := NewSession(SessionOptions{Model: model, Cwd: t.TempDir(), NoTools: NoToolsAll})
+	sess := newTestSession(t, SessionOptions{Model: model, Cwd: t.TempDir(), NoTools: NoToolsAll})
 	if got := sess.Agent.State().ThinkingLevel; got != agent.ThinkOff {
 		t.Fatalf("unset thinking on a non-reasoning model = %q, want off", got)
 	}

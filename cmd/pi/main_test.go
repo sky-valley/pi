@@ -68,8 +68,11 @@ func TestResumeExtendsTheSessionsCompaction(t *testing.T) {
 	}
 	reg.SetResponses([]providers.FauxResponseStep{step, step, step})
 	// A reserve as large as the window compacts on every request.
-	sess := coding.NewSession(coding.SessionOptions{Model: reg.GetModel(), Cwd: t.TempDir(), SystemPrompt: "test", NoTools: coding.NoToolsAll,
+	sess, err := coding.NewSession(coding.SessionOptions{Model: reg.GetModel(), Cwd: t.TempDir(), SystemPrompt: "test", NoTools: coding.NoToolsAll,
 		Compaction: &coding.CompactionSettings{Enabled: true, ReserveTokens: 2000, KeepRecentTokens: 1}})
+	if err != nil {
+		t.Fatal(err)
+	}
 	if rec := resume(sess, path, tree.BuildProjection(), true); rec != nil {
 		t.Cleanup(func() { rec.Close() })
 	}
