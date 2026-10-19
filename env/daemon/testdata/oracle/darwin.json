@@ -1195,6 +1195,19 @@
       "json": "{\"code\":\"EINVAL\",\"message\":\"missing or invalid field startLine\"}"
     }
   ],
+  "signals": [
+    {
+      "label": "ignored in child",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "[] []\n"
+    },
+    {
+      "label": "ignored in child",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    }
+  ],
   "stat": [
     {
       "label": "file",

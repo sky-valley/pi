@@ -448,6 +448,24 @@ func scenarios() []scenario {
 			},
 		},
 		{
+			// Children get the default disposition of every signal, also of those
+			// the daemon was started ignoring (libuv resets them all).
+			name:          "signals",
+			ignoreSignals: "HUP INT TERM USR1 TSTP TTIN TTOU",
+			skip: func() string {
+				if reason := unixOnly(); reason != "" {
+					return reason
+				}
+				if _, err := os.Stat("/usr/bin/python3"); err != nil {
+					return "needs /usr/bin/python3 to report a child's dispositions"
+				}
+				return ""
+			},
+			run: func(r *recorder) {
+				r.do("ignored in child", `{"op":"exec","argv":["/usr/bin/python3","-I","-c","import signal; print(sorted(s.name for s in signal.Signals if signal.getsignal(s) == signal.SIG_IGN and s not in (signal.SIGPIPE, signal.SIGXFSZ)), sorted(s.name for s in signal.pthread_sigmask(signal.SIG_BLOCK, [])))"],"cwd":"%R","env":{}}`)
+			},
+		},
+		{
 			name: "watch",
 			skip: unixOnly,
 			run: func(r *recorder) {

@@ -78,8 +78,17 @@ type daemonSession struct {
 }
 
 func startDaemon(t *testing.T, binary string, env ...string) *daemonSession {
+	return startDaemonWith(t, exec.Command(binary, "serve", "--token", "0123abcd"), env...)
+}
+
+// startDaemonIgnoring starts the daemon with signals ignored, as nohup or a
+// parent may start it.
+func startDaemonIgnoring(t *testing.T, binary string, signals string, env ...string) *daemonSession {
+	return startDaemonWith(t, exec.Command("/bin/sh", "-c", `trap '' `+signals+`; exec "$0" serve --token 0123abcd`, binary), env...)
+}
+
+func startDaemonWith(t *testing.T, cmd *exec.Cmd, env ...string) *daemonSession {
 	t.Helper()
-	cmd := exec.Command(binary, "serve", "--token", "0123abcd")
 	if len(env) > 0 {
 		cmd.Env = env
 	}
@@ -252,9 +261,11 @@ func jsonEscape(s string) string {
 type scenario struct {
 	name string
 	// skip is a reason to skip the scenario on this system, or "".
-	skip  func() string
-	run   func(r *recorder)
-	clean []func(string) string
+	skip func() string
+	// ignoreSignals are signals the daemon is started ignoring.
+	ignoreSignals string
+	run           func(r *recorder)
+	clean         []func(string) string
 }
 
 func goldenPath() string {
@@ -307,7 +318,13 @@ func TestOracle(t *testing.T) {
 				env = append(env, entry)
 			}
 			env = append(env, "HOME="+filepath.Join(root, "home"), "GIT_CONFIG_GLOBAL="+filepath.Join(root, "gitconfig"), "GIT_CONFIG_SYSTEM="+os.DevNull)
-			r := &recorder{daemonSession: startDaemon(t, binary, env...), root: root}
+			session := startDaemon
+			if sc.ignoreSignals != "" {
+				session = func(t *testing.T, binary string, env ...string) *daemonSession {
+					return startDaemonIgnoring(t, binary, sc.ignoreSignals, env...)
+				}
+			}
+			r := &recorder{daemonSession: session(t, binary, env...), root: root}
 			r.normalize = append(r.normalize,
 				func(s string) string { return strings.ReplaceAll(s, jsonEscape(canonical), "<root>") },
 				func(s string) string { return strings.ReplaceAll(s, jsonEscape(root), "<root>") },
