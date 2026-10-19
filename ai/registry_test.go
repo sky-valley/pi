@@ -1,30 +1,39 @@
 package ai
 
-import "testing"
+import (
+	"slices"
+	"strings"
+	"testing"
+)
 
 // TestGetApiProvidersEnumerates ports api-registry.ts:84-86 getApiProviders:
-// the registry must be enumerable. pi returns Map insertion order; the Go port
-// sorts by Api for determinism.
+// the registry must be enumerable, in its Map's insertion order — a provider
+// registered again keeps its place, and one unregistered and registered again
+// comes last.
 func TestGetApiProvidersEnumerates(t *testing.T) {
 	defer UnregisterApiProviders("registry-test")
+	defer UnregisterApiProviders("registry-test-c")
 	RegisterApiProvider(ApiProvider{Api: "zz-test-api-b"}, "registry-test")
+	RegisterApiProvider(ApiProvider{Api: "zz-test-api-c"}, "registry-test-c")
 	RegisterApiProvider(ApiProvider{Api: "zz-test-api-a"}, "registry-test")
+	RegisterApiProvider(ApiProvider{Api: "zz-test-api-b"}, "registry-test")
 
-	got := GetApiProviders()
-	idxA, idxB := -1, -1
-	for i, p := range got {
-		switch p.Api {
-		case "zz-test-api-a":
-			idxA = i
-		case "zz-test-api-b":
-			idxB = i
+	order := func() []Api {
+		var apis []Api
+		for _, p := range GetApiProviders() {
+			if strings.HasPrefix(string(p.Api), "zz-test-api-") {
+				apis = append(apis, p.Api)
+			}
 		}
+		return apis
 	}
-	if idxA == -1 || idxB == -1 {
-		t.Fatalf("registered providers missing from GetApiProviders(): %v", got)
+	if got, want := order(), []Api{"zz-test-api-b", "zz-test-api-c", "zz-test-api-a"}; !slices.Equal(got, want) {
+		t.Fatalf("GetApiProviders() order %v, pi's Map order %v", got, want)
 	}
-	if idxA > idxB {
-		t.Fatalf("providers not sorted by Api: a@%d b@%d", idxA, idxB)
+	UnregisterApiProviders("registry-test-c")
+	RegisterApiProvider(ApiProvider{Api: "zz-test-api-c"}, "registry-test-c")
+	if got, want := order(), []Api{"zz-test-api-b", "zz-test-api-a", "zz-test-api-c"}; !slices.Equal(got, want) {
+		t.Fatalf("after re-adding c: order %v, pi's Map order %v", got, want)
 	}
 
 	UnregisterApiProviders("registry-test")

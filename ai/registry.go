@@ -3,7 +3,7 @@ package ai
 import (
 	"context"
 	"fmt"
-	"sort"
+	"slices"
 	"sync"
 )
 
@@ -49,9 +49,13 @@ type registeredProvider struct {
 }
 
 var (
-	registryMu  sync.RWMutex
-	registry    = map[Api]registeredProvider{}
-	registrySeq uint64
+	registryMu sync.RWMutex
+	registry   = map[Api]registeredProvider{}
+	// registryOrder keeps the apis in registration order, as pi's registry
+	// Map does: a provider registered again keeps its place, and one removed
+	// and registered again comes last.
+	registryOrder []Api
+	registrySeq   uint64
 )
 
 // registrations returns each api's current registration (registeredProvider.seq).
@@ -125,6 +129,9 @@ func RegisterApiProvider(p ApiProvider, sourceID ...string) {
 		}
 	}
 	registrySeq++
+	if _, ok := registry[api]; !ok {
+		registryOrder = append(registryOrder, api)
+	}
 	registry[api] = registeredProvider{
 		provider: ApiProvider{
 			Api:            api,
@@ -146,17 +153,15 @@ func GetApiProvider(api Api) (ApiProvider, bool) {
 	return r.provider, ok
 }
 
-// GetApiProviders returns all registered providers (port of api-registry.ts
-// getApiProviders). pi returns Map insertion order; Go maps are unordered, so
-// the result is sorted by Api for determinism.
+// GetApiProviders returns all registered providers in registration order
+// (compat.ts getApiProviders, the registry Map's insertion order).
 func GetApiProviders() []ApiProvider {
 	registryMu.RLock()
 	defer registryMu.RUnlock()
-	out := make([]ApiProvider, 0, len(registry))
-	for _, entry := range registry {
-		out = append(out, entry.provider)
+	out := make([]ApiProvider, 0, len(registryOrder))
+	for _, api := range registryOrder {
+		out = append(out, registry[api].provider)
 	}
-	sort.Slice(out, func(i, j int) bool { return out[i].Api < out[j].Api })
 	return out
 }
 
@@ -164,11 +169,13 @@ func GetApiProviders() []ApiProvider {
 func UnregisterApiProviders(sourceID string) {
 	registryMu.Lock()
 	defer registryMu.Unlock()
-	for api, entry := range registry {
-		if entry.sourceID == sourceID {
-			delete(registry, api)
+	registryOrder = slices.DeleteFunc(registryOrder, func(api Api) bool {
+		if registry[api].sourceID != sourceID {
+			return false
 		}
-	}
+		delete(registry, api)
+		return true
+	})
 }
 
 // ClearApiProviders removes all registered providers.
@@ -176,4 +183,5 @@ func ClearApiProviders() {
 	registryMu.Lock()
 	defer registryMu.Unlock()
 	registry = map[Api]registeredProvider{}
+	registryOrder = nil
 }
