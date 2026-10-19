@@ -7,6 +7,7 @@ import (
 	"errors"
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/sky-valley/pi/ai"
@@ -137,7 +138,7 @@ func TestFauxToolsOnlySystemMessageDropsEmptyText(t *testing.T) {
 	if err := json.Unmarshal(toolsOnlyCapture(t, "fauxSerializedContext"), &want); err != nil {
 		t.Fatal(err)
 	}
-	if got := serializeContext(ai.NormalizeContext(toolsOnlyContext())); got != want {
-		t.Fatalf("serializeContext\n got %q\nwant %q", got, want)
+	if got := strings.Join(promptTexts(ai.NormalizeContext(toolsOnlyContext())), "\n\n"); got != want {
+		t.Fatalf("joined prompt\n got %q\nwant %q", got, want)
 	}
 }

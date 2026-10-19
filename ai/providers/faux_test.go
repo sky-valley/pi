@@ -155,6 +155,39 @@ func TestFauxProviderCachePrefix(t *testing.T) {
 	}
 }
 
+// TestFauxProviderCacheCountsToFirstDifference mirrors pi faux-provider.test.ts
+// "counts cached characters up to the first difference in the joined prompt"
+// (upstream fe11328b0, which compares the prompts message by message and the
+// characters only from the first differing one; the numbers are unchanged).
+func TestFauxProviderCacheCountsToFirstDifference(t *testing.T) {
+	reg := RegisterFauxProvider(RegisterFauxProviderOptions{})
+	defer reg.Unregister()
+	reg.SetResponses([]FauxResponseStep{
+		FauxStatic(FauxAssistantMessage(ai.ContentList{FauxText("a")}, ai.StopStop)),
+		FauxStatic(FauxAssistantMessage(ai.ContentList{FauxText("b")}, ai.StopStop)),
+		FauxStatic(FauxAssistantMessage(ai.ContentList{FauxText("c")}, ai.StopStop)),
+	})
+	model := reg.GetModel()
+	opts := &ai.SimpleStreamOptions{StreamOptions: ai.StreamOptions{SessionID: "session-1", CacheRetention: ai.CacheShort}}
+	complete := func(texts ...string) ai.Usage {
+		messages := make([]ai.Message, len(texts))
+		for i, text := range texts {
+			messages[i] = ai.NewUserText(text, 1)
+		}
+		return ai.StreamSimple(context.Background(), model, ai.Context{Messages: messages}, opts).Result().Usage
+	}
+
+	// Prompt texts: "user:hello world" (16 characters), then 16 + 2 + "user:next" (9) = 27.
+	complete("hello world")
+	if got := complete("hello world", "next"); got.Input != 3 || got.CacheRead != 4 || got.CacheWrite != 3 {
+		t.Fatalf("extended usage = %+v, want input 3, cacheRead 4, cacheWrite 3", got)
+	}
+	// The first message now differs after "user:hello w" (12 characters): "user:hello wide" + 2 + 9 = 26.
+	if got := complete("hello wide", "next"); got.Input != 4 || got.CacheRead != 3 || got.CacheWrite != 4 {
+		t.Fatalf("edited usage = %+v, want input 4, cacheRead 3, cacheWrite 4", got)
+	}
+}
+
 // TestFauxProviderDeferredResponses locks pi 382aa641c's faux half: a
 // submission that asks for deferral streams an empty "deferred" message
 // carrying a handle, fetches answer with that same handle while the script

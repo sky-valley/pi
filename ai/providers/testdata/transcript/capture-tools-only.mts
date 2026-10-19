@@ -94,9 +94,10 @@ async function captureFetchBody(model: any): Promise<unknown> {
 	}
 }
 
-// faux.ts serializes the transcript with module-private helpers; evaluate the
-// file's own definitions (contentToText through serializeContext) rather than
-// a copy.
+// faux.ts renders the transcript with module-private helpers; evaluate the
+// file's own definitions (contentToText through messageToText) rather than a
+// copy. The prompt text is one `role:text` per message joined by a blank line:
+// serializeContext until fe11328b0, withUsageEstimate's inline map since.
 async function fauxSerializeContext(): Promise<string> {
 	const faux = fs.readFileSync(path.join(src, "providers/faux.ts"), "utf8");
 	const start = faux.indexOf("function contentToText(");
@@ -108,11 +109,13 @@ async function fauxSerializeContext(): Promise<string> {
 		module,
 		`import { getSystemMessageText } from ${JSON.stringify(pathToFileURL(path.join(src, "utils/text.ts")).href)};\n` +
 			faux.slice(start, end) +
-			"export { serializeContext };\n",
+			"export { messageToText };\n",
 	);
 	try {
-		const { serializeContext } = await import(pathToFileURL(module).href);
-		return serializeContext(normalizeContext(context));
+		const { messageToText } = await import(pathToFileURL(module).href);
+		return normalizeContext(context)
+			.messages.map((message: { role: string }) => `${message.role}:${messageToText(message)}`)
+			.join("\n\n");
 	} finally {
 		fs.rmSync(module);
 	}

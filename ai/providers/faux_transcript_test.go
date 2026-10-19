@@ -2,6 +2,7 @@ package providers
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/sky-valley/pi/ai"
@@ -44,9 +45,10 @@ func TestFauxUsageSerializesSystemMessagesInPlace(t *testing.T) {
 	}
 }
 
-// The serialized prompt behind that usage, byte for byte: faux.ts's
+// The prompt text behind that usage, byte for byte: faux.ts's
 // serializeContext/messageToText at 9e05370b2 run on the same normalized context
-// under node.
+// under node. Since fe11328b0 pi keeps one text per message and joins them only
+// in measuring; the joined text is unchanged.
 func TestFauxSerializeContextBytes(t *testing.T) {
 	update := ai.NewSystemText("updated guidance", 2)
 	update.Sections = ai.SystemSections{{Name: "docs", Value: foldStr("<docs/>")}}
@@ -63,8 +65,8 @@ func TestFauxSerializeContextBytes(t *testing.T) {
 		`tool-:{"name":"base_tool"}` + "\n" +
 		`tool+:{"name":"late_tool","description":"late_tool tool","parameters":{"type":"object","properties":{}}}` +
 		"\n\nuser:again"
-	if got := serializeContext(req); got != want {
-		t.Fatalf("serializeContext\n got %q\nwant %q", got, want)
+	if got := strings.Join(promptTexts(req), "\n\n"); got != want {
+		t.Fatalf("joined prompt\n got %q\nwant %q", got, want)
 	}
 }
 
