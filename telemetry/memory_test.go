@@ -156,7 +156,8 @@ func TestInMemoryContextRecordsNestedChildren(t *testing.T) {
 }
 
 // A child started under an already-settled parent runs, but is not recorded --
-// pi delegates it to the noop context.
+// pi runs it on an inert span that keeps the recorder's capabilities
+// (TestConformanceCarriesCapabilities).
 func TestInMemoryContextChildOfSettledParentNotRecorded(t *testing.T) {
 	c := NewInMemoryContext()
 	var escaped Span
@@ -172,7 +173,7 @@ func TestInMemoryContextChildOfSettledParentNotRecorded(t *testing.T) {
 		t.Fatalf("orphan span: %v", err)
 	}
 	if !ran {
-		t.Fatal("callback must still run against the noop context")
+		t.Fatal("callback must still run, on an inert span")
 	}
 	if got := len(c.Spans()); got != 1 {
 		t.Fatalf("spans = %d, want 1 (orphan not recorded)", got)

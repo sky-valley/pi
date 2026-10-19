@@ -23,6 +23,9 @@ func (*tracedContext) StartSpan(options telemetry.SpanOptions, callback func(tel
 	return telemetry.NoopContext.StartSpan(options, callback)
 }
 
+func (*tracedContext) Metrics() telemetry.Metrics         { return telemetry.NoopMetrics }
+func (*tracedContext) Propagation() telemetry.Propagation { return telemetry.NoopPropagation }
+
 // TestTelemetryContextSurvivesDispatch mirrors pi "survives provider and
 // Models stream/deferred dispatch": a TelemetryContext set on the caller's
 // request options must reach the provider api on all eight dispatch paths —
