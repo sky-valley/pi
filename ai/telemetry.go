@@ -1,6 +1,7 @@
 package ai
 
 import (
+	"fmt"
 	"reflect"
 	"sync"
 	"time"
@@ -182,7 +183,10 @@ func instrumentsFor(adapter telemetry.Metrics) *requestInstruments {
 // observed. onEvent and onResult run one at a time, on the goroutine that
 // forwards the stream or fails its setup.
 type requestObserver struct {
-	span        telemetry.Span
+	span telemetry.Span
+	// spanless is why span is nil: the parent's StartSpan returned without
+	// running its callback.
+	spanless    error
 	finish      func()
 	now         func() time.Time
 	started     time.Time
@@ -246,16 +250,43 @@ func startRequestObservation(model *Model, parent telemetry.Span, reasoning Thin
 	// recording adapter, recorded — before the request runs.
 	span := make(chan telemetry.Span, 1)
 	finished := make(chan struct{})
+	returned := make(chan struct{})
+	var startErr error
 	go func() {
-		_ = parent.StartSpan(options, func(s telemetry.Span) error {
+		defer close(returned)
+		// The callback never fails, so an error here is the adapter's own; pi
+		// drops it too (`void start(...)`). It is reported only when the
+		// callback never ran.
+		startErr = parent.StartSpan(options, func(s telemetry.Span) error {
 			span <- s
 			<-finished
 			return nil
 		})
 	}()
-	o.span = <-span
+	select {
+	case o.span = <-span:
+	case <-returned:
+		// A non-conforming adapter returned without running the callback, or
+		// runs it later on a goroutine of its own. pi's request then has no
+		// span, and its first use throws (see onEvent).
+		select {
+		case o.span = <-span:
+		default:
+			o.spanless = spanlessError(options.Name, startErr)
+		}
+	}
 	o.finish = sync.OnceFunc(func() { close(finished) })
 	return o
+}
+
+// spanlessError is the request's failure when its span never started. pi's
+// is the TypeError of reading the undefined span.
+func spanlessError(name string, startErr error) error {
+	cause := ""
+	if startErr != nil {
+		cause = " (" + startErr.Error() + ")"
+	}
+	return fmt.Errorf("telemetry: %s has no span: the parent's StartSpan returned without running its callback%s; a telemetry.Context runs the callback exactly once, before StartSpan returns (check the adapter with telemetrytest.Run)", name, cause)
 }
 
 // sinceStart is the time since the request started in fractional
@@ -268,8 +299,18 @@ func (o *requestObserver) attributes() telemetry.SpanAttributes {
 	return telemetry.SpanAttributes{"provider": o.provider, "model": o.model}
 }
 
-// onEvent sees each event right after the stream delivered it.
-func (o *requestObserver) onEvent(event AssistantMessageEvent) {
+// onEvent sees each event before the stream delivers it. Without a span it
+// fails where pi's observer throws: the first event and each completed block
+// read the span.
+func (o *requestObserver) onEvent(event AssistantMessageEvent) error {
+	if o.span == nil {
+		switch {
+		case o.first, event.Type == EventTextEnd, event.Type == EventThinkingEnd, event.Type == EventToolCallEnd:
+			o.first = false
+			return o.spanless
+		}
+		return nil
+	}
 	if o.first {
 		o.first = false
 		o.span.AddEvent("pi.ai.first_chunk", nil)
@@ -297,12 +338,14 @@ func (o *requestObserver) onEvent(event AssistantMessageEvent) {
 		}
 		o.span.AddEvent("pi.ai.block", attributes)
 	}
+	return nil
 }
 
 // onResult records the result, nil when the stream ended without one, and
-// closes the span.
+// closes the span. Without a span there is nothing to record: pi's observer
+// throws there, after the stream ended, where no consumer sees it.
 func (o *requestObserver) onResult(message *AssistantMessage) {
-	if message != nil {
+	if message != nil && o.span != nil {
 		end := telemetry.SpanAttributes{
 			"stop":              string(message.StopReason),
 			"usage.input":       message.Usage.Input,

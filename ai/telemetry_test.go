@@ -604,6 +604,65 @@ func TestModelsTelemetryBoundsPollErrorMessage(t *testing.T) {
 	}
 }
 
+// skippingSpan is a non-conforming adapter: its StartSpan returns without
+// running the callback.
+type skippingSpan struct{ telemetry.Span }
+
+func (skippingSpan) StartSpan(telemetry.SpanOptions, func(telemetry.Span) error) error {
+	return errors.New("adapter closed")
+}
+
+// TestModelsTelemetrySpanNeverStarted pins what pi does when the parent's
+// startSpan never runs its callback, probed against pi at d2e7d8b7c: the
+// request has no span, so the observer's first use of it throws, and
+// lazyStream's catch ends the stream with an error. The consumer gets the
+// first event, then an error event, and an error result (pi's message is the
+// TypeError's own, "Cannot read properties of undefined (reading
+// 'addEvent')"; Go's names the broken adapter). A provider stream with no
+// events ends with its own result: pi throws only at onResult, after the
+// stream ended. A setup failure ends with the setup error; pi throws in its
+// catch before end() and never ends the stream, which Go does not mirror.
+// Every call returns.
+func TestModelsTelemetrySpanNeverStarted(t *testing.T) {
+	stop := telemetryTestMessage(StopStop, "")
+	for _, tc := range []struct {
+		name      string
+		models    MutableModels
+		delivered []EventType
+		stop      StopReason
+		message   string
+	}{
+		{"events", telemetryModels(telemetryBlockEvents(stop), stop), []EventType{EventStart, EventError}, StopError, "StartSpan returned without running its callback (adapter closed)"},
+		{"no events", telemetryModels(nil, stop), nil, StopStop, ""},
+		{"setup failure", modelsWithEnv(nil, nil), []EventType{EventError}, StopError, "Unknown provider: test"},
+	} {
+		done := make(chan struct{})
+		var delivered []EventType
+		var result *AssistantMessage
+		go func() {
+			defer close(done)
+			stream := tc.models.Stream(context.Background(), telemetryTestModel, Context{}, &ModelsStreamOptions{
+				StreamOptions: StreamOptions{ProviderRequestOptions: ProviderRequestOptions{Telemetry: skippingSpan{telemetry.NoopContext}}},
+			})
+			for event := range stream.Events() {
+				delivered = append(delivered, event.Type)
+			}
+			result = stream.Result()
+		}()
+		select {
+		case <-done:
+		case <-time.After(5 * time.Second):
+			t.Fatalf("%s: the request never returned: it waits for a span the adapter never handed over", tc.name)
+		}
+		if !reflect.DeepEqual(delivered, tc.delivered) {
+			t.Errorf("%s: delivered %v, want %v", tc.name, delivered, tc.delivered)
+		}
+		if result == nil || result.StopReason != tc.stop || !strings.Contains(result.ErrorMessage, tc.message) {
+			t.Errorf("%s: result %+v, want stop %q with an error message containing %q", tc.name, result, tc.stop, tc.message)
+		}
+	}
+}
+
 // TestModelsTelemetryDefaultsToNoop mirrors pi "defaults to no-op
 // telemetry": a request without a telemetry span runs as before, and the
 // exported schema is plain data.
@@ -684,7 +743,7 @@ func (o *recordingObserver) entries() []string {
 	return slices.Clone(o.log)
 }
 
-func (o *recordingObserver) onEvent(event AssistantMessageEvent) {
+func (o *recordingObserver) onEvent(event AssistantMessageEvent) error {
 	o.record("event " + string(event.Type))
 	if o.stream != nil {
 		go func() {
@@ -692,6 +751,7 @@ func (o *recordingObserver) onEvent(event AssistantMessageEvent) {
 			o.record("resolved")
 		}()
 	}
+	return nil
 }
 
 func (o *recordingObserver) onResult(result *AssistantMessage) {

@@ -171,8 +171,11 @@ type streamSetup struct {
 // setup observes first and delivers after — an observer never reads an event
 // a consumer already holds, and a consumer never sees a result whose
 // telemetry is not yet recorded.
+//
+// onEvent's error is pi's throwing observer: the event is delivered all the
+// same, then the stream fails with the error, as lazyStream's catch ends it.
 type streamObserver interface {
-	onEvent(event AssistantMessageEvent)
+	onEvent(event AssistantMessageEvent) error
 	onResult(result *AssistantMessage)
 }
 
@@ -188,7 +191,9 @@ func (s streamSetup) fail(err error) *AssistantMessageEventStream {
 	msg.Timestamp = s.startedAt
 	event := AssistantMessageEvent{Type: EventError, Reason: StopError, Error: msg}
 	if s.observer != nil {
-		s.observer.onEvent(event)
+		// pi's catch calls onEvent unguarded, so an observer that throws here
+		// leaves its stream unended for good. Go ends it regardless.
+		_ = s.observer.onEvent(event)
 		s.observer.onResult(msg)
 	}
 	s.stream.Push(event)
@@ -205,7 +210,13 @@ func (s streamSetup) forward(inner *AssistantMessageEventStream) *AssistantMessa
 		var terminal *AssistantMessageEvent
 		for event := range inner.Events() {
 			if s.observer != nil {
-				s.observer.onEvent(event)
+				if err := s.observer.onEvent(event); err != nil {
+					// pi pushed the event before its observer threw; the
+					// failure abandons the provider's stream.
+					s.stream.Push(event)
+					s.fail(err)
+					return
+				}
 			}
 			if event.Type == EventDone || event.Type == EventError {
 				// The last event: a done stream drops later pushes.
