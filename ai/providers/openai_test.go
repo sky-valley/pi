@@ -360,45 +360,6 @@ func eventTypes(events []ai.AssistantMessageEvent) []ai.EventType {
 	return out
 }
 
-// ---- A3: delta processing order (pi openai-completions.ts:299-385) ----
-
-func TestOpenAIDeltaOrderContentBeforeReasoning(t *testing.T) {
-	// One chunk carrying BOTH content and reasoning: pi processes content first,
-	// so the text block starts (and sits) before the thinking block.
-	sse := `data: {"choices":[{"delta":{"content":"hi","reasoning_content":"think"}}]}
-
-data: {"choices":[{"delta":{},"finish_reason":"stop"}]}
-
-data: [DONE]
-
-`
-	events, final := collectOpenAIEvents(t, sse, nil)
-	if final.StopReason != ai.StopStop {
-		t.Fatalf("stop reason: %s (%s)", final.StopReason, final.ErrorMessage)
-	}
-	if len(final.Content) != 2 {
-		t.Fatalf("expected 2 blocks, got %d", len(final.Content))
-	}
-	if _, ok := final.Content[0].(ai.TextContent); !ok {
-		t.Fatalf("content[0] should be text, got %T", final.Content[0])
-	}
-	if _, ok := final.Content[1].(ai.ThinkingContent); !ok {
-		t.Fatalf("content[1] should be thinking, got %T", final.Content[1])
-	}
-	textStart, thinkingStart := -1, -1
-	for i, e := range events {
-		if e.Type == ai.EventTextStart && textStart == -1 {
-			textStart = i
-		}
-		if e.Type == ai.EventThinkingStart && thinkingStart == -1 {
-			thinkingStart = i
-		}
-	}
-	if textStart == -1 || thinkingStart == -1 || textStart > thinkingStart {
-		t.Fatalf("text_start must precede thinking_start: %v", eventTypes(events))
-	}
-}
-
 // ---- A4: finalize once, after the whole stream, in block order ----
 
 func TestOpenAIFinalizeOnceAfterStreamWithUsage(t *testing.T) {

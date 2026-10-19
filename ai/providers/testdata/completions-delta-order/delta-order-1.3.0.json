@@ -1,0 +1,450 @@
+{
+	"piAi": "1.3.0",
+	"rows": [
+		{
+			"name": "upstream/reasoning_content and content",
+			"body": "data: {\"id\":\"c\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\"thinking\",\"content\":\"answer\"},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n",
+			"events": [
+				[
+					"start",
+					null
+				],
+				[
+					"thinking_start",
+					0
+				],
+				[
+					"thinking_delta",
+					0
+				],
+				[
+					"text_start",
+					1
+				],
+				[
+					"text_delta",
+					1
+				],
+				[
+					"thinking_end",
+					0
+				],
+				[
+					"text_end",
+					1
+				],
+				[
+					"done",
+					null
+				]
+			],
+			"stopReason": "stop",
+			"errorMessage": null,
+			"content": "[{\"type\":\"thinking\",\"thinking\":\"thinking\",\"thinkingSignature\":\"reasoning_content\"},{\"type\":\"text\",\"text\":\"answer\"}]"
+		},
+		{
+			"name": "upstream/reasoning_details and content",
+			"body": "data: {\"id\":\"c\",\"choices\":[{\"index\":0,\"delta\":{\"reasoning_details\":[{\"type\":\"reasoning.encrypted\",\"id\":\"call_1\",\"data\":\"encrypted-signature\"}],\"content\":\"answer\"},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n",
+			"events": [
+				[
+					"start",
+					null
+				],
+				[
+					"thinking_start",
+					0
+				],
+				[
+					"text_start",
+					1
+				],
+				[
+					"text_delta",
+					1
+				],
+				[
+					"thinking_end",
+					0
+				],
+				[
+					"text_end",
+					1
+				],
+				[
+					"done",
+					null
+				]
+			],
+			"stopReason": "stop",
+			"errorMessage": null,
+			"content": "[{\"type\":\"thinking\",\"thinking\":\"\",\"thinkingSignature\":\"[{\\\"type\\\":\\\"reasoning.encrypted\\\",\\\"id\\\":\\\"call_1\\\",\\\"data\\\":\\\"encrypted-signature\\\"}]\"},{\"type\":\"text\",\"text\":\"answer\"}]"
+		},
+		{
+			"name": "upstream/mixed content, reasoning and parallel tool calls",
+			"body": "data: {\"id\":\"c\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"answer 1\",\"reasoning_content\":\"think 1\",\"tool_calls\":[{\"index\":0,\"id\":\"tc_read_initial\",\"type\":\"function\",\"function\":{\"name\":\"read\",\"arguments\":\"{\\\"path\\\":\\\"README\"}},{\"index\":1,\"id\":\"tc_grep_initial\",\"type\":\"function\",\"function\":{\"name\":\"grep\",\"arguments\":\"{\\\"pattern\\\":\\\"TODO\"}},{\"id\":\"tc_list_no_index\",\"type\":\"function\",\"function\":{\"name\":\"list\",\"arguments\":\"{\\\"path\\\":\\\"packages\"}},{\"id\":\"tc_write_no_index\",\"type\":\"function\",\"function\":{\"name\":\"write\",\"arguments\":\"{\\\"path\\\":\\\"out\"}}]},\"finish_reason\":null}]}\n\ndata: {\"id\":\"c\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" answer 2\",\"tool_calls\":[{\"index\":1,\"id\":\"tc_grep_changed\",\"type\":\"function\",\"function\":{\"arguments\":\"\\\",\\\"path\\\":\\\"src\"}},{\"id\":\"tc_write_no_index\",\"type\":\"function\",\"function\":{\"arguments\":\".txt\\\",\\\"content\\\":\\\"ok\\\"}\"}},{\"id\":\"tc_list_no_index\",\"type\":\"function\",\"function\":{\"arguments\":\"/ai\\\"}\"}}]},\"finish_reason\":null}]}\n\ndata: {\"id\":\"c\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\\n\",\"reasoning_content\":\" think 2\",\"tool_calls\":[{\"index\":0,\"id\":\"tc_read_changed\",\"type\":\"function\",\"function\":{\"arguments\":\".md\\\"}\"}},{\"index\":1,\"type\":\"function\",\"function\":{\"arguments\":\"\\\"}\"}}]},\"finish_reason\":\"tool_calls\"}]}\n\ndata: [DONE]\n\n",
+			"events": [
+				[
+					"start",
+					null
+				],
+				[
+					"thinking_start",
+					0
+				],
+				[
+					"thinking_delta",
+					0
+				],
+				[
+					"text_start",
+					1
+				],
+				[
+					"text_delta",
+					1
+				],
+				[
+					"toolcall_start",
+					2
+				],
+				[
+					"toolcall_delta",
+					2
+				],
+				[
+					"toolcall_start",
+					3
+				],
+				[
+					"toolcall_delta",
+					3
+				],
+				[
+					"toolcall_start",
+					4
+				],
+				[
+					"toolcall_delta",
+					4
+				],
+				[
+					"toolcall_start",
+					5
+				],
+				[
+					"toolcall_delta",
+					5
+				],
+				[
+					"text_delta",
+					1
+				],
+				[
+					"toolcall_delta",
+					3
+				],
+				[
+					"toolcall_delta",
+					5
+				],
+				[
+					"toolcall_delta",
+					4
+				],
+				[
+					"thinking_delta",
+					0
+				],
+				[
+					"text_delta",
+					1
+				],
+				[
+					"toolcall_delta",
+					2
+				],
+				[
+					"toolcall_delta",
+					3
+				],
+				[
+					"thinking_end",
+					0
+				],
+				[
+					"text_end",
+					1
+				],
+				[
+					"toolcall_end",
+					2
+				],
+				[
+					"toolcall_end",
+					3
+				],
+				[
+					"toolcall_end",
+					4
+				],
+				[
+					"toolcall_end",
+					5
+				],
+				[
+					"done",
+					null
+				]
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"thinking\",\"thinking\":\"think 1 think 2\",\"thinkingSignature\":\"reasoning_content\"},{\"type\":\"text\",\"text\":\"answer 1 answer 2\\n\"},{\"type\":\"toolCall\",\"id\":\"tc_read_initial\",\"name\":\"read\",\"arguments\":{\"path\":\"README.md\"}},{\"type\":\"toolCall\",\"id\":\"tc_grep_initial\",\"name\":\"grep\",\"arguments\":{\"pattern\":\"TODO\",\"path\":\"src\"}},{\"type\":\"toolCall\",\"id\":\"tc_list_no_index\",\"name\":\"list\",\"arguments\":{\"path\":\"packages/ai\"}},{\"type\":\"toolCall\",\"id\":\"tc_write_no_index\",\"name\":\"write\",\"arguments\":{\"path\":\"out.txt\",\"content\":\"ok\"}}]"
+		},
+		{
+			"name": "reasoning and tool_calls",
+			"body": "data: {\"id\":\"c\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"f\",\"arguments\":\"{}\"}}],\"reasoning\":\"r\"},\"finish_reason\":\"tool_calls\"}]}\n\ndata: [DONE]\n\n",
+			"events": [
+				[
+					"start",
+					null
+				],
+				[
+					"thinking_start",
+					0
+				],
+				[
+					"thinking_delta",
+					0
+				],
+				[
+					"toolcall_start",
+					1
+				],
+				[
+					"toolcall_delta",
+					1
+				],
+				[
+					"thinking_end",
+					0
+				],
+				[
+					"toolcall_end",
+					1
+				],
+				[
+					"done",
+					null
+				]
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"thinking\",\"thinking\":\"r\",\"thinkingSignature\":\"reasoning\"},{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"f\",\"arguments\":{}}]"
+		},
+		{
+			"name": "reasoning_details and tool_calls",
+			"body": "data: {\"id\":\"c\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"f\",\"arguments\":\"{}\"}}],\"reasoning_details\":[{\"type\":\"reasoning.encrypted\",\"id\":\"call_1\",\"data\":\"encrypted-signature\"}]},\"finish_reason\":\"tool_calls\"}]}\n\ndata: [DONE]\n\n",
+			"events": [
+				[
+					"start",
+					null
+				],
+				[
+					"thinking_start",
+					0
+				],
+				[
+					"toolcall_start",
+					1
+				],
+				[
+					"toolcall_delta",
+					1
+				],
+				[
+					"thinking_end",
+					0
+				],
+				[
+					"toolcall_end",
+					1
+				],
+				[
+					"done",
+					null
+				]
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"thinking\",\"thinking\":\"\",\"thinkingSignature\":\"[{\\\"type\\\":\\\"reasoning.encrypted\\\",\\\"id\\\":\\\"call_1\\\",\\\"data\\\":\\\"encrypted-signature\\\"}]\"},{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"f\",\"arguments\":{}}]"
+		},
+		{
+			"name": "content and tool_calls",
+			"body": "data: {\"id\":\"c\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"f\",\"arguments\":\"{}\"}}],\"content\":\"hi\"},\"finish_reason\":\"tool_calls\"}]}\n\ndata: [DONE]\n\n",
+			"events": [
+				[
+					"start",
+					null
+				],
+				[
+					"text_start",
+					0
+				],
+				[
+					"text_delta",
+					0
+				],
+				[
+					"toolcall_start",
+					1
+				],
+				[
+					"toolcall_delta",
+					1
+				],
+				[
+					"text_end",
+					0
+				],
+				[
+					"toolcall_end",
+					1
+				],
+				[
+					"done",
+					null
+				]
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"text\",\"text\":\"hi\"},{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"f\",\"arguments\":{}}]"
+		},
+		{
+			"name": "reasoning and reasoning_details",
+			"body": "data: {\"id\":\"c\",\"choices\":[{\"index\":0,\"delta\":{\"reasoning_details\":[{\"type\":\"reasoning.encrypted\",\"id\":\"call_1\",\"data\":\"encrypted-signature\"}],\"reasoning_text\":\"r\"},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n",
+			"events": [
+				[
+					"start",
+					null
+				],
+				[
+					"thinking_start",
+					0
+				],
+				[
+					"thinking_delta",
+					0
+				],
+				[
+					"thinking_end",
+					0
+				],
+				[
+					"done",
+					null
+				]
+			],
+			"stopReason": "stop",
+			"errorMessage": null,
+			"content": "[{\"type\":\"thinking\",\"thinking\":\"r\",\"thinkingSignature\":\"[{\\\"type\\\":\\\"reasoning.encrypted\\\",\\\"id\\\":\\\"call_1\\\",\\\"data\\\":\\\"encrypted-signature\\\"}]\"}]"
+		},
+		{
+			"name": "all four",
+			"body": "data: {\"id\":\"c\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"f\",\"arguments\":\"{}\"}}],\"content\":\"hi\",\"reasoning_details\":[{\"type\":\"reasoning.encrypted\",\"id\":\"call_1\",\"data\":\"encrypted-signature\"}],\"reasoning_content\":\"r\"},\"finish_reason\":\"tool_calls\"}]}\n\ndata: [DONE]\n\n",
+			"events": [
+				[
+					"start",
+					null
+				],
+				[
+					"thinking_start",
+					0
+				],
+				[
+					"thinking_delta",
+					0
+				],
+				[
+					"text_start",
+					1
+				],
+				[
+					"text_delta",
+					1
+				],
+				[
+					"toolcall_start",
+					2
+				],
+				[
+					"toolcall_delta",
+					2
+				],
+				[
+					"thinking_end",
+					0
+				],
+				[
+					"text_end",
+					1
+				],
+				[
+					"toolcall_end",
+					2
+				],
+				[
+					"done",
+					null
+				]
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"thinking\",\"thinking\":\"r\",\"thinkingSignature\":\"[{\\\"type\\\":\\\"reasoning.encrypted\\\",\\\"id\\\":\\\"call_1\\\",\\\"data\\\":\\\"encrypted-signature\\\"}]\"},{\"type\":\"text\",\"text\":\"hi\"},{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"f\",\"arguments\":{}}]"
+		},
+		{
+			"name": "text first, then reasoning with content",
+			"body": "data: {\"id\":\"c\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"a\"},\"finish_reason\":null}]}\n\ndata: {\"id\":\"c\",\"choices\":[{\"index\":0,\"delta\":{\"reasoning_content\":\"r\",\"content\":\"b\"},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n",
+			"events": [
+				[
+					"start",
+					null
+				],
+				[
+					"text_start",
+					0
+				],
+				[
+					"text_delta",
+					0
+				],
+				[
+					"thinking_start",
+					1
+				],
+				[
+					"thinking_delta",
+					1
+				],
+				[
+					"text_delta",
+					0
+				],
+				[
+					"text_end",
+					0
+				],
+				[
+					"thinking_end",
+					1
+				],
+				[
+					"done",
+					null
+				]
+			],
+			"stopReason": "stop",
+			"errorMessage": null,
+			"content": "[{\"type\":\"text\",\"text\":\"ab\"},{\"type\":\"thinking\",\"thinking\":\"r\",\"thinkingSignature\":\"reasoning_content\"}]"
+		}
+	]
+}

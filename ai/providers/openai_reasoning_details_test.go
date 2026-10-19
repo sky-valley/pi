@@ -457,28 +457,6 @@ data: [DONE]
 	}
 }
 
-// pi handles a delta's fields in a fixed order — content, reasoning, tool_calls,
-// then reasoning_details — so a delta carrying both puts the tool call first.
-func TestOpenAIStreamReasoningDetailsAfterToolCallsInSameDelta(t *testing.T) {
-	sse := `data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"call_1","function":{"name":"f","arguments":"{}"}}],"reasoning_details":[` + rdEncrypted + `]}}]}
-
-data: {"choices":[{"delta":{},"finish_reason":"tool_calls"}]}
-
-data: [DONE]
-
-`
-	_, final := collectOpenAIEvents(t, sse, nil)
-	if len(final.Content) != 2 {
-		t.Fatalf("content = %#v, want two blocks", final.Content)
-	}
-	if _, ok := final.Content[0].(ai.ToolCall); !ok {
-		t.Fatalf("content[0] = %#v, want the tool call first", final.Content[0])
-	}
-	if _, ok := final.Content[1].(ai.ThinkingContent); !ok {
-		t.Fatalf("content[1] = %#v, want the thinking block second", final.Content[1])
-	}
-}
-
 // An invalid detail is skipped, not stored, and never opens a thinking block.
 func TestOpenAIStreamReasoningDetailsInvalidSkipped(t *testing.T) {
 	sse := `data: {"choices":[{"delta":{"reasoning_details":[{"type":"reasoning.encrypted","data":123},"nope",null,{"type":"unknown","data":"d"}]}}]}
