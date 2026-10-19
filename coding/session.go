@@ -112,7 +112,7 @@ type SessionOptions struct {
 	AfterToolCall agent.AfterToolCallFunc
 
 	// Compaction, when non-nil, installs automatic context-window compaction.
-	// Use &DefaultCompactionSettings for pi's defaults.
+	// Use DefaultCompactionSettings() for pi's defaults.
 	Compaction *CompactionSettings
 	// StreamFn overrides the stream function (for tests). Default: ai.StreamSimple.
 	// Either way the session asserts a chat model first (see sessionStreamFn).

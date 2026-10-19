@@ -41,16 +41,18 @@ type CompactionSettings struct {
 	RetryCallbacks *ai.RetryCallbacks
 }
 
-// DefaultCompactionSettings mirrors pi's defaults: SETTINGS_DEFAULTS.compaction,
+// DefaultCompactionSettings returns pi's defaults: SETTINGS_DEFAULTS.compaction,
 // and the retry policy pi's AgentSession compacts under unless configured
 // (SETTINGS_DEFAULTS.retry: enabled, 3 retries, a 2s base backoff capped at
-// DefaultMaxAgentRetryDelayMs). Copy it to change a field; its Retry is
-// shared, so replace that policy rather than write through it.
-var DefaultCompactionSettings = CompactionSettings{
-	Enabled:          true,
-	ReserveTokens:    16384,
-	KeepRecentTokens: 20000,
-	Retry:            &ai.RetryPolicy{Enabled: true, MaxRetries: 3, BaseDelayMs: 2000},
+// DefaultMaxAgentRetryDelayMs). Each call returns new settings with a retry
+// policy of their own, so a caller may change any field.
+func DefaultCompactionSettings() *CompactionSettings {
+	return &CompactionSettings{
+		Enabled:          true,
+		ReserveTokens:    16384,
+		KeepRecentTokens: 20000,
+		Retry:            &ai.RetryPolicy{Enabled: true, MaxRetries: 3, BaseDelayMs: 2000},
+	}
 }
 
 // estimatedImageChars mirrors pi's ESTIMATED_IMAGE_CHARS (compaction.ts):

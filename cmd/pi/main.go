@@ -170,7 +170,7 @@ func main() {
 		SystemPrompt:  system,
 		ThinkingLevel: agent.ThinkingLevel(think),
 		// pi enables compaction by default (settings compaction.enabled ?? true).
-		Compaction: &coding.DefaultCompactionSettings,
+		Compaction: coding.DefaultCompactionSettings(),
 	})
 	if err != nil {
 		fatal(err)

@@ -165,15 +165,27 @@ func TestCompactionRetriesTransientSummaryErrors(t *testing.T) {
 func TestDefaultCompactionSettingsRetryAsPiDoes(t *testing.T) {
 	success := &ai.AssistantMessage{Content: ai.ContentList{ai.TextContent{Text: "recovered summary"}}, StopReason: ai.StopStop}
 	sess, calls := retryScriptSession(t, []*ai.AssistantMessage{retryErrorMessage("terminated"), success})
-	settings := DefaultCompactionSettings
+	settings := DefaultCompactionSettings()
 	settings.KeepRecentTokens = 1
-	state := &compactionState{settings: settings}
+	state := &compactionState{settings: *settings}
 	sess.compact(context.Background(), state, retryCompactable())
 	if state.checkpoint == nil || calls() != 2 {
 		t.Fatalf("checkpoint %+v after %d summary requests; want the summary recovered by one retry", state.checkpoint, calls())
 	}
 	want := ai.RetryPolicy{Enabled: true, MaxRetries: 3, BaseDelayMs: 2000}
-	if got := DefaultCompactionSettings.Retry; *got != want || ai.RetryDelayMs(*got, 10) != ai.DefaultMaxAgentRetryDelayMs {
+	if got := DefaultCompactionSettings().Retry; *got != want || ai.RetryDelayMs(*got, 10) != ai.DefaultMaxAgentRetryDelayMs {
 		t.Errorf("default retry %+v, want pi's %+v capped at %dms", *got, want, ai.DefaultMaxAgentRetryDelayMs)
+	}
+}
+
+// A caller that changes the default settings it was handed changes only its
+// own copy: no other caller's defaults, retry policy included.
+func TestDefaultCompactionSettingsAreEachCallersOwn(t *testing.T) {
+	mine := DefaultCompactionSettings()
+	mine.Retry.MaxRetries = 0
+	mine.KeepRecentTokens = 1
+	theirs := DefaultCompactionSettings()
+	if theirs.Retry.MaxRetries != 3 || theirs.KeepRecentTokens != 20000 {
+		t.Errorf("another caller's defaults: %d retries, keep %d tokens; want pi's 3 and 20000", theirs.Retry.MaxRetries, theirs.KeepRecentTokens)
 	}
 }

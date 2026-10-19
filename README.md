@@ -125,7 +125,7 @@ sess, err := coding.NewSession(coding.SessionOptions{
     MaxRetries:     4,                                      // backoff honors Retry-After
     TimeoutMs:      120000,
     OnPayload:      func(p any, m *ai.Model) (any, error) { return p, nil }, // inspect/rewrite request
-    Compaction:     &coding.DefaultCompactionSettings,      // auto context-window compaction
+    Compaction:     coding.DefaultCompactionSettings(),     // auto context-window compaction
 })
 if err != nil {
     return err                                             // e.g. an invalid ToolNames list
