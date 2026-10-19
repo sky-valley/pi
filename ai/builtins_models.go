@@ -99,11 +99,15 @@ func builtinProviderAuth(providerID string) ProviderAuth {
 	case "cloudflare-ai-gateway":
 		return ProviderAuth{APIKey: cloudflareAIGatewayAuth()}
 	}
+	name := builtinAPIKeyNames[providerID]
+	if name == "" {
+		name = providerID
+	}
 	if vars := apiKeyEnvVars(providerID); len(vars) > 0 {
-		return ProviderAuth{APIKey: EnvAPIKeyAuth(providerID, vars...)}
+		return ProviderAuth{APIKey: EnvAPIKeyAuth(name, vars...)}
 	}
 	return ProviderAuth{APIKey: &ApiKeyAuth{
-		Name: providerID,
+		Name: name,
 		Resolve: func(ctx context.Context, _ AuthContext, cred *Credential) (*AuthResult, error) {
 			if err := ctx.Err(); err != nil {
 				return nil, err
@@ -121,6 +125,51 @@ func builtinProviderAuth(providerID string) ProviderAuth {
 			return &AuthResult{Auth: ModelAuth{APIKey: key}}, nil
 		},
 	}}
+}
+
+// builtinAPIKeyNames are the display names pi's provider factories give their
+// api-key auth (envApiKeyAuth's first argument, and the AWS and Google Cloud
+// resolvers' names): Name, and the login's "Enter <name>" prompt. Anthropic
+// and Cloudflare name theirs in their own resolvers.
+var builtinAPIKeyNames = map[string]string{
+	"amazon-bedrock":             "AWS credentials or bearer token",
+	"ant-ling":                   "Ant Ling API key",
+	"azure":                      "Azure OpenAI API key",
+	"baseten":                    "Baseten API key",
+	"cerebras":                   "Cerebras API key",
+	"deepseek":                   "DeepSeek API key",
+	"fireworks":                  "Fireworks API key",
+	"github-copilot":             "GitHub Copilot token",
+	"google":                     "Gemini API key",
+	"google-vertex":              "Google Cloud credentials",
+	"groq":                       "Groq API key",
+	"huggingface":                "Hugging Face token",
+	"kimi-coding":                "Kimi API key",
+	"meta":                       "Meta Model API key",
+	"minimax":                    "MiniMax API key",
+	"minimax-cn":                 "MiniMax CN API key",
+	"mistral":                    "Mistral API key",
+	"moonshotai":                 "Moonshot AI API key",
+	"moonshotai-cn":              "Moonshot AI API key",
+	"nvidia":                     "NVIDIA API key",
+	"openai":                     "OpenAI API key",
+	"opencode":                   "OpenCode API key",
+	"opencode-go":                "OpenCode API key",
+	"openrouter":                 "OpenRouter API key",
+	"qwen-token-plan":            "Qwen Token Plan API key",
+	"qwen-token-plan-cn":         "Qwen Token Plan CN API key",
+	"qwen-token-plan-individual": "Qwen Token Plan Individual API key",
+	"radius":                     "Radius API key",
+	"together":                   "Together API key",
+	"typesafe":                   "TypeSafe API key",
+	"vercel-ai-gateway":          "Vercel AI Gateway API key",
+	"xai":                        "xAI API key",
+	"xiaomi":                     "Xiaomi API key",
+	"xiaomi-token-plan-ams":      "Xiaomi Token Plan AMS API key",
+	"xiaomi-token-plan-cn":       "Xiaomi Token Plan CN API key",
+	"xiaomi-token-plan-sgp":      "Xiaomi Token Plan SGP API key",
+	"zai":                        "Z.AI API key",
+	"zai-coding-cn":              "Z.AI Coding CN API key",
 }
 
 // anthropicAPIKeyAuth mirrors pi anthropicApiKeyAuth() (upstream 24e5cc04): a

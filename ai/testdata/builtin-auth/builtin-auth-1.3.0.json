@@ -1,0 +1,474 @@
+{
+	"version": "1.3.0",
+	"providers": [
+		{
+			"id": "amazon-bedrock",
+			"apiKeyName": "AWS credentials or bearer token",
+			"prompts": [
+				{
+					"type": "select",
+					"message": "Select Amazon Bedrock authentication method:"
+				}
+			],
+			"loginError": "Unknown Amazon Bedrock auth method: x1"
+		},
+		{
+			"id": "ant-ling",
+			"apiKeyName": "Ant Ling API key",
+			"prompts": [
+				{
+					"type": "secret",
+					"message": "Enter Ant Ling API key"
+				}
+			],
+			"loginError": null
+		},
+		{
+			"id": "anthropic",
+			"apiKeyName": "Anthropic API key",
+			"prompts": [
+				{
+					"type": "secret",
+					"message": "Enter Anthropic API key"
+				}
+			],
+			"loginError": null
+		},
+		{
+			"id": "azure",
+			"apiKeyName": "Azure OpenAI API key",
+			"prompts": [
+				{
+					"type": "secret",
+					"message": "Enter Azure OpenAI API key"
+				}
+			],
+			"loginError": null
+		},
+		{
+			"id": "baseten",
+			"apiKeyName": "Baseten API key",
+			"prompts": [
+				{
+					"type": "secret",
+					"message": "Enter Baseten API key"
+				}
+			],
+			"loginError": null
+		},
+		{
+			"id": "cerebras",
+			"apiKeyName": "Cerebras API key",
+			"prompts": [
+				{
+					"type": "secret",
+					"message": "Enter Cerebras API key"
+				}
+			],
+			"loginError": null
+		},
+		{
+			"id": "cloudflare-ai-gateway",
+			"apiKeyName": "Cloudflare API key",
+			"prompts": [
+				{
+					"type": "secret",
+					"message": "Enter Cloudflare API key"
+				},
+				{
+					"type": "text",
+					"message": "Enter Cloudflare account ID"
+				},
+				{
+					"type": "text",
+					"message": "Enter Cloudflare AI Gateway ID"
+				}
+			],
+			"loginError": null
+		},
+		{
+			"id": "cloudflare-workers-ai",
+			"apiKeyName": "Cloudflare API key",
+			"prompts": [
+				{
+					"type": "secret",
+					"message": "Enter Cloudflare API key"
+				},
+				{
+					"type": "text",
+					"message": "Enter Cloudflare account ID"
+				}
+			],
+			"loginError": null
+		},
+		{
+			"id": "deepseek",
+			"apiKeyName": "DeepSeek API key",
+			"prompts": [
+				{
+					"type": "secret",
+					"message": "Enter DeepSeek API key"
+				}
+			],
+			"loginError": null
+		},
+		{
+			"id": "fireworks",
+			"apiKeyName": "Fireworks API key",
+			"prompts": [
+				{
+					"type": "secret",
+					"message": "Enter Fireworks API key"
+				}
+			],
+			"loginError": null
+		},
+		{
+			"id": "github-copilot",
+			"apiKeyName": "GitHub Copilot token",
+			"prompts": [
+				{
+					"type": "secret",
+					"message": "Enter GitHub Copilot token"
+				}
+			],
+			"loginError": null
+		},
+		{
+			"id": "google",
+			"apiKeyName": "Gemini API key",
+			"prompts": [
+				{
+					"type": "secret",
+					"message": "Enter Gemini API key"
+				}
+			],
+			"loginError": null
+		},
+		{
+			"id": "google-vertex",
+			"apiKeyName": "Google Cloud credentials",
+			"prompts": [
+				{
+					"type": "select",
+					"message": "Select Google Vertex AI authentication method:"
+				}
+			],
+			"loginError": "Unknown Google Vertex AI auth method: x1"
+		},
+		{
+			"id": "groq",
+			"apiKeyName": "Groq API key",
+			"prompts": [
+				{
+					"type": "secret",
+					"message": "Enter Groq API key"
+				}
+			],
+			"loginError": null
+		},
+		{
+			"id": "huggingface",
+			"apiKeyName": "Hugging Face token",
+			"prompts": [
+				{
+					"type": "secret",
+					"message": "Enter Hugging Face token"
+				}
+			],
+			"loginError": null
+		},
+		{
+			"id": "kimi-coding",
+			"apiKeyName": "Kimi API key",
+			"prompts": [
+				{
+					"type": "secret",
+					"message": "Enter Kimi API key"
+				}
+			],
+			"loginError": null
+		},
+		{
+			"id": "meta",
+			"apiKeyName": "Meta Model API key",
+			"prompts": [
+				{
+					"type": "secret",
+					"message": "Enter Meta Model API key"
+				}
+			],
+			"loginError": null
+		},
+		{
+			"id": "minimax",
+			"apiKeyName": "MiniMax API key",
+			"prompts": [
+				{
+					"type": "secret",
+					"message": "Enter MiniMax API key"
+				}
+			],
+			"loginError": null
+		},
+		{
+			"id": "minimax-cn",
+			"apiKeyName": "MiniMax CN API key",
+			"prompts": [
+				{
+					"type": "secret",
+					"message": "Enter MiniMax CN API key"
+				}
+			],
+			"loginError": null
+		},
+		{
+			"id": "mistral",
+			"apiKeyName": "Mistral API key",
+			"prompts": [
+				{
+					"type": "secret",
+					"message": "Enter Mistral API key"
+				}
+			],
+			"loginError": null
+		},
+		{
+			"id": "moonshotai",
+			"apiKeyName": "Moonshot AI API key",
+			"prompts": [
+				{
+					"type": "secret",
+					"message": "Enter Moonshot AI API key"
+				}
+			],
+			"loginError": null
+		},
+		{
+			"id": "moonshotai-cn",
+			"apiKeyName": "Moonshot AI API key",
+			"prompts": [
+				{
+					"type": "secret",
+					"message": "Enter Moonshot AI API key"
+				}
+			],
+			"loginError": null
+		},
+		{
+			"id": "nvidia",
+			"apiKeyName": "NVIDIA API key",
+			"prompts": [
+				{
+					"type": "secret",
+					"message": "Enter NVIDIA API key"
+				}
+			],
+			"loginError": null
+		},
+		{
+			"id": "openai",
+			"apiKeyName": "OpenAI API key",
+			"prompts": [
+				{
+					"type": "secret",
+					"message": "Enter OpenAI API key"
+				}
+			],
+			"loginError": null
+		},
+		{
+			"id": "openai-codex",
+			"apiKeyName": null,
+			"prompts": null,
+			"loginError": null
+		},
+		{
+			"id": "opencode",
+			"apiKeyName": "OpenCode API key",
+			"prompts": [
+				{
+					"type": "secret",
+					"message": "Enter OpenCode API key"
+				}
+			],
+			"loginError": null
+		},
+		{
+			"id": "opencode-go",
+			"apiKeyName": "OpenCode API key",
+			"prompts": [
+				{
+					"type": "secret",
+					"message": "Enter OpenCode API key"
+				}
+			],
+			"loginError": null
+		},
+		{
+			"id": "openrouter",
+			"apiKeyName": "OpenRouter API key",
+			"prompts": [
+				{
+					"type": "secret",
+					"message": "Enter OpenRouter API key"
+				}
+			],
+			"loginError": null
+		},
+		{
+			"id": "qwen-token-plan",
+			"apiKeyName": "Qwen Token Plan API key",
+			"prompts": [
+				{
+					"type": "secret",
+					"message": "Enter Qwen Token Plan API key"
+				}
+			],
+			"loginError": null
+		},
+		{
+			"id": "qwen-token-plan-cn",
+			"apiKeyName": "Qwen Token Plan CN API key",
+			"prompts": [
+				{
+					"type": "secret",
+					"message": "Enter Qwen Token Plan CN API key"
+				}
+			],
+			"loginError": null
+		},
+		{
+			"id": "qwen-token-plan-individual",
+			"apiKeyName": "Qwen Token Plan Individual API key",
+			"prompts": [
+				{
+					"type": "secret",
+					"message": "Enter Qwen Token Plan Individual API key"
+				}
+			],
+			"loginError": null
+		},
+		{
+			"id": "radius",
+			"apiKeyName": "Radius API key",
+			"prompts": [
+				{
+					"type": "secret",
+					"message": "Enter Radius API key"
+				}
+			],
+			"loginError": null
+		},
+		{
+			"id": "together",
+			"apiKeyName": "Together API key",
+			"prompts": [
+				{
+					"type": "secret",
+					"message": "Enter Together API key"
+				}
+			],
+			"loginError": null
+		},
+		{
+			"id": "typesafe",
+			"apiKeyName": "TypeSafe API key",
+			"prompts": [
+				{
+					"type": "secret",
+					"message": "Enter TypeSafe API key"
+				}
+			],
+			"loginError": null
+		},
+		{
+			"id": "vercel-ai-gateway",
+			"apiKeyName": "Vercel AI Gateway API key",
+			"prompts": [
+				{
+					"type": "secret",
+					"message": "Enter Vercel AI Gateway API key"
+				}
+			],
+			"loginError": null
+		},
+		{
+			"id": "xai",
+			"apiKeyName": "xAI API key",
+			"prompts": [
+				{
+					"type": "secret",
+					"message": "Enter xAI API key"
+				}
+			],
+			"loginError": null
+		},
+		{
+			"id": "xiaomi",
+			"apiKeyName": "Xiaomi API key",
+			"prompts": [
+				{
+					"type": "secret",
+					"message": "Enter Xiaomi API key"
+				}
+			],
+			"loginError": null
+		},
+		{
+			"id": "xiaomi-token-plan-ams",
+			"apiKeyName": "Xiaomi Token Plan AMS API key",
+			"prompts": [
+				{
+					"type": "secret",
+					"message": "Enter Xiaomi Token Plan AMS API key"
+				}
+			],
+			"loginError": null
+		},
+		{
+			"id": "xiaomi-token-plan-cn",
+			"apiKeyName": "Xiaomi Token Plan CN API key",
+			"prompts": [
+				{
+					"type": "secret",
+					"message": "Enter Xiaomi Token Plan CN API key"
+				}
+			],
+			"loginError": null
+		},
+		{
+			"id": "xiaomi-token-plan-sgp",
+			"apiKeyName": "Xiaomi Token Plan SGP API key",
+			"prompts": [
+				{
+					"type": "secret",
+					"message": "Enter Xiaomi Token Plan SGP API key"
+				}
+			],
+			"loginError": null
+		},
+		{
+			"id": "zai",
+			"apiKeyName": "Z.AI API key",
+			"prompts": [
+				{
+					"type": "secret",
+					"message": "Enter Z.AI API key"
+				}
+			],
+			"loginError": null
+		},
+		{
+			"id": "zai-coding-cn",
+			"apiKeyName": "Z.AI Coding CN API key",
+			"prompts": [
+				{
+					"type": "secret",
+					"message": "Enter Z.AI Coding CN API key"
+				}
+			],
+			"loginError": null
+		}
+	]
+}
