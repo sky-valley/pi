@@ -1,0 +1,394 @@
+{
+	"frames": [
+		{
+			"type": 1,
+			"id": 1,
+			"json": "{\"protocol\":1,\"op\":\"hello\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 2,
+			"json": "{\"path\":\"<root>/a.txt\",\"append\":false,\"keep\":false,\"op\":\"write\"}",
+			"payload": "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
+		},
+		{
+			"type": 1,
+			"id": 3,
+			"json": "{\"path\":\"<root>/a.txt\",\"append\":true,\"keep\":false,\"op\":\"write\"}",
+			"payload": "045f13dd864bafaad0dd977ac971de549b090cb2836f061d0779b26dd9bb8f4b"
+		},
+		{
+			"type": 1,
+			"id": 4,
+			"json": "{\"path\":\"<root>/big.bin\",\"append\":false,\"keep\":true,\"op\":\"write\"}",
+			"payload": "891328d2c85ae65f9af5ea8f4c743af2cf74a09212e1d0e1c46dd2476d4ad99c"
+		},
+		{
+			"type": 1,
+			"id": 5,
+			"json": "{\"handle\":1,\"op\":\"writeChunk\"}",
+			"payload": "afb6636a3edb75b5d86e7f6e95c97c4dc2fc454cecdaf6138a9fc19dffb5b6e6"
+		},
+		{
+			"type": 1,
+			"id": 6,
+			"json": "{\"handle\":1,\"op\":\"close\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 7,
+			"json": "{\"path\":\"<root>/a.txt\",\"mode\":\"read\",\"op\":\"open\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 8,
+			"json": "{\"offset\":0,\"length\":11,\"handle\":2,\"op\":\"pread\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 9,
+			"json": "{\"offset\":11,\"length\":11,\"handle\":2,\"op\":\"pread\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 10,
+			"json": "{\"offset\":22,\"length\":11,\"handle\":2,\"op\":\"pread\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 11,
+			"json": "{\"offset\":33,\"length\":11,\"handle\":2,\"op\":\"pread\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 12,
+			"json": "{\"offset\":44,\"length\":11,\"handle\":2,\"op\":\"pread\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 13,
+			"json": "{\"offset\":55,\"length\":11,\"handle\":2,\"op\":\"pread\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 14,
+			"json": "{\"offset\":66,\"length\":11,\"handle\":2,\"op\":\"pread\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 15,
+			"json": "{\"offset\":77,\"length\":11,\"handle\":2,\"op\":\"pread\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 16,
+			"json": "{\"handle\":2,\"op\":\"close\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 17,
+			"json": "{\"path\":\"<root>/big.bin\",\"mode\":\"read\",\"op\":\"open\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 18,
+			"json": "{\"offset\":0,\"length\":524288,\"handle\":3,\"op\":\"pread\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 19,
+			"json": "{\"offset\":524288,\"length\":90112,\"handle\":3,\"op\":\"pread\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 20,
+			"json": "{\"handle\":3,\"op\":\"close\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 21,
+			"json": "{\"path\":\"<root>/a.txt\",\"op\":\"lstat\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 22,
+			"json": "{\"path\":\"<root>\",\"op\":\"opendir\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 23,
+			"json": "{\"max\":1000,\"handle\":4,\"op\":\"readdir\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 24,
+			"json": "{\"handle\":4,\"op\":\"close\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 25,
+			"json": "{\"path\":\"<root>\",\"op\":\"opendir\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 26,
+			"json": "{\"max\":10,\"handle\":5,\"op\":\"readdir\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 27,
+			"json": "{\"handle\":5,\"op\":\"close\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 28,
+			"json": "{\"path\":\"<root>/a.txt\",\"noFollow\":true,\"op\":\"open\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 29,
+			"json": "{\"offset\":0,\"length\":5,\"handle\":6,\"op\":\"pread\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 30,
+			"json": "{\"startLine\":0,\"endLine\":1,\"handle\":6,\"op\":\"scanLines\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 31,
+			"json": "{\"handle\":6,\"op\":\"fstat\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 32,
+			"json": "{\"handle\":6,\"op\":\"close\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 33,
+			"json": "{\"path\":\"<root>/a.txt\",\"mode\":\"read\",\"op\":\"open\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 34,
+			"json": "{\"offset\":0,\"length\":65536,\"handle\":7,\"op\":\"pread\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 35,
+			"json": "{\"offset\":11,\"length\":65536,\"handle\":7,\"op\":\"pread\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 36,
+			"json": "{\"handle\":7,\"op\":\"close\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 37,
+			"json": "{\"path\":\"<root>/a.txt\",\"mode\":\"read\",\"op\":\"open\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 38,
+			"json": "{\"offset\":0,\"length\":65536,\"handle\":8,\"op\":\"pread\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 39,
+			"json": "{\"offset\":11,\"length\":65536,\"handle\":8,\"op\":\"pread\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 40,
+			"json": "{\"handle\":8,\"op\":\"close\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 41,
+			"json": "{\"path\":\"<root>/a.txt\",\"size\":3,\"op\":\"truncate\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 42,
+			"json": "{\"path\":\"<root>/a.txt\",\"op\":\"fsync\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 43,
+			"json": "{\"path\":\"<root>/a.txt\",\"to\":\"<root>/b.txt\",\"op\":\"rename\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 44,
+			"json": "{\"path\":\"<root>/b.txt\",\"op\":\"realpath\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 45,
+			"json": "{\"path\":\"<root>/b.txt\",\"op\":\"lstat\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 46,
+			"json": "{\"path\":\"<root>/d/e\",\"recursive\":true,\"op\":\"mkdir\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 47,
+			"json": "{\"path\":\"<root>/f\",\"recursive\":false,\"op\":\"mkdir\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 48,
+			"json": "{\"path\":\"<root>/d\",\"recursive\":true,\"force\":true,\"op\":\"rm\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 49,
+			"json": "{\"path\":\"<tmpdir>/x-\",\"op\":\"mkdtemp\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 50,
+			"json": "{\"path\":\"<tmpdir>/tmp-\",\"op\":\"mkdtemp\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 51,
+			"json": "{\"path\":\"<tmpdir>/tmp-<random>/p-<uuid>.s\",\"append\":false,\"parents\":false,\"op\":\"write\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 52,
+			"json": "{\"argv\":[\"sh\",\"-c\",\"exit 3\"],\"cwd\":\"<root>/f\",\"env\":{\"A\":\"1\"},\"inheritEnv\":false,\"timeoutMs\":5000,\"spill\":{\"afterBytes\":10,\"afterLines\":2},\"window\":{\"maxBytes\":100,\"maxLines\":5,\"minIntervalMs\":10,\"bytesPerSecond\":1000},\"op\":\"exec\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 53,
+			"json": "{\"command\":\"printf hi\",\"cwd\":\"<root>\",\"env\":{\"B\":\"2\"},\"inheritEnv\":true,\"shellPath\":\"/bin/sh\",\"op\":\"exec\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 54,
+			"json": "{\"path\":\"<root>\",\"hidden\":false,\"gitignore\":false,\"exclude\":[\"node_modules\"],\"maxEntries\":10,\"maxBytes\":1000,\"timeoutMs\":5000,\"op\":\"listFiles\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 55,
+			"json": "{\"path\":\"<root>\",\"op\":\"listFiles\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 56,
+			"json": "{\"targets\":[{\"path\":\"<root>/w\",\"recursive\":true,\"exclude\":{\"hidden\":true,\"names\":[\"n\"]}},{\"path\":\"<root>/b.txt\",\"recursive\":false,\"exclude\":{\"hidden\":false,\"names\":[]}}],\"mode\":\"polling\",\"pollIntervalMs\":100,\"maxDirectories\":50,\"op\":\"watch\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 5,
+			"id": 56,
+			"json": "{}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 57,
+			"json": "{\"argv\":[\"sleep\",\"5\"],\"cwd\":\"<root>\",\"env\":{\"Z\":\"z\"},\"inheritEnv\":true,\"op\":\"exec\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 5,
+			"id": 57,
+			"json": "{}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 58,
+			"json": "{\"argv\":[\"sleep\",\"5\"],\"cwd\":\"<root>\",\"env\":{\"Z\":\"z\"},\"inheritEnv\":true,\"op\":\"exec\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 5,
+			"id": 58,
+			"json": "{\"mode\":\"kill\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 59,
+			"json": "{\"cwd\":\"<root>\",\"argv\":[\"sh\",\"-c\",\"read x; exit 0\"],\"env\":{\"TERM\":\"xterm\"},\"inheritEnv\":true,\"cols\":80,\"rows\":24,\"op\":\"pty\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 60,
+			"json": "{\"cols\":100,\"rows\":30,\"target\":59,\"op\":\"ptyResize\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 61,
+			"json": "{\"target\":59,\"op\":\"ptyForeground\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 62,
+			"json": "{\"target\":59,\"op\":\"ptyWrite\"}",
+			"payload": "dc51b8c96c2d745df3bd5590d990230a482fd247123599548e0632fdbf97fc22"
+		}
+	]
+}

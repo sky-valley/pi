@@ -44,10 +44,21 @@ type Frame struct {
 }
 
 var (
-	errLength     = errors.New("frame length out of range")
-	errJSONLength = errors.New("JSON length out of range")
-	errTooLarge   = errors.New("frame too large")
+	// ErrCorrupt matches what Read reports for a stream that is not frames: a
+	// length or JSON length out of range. Other errors are the reader's.
+	ErrCorrupt = errors.New("corrupt frame")
+
+	// The daemon prints these as the Rust daemon does ("pi-env: <text>").
+	errLength     error = corruptError("frame length out of range")
+	errJSONLength error = corruptError("JSON length out of range")
+	errTooLarge         = errors.New("frame too large")
 )
+
+// corruptError is a framing failure: its own text, matching ErrCorrupt.
+type corruptError string
+
+func (e corruptError) Error() string      { return string(e) }
+func (corruptError) Is(target error) bool { return target == ErrCorrupt }
 
 // Read reads one frame. It returns io.EOF at a clean end of input, which is
 // an end before or inside the length field; an end inside the rest of a frame
