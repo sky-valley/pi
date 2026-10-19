@@ -6,9 +6,9 @@
 // fast with when a 429 asks for a retry delay past maxRetryDelayMs.
 //
 //   node capture.mjs <pi-ai npm dir> <out.json>
-//   e.g. node capture.mjs ~/.cache/pi-npm/0.87.1 pi-ai-0.87.1.json
+//   e.g. node capture.mjs .../npm-1.3.0 pi-ai-1.3.0.json
 //   node --experimental-strip-types capture.mjs --src <extraction> <out.json> <sha>
-//   e.g. ... capture.mjs --src <dir> pi-ai-src-2b0a123de.json 2b0a123de
+//   e.g. ... capture.mjs --src <dir> pi-ai-src-<sha>.json <sha>
 //
 // Each adapter streams against a loopback server that answers with the given
 // status and body, so neither side needs a key or the network. The capture is
@@ -28,6 +28,11 @@
 // packages/ai/node_modules/.package-lock.json under "node_modules/openai".
 // The "openai-responses/xai" column drives the same adapter as provider xai,
 // which pi labels by its provider since upstream 0c7bb7c5c.
+//
+// `byteRows` carry bodies that are not valid UTF-8, as `bodyBase64`: fetch's
+// text() decodes them with the WHATWG UTF-8 decoder (one U+FFFD per maximal
+// subpart, a leading BOM dropped) before any client parses them. pi-ai 1.3.0
+// (which ships ab30693d6) records the 2b0a123de src oracle's rows unchanged.
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
@@ -172,10 +177,20 @@ const failFastCases = [
 	["empty", ""],
 ];
 
+// [name, status, body bytes]
+const byteCases = [
+	["invalid-in-json-string", 400, Buffer.concat([Buffer.from('{"type":"error","error":{"type":"invalid_request_error","message":"bad '), Buffer.from([0xff]), Buffer.from(' byte"}}')])],
+	["truncated-multibyte-text", 403, Buffer.concat([Buffer.from("oops "), Buffer.from([0xe2, 0x82])])],
+	["latin1-html", 502, Buffer.concat([Buffer.from("<html>caf"), Buffer.from([0xe9]), Buffer.from("</html>")])],
+	["bom-then-invalid-message", 403, Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), Buffer.from('{"message":"a'), Buffer.from([0xc0]), Buffer.from('b"}')])],
+	["overlong-and-surrogate", 403, Buffer.from([0x6f, 0xc0, 0xaf, 0xed, 0xa0, 0x80, 0x6b])],
+];
+
 async function run(api, provider, mod, status, body, headers = {}, options = {}) {
+	const text = typeof body === "string" ? body : body.toString("latin1");
 	const srv = http.createServer((req, res) => {
 		req.resume();
-		res.writeHead(status, { "content-type": /^\s*[\[{]/.test(body) ? "application/json" : "text/plain", ...headers });
+		res.writeHead(status, { "content-type": /^\s*[\[{]/.test(text) ? "application/json" : "text/plain", ...headers });
 		res.end(body);
 	});
 	await new Promise((r) => srv.listen(0, "127.0.0.1", r));
@@ -200,6 +215,14 @@ for (const [name, status, body] of cases) {
 	}
 	rows.push(row);
 }
+const byteRows = [];
+for (const [name, status, bytes] of byteCases) {
+	const row = { name, status, bodyBase64: bytes.toString("base64"), errorMessage: {} };
+	for (const [api, [provider, mod]] of Object.entries(adapters)) {
+		row.errorMessage[api] = await run(api, provider, mod, status, bytes);
+	}
+	byteRows.push(row);
+}
 const failFast = [];
 for (const [name, body] of failFastCases) {
 	const row = { name, status: 429, retryAfter: "120", maxRetries: 1, body, errorMessage: {} };
@@ -209,5 +232,5 @@ for (const [name, body] of failFastCases) {
 	}
 	failFast.push(row);
 }
-fs.writeFileSync(outFile, JSON.stringify({ source, rows, failFast }, null, 1) + "\n");
-console.log(`captured ${rows.length} rows and ${failFast.length} fail-fast rows (${source}) -> ${outFile}`);
+fs.writeFileSync(outFile, JSON.stringify({ source, rows, byteRows, failFast }, null, 1) + "\n");
+console.log(`captured ${rows.length} rows, ${byteRows.length} byte rows and ${failFast.length} fail-fast rows (${source}) -> ${outFile}`);

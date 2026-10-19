@@ -3,7 +3,7 @@
 // behind TestStreamAbortMatchesPi in this package.
 //
 //   node --experimental-strip-types capture.mts <extraction> <out.json> <sha>
-//   e.g. ... capture.mts <dir> stream-abort-2b0a123de.json 2b0a123de
+//   e.g. ... capture.mts <dir> stream-abort-71023aec1.json 71023aec1
 //
 // <extraction> holds `git archive <sha> packages/ai package-lock.json` from the
 // upstream clone, plus a node_modules resolving pi-ai's dependencies (the npm
@@ -23,8 +23,7 @@
 // adapter as one body read (undici reads one chunk at a time); then it holds
 // the connection open. The anthropic-messages, openai-completions,
 // openai-responses and pi-messages adapters run every mode (the SDK adapters'
-// request modes are abort-before-response's, and anthropic's error-body drop
-// is K18's); google-generative-ai runs the error-body modes but the retryable
+// request modes are abort-before-response's); google-generative-ai runs the error-body modes but the retryable
 // drop, the no-response ones and "an abort from the callback on the last event
 // of a body already complete". Modes:
 //   - "an abort while a read is pending": the signal aborts 150ms after the
@@ -53,8 +52,8 @@
 //     aborted before the call or 150ms into it;
 //   - "the connection drops mid-body": no abort; the server destroys the
 //     socket 100ms after the first segment, inside the chunked body;
-//   - "the connection drops while an error body is read" (all but anthropic,
-//     whose error text is K18's): the same after a 500's start;
+//   - "the connection drops while an error body is read": the same after a
+//     500's start;
 //   - "the connection drops while a retryable error body is read" (the SDK
 //     adapters, whose fail-fast error quotes their SDK's message): the same
 //     after the start of a 429 carrying retry-after: 120, under maxRetries 1;
@@ -213,7 +212,7 @@ const adapters = [
 		provider: "anthropic",
 		id: "claude-sonnet-4-5",
 		module: await load("api/anthropic-messages.ts"),
-		modes: [...streamModes, completeBody, errorBody, drops, customBody, retryableErrorBody, retryableErrorBodyDrops, customRetryableErrorBody, ...noResponseModes, ...sdkNoResponseModes, ...customAbortModes],
+		modes: [...streamModes, completeBody, errorBody, drops, errorBodyDrops, customBody, retryableErrorBody, retryableErrorBodyDrops, customRetryableErrorBody, ...noResponseModes, ...sdkNoResponseModes, ...customAbortModes],
 		segments: [
 			anthropicEvent("message_start", {
 				type: "message_start",

@@ -90,10 +90,7 @@ func TestAnthropicOnResponseMatchesPi(t *testing.T) {
 			if final.StopReason != row.StopReason {
 				t.Errorf("stopReason = %s, want %s (%s)", final.StopReason, row.StopReason, final.ErrorMessage)
 			}
-			// A non-2xx response's message is K18 in docs/UPSTREAM.md (the port
-			// words it "Anthropic API error <status>: ..." where pi surfaces the
-			// SDK's "<status> <body>"), not this test's subject.
-			if len(row.Calls) > 0 && final.ErrorMessage != row.ErrorMessage {
+			if final.ErrorMessage != row.ErrorMessage {
 				t.Errorf("errorMessage = %q, want %q", final.ErrorMessage, row.ErrorMessage)
 			}
 		})

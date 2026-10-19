@@ -323,17 +323,7 @@ func TestAnthropicFederationMatchesPi(t *testing.T) {
 			}
 			assertJSONEqual(t, "exchanges", exchanges, row.Exchanges)
 			assertJSONEqual(t, "messages", messages, row.Messages)
-			// A messages request that got an error status fails with the
-			// adapter's non-2xx message, which the port does not yet word as
-			// pi does (docs/UPSTREAM.md: the queued per-adapter formatter
-			// slice, `Anthropic API error 401: ...` for pi's `401 {...}`).
-			// This row is about the token, so only its outcome is compared.
-			want := append([]federationResult(nil), row.Results...)
-			for i, status := range row.Statuses {
-				if status != 200 && i < len(results) && i < len(want) {
-					results[i].ErrorMessage, want[i].ErrorMessage = nil, nil
-				}
-			}
+			want := row.Results
 			assertJSONEqual(t, "results", results, want)
 		})
 	}

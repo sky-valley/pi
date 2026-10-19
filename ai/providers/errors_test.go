@@ -51,7 +51,7 @@ func TestFormatProviderErrorTruncation(t *testing.T) {
 // (error-body.ts extractBody), which formatResponsesHTTPError applies when the
 // stringified `error` object replaces the message. Measured: oracle rows
 // str-error-long (message path, untruncated) and obj-long-message (body path,
-// truncated) in testdata/httperror/pi-ai-src-2b0a123de.json.
+// truncated) in testdata/httperror/pi-ai-1.3.0.json.
 func TestOpenAISDKErrorMessageNotCapped(t *testing.T) {
 	long := strings.Repeat("y", 5000)
 	if got, want := openaiSDKErrorMessage(429, []byte(`{"error":"`+long+`"}`)), `429 "`+long+`"`; got != want {

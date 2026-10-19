@@ -1352,9 +1352,11 @@ func responsesHTTPError(t *testing.T, provider string, status int, body string) 
 // that does replaces it. Goldens come from pi, never from what the porter
 // believed.
 type httpErrorOracleRow struct {
-	Name         string            `json:"name"`
-	Status       int               `json:"status"`
-	Body         string            `json:"body"`
+	Name   string `json:"name"`
+	Status int    `json:"status"`
+	Body   string `json:"body"`
+	// BodyBase64 is a byteRows body, which is not valid UTF-8.
+	BodyBase64   []byte            `json:"bodyBase64"`
 	ErrorMessage map[string]string `json:"errorMessage"`
 	// RetryAfter and MaxRetries are what a failFast row's 429 carried and the
 	// stream's maxRetries.
@@ -1362,10 +1364,20 @@ type httpErrorOracleRow struct {
 	MaxRetries int    `json:"maxRetries"`
 }
 
-// httpErrorOracleFile is capture.mjs's output.
-const httpErrorOracleFile = "pi-ai-src-2b0a123de.json"
+// httpErrorOracleFile is capture.mjs's output over the published pi-ai 1.3.0
+// build (the first that ships ab30693d6; it records the interim 2b0a123de src
+// oracle's rows unchanged).
+const httpErrorOracleFile = "pi-ai-1.3.0.json"
 
 func loadHTTPErrorCapture(t *testing.T) (rows, failFast []httpErrorOracleRow) {
+	t.Helper()
+	rows, _, failFast = loadHTTPErrorCaptureWithBytes(t)
+	return rows, failFast
+}
+
+// loadHTTPErrorCaptureWithBytes also returns the byteRows, whose bodies are
+// not valid UTF-8.
+func loadHTTPErrorCaptureWithBytes(t *testing.T) (rows, byteRows, failFast []httpErrorOracleRow) {
 	t.Helper()
 	data, err := os.ReadFile(filepath.Join("testdata", "httperror", httpErrorOracleFile))
 	if err != nil {
@@ -1373,15 +1385,16 @@ func loadHTTPErrorCapture(t *testing.T) (rows, failFast []httpErrorOracleRow) {
 	}
 	var doc struct {
 		Rows     []httpErrorOracleRow `json:"rows"`
+		ByteRows []httpErrorOracleRow `json:"byteRows"`
 		FailFast []httpErrorOracleRow `json:"failFast"`
 	}
 	if err := json.Unmarshal(data, &doc); err != nil {
 		t.Fatalf("decode oracle: %v", err)
 	}
-	if len(doc.Rows) == 0 || len(doc.FailFast) == 0 {
-		t.Fatalf("%s has no rows or no failFast rows; re-capture it", httpErrorOracleFile)
+	if len(doc.Rows) == 0 || len(doc.ByteRows) == 0 || len(doc.FailFast) == 0 {
+		t.Fatalf("%s has no rows, byteRows or failFast rows; re-capture it", httpErrorOracleFile)
 	}
-	return doc.Rows, doc.FailFast
+	return doc.Rows, doc.ByteRows, doc.FailFast
 }
 
 func loadHTTPErrorOracle(t *testing.T) []httpErrorOracleRow {

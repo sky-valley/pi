@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 	"unicode/utf16"
+
+	"github.com/sky-valley/pi/internal/jstext"
 )
 
 // maxProviderErrorBodyChars caps the surfaced HTTP error body, matching pi's
@@ -47,9 +49,10 @@ func truncateErrorText(text string, maxChars int) string {
 // other half is observable, though: for the openai SDK, a parsed `error` object
 // REPLACES the SDK's message in what the user sees. formatResponsesHTTPError
 // and formatCompletionsHTTPError port that composition against a captured
-// oracle; this function keeps the port's own `<Label> API error <status>:
-// <msg>` shape for the google and anthropic call sites (docs/UPSTREAM.md K18)
-// and applies 6fbeba51's 4000-char cap to the body-derived message.
+// oracle, and anthropicSDKErrorMessage the anthropic one; this function keeps
+// the port's own `<Label> API error <status>: <msg>` shape for the google call
+// site (docs/UPSTREAM.md K18) and applies 6fbeba51's 4000-char cap to the
+// body-derived message.
 func formatProviderError(label string, status int, body []byte) error {
 	msg := strings.TrimSpace(string(body))
 	var parsed struct {
@@ -196,7 +199,8 @@ func openaiSDKErrorMessage(status int, body []byte) string {
 }
 
 // openaiSDKErrorDetail is the text openai SDK APIError.makeMessage builds from
-// its `error` argument, given as JSON (nil when absent): error.message when it
+// its `error` argument — @anthropic-ai/sdk's makeMessage is byte-identical —
+// given as JSON (nil when absent): error.message when it
 // is a truthy string, JSON.stringify(error.message) when it is truthy
 // otherwise, else JSON.stringify(error) — or "" when error is falsy, where
 // makeMessage falls back to its status and message arguments.
@@ -220,11 +224,12 @@ func openaiSDKErrorDetail(errorValue json.RawMessage) string {
 	return j
 }
 
-// stripBOM is the one piece of fetch's text() decode that the SDK-level
+// stripBOM is the one piece of fetch's text() decode that the openai
 // functions above see: one leading UTF-8 BOM is dropped before the client ever
 // parses, on the terminal path and on the retry fail-fast quote alike. The rest
-// of that decode — invalid UTF-8 becoming U+FFFD per maximal subpart — is not
-// ported; the raw bytes pass through (docs/UPSTREAM.md K18).
+// of that decode — invalid UTF-8 becoming U+FFFD per maximal subpart — is
+// ported for anthropic only (anthropicSDKErrorMessage); the openai paths pass
+// the raw bytes through (docs/UPSTREAM.md K18).
 func stripBOM(body []byte) []byte {
 	return bytes.TrimPrefix(body, []byte("\xEF\xBB\xBF"))
 }
@@ -253,45 +258,29 @@ func rawTruthy(raw json.RawMessage) bool {
 	return f != 0
 }
 
-// anthropicSDKErrorMessage replicates the Anthropic SDK's APIError message for
-// a non-2xx response. Both SDKs share a byte-identical makeMessage; they differ
-// in APIError.generate, which decides what makeMessage receives as `error`:
-// openai passes `errorResponse['error']` (so the message is the nested
-// error.message), while anthropic passes the WHOLE parsed body. For a
-// conformant anthropic body — {"type":"error","error":{...}} — the body has no
-// top-level `message`, so makeMessage falls through to JSON.stringify(body) and
-// the result is `${status} {"type":"error",...}`, not the nested message.
+// anthropicSDKErrorMessage is the Anthropic SDK's APIError message for a
+// non-2xx response, which pi surfaces as is: on the terminal path as the
+// stream's errorMessage, and quoted by retryProviderRequest's fail-fast
+// refusal. Nothing caps it.
+//
+// The SDK reads the body as fetch's text() decodes it (one leading BOM dropped,
+// invalid UTF-8 as U+FFFD per maximal subpart), parses it with safeJSON, and
+// hands makeMessage the WHOLE parsed body as `error` — openai passes its
+// `error` member — with the raw text as the fallback message when the parse
+// failed or made a falsy value (`errJSON ? undefined : errText`). makeMessage
+// is byte-identical in both SDKs (openaiSDKErrorDetail). So a conformant
+// anthropic body — {"type":"error","error":{...}}, with no top-level `message`
+// — reads `${status} {"type":"error",...}`, not the nested message.
 func anthropicSDKErrorMessage(status int, body []byte) string {
-	errText := string(body)
-	var errJSON any
-	// safeJSON: JSON.parse in a try, with no blank check of its own.
-	jsonOK := json.Unmarshal(body, &errJSON) == nil
-
+	text := jstext.DecodeUTF8(stripBOM(body))
 	var msg string
-	switch {
-	case !jsonOK:
-		msg = errText
-	default:
-		if obj, ok := errJSON.(map[string]any); ok {
-			if m, has := obj["message"]; has && jsTruthy(m) {
-				if s, ok := m.(string); ok {
-					msg = s
-				} else if j, err := json.Marshal(m); err == nil {
-					msg = string(j)
-				}
-			}
-		}
-		// `error ? JSON.stringify(error) : message` — the whole body, with JS
-		// key ordering and escaping rather than encoding/json's.
-		if msg == "" && jsTruthy(errJSON) {
-			if s, ok := jsStringify(body); ok {
-				msg = s
-			}
-		}
+	if raw := json.RawMessage(text); json.Valid(raw) && rawTruthy(raw) {
+		msg = openaiSDKErrorDetail(raw)
+	} else {
+		msg = text
 	}
 	if msg == "" {
 		return fmt.Sprintf("%d status code (no body)", status)
 	}
-	msg = truncateErrorText(msg, maxProviderErrorBodyChars)
 	return fmt.Sprintf("%d %s", status, msg)
 }

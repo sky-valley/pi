@@ -23,7 +23,7 @@ import (
 
 // streamAbortCaptureFile is written by testdata/stream-abort/capture.mts,
 // which streams pi's adapters from source at the named sha.
-const streamAbortCaptureFile = "testdata/stream-abort/stream-abort-2b0a123de.json"
+const streamAbortCaptureFile = "testdata/stream-abort/stream-abort-71023aec1.json"
 
 // streamAbortRun is one row of the capture: how pi's adapter ended a stream
 // whose signal aborted once the request was on its way, or whose connection

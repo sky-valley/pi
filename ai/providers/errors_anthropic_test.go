@@ -1,8 +1,12 @@
 package providers
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/sky-valley/pi/ai"
 )
 
 // TestAnthropicSDKErrorMessage locks the Anthropic SDK's APIError message shape.
@@ -162,5 +166,39 @@ func TestJSNumberExponentialThreshold(t *testing.T) {
 		if got := jsNumber(c.in); got != c.want {
 			t.Errorf("jsNumber(%s) = %s, want %s", c.in, got, c.want)
 		}
+	}
+}
+
+// TestAnthropicHTTPErrorMatchesPi drives every captured body through the
+// adapter and compares the terminal ErrorMessage with pi's byte for byte: pi
+// surfaces the Anthropic SDK's APIError message as is (`${status} ${msg}`, the
+// whole body stringified when it has no top-level message, never capped), over
+// the text fetch decoded the body to.
+func TestAnthropicHTTPErrorMatchesPi(t *testing.T) {
+	rows, byteRows, _ := loadHTTPErrorCaptureWithBytes(t)
+	req := ai.NormalizeContext(ai.Context{Messages: []ai.Message{ai.NewUserText("hi", 1)}})
+	for _, row := range append(rows, byteRows...) {
+		t.Run(row.Name, func(t *testing.T) {
+			want, ok := row.ErrorMessage["anthropic-messages"]
+			if !ok {
+				t.Fatalf("oracle row %q has no anthropic-messages column; re-capture it", row.Name)
+			}
+			body := []byte(row.Body)
+			if row.BodyBase64 != nil {
+				body = row.BodyBase64
+			}
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(row.Status)
+				w.Write(body)
+			}))
+			defer server.Close()
+			m := anthropicUAModel()
+			m.BaseURL = server.URL
+			opts := &AnthropicOptions{StreamOptions: ai.StreamOptions{ProviderRequestOptions: ai.ProviderRequestOptions{APIKey: "sk"}}}
+			final := StreamAnthropic(t.Context(), m, req, opts).Result()
+			if final.StopReason != ai.StopError || final.ErrorMessage != want {
+				t.Fatalf("stream = %s %q, want pi's %q", final.StopReason, final.ErrorMessage, want)
+			}
+		})
 	}
 }

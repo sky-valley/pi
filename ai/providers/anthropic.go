@@ -748,7 +748,8 @@ func StreamAnthropic(ctx context.Context, model *ai.Model, req ai.TranscriptCont
 				fail(err)
 				return
 			}
-			fail(formatProviderError("Anthropic", resp.StatusCode, data))
+			// pi surfaces the SDK's APIError message as is.
+			fail(errors.New(anthropicSDKErrorMessage(resp.StatusCode, data)))
 			return
 		}
 		// pi awaits onResponse once the SDK has returned the response — the SDK

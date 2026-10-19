@@ -25,8 +25,7 @@ const anthropicWholeSSE = "event: message_start\ndata: {\"type\":\"message_start
 // iterateAnthropicEvents throws after onResponse and start; pi-messages
 // throws after onResponse, before any event. A non-2xx null body reads as an
 // empty one. Measured against pi at 2b0a123de (node v26.4.0): every row's
-// onResponse statuses, events and message are pi's, except the anthropic
-// custom 500's message, pi's `500 status code (no body)`, which is K18's.
+// onResponse statuses, events and message are pi's.
 func TestNullBodyAnthropicAndPiMessagesLikePi(t *testing.T) {
 	const anthropicNoBody = "Attempted to iterate over an Anthropic response with no body"
 	const piMessagesNoBody = "radius response has no body" // `${model.provider} response has no body`
@@ -44,7 +43,7 @@ func TestNullBodyAnthropicAndPiMessagesLikePi(t *testing.T) {
 		{"anthropic/204", ai.APIAnthropicMessages, 204, "", false, []int{204}, []ai.EventType{start, fail}, anthropicNoBody},
 		{"anthropic/205 with a whole stream", ai.APIAnthropicMessages, 205, anthropicWholeSSE, false, []int{205}, []ai.EventType{start, fail}, anthropicNoBody},
 		{"anthropic/custom null body", ai.APIAnthropicMessages, 200, "", true, []int{200}, []ai.EventType{start, fail}, anthropicNoBody},
-		{"anthropic/custom null body at 500", ai.APIAnthropicMessages, 500, "", true, nil, []ai.EventType{fail}, ""},
+		{"anthropic/custom null body at 500", ai.APIAnthropicMessages, 500, "", true, nil, []ai.EventType{fail}, "500 status code (no body)"},
 		{"pi-messages/204", ai.APIPiMessages, 204, "", false, []int{204}, []ai.EventType{fail}, piMessagesNoBody},
 		{"pi-messages/205 with a whole stream", ai.APIPiMessages, 205, piMessagesSSE(`{"type":"start"}`, `{"type":"done","reason":"stop","usage":`+piMessagesUsageJSON+`}`), false, []int{205}, []ai.EventType{fail}, piMessagesNoBody},
 		{"pi-messages/custom null body", ai.APIPiMessages, 200, "", true, []int{200}, []ai.EventType{fail}, piMessagesNoBody},
