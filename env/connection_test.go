@@ -8,8 +8,10 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -208,6 +210,88 @@ func TestWatcherReopensAfterALostConnectionAndReportsOverflow(t *testing.T) {
 		}
 		return false
 	})
+}
+
+// TestWatcherClosesFromItsOwnCallback: upstream's close() called inside
+// onChange returns at once (its promise settles later); Go's Close must not
+// wait for the callback that calls it, and no call follows.
+func TestWatcherClosesFromItsOwnCallback(t *testing.T) {
+	env, _ := environment(t)
+	var watcher *RemoteWatcher
+	opened := make(chan struct{})
+	closed := make(chan error, 1)
+	var calls atomic.Int32
+	watcher, err := env.Watch(background(), []WatchTarget{{Path: "AGENTS.md"}}, func(change WatchChange) {
+		<-opened
+		if calls.Add(1) == 1 {
+			closed <- watcher.Close()
+		}
+	})
+	mustDo(t, err)
+	close(opened)
+	mustDo(t, env.WriteFile(background(), "AGENTS.md", []byte("x")))
+	select {
+	case err := <-closed:
+		mustDo(t, err)
+	case <-time.After(10 * time.Second):
+		t.Fatal("Close called from onChange did not return")
+	}
+	mustDo(t, env.WriteFile(background(), "AGENTS.md", []byte("y")))
+	time.Sleep(500 * time.Millisecond)
+	if n := calls.Load(); n != 1 {
+		t.Fatalf("%d onChange calls, want 1: the watcher reported changes after it was closed", n)
+	}
+}
+
+// TestWatcherCallsOnChangeOneAtATimeAcrossAReconnect: upstream's callbacks
+// run one at a time (one JavaScript thread), also the overflow a reopened
+// watcher reports while the new watch already reports changes.
+func TestWatcherCallsOnChangeOneAtATimeAcrossAReconnect(t *testing.T) {
+	connection := newConnection(t)
+	env := NewRemoteExecutionEnv(RemoteExecutionEnvOptions{
+		Connection: connection, ID: "pi-env:test", Cwd: tempDir(t, "pi-env-remote-"),
+		Watch: RemoteWatchOptions{Mode: "polling", PollIntervalMS: 50},
+	})
+	var active, most atomic.Int32
+	var overflowed, changedAfter atomic.Bool
+	watcher, err := env.Watch(background(), []WatchTarget{{Path: "AGENTS.md"}}, func(change WatchChange) {
+		n := active.Add(1)
+		defer active.Add(-1)
+		for m := most.Load(); n > m && !most.CompareAndSwap(m, n); m = most.Load() {
+		}
+		if change.Overflow {
+			overflowed.Store(true)
+			time.Sleep(time.Second)
+		} else if overflowed.Load() {
+			changedAfter.Store(true)
+		}
+	})
+	mustDo(t, err)
+	defer watcher.Close()
+	info, err := connection.Info(background())
+	mustDo(t, err)
+	killPID(t, info.PID)
+	// Keep changing the file while the watcher reopens (after a second), so
+	// the new watch reports changes while the overflow is delivered.
+	stop := make(chan struct{})
+	writer := make(chan struct{})
+	go func() {
+		defer close(writer)
+		for i := 0; ; i++ {
+			select {
+			case <-stop:
+				return
+			case <-time.After(20 * time.Millisecond):
+			}
+			_ = env.WriteFile(background(), "AGENTS.md", []byte(strconv.Itoa(i)))
+		}
+	}()
+	waitFor(t, 10*time.Second, "the overflow and a change after it", func() bool { return overflowed.Load() && changedAfter.Load() })
+	close(stop)
+	<-writer
+	if n := most.Load(); n != 1 {
+		t.Fatalf("onChange ran on %d goroutines at once", n)
+	}
 }
 
 // TestResolvesPathsLikeUpstream compares AbsolutePath and JoinPath with

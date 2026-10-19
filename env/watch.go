@@ -76,14 +76,22 @@ type RemoteWatcher struct {
 	cancel  context.CancelFunc
 	request chan struct{}
 	wake    chan struct{}
+	// queue holds the changes onChange has yet to receive; delivering is set
+	// while a goroutine delivers them.
+	queue      []WatchChange
+	delivering bool
 }
 
+// errWatcherClosed is what start reports once the watcher is closed.
+var errWatcherClosed = errors.New("the watcher is closed")
+
 // OpenRemoteWatcher watches targets (resolved paths); it fails like
-// NodeFileWatcher.open if coverage cannot be established. onChange is called
-// from one goroutine at a time.
+// NodeFileWatcher.open if coverage cannot be established. onChange receives
+// one change at a time, in order, on a goroutine of the watcher's own (as
+// upstream's callbacks run on one thread); it may call Close.
 func OpenRemoteWatcher(connection *Connection, targets []WatchTarget, onChange func(WatchChange), options RemoteWatchOptions) (*RemoteWatcher, error) {
 	w := &RemoteWatcher{connection: connection, targets: targets, onChange: onChange, options: options, mode: "native", wake: make(chan struct{})}
-	if err := w.start(); err != nil {
+	if err := w.start(false); err != nil {
 		return nil, err
 	}
 	return w, nil
@@ -98,10 +106,13 @@ func (w *RemoteWatcher) Mode() string {
 	return w.mode
 }
 
-// Close stops watching; no onChange call starts after it returns. It is
+// Close stops watching and waits for the daemon's watch to end; no onChange
+// call starts after it returns. Called from onChange, it does not wait for
+// that call, as upstream's close() inside the callback returns at once. It is
 // idempotent.
 func (w *RemoteWatcher) Close() error {
 	w.mu.Lock()
+	w.queue = nil
 	if w.closed {
 		w.mu.Unlock()
 		return nil
@@ -110,12 +121,8 @@ func (w *RemoteWatcher) Close() error {
 	close(w.wake)
 	cancel, request := w.cancel, w.request
 	w.mu.Unlock()
-	if cancel != nil {
-		cancel()
-	}
-	if request != nil {
-		<-request
-	}
+	cancel()
+	<-request
 	return nil
 }
 
@@ -125,16 +132,54 @@ func (w *RemoteWatcher) isClosed() bool {
 	return w.closed
 }
 
-func (w *RemoteWatcher) setClosed() {
+// post queues change for onChange, unless the watcher is closed.
+func (w *RemoteWatcher) post(change WatchChange) {
 	w.mu.Lock()
-	w.closed = true
-	w.mu.Unlock()
+	defer w.mu.Unlock()
+	if !w.closed {
+		w.enqueue(change)
+	}
 }
 
-func (w *RemoteWatcher) deliver(change WatchChange) {
-	if w.isClosed() {
-		return
+// stop ends watching with err, onChange's last change.
+func (w *RemoteWatcher) stop(err *FileError) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if !w.closed {
+		w.enqueue(WatchChange{Err: err})
+		w.closed = true
 	}
+}
+
+// enqueue queues change and starts delivering unless a goroutine does; w.mu
+// is held.
+func (w *RemoteWatcher) enqueue(change WatchChange) {
+	w.queue = append(w.queue, change)
+	if !w.delivering {
+		w.delivering = true
+		go w.deliver()
+	}
+}
+
+// deliver calls onChange with the queued changes, one at a time, off the
+// goroutines that receive them, so a callback can neither stall the watch
+// request nor deadlock calling Close.
+func (w *RemoteWatcher) deliver() {
+	for {
+		w.mu.Lock()
+		if len(w.queue) == 0 {
+			w.delivering = false
+			w.mu.Unlock()
+			return
+		}
+		change := w.queue[0]
+		w.queue = w.queue[1:]
+		w.mu.Unlock()
+		w.call(change)
+	}
+}
+
+func (w *RemoteWatcher) call(change WatchChange) {
 	// A panicking callback must not stop watching.
 	defer func() { _ = recover() }()
 	w.onChange(change)
@@ -152,8 +197,9 @@ type excludeJSON struct {
 }
 
 // start opens the daemon's watcher; it returns once the watcher reports
-// coverage.
-func (w *RemoteWatcher) start() error {
+// coverage. A reopened watcher reports Overflow first: changes while it was
+// disconnected were not seen.
+func (w *RemoteWatcher) start(reopened bool) error {
 	targets := make([]watchTargetJSON, len(w.targets))
 	for i, target := range w.targets {
 		names := append([]string{}, target.Exclude.Names...)
@@ -175,7 +221,14 @@ func (w *RemoteWatcher) start() error {
 	isReady := false
 	finished := make(chan error, 1)
 	request := make(chan struct{})
+	// Registered with the closed check, so a Close either sees this request
+	// or keeps it from starting.
 	w.mu.Lock()
+	if w.closed {
+		w.mu.Unlock()
+		cancel()
+		return errWatcherClosed
+	}
 	w.cancel, w.request = cancel, request
 	w.mu.Unlock()
 
@@ -205,6 +258,9 @@ func (w *RemoteWatcher) start() error {
 					w.mu.Unlock()
 					if !isReady {
 						isReady = true
+						if reopened {
+							w.post(WatchChange{Overflow: true})
+						}
 						close(ready)
 					}
 				case "change":
@@ -214,17 +270,16 @@ func (w *RemoteWatcher) start() error {
 						w.mu.Unlock()
 					}
 					if e.Overflow {
-						w.deliver(WatchChange{Overflow: true})
+						w.post(WatchChange{Overflow: true})
 					} else {
-						w.deliver(WatchChange{Paths: e.Paths})
+						w.post(WatchChange{Paths: e.Paths})
 					}
 				case "error":
 					code := FileInvalid
 					if e.Code == "permission_denied" {
 						code = FilePermissionDenied
 					}
-					w.deliver(WatchChange{Err: &FileError{Code: code, Message: jsValueString(e.Message)}})
-					w.setClosed()
+					w.stop(&FileError{Code: code, Message: jsValueString(e.Message)})
 				}
 			},
 		})
@@ -242,8 +297,7 @@ func (w *RemoteWatcher) start() error {
 			go w.reconnect()
 			return
 		}
-		w.deliver(WatchChange{Err: toFileError(err, "")})
-		w.setClosed()
+		w.stop(toFileError(err, ""))
 	}()
 
 	select {
@@ -255,27 +309,21 @@ func (w *RemoteWatcher) start() error {
 }
 
 func (w *RemoteWatcher) reconnect() {
-	for delay := reconnectFirst; !w.isClosed(); delay = min(delay*2, reconnectMax) {
+	for delay := reconnectFirst; ; delay = min(delay*2, reconnectMax) {
 		timer := time.NewTimer(delay)
 		select {
 		case <-timer.C:
 		case <-w.wake:
 			timer.Stop()
 		}
-		if w.isClosed() {
-			return
-		}
-		err := w.start()
-		if err == nil {
-			// Changes while disconnected were not seen.
-			w.deliver(WatchChange{Overflow: true})
+		err := w.start(true)
+		if err == nil || w.isClosed() {
 			return
 		}
 		if IsConnectionLost(err) {
 			continue
 		}
-		w.deliver(WatchChange{Err: toFileError(err, "")})
-		w.setClosed()
+		w.stop(toFileError(err, ""))
 		return
 	}
 }
