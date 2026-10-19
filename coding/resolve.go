@@ -387,17 +387,6 @@ func resolveModelReference(request modelReferenceRequest, models []*ai.Model, us
 	return modelReferenceResult{target: target}
 }
 
-// findExactModelReferenceMatch is pi's findExactModelReferenceMatch: an
-// exact provider/id or bare id lookup, without thinking suffixes or fuzzy
-// matching, that resolves only when unambiguous.
-func findExactModelReferenceMatch(reference string, models []*ai.Model) *ai.Model {
-	result := resolveModelReference(modelReferenceRequest{text: reference, thinkingSuffix: thinkingSuffixNone}, models, func(string) bool { return true })
-	if result.status != referenceResolved {
-		return nil
-	}
-	return result.model
-}
-
 // resolveText is pi's resolveText: an exact reference, then a fuzzy match,
 // then the same with a thinking suffix split off.
 func resolveText(text string, request modelReferenceRequest, pool []*ai.Model, usable func(string) bool) modelReferenceResult {

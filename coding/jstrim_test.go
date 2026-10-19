@@ -192,13 +192,21 @@ func TestJSTrimGitPaths(t *testing.T) {
 	}
 }
 
+// The capture ran pi's findExactModelReferenceMatch, which is
+// resolveModelReference without thinking suffixes or fuzzy matching, every
+// provider usable; its only callers are in interactive mode, which the port
+// does not have, so the trim is checked on resolveModelReference itself.
 func TestJSTrimModelReferences(t *testing.T) {
 	models := []*ai.Model{
 		{Provider: "anthropic", ID: "claude-sonnet-4-5", Name: "Claude Sonnet 4.5"},
 		{Provider: "openai", ID: "gpt-4o", Name: "GPT-4o"},
 	}
 	for _, tc := range loadJSTrimCapture(t).ModelReferences {
-		got := findExactModelReferenceMatch(tc.Reference, models)
+		var got *ai.Model
+		request := modelReferenceRequest{text: tc.Reference, thinkingSuffix: thinkingSuffixNone}
+		if result := resolveModelReference(request, models, func(string) bool { return true }); result.status == referenceResolved {
+			got = result.model
+		}
 		switch {
 		case tc.Match == nil && got != nil:
 			t.Errorf("%+q matched %s/%s, pi matched nothing", tc.Reference, got.Provider, got.ID)
