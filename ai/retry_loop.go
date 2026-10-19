@@ -13,7 +13,8 @@ import (
 // and stay reusable by the SDK and other callers. pi's consumer is the
 // coding agent's compaction (core/compaction/compaction.ts wraps each summary
 // call in retryAssistantCall), under the policy AgentSession reads from
-// settings.retry (getRetrySettings).
+// settings.retry (getRetrySettings); the port's is coding's compaction, under
+// CompactionSettings.Retry.
 
 // RetryPolicy is bounded retry with exponential backoff
 // (baseDelayMs * 2^(attempt-1)), capped at MaxAgentDelayMs. Mirrors pi's

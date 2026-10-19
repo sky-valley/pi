@@ -30,6 +30,15 @@ type CompactionSettings struct {
 	// "none" either way (pi compact()'s optional sessionId param, upstream
 	// 58302d34e "support compaction routing sessions").
 	SessionID string
+	// Retry, when set and enabled, retries a summary request that fails with
+	// a transient error, with backoff (pi compact()'s retry param:
+	// completeSummarization wraps each call in retryAssistantCall, upstream
+	// 8e53e0e49). Nil sends each request once. pi's AgentSession passes its
+	// settings.retry here; the port's session has no settings, so a caller
+	// that wants pi's behaviour sets it.
+	Retry *ai.RetryPolicy
+	// RetryCallbacks observe those retries (pi compact()'s callbacks).
+	RetryCallbacks *ai.RetryCallbacks
 }
 
 // DefaultCompactionSettings mirrors pi's defaults.
@@ -702,19 +711,19 @@ func (s *Session) compact(ctx context.Context, state *compactionState, messages 
 			historyResult = previous.summary
 		}
 		if len(history) > 0 {
-			hr, ok := s.generateSummary(ctx, history, previousSummary, settings.SessionID)
+			hr, ok := s.generateSummary(ctx, history, previousSummary, settings)
 			if !ok {
 				return current // summarization failed; keep current view
 			}
 			historyResult = hr
 		}
-		tp, ok := s.generateTurnPrefixSummary(ctx, turnPrefix, settings.SessionID)
+		tp, ok := s.generateTurnPrefixSummary(ctx, turnPrefix, settings)
 		if !ok {
 			return current
 		}
 		newSummary = historyResult + "\n\n---\n\n**Turn Context (split turn):**\n\n" + tp
 	} else {
-		ns, ok := s.generateSummary(ctx, history, previousSummary, settings.SessionID)
+		ns, ok := s.generateSummary(ctx, history, previousSummary, settings)
 		if !ok {
 			return current
 		}
@@ -781,7 +790,7 @@ func (s *Session) compact(ctx context.Context, state *compactionState, messages 
 // Branch-summary-style callers carry no routing session ID (pi generateSummary's
 // optional sessionId stays undefined for them), so each request gets a fresh one.
 func (s *Session) summarize(ctx context.Context, older []agent.AgentMessage) string {
-	text, ok := s.generateSummary(ctx, older, "", "")
+	text, ok := s.generateSummary(ctx, older, "", CompactionSettings{})
 	if !ok {
 		return ""
 	}
@@ -798,7 +807,7 @@ func (s *Session) summarize(ctx context.Context, older []agent.AgentMessage) str
 // generateTurnPrefixSummary). Returns ok=false where pi fails the summarization
 // (stopReason "error" or "length"); an aborted response returns the text
 // produced so far, like pi.
-func (s *Session) generateSummary(ctx context.Context, older []agent.AgentMessage, previousSummary, sessionID string) (string, bool) {
+func (s *Session) generateSummary(ctx context.Context, older []agent.AgentMessage, previousSummary string, settings CompactionSettings) (string, bool) {
 	conversationText := serializeConversation(messagesAsLlm(older))
 
 	promptText := "<conversation>\n" + conversationText + "\n</conversation>\n\n"
@@ -809,7 +818,7 @@ func (s *Session) generateSummary(ctx context.Context, older []agent.AgentMessag
 		promptText += summarizationPrompt
 	}
 
-	return s.completeSummarization(ctx, promptText, sessionID)
+	return s.completeSummarization(ctx, promptText, settings)
 }
 
 // generateTurnPrefixSummary ports pi's generateTurnPrefixSummary: the prefix of
@@ -817,10 +826,10 @@ func (s *Session) generateSummary(ctx context.Context, older []agent.AgentMessag
 // serialized prefix goes under a
 // "# Conversation" heading and the prompt under "# Instructions" — not the
 // history request's <conversation> tags (pi #9652, upstream d192bd6dc).
-func (s *Session) generateTurnPrefixSummary(ctx context.Context, messages []agent.AgentMessage, sessionID string) (string, bool) {
+func (s *Session) generateTurnPrefixSummary(ctx context.Context, messages []agent.AgentMessage, settings CompactionSettings) (string, bool) {
 	conversationText := serializeConversation(messagesAsLlm(messages))
 	promptText := "# Conversation\n" + conversationText + "\n\n# Instructions\n" + turnPrefixSummarizationPrompt
-	return s.completeSummarization(ctx, promptText, sessionID)
+	return s.completeSummarization(ctx, promptText, settings)
 }
 
 // messagesAsLlm filters agent messages down to LLM roles (pi convertToLlm, which
@@ -891,11 +900,14 @@ func summarizationFailed(reason ai.StopReason) bool {
 // the thinking level are passed through. It sets no maxTokens (upstream
 // 6fcb48670): the provider sizes the output from the actual request, the
 // model's output limit reduced to fit the remaining context, as for normal
-// turns, so ReserveTokens only decides when compaction starts. Returns ok=false where pi fails the
+// turns, so ReserveTokens only decides when compaction starts. The request
+// runs under settings.Retry (pi retryAssistantCall): a transient error such as
+// a dropped stream is retried with backoff, while a deterministic error or an
+// abort returns at once; settings.SessionID is the routing session. Returns ok=false where pi fails the
 // summarization (see summarizationFailed); otherwise the response's text blocks
 // joined with "\n" (pi-ai contentText), which for an aborted response is the
 // text produced so far.
-func (s *Session) completeSummarization(ctx context.Context, promptText, sessionID string) (string, bool) {
+func (s *Session) completeSummarization(ctx context.Context, promptText string, settings CompactionSettings) (string, bool) {
 	summarizationMessages := []ai.Message{ai.NewUserText(promptText, nowMillisCoding())}
 
 	// Avoid cache writes for one-off summaries (pi 9b3a2059): retention "none".
@@ -904,6 +916,7 @@ func (s *Session) completeSummarization(ctx context.Context, promptText, session
 	// `options.sessionId ?? uuidv7()`, upstream 58302d34e). pi throws here on
 	// generator exhaustion; the Must form panics for the same reason, because
 	// completeSummarization's (string, bool) return has nowhere to carry it.
+	sessionID := settings.SessionID
 	if sessionID == "" {
 		sessionID = mustUUIDv7()
 	}
@@ -939,9 +952,17 @@ func (s *Session) completeSummarization(ctx context.Context, promptText, session
 	// pi buildSummarizationContext: the summarization prompt rides the leading
 	// system message of a normalized transcript.
 	summarizationContext := ai.NormalizeContext(ai.Context{SystemPrompt: summarizationSystemPrompt, Messages: summarizationMessages})
-	stream := streamFn(ctx, requestModel, summarizationContext, opts)
-	msg := stream.Result()
-	if msg == nil || summarizationFailed(msg.StopReason) {
+	produce := func() *ai.AssistantMessage {
+		if msg := streamFn(ctx, requestModel, summarizationContext, opts).Result(); msg != nil {
+			return msg
+		}
+		// pi awaits a result that never comes. Here a stream that ends
+		// without one fails the request like a dropped stream, which the
+		// retry policy may retry.
+		return ai.NewErrorMessage(requestModel.Api, requestModel.Provider, requestModel.ID, ai.StopError, "summarization stream ended without a result")
+	}
+	msg := ai.RetryAssistantCall(ctx, produce, settings.Retry, settings.RetryCallbacks)
+	if summarizationFailed(msg.StopReason) {
 		return "", false
 	}
 	// A model that called a tool anyway did not produce a summary, so the
