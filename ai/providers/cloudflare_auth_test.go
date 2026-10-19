@@ -94,6 +94,9 @@ var (
 		"apiKey-env": func() ai.StreamOptions {
 			return cloudflareRequestOptions("request-key", cloudflareRequestEnv, nil)
 		},
+		"apiKey-account-env": func() ai.StreamOptions {
+			return cloudflareRequestOptions("request-key", map[string]string{"CLOUDFLARE_ACCOUNT_ID": "request-account"}, nil)
+		},
 		"gateway-header": func() ai.StreamOptions {
 			header := "Bearer request-header"
 			return cloudflareRequestOptions("", nil, ai.ProviderHeaders{"cf-aig-authorization": &header})

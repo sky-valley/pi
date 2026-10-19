@@ -3212,6 +3212,46 @@
 			"provider": "cloudflare-workers-ai",
 			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "none",
+			"credential": "none",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "compat",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "none",
+			"credential": "none",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -3365,6 +3405,38 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "none",
+			"credential": "none",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "compat",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/%7BCLOUDFLARE_GATEWAY_ID%7D/compat/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "none",
+			"credential": "none",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -3504,6 +3576,38 @@
 				{
 					"method": "POST",
 					"url": "https://gateway.ai.cloudflare.com/v1/request-account/request-gateway/anthropic/v1/messages?beta=true",
+					"headers": {
+						"x-api-key": "request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "none",
+			"credential": "none",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "none",
+			"credential": "none",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "compat",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/%7BCLOUDFLARE_GATEWAY_ID%7D/anthropic/v1/messages?beta=true",
 					"headers": {
 						"x-api-key": "request-key"
 					}
@@ -3662,6 +3766,38 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "gpt-4.1",
 			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "none",
+			"credential": "none",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "compat",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/%7BCLOUDFLARE_GATEWAY_ID%7D/openai/responses",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "none",
+			"credential": "none",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -3759,6 +3895,26 @@
 			"provider": "cloudflare-workers-ai",
 			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "none",
+			"credential": "key-only",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -3835,6 +3991,18 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "none",
+			"credential": "key-only",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -3911,6 +4079,18 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "claude-haiku-4-5",
 			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "none",
+			"credential": "key-only",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -3980,6 +4160,18 @@
 			],
 			"stopReason": "error",
 			"errorMessage": null
+		},
+		{
+			"env": "none",
+			"credential": "key-only",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
 		},
 		{
 			"env": "none",
@@ -4052,6 +4244,26 @@
 			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
 			"options": "apiKey-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "none",
+			"credential": "key-account",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
 			"entry": "models",
 			"requests": [
 				{
@@ -4156,6 +4368,18 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "none",
+			"credential": "key-account",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -4232,6 +4456,18 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "claude-haiku-4-5",
 			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "none",
+			"credential": "key-account",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -4301,6 +4537,18 @@
 			],
 			"stopReason": "error",
 			"errorMessage": null
+		},
+		{
+			"env": "none",
+			"credential": "key-account",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
 		},
 		{
 			"env": "none",
@@ -4373,6 +4621,26 @@
 			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
 			"options": "apiKey-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "none",
+			"credential": "key-account-gateway",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
 			"entry": "models",
 			"requests": [
 				{
@@ -4485,6 +4753,18 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "none",
+			"credential": "key-account-gateway",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [
@@ -4577,6 +4857,18 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "claude-haiku-4-5",
 			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "none",
+			"credential": "key-account-gateway",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [
@@ -4669,6 +4961,18 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "gpt-4.1",
 			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "none",
+			"credential": "key-account-gateway",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [
@@ -4726,6 +5030,26 @@
 			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
 			"options": "apiKey-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "none",
+			"credential": "empty-key",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
 			"entry": "models",
 			"requests": [
 				{
@@ -4813,6 +5137,18 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "none",
+			"credential": "empty-key",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -4881,6 +5217,18 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "claude-haiku-4-5",
 			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "none",
+			"credential": "empty-key",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -4942,6 +5290,18 @@
 			],
 			"stopReason": "error",
 			"errorMessage": null
+		},
+		{
+			"env": "none",
+			"credential": "empty-key",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
 		},
 		{
 			"env": "none",
@@ -5025,6 +5385,26 @@
 			"provider": "cloudflare-workers-ai",
 			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "none",
+			"credential": "empty-account",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -5101,6 +5481,18 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "none",
+			"credential": "empty-account",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -5177,6 +5569,18 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "claude-haiku-4-5",
 			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "none",
+			"credential": "empty-account",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -5246,6 +5650,18 @@
 			],
 			"stopReason": "error",
 			"errorMessage": null
+		},
+		{
+			"env": "none",
+			"credential": "empty-account",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
 		},
 		{
 			"env": "none",
@@ -5382,6 +5798,46 @@
 			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
 			"options": "apiKey-env",
+			"entry": "compat",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key",
+			"credential": "none",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key",
+			"credential": "none",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
 			"entry": "compat",
 			"requests": [
 				{
@@ -5556,6 +6012,38 @@
 				{
 					"method": "POST",
 					"url": "https://gateway.ai.cloudflare.com/v1/request-account/request-gateway/compat/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key",
+			"credential": "none",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "key",
+			"credential": "none",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "compat",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/%7BCLOUDFLARE_GATEWAY_ID%7D/compat/chat/completions",
 					"headers": {
 						"authorization": "Bearer request-key"
 					}
@@ -5725,6 +6213,38 @@
 				{
 					"method": "POST",
 					"url": "https://gateway.ai.cloudflare.com/v1/request-account/request-gateway/anthropic/v1/messages?beta=true",
+					"headers": {
+						"x-api-key": "request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key",
+			"credential": "none",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "key",
+			"credential": "none",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "compat",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/%7BCLOUDFLARE_GATEWAY_ID%7D/anthropic/v1/messages?beta=true",
 					"headers": {
 						"x-api-key": "request-key"
 					}
@@ -5908,6 +6428,38 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "gpt-4.1",
 			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "key",
+			"credential": "none",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "compat",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/%7BCLOUDFLARE_GATEWAY_ID%7D/openai/responses",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key",
+			"credential": "none",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -6005,6 +6557,26 @@
 			"provider": "cloudflare-workers-ai",
 			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key",
+			"credential": "key-only",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -6081,6 +6653,18 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "key",
+			"credential": "key-only",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -6157,6 +6741,18 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "claude-haiku-4-5",
 			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "key",
+			"credential": "key-only",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -6226,6 +6822,18 @@
 			],
 			"stopReason": "error",
 			"errorMessage": null
+		},
+		{
+			"env": "key",
+			"credential": "key-only",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
 		},
 		{
 			"env": "key",
@@ -6298,6 +6906,26 @@
 			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
 			"options": "apiKey-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key",
+			"credential": "key-account",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
 			"entry": "models",
 			"requests": [
 				{
@@ -6402,6 +7030,18 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "key",
+			"credential": "key-account",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -6478,6 +7118,18 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "claude-haiku-4-5",
 			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "key",
+			"credential": "key-account",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -6547,6 +7199,18 @@
 			],
 			"stopReason": "error",
 			"errorMessage": null
+		},
+		{
+			"env": "key",
+			"credential": "key-account",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
 		},
 		{
 			"env": "key",
@@ -6619,6 +7283,26 @@
 			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
 			"options": "apiKey-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key",
+			"credential": "key-account-gateway",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
 			"entry": "models",
 			"requests": [
 				{
@@ -6731,6 +7415,18 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "key",
+			"credential": "key-account-gateway",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [
@@ -6823,6 +7519,18 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "claude-haiku-4-5",
 			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "key",
+			"credential": "key-account-gateway",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [
@@ -6915,6 +7623,18 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "gpt-4.1",
 			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "key",
+			"credential": "key-account-gateway",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [
@@ -6972,6 +7692,26 @@
 			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
 			"options": "apiKey-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key",
+			"credential": "empty-key",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
 			"entry": "models",
 			"requests": [
 				{
@@ -7059,6 +7799,18 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "key",
+			"credential": "empty-key",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -7127,6 +7879,18 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "claude-haiku-4-5",
 			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "key",
+			"credential": "empty-key",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -7188,6 +7952,18 @@
 			],
 			"stopReason": "error",
 			"errorMessage": null
+		},
+		{
+			"env": "key",
+			"credential": "empty-key",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
 		},
 		{
 			"env": "key",
@@ -7271,6 +8047,26 @@
 			"provider": "cloudflare-workers-ai",
 			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key",
+			"credential": "empty-account",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -7347,6 +8143,18 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "key",
+			"credential": "empty-account",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -7423,6 +8231,18 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "claude-haiku-4-5",
 			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "key",
+			"credential": "empty-account",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -7492,6 +8312,18 @@
 			],
 			"stopReason": "error",
 			"errorMessage": null
+		},
+		{
+			"env": "key",
+			"credential": "empty-account",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
 		},
 		{
 			"env": "key",
@@ -7620,6 +8452,46 @@
 			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
 			"options": "apiKey-env",
+			"entry": "compat",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "blank-key",
+			"credential": "none",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "blank-key",
+			"credential": "none",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
 			"entry": "compat",
 			"requests": [
 				{
@@ -7800,6 +8672,46 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/compat/chat/completions",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "blank-key",
+			"credential": "none",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "compat",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/%7BCLOUDFLARE_GATEWAY_ID%7D/compat/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "blank-key",
+			"credential": "none",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -7947,6 +8859,46 @@
 				{
 					"method": "POST",
 					"url": "https://gateway.ai.cloudflare.com/v1/request-account/request-gateway/anthropic/v1/messages?beta=true",
+					"headers": {
+						"x-api-key": "request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "blank-key",
+			"credential": "none",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/anthropic/v1/messages?beta=true",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "blank-key",
+			"credential": "none",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "compat",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/%7BCLOUDFLARE_GATEWAY_ID%7D/anthropic/v1/messages?beta=true",
 					"headers": {
 						"x-api-key": "request-key"
 					}
@@ -8113,6 +9065,46 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "gpt-4.1",
 			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/openai/responses",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "blank-key",
+			"credential": "none",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "compat",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/%7BCLOUDFLARE_GATEWAY_ID%7D/openai/responses",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "blank-key",
+			"credential": "none",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -8226,6 +9218,26 @@
 			"provider": "cloudflare-workers-ai",
 			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "blank-key",
+			"credential": "key-only",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [
@@ -8327,6 +9339,26 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/compat/chat/completions",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "blank-key",
+			"credential": "key-only",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [
@@ -8427,6 +9459,26 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "claude-haiku-4-5",
 			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/anthropic/v1/messages?beta=true",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "blank-key",
+			"credential": "key-only",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [
@@ -8527,6 +9579,26 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "gpt-4.1",
 			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/openai/responses",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "blank-key",
+			"credential": "key-only",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [
@@ -8608,6 +9680,26 @@
 			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
 			"options": "apiKey-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "blank-key",
+			"credential": "key-account",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
 			"entry": "models",
 			"requests": [
 				{
@@ -8728,6 +9820,26 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/compat/chat/completions",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "blank-key",
+			"credential": "key-account",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [
@@ -8814,6 +9926,26 @@
 				{
 					"method": "POST",
 					"url": "https://gateway.ai.cloudflare.com/v1/request-account/request-gateway/anthropic/v1/messages?beta=true",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "blank-key",
+			"credential": "key-account",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/anthropic/v1/messages?beta=true",
 					"headers": {
 						"cf-aig-authorization": "Bearer request-key"
 					}
@@ -8928,6 +10060,26 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "gpt-4.1",
 			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/openai/responses",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "blank-key",
+			"credential": "key-account",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [
@@ -9009,6 +10161,26 @@
 			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
 			"options": "apiKey-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "blank-key",
+			"credential": "key-account-gateway",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
 			"entry": "models",
 			"requests": [
 				{
@@ -9129,6 +10301,26 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/compat/chat/completions",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "blank-key",
+			"credential": "key-account-gateway",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [
@@ -9229,6 +10421,26 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "claude-haiku-4-5",
 			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/anthropic/v1/messages?beta=true",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "blank-key",
+			"credential": "key-account-gateway",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [
@@ -9329,6 +10541,26 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "gpt-4.1",
 			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/openai/responses",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "blank-key",
+			"credential": "key-account-gateway",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [
@@ -9394,6 +10626,26 @@
 			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
 			"options": "apiKey-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "blank-key",
+			"credential": "empty-key",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
 			"entry": "models",
 			"requests": [
 				{
@@ -9489,6 +10741,26 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/compat/chat/completions",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "blank-key",
+			"credential": "empty-key",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -9565,6 +10837,26 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "claude-haiku-4-5",
 			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/anthropic/v1/messages?beta=true",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "blank-key",
+			"credential": "empty-key",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -9627,6 +10919,26 @@
 				{
 					"method": "POST",
 					"url": "https://gateway.ai.cloudflare.com/v1/request-account/request-gateway/openai/responses",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "blank-key",
+			"credential": "empty-key",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/openai/responses",
 					"headers": {
 						"cf-aig-authorization": "Bearer request-key"
 					}
@@ -9725,6 +11037,26 @@
 			"provider": "cloudflare-workers-ai",
 			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "blank-key",
+			"credential": "empty-account",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -9795,6 +11127,26 @@
 				{
 					"method": "POST",
 					"url": "https://gateway.ai.cloudflare.com/v1/request-account/request-gateway/compat/chat/completions",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "blank-key",
+			"credential": "empty-account",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/compat/chat/completions",
 					"headers": {
 						"cf-aig-authorization": "Bearer request-key"
 					}
@@ -9893,6 +11245,26 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "claude-haiku-4-5",
 			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/anthropic/v1/messages?beta=true",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "blank-key",
+			"credential": "empty-account",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -9963,6 +11335,26 @@
 				{
 					"method": "POST",
 					"url": "https://gateway.ai.cloudflare.com/v1/request-account/request-gateway/openai/responses",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "blank-key",
+			"credential": "empty-account",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/openai/responses",
 					"headers": {
 						"cf-aig-authorization": "Bearer request-key"
 					}
@@ -10130,6 +11522,46 @@
 			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
 			"options": "apiKey-env",
+			"entry": "compat",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key-account",
+			"credential": "none",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key-account",
+			"credential": "none",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
 			"entry": "compat",
 			"requests": [
 				{
@@ -10313,6 +11745,38 @@
 				{
 					"method": "POST",
 					"url": "https://gateway.ai.cloudflare.com/v1/request-account/request-gateway/compat/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key-account",
+			"credential": "none",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "key-account",
+			"credential": "none",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "compat",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/%7BCLOUDFLARE_GATEWAY_ID%7D/compat/chat/completions",
 					"headers": {
 						"authorization": "Bearer request-key"
 					}
@@ -10482,6 +11946,38 @@
 				{
 					"method": "POST",
 					"url": "https://gateway.ai.cloudflare.com/v1/request-account/request-gateway/anthropic/v1/messages?beta=true",
+					"headers": {
+						"x-api-key": "request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key-account",
+			"credential": "none",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "key-account",
+			"credential": "none",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "compat",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/%7BCLOUDFLARE_GATEWAY_ID%7D/anthropic/v1/messages?beta=true",
 					"headers": {
 						"x-api-key": "request-key"
 					}
@@ -10665,6 +12161,38 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "gpt-4.1",
 			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "key-account",
+			"credential": "none",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "compat",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/%7BCLOUDFLARE_GATEWAY_ID%7D/openai/responses",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key-account",
+			"credential": "none",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -10778,6 +12306,26 @@
 			"provider": "cloudflare-workers-ai",
 			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key-account",
+			"credential": "key-only",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [
@@ -10863,6 +12411,18 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "key-account",
+			"credential": "key-only",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -10939,6 +12499,18 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "claude-haiku-4-5",
 			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "key-account",
+			"credential": "key-only",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -11008,6 +12580,18 @@
 			],
 			"stopReason": "error",
 			"errorMessage": null
+		},
+		{
+			"env": "key-account",
+			"credential": "key-only",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
 		},
 		{
 			"env": "key-account",
@@ -11088,6 +12672,26 @@
 			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
 			"options": "apiKey-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key-account",
+			"credential": "key-account",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
 			"entry": "models",
 			"requests": [
 				{
@@ -11192,6 +12796,18 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "key-account",
+			"credential": "key-account",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -11268,6 +12884,18 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "claude-haiku-4-5",
 			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "key-account",
+			"credential": "key-account",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -11337,6 +12965,18 @@
 			],
 			"stopReason": "error",
 			"errorMessage": null
+		},
+		{
+			"env": "key-account",
+			"credential": "key-account",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
 		},
 		{
 			"env": "key-account",
@@ -11417,6 +13057,26 @@
 			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
 			"options": "apiKey-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key-account",
+			"credential": "key-account-gateway",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
 			"entry": "models",
 			"requests": [
 				{
@@ -11529,6 +13189,18 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "key-account",
+			"credential": "key-account-gateway",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [
@@ -11621,6 +13293,18 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "claude-haiku-4-5",
 			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "key-account",
+			"credential": "key-account-gateway",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [
@@ -11713,6 +13397,18 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "gpt-4.1",
 			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "key-account",
+			"credential": "key-account-gateway",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [
@@ -11778,6 +13474,26 @@
 			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
 			"options": "apiKey-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key-account",
+			"credential": "empty-key",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
 			"entry": "models",
 			"requests": [
 				{
@@ -11865,6 +13581,18 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "key-account",
+			"credential": "empty-key",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -11933,6 +13661,18 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "claude-haiku-4-5",
 			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "key-account",
+			"credential": "empty-key",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -11994,6 +13734,18 @@
 			],
 			"stopReason": "error",
 			"errorMessage": null
+		},
+		{
+			"env": "key-account",
+			"credential": "empty-key",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
 		},
 		{
 			"env": "key-account",
@@ -12085,6 +13837,26 @@
 			"provider": "cloudflare-workers-ai",
 			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key-account",
+			"credential": "empty-account",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -12161,6 +13933,18 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "key-account",
+			"credential": "empty-account",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -12237,6 +14021,18 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "claude-haiku-4-5",
 			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
+		},
+		{
+			"env": "key-account",
+			"credential": "empty-account",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -12306,6 +14102,18 @@
 			],
 			"stopReason": "error",
 			"errorMessage": null
+		},
+		{
+			"env": "key-account",
+			"credential": "empty-account",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [],
+			"stopReason": "error",
+			"errorMessage": "Provider is not configured: cloudflare-ai-gateway"
 		},
 		{
 			"env": "key-account",
@@ -12466,6 +14274,46 @@
 			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
 			"options": "apiKey-env",
+			"entry": "compat",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key-account-gateway",
+			"credential": "none",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key-account-gateway",
+			"credential": "none",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
 			"entry": "compat",
 			"requests": [
 				{
@@ -12673,6 +14521,46 @@
 				{
 					"method": "POST",
 					"url": "https://gateway.ai.cloudflare.com/v1/request-account/request-gateway/compat/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key-account-gateway",
+			"credential": "none",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/compat/chat/completions",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key-account-gateway",
+			"credential": "none",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "compat",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/%7BCLOUDFLARE_GATEWAY_ID%7D/compat/chat/completions",
 					"headers": {
 						"authorization": "Bearer request-key"
 					}
@@ -12874,6 +14762,46 @@
 				{
 					"method": "POST",
 					"url": "https://gateway.ai.cloudflare.com/v1/request-account/request-gateway/anthropic/v1/messages?beta=true",
+					"headers": {
+						"x-api-key": "request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key-account-gateway",
+			"credential": "none",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/anthropic/v1/messages?beta=true",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key-account-gateway",
+			"credential": "none",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "compat",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/%7BCLOUDFLARE_GATEWAY_ID%7D/anthropic/v1/messages?beta=true",
 					"headers": {
 						"x-api-key": "request-key"
 					}
@@ -13089,6 +15017,46 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "gpt-4.1",
 			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/openai/responses",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key-account-gateway",
+			"credential": "none",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "compat",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/%7BCLOUDFLARE_GATEWAY_ID%7D/openai/responses",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key-account-gateway",
+			"credential": "none",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [
@@ -13210,6 +15178,26 @@
 			"provider": "cloudflare-workers-ai",
 			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key-account-gateway",
+			"credential": "key-only",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [
@@ -13311,6 +15299,26 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/compat/chat/completions",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key-account-gateway",
+			"credential": "key-only",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [
@@ -13411,6 +15419,26 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "claude-haiku-4-5",
 			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/anthropic/v1/messages?beta=true",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key-account-gateway",
+			"credential": "key-only",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [
@@ -13511,6 +15539,26 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "gpt-4.1",
 			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/openai/responses",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key-account-gateway",
+			"credential": "key-only",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [
@@ -13592,6 +15640,26 @@
 			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
 			"options": "apiKey-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key-account-gateway",
+			"credential": "key-account",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
 			"entry": "models",
 			"requests": [
 				{
@@ -13712,6 +15780,26 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/compat/chat/completions",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key-account-gateway",
+			"credential": "key-account",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [
@@ -13798,6 +15886,26 @@
 				{
 					"method": "POST",
 					"url": "https://gateway.ai.cloudflare.com/v1/request-account/request-gateway/anthropic/v1/messages?beta=true",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key-account-gateway",
+			"credential": "key-account",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/anthropic/v1/messages?beta=true",
 					"headers": {
 						"cf-aig-authorization": "Bearer request-key"
 					}
@@ -13912,6 +16020,26 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "gpt-4.1",
 			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/openai/responses",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key-account-gateway",
+			"credential": "key-account",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [
@@ -13993,6 +16121,26 @@
 			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
 			"options": "apiKey-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key-account-gateway",
+			"credential": "key-account-gateway",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
 			"entry": "models",
 			"requests": [
 				{
@@ -14113,6 +16261,26 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/compat/chat/completions",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key-account-gateway",
+			"credential": "key-account-gateway",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [
@@ -14213,6 +16381,26 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "claude-haiku-4-5",
 			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/anthropic/v1/messages?beta=true",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key-account-gateway",
+			"credential": "key-account-gateway",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [
@@ -14313,6 +16501,26 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "gpt-4.1",
 			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/openai/responses",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key-account-gateway",
+			"credential": "key-account-gateway",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [
@@ -14378,6 +16586,26 @@
 			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
 			"options": "apiKey-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key-account-gateway",
+			"credential": "empty-key",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
 			"entry": "models",
 			"requests": [
 				{
@@ -14473,6 +16701,26 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/compat/chat/completions",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key-account-gateway",
+			"credential": "empty-key",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -14549,6 +16797,26 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "claude-haiku-4-5",
 			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/anthropic/v1/messages?beta=true",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key-account-gateway",
+			"credential": "empty-key",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -14611,6 +16879,26 @@
 				{
 					"method": "POST",
 					"url": "https://gateway.ai.cloudflare.com/v1/request-account/request-gateway/openai/responses",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key-account-gateway",
+			"credential": "empty-key",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/openai/responses",
 					"headers": {
 						"cf-aig-authorization": "Bearer request-key"
 					}
@@ -14709,6 +16997,26 @@
 			"provider": "cloudflare-workers-ai",
 			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key-account-gateway",
+			"credential": "empty-account",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -14779,6 +17087,26 @@
 				{
 					"method": "POST",
 					"url": "https://gateway.ai.cloudflare.com/v1/request-account/request-gateway/compat/chat/completions",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key-account-gateway",
+			"credential": "empty-account",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/compat/chat/completions",
 					"headers": {
 						"cf-aig-authorization": "Bearer request-key"
 					}
@@ -14877,6 +17205,26 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "claude-haiku-4-5",
 			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/anthropic/v1/messages?beta=true",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key-account-gateway",
+			"credential": "empty-account",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -14947,6 +17295,26 @@
 				{
 					"method": "POST",
 					"url": "https://gateway.ai.cloudflare.com/v1/request-account/request-gateway/openai/responses",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "key-account-gateway",
+			"credential": "empty-account",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/openai/responses",
 					"headers": {
 						"cf-aig-authorization": "Bearer request-key"
 					}
@@ -15082,6 +17450,46 @@
 			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
 			"options": "apiKey-env",
+			"entry": "compat",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "account-gateway",
+			"credential": "none",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "account-gateway",
+			"credential": "none",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
 			"entry": "compat",
 			"requests": [
 				{
@@ -15248,6 +17656,46 @@
 				{
 					"method": "POST",
 					"url": "https://gateway.ai.cloudflare.com/v1/request-account/request-gateway/compat/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "account-gateway",
+			"credential": "none",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/compat/chat/completions",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "account-gateway",
+			"credential": "none",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "compat",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/%7BCLOUDFLARE_GATEWAY_ID%7D/compat/chat/completions",
 					"headers": {
 						"authorization": "Bearer request-key"
 					}
@@ -15423,6 +17871,46 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "claude-haiku-4-5",
 			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/anthropic/v1/messages?beta=true",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "account-gateway",
+			"credential": "none",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "compat",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/%7BCLOUDFLARE_GATEWAY_ID%7D/anthropic/v1/messages?beta=true",
+					"headers": {
+						"x-api-key": "request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "account-gateway",
+			"credential": "none",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -15575,6 +18063,46 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "gpt-4.1",
 			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/openai/responses",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "account-gateway",
+			"credential": "none",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "compat",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/%7BCLOUDFLARE_GATEWAY_ID%7D/openai/responses",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "account-gateway",
+			"credential": "none",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -15688,6 +18216,26 @@
 			"provider": "cloudflare-workers-ai",
 			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "account-gateway",
+			"credential": "key-only",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [
@@ -15789,6 +18337,26 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/compat/chat/completions",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "account-gateway",
+			"credential": "key-only",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [
@@ -15889,6 +18457,26 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "claude-haiku-4-5",
 			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/anthropic/v1/messages?beta=true",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "account-gateway",
+			"credential": "key-only",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [
@@ -15989,6 +18577,26 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "gpt-4.1",
 			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/openai/responses",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "account-gateway",
+			"credential": "key-only",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [
@@ -16070,6 +18678,26 @@
 			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
 			"options": "apiKey-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "account-gateway",
+			"credential": "key-account",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
 			"entry": "models",
 			"requests": [
 				{
@@ -16190,6 +18818,26 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/compat/chat/completions",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "account-gateway",
+			"credential": "key-account",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [
@@ -16276,6 +18924,26 @@
 				{
 					"method": "POST",
 					"url": "https://gateway.ai.cloudflare.com/v1/request-account/request-gateway/anthropic/v1/messages?beta=true",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "account-gateway",
+			"credential": "key-account",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/anthropic/v1/messages?beta=true",
 					"headers": {
 						"cf-aig-authorization": "Bearer request-key"
 					}
@@ -16390,6 +19058,26 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "gpt-4.1",
 			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/openai/responses",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "account-gateway",
+			"credential": "key-account",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [
@@ -16471,6 +19159,26 @@
 			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
 			"options": "apiKey-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "account-gateway",
+			"credential": "key-account-gateway",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
 			"entry": "models",
 			"requests": [
 				{
@@ -16591,6 +19299,26 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/compat/chat/completions",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "account-gateway",
+			"credential": "key-account-gateway",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [
@@ -16691,6 +19419,26 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "claude-haiku-4-5",
 			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/anthropic/v1/messages?beta=true",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "account-gateway",
+			"credential": "key-account-gateway",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [
@@ -16791,6 +19539,26 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "gpt-4.1",
 			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/openai/responses",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "account-gateway",
+			"credential": "key-account-gateway",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [
@@ -16856,6 +19624,26 @@
 			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
 			"options": "apiKey-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "account-gateway",
+			"credential": "empty-key",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
 			"entry": "models",
 			"requests": [
 				{
@@ -16951,6 +19739,26 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/compat/chat/completions",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "account-gateway",
+			"credential": "empty-key",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -17027,6 +19835,26 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "claude-haiku-4-5",
 			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/anthropic/v1/messages?beta=true",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "account-gateway",
+			"credential": "empty-key",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -17089,6 +19917,26 @@
 				{
 					"method": "POST",
 					"url": "https://gateway.ai.cloudflare.com/v1/request-account/request-gateway/openai/responses",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "account-gateway",
+			"credential": "empty-key",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/openai/responses",
 					"headers": {
 						"cf-aig-authorization": "Bearer request-key"
 					}
@@ -17187,6 +20035,26 @@
 			"provider": "cloudflare-workers-ai",
 			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
 			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/request-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "account-gateway",
+			"credential": "empty-account",
+			"provider": "cloudflare-workers-ai",
+			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -17257,6 +20125,26 @@
 				{
 					"method": "POST",
 					"url": "https://gateway.ai.cloudflare.com/v1/request-account/request-gateway/compat/chat/completions",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "account-gateway",
+			"credential": "empty-account",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"api": "openai-completions",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/compat/chat/completions",
 					"headers": {
 						"cf-aig-authorization": "Bearer request-key"
 					}
@@ -17355,6 +20243,26 @@
 			"provider": "cloudflare-ai-gateway",
 			"modelId": "claude-haiku-4-5",
 			"api": "anthropic-messages",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/anthropic/v1/messages?beta=true",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "account-gateway",
+			"credential": "empty-account",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"api": "anthropic-messages",
 			"options": "gateway-header",
 			"entry": "models",
 			"requests": [],
@@ -17425,6 +20333,26 @@
 				{
 					"method": "POST",
 					"url": "https://gateway.ai.cloudflare.com/v1/request-account/request-gateway/openai/responses",
+					"headers": {
+						"cf-aig-authorization": "Bearer request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null
+		},
+		{
+			"env": "account-gateway",
+			"credential": "empty-account",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "gpt-4.1",
+			"api": "openai-responses",
+			"options": "apiKey-account-env",
+			"entry": "models",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/request-account/env-gateway/openai/responses",
 					"headers": {
 						"cf-aig-authorization": "Bearer request-key"
 					}

@@ -103,6 +103,8 @@ const overrideSets = {
 
 const optionSets = {
 	...overrideSets,
+	// An env naming the account alone: the gateway placeholder stays.
+	"apiKey-account-env": { apiKey: "request-key", env: { CLOUDFLARE_ACCOUNT_ID: "request-account" } },
 	"gateway-header": { headers: { "cf-aig-authorization": "Bearer request-header" } },
 };
 
