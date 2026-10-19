@@ -16,9 +16,12 @@ import (
 	"github.com/sky-valley/pi/internal/jstext"
 )
 
+// validJSONEscapes are the escape characters repairJSON keeps as they are. A
+// `\u` is kept only when four hex digits follow; otherwise its backslash is
+// doubled like any other invalid escape's.
 var validJSONEscapes = map[byte]bool{
 	'"': true, '\\': true, '/': true, 'b': true, 'f': true,
-	'n': true, 'r': true, 't': true, 'u': true,
+	'n': true, 'r': true, 't': true,
 }
 
 func isHexDigit(b byte) bool {

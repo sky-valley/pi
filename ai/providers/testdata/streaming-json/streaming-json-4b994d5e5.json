@@ -1,5 +1,5 @@
 {
-	"sha": "002fc8385",
+	"sha": "4b994d5e5",
 	"partialJSON": "0.1.7",
 	"documents": [
 		{
@@ -690,6 +690,86 @@
 				"{\"a\":null,\"b\":null,\"c\":null,\"d\":null,\"e\":-1e+40}",
 				"{\"a\":null,\"b\":null,\"c\":null,\"d\":null,\"e\":null}",
 				"{\"a\":null,\"b\":null,\"c\":null,\"d\":null,\"e\":null}"
+			]
+		},
+		{
+			"doc": "{\"path\":\"a.tex\",\"content\":\"\\usepackage{x} caf\\u00e9 \\u12g \\url\",\"mode\":\"w\"}",
+			"results": [
+				"{}",
+				"{}",
+				"{}",
+				"{}",
+				"{}",
+				"{}",
+				"{}",
+				"{}",
+				"{\"path\":\"\"}",
+				"{\"path\":\"a\"}",
+				"{\"path\":\"a.\"}",
+				"{\"path\":\"a.t\"}",
+				"{\"path\":\"a.te\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\",\"content\":\"\"}",
+				"{\"path\":\"a.tex\",\"content\":\"\"}",
+				"{\"path\":\"a.tex\",\"content\":\"\"}",
+				"{\"path\":\"a.tex\",\"content\":\"\"}",
+				"{\"path\":\"a.tex\",\"content\":\"\"}",
+				"{\"path\":\"a.tex\",\"content\":\"\"}",
+				"{\"path\":\"a.tex\",\"content\":\"\"}",
+				"{\"path\":\"a.tex\",\"content\":\"\"}",
+				"{\"path\":\"a.tex\",\"content\":\"\"}",
+				"{\"path\":\"a.tex\",\"content\":\"\"}",
+				"{\"path\":\"a.tex\",\"content\":\"\"}",
+				"{\"path\":\"a.tex\",\"content\":\"\"}",
+				"{\"path\":\"a.tex\",\"content\":\"\"}",
+				"{\"path\":\"a.tex\",\"content\":\"\"}",
+				"{\"path\":\"a.tex\",\"content\":\"\"}",
+				"{\"path\":\"a.tex\",\"content\":\"\"}",
+				"{\"path\":\"a.tex\",\"content\":\"\"}",
+				"{\"path\":\"a.tex\",\"content\":\"\"}",
+				"{\"path\":\"a.tex\",\"content\":\"\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\"}",
+				"{\"path\":\"a.tex\",\"content\":\"\\\\usepackage{x} café \\\\u12g \\\\url\",\"mode\":\"w\"}"
 			]
 		},
 		{
@@ -5856,7 +5936,7 @@
 		},
 		{
 			"input": "{\"a\":\"b\\u12\"}",
-			"result": "{}"
+			"result": "{\"a\":\"b\\\\u12\"}"
 		},
 		{
 			"input": "{\"a\":\"b\\u12",
@@ -5925,6 +6005,22 @@
 		{
 			"input": "{\"é\":\"😀",
 			"result": "{\"é\":\"😀\"}"
+		},
+		{
+			"input": "{\"text\":\"\\url{x}\"}",
+			"result": "{\"text\":\"\\\\url{x}\"}"
+		},
+		{
+			"input": "{\"path\":\"a.tex\",\"content\":\"\\usepackage{x}\",\"mode\":\"w\"}",
+			"result": "{\"path\":\"a.tex\",\"content\":\"\\\\usepackage{x}\",\"mode\":\"w\"}"
+		},
+		{
+			"input": "{\"text\":\"caf\\u00e9 \\url\"}",
+			"result": "{\"text\":\"café \\\\url\"}"
+		},
+		{
+			"input": "{\"text\":\"ab\\u00",
+			"result": "{\"text\":\"ab\"}"
 		}
 	]
 }

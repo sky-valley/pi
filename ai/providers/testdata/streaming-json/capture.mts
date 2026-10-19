@@ -3,14 +3,14 @@
 // behind parseStreamingJSON in this package (json.go, partial_json.go).
 //
 //   node --experimental-strip-types capture.mts <extraction> <out.json> <sha>
-//   e.g. ... capture.mts <dir> streaming-json-002fc8385.json 002fc8385
+//   e.g. ... capture.mts <dir> streaming-json-4b994d5e5.json 4b994d5e5
 //
 // <extraction> holds packages/ai at <sha> (`git archive <sha> packages/ai`,
 // prefix kept) and a node_modules resolving its dependencies. partial-json there
-// must be the version package-lock.json locks at <sha> — 0.1.7 at 002fc8385,
+// must be the version package-lock.json locks at <sha> — 0.1.7 at 4b994d5e5,
 // integrity
 // sha512-Njv/59hHaokb/hRUjce3Hdv12wd60MtM9Z5Olmn+nehe0QDAsRtRbJPvJ0Z91TusF0SuZRIvnM+S4l6EIP8leA==
-// — which the npm 0.87.1 build's node_modules carries. The version read is
+// — which the npm 1.3.0 build's node_modules carries. The version read is
 // recorded in the output.
 //
 // A tool call's arguments are parseStreamingJson of the text streamed so far,
@@ -63,6 +63,9 @@ const documents: string[] = [
 	`{"cmd":"echo a\tb\nc","path":"C:${B}Users${B}new","q":"${B}q${B}x"}`,
 	`{"a":"x,","b":"y:","c":"z}","d":"w]"}`,
 	`{"a":Infinity,"b":-Infinity,"c":NaN,"d":1e400,"e":-1e400}`,
+	// A \u not followed by four hex digits is not an escape (4b994d5e5): the
+	// repair doubles its backslash, as it does any other invalid escape.
+	`{"path":"a.tex","content":"${B}usepackage{x} caf${B}u00e9 ${B}u12g ${B}url","mode":"w"}`,
 	`{"__proto__":{"x":1},"y":2,"__proto__":3,"z":{"__proto__":null}}`,
 	`[1,{"a":2},"b"]`,
 	`"just a string"`,
@@ -164,6 +167,11 @@ const cases: string[] = [
 	`"abc`,
 	`{"a":1} {"b":2}`,
 	`{"é":"😀`,
+	// The inputs of upstream's json-parse.test.ts (4b994d5e5, #10868).
+	`{"text":"${B}url{x}"}`,
+	`{"path":"a.tex","content":"${B}usepackage{x}","mode":"w"}`,
+	`{"text":"caf${B}u00e9 ${B}url"}`,
+	`{"text":"ab${B}u00`,
 ];
 
 const out = {

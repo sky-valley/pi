@@ -96,10 +96,10 @@ func TestParseStreamingJSONDropsADanglingMemberLikePi(t *testing.T) {
 }
 
 // streamingJSONCaptureFile is what testdata/streaming-json/capture.mts recorded
-// from pi's parseStreamingJson at 002fc8385 with the partial-json its lockfile
+// from pi's parseStreamingJson at 4b994d5e5 with the partial-json its lockfile
 // pins: the arguments pi reads out of every prefix of tool-argument texts, and
 // out of single inputs.
-const streamingJSONCaptureFile = "testdata/streaming-json/streaming-json-002fc8385.json"
+const streamingJSONCaptureFile = "testdata/streaming-json/streaming-json-4b994d5e5.json"
 
 // parseStreamingJSON reads every prefix of a tool call's argument text as pi's
 // parseStreamingJson does — JSON.parse, its repair, partial-json 0.1.7's
@@ -131,7 +131,7 @@ func TestParseStreamingJSONLikePi(t *testing.T) {
 		t.Fatalf("%s: %v; rerun capture.mts", streamingJSONCaptureFile, err)
 	}
 	if capture.PartialJSON != "0.1.7" {
-		t.Fatalf("%s was captured with partial-json %s; 002fc8385's package-lock.json locks 0.1.7", streamingJSONCaptureFile, capture.PartialJSON)
+		t.Fatalf("%s was captured with partial-json %s; 4b994d5e5's package-lock.json locks 0.1.7", streamingJSONCaptureFile, capture.PartialJSON)
 	}
 	compared, nonObject, loneSurrogate := 0, 0, 0
 	check := func(input string, want *string) {
