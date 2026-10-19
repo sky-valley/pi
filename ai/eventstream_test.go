@@ -1,6 +1,7 @@
 package ai
 
 import (
+	"errors"
 	"sync"
 	"testing"
 	"time"
@@ -176,5 +177,101 @@ func TestEventStreamDeliversToWaitersInRegistrationOrder(t *testing.T) {
 
 	if got[0] != 1 || got[1] != 2 {
 		t.Fatalf("delivery to waiters = first:%d second:%d, want first:1 second:2", got[0], got[1])
+	}
+}
+
+// The AssistantMessageEventStream timing tests mirror pi event-stream.test.ts
+// "AssistantMessageEventStream timing" (upstream 36a686ee8, f284a2460).
+
+func timedTestMessage(timestamp int64) *AssistantMessage {
+	return &AssistantMessage{Api: "openai-responses", Provider: "openai", Model: "m", StopReason: StopStop, Timestamp: timestamp}
+}
+
+func TestAssistantMessageEventStreamTimesFinalMessage(t *testing.T) {
+	done := NewAssistantMessageEventStream()
+	answer := timedTestMessage(nowMillis())
+	time.Sleep(20 * time.Millisecond)
+	done.Push(AssistantMessageEvent{Type: EventDone, Reason: StopStop, Message: answer})
+	if answer.DurationMs == nil || *answer.DurationMs < 15 {
+		t.Fatalf("done message durationMs = %v, want >= 15", answer.DurationMs)
+	}
+	if got := done.Result(); got.DurationMs != answer.DurationMs {
+		t.Fatalf("result durationMs = %v, want the done message's", got.DurationMs)
+	}
+
+	failed := NewAssistantMessageEventStream()
+	errMsg := timedTestMessage(nowMillis())
+	errMsg.StopReason = StopError
+	failed.Push(AssistantMessageEvent{Type: EventError, Reason: StopError, Error: errMsg})
+	if errMsg.DurationMs == nil || *errMsg.DurationMs < 0 {
+		t.Fatalf("error message durationMs = %v, want >= 0", errMsg.DurationMs)
+	}
+
+	ended := NewAssistantMessageEventStream()
+	result := timedTestMessage(nowMillis())
+	ended.End(result)
+	if result.DurationMs == nil || *result.DurationMs < 0 {
+		t.Fatalf("end() result durationMs = %v, want >= 0", result.DurationMs)
+	}
+}
+
+// A forwarding stream keeps the inner measurement.
+func TestAssistantMessageEventStreamKeepsExistingDuration(t *testing.T) {
+	outer := NewAssistantMessageEventStream()
+	time.Sleep(20 * time.Millisecond)
+	inner := NewAssistantMessageEventStream()
+	answer := timedTestMessage(nowMillis())
+	inner.Push(AssistantMessageEvent{Type: EventDone, Reason: StopStop, Message: answer})
+	if answer.DurationMs == nil {
+		t.Fatal("the inner stream did not time the response")
+	}
+	measured := *answer.DurationMs
+	outer.Push(AssistantMessageEvent{Type: EventDone, Reason: StopStop, Message: answer})
+	if *answer.DurationMs != measured || measured >= 20 {
+		t.Fatalf("durationMs = %d after forwarding, want the inner %d (< 20)", *answer.DurationMs, measured)
+	}
+
+	preset := timedTestMessage(nowMillis())
+	preset.DurationMs = new(int64)
+	*preset.DurationMs = 1234
+	NewAssistantMessageEventStream().Push(AssistantMessageEvent{Type: EventDone, Reason: StopStop, Message: preset})
+	if *preset.DurationMs != 1234 {
+		t.Fatalf("preset durationMs = %d, want 1234", *preset.DurationMs)
+	}
+}
+
+// A message that started before the stream, such as a fetched deferred
+// result, stays untimed.
+func TestAssistantMessageEventStreamLeavesEarlierMessageUntimed(t *testing.T) {
+	fetched := timedTestMessage(nowMillis() - 60_000)
+	NewAssistantMessageEventStream().Push(AssistantMessageEvent{Type: EventDone, Reason: StopStop, Message: fetched})
+	if fetched.DurationMs != nil {
+		t.Fatalf("durationMs = %d, want none", *fetched.DurationMs)
+	}
+}
+
+func TestAssistantMessageEventStreamDoesNotTimeAfterCompletion(t *testing.T) {
+	stream := NewAssistantMessageEventStream()
+	stream.Push(AssistantMessageEvent{Type: EventDone, Reason: StopStop, Message: timedTestMessage(nowMillis())})
+	late := timedTestMessage(nowMillis())
+	stream.Push(AssistantMessageEvent{Type: EventDone, Reason: StopStop, Message: late})
+	if late.DurationMs != nil {
+		t.Fatalf("durationMs = %d, want none", *late.DurationMs)
+	}
+	stream.End(late)
+	if late.DurationMs != nil {
+		t.Fatalf("end() after completion timed the message: %d", *late.DurationMs)
+	}
+}
+
+// pi's lazyStream stamps a setup-error message with the wall clock taken just
+// before its stream (3ba22ce17), which ErrorStream mirrors. Whether the stream
+// then times it depends on both readings falling in the same millisecond, as
+// in pi.
+func TestErrorStreamStampsSetupErrorAtStreamStart(t *testing.T) {
+	before := nowMillis()
+	msg := ErrorStream(&Model{Api: "a", Provider: "p", ID: "m"}, errors.New("setup failed")).Result()
+	if after := nowMillis(); msg.Timestamp < before || msg.Timestamp > after {
+		t.Fatalf("timestamp = %d, want the stream start in [%d, %d]", msg.Timestamp, before, after)
 	}
 }

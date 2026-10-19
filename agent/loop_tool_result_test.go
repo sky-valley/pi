@@ -4,6 +4,7 @@ import (
 	"context"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/sky-valley/pi/ai"
 )
@@ -215,5 +216,72 @@ func TestLoopToolResultIsErrorKeepsDetails(t *testing.T) {
 	result, _ := end.Result.(AgentToolResult)
 	if !reflect.DeepEqual(result.StructuredContent, map[string]any{"value": "v"}) {
 		t.Fatalf("tool_execution_end structured content = %#v, want {value: v}", end.Result)
+	}
+}
+
+// agent-loop.test.ts "records how long execute() took on the tool result,
+// excluding hooks" (upstream 36a686ee8, #10549): the duration is measured
+// around Execute alone, and a call that never ran has none — on the tool
+// result message and on tool_execution_end alike.
+func TestLoopRecordsToolExecutionDuration(t *testing.T) {
+	echo := AgentTool{
+		Name:        "echo",
+		Label:       "Echo",
+		Description: "Echo tool",
+		Parameters:  ai.Object(ai.Prop("value", ai.String())),
+		Execute: func(ctx context.Context, id string, params map[string]any, onUpdate ToolUpdateFunc) (AgentToolResult, error) {
+			time.Sleep(30 * time.Millisecond)
+			value, _ := params["value"].(string)
+			return AgentToolResult{Content: ai.ContentList{ai.TextContent{Text: value}}, Details: map[string]any{"value": value}}, nil
+		},
+	}
+	call := &ai.AssistantMessage{
+		Content: ai.ContentList{
+			ai.ToolCall{ID: "ran", Name: "echo", Arguments: map[string]any{"value": "a"}},
+			ai.ToolCall{ID: "blocked", Name: "echo", Arguments: map[string]any{"value": "b"}},
+		},
+		StopReason: ai.StopToolUse,
+	}
+	a := NewAgent(AgentOptions{
+		InitialState: &AgentState{Model: testModel, Tools: []AgentTool{echo}},
+		StreamFn: scriptedStream(call,
+			&ai.AssistantMessage{Content: ai.ContentList{ai.TextContent{Text: "done"}}, StopReason: ai.StopStop}),
+		BeforeToolCall: func(_ context.Context, c BeforeToolCallContext) *BeforeToolCallResult {
+			time.Sleep(100 * time.Millisecond)
+			if c.ToolCall.ID == "blocked" {
+				return &BeforeToolCallResult{Block: true, Reason: "no"}
+			}
+			return nil
+		},
+	})
+	ends := map[string]AgentEvent{}
+	a.Subscribe(func(_ context.Context, e AgentEvent) error {
+		if e.Type == EvToolExecutionEnd {
+			ends[e.ToolCallID] = e
+		}
+		return nil
+	})
+	if err := a.Prompt(context.Background(), "go"); err != nil {
+		t.Fatal(err)
+	}
+	results := map[string]ai.ToolResultMessage{}
+	for _, m := range a.State().Messages {
+		if trm, ok := m.(ai.ToolResultMessage); ok {
+			results[trm.ToolCallID] = trm
+		}
+	}
+
+	ran, blocked := results["ran"], results["blocked"]
+	if ran.DurationMs == nil || *ran.DurationMs < 25 || *ran.DurationMs >= 100 {
+		t.Fatalf("ran durationMs = %v, want execute()'s ~30ms without the 100ms hook", ran.DurationMs)
+	}
+	if end := ends["ran"]; end.DurationMs == nil || *end.DurationMs != *ran.DurationMs {
+		t.Fatalf("tool_execution_end durationMs = %v, want the result's %d", end.DurationMs, *ran.DurationMs)
+	}
+	if !blocked.IsError || blocked.DurationMs != nil {
+		t.Fatalf("blocked result = isError %v, durationMs %v; want an error with no duration", blocked.IsError, blocked.DurationMs)
+	}
+	if end := ends["blocked"]; end.DurationMs != nil {
+		t.Fatalf("blocked tool_execution_end durationMs = %d, want none", *end.DurationMs)
 	}
 }

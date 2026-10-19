@@ -26,11 +26,11 @@ import (
 // added to packages/ai/test/anthropic-sse-parsing.test.ts; the remaining cases
 // are this port's edges. Every expected message is pi's, captured under node by
 // testdata/response-model/capture-anthropic-response-model.mts, last at
-// d86654abb (v0.99.1) against the 0.99.1 build. Re-captured at every regen:
-// each time the behavioural entries came back identical and only the catalog
-// model moved.
+// f284a2460 (the response timing, 36a686ee8) with the 1.3.0 build's
+// node_modules and catalog data. Re-captured at every regen: each time the
+// behavioural entries came back identical and only the catalog model moved.
 
-const anthropicResponseModelCaptureFile = "testdata/response-model/anthropic-response-model-d86654abb.json"
+const anthropicResponseModelCaptureFile = "testdata/response-model/anthropic-response-model-f284a2460.json"
 
 // anthropicResponseModelCapture decodes one captured entry into plain JSON
 // values.
@@ -124,7 +124,8 @@ func streamAnthropicResponseModel(t *testing.T, model *ai.Model, sse string) (ai
 }
 
 // responseModelJSON is a message as plain JSON values, with a streamed
-// assistant message's wall-clock timestamp dropped as the capture drops it.
+// assistant message's wall-clock timestamp dropped and its monotonic
+// durationMs recorded only as being a number, as the capture does.
 func responseModelJSON(t *testing.T, message ai.Message) any {
 	t.Helper()
 	raw, err := json.Marshal(message)
@@ -137,6 +138,9 @@ func responseModelJSON(t *testing.T, message ai.Message) any {
 	}
 	if am, ok := asAssistantMsg(message); ok {
 		delete(out, "timestamp")
+		if _, ok := out["durationMs"].(float64); ok {
+			out["durationMs"] = "number"
+		}
 		if am.Usage.CacheWrite1h != 0 {
 			t.Errorf("usage.cacheWrite1h = %d, want 0", am.Usage.CacheWrite1h)
 		}

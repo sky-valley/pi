@@ -89,6 +89,14 @@ func (s *EventStream[T, R]) Push(event T) {
 	}
 }
 
+// isDone reports whether the stream has completed: a terminal event was pushed
+// or End was called (pi's protected `done`).
+func (s *EventStream[T, R]) isDone() bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.done
+}
+
 // End terminates the stream. If a result is supplied it becomes the final
 // result unless one was already captured (a terminal event's result wins,
 // mirroring pi's resolve-once promise). Like pi's end (event-stream.ts:60-70),

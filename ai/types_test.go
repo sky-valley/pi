@@ -1,8 +1,10 @@
 package ai
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -690,5 +692,53 @@ func TestModelPromptCacheRoundTrips(t *testing.T) {
 	}
 	if strings.Contains(string(bare), "promptCache") {
 		t.Fatalf("a model without cache metadata must not emit promptCache: %s", bare)
+	}
+}
+
+// topLevelJSONKeys lists an object's keys in the order they were written.
+func topLevelJSONKeys(t *testing.T, data []byte) []string {
+	t.Helper()
+	dec := json.NewDecoder(bytes.NewReader(data))
+	if tok, err := dec.Token(); err != nil || tok != json.Delim('{') {
+		t.Fatalf("not an object: %s", data)
+	}
+	var keys []string
+	for dec.More() {
+		tok, err := dec.Token()
+		if err != nil {
+			t.Fatal(err)
+		}
+		keys = append(keys, tok.(string))
+		var skip json.RawMessage
+		if err := dec.Decode(&skip); err != nil {
+			t.Fatal(err)
+		}
+	}
+	return keys
+}
+
+// durationMs sits where pi writes it (upstream 36a686ee8): the agent loop's
+// createToolResultMessage puts it between isError and timestamp, and
+// AssistantMessageEventStream adds it to a finished response after every other
+// key the provider wrote. Key orders from a src run of pi's agentLoop at
+// d2e7d8b7c; usage is undefined there, which JSON.stringify drops.
+func TestDurationMsKeyPosition(t *testing.T) {
+	d := int64(5)
+	trm, err := json.Marshal(ToolResultMessage{
+		ToolCallID: "c1", ToolName: "echo", Content: ContentList{TextContent{Text: "a"}},
+		Details: map[string]any{"value": "a"}, DurationMs: &d, Timestamp: 1,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := topLevelJSONKeys(t, trm), []string{"role", "toolCallId", "toolName", "content", "details", "isError", "durationMs", "timestamp"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("toolResult keys = %v, want %v", got, want)
+	}
+	am, err := json.Marshal(AssistantMessage{Api: "x", Provider: "x", Model: "m", StopReason: StopStop, Timestamp: 1, DurationMs: &d})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := topLevelJSONKeys(t, am), []string{"role", "content", "api", "provider", "model", "usage", "stopReason", "timestamp", "durationMs"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("assistant keys = %v, want %v", got, want)
 	}
 }

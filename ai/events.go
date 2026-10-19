@@ -1,6 +1,10 @@
 package ai
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"math"
+	"time"
+)
 
 // EventType is the discriminator for AssistantMessageEvent.
 type EventType string
@@ -148,26 +152,73 @@ func (e AssistantMessageEvent) MarshalJSON() ([]byte, error) {
 	}
 }
 
-// AssistantMessageEventStream is an EventStream specialized for the assistant
-// message protocol. The terminal event ("done" or "error") yields the final
-// AssistantMessage.
-type AssistantMessageEventStream = EventStream[AssistantMessageEvent, *AssistantMessage]
+// AssistantMessageEventStream is the event stream of one assistant response
+// (pi AssistantMessageEventStream). The terminal event ("done" or "error")
+// yields the final AssistantMessage.
+//
+// It also times the response (upstream 36a686ee8, f284a2460): the final
+// message — of a done or error event, or the result passed to End — gets
+// DurationMs, measured with the monotonic clock from the stream's creation,
+// unless the stream is already done, the message already has a duration, or
+// its Timestamp predates the stream. A stream that forwards a response which
+// started elsewhere, such as a deferred result fetched later, therefore
+// leaves it untimed, and a forwarding stream keeps the inner measurement.
+type AssistantMessageEventStream struct {
+	*EventStream[AssistantMessageEvent, *AssistantMessage]
+	startedAt   time.Time // carries the monotonic reading
+	startedAtMs int64     // wall clock, compared with message timestamps
+}
 
 // NewAssistantMessageEventStream creates an AssistantMessageEventStream.
 func NewAssistantMessageEventStream() *AssistantMessageEventStream {
-	return NewEventStream(
-		func(e AssistantMessageEvent) bool {
-			return e.Type == EventDone || e.Type == EventError
-		},
-		func(e AssistantMessageEvent) *AssistantMessage {
-			switch e.Type {
-			case EventDone:
-				return e.Message
-			case EventError:
-				return e.Error
-			default:
-				return nil
-			}
-		},
-	)
+	startedAt := time.Now()
+	return &AssistantMessageEventStream{
+		EventStream: NewEventStream(
+			func(e AssistantMessageEvent) bool {
+				return e.Type == EventDone || e.Type == EventError
+			},
+			func(e AssistantMessageEvent) *AssistantMessage {
+				switch e.Type {
+				case EventDone:
+					return e.Message
+				case EventError:
+					return e.Error
+				default:
+					return nil
+				}
+			},
+		),
+		startedAt:   startedAt,
+		startedAtMs: startedAt.UnixMilli(),
+	}
+}
+
+// Push times the final message of a done or error event, then pushes it.
+func (s *AssistantMessageEventStream) Push(event AssistantMessageEvent) {
+	switch event.Type {
+	case EventDone:
+		s.time(event.Message)
+	case EventError:
+		s.time(event.Error)
+	}
+	s.EventStream.Push(event)
+}
+
+// End times the result, when one is given, then ends the stream.
+func (s *AssistantMessageEventStream) End(result ...*AssistantMessage) {
+	if len(result) > 0 {
+		s.time(result[0])
+	}
+	s.EventStream.End(result...)
+}
+
+// time sets message.DurationMs to the whole milliseconds since the stream
+// started (Math.round), assigning a fresh pointer: a cloned message may share
+// the old one.
+func (s *AssistantMessageEventStream) time(message *AssistantMessage) {
+	if message == nil || s.isDone() || message.DurationMs != nil || message.Timestamp < s.startedAtMs {
+		return
+	}
+	durationMs := int64(math.Round(float64(time.Since(s.startedAt)) / float64(time.Millisecond)))
+	message.DurationMs = &durationMs
 }

@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"slices"
 	"sync"
+	"time"
 
 	"github.com/sky-valley/pi/ai"
 )
@@ -644,6 +646,7 @@ func executeToolCallsParallel(ctx context.Context, current *AgentContext, msg *a
 					ToolName:   fo.ToolCall.Name,
 					Result:     fo.Result,
 					IsError:    fo.IsError,
+					DurationMs: fo.DurationMs,
 				})
 			}()
 			if emitErr != nil {
@@ -728,6 +731,14 @@ func executeToolCallsParallel(ctx context.Context, current *AgentContext, msg *a
 type immediateOutcome struct {
 	result  AgentToolResult
 	isError bool
+}
+
+// executedOutcome is pi's ExecutedToolCallOutcome: what Execute returned,
+// with how many milliseconds it took.
+type executedOutcome struct {
+	result     AgentToolResult
+	isError    bool
+	durationMs int64
 }
 
 type preparedToolCall struct {
@@ -888,7 +899,7 @@ func RunToolCall(ctx context.Context, toolCall ai.ToolCall, opts RunToolCallOpti
 	return finalizeExecutedToolCall(ctx, opts.Context, opts.AssistantMessage, *prep.prepared, executed, opts.ToolCallHooks)
 }
 
-func executePreparedToolCall(ctx context.Context, prepared preparedToolCall, onUpdate toolUpdateSink) immediateOutcome {
+func executePreparedToolCall(ctx context.Context, prepared preparedToolCall, onUpdate toolUpdateSink) executedOutcome {
 	// pi buffers tool_execution_update emit promises and awaits them only after
 	// execute settles (agent-loop.ts:633-654): a listener error never interrupts
 	// the tool mid-flight; it surfaces afterwards and rejects the run. We mirror
@@ -923,21 +934,30 @@ func executePreparedToolCall(ctx context.Context, prepared preparedToolCall, onU
 	// createErrorToolResult) and the loop CONTINUES. An emitPanic (listener
 	// error) must still unwind to the run boundary, like the recovers in
 	// prepareToolCall/finalizeExecutedToolCall.
-	outcome := func() (out immediateOutcome) {
+	//
+	// The duration is Execute's alone, taken the moment it settles, with the
+	// monotonic clock (upstream 36a686ee8).
+	startedAt := time.Now()
+	elapsed := func() int64 {
+		return int64(math.Round(float64(time.Since(startedAt)) / float64(time.Millisecond)))
+	}
+	outcome := func() (out executedOutcome) {
 		defer func() {
 			if r := recover(); r != nil {
+				durationMs := elapsed()
 				if ep, ok := r.(emitPanic); ok {
 					panic(ep)
 				}
-				out = immediateOutcome{result: errorToolResult(panicMessage(r)), isError: true}
+				out = executedOutcome{result: errorToolResult(panicMessage(r)), isError: true, durationMs: durationMs}
 			}
 		}()
 		result, err := prepared.tool.Execute(ctx, prepared.toolCall.ID, prepared.args, update)
+		durationMs := elapsed()
 		if err != nil {
-			return immediateOutcome{result: errorToolResult(err.Error()), isError: true}
+			return executedOutcome{result: errorToolResult(err.Error()), isError: true, durationMs: durationMs}
 		}
 		// Upstream 8562bcf66: a tool can report a failure without throwing.
-		return immediateOutcome{result: result, isError: result.IsError}
+		return executedOutcome{result: result, isError: result.IsError, durationMs: durationMs}
 	}()
 
 	// pi daab056a (#5573): stop accepting updates the moment execute() settles
@@ -957,7 +977,7 @@ func executePreparedToolCall(ctx context.Context, prepared preparedToolCall, onU
 	return outcome
 }
 
-func finalizeExecutedToolCall(ctx context.Context, current *AgentContext, msg *ai.AssistantMessage, prepared preparedToolCall, executed immediateOutcome, hooks ToolCallHooks) AgentToolCallOutcome {
+func finalizeExecutedToolCall(ctx context.Context, current *AgentContext, msg *ai.AssistantMessage, prepared preparedToolCall, executed executedOutcome, hooks ToolCallHooks) AgentToolCallOutcome {
 	result := executed.result
 	isError := executed.isError
 
@@ -1013,7 +1033,7 @@ func finalizeExecutedToolCall(ctx context.Context, current *AgentContext, msg *a
 		}()
 	}
 
-	return AgentToolCallOutcome{ToolCall: prepared.toolCall, Result: result, IsError: isError}
+	return AgentToolCallOutcome{ToolCall: prepared.toolCall, Result: result, IsError: isError, DurationMs: &executed.durationMs}
 }
 
 func errorToolResult(message string) AgentToolResult {
@@ -1027,6 +1047,7 @@ func emitToolExecutionEnd(fo AgentToolCallOutcome, emit EventSink) {
 		ToolName:   fo.ToolCall.Name,
 		Result:     fo.Result,
 		IsError:    fo.IsError,
+		DurationMs: fo.DurationMs,
 	})
 }
 
@@ -1038,6 +1059,7 @@ func createToolResultMessage(fo AgentToolCallOutcome) ai.ToolResultMessage {
 		Details:    fo.Result.Details,
 		Usage:      fo.Result.Usage,
 		IsError:    fo.IsError,
+		DurationMs: fo.DurationMs,
 		Timestamp:  nowMillis(),
 	}
 }

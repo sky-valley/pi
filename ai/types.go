@@ -889,8 +889,15 @@ type AssistantMessage struct {
 	// anyway because session files and the server wire are shared with pi
 	// proper — a session pi wrote must round-trip through here without losing
 	// the field — the same reason ToolResultMessage.Usage is carried.
-	EndTurn   *bool `json:"endTurn,omitempty"`
+	EndTurn *bool `json:"endTurn,omitempty"`
+	// Timestamp is the Unix time in milliseconds when the request started.
 	Timestamp int64 `json:"timestamp"`
+	// DurationMs is the milliseconds from Timestamp until the response ended,
+	// measured with the monotonic clock (pi `durationMs?`, upstream 36a686ee8).
+	// AssistantMessageEventStream sets it on the final message of a response it
+	// saw start; nil for legacy messages and for deferred results fetched
+	// later. pi assigns it last, so it is the last key.
+	DurationMs *int64 `json:"durationMs,omitempty"`
 }
 
 func (AssistantMessage) MessageRole() Role { return RoleAssistant }
@@ -914,9 +921,15 @@ type ToolResultMessage struct {
 	// (pi: ToolResultMessage.usage, optional). The agent loop sets it from the
 	// tool's AgentToolResult.Usage, as pi's has since 2fd386840, and the server
 	// bridge puts it on the wire when it is there.
-	Usage     *Usage `json:"usage,omitempty"`
-	IsError   bool   `json:"isError"`
-	Timestamp int64  `json:"timestamp"`
+	Usage   *Usage `json:"usage,omitempty"`
+	IsError bool   `json:"isError"`
+	// DurationMs is the milliseconds the tool's execution took, measured with
+	// the monotonic clock (pi `durationMs?`, upstream 36a686ee8); nil for
+	// legacy results and for calls that never ran. pi's agent loop writes it
+	// between isError and timestamp.
+	DurationMs *int64 `json:"durationMs,omitempty"`
+	// Timestamp is the Unix time in milliseconds when the result was created.
+	Timestamp int64 `json:"timestamp"`
 	// NestedCalls records the calls this tool made to other tools, a codemode
 	// script's for example (pi ToolResultMessage.nestedCalls, upstream
 	// 8562bcf66). It is kept for the session record and not sent to the model.

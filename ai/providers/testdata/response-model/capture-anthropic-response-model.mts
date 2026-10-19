@@ -3,7 +3,7 @@
 // TestAnthropicResponseModel* in this package (upstream 1283afd0d).
 //
 //   node --experimental-strip-types capture-anthropic-response-model.mts <extraction> <out.json> <sha>
-//   e.g. ... capture-anthropic-response-model.mts <dir> anthropic-response-model-d86654abb.json d86654abb
+//   e.g. ... capture-anthropic-response-model.mts <dir> anthropic-response-model-f284a2460.json f284a2460
 //
 // <extraction> holds packages/ai at <sha> (`git archive <sha> packages/ai` from
 // the upstream clone), a node_modules resolving pi-ai's dependencies (the npm
@@ -39,6 +39,13 @@
 // (71023aec1) moves behavioural entries too (durationMs, where
 // providerThinkingLevel is recorded, a dropped thinking text), and those are
 // ports of their own: whichever lands them re-captures at its sha.
+//
+// Re-captured at f284a2460 (the response timing, 36a686ee8 + 3ba22ce17 +
+// f284a2460) on 2026-10-19 with the 1.3.0 build's node_modules and the whole
+// of its dist/providers/data. Against the d86654abb file only durationMs moved:
+// every streamed assistant message, and the replayed copies of one, now carry
+// it. dc939913f (where providerThinkingLevel is recorded) and 911309429 (a
+// dropped thinking text) come later and re-capture with their own ports.
 //
 // `relabeled` and `fallbackCost` are the two cases 1283afd0d added to
 // packages/ai/test/anthropic-sse-parsing.test.ts, with the suite's model,
@@ -112,9 +119,13 @@ function createResponseModelSseResponse(
 	]);
 }
 
+// Streamed assistant timestamps are Date.now() and are dropped; durationMs
+// (upstream 36a686ee8) is a monotonic measurement, so the capture records only
+// that it is there and a number.
 function withoutTimestamp(message: any) {
 	if (message.role !== "assistant") return JSON.parse(JSON.stringify(message));
 	const { timestamp: _timestamp, ...rest } = message;
+	if (typeof rest.durationMs === "number") rest.durationMs = "number";
 	return JSON.parse(JSON.stringify(rest));
 }
 

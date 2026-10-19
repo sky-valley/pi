@@ -135,7 +135,12 @@ func CompleteSimple(ctx context.Context, model *Model, req Context, opts *Simple
 // stream contract, a failure that pi raises by throwing out of stream setup —
 // provider resolution here, an unusable option in a provider's StreamSimple —
 // is encoded in the stream rather than returned alongside it.
+//
+// The message is stamped with the wall clock read just before the stream is
+// created, as pi's lazyStream stamps a setup error (3ba22ce17), so the stream
+// times it only when both readings fall in the same millisecond.
 func ErrorStream(model *Model, err error) *AssistantMessageEventStream {
+	startedAt := nowMillis()
 	s := NewAssistantMessageEventStream()
 	msg := &AssistantMessage{
 		Api:          model.Api,
@@ -143,7 +148,7 @@ func ErrorStream(model *Model, err error) *AssistantMessageEventStream {
 		Model:        model.ID,
 		StopReason:   StopError,
 		ErrorMessage: err.Error(),
-		Timestamp:    nowMillis(),
+		Timestamp:    startedAt,
 	}
 	s.Push(AssistantMessageEvent{Type: EventError, Reason: StopError, Error: msg})
 	s.End()
