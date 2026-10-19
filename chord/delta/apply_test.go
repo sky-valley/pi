@@ -839,6 +839,109 @@ func TestApplyImmutableCopiesAWideObjectOnce(t *testing.T) {
 	}
 }
 
+// delta-apply-immutable.test.ts (upstream 091bcc099) "appends to an array not
+// yet copied in one copy, sharing everything else". Upstream asserts sharing
+// and values; the one copy shows here as bytes, for one append: a copy that
+// the insert then grows allocates the array about two and a quarter times.
+// The batch's second append grows the copy, which the replay owns, as
+// upstream's push grows the concat.
+func TestApplyImmutableAppendsInOneCopy(t *testing.T) {
+	const n = 100_000
+	entries := make([]any, n)
+	for i := range entries {
+		entries[i] = map[string]any{"index": float64(i)}
+	}
+	meta := map[string]any{"count": float64(n)}
+	log := map[string]any{"entries": entries, "meta": meta}
+	other := map[string]any{"value": 1.0}
+	base := map[string]any{"log": log, "other": other}
+	appendOps := ops(t, `[["p", ["log", "entries"], 100000, 0, [{"index": 100000}]], ["p", ["log", "entries"], 100001, 0, [{"index": 100001}]]]`)
+
+	bytes := allocatedBytes(func() {
+		_, err := ApplyImmutable(base, appendOps[:1])
+		must(t, err)
+	})
+	arrayBytes := uint64(n * 16) // an []any element is two words
+	if bytes > arrayBytes*3/2 {
+		t.Errorf("appending to a %d-entry array allocated %d bytes, %.2f times the array: it is copied, then grown into a second copy", n, bytes, float64(bytes)/float64(arrayBytes))
+	}
+
+	// A replay's later appends grow the copy it owns: not one copy each.
+	batches := make([][]Op, 100)
+	for i := range batches {
+		batches[i] = []Op{Splice{Path: Path{Key("log"), Key("entries")}, Index: n + i, Items: []any{float64(i)}}}
+	}
+	bytes = allocatedBytes(func() {
+		_, err := ApplyImmutableBatches(base, slices.Values(batches))
+		must(t, err)
+	})
+	if bytes > arrayBytes*4 {
+		t.Errorf("100 one-append batches allocated %.2f times the array: the replay copies its own array again", float64(bytes)/float64(arrayBytes))
+	}
+
+	result, err := ApplyImmutable(base, appendOps)
+	must(t, err)
+
+	got := result["log"].(map[string]any)["entries"].([]any)
+	if len(got) != n+2 {
+		t.Fatalf("result has %d entries, want %d", len(got), n+2)
+	}
+	wantJSON(t, got[n:], tree(t, `[{"index": 100000}, {"index": 100001}]`))
+	if len(entries) != n || len(log["entries"].([]any)) != n {
+		t.Errorf("base entries grew to %d", len(log["entries"].([]any)))
+	}
+	pointer := func(v any) uintptr { return reflect.ValueOf(v).Pointer() }
+	if pointer(got[0]) != pointer(entries[0]) {
+		t.Errorf("result entries[0] is a copy, want the base's own")
+	}
+	resultLog := result["log"].(map[string]any)
+	if pointer(resultLog["meta"]) != pointer(meta) || pointer(result["other"]) != pointer(other) {
+		t.Errorf("an untouched sibling was copied")
+	}
+	if pointer(resultLog) == pointer(log) {
+		t.Errorf("result log is the base's: the parent of the appended array was written in place")
+	}
+
+	rootArray := []any{1.0, 2.0}
+	appended, err := ApplyImmutable(rootArray, ops(t, `[["p", [], 2, 0, [3]]]`))
+	must(t, err)
+	wantJSON(t, appended, tree(t, `[1, 2, 3]`))
+	wantJSON(t, rootArray, tree(t, `[1, 2]`))
+	// An appended item that is itself an array stays one element.
+	appended, err = ApplyImmutable(rootArray, ops(t, `[["p", [], 2, 0, [[3, 4]]]]`))
+	must(t, err)
+	wantJSON(t, appended, tree(t, `[1, 2, [3, 4]]`))
+
+	// Invalid paths fail with the general path's errors. Upstream's
+	// ["list", 1.5] has no Go form: an Index is an integer.
+	document := tree(t, `{"values": [], "list": [[1]], "text": "a"}`)
+	for _, c := range []struct {
+		path   Path
+		unsafe bool
+	}{
+		{Path{Key("values"), Key("missing")}, false},
+		{Path{Key("missing")}, false},
+		{Path{Key("values"), Index(0)}, false},
+		{Path{Key("__proto__")}, true},
+		{Path{Key("list"), Key("x")}, false},
+		{Path{Key("text")}, false},
+		{Path{Key("list"), Index(-1)}, true},
+		{Path{Key("list"), Index(0), Key("constructor")}, true},
+	} {
+		_, err := ApplyImmutable(document, []Op{Splice{Path: c.path, Items: []any{}}})
+		var pe *PathError
+		var unsafe *UnsafePathError
+		if c.unsafe && !errors.As(err, &unsafe) || !c.unsafe && !errors.As(err, &pe) {
+			t.Errorf("splice at %s: got %v, want unsafe=%v", c.path, err, c.unsafe)
+		}
+	}
+	wantJSON(t, document, tree(t, `{"values": [], "list": [[1]], "text": "a"}`))
+	// An insert that is not at the end takes the general path.
+	inserted, err := ApplyImmutable(rootArray, ops(t, `[["p", [], 1, 0, [9]]]`))
+	must(t, err)
+	wantJSON(t, inserted, tree(t, `[1, 9, 2]`))
+}
+
 // A replay keeps every copy it made alive until it returns. Were a copy freed
 // once a later op dropped it, a payload a lazy batch allocates afterwards could
 // take its address and read as the replay's own — and be written in place.

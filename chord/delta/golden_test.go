@@ -1157,6 +1157,11 @@ func generatedChange(t *testing.T, name string) (map[string]any, func(d *Draft))
 			must(t, d.At("values").Set(17, nil))
 			must(t, d.At("values").Set(9_000, nil))
 		}
+	case "append-10000":
+		return obj("values", numbers(10_000)), func(d *Draft) {
+			_, err := d.At("values").Push(-1.0)
+			must(t, err)
+		}
 	case "op-cap-object-4096", "op-cap-object-4097":
 		n, _ := strconv.Atoi(strings.TrimPrefix(name, "op-cap-object-"))
 		initial := map[string]any{}

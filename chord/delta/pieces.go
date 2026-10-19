@@ -64,6 +64,9 @@ type arrayPlan struct {
 // span is a run of base indices.
 type span struct{ start, length int }
 
+// end is one past the run's last index.
+func (s span) end() int { return s.start + s.length }
+
 // insertionRun is a run of consecutive inserted pieces, pieces[first:end] of
 // the flattened sequence, landing at logical index at.
 type insertionRun struct{ at, first, end int }

@@ -1,6 +1,7 @@
 package delta
 
 import (
+	"runtime"
 	"testing"
 )
 
@@ -25,6 +26,17 @@ func wantOps(t *testing.T, got []Op, literal string) {
 	if g := jsonText(t, got); g != want {
 		t.Errorf("ops\n got %s\nwant %s", g, want)
 	}
+}
+
+// allocatedBytes is how many heap bytes one call of fn allocates. Where
+// upstream's complexity tests count calls or time, a copy shows here as its
+// size. The test must not be parallel: the count is the whole process's.
+func allocatedBytes(fn func()) uint64 {
+	var before, after runtime.MemStats
+	runtime.ReadMemStats(&before)
+	fn()
+	runtime.ReadMemStats(&after)
+	return after.TotalAlloc - before.TotalAlloc
 }
 
 // wantJSON compares two values by their JSON form.

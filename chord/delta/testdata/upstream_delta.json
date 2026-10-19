@@ -1,5 +1,5 @@
 {
-	"sha": "9e70c3d50",
+	"sha": "d2e7d8b7c",
 	"diffs": [
 		{"name":"sets and deletes","before":{"keep":1,"change":1,"remove":true},"after":{"keep":1,"change":2,"add":3},"ops":[["s",["add"],3],["s",["change"],2],["d",["remove"]]],"raw":[["s",["change"],2],["s",["add"],3],["d",["remove"]]]},
 		{"name":"string append","before":{"text":"hello"},"after":{"text":"hello world"},"ops":[["a",["text"]," world"]]},
@@ -550,6 +550,12 @@
 		{"name":"splice clamps","trackers":{"main":{"v":[1,2,3]}},"steps":[{"do":"begin"},{"at":["v"],"deleteCount":5,"do":"splice","items":[4],"start":10},{"at":["v"],"deleteCount":-3,"do":"splice","items":[0],"start":-10},{"do":"prepare"}],"results":[{},{"value":[]},{"value":[]},{"ops":[["p",["v"],0,0,[0]],["p",["v"],4,0,[4]]],"noop":false,"value":{"v":[0,1,2,3,4]}}]},
 		{"name":"splice everything","trackers":{"main":{"v":[1,2,3]}},"steps":[{"do":"begin"},{"at":["v"],"deleteCount":3,"do":"splice","items":[],"start":0},{"do":"prepare"}],"results":[{},{"value":[1,2,3]},{"ops":[["p",["v"],0,3,[]]],"noop":false,"value":{"v":[]}}]},
 		{"name":"splice at the root","trackers":{"main":[1,2,3]},"steps":[{"do":"begin"},{"at":[],"deleteCount":1,"do":"splice","items":[9],"start":1},{"do":"prepare"}],"results":[{},{"value":[2]},{"ops":[["p",[],1,1,[]],["p",[],1,0,[9]]],"noop":false,"value":[1,9,3]}]},
+		{
+			"name": "kept elements keep their order",
+			"trackers": {"main":{"values":[0,1,2,3,4,5,6,7,8,9]}},
+			"steps": [{"do":"begin"},{"at":["values"],"do":"shift"},{"at":["values"],"deleteCount":2,"do":"splice","items":[20],"start":1},{"at":["values"],"deleteCount":1,"do":"splice","items":[],"start":5},{"at":["values"],"do":"pop"},{"at":["values"],"do":"push","items":[30]},{"do":"prepare"}],
+			"results": [{},{"value":0},{"value":[2,3]},{"value":[7]},{"value":9},{"value":7},{"ops":[["p",["values"],9,1,[]],["p",["values"],7,1,[]],["p",["values"],2,2,[]],["p",["values"],0,1,[]],["p",["values"],1,0,[20]],["p",["values"],6,0,[30]]],"noop":false,"value":{"values":[1,20,4,5,6,8,30]}}]
+		},
 		{"name":"root array emptied","trackers":{"main":[1,2,3]},"steps":[{"do":"begin"},{"at":[],"do":"setLength","length":0},{"do":"prepare"}],"results":[{},{},{"ops":[["p",[],0,3,[]]],"noop":false,"value":[]}]},
 		{"name":"reverse scalars","trackers":{"main":{"v":[1,2,3]}},"steps":[{"do":"begin"},{"at":["v"],"do":"reverse"},{"do":"prepare"}],"results":[{},{},{"ops":[["m",["v"],[2,1,0]]],"noop":false,"value":{"v":[3,2,1]}}]},
 		{"name":"reverse a palindrome","trackers":{"main":{"v":[1,2,1]}},"steps":[{"do":"begin"},{"at":["v"],"do":"reverse"},{"do":"prepare"}],"results":[{},{},{"ops":[["m",["v"],[2,1,0]]],"noop":false,"value":{"v":[1,2,1]}}]},
@@ -1121,6 +1127,7 @@
 		{"name":"queue-20000","opsHash":"f44f787ba19083ab751e365e5ade132c16189a8e29148797d80075f24b426839","opsBytes":160056,"opsHead":"[[\"p\",[\"values\"],0,10000,[]],[\"p\",[\"values\"],10000,0,[{\"value\":20000},{\"value\":20001},{\"value\":20002},{\"value\":20003},{\"","valueHash":"714797920478579a2b5dd4039247edd199026919b5b23c71ca5513c49ed51d9e"},
 		{"name":"fragmentation-20000","opsHash":"d46e43af4987a6683bbfe3df017d8e065137805c5f515ee1822cb32f4e315ff6","opsBytes":318922,"opsHead":"[[\"r\",{\"values\":[{\"value\":-1},{\"value\":100001},{\"value\":-3},{\"value\":3},{\"value\":-5},{\"value\":5},{\"value\":-7},{\"value\":7","valueHash":"66e9c4b34e7e543b94b15dee52668c4cc6a73881127f5b17b262d1abbff77750"},
 		{"name":"null-overrides-10000","ops":[["s",["values",17],null],["s",["values",9000],null]],"valueHash":"767c067ba9971104b0af19df0693de08865d2ec42caeaf6ed13f5c98bba4edce"},
+		{"name":"append-10000","ops":[["p",["values"],10000,0,[-1]]],"valueHash":"935b67ff7c85b7c08a33de173b22c8f023950b00b649d2f3d7d6460478bd89d2"},
 		{"name":"op-cap-object-4096","opsHash":"6fa7429056a91ce888250b25434287fa89440994994c9b343ef7dac22e04662e","opsBytes":64205,"opsHead":"[[\"s\",[\"0\"],1],[\"s\",[\"1\"],1],[\"s\",[\"2\"],1],[\"s\",[\"3\"],1],[\"s\",[\"4\"],1],[\"s\",[\"5\"],1],[\"s\",[\"6\"],1],[\"s\",[\"7\"],1],[\"s\",[\"","valueHash":"3d0735645ab1ed5f1d8223ee084fd31e1aa9c9994eff2f005e2793abca744562"},
 		{"name":"op-cap-array-4096","opsHash":"8f0d994767801c57ab72bc4225a950047e81eb9d51157869c6a3e4fca16966c2","opsBytes":44967,"opsHead":"[[\"m\",[\"v\"],[4095,4094,4093,4092,4091,4090,4089,4088,4087,4086,4085,4084,4083,4082,4081,4080,4079,4078,4077,4076,4075,40","valueHash":"a2b68d22421f8da94a807f2a7e26f6cb7928cb7dd8d03ac0b166453cfd7ccc76"},
 		{"name":"op-cap-object-4097","opsHash":"034f08c3ba3c902c84503a766639fbbb7e70ce2c959a97dd9c9a457612fb1c5d","opsBytes":31453,"opsHead":"[[\"r\",{\"0\":1,\"1\":1,\"10\":1,\"100\":1,\"101\":1,\"102\":1,\"103\":1,\"104\":1,\"105\":1,\"106\":1,\"107\":1,\"108\":1,\"109\":1,\"10a\":1,\"10b\":","valueHash":"46a47ec0897274fe39ea8193e41c7214765596681e47b0757f1da1e5f599cfd5"},

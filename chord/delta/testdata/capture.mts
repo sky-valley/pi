@@ -1122,6 +1122,9 @@ scenario("splice negative start", { main: J(`{"v":[1,2,3,4,5]}`) }, arrays(`{"do
 scenario("splice clamps", { main: J(`{"v":[1,2,3]}`) }, arrays(`{"do":"splice","at":["v"],"start":10,"deleteCount":5,"items":[4]},{"do":"splice","at":["v"],"start":-10,"deleteCount":-3,"items":[0]}`));
 scenario("splice everything", { main: J(`{"v":[1,2,3]}`) }, arrays(`{"do":"splice","at":["v"],"start":0,"deleteCount":3,"items":[]}`));
 scenario("splice at the root", { main: J(`[1,2,3]`) }, arrays(`{"do":"splice","at":[],"start":1,"deleteCount":1,"items":[9]}`));
+// tracker.test.ts (091bcc099) "emits removals from the end backwards, then
+// inserts, when kept elements keep their order".
+scenario("kept elements keep their order", { main: J(`{"values":[0,1,2,3,4,5,6,7,8,9]}`) }, arrays(`{"do":"shift","at":["values"]},{"do":"splice","at":["values"],"start":1,"deleteCount":2,"items":[20]},{"do":"splice","at":["values"],"start":5,"deleteCount":1,"items":[]},{"do":"pop","at":["values"]},{"do":"push","at":["values"],"items":[30]}`));
 scenario("root array emptied", { main: J(`[1,2,3]`) }, arrays(`{"do":"setLength","at":[],"length":0}`));
 scenario("reverse scalars", { main: J(`{"v":[1,2,3]}`) }, arrays(`{"do":"reverse","at":["v"]}`));
 scenario("reverse a palindrome", { main: J(`{"v":[1,2,1]}`) }, arrays(`{"do":"reverse","at":["v"]}`));
@@ -1479,6 +1482,10 @@ const generated: unknown[] = [];
 	generate("null-overrides-10000", { values: range(10_000) }, (draft) => {
 		draft.values[17] = null;
 		draft.values[9_000] = null;
+	});
+	// tracker.test.ts (091bcc099) "emits one insert for an append to a long array".
+	generate("append-10000", { values: range(10_000) }, (draft) => {
+		draft.values.push(-1);
 	});
 	// The operation cap: 4,096 ops publish; one more is a replacement.
 	for (const n of [4_096, 4_097]) {

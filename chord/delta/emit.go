@@ -249,15 +249,68 @@ func (n *node) emitArrayOperations(path Path, ops []Op, regions []denseRegion) [
 	return ops
 }
 
-// buildPlan is upstream's buildArrayPlan.
+// buildPlan is upstream's buildArrayPlan: from the pieces alone when the
+// retained base entries keep their order, else from a walk over every base
+// entry.
 func (n *node) buildPlan() *arrayPlan {
 	a := n.array
 	if a.plan != nil {
 		return a.plan
 	}
-	base := n.elements()
+	baseLength := len(n.elements())
 	pieces := a.piecesOf()
-	retained := make([]bool, len(base))
+	plan := orderedArrayPlan(baseLength, pieces)
+	if plan == nil {
+		plan = elementArrayPlan(baseLength, pieces)
+	}
+	plan.insertions = insertionRuns(pieces)
+	a.plan = plan
+	return plan
+}
+
+// orderedArrayPlan is upstream's: the plan when the retained base entries keep
+// their order, the common case of inserts and removals, computed from the
+// pieces alone, so an append to a long array walks none of its entries. nil
+// when base entries moved.
+func orderedArrayPlan(baseLength int, pieces []*piece) *arrayPlan {
+	// The retained base ranges in piece order; ordered means strictly
+	// ascending without overlap.
+	var kept []span
+	for _, p := range pieces {
+		if !p.base() || p.length == 0 {
+			continue
+		}
+		if p.step != 1 && p.length > 1 {
+			return nil
+		}
+		if len(kept) > 0 && p.start < kept[len(kept)-1].end() {
+			return nil
+		}
+		kept = append(kept, span{start: p.start, length: p.length})
+	}
+	// The unretained runs from the end backwards: after the last range,
+	// between ranges, before the first.
+	var removals []span
+	end := baseLength
+	for i := len(kept); i >= 0; i-- {
+		start := 0
+		if i > 0 {
+			start = kept[i-1].end()
+		}
+		if end > start {
+			removals = append(removals, span{start: start, length: end - start})
+		}
+		if i > 0 {
+			end = kept[i-1].start
+		}
+	}
+	return &arrayPlan{removals: removals}
+}
+
+// elementArrayPlan is upstream's: the plan from a walk over every base entry,
+// for pieces that moved base entries.
+func elementArrayPlan(baseLength int, pieces []*piece) *arrayPlan {
+	retained := make([]bool, baseLength)
 	var targetBase []int
 	for _, p := range pieces {
 		if !p.base() {
@@ -270,7 +323,7 @@ func (n *node) buildPlan() *arrayPlan {
 		}
 	}
 	var removals []span
-	for end := len(base); end > 0; {
+	for end := baseLength; end > 0; {
 		if retained[end-1] {
 			end--
 			continue
@@ -290,7 +343,7 @@ func (n *node) buildPlan() *arrayPlan {
 	}
 	var permutation []int
 	if !slices.Equal(targetBase, retainedBase) {
-		positions := make([]int, len(base))
+		positions := make([]int, baseLength)
 		for i, index := range retainedBase {
 			positions[index] = i
 		}
@@ -299,6 +352,12 @@ func (n *node) buildPlan() *arrayPlan {
 			permutation[i] = positions[index]
 		}
 	}
+	return &arrayPlan{removals: removals, permutation: permutation}
+}
+
+// insertionRuns is upstream's insertRunsOf: the runs of consecutive inserted
+// pieces, each at the logical index it lands on.
+func insertionRuns(pieces []*piece) []insertionRun {
 	var insertions []insertionRun
 	logical := 0
 	for i := 0; i < len(pieces); {
@@ -315,8 +374,7 @@ func (n *node) buildPlan() *arrayPlan {
 		run.end = i
 		insertions = append(insertions, run)
 	}
-	a.plan = &arrayPlan{removals: removals, permutation: permutation, insertions: insertions}
-	return a.plan
+	return insertions
 }
 
 // cloneRegion is upstream's cloneArrayRegion: a dense region's entries as the

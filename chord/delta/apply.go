@@ -209,10 +209,16 @@ func applyOne(root any, op Op, owned *ownedSet) (any, error) {
 		// Adopted, not copied. See Apply.
 		return op.Value, nil
 	case Splice:
-		return walk(root, op.Path, owned, func(node any) (any, error) {
+		return descend(root, op.Path, owned, func(node any) (any, error) {
 			xs, ok := node.([]any)
 			if !ok {
 				return nil, &PathError{Ref: op.Path}
+			}
+			if owned != nil {
+				if appended, ok := appendCopy(xs, op, owned); ok {
+					return appended, nil
+				}
+				xs = owned.claim(xs).([]any)
 			}
 			return splice(xs, op.Index, op.Remove, op.Items), nil
 		})
@@ -282,11 +288,20 @@ func applyOne(root any, op Op, owned *ownedSet) (any, error) {
 // only one it owns — a canonical index below its length, or "length" — is
 // unsafe.
 func walk(root any, path Path, owned *ownedSet, fn func(node any) (any, error)) (any, error) {
-	var descend func(node any, rest Path) (any, error)
-	descend = func(node any, rest Path) (any, error) {
+	return descend(root, path, owned, func(node any) (any, error) {
 		if owned != nil {
 			node = owned.claim(node)
 		}
+		return fn(node)
+	})
+}
+
+// descend is walk without the leaf's claim: fn gets the addressed value as it
+// is and claims it itself before writing it, so that a write which builds its
+// own copy (appendCopy) copies once. What fn returns is adopted all the same.
+func descend(root any, path Path, owned *ownedSet, fn func(node any) (any, error)) (any, error) {
+	var step func(node any, rest Path) (any, error)
+	step = func(node any, rest Path) (any, error) {
 		if len(rest) == 0 {
 			next, err := fn(node)
 			if err == nil && owned != nil {
@@ -296,6 +311,9 @@ func walk(root any, path Path, owned *ownedSet, fn func(node any) (any, error)) 
 			}
 			return next, err
 		}
+		if owned != nil {
+			node = owned.claim(node)
+		}
 		seg := rest[0]
 		switch c := node.(type) {
 		case map[string]any:
@@ -304,7 +322,7 @@ func walk(root any, path Path, owned *ownedSet, fn func(node any) (any, error)) 
 			if !ok {
 				return nil, &PathError{Ref: path}
 			}
-			next, err := descend(child, rest[1:])
+			next, err := step(child, rest[1:])
 			if err != nil {
 				return nil, err
 			}
@@ -321,7 +339,7 @@ func walk(root any, path Path, owned *ownedSet, fn func(node any) (any, error)) 
 			if i >= Index(len(c)) {
 				return nil, &PathError{Ref: path}
 			}
-			next, err := descend(c[i], rest[1:])
+			next, err := step(c[i], rest[1:])
 			if err != nil {
 				return nil, err
 			}
@@ -330,7 +348,20 @@ func walk(root any, path Path, owned *ownedSet, fn func(node any) (any, error)) 
 		}
 		return nil, &PathError{Ref: path}
 	}
-	return descend(root, path)
+	return step(root, path)
+}
+
+// appendCopy is upstream's: an append to an array this application has not
+// copied yet, built as one copy with the items rather than a copy that the
+// insert then grows, which copies it again. ok is false for any other splice,
+// which takes the general path.
+func appendCopy(xs []any, op Splice, owned *ownedSet) (appended []any, ok bool) {
+	if op.Remove != 0 || op.Index != len(xs) || owned.owns(xs) {
+		return nil, false
+	}
+	// Capacity at least one, as every copy's (ownedSet).
+	appended = make([]any, 0, max(len(xs)+len(op.Items), 1))
+	return append(append(appended, xs...), op.Items...), true
 }
 
 // ownsKey is Object.hasOwn(xs, key) for a string key of a JSON array: its

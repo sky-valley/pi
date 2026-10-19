@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"runtime"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -776,6 +777,65 @@ func TestSortComparatorThatSettlesItsChange(t *testing.T) {
 		if !errors.Is(err, ErrDraftSettled) {
 			t.Errorf("%s: Sort = %v, want ErrDraftSettled", name, err)
 		}
+	}
+}
+
+// tracker.test.ts (upstream 091bcc099) "emits one insert for an append to a
+// long array": the ops are the golden "append-10000"'s; here, that the plan
+// behind them is computed from the pieces alone. A walk over the base entries
+// allocates per entry, the plan of two pieces a handful of bytes.
+func TestTrackerAppendPlanWalksNoEntries(t *testing.T) {
+	const n = 100_000
+	values := make([]any, n)
+	for i := range values {
+		values[i] = float64(i)
+	}
+	tr := Track(map[string]any{"values": values})
+	c := mustBegin(t, tr)
+	d := c.State().At("values")
+	if _, err := d.Push(-1.0); err != nil {
+		t.Fatal(err)
+	}
+	var plan *arrayPlan
+	bytes := allocatedBytes(func() { plan = d.n.buildPlan() })
+	if bytes > 4096 {
+		t.Errorf("planning an append to a %d-entry array allocated %d bytes: it walked the base entries", n, bytes)
+	}
+	if len(plan.removals) != 0 || plan.permutation != nil || len(plan.insertions) != 1 || plan.insertions[0].at != n {
+		t.Errorf("plan %+v, want one insertion at %d", plan, n)
+	}
+	p := mustPrepare(t, c)
+	wantOps(t, p.Ops(), `[["p", ["values"], 100000, 0, [-1]]]`)
+}
+
+// tracker.test.ts (upstream 091bcc099) "emits a permutation when kept
+// elements change order": the pieces that moved base entries take the walk.
+func TestTrackerMovedEntriesEmitAPermutation(t *testing.T) {
+	parity := func(a, b any) int {
+		x, y := int(a.(float64)), int(b.(float64))
+		if c := x%2 - y%2; c != 0 {
+			return c
+		}
+		return x - y
+	}
+	for _, c := range []struct {
+		name   string
+		mutate func(d *Draft) error
+		want   string
+	}{
+		{"reverse", (*Draft).Reverse, `{"values":[4,3,2,1,0]}`},
+		{"sort by parity", func(d *Draft) error { return d.Sort(parity) }, `{"values":[0,2,4,1,3]}`},
+	} {
+		tr := Track(tree(t, `{"values":[0,1,2,3,4]}`).(map[string]any))
+		change := mustBegin(t, tr)
+		must(t, c.mutate(change.State().At("values")))
+		p := mustPrepare(t, change)
+		if !slices.ContainsFunc(p.Ops(), func(op Op) bool { _, ok := op.(Permute); return ok }) {
+			t.Errorf("%s: ops %s carry no permutation", c.name, jsonText(t, p.Ops()))
+		}
+		replica, err := ApplyImmutable(tr.Value(), p.Ops())
+		must(t, err)
+		wantJSON(t, replica, tree(t, c.want))
 	}
 }
 
