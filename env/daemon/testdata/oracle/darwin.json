@@ -198,6 +198,42 @@
       "json": "{\"code\":\"spawn_error\",\"message\":\"Working directory does not exist: \u003croot\u003e/missing\\nCannot execute bash commands.\"}"
     },
     {
+      "label": "cwd is a file",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"Not a directory (os error 20)\"}"
+    },
+    {
+      "label": "empty program",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"No such file or directory (os error 2)\"}"
+    },
+    {
+      "label": "directory as program",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"Permission denied (os error 13)\"}"
+    },
+    {
+      "label": "inherited PATH replaced",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"No such file or directory (os error 2)\"}"
+    },
+    {
+      "label": "empty PATH entry",
+      "kind": 3,
+      "json": "{\"code\":\"spawn_error\",\"message\":\"Permission denied (os error 13)\"}"
+    },
+    {
+      "label": "no PATH",
+      "kind": 4,
+      "json": "{\"kind\":\"output\",\"stream\":\"stdout\"}",
+      "payload": "ok"
+    },
+    {
+      "label": "no PATH",
+      "kind": 2,
+      "json": "{\"exitCode\":0}"
+    },
+    {
       "label": "empty argv",
       "kind": 3,
       "json": "{\"code\":\"spawn_error\",\"message\":\"Empty argv: no program to run\"}"
@@ -320,6 +356,18 @@
       "kind": 2,
       "json": "{\"count\":2,\"truncated\":false}",
       "payload": "f.gitignore\u0000fb.md\u0000"
+    },
+    {
+      "label": "root with trailing slash",
+      "kind": 2,
+      "json": "{\"count\":34,\"truncated\":false}",
+      "payload": "f.gitignore\u0000d.hidden\u0000f.hidden/visible\u0000fabbc.txt\u0000fdat.md\u0000fdironly\u0000ddocs\u0000ddocs/a\u0000fdocs/a/d.md\u0000dfoo\u0000finner.txt\u0000fkeep.log\u0000fl\u0000llinked\u0000dmid\u0000dmid/a\u0000dmid/a/b\u0000fmid/a/b/deep\u0000dnested\u0000fnested/.gitignore\u0000fnested/a.log\u0000fnested/c.txt\u0000dsub\u0000fsub/.dot\u0000fsub/.gitignore\u0000fsub/anchored-global\u0000dsub/build\u0000fsub/build/y\u0000fsub/important.log\u0000fsub/keep.txt\u0000dx\u0000fxy.z\u0000f{x,y}.alt\u0000féq\u0000"
+    },
+    {
+      "label": "root with dot",
+      "kind": 2,
+      "json": "{\"count\":6,\"truncated\":false}",
+      "payload": "f.dot\u0000f.gitignore\u0000dbuild\u0000fbuild/y\u0000fimportant.log\u0000fkeep.txt\u0000"
     }
   ],
   "listFiles": [

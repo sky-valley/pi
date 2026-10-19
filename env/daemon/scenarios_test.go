@@ -377,6 +377,8 @@ func scenarios() []scenario {
 				r.do("nested repo", `{"op":"listFiles","path":"%R/repo/nested"}`)
 				r.do("not a repo", `{"op":"listFiles","path":"%R/plain"}`)
 				r.do("worktree", `{"op":"listFiles","path":"%R/worktree"}`)
+				r.do("root with trailing slash", `{"op":"listFiles","path":"%R/repo/"}`)
+				r.do("root with dot", `{"op":"listFiles","path":"%R/repo/sub/./"}`)
 			},
 		},
 		{
@@ -405,6 +407,12 @@ func scenarios() []scenario {
 				r.do("not executable", `{"op":"exec","argv":["%R/file"],"cwd":"%R","env":{}}`)
 				r.do("script without shebang", `{"op":"exec","argv":["./script"],"cwd":"%R","env":{}}`)
 				r.do("missing cwd", `{"op":"exec","argv":["true"],"cwd":"%R/missing","env":{}}`)
+				r.do("cwd is a file", `{"op":"exec","argv":["true"],"cwd":"%R/file","env":{}}`)
+				r.do("empty program", `{"op":"exec","argv":[""],"cwd":"%R","env":{}}`)
+				r.do("directory as program", `{"op":"exec","argv":["%R"],"cwd":"%R","env":{}}`)
+				r.do("inherited PATH replaced", `{"op":"exec","argv":["sh","-c","true"],"cwd":"%R","env":{"PATH":"/nonexistent"}}`)
+				r.do("empty PATH entry", `{"op":"exec","argv":["script"],"cwd":"%R","env":{"PATH":":/nonexistent"}}`)
+				r.do("no PATH", `{"op":"exec","argv":["sh","-c","printf ok"],"cwd":"%R","env":{},"inheritEnv":false}`)
 				r.do("empty argv", `{"op":"exec","argv":[],"cwd":"%R","env":{}}`)
 				r.do("nothing to run", `{"op":"exec","cwd":"%R","env":{}}`)
 				r.do("no cwd", `{"op":"exec","argv":["true"]}`)
