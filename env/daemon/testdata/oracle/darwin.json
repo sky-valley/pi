@@ -546,6 +546,23 @@
       "json": "{\"code\":\"ENOTDIR\",\"message\":\"ENOTDIR: not a directory, mkdtemp '\u003croot\u003e/file/pre-XXXXXX'\",\"path\":\"\u003croot\u003e/file/pre-XXXXXX\",\"syscall\":\"mkdtemp\"}"
     }
   ],
+  "not UTF-8": [
+    {
+      "label": "hello",
+      "kind": 2,
+      "json": "{\"arch\":\"aarch64\",\"cwd\":\"*\",\"driveCwds\":{},\"features\":[\"listFiles\"],\"home\":\"\",\"os\":\"macos\",\"pid\":0,\"protocol\":1,\"separator\":\"/\",\"tmpdir\":\"/second\",\"version\":\"1.3.0\"}"
+    },
+    {
+      "label": "exit",
+      "kind": 2,
+      "json": "{}"
+    },
+    {
+      "label": "login shell",
+      "kind": 2,
+      "json": "{\"exitCode\":7}"
+    }
+  ],
   "nul": [
     {
       "label": "lstat",

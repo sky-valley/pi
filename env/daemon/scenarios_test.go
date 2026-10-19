@@ -141,6 +141,44 @@ func scenarios() []scenario {
 			},
 		},
 		{
+			// Rust reads its own variables with env::var, which passes over
+			// values that are not UTF-8, and decodes paths lossily, so replies
+			// never carry raw bytes. File names cannot be other than UTF-8 on
+			// macOS, so the working directory, the shell and the watched file
+			// below are not UTF-8 on Linux only.
+			name:   "not UTF-8",
+			skip:   needsPython,
+			launch: notUTF8Launch,
+			clean:  []func(string) string{func(s string) string { return foreignCwd.ReplaceAllString(s, `"cwd":"*"`) }},
+			run: func(r *recorder) {
+				r.do("hello", `{"op":"hello","protocol":1}`)
+				// $SHELL, when it is not UTF-8, names a script that is not a
+				// login shell: the default /bin/sh runs instead and exits 7.
+				id := r.start(strings.ReplaceAll(`{"op":"pty","cwd":"%R","env":{},"cols":80,"rows":24}`, "%R", jsonEscape(r.root)), nil)
+				r.wait(id, func(f []frame.Frame) bool { return len(f) > 0 })
+				time.Sleep(500 * time.Millisecond)
+				r.do("exit", `{"op":"ptyWrite","target":`+strconv.Itoa(int(id))+`}`, []byte("exit 7\n")...)
+				frames := r.wait(id, finished)
+				r.keep("login shell", frames[len(frames)-1:])
+				if runtime.GOOS != "linux" {
+					return
+				}
+				writeFixture(t(r), r.root, map[string]string{"w/a\xffb": "x"})
+				id = r.start(strings.ReplaceAll(`{"op":"watch","targets":[{"path":"%R/w","recursive":true}],"mode":"native"}`, "%R", jsonEscape(r.root)), nil)
+				r.keep("watch ready", r.wait(id, func(f []frame.Frame) bool { return len(f) > 0 }))
+				f, err := os.OpenFile(filepath.Join(r.root, "w", "a\xffb"), os.O_APPEND|os.O_WRONLY, 0)
+				if err != nil {
+					t(r).Fatal(err)
+				}
+				f.WriteString("y")
+				f.Close()
+				r.keep("watch change", r.wait(id, func(f []frame.Frame) bool { return len(f) > 1 })[1:2])
+				r.send(frame.Cancel, id, nil, nil)
+				all := r.wait(id, finished)
+				r.keep("watch closed", all[len(all)-1:])
+			},
+		},
+		{
 			name: "stat",
 			skip: unixOnly,
 			run: func(r *recorder) {
@@ -572,6 +610,37 @@ func scenarios() []scenario {
 			},
 		},
 	}
+}
+
+// notUTF8Launch starts the daemon with HOME, TMPDIR and SHELL not UTF-8
+// (TMP is the first temporary directory variable that is) and, where file
+// names may be any bytes, in a working directory whose name is not UTF-8.
+const notUTF8Launch = `root = os.path.dirname(os.environb[b'HOME'])
+os.environb[b'HOME'] = b'/h\xffome'
+os.environb[b'TMPDIR'] = b'/t\xffmp'
+os.environb[b'TMP'] = b'/second'
+os.environb[b'SHELL'] = root + b'/s\xffh'
+try:
+    with open(root + b'/s\xffh', 'wb') as script:
+        script.write(b'#!/bin/sh\necho not the login shell\n')
+    os.chmod(root + b'/s\xffh', 0o755)
+    os.mkdir(root + b'/c\xffwd')
+    os.chdir(root + b'/c\xffwd')
+except OSError:
+    pass`
+
+// foreignCwd is a working directory outside the scenario's directory, the
+// test's own.
+var foreignCwd = regexp.MustCompile(`"cwd":"[^<"][^"]*"`)
+
+func needsPython() string {
+	if reason := unixOnly(); reason != "" {
+		return reason
+	}
+	if _, err := os.Stat("/usr/bin/python3"); err != nil {
+		return "needs /usr/bin/python3 to start the daemon"
+	}
+	return ""
 }
 
 // summarizeEnvironment reduces env(1) output to whether the variables are in

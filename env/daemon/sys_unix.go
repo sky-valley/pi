@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strings"
 	"syscall"
+	"unicode/utf8"
 
 	"golang.org/x/sys/unix"
 )
@@ -162,18 +163,27 @@ func fstatFile(f *os.File) (fileStat, error) {
 	return statOf(&st), pathError("fstat", f.Name(), statErr)
 }
 
+// envVar is Rust's env::var: the value of a variable that is set and UTF-8.
+func envVar(key string) (string, bool) {
+	value, ok := os.LookupEnv(key)
+	if !ok || !utf8.ValidString(value) {
+		return "", false
+	}
+	return value, true
+}
+
 // tmpdir is Node's os.tmpdir(); Termux's Node falls back to $PREFIX/tmp.
 func tmpdir() string {
 	path := ""
 	for _, key := range []string{"TMPDIR", "TMP", "TEMP"} {
-		if value := os.Getenv(key); value != "" {
+		if value, _ := envVar(key); value != "" {
 			path = value
 			break
 		}
 	}
 	if path == "" {
 		if onAndroid {
-			prefix, ok := os.LookupEnv("PREFIX")
+			prefix, ok := envVar("PREFIX")
 			if !ok {
 				prefix = "/data/data/com.termux/files/usr"
 			}
@@ -188,7 +198,10 @@ func tmpdir() string {
 	return path
 }
 
-func home() string { return os.Getenv("HOME") }
+func home() string {
+	home, _ := envVar("HOME")
+	return home
+}
 
 // cwd is the daemon's working directory, the process.cwd() Node's
 // path.resolve falls back to: getcwd(3), never $PWD.
@@ -197,7 +210,7 @@ func cwd() string {
 	if err != nil {
 		return ""
 	}
-	return dir
+	return decodeUTF8([]byte(dir))
 }
 
 // tempCharacters are the characters mkdtemp(3) fills its template with.

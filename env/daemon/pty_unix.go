@@ -135,7 +135,7 @@ func ptyCommand(request ptyRequest) (string, []string) {
 	}
 	shell, ok := asString(request.env["SHELL"])
 	if !ok {
-		shell, ok = os.LookupEnv("SHELL")
+		shell, ok = envVar("SHELL")
 	}
 	if !ok || shell == "" || !pathExists(shell) {
 		shell = "/bin/sh"

@@ -706,7 +706,8 @@ func (n *nativeWatcher) pump() {
 			if !ok {
 				return
 			}
-			event.path = e.Name
+			// Lossily, as the notify crate's paths are decoded.
+			event.path = decodeUTF8([]byte(e.Name))
 		case err, ok := <-n.watcher.Errors:
 			if !ok {
 				return
