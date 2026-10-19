@@ -3,15 +3,21 @@ package chord
 import (
 	"context"
 	"errors"
+	"reflect"
+	"sync"
 	"testing"
+
+	"github.com/sky-valley/pi/telemetry"
 )
 
-// Port of packages/chord/test/context.test.ts at 64eeb82a4. Upstream's
+// Port of packages/chord/test/context.test.ts at d2e7d8b7c. Upstream's
 // Context is a TypeScript reimplementation of Go's context package, so the
 // mirror is context.Context plus typed keys: createContextKey → NewKey,
 // withContextValue → WithValue, context.value(key) → key.Value(ctx),
 // withAbortSignal/withCancel → context.WithCancel, withoutAbortSignal →
-// context.WithoutCancel, awaitWithContext → a select on ctx.Done().
+// context.WithoutCancel, awaitWithContext → a select on ctx.Done(), and the
+// telemetry member (upstream 48909d987, 2ec55d808) → Telemetry(ctx),
+// WithTelemetry and TraceIn.
 
 // "provides distinct empty root contexts": a key reads nothing from either
 // root, and the roots are Go's own.
@@ -24,6 +30,11 @@ func TestKeyReadsNothingFromEmptyRoots(t *testing.T) {
 	}
 	if context.Background() == context.TODO() {
 		t.Error("roots are not distinct")
+	}
+	for _, ctx := range []context.Context{context.Background(), context.TODO()} {
+		if got := Telemetry(ctx); got != telemetry.NoopContext {
+			t.Errorf("%v: Telemetry = %#v, want telemetry.NoopContext", ctx, got)
+		}
 	}
 }
 
@@ -147,4 +158,151 @@ func TestWaitingStopsWhenTheInvocationIsCancelled(t *testing.T) {
 			t.Errorf("got %q", v)
 		}
 	}
+}
+
+// "derives telemetry independently from values and cancellation"
+func TestTelemetryDerivesIndependentlyFromValuesAndCancellation(t *testing.T) {
+	recorder := telemetry.NewInMemoryContext()
+	other := telemetry.NewInMemoryContext()
+	err := recorder.StartSpan(telemetry.SpanOptions{Name: "caller"}, func(parent telemetry.Span) error {
+		return other.StartSpan(telemetry.SpanOptions{Name: "other"}, func(otherSpan telemetry.Span) error {
+			key := NewKey[string]("principal")
+			cancellable, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			base := WithValue(cancellable, key, "owner")
+			ctx := WithTelemetry(base, parent)
+			replaced := WithTelemetry(ctx, otherSpan)
+			if got := Telemetry(base); got != telemetry.NoopContext {
+				t.Errorf("Telemetry(base) = %#v, want NoopContext", got)
+			}
+			if got := Telemetry(ctx); got != parent {
+				t.Errorf("Telemetry(ctx) = %#v, want the caller span", got)
+			}
+			if got := Telemetry(replaced); got != otherSpan {
+				t.Errorf("Telemetry(replaced) = %#v, want the other span", got)
+			}
+			if v, _ := key.Value(replaced); v != "owner" {
+				t.Errorf("replaced value = %q, want owner", v)
+			}
+			if replaced.Done() != base.Done() {
+				t.Error("WithTelemetry changed cancellation")
+			}
+			if got := Telemetry(context.WithoutCancel(ctx)); got != parent {
+				t.Errorf("Telemetry(WithoutCancel) = %#v, want the caller span", got)
+			}
+			err := TraceIn(ctx, telemetry.SpanOptions{Name: "outer"}, func(child context.Context) error {
+				if v, _ := key.Value(child); v != "owner" {
+					t.Errorf("child value = %q, want owner", v)
+				}
+				if child.Done() != ctx.Done() {
+					t.Error("TraceIn changed cancellation")
+				}
+				Telemetry(child).AddEvent("started", nil)
+				return TraceIn(child, telemetry.SpanOptions{Name: "inner"}, func(nested context.Context) error {
+					Telemetry(nested).AddLink(telemetry.SpanLink{Context: Telemetry(child)})
+					return nil
+				})
+			})
+			if err != nil {
+				t.Errorf("TraceIn = %v", err)
+			}
+			spans := recorder.Spans()
+			if len(spans) != 3 {
+				t.Fatalf("spans = %d, want caller, outer and inner", len(spans))
+			}
+			caller, outer, inner := spans[0], spans[1], spans[2]
+			if outer.Name != "outer" || outer.ParentID != caller.ID {
+				t.Errorf("outer = %q under %d, want outer under %d", outer.Name, outer.ParentID, caller.ID)
+			}
+			if inner.Name != "inner" || inner.ParentID != outer.ID {
+				t.Errorf("inner = %q under %d, want inner under %d", inner.Name, inner.ParentID, outer.ID)
+			}
+			if len(outer.Events) != 1 || outer.Events[0].Name != "started" {
+				t.Errorf("outer events = %+v, want started", outer.Events)
+			}
+			if len(inner.Links) != 1 || !reflect.DeepEqual(inner.Links[0].Context, outer.Context) {
+				t.Errorf("inner links = %+v, want outer", inner.Links)
+			}
+			if got := Telemetry(ctx); got != parent {
+				t.Errorf("Telemetry(ctx) after TraceIn = %#v, want the caller span", got)
+			}
+			cancel()
+			if ctx.Err() == nil {
+				t.Error("ctx not cancelled")
+			}
+			return nil
+		})
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+// "isolates concurrent traceIn branches and preserves callback results and
+// errors": concurrent branches parent their own children, a failure comes
+// back unchanged, and TraceIn on a context without telemetry runs on the
+// no-op span.
+func TestTraceInIsolatesConcurrentBranches(t *testing.T) {
+	recorder := telemetry.NewInMemoryContext()
+	_ = recorder.StartSpan(telemetry.SpanOptions{Name: "caller"}, func(parent telemetry.Span) error {
+		ctx := WithTelemetry(context.Background(), parent)
+		gate := make(chan struct{})
+		var wg sync.WaitGroup
+		results := make([]string, 2)
+		wg.Add(2)
+		go func() {
+			defer wg.Done()
+			_ = TraceIn(ctx, telemetry.SpanOptions{Name: "first"}, func(child context.Context) error {
+				<-gate
+				return TraceIn(child, telemetry.SpanOptions{Name: "first.child"}, func(context.Context) error {
+					results[0] = "first"
+					return nil
+				})
+			})
+		}()
+		go func() {
+			defer wg.Done()
+			_ = TraceIn(ctx, telemetry.SpanOptions{Name: "second"}, func(child context.Context) error {
+				err := TraceIn(child, telemetry.SpanOptions{Name: "second.child"}, func(context.Context) error {
+					results[1] = "second"
+					return nil
+				})
+				close(gate)
+				return err
+			})
+		}()
+		wg.Wait()
+		if !reflect.DeepEqual(results, []string{"first", "second"}) {
+			t.Errorf("results = %v", results)
+		}
+		spans := recorder.Spans()
+		byName := map[string]telemetry.RecordedSpan{}
+		for _, span := range spans {
+			byName[span.Name] = span
+		}
+		for _, name := range []string{"first", "second"} {
+			parentSpan, ok := byName[name]
+			if !ok {
+				t.Errorf("no %s span", name)
+				continue
+			}
+			if child := byName[name+".child"]; child.ParentID != parentSpan.ID {
+				t.Errorf("%s.child under %d, want %d", name, child.ParentID, parentSpan.ID)
+			}
+		}
+		failure := errors.New("same value")
+		if err := TraceIn(ctx, telemetry.SpanOptions{Name: "fail"}, func(context.Context) error { return failure }); err != failure {
+			t.Errorf("TraceIn = %v, want the callback's own error", err)
+		}
+		ran := false
+		err := TraceIn(context.Background(), telemetry.SpanOptions{Name: "noop"}, func(child context.Context) error {
+			Telemetry(child).AddLink(telemetry.SpanLink{Context: parent})
+			ran = true
+			return nil
+		})
+		if err != nil || !ran {
+			t.Errorf("TraceIn without telemetry = %v (ran %v), want the callback run on the no-op span", err, ran)
+		}
+		return nil
+	})
 }
