@@ -1,6 +1,11 @@
 package ai
 
-import "testing"
+import (
+	"encoding/json"
+	"os"
+	"slices"
+	"testing"
+)
 
 // pi 8eeaa2bc threads per-stream scoped ProviderEnv through getEnvApiKey /
 // findEnvKeys: a non-empty scoped value wins over the OS environment, an empty
@@ -231,5 +236,37 @@ func TestTypesafeEnvKey(t *testing.T) {
 	}
 	if got := GetEnvApiKey("typesafe", map[string]string{"TYPESAFE_API_KEY": "scoped"}); got != "scoped" {
 		t.Errorf("GetEnvApiKey(typesafe) = %q, want %q", got, "scoped")
+	}
+}
+
+// testdata/envkeys/capture.mjs reads pi's API-key env var table through
+// findEnvKeys, for every catalog provider and for the ids pi renamed away
+// (azure-openai-responses became azure in a37306d43). The port's table must
+// list the same variables in the same order, and none for a provider pi has
+// none for. A provider the capture lacks means the catalog moved: re-capture.
+func TestAPIKeyEnvVarsMatchPi(t *testing.T) {
+	const file = "testdata/envkeys/env-keys-1.3.0.json"
+	data, err := os.ReadFile(file)
+	if err != nil {
+		t.Fatalf("read %s: %v (regenerate it with testdata/envkeys/capture.mjs)", file, err)
+	}
+	var capture struct {
+		EnvKeys map[string][]string `json:"envKeys"`
+	}
+	if err := json.Unmarshal(data, &capture); err != nil {
+		t.Fatalf("decode %s: %v", file, err)
+	}
+	if len(capture.EnvKeys) == 0 {
+		t.Fatalf("%s holds no providers", file)
+	}
+	for provider, want := range capture.EnvKeys {
+		if got := apiKeyEnvVars(provider); !slices.Equal(got, want) {
+			t.Errorf("apiKeyEnvVars(%q) = %q, pi %q", provider, got, want)
+		}
+	}
+	for _, provider := range GetProviders() {
+		if _, ok := capture.EnvKeys[provider]; !ok {
+			t.Errorf("catalog provider %q is not in %s; re-capture it from the build the catalog came from", provider, file)
+		}
 	}
 }

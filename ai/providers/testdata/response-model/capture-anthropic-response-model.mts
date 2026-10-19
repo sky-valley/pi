@@ -31,6 +31,15 @@
 // behavioural entry came back byte-identical. Only `model` moved: the catalog
 // now types every chat model, so claude-opus-5 gained "type": "chat".
 //
+// Re-captured for the 1.3.0 regen on 2026-10-19, still at d86654abb's source
+// but with dist/providers/data from the 0.99.2 build and anthropic.json from
+// the 1.3.0 build. With 0.99.2's anthropic.json that extraction reproduces the
+// previous file byte for byte; with 1.3.0's only `model` moves (dc939913f's
+// generator half drops claude-opus-5's `off: null`). The source at v1.3.0
+// (71023aec1) moves behavioural entries too (durationMs, where
+// providerThinkingLevel is recorded, a dropped thinking text), and those are
+// ports of their own: whichever lands them re-captures at its sha.
+//
 // `relabeled` and `fallbackCost` are the two cases 1283afd0d added to
 // packages/ai/test/anthropic-sse-parsing.test.ts, with the suite's model,
 // client and SSE fixture; every other entry is an edge case of this port's,

@@ -70,3 +70,40 @@ func TestAzureChatCompletionsModelSendsNothing(t *testing.T) {
 		})
 	}
 }
+
+// The same refusal, for every azure catalog model on openai-completions, down
+// the path the coding session takes: the compat ai.StreamSimple, with the key
+// resolved from AZURE_OPENAI_API_KEY as pi's withEnvApiKey resolves it.
+func TestAzureCatalogChatCompletionsModelsSendNothing(t *testing.T) {
+	var models []*ai.Model
+	for _, model := range ai.GetModels(azureProvider) {
+		if model.Api == ai.APIOpenAICompletions {
+			models = append(models, model)
+		}
+	}
+	if len(models) == 0 {
+		t.Fatal("the catalog has no azure openai-completions model; this test no longer tests anything")
+	}
+	req := ai.Context{Messages: []ai.Message{ai.UserMessage{Content: ai.ContentList{ai.TextContent{Text: "hi"}}}}}
+	for _, model := range models {
+		t.Run(model.ID, func(t *testing.T) {
+			if model.BaseURL != "" {
+				t.Fatalf("baseUrl = %q; pi ships azure models without one", model.BaseURL)
+			}
+			var sent []string
+			result := ai.StreamSimple(context.Background(), model, req, &ai.SimpleStreamOptions{
+				StreamOptions: ai.StreamOptions{ProviderRequestOptions: ai.ProviderRequestOptions{
+					HTTPClient: azureRecordingDoer{&sent},
+					Env:        map[string]string{"AZURE_OPENAI_API_KEY": "azure-key"},
+				}},
+				Reasoning: "high",
+			}).Result()
+			if len(sent) != 0 {
+				t.Fatalf("sent %q; it must fail before any request leaves", sent)
+			}
+			if result.StopReason != ai.StopError || !strings.Contains(result.ErrorMessage, "azure/"+model.ID) {
+				t.Fatalf("result = %s %q, want the azure refusal", result.StopReason, result.ErrorMessage)
+			}
+		})
+	}
+}

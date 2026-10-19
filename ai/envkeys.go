@@ -47,7 +47,7 @@ func apiKeyEnvVars(provider string) []string {
 		// (envApiKeyAuth(..., ["QWEN_TOKEN_PLAN_API_KEY"])), not a new one.
 		"qwen-token-plan-individual": "QWEN_TOKEN_PLAN_API_KEY",
 		"openai":                     "OPENAI_API_KEY",
-		"azure-openai-responses":     "AZURE_OPENAI_API_KEY",
+		"azure":                      "AZURE_OPENAI_API_KEY", // pi a37306d43 renamed the provider from azure-openai-responses
 		"nvidia":                     "NVIDIA_API_KEY",
 		"deepseek":                   "DEEPSEEK_API_KEY",
 		"google":                     "GEMINI_API_KEY",

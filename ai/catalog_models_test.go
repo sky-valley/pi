@@ -3,6 +3,7 @@ package ai
 import (
 	"encoding/json"
 	"reflect"
+	"slices"
 	"testing"
 )
 
@@ -29,6 +30,14 @@ import (
 //     metadata for OpenAI and Codex %s". Its max-thinking.test.ts case sends a
 //     Codex request, which waits on the Codex adapter (Scope queue row 10).
 //   - c1449660c  has no upstream test; the case asserts its generator diff.
+//
+// From the 1.3.0 regen, supports-xhigh.test.ts as d2e7d8b7c has it:
+//
+//   - ce950d78f  Claude Sonnet 5.5 takes models.dev's metadata: cacheRead 0.1.
+//   - 5712b134e  Codex serves GPT-6.1 Sol with a 500K context window.
+//   - a37306d43  "does not support off for GPT-6.1 Sol" reads the azure
+//     provider, renamed from azure-openai-responses.
+//   - a3f265b1c  "excludes off for always-thinking Kimi Coding Highspeed".
 //
 // The expectations are upstream's own. The catalog is the published build's
 // data, so these pass exactly when that data is what pi's tests say it is.
@@ -199,7 +208,7 @@ func TestCatalogGrok47(t *testing.T) {
 func TestCatalogClaudeSonnet55(t *testing.T) {
 	catalogCase{
 		provider: "anthropic", id: "claude-sonnet-5-5",
-		cost:          &ModelCost{Input: 2, Output: 10, CacheRead: 0.2, CacheWrite: 2.5},
+		cost:          &ModelCost{Input: 2, Output: 10, CacheRead: 0.1, CacheWrite: 2.5},
 		contextWindow: 1_000_000, maxTokens: 128_000,
 		compat: map[string]any{
 			"forceAdaptiveThinking":          true,
@@ -229,11 +238,11 @@ func TestCatalogGPT61Sol(t *testing.T) {
 		},
 		{
 			provider: "openai-codex", id: "gpt-6.1-sol",
-			cost: official, contextWindow: 272000, maxTokens: 128000,
+			cost: official, contextWindow: 500000, maxTokens: 128000,
 			compat: compat,
 			levels: []ModelThinkingLevel{"minimal", "low", "medium", "high", "xhigh", "max"},
 		},
-		{provider: "azure-openai-responses", id: "gpt-6.1-sol", levels: noOff},
+		{provider: "azure", id: "gpt-6.1-sol", levels: noOff},
 	} {
 		t.Run(c.provider+"/"+c.id, func(t *testing.T) {
 			c.check(t)
@@ -262,5 +271,17 @@ func TestCatalogQwen38FlashAllowsEmptySignature(t *testing.T) {
 			compat: map[string]any{"allowEmptySignature": true},
 		}
 		t.Run(provider, c.check)
+	}
+}
+
+// a3f265b1c: kimi-coding moves to Chat Completions, and Kimi Code Highspeed
+// always thinks, so its map nulls off.
+func TestCatalogKimiCodingHighspeedExcludesOff(t *testing.T) {
+	m := GetModel("kimi-coding", "kimi-for-coding-highspeed")
+	if m == nil {
+		t.Fatal("catalog has no kimi-coding/kimi-for-coding-highspeed")
+	}
+	if slices.Contains(GetSupportedThinkingLevels(m), "off") {
+		t.Errorf("GetSupportedThinkingLevels = %v, want no off", GetSupportedThinkingLevels(m))
 	}
 }

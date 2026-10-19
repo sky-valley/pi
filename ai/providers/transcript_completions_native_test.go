@@ -192,6 +192,55 @@ func TestKeepsKimiK2SystemTextInlineWithoutDynamicToolMessages(t *testing.T) {
 	assertRequestBody(t, body, completionsNativeCapture(t, "kimi-k2-text-inline").Body)
 }
 
+// a3f265b1c moves kimi-coding onto Chat Completions at /coding/v1 (the 1.3.0
+// regen carries it). Its two cases in transcript-tool-changes.test.ts read the
+// catalog models, so these do too, through ai.StreamSimple as the suite goes
+// through compat.ts streamSimple. "anchors additions for Kimi Coding %s": K3,
+// K3-256K and Kimi For Coding take added tools in a tool-bearing system message
+// and keep them out of the top-level list.
+func TestAnchorsKimiCodingAdditions(t *testing.T) {
+	for _, id := range []string{"k3", "k3-256k", "kimi-for-coding"} {
+		t.Run(id, func(t *testing.T) {
+			model := ai.GetModel("kimi-coding", id)
+			if model == nil {
+				t.Fatalf("catalog has no kimi-coding/%s", id)
+			}
+			payload := decodeCompletionsPayload(t, captureStreamSimplePayload(t, model, transcriptAdditionContext()))
+			if got := functionNames(payload.Tools); !slices.Equal(got, []string{"base_tool"}) {
+				t.Fatalf("tools = %v, want [base_tool]", got)
+			}
+			var anchored []string
+			for _, message := range payload.Messages {
+				if message.Tools != nil {
+					anchored = functionNames(*message.Tools)
+					break
+				}
+			}
+			if !slices.Equal(anchored, []string{"late_tool"}) {
+				t.Fatalf("tool-bearing message tools = %v, want [late_tool]", anchored)
+			}
+		})
+	}
+}
+
+// "keeps Kimi Coding Highspeed additions in top-level tools": Kimi Code
+// Highspeed rejects tool-bearing system messages.
+func TestKeepsKimiCodingHighspeedAdditionsTopLevel(t *testing.T) {
+	model := ai.GetModel("kimi-coding", "kimi-for-coding-highspeed")
+	if model == nil {
+		t.Fatal("catalog has no kimi-coding/kimi-for-coding-highspeed")
+	}
+	payload := decodeCompletionsPayload(t, captureStreamSimplePayload(t, model, transcriptAdditionContext()))
+	if got := functionNames(payload.Tools); !slices.Equal(got, []string{"base_tool", "late_tool"}) {
+		t.Fatalf("tools = %v, want [base_tool late_tool]", got)
+	}
+	for _, message := range payload.Messages {
+		if message.Tools != nil {
+			t.Fatalf("message %+v carries tools; no message may", message)
+		}
+	}
+}
+
 // Copilot dynamic headers read the transcript as the stream resolved it: kept
 // in place, a trailing system message is the last message, so the request is
 // agent-initiated (the collapsed counterpart is

@@ -28,7 +28,6 @@
 			"supportsStrictTools": true
 		},
 		"thinkingLevelMap": {
-			"off": null,
 			"xhigh": "xhigh",
 			"max": "max"
 		},
