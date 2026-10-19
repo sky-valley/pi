@@ -34,11 +34,14 @@ func (s *serial[T]) run() {
 	for {
 		s.mu.Lock()
 		if len(s.queue) == 0 {
+			s.queue = nil
 			s.running = false
 			s.mu.Unlock()
 			return
 		}
 		value := s.queue[0]
+		var zero T
+		s.queue[0] = zero // the queue does not keep what it passed on
 		s.queue = s.queue[1:]
 		s.mu.Unlock()
 		s.fn(value)
