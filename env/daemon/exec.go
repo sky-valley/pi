@@ -1,6 +1,7 @@
 package daemon
 
 import (
+	"bytes"
 	"encoding/hex"
 	"errors"
 	"math"
@@ -176,7 +177,7 @@ func (s *spill) push(chunk []byte, tmpdir string) {
 	}
 	if s.file == nil {
 		s.seenBytes += uint64(len(chunk))
-		s.seenNewlines += uint64(strings.Count(string(chunk), "\n"))
+		s.seenNewlines += uint64(bytes.Count(chunk, []byte("\n")))
 		lines := s.seenNewlines
 		if chunk[len(chunk)-1] != '\n' {
 			lines++
@@ -344,13 +345,8 @@ func runExec(id uint32, request execRequest, tmpdir string, out *output, ctl *co
 	if request.window == nil {
 		gate = out
 	}
-	var readers sync.WaitGroup
 	for stream, pipe := range command.output {
-		readers.Add(1)
-		go func() {
-			defer readers.Done()
-			readPipe(stream, pipe, messages, done, stop, gate)
-		}()
+		go readPipe(stream, pipe, messages, done, stop, gate)
 	}
 	go func() {
 		state, err := command.process.Wait()

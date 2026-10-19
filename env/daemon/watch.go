@@ -585,8 +585,8 @@ func runWatch(id uint32, json any, out *output, ctl *control) (object, *failure)
 		pollMs = defaultPollMs
 	}
 	maxDirectories := defaultMaxDirectory
-	if max, ok := asU64(get(json, "maxDirectories")); ok {
-		maxDirectories = int(min(max, uint64(1<<62)))
+	if limit, ok := asU64(get(json, "maxDirectories")); ok {
+		maxDirectories = int(min(limit, uint64(1<<62)))
 	}
 	w := &fileWatcher{
 		id:             id,
@@ -637,9 +637,6 @@ func runWatch(id uint32, json any, out *output, ctl *control) (object, *failure)
 			for _, event := range w.native.take() {
 				if w.onEvent(event) && flushAt.IsZero() && w.mode == modeNative {
 					flushAt = time.Now().Add(debounce)
-				}
-				if w.native == nil {
-					break
 				}
 			}
 		case <-ctl.wake:

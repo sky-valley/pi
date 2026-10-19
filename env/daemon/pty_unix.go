@@ -161,9 +161,14 @@ func spawnPty(request ptyRequest) (*os.File, *os.Process, error) {
 		master.Close()
 		return nil, nil, err
 	}
+	// Reads and writes poll instead of blocking.
+	var nonblockErr error
 	conn, err := master.SyscallConn()
 	if err == nil {
-		err = conn.Control(func(fd uintptr) { err = unix.SetNonblock(int(fd), true) })
+		err = conn.Control(func(fd uintptr) { nonblockErr = unix.SetNonblock(int(fd), true) })
+	}
+	if err == nil {
+		err = nonblockErr
 	}
 	if err != nil {
 		killTree(process.Pid)
