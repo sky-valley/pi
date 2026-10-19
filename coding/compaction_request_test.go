@@ -132,7 +132,7 @@ func TestSummarizationRequestShape(t *testing.T) {
 // leave a checkpoint behind. A previous summary that is present but empty is not
 // an absent one: `previousSummary ?? "No prior history."` keeps it.
 func TestSummarizationRequestsMatchPiCapture(t *testing.T) {
-	data, err := os.ReadFile("testdata/compaction/requests-0.87.1.json")
+	data, err := os.ReadFile("testdata/compaction/requests-1.3.0.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -148,7 +148,7 @@ func TestSummarizationRequestsMatchPiCapture(t *testing.T) {
 			Requests        []struct {
 				SystemPrompt string `json:"systemPrompt"`
 				Text         string `json:"text"`
-				MaxTokens    int    `json:"maxTokens"`
+				MaxTokens    *int   `json:"maxTokens"` // nil: the request sets none
 				Reply        string `json:"reply"`
 			} `json:"requests"`
 			Summary string `json:"summary"`
@@ -187,7 +187,7 @@ func TestSummarizationRequestsMatchPiCapture(t *testing.T) {
 			type request struct {
 				systemPrompt string
 				text         string
-				maxTokens    int
+				maxTokens    *int
 			}
 			var got []request
 			record := func(req ai.TranscriptContext, opts *ai.SimpleStreamOptions, _ *providers.FauxState, _ *ai.Model) *ai.AssistantMessage {
@@ -200,8 +200,8 @@ func TestSummarizationRequestsMatchPiCapture(t *testing.T) {
 				} else {
 					t.Errorf("request %d carries %d messages after its system prompt, want 1", len(got)+1, len(conversation))
 				}
-				if opts != nil && opts.MaxTokens != nil {
-					r.maxTokens = *opts.MaxTokens
+				if opts != nil {
+					r.maxTokens = opts.MaxTokens
 				}
 				got = append(got, r)
 				reply := fmt.Sprintf("unexpected request %d", len(got))
@@ -235,8 +235,8 @@ func TestSummarizationRequestsMatchPiCapture(t *testing.T) {
 				if got[i].text != want.Text {
 					t.Errorf("request %d text drifts from pi.\n--- got ---\n%s\n--- pi ---\n%s", i+1, got[i].text, want.Text)
 				}
-				if got[i].maxTokens != want.MaxTokens {
-					t.Errorf("request %d maxTokens = %d, pi %d", i+1, got[i].maxTokens, want.MaxTokens)
+				if formatMaxTokens(got[i].maxTokens) != formatMaxTokens(want.MaxTokens) {
+					t.Errorf("request %d maxTokens = %s, pi %s", i+1, formatMaxTokens(got[i].maxTokens), formatMaxTokens(want.MaxTokens))
 				}
 			}
 			checkpoint := state.checkpoint
@@ -251,6 +251,14 @@ func TestSummarizationRequestsMatchPiCapture(t *testing.T) {
 			}
 		})
 	}
+}
+
+// formatMaxTokens renders a request's maxTokens, "none" when it sets none.
+func formatMaxTokens(maxTokens *int) string {
+	if maxTokens == nil {
+		return "none"
+	}
+	return fmt.Sprint(*maxTokens)
 }
 
 // TestSummarizationMaxTokensClampedByModel verifies model.maxTokens caps the

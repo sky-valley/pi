@@ -3,19 +3,21 @@
 // coding/compaction_request_test.go.
 //
 //   node capture-requests.mts <compaction-module> <out.json> <version>
-//   e.g. node capture-requests.mts ~/.cache/pi-npm/0.87.1/node_modules/@earendil-works/pi-coding-agent/dist/core/compaction/index.js requests-0.87.1.json 0.87.1
+//   e.g. node capture-requests.mts <npm>/1.3.0/node_modules/@earendil-works/pi-coding-agent/dist/core/compaction/index.js requests-1.3.0.json 1.3.0
 //
 // <compaction-module> exports compact, createFileOps and
-// extractFileOpsFromMessage: the npm build's dist/core/compaction/index.js
-// (0.87.1 is the first build that frames the split-turn prefix as
-// "# Conversation" / "# Instructions", upstream d192bd6dc).
+// extractFileOpsFromMessage: the npm build's dist/core/compaction/index.js, or
+// packages/coding-agent/src/core/compaction/index.ts of a src extraction when
+// no build ships the change yet (1.3.0 omits thinking from the serialized
+// conversation, upstream 15e7bdc14).
 //
 // Each scenario is a transcript whose first historyCount messages are the
 // history to summarize and whose next prefixCount messages are the split
 // turn's prefix; the rest is kept. The preparation carries those lists, the
 // optional previous summary and the file operations of both lists, as
 // prepareCompaction builds them. compact() runs with a stub streamFn that
-// records each request's system prompt, user text and maxTokens, and answers
+// records each request's system prompt, user text and maxTokens (null when
+// the request sets none), and answers
 // request n with the scenario's replies[n-1], or "SUMMARY n" when it has none.
 // The output keeps the messages as pi reads them, the requests in order with
 // the reply each got, and the summary compact() returns.
@@ -53,6 +55,10 @@ const assistant = (text: string | null, calls: Array<[string, string, Record<str
 	stopReason,
 	timestamp: ++clock,
 });
+const thinkingAssistant = (thinking: string[], text: string | null, calls: Array<[string, string, Record<string, unknown>]> = []) => {
+	const message = assistant(text, calls, calls.length > 0 ? "toolUse" : "stop");
+	return { ...message, content: [...thinking.map((block) => ({ type: "thinking", thinking: block })), ...message.content] };
+};
 const toolResult = (id: string, name: string, text: string) => ({
 	role: "toolResult",
 	toolCallId: id,
@@ -176,6 +182,34 @@ const scenarios: Array<{
 		previousSummary: "",
 	},
 	{
+		// Thinking is left out of the serialized conversation (upstream 15e7bdc14):
+		// text, tool calls and tool results record what happened.
+		name: "history-only-thinking",
+		messages: [
+			user("why is the build red?"),
+			thinkingAssistant(["the linker fails", "check the flags"], "checking the linker", [["r1", "read", { path: "/a/Makefile" }]]),
+			toolResult("r1", "read", "LDFLAGS=-x"),
+			thinkingAssistant(["only thinking, no text"], null),
+			thinkingAssistant(["fix it"], "the -x flag is wrong"),
+			user("next question"),
+		],
+		historyCount: 5,
+		prefixCount: 0,
+	},
+	{
+		name: "split-turn-thinking",
+		messages: [
+			user("first question"),
+			thinkingAssistant(["first thought"], "first answer"),
+			user("now edit it"),
+			thinkingAssistant(["plan the edit"], null, [["e1", "edit", { path: "/a/x.go", oldText: "a", newText: "b" }]]),
+			toolResult("e1", "edit", "ok"),
+			thinkingAssistant(["done thinking"], "edited"),
+		],
+		historyCount: 2,
+		prefixCount: 3,
+	},
+	{
 		// computeFileLists sorts with Array.prototype.sort: by UTF-16 code unit,
 		// which puts an astral character (a surrogate) before U+E000..U+FFFF,
 		// where UTF-8 byte order puts it after.
@@ -221,15 +255,15 @@ for (const { name, messages, historyCount, prefixCount, previousSummary, replies
 	const fileOps = createFileOps();
 	for (const message of [...messagesToSummarize, ...turnPrefixMessages]) extractFileOpsFromMessage(message, fileOps);
 
-	const requests: Array<{ systemPrompt: string; text: string; maxTokens: number; reply: string }> = [];
-	const streamFn = (_model: unknown, context: { messages: Array<{ role: string; content: unknown }> }, options: { maxTokens: number }) => {
+	const requests: Array<{ systemPrompt: string; text: string; maxTokens: number | null; reply: string }> = [];
+	const streamFn = (_model: unknown, context: { messages: Array<{ role: string; content: unknown }> }, options: { maxTokens?: number }) => {
 		const system = context.messages.filter((message) => message.role === "system");
 		const users = context.messages.filter((message) => message.role === "user");
 		if (system.length !== 1 || users.length !== 1 || context.messages.length !== 2) {
 			throw new Error(`${name}: unexpected request shape ${JSON.stringify(context.messages.map((message) => message.role))}`);
 		}
 		const reply = replies?.[requests.length] ?? `SUMMARY ${requests.length + 1}`;
-		requests.push({ systemPrompt: textOf(system[0].content), text: textOf(users[0].content), maxTokens: options.maxTokens, reply });
+		requests.push({ systemPrompt: textOf(system[0].content), text: textOf(users[0].content), maxTokens: options.maxTokens ?? null, reply });
 		const response = { ...assistant(reply), timestamp: 0 };
 		return { result: async () => response };
 	};
