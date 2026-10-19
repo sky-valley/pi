@@ -1481,7 +1481,8 @@ func responsesInput(model *ai.Model, req ai.TranscriptContext, updateEffort stri
 				}
 			}
 			textResult := strings.Join(texts, "\n")
-			hasText := len(textResult) > 0
+			// Text that is blank by JS trim counts as none (upstream 4dd2b149d).
+			hasText := jstext.Trim(textResult) != ""
 
 			var outputVal any
 			if hasImages && imageInput {

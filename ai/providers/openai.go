@@ -983,7 +983,9 @@ func buildOpenAIParams(model *ai.Model, req ai.TranscriptContext, opts *OpenAIOp
 				}
 				textResult := strings.Join(text, "\n")
 				content := textResult
-				if content == "" {
+				// Text that is blank by JS trim counts as none (upstream
+				// 4dd2b149d): some providers reject a bare "\r\n" with a 400.
+				if jstext.Trim(textResult) == "" {
 					// Only claim an attached image when one is actually present;
 					// empty results with no image get a distinct placeholder so the
 					// model doesn't hallucinate an attachment (pi #6290).

@@ -1,0 +1,3125 @@
+{
+	"sha": "4dd2b149d",
+	"rows": [
+		{
+			"api": "openai-completions",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": ""
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\"(no tool output)\",\"tool_call_id\":\"call_1\"}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "\r\n"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\"(no tool output)\",\"tool_call_id\":\"call_1\"}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " \n\t"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\"(no tool output)\",\"tool_call_id\":\"call_1\"}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\"(no tool output)\",\"tool_call_id\":\"call_1\"}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "﻿  　 \u000b\f"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\"(no tool output)\",\"tool_call_id\":\"call_1\"}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "​"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\"​\",\"tool_call_id\":\"call_1\"}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": ""
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\"\",\"tool_call_id\":\"call_1\"}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "text",
+					"text": " "
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\"(no tool output)\",\"tool_call_id\":\"call_1\"}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "text",
+					"text": "x"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\" \\nx\",\"tool_call_id\":\"call_1\"}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "x"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\"x\",\"tool_call_id\":\"call_1\"}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " x "
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\" x \",\"tool_call_id\":\"call_1\"}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": ""
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\"\\n(tool image omitted: model does not support images)\",\"tool_call_id\":\"call_1\"}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "\r\n"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\"\\r\\n\\n(tool image omitted: model does not support images)\",\"tool_call_id\":\"call_1\"}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " \n\t"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\" \\n\\t\\n(tool image omitted: model does not support images)\",\"tool_call_id\":\"call_1\"}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\" \\n(tool image omitted: model does not support images)\",\"tool_call_id\":\"call_1\"}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "﻿  　 \u000b\f"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\"﻿  　 \\u000b\\f\\n(tool image omitted: model does not support images)\",\"tool_call_id\":\"call_1\"}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "​"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\"​\\n(tool image omitted: model does not support images)\",\"tool_call_id\":\"call_1\"}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": ""
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\"\\n(tool image omitted: model does not support images)\",\"tool_call_id\":\"call_1\"}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\" \\n \\n(tool image omitted: model does not support images)\",\"tool_call_id\":\"call_1\"}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "text",
+					"text": "x"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\" \\nx\\n(tool image omitted: model does not support images)\",\"tool_call_id\":\"call_1\"}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "x"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\"x\\n(tool image omitted: model does not support images)\",\"tool_call_id\":\"call_1\"}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " x "
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\" x \\n(tool image omitted: model does not support images)\",\"tool_call_id\":\"call_1\"}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": ""
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\"(no tool output)\",\"tool_call_id\":\"call_1\"}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "\r\n"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\"(no tool output)\",\"tool_call_id\":\"call_1\"}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " \n\t"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\"(no tool output)\",\"tool_call_id\":\"call_1\"}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\"(no tool output)\",\"tool_call_id\":\"call_1\"}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "﻿  　 \u000b\f"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\"(no tool output)\",\"tool_call_id\":\"call_1\"}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "​"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\"​\",\"tool_call_id\":\"call_1\"}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": ""
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\"\",\"tool_call_id\":\"call_1\"}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "text",
+					"text": " "
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\"(no tool output)\",\"tool_call_id\":\"call_1\"}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "text",
+					"text": "x"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\" \\nx\",\"tool_call_id\":\"call_1\"}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "x"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\"x\",\"tool_call_id\":\"call_1\"}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " x "
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\" x \",\"tool_call_id\":\"call_1\"}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": ""
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\"(see attached image)\",\"tool_call_id\":\"call_1\"},{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Attached image(s) from tool result:\"},{\"type\":\"image_url\",\"image_url\":{\"url\":\"data:image/png;base64,aW1n\"}}]}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "\r\n"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\"(see attached image)\",\"tool_call_id\":\"call_1\"},{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Attached image(s) from tool result:\"},{\"type\":\"image_url\",\"image_url\":{\"url\":\"data:image/png;base64,aW1n\"}}]}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " \n\t"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\"(see attached image)\",\"tool_call_id\":\"call_1\"},{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Attached image(s) from tool result:\"},{\"type\":\"image_url\",\"image_url\":{\"url\":\"data:image/png;base64,aW1n\"}}]}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\"(see attached image)\",\"tool_call_id\":\"call_1\"},{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Attached image(s) from tool result:\"},{\"type\":\"image_url\",\"image_url\":{\"url\":\"data:image/png;base64,aW1n\"}}]}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "﻿  　 \u000b\f"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\"(see attached image)\",\"tool_call_id\":\"call_1\"},{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Attached image(s) from tool result:\"},{\"type\":\"image_url\",\"image_url\":{\"url\":\"data:image/png;base64,aW1n\"}}]}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "​"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\"​\",\"tool_call_id\":\"call_1\"},{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Attached image(s) from tool result:\"},{\"type\":\"image_url\",\"image_url\":{\"url\":\"data:image/png;base64,aW1n\"}}]}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": ""
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\"\",\"tool_call_id\":\"call_1\"},{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Attached image(s) from tool result:\"},{\"type\":\"image_url\",\"image_url\":{\"url\":\"data:image/png;base64,aW1n\"}}]}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\"(see attached image)\",\"tool_call_id\":\"call_1\"},{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Attached image(s) from tool result:\"},{\"type\":\"image_url\",\"image_url\":{\"url\":\"data:image/png;base64,aW1n\"}}]}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "text",
+					"text": "x"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\" \\nx\",\"tool_call_id\":\"call_1\"},{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Attached image(s) from tool result:\"},{\"type\":\"image_url\",\"image_url\":{\"url\":\"data:image/png;base64,aW1n\"}}]}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "x"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\"x\",\"tool_call_id\":\"call_1\"},{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Attached image(s) from tool result:\"},{\"type\":\"image_url\",\"image_url\":{\"url\":\"data:image/png;base64,aW1n\"}}]}]"
+		},
+		{
+			"api": "openai-completions",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " x "
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":\"run\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"}}]},{\"role\":\"tool\",\"content\":\" x \",\"tool_call_id\":\"call_1\"},{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Attached image(s) from tool result:\"},{\"type\":\"image_url\",\"image_url\":{\"url\":\"data:image/png;base64,aW1n\"}}]}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": ""
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"(no tool output)\"}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "\r\n"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"(no tool output)\"}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " \n\t"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"(no tool output)\"}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"(no tool output)\"}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "﻿  　 \u000b\f"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"(no tool output)\"}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "​"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"​\"}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": ""
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"\"}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "text",
+					"text": " "
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"(no tool output)\"}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "text",
+					"text": "x"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\" \\nx\"}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "x"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"x\"}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " x "
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\" x \"}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": ""
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"\\n(tool image omitted: model does not support images)\"}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "\r\n"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"\\r\\n\\n(tool image omitted: model does not support images)\"}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " \n\t"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\" \\n\\t\\n(tool image omitted: model does not support images)\"}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\" \\n(tool image omitted: model does not support images)\"}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "﻿  　 \u000b\f"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"﻿  　 \\u000b\\f\\n(tool image omitted: model does not support images)\"}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "​"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"​\\n(tool image omitted: model does not support images)\"}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": ""
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"\\n(tool image omitted: model does not support images)\"}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\" \\n \\n(tool image omitted: model does not support images)\"}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "text",
+					"text": "x"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\" \\nx\\n(tool image omitted: model does not support images)\"}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "x"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"x\\n(tool image omitted: model does not support images)\"}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " x "
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\" x \\n(tool image omitted: model does not support images)\"}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": ""
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"(no tool output)\"}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "\r\n"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"(no tool output)\"}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " \n\t"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"(no tool output)\"}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"(no tool output)\"}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "﻿  　 \u000b\f"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"(no tool output)\"}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "​"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"​\"}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": ""
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"\"}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "text",
+					"text": " "
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"(no tool output)\"}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "text",
+					"text": "x"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\" \\nx\"}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "x"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"x\"}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " x "
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\" x \"}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": ""
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":[{\"type\":\"input_image\",\"detail\":\"auto\",\"image_url\":\"data:image/png;base64,aW1n\"}]}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "\r\n"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":[{\"type\":\"input_image\",\"detail\":\"auto\",\"image_url\":\"data:image/png;base64,aW1n\"}]}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " \n\t"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":[{\"type\":\"input_image\",\"detail\":\"auto\",\"image_url\":\"data:image/png;base64,aW1n\"}]}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":[{\"type\":\"input_image\",\"detail\":\"auto\",\"image_url\":\"data:image/png;base64,aW1n\"}]}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "﻿  　 \u000b\f"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":[{\"type\":\"input_image\",\"detail\":\"auto\",\"image_url\":\"data:image/png;base64,aW1n\"}]}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "​"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":[{\"type\":\"input_text\",\"text\":\"​\"},{\"type\":\"input_image\",\"detail\":\"auto\",\"image_url\":\"data:image/png;base64,aW1n\"}]}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": ""
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":[{\"type\":\"input_text\",\"text\":\"\"},{\"type\":\"input_image\",\"detail\":\"auto\",\"image_url\":\"data:image/png;base64,aW1n\"}]}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":[{\"type\":\"input_image\",\"detail\":\"auto\",\"image_url\":\"data:image/png;base64,aW1n\"}]}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "text",
+					"text": "x"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":[{\"type\":\"input_text\",\"text\":\" \\nx\"},{\"type\":\"input_image\",\"detail\":\"auto\",\"image_url\":\"data:image/png;base64,aW1n\"}]}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "x"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":[{\"type\":\"input_text\",\"text\":\"x\"},{\"type\":\"input_image\",\"detail\":\"auto\",\"image_url\":\"data:image/png;base64,aW1n\"}]}]"
+		},
+		{
+			"api": "openai-responses",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " x "
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":[{\"type\":\"input_text\",\"text\":\" x \"},{\"type\":\"input_image\",\"detail\":\"auto\",\"image_url\":\"data:image/png;base64,aW1n\"}]}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": ""
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\"\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": ""
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\"\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "\r\n"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\"\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": "\r\n"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\"\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " \n\t"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\"\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": " \n\t"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\"\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\"\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\"\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "﻿  　 \u000b\f"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\"\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": "﻿  　 \u000b\f"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\"\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "​"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\"​\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": "​"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\"​\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": ""
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\"\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": ""
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\"\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "text",
+					"text": " "
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\"\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "text",
+					"text": " "
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\"\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "text",
+					"text": "x"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\" \\nx\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "text",
+					"text": "x"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\" \\nx\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "x"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\"x\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": "x"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\"x\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " x "
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\" x \"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": " x "
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\" x \"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": ""
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\"\\n(tool image omitted: model does not support images)\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": ""
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\"\\n(tool image omitted: model does not support images)\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "\r\n"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\"\\r\\n\\n(tool image omitted: model does not support images)\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": "\r\n"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\"\\r\\n\\n(tool image omitted: model does not support images)\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " \n\t"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\" \\n\\t\\n(tool image omitted: model does not support images)\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": " \n\t"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\" \\n\\t\\n(tool image omitted: model does not support images)\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\" \\n(tool image omitted: model does not support images)\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\" \\n(tool image omitted: model does not support images)\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "﻿  　 \u000b\f"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\"﻿  　 \\u000b\\f\\n(tool image omitted: model does not support images)\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": "﻿  　 \u000b\f"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\"﻿  　 \\u000b\\f\\n(tool image omitted: model does not support images)\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "​"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\"​\\n(tool image omitted: model does not support images)\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": "​"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\"​\\n(tool image omitted: model does not support images)\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": ""
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\"\\n(tool image omitted: model does not support images)\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": ""
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\"\\n(tool image omitted: model does not support images)\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\" \\n \\n(tool image omitted: model does not support images)\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\" \\n \\n(tool image omitted: model does not support images)\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "text",
+					"text": "x"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\" \\nx\\n(tool image omitted: model does not support images)\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "text",
+					"text": "x"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\" \\nx\\n(tool image omitted: model does not support images)\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "x"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\"x\\n(tool image omitted: model does not support images)\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": "x"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\"x\\n(tool image omitted: model does not support images)\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " x "
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\" x \\n(tool image omitted: model does not support images)\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": " x "
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\" x \\n(tool image omitted: model does not support images)\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": ""
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\"\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": ""
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\"\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "\r\n"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\"\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": "\r\n"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\"\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " \n\t"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\"\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": " \n\t"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\"\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\"\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\"\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "﻿  　 \u000b\f"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\"\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": "﻿  　 \u000b\f"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\"\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "​"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\"​\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": "​"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\"​\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": ""
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\"\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": ""
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\"\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "text",
+					"text": " "
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\"\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "text",
+					"text": " "
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\"\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "text",
+					"text": "x"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\" \\nx\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "text",
+					"text": "x"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\" \\nx\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "x"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\"x\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": "x"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\"x\"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " x "
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\" x \"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": " x "
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\" x \"},\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": ""
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\"(see attached image)\"},\"parts\":[{\"inlineData\":{\"mimeType\":\"image/png\",\"data\":\"aW1n\"}}],\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": ""
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\"(see attached image)\"},\"parts\":[{\"inlineData\":{\"mimeType\":\"image/png\",\"data\":\"aW1n\"}}],\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "\r\n"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\"(see attached image)\"},\"parts\":[{\"inlineData\":{\"mimeType\":\"image/png\",\"data\":\"aW1n\"}}],\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": "\r\n"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\"(see attached image)\"},\"parts\":[{\"inlineData\":{\"mimeType\":\"image/png\",\"data\":\"aW1n\"}}],\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " \n\t"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\"(see attached image)\"},\"parts\":[{\"inlineData\":{\"mimeType\":\"image/png\",\"data\":\"aW1n\"}}],\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": " \n\t"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\"(see attached image)\"},\"parts\":[{\"inlineData\":{\"mimeType\":\"image/png\",\"data\":\"aW1n\"}}],\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\"(see attached image)\"},\"parts\":[{\"inlineData\":{\"mimeType\":\"image/png\",\"data\":\"aW1n\"}}],\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\"(see attached image)\"},\"parts\":[{\"inlineData\":{\"mimeType\":\"image/png\",\"data\":\"aW1n\"}}],\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "﻿  　 \u000b\f"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\"(see attached image)\"},\"parts\":[{\"inlineData\":{\"mimeType\":\"image/png\",\"data\":\"aW1n\"}}],\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": "﻿  　 \u000b\f"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\"(see attached image)\"},\"parts\":[{\"inlineData\":{\"mimeType\":\"image/png\",\"data\":\"aW1n\"}}],\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "​"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\"​\"},\"parts\":[{\"inlineData\":{\"mimeType\":\"image/png\",\"data\":\"aW1n\"}}],\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": "​"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\"​\"},\"parts\":[{\"inlineData\":{\"mimeType\":\"image/png\",\"data\":\"aW1n\"}}],\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": ""
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\"\"},\"parts\":[{\"inlineData\":{\"mimeType\":\"image/png\",\"data\":\"aW1n\"}}],\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": ""
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\"\"},\"parts\":[{\"inlineData\":{\"mimeType\":\"image/png\",\"data\":\"aW1n\"}}],\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\"(see attached image)\"},\"parts\":[{\"inlineData\":{\"mimeType\":\"image/png\",\"data\":\"aW1n\"}}],\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\"(see attached image)\"},\"parts\":[{\"inlineData\":{\"mimeType\":\"image/png\",\"data\":\"aW1n\"}}],\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "text",
+					"text": "x"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\" \\nx\"},\"parts\":[{\"inlineData\":{\"mimeType\":\"image/png\",\"data\":\"aW1n\"}}],\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "text",
+					"text": "x"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\" \\nx\"},\"parts\":[{\"inlineData\":{\"mimeType\":\"image/png\",\"data\":\"aW1n\"}}],\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": "x"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\"x\"},\"parts\":[{\"inlineData\":{\"mimeType\":\"image/png\",\"data\":\"aW1n\"}}],\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": "x"
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\"x\"},\"parts\":[{\"inlineData\":{\"mimeType\":\"image/png\",\"data\":\"aW1n\"}}],\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": false,
+			"content": [
+				{
+					"type": "text",
+					"text": " x "
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"output\":\" x \"},\"parts\":[{\"inlineData\":{\"mimeType\":\"image/png\",\"data\":\"aW1n\"}}],\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		},
+		{
+			"api": "google-generative-ai",
+			"input": [
+				"text",
+				"image"
+			],
+			"isError": true,
+			"content": [
+				{
+					"type": "text",
+					"text": " x "
+				},
+				{
+					"type": "image",
+					"data": "aW1n",
+					"mimeType": "image/png"
+				}
+			],
+			"request": "[{\"parts\":[{\"text\":\"run\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"true\"},\"id\":\"call_1\",\"name\":\"bash\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"bash\",\"response\":{\"error\":\" x \"},\"parts\":[{\"inlineData\":{\"mimeType\":\"image/png\",\"data\":\"aW1n\"}}],\"id\":\"call_1\"}}],\"role\":\"user\"}]"
+		}
+	]
+}

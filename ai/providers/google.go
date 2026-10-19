@@ -1029,7 +1029,8 @@ func googleContents(model *ai.Model, req ai.TranscriptContext) []any {
 				}
 			}
 			textResult := strings.Join(texts, "\n")
-			hasText := len(textResult) > 0
+			// Text that is blank by JS trim counts as none (upstream 4dd2b149d).
+			hasText := jstext.Trim(textResult) != ""
 			hasImages := len(imageParts) > 0
 
 			// responseValue: text if present, else placeholder for image-only, else "".
