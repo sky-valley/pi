@@ -59,9 +59,8 @@ func opencodeAdapters() []opencodeAdapter {
 		{ai.APIAnthropicMessages, both, func(t *testing.T, model *ai.Model, opts ai.StreamOptions) http.Header {
 			return captureAnthropicHeaders(t, model, &AnthropicOptions{StreamOptions: opts})
 		}},
-		// google-generative-ai is in opencode's table only (opencode-go.ts names
-		// the other three).
-		{ai.APIGoogleGenerativeAI, []ai.ProviderId{"opencode"}, captureGoogleHeaders},
+		// opencode-go's table gained google-generative-ai in upstream 195120a91.
+		{ai.APIGoogleGenerativeAI, both, captureGoogleHeaders},
 	}
 }
 
