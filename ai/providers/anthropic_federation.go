@@ -25,7 +25,7 @@ import (
 // Anthropic workload identity federation (upstream a9424cd43). pi hands the
 // federation config to @anthropic-ai/sdk, which exchanges the identity token
 // for an access token, caches it and sends it as a bearer; the port has no
-// SDK, so this file is the part of @anthropic-ai/sdk 0.124.0 pi reaches:
+// SDK, so this file is the part of @anthropic-ai/sdk 0.129.0 pi reaches:
 // lib/credentials/oidc-federation.ts (the exchange), identity-token.ts (the
 // file read), token-cache.ts (the cache), the config branch of
 // credential-chain.ts resolveCredentialsFromConfig, and the token-auth arms of
@@ -113,11 +113,12 @@ func sameHTTPDoer(a, b ai.HTTPDoer) bool {
 }
 
 // appendAnthropicOAuthBeta is the SDK's prepareRequest for token auth: once
-// every header is merged, the OAuth beta joins anthropic-beta — appended, as
-// Headers.append joins a value, after ", " — unless it is already one of the
-// header's comma-separated values, trimmed. An empty header (the one an
-// empty `betas` list sends) still counts as present, so it becomes
-// ", oauth-2025-04-20".
+// every header is merged, the OAuth beta joins anthropic-beta unless it is
+// already one of the header's comma-separated values, trimmed. Since SDK
+// 0.129.0 the header is then SET to those trimmed values with the OAuth beta
+// last, joined with "," (0.124.0 appended it after ", ", keeping the values as
+// sent). An empty header (the one an empty `betas` list sends) still counts as
+// present, with one empty value, so it becomes ",oauth-2025-04-20".
 func appendAnthropicOAuthBeta(h http.Header) {
 	key := http.CanonicalHeaderKey("anthropic-beta")
 	values, present := h[key]
@@ -125,16 +126,18 @@ func appendAnthropicOAuthBeta(h http.Header) {
 		h.Set(key, anthropicOAuthAPIBeta)
 		return
 	}
-	existing := strings.Join(values, ", ")
-	for _, beta := range strings.Split(existing, ",") {
-		if jstext.Trim(beta) == anthropicOAuthAPIBeta {
+	// Headers.get joins a repeated header with ", ".
+	existing := strings.Split(strings.Join(values, ", "), ",")
+	for i, beta := range existing {
+		existing[i] = jstext.Trim(beta)
+		if existing[i] == anthropicOAuthAPIBeta {
 			return
 		}
 	}
-	h.Set(key, existing+", "+anthropicOAuthAPIBeta)
+	h.Set(key, strings.Join(append(existing, anthropicOAuthAPIBeta), ","))
 }
 
-// SDK 0.124.0 lib/credentials/types.ts.
+// SDK 0.129.0 lib/credentials/types.ts (unchanged since 0.124.0).
 const (
 	anthropicTokenEndpoint        = "/v1/oauth/token"
 	anthropicGrantTypeJWTBearer   = "urn:ietf:params:oauth:grant-type:jwt-bearer"
@@ -148,7 +151,7 @@ const (
 	// anthropicFederationUserAgent is the User-Agent of the exchange: the SDK
 	// passes its client's getUserAgent() as the provider's userAgent.
 	anthropicFederationUserAgent = "Anthropic/JS " + anthropicSDKVersion
-	anthropicSDKVersion          = "0.124.0"
+	anthropicSDKVersion          = "0.129.0"
 )
 
 // anthropicNowSeconds is the SDK's nowAsSeconds, Math.floor(Date.now()/1000).

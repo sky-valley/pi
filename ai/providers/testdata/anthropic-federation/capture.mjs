@@ -3,12 +3,16 @@
 // oracle behind TestAnthropicFederationMatchesPi.
 //
 //   node capture.mjs <pi npm dir> <out.json>
-//   e.g. node capture.mjs ~/.cache/pi-npm/0.99.2 anthropic-federation-0.99.2.json
+//   e.g. node capture.mjs .../npm-1.3.0 anthropic-federation-1.3.0.json
 //
-// pi hands the federation config to @anthropic-ai/sdk (0.124.0, what upstream's
-// package-lock.json locks at a9424cd43 and what the 0.99.2 build ships), and it
-// is the SDK that exchanges the identity token, caches the access token and
-// sends it. So no fake client here: each row streams the published build's
+// pi hands the federation config to @anthropic-ai/sdk (0.129.0, what upstream's
+// package-lock.json locks since b271b0a52 and what the 1.3.0 build ships; it
+// was 0.124.0 from a9424cd43 to the 0.99.2 build), and it is the SDK that
+// exchanges the identity token, caches the access token and sends it. The
+// control for an SDK bump is the same pi-ai build over the previous SDK: 1.3.0
+// over 0.124.0 records the 0.99.2 file row for row, and 0.129.0 then moves only
+// the exchange's User-Agent and the OAuth beta join (prepareRequest now sets
+// the header to the trimmed values joined with "," instead of appending). So no fake client here: each row streams the published build's
 // anthropic-messages adapter, with its real SDK client, against a loopback
 // server that answers POST /v1/oauth/token with the row's exchange responses
 // (one per exchange, the last repeated) and POST /v1/messages with an SSE body
@@ -100,6 +104,7 @@ const cases = [
 	{ name: "emptyBetasGetTheOAuthBetaAppended", env: ids, tokenFile: "jwt", exchanges: [granted("t")], payloadBetas: [] },
 	{ name: "betasGetTheOAuthBetaAppended", env: ids, tokenFile: "jwt", exchanges: [granted("t")], payloadBetas: ["a-beta", "b-beta"] },
 	{ name: "presentOAuthBetaIsNotRepeated", env: ids, tokenFile: "jwt", exchanges: [granted("t")], payloadBetas: ["a-beta", " oauth-2025-04-20 "] },
+	{ name: "spacedBetasAreTrimmedWhenTheOAuthBetaIsAppended", env: ids, tokenFile: "jwt", exchanges: [granted("t")], payloadBetas: ["a-beta ", " b-beta"] },
 	{ name: "expiringTokenIsExchangedPerRequest", env: ids, tokenFile: "jwt", exchanges: [granted("t1", 10), granted("t2", 10)], requests: 2 },
 	{
 		name: "advisoryWindowServesTheCachedTokenAndRefreshes",

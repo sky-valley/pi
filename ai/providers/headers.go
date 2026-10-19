@@ -200,7 +200,7 @@ func (o *headerObject) applyAsDefaultHeaders(h http.Header, checkName headerName
 // a bundle it folds, a marker's included: nil for a name it takes.
 type headerNameCheck func(name string) error
 
-// undiciDeleteHeaderName is @anthropic-ai/sdk 0.124.0's name check (and openai
+// undiciDeleteHeaderName is @anthropic-ai/sdk 0.129.0's name check (and openai
 // 6's): buildHeaders deletes a name from its Headers before it first appends
 // one, and a marker is that delete alone, so undici's Headers.delete converts
 // the name and refuses one that is not a token.
@@ -286,7 +286,7 @@ func (b builtHeaders) applyAsDefaultHeaders(h http.Header, _ headerNameCheck) er
 }
 
 // sdkHeaders is one request's headers as a vendor SDK's buildHeaders folds
-// them together (openai 7.19.0 and @anthropic-ai/sdk 0.124.0,
+// them together (openai 7.19.0 and @anthropic-ai/sdk 0.129.0,
 // client.buildHeaders), bundle by bundle in this order:
 //
 //	[own, auth, defaults, body, request]

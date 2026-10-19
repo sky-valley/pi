@@ -2157,8 +2157,10 @@ func anthropicClientHeaders(model *ai.Model, opts *AnthropicOptions, oauth bool,
 }
 
 // anthropicOwnHeaders is the bundle @anthropic-ai/sdk's buildHeaders writes for
-// itself ahead of its auth header (0.124.0 client.buildHeaders; pi's
-// dangerouslyAllowBrowser adds the browser-access header).
+// itself ahead of its auth header (0.129.0 client.buildHeaders; pi's
+// dangerouslyAllowBrowser adds the browser-access header). Its X-Stainless-*
+// telemetry is left out (see sdkHeaders.own), including the
+// X-Stainless-Timeout 0.129.0 now sends on every request.
 var anthropicOwnHeaders = []recordEntry{
 	{"accept", "application/json"},
 	{"anthropic-dangerous-direct-browser-access", "true"},

@@ -458,7 +458,7 @@ var errOpenAIHeadersTimeout = errors.New("Request timed out. Node.js fetch timed
 
 // openaiFetchError is sdkFetchError for the two openai loops: openai 7.19.0
 // words a rejection whose cause is undici's headers timeout apart
-// (errOpenAIHeadersTimeout). @anthropic-ai/sdk 0.124.0 does not, so
+// (errOpenAIHeadersTimeout). @anthropic-ai/sdk 0.129.0 does not, so
 // anthropic's is "Request timed out." like any other timeout.
 func openaiFetchError(err error) error {
 	var rejected *fetchRejection

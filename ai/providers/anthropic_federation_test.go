@@ -20,9 +20,9 @@ import (
 
 // anthropicFederationCaptureFile is written by
 // testdata/anthropic-federation/capture.mjs, which streams the published pi-ai
-// 0.99.2 anthropic-messages adapter, with its real @anthropic-ai/sdk 0.124.0
+// 1.3.0 anthropic-messages adapter, with its real @anthropic-ai/sdk 0.129.0
 // client, against a loopback server.
-const anthropicFederationCaptureFile = "testdata/anthropic-federation/anthropic-federation-0.99.2.json"
+const anthropicFederationCaptureFile = "testdata/anthropic-federation/anthropic-federation-1.3.0.json"
 
 // anthropicFederationEnvVars are the variables pi's federation reads, cleared
 // from the ambient environment so a row's env is the only source.
@@ -209,7 +209,7 @@ func TestAnthropicFederationMatchesPi(t *testing.T) {
 	if err := json.Unmarshal(data, &capture); err != nil {
 		t.Fatalf("decode %s: %v", anthropicFederationCaptureFile, err)
 	}
-	if capture.SDK != "0.124.0" || len(capture.Rows) == 0 {
+	if capture.SDK != anthropicSDKVersion || len(capture.Rows) == 0 {
 		t.Fatalf("%s: sdk %q, %d rows", anthropicFederationCaptureFile, capture.SDK, len(capture.Rows))
 	}
 	clearAnthropicFederationEnv(t)
