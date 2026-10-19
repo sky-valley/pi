@@ -97,10 +97,10 @@ const maxSafeInteger = 1<<53 - 1
 // InMemoryContext, as pi's module-wide registry does, so a link or exemplar
 // may name another recorder's span.
 //
-// Unlike pi's single-threaded original this is safe for concurrent use: Go
-// callers routinely start sibling spans from several goroutines, so the
-// recorder takes a mutex around its state. The lock is never held across a
-// callback — a callback starting a child span would otherwise deadlock.
+// It is safe for concurrent use, as the Context contract requires of every
+// adapter: the recorder takes a mutex around its state. The lock is never
+// held across a callback — a callback starting a child span would otherwise
+// deadlock.
 //
 // The usable zero value is deliberate: span ids and end-sequences are derived
 // from state the recorder already keeps rather than from counters a constructor

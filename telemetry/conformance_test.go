@@ -8,13 +8,10 @@ import (
 	"testing"
 )
 
-// The cases below port what upstream 48909d987 and 2ec55d808 added to pi's
-// adapter conformance suite (packages/telemetry/src/testing/conformance.ts at
-// d2e7d8b7c: capabilities, metrics, links, propagation), run against
-// InMemoryContext as pi's conformance.test.ts does, plus that package's
-// propagation.test.ts and metrics.test.ts. pi's "unreadable" Proxy inputs
-// have no Go analog (see memory_test.go); everything else they guard is
-// kept.
+// InMemoryContext's propagation and metrics beyond the adapter contract,
+// which telemetrytest checks against it (pi's conformance.test.ts runs the
+// suite on InMemoryTelemetryContext), plus pi's propagation.test.ts and
+// metrics.test.ts.
 
 func findSpan(t *testing.T, spans []RecordedSpan, name string) RecordedSpan {
 	t.Helper()
@@ -40,162 +37,9 @@ func roundtripJSON(t *testing.T, carrier Carrier) Carrier {
 	return wire
 }
 
-// "carries adapter capabilities through contexts and spans": the root, its
-// spans, their children, an extracted parent and its span, and an inert
-// child of a settled span all expose the recorder's own capabilities.
-func TestConformanceCarriesCapabilities(t *testing.T) {
-	c := NewInMemoryContext()
-	assertCapabilities := func(name string, context Context) {
-		t.Helper()
-		if context.Metrics() != Metrics(c) {
-			t.Errorf("%s: Metrics() = %#v, want the recorder", name, context.Metrics())
-		}
-		if context.Propagation() != Propagation(c) {
-			t.Errorf("%s: Propagation() = %#v, want the recorder", name, context.Propagation())
-		}
-	}
-	assertCapabilities("root", c)
-	var settled Span
-	_ = c.StartSpan(SpanOptions{Name: "capabilities"}, func(span Span) error {
-		settled = span
-		assertCapabilities("span", span)
-		_ = span.StartSpan(SpanOptions{Name: "capabilities.child"}, func(child Span) error {
-			assertCapabilities("child", child)
-			return nil
-		})
-		parent := c.Extract(c.Inject(span))
-		assertCapabilities("extracted parent", parent)
-		return parent.StartSpan(SpanOptions{Name: "capabilities.extracted"}, func(extracted Span) error {
-			assertCapabilities("extracted span", extracted)
-			return nil
-		})
-	})
-	_ = settled.StartSpan(SpanOptions{Name: "capabilities.inert"}, func(inert Span) error {
-		assertCapabilities("inert span", inert)
-		return inert.StartSpan(SpanOptions{Name: "capabilities.inert.child"}, func(child Span) error {
-			assertCapabilities("inert child", child)
-			return nil
-		})
-	})
-	if got := len(c.Spans()); got != 3 {
-		t.Errorf("spans = %d, want 3: inert spans are not recorded", got)
-	}
-}
-
-// "records ordered measurements and optional histogram exemplars"
-func TestConformanceRecordsOrderedMeasurements(t *testing.T) {
-	c := NewInMemoryContext()
-	c.Counter("bytes", InstrumentOptions{Description: "Encoded bytes", Unit: "By"}).Add(12, SpanAttributes{"direction": "out"})
-	active := c.UpDownCounter("active", InstrumentOptions{})
-	active.Add(1, nil)
-	active.Add(-1, nil)
-	histogram := c.Histogram("duration", HistogramOptions{InstrumentOptions: InstrumentOptions{Unit: "ms"}, Boundaries: []float64{1, 10}})
-	_ = c.StartSpan(SpanOptions{Name: "measured"}, func(span Span) error {
-		histogram.Record(5, SpanAttributes{"method": "read"}, span)
-		return nil
-	})
-
-	measurements := c.Measurements()
-	type row struct {
-		kind  MetricKind
-		name  string
-		value float64
-	}
-	var got []row
-	for _, m := range measurements {
-		got = append(got, row{m.Kind, m.Name, m.Value})
-	}
-	want := []row{
-		{MetricCounter, "bytes", 12},
-		{MetricUpDownCounter, "active", 1},
-		{MetricUpDownCounter, "active", -1},
-		{MetricHistogram, "duration", 5},
-	}
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("measurements = %v, want %v", got, want)
-	}
-	if !reflect.DeepEqual(measurements[0].Attributes, SpanAttributes{"direction": "out"}) {
-		t.Errorf("attributes = %v", measurements[0].Attributes)
-	}
-	if measurements[0].Description != "Encoded bytes" || measurements[0].Unit != "By" {
-		t.Errorf("metadata = %q/%q", measurements[0].Description, measurements[0].Unit)
-	}
-	if !reflect.DeepEqual(measurements[3].Boundaries, []float64{1, 10}) {
-		t.Errorf("boundaries = %v", measurements[3].Boundaries)
-	}
-	if want := findSpan(t, c.Spans(), "measured").Context; !reflect.DeepEqual(measurements[3].Context, want) {
-		t.Errorf("exemplar = %v, want the span's carrier %v", measurements[3].Context, want)
-	}
-	if measurements[0].Context != nil || measurements[0].Boundaries != nil {
-		t.Errorf("counter context/boundaries = %v/%v, want nil", measurements[0].Context, measurements[0].Boundaries)
-	}
-}
-
-// "copies inputs and suppresses invalid measurements atomically"
-func TestConformanceCopiesInputsAndSuppressesInvalidMeasurements(t *testing.T) {
-	c := NewInMemoryContext()
-	boundaries := []float64{1, 10}
-	histogram := c.Histogram("snapshot", HistogramOptions{InstrumentOptions: InstrumentOptions{Description: "Original"}, Boundaries: boundaries})
-	boundaries[1] = 100
-	tags := []string{"original"}
-	histogram.Record(-1, SpanAttributes{"tags": tags}, nil)
-	tags[0] = "changed"
-	counter := c.Counter("invalid", InstrumentOptions{})
-	for _, value := range []float64{math.NaN(), math.Inf(1), math.Inf(-1), -1} {
-		counter.Add(value, nil)
-	}
-	c.Histogram("bad-boundaries", HistogramOptions{Boundaries: []float64{2, 1}}).Record(1, nil, nil)
-
-	measurements := c.Measurements()
-	if len(measurements) != 1 {
-		t.Fatalf("measurements = %+v, want only the valid histogram value", measurements)
-	}
-	m := measurements[0]
-	if !reflect.DeepEqual(m.Attributes, SpanAttributes{"tags": []string{"original"}}) {
-		t.Errorf("attributes = %v, want the copy taken at record time", m.Attributes)
-	}
-	if !reflect.DeepEqual(m.Boundaries, []float64{1, 10}) {
-		t.Errorf("boundaries = %v, want the copy taken at creation", m.Boundaries)
-	}
-	if m.Description != "Original" || m.Context != nil {
-		t.Errorf("description/context = %q/%v", m.Description, m.Context)
-	}
-}
-
-// "records initial and late links without changing parents"
-func TestConformanceRecordsInitialAndLateLinks(t *testing.T) {
-	c := NewInMemoryContext()
-	var target Span
-	_ = c.StartSpan(SpanOptions{Name: "target"}, func(span Span) error {
-		target = span
-		return nil
-	})
-	reason := []string{"initial"}
-	_ = c.StartSpan(SpanOptions{Name: "linked", Links: []SpanLink{{Context: target, Attributes: SpanAttributes{"reason": reason}}}}, func(span Span) error {
-		reason[0] = "mutated"
-		span.AddLink(SpanLink{Context: target, Attributes: SpanAttributes{"reason": "late"}})
-		span.AddLink(SpanLink{Context: NoopContext})
-		return nil
-	})
-	spans := c.Spans()
-	linked := findSpan(t, spans, "linked")
-	if linked.ParentID != 0 || linked.ParentContext != nil {
-		t.Errorf("parent = %d/%v, want a root", linked.ParentID, linked.ParentContext)
-	}
-	targetContext := findSpan(t, spans, "target").Context
-	want := []RecordedLink{
-		{Context: targetContext, Attributes: SpanAttributes{"reason": []string{"initial"}}},
-		{Context: targetContext, Attributes: SpanAttributes{"reason": "late"}},
-	}
-	if !reflect.DeepEqual(linked.Links, want) {
-		t.Errorf("links = %+v, want %+v", linked.Links, want)
-	}
-}
-
-// "suppresses malformed links atomically and ignores settled sources": a
-// settled span ignores AddLink, and a link to a context the recorder does
-// not know records nothing.
-func TestConformanceIgnoresSettledLinkSources(t *testing.T) {
+// A link to the recorder's root, or to no context, records nothing: the root
+// has no carrier (pi copyLink finds none in its registry).
+func TestInMemoryLinksIgnoreRootTargets(t *testing.T) {
 	c := NewInMemoryContext()
 	var source Span
 	_ = c.StartSpan(SpanOptions{Name: "link-source"}, func(span Span) error {
@@ -210,8 +54,9 @@ func TestConformanceIgnoresSettledLinkSources(t *testing.T) {
 	}
 }
 
-// "roundtrips parent identity through JSON without retaining the carrier"
-func TestConformanceRoundtripsParentIdentity(t *testing.T) {
+// A carrier naming one of the recorder's own spans extracts a parent whose
+// children keep the local parent id, beside the carrier the suite checks.
+func TestInMemoryExtractedOwnSpanKeepsLocalParent(t *testing.T) {
 	c := NewInMemoryContext()
 	_ = c.StartSpan(SpanOptions{Name: "sender"}, func(span Span) error {
 		carrier := c.Inject(span)
@@ -239,10 +84,10 @@ func TestConformanceRoundtripsParentIdentity(t *testing.T) {
 	}
 }
 
-// "unknown and unreadable carriers produce recorded roots": nothing injects
-// for the no-op context, and every carrier the recorder did not write
-// extracts to its root, whose spans still run and are recorded.
-func TestConformanceUnknownCarriersProduceRoots(t *testing.T) {
+// Nothing injects for the no-op context or the recorder's own root, and every
+// carrier the recorder did not write extracts to its root, whose spans are
+// recorded as roots with no parent id.
+func TestInMemoryUnknownCarriersProduceRoots(t *testing.T) {
 	c := NewInMemoryContext()
 	if carrier := c.Inject(NoopContext); carrier != nil {
 		t.Errorf("Inject(NoopContext) = %v, want nil", carrier)
@@ -300,31 +145,6 @@ func TestInMemoryExtractRejectsMalformedCarriers(t *testing.T) {
 	}
 	if got := c.Extract(Carrier{memoryScopeKey: scope, memorySpanKey: "9007199254740991", "extra": "x"}); got == Context(c) {
 		t.Error("the largest safe span id must extract a parent")
-	}
-}
-
-// "propagates across fresh adapters and multiple hops"
-func TestConformancePropagatesAcrossAdaptersAndHops(t *testing.T) {
-	sender, receiver, worker := NewInMemoryContext(), NewInMemoryContext(), NewInMemoryContext()
-	var senderCarrier, receiverCarrier Carrier
-	_ = sender.StartSpan(SpanOptions{Name: "sender"}, func(span Span) error {
-		senderCarrier = sender.Inject(span)
-		return nil
-	})
-	_ = receiver.Extract(roundtripJSON(t, senderCarrier)).StartSpan(SpanOptions{Name: "receiver"}, func(span Span) error {
-		receiverCarrier = receiver.Inject(span)
-		return nil
-	})
-	_ = worker.Extract(roundtripJSON(t, receiverCarrier)).StartSpan(SpanOptions{Name: "worker"}, func(Span) error { return nil })
-
-	if got := findSpan(t, receiver.Spans(), "receiver"); !reflect.DeepEqual(got.ParentContext, senderCarrier) || got.ParentID != 0 {
-		t.Errorf("receiver parent = %d/%v, want remote %v", got.ParentID, got.ParentContext, senderCarrier)
-	}
-	if got := findSpan(t, worker.Spans(), "worker"); !reflect.DeepEqual(got.ParentContext, receiverCarrier) {
-		t.Errorf("worker parent = %v, want %v", got.ParentContext, receiverCarrier)
-	}
-	if reflect.DeepEqual(findSpan(t, worker.Spans(), "worker").Context, receiverCarrier) {
-		t.Error("the worker's own carrier must differ from its parent's")
 	}
 }
 

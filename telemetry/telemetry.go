@@ -4,7 +4,8 @@
 // application implements to observe pi's logical operations, the optional
 // Metrics and Propagation capabilities an adapter exposes on every context
 // (upstream 48909d987, 2ec55d808), the shared no-op implementations used when
-// it supplies none, and the in-memory reference adapter.
+// it supplies none, and the in-memory reference adapter. Package telemetrytest
+// holds pi's adapter conformance suite (@earendil-works/pi-telemetry/testing).
 //
 // pi's startSpan<T> threads the callback's return value through the returned
 // promise; Go interface methods cannot be generic, so StartSpan takes an
@@ -42,7 +43,8 @@ type Carrier map[string]string
 
 // Propagation carries a parent's identity across a process or transport
 // boundary (pi TelemetryPropagation). Both methods are synchronous, passive
-// and never panic.
+// and never panic. Like every interface here, it must be safe for concurrent
+// use by multiple goroutines.
 type Propagation interface {
 	// Inject returns a detached carrier for a span or extracted parent the
 	// adapter knows, settled or not; nil for its root, a no-op context, or a
@@ -111,6 +113,13 @@ type SpanStatus struct {
 // invocation contexts carry a Span. The adapter's capabilities stay
 // available on every context it hands out — child spans, extracted parents,
 // and the inert spans it falls back to.
+//
+// Implementations must be safe for concurrent use by multiple goroutines,
+// and so must every Span, Metrics, instrument and Propagation they hand out:
+// pi is single-threaded, Go callers are not. ai, for one, starts a request's
+// span on a goroutine of its own and records into it from the goroutine that
+// forwards the stream, while the caller goes on using the parent. Check an
+// adapter with telemetrytest, under -race.
 type Context interface {
 	// StartSpan opens a span, runs callback inside it — synchronously, exactly
 	// once — and closes the span when the callback returns. The callback's
@@ -126,7 +135,9 @@ type Context interface {
 
 // Span is a live span: a Context for starting children, plus the mutators
 // that record what happened inside it (pi TelemetrySpan). Every mutator is
-// passive, never panics, and is ignored once the span settled.
+// passive, never panics, and is ignored once the span settled. A Span is
+// safe for concurrent use: its mutators and children may be called from
+// several goroutines at once, during its callback and after it.
 type Span interface {
 	Context
 	// AddLink relates the span to link.Context without changing its parent.

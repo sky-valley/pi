@@ -7,12 +7,9 @@ import (
 	"testing"
 )
 
-// The cases below mirror pi's telemetry conformance suite
-// (packages/telemetry/src/testing/conformance.ts, upstream 35f5c265d) for
-// every behaviour that survives the port. Its "unreadable payload" cases --
-// a Proxy whose getters throw on read/enumerate -- have no Go analog: reading
-// a map or appending to a slice cannot fail, so pi's defensive try/catch
-// around each mutator guards a failure mode Go does not have.
+// InMemoryContext's own behaviour beyond the adapter contract, which
+// telemetrytest checks against it (pi's conformance suite): span ids, the
+// status it derives from a failure, panics, snapshots and its zero value.
 
 func TestInMemoryContextRecordsSpanLifecycle(t *testing.T) {
 	c := NewInMemoryContext()
@@ -62,63 +59,6 @@ func TestInMemoryContextPropagatesErrorAndDerivesStatus(t *testing.T) {
 	}
 }
 
-// Mirrors "uses last explicit status without automatic overwrite": a span that
-// set its own status keeps it even when the callback then fails.
-func TestInMemoryContextExplicitStatusSurvivesFailure(t *testing.T) {
-	c := NewInMemoryContext()
-	want := SpanStatus{Code: StatusError, Error: &SpanError{Name: "expected-failure", Message: "declared"}}
-	_ = c.StartSpan(SpanOptions{Name: "explicit"}, func(s Span) error {
-		s.SetStatus(want)
-		return errors.New("returned failure")
-	})
-	got := c.Spans()[0].Status
-	if got.Error == nil || got.Error.Name != "expected-failure" || got.Error.Message != "declared" {
-		t.Fatalf("status = %+v, want the explicit status preserved", got.Error)
-	}
-}
-
-func TestInMemoryContextMergesAttributesAndOrdersEvents(t *testing.T) {
-	c := NewInMemoryContext()
-	_ = c.StartSpan(SpanOptions{Name: "s", Attributes: SpanAttributes{"a": 1}}, func(s Span) error {
-		s.SetAttributes(SpanAttributes{"b": 2})
-		s.SetAttributes(SpanAttributes{"a": 3})
-		s.AddEvent("first", SpanAttributes{"index": 1})
-		s.AddEvent("second", SpanAttributes{"index": 2})
-		return nil
-	})
-	got := c.Spans()[0]
-	if got.Attributes["a"] != 3 || got.Attributes["b"] != 2 {
-		t.Fatalf("attributes = %v, want a=3 b=2", got.Attributes)
-	}
-	if len(got.Events) != 2 || got.Events[0].Name != "first" || got.Events[1].Name != "second" {
-		t.Fatalf("events = %+v, want [first second] in order", got.Events)
-	}
-}
-
-// Mirrors "makes calls after settlement inert".
-func TestInMemoryContextMutatorsInertAfterSettle(t *testing.T) {
-	c := NewInMemoryContext()
-	var escaped Span
-	_ = c.StartSpan(SpanOptions{Name: "s"}, func(s Span) error {
-		escaped = s
-		return nil
-	})
-	escaped.AddEvent("late", nil)
-	escaped.SetAttributes(SpanAttributes{"late": true})
-	escaped.SetStatus(SpanStatus{Code: StatusError})
-
-	got := c.Spans()[0]
-	if len(got.Events) != 0 {
-		t.Fatalf("events = %+v, want none after settle", got.Events)
-	}
-	if _, ok := got.Attributes["late"]; ok {
-		t.Fatal("late SetAttributes was recorded")
-	}
-	if got.Status.Code != StatusOK {
-		t.Fatalf("status = %v, want the settled ok status kept", got.Status.Code)
-	}
-}
-
 // Mirrors "records nested and concurrent child relationships".
 func TestInMemoryContextRecordsNestedChildren(t *testing.T) {
 	c := NewInMemoryContext()
@@ -152,31 +92,6 @@ func TestInMemoryContextRecordsNestedChildren(t *testing.T) {
 	if byName["grandchild"].EndSequence >= byName["child-a"].EndSequence ||
 		byName["child-a"].EndSequence >= byName["root"].EndSequence {
 		t.Fatalf("end sequences out of order: %+v", byName)
-	}
-}
-
-// A child started under an already-settled parent runs, but is not recorded --
-// pi runs it on an inert span that keeps the recorder's capabilities
-// (TestConformanceCarriesCapabilities).
-func TestInMemoryContextChildOfSettledParentNotRecorded(t *testing.T) {
-	c := NewInMemoryContext()
-	var escaped Span
-	_ = c.StartSpan(SpanOptions{Name: "root"}, func(s Span) error {
-		escaped = s
-		return nil
-	})
-	ran := false
-	if err := escaped.StartSpan(SpanOptions{Name: "orphan"}, func(Span) error {
-		ran = true
-		return nil
-	}); err != nil {
-		t.Fatalf("orphan span: %v", err)
-	}
-	if !ran {
-		t.Fatal("callback must still run, on an inert span")
-	}
-	if got := len(c.Spans()); got != 1 {
-		t.Fatalf("spans = %d, want 1 (orphan not recorded)", got)
 	}
 }
 

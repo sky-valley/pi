@@ -16,18 +16,20 @@ type HistogramOptions struct {
 }
 
 // Counter accumulates non-negative finite increments (pi TelemetryCounter).
+// Like every instrument, it is safe for concurrent use.
 type Counter interface {
 	Add(value float64, attributes SpanAttributes)
 }
 
 // UpDownCounter accumulates finite signed increments (pi
-// TelemetryUpDownCounter).
+// TelemetryUpDownCounter). It is safe for concurrent use.
 type UpDownCounter interface {
 	Add(value float64, attributes SpanAttributes)
 }
 
 // Histogram records finite signed values (pi TelemetryHistogram). A non-nil
-// context correlates the measurement with that span, an exemplar.
+// context correlates the measurement with that span, an exemplar. It is safe
+// for concurrent use.
 type Histogram interface {
 	Record(value float64, attributes SpanAttributes, context Context)
 }
@@ -37,7 +39,8 @@ type Histogram interface {
 // Factories and recording methods are synchronous, passive, and never panic:
 // an invalid measurement, or an instrument with invalid boundaries, is
 // ignored. Record only values business code already has, and only
-// low-cardinality attributes.
+// low-cardinality attributes. Metrics and the instruments it creates are
+// safe for concurrent use by multiple goroutines.
 type Metrics interface {
 	Counter(name string, options InstrumentOptions) Counter
 	UpDownCounter(name string, options InstrumentOptions) UpDownCounter
