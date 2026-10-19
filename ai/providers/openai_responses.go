@@ -280,7 +280,13 @@ type OpenAIResponsesOptions struct {
 }
 
 // StreamSimpleOpenAIResponses maps unified reasoning to Responses options.
+// Like pi's streamSimple it asserts the client api key first
+// (getClientApiKey), rendered as ai.ErrorStream (see
+// StreamSimpleOpenAICompletions).
 func StreamSimpleOpenAIResponses(ctx context.Context, model *ai.Model, req ai.TranscriptContext, opts *ai.SimpleStreamOptions) *ai.AssistantMessageEventStream {
+	if err := assertSimpleClientAPIKey(model, opts); err != nil {
+		return ai.ErrorStream(model, err)
+	}
 	o := &OpenAIResponsesOptions{}
 	if opts != nil {
 		o.StreamOptions = opts.StreamOptions

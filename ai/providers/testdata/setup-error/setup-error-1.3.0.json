@@ -1,0 +1,517 @@
+{
+	"piAiVersion": "1.3.0",
+	"rows": [
+		{
+			"name": "anthropic/streamSimple",
+			"entry": "streamSimple",
+			"model": {
+				"id": "claude-opus-4-8",
+				"name": "Claude Opus 4.8",
+				"api": "anthropic-messages",
+				"provider": "anthropic",
+				"baseUrl": "https://api.anthropic.com",
+				"reasoning": true,
+				"input": [
+					"text",
+					"image"
+				],
+				"cost": {
+					"input": 5,
+					"output": 25,
+					"cacheRead": 0.5,
+					"cacheWrite": 6.25
+				},
+				"contextWindow": 1000000,
+				"maxTokens": 128000,
+				"compat": {
+					"supportsMidConvoSystemMessages": true,
+					"supportsMidConvoToolChanges": true,
+					"forceAdaptiveThinking": true,
+					"supportsTemperature": false,
+					"supportsStrictTools": true
+				},
+				"thinkingLevelMap": {
+					"xhigh": "xhigh",
+					"max": "max"
+				},
+				"promptCache": {
+					"short": 300,
+					"long": 3600
+				},
+				"inputLimits": {
+					"maxRequestBytes": 33554432,
+					"images": {
+						"maxPerRequest": 600,
+						"resize": {
+							"maxWidth": 2000,
+							"maxHeight": 2000,
+							"maxBytes": 4718592,
+							"jpegQuality": 80
+						}
+					}
+				},
+				"type": "chat"
+			},
+			"events": [
+				"error"
+			],
+			"keys": [
+				"role",
+				"content",
+				"api",
+				"provider",
+				"model",
+				"usage",
+				"stopReason",
+				"errorMessage",
+				"timestamp",
+				"durationMs"
+			],
+			"stopReason": "error",
+			"errorMessage": "No API key for provider: anthropic"
+		},
+		{
+			"name": "anthropic/stream",
+			"entry": "stream",
+			"model": {
+				"id": "claude-opus-4-8",
+				"name": "Claude Opus 4.8",
+				"api": "anthropic-messages",
+				"provider": "anthropic",
+				"baseUrl": "https://api.anthropic.com",
+				"reasoning": true,
+				"input": [
+					"text",
+					"image"
+				],
+				"cost": {
+					"input": 5,
+					"output": 25,
+					"cacheRead": 0.5,
+					"cacheWrite": 6.25
+				},
+				"contextWindow": 1000000,
+				"maxTokens": 128000,
+				"compat": {
+					"supportsMidConvoSystemMessages": true,
+					"supportsMidConvoToolChanges": true,
+					"forceAdaptiveThinking": true,
+					"supportsTemperature": false,
+					"supportsStrictTools": true
+				},
+				"thinkingLevelMap": {
+					"xhigh": "xhigh",
+					"max": "max"
+				},
+				"promptCache": {
+					"short": 300,
+					"long": 3600
+				},
+				"inputLimits": {
+					"maxRequestBytes": 33554432,
+					"images": {
+						"maxPerRequest": 600,
+						"resize": {
+							"maxWidth": 2000,
+							"maxHeight": 2000,
+							"maxBytes": 4718592,
+							"jpegQuality": 80
+						}
+					}
+				},
+				"type": "chat"
+			},
+			"events": [
+				"error"
+			],
+			"keys": [
+				"role",
+				"content",
+				"api",
+				"provider",
+				"model",
+				"usage",
+				"stopReason",
+				"timestamp",
+				"errorMessage",
+				"durationMs"
+			],
+			"stopReason": "error",
+			"errorMessage": "No API key for provider: anthropic"
+		},
+		{
+			"name": "google/streamSimple",
+			"entry": "streamSimple",
+			"model": {
+				"id": "gemini-2.5-pro",
+				"name": "Gemini 2.5 Pro",
+				"api": "google-generative-ai",
+				"provider": "google",
+				"baseUrl": "https://generativelanguage.googleapis.com/v1beta",
+				"reasoning": true,
+				"input": [
+					"text",
+					"image"
+				],
+				"cost": {
+					"input": 1.25,
+					"output": 10,
+					"cacheRead": 0.125,
+					"cacheWrite": 0,
+					"tiers": [
+						{
+							"inputTokensAbove": 200000,
+							"input": 2.5,
+							"output": 15,
+							"cacheRead": 0.25,
+							"cacheWrite": 0
+						}
+					]
+				},
+				"contextWindow": 1048576,
+				"maxTokens": 65536,
+				"inputLimits": {
+					"maxRequestBytes": 20971520,
+					"images": {
+						"maxPerRequest": 3600,
+						"resize": {
+							"maxWidth": 2000,
+							"maxHeight": 2000,
+							"maxBytes": 4718592,
+							"jpegQuality": 80
+						}
+					}
+				},
+				"type": "chat"
+			},
+			"events": [
+				"error"
+			],
+			"keys": [
+				"role",
+				"content",
+				"api",
+				"provider",
+				"model",
+				"usage",
+				"stopReason",
+				"errorMessage",
+				"timestamp",
+				"durationMs"
+			],
+			"stopReason": "error",
+			"errorMessage": "No API key for provider: google"
+		},
+		{
+			"name": "google/stream",
+			"entry": "stream",
+			"model": {
+				"id": "gemini-2.5-pro",
+				"name": "Gemini 2.5 Pro",
+				"api": "google-generative-ai",
+				"provider": "google",
+				"baseUrl": "https://generativelanguage.googleapis.com/v1beta",
+				"reasoning": true,
+				"input": [
+					"text",
+					"image"
+				],
+				"cost": {
+					"input": 1.25,
+					"output": 10,
+					"cacheRead": 0.125,
+					"cacheWrite": 0,
+					"tiers": [
+						{
+							"inputTokensAbove": 200000,
+							"input": 2.5,
+							"output": 15,
+							"cacheRead": 0.25,
+							"cacheWrite": 0
+						}
+					]
+				},
+				"contextWindow": 1048576,
+				"maxTokens": 65536,
+				"inputLimits": {
+					"maxRequestBytes": 20971520,
+					"images": {
+						"maxPerRequest": 3600,
+						"resize": {
+							"maxWidth": 2000,
+							"maxHeight": 2000,
+							"maxBytes": 4718592,
+							"jpegQuality": 80
+						}
+					}
+				},
+				"type": "chat"
+			},
+			"events": [
+				"error"
+			],
+			"keys": [
+				"role",
+				"content",
+				"api",
+				"provider",
+				"model",
+				"usage",
+				"stopReason",
+				"timestamp",
+				"errorMessage",
+				"durationMs"
+			],
+			"stopReason": "error",
+			"errorMessage": "No API key for provider: google"
+		},
+		{
+			"name": "openai/streamSimple",
+			"entry": "streamSimple",
+			"model": {
+				"id": "gpt-5",
+				"name": "GPT-5",
+				"api": "openai-responses",
+				"provider": "openai",
+				"baseUrl": "https://api.openai.com/v1",
+				"reasoning": true,
+				"input": [
+					"text",
+					"image"
+				],
+				"cost": {
+					"input": 1.25,
+					"output": 10,
+					"cacheRead": 0.125,
+					"cacheWrite": 0
+				},
+				"contextWindow": 400000,
+				"maxTokens": 128000,
+				"thinkingLevelMap": {
+					"off": null,
+					"minimal": "minimal",
+					"low": "low",
+					"medium": "medium",
+					"high": "high",
+					"xhigh": null,
+					"max": null
+				},
+				"compat": {
+					"supportsStrictMode": true,
+					"supportsOpenAIGrammarTools": true
+				},
+				"inputLimits": {
+					"maxRequestBytes": 536870912,
+					"images": {
+						"maxPerRequest": 1500,
+						"resize": {
+							"maxWidth": 2000,
+							"maxHeight": 2000,
+							"maxBytes": 4718592,
+							"jpegQuality": 80
+						}
+					}
+				},
+				"type": "chat"
+			},
+			"events": [
+				"error"
+			],
+			"keys": [
+				"role",
+				"content",
+				"api",
+				"provider",
+				"model",
+				"usage",
+				"stopReason",
+				"errorMessage",
+				"timestamp",
+				"durationMs"
+			],
+			"stopReason": "error",
+			"errorMessage": "No API key for provider: openai"
+		},
+		{
+			"name": "openai/stream",
+			"entry": "stream",
+			"model": {
+				"id": "gpt-5",
+				"name": "GPT-5",
+				"api": "openai-responses",
+				"provider": "openai",
+				"baseUrl": "https://api.openai.com/v1",
+				"reasoning": true,
+				"input": [
+					"text",
+					"image"
+				],
+				"cost": {
+					"input": 1.25,
+					"output": 10,
+					"cacheRead": 0.125,
+					"cacheWrite": 0
+				},
+				"contextWindow": 400000,
+				"maxTokens": 128000,
+				"thinkingLevelMap": {
+					"off": null,
+					"minimal": "minimal",
+					"low": "low",
+					"medium": "medium",
+					"high": "high",
+					"xhigh": null,
+					"max": null
+				},
+				"compat": {
+					"supportsStrictMode": true,
+					"supportsOpenAIGrammarTools": true
+				},
+				"inputLimits": {
+					"maxRequestBytes": 536870912,
+					"images": {
+						"maxPerRequest": 1500,
+						"resize": {
+							"maxWidth": 2000,
+							"maxHeight": 2000,
+							"maxBytes": 4718592,
+							"jpegQuality": 80
+						}
+					}
+				},
+				"type": "chat"
+			},
+			"events": [
+				"error"
+			],
+			"keys": [
+				"role",
+				"content",
+				"api",
+				"provider",
+				"model",
+				"usage",
+				"stopReason",
+				"timestamp",
+				"errorMessage",
+				"durationMs"
+			],
+			"stopReason": "error",
+			"errorMessage": "No API key for provider: openai"
+		},
+		{
+			"name": "deepseek/streamSimple",
+			"entry": "streamSimple",
+			"model": {
+				"id": "deepseek-v4-pro",
+				"name": "DeepSeek V4 Pro",
+				"api": "openai-completions",
+				"baseUrl": "https://api.deepseek.com",
+				"provider": "deepseek",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 1.32,
+					"output": 3.96,
+					"cacheRead": 0.044,
+					"cacheWrite": 0
+				},
+				"contextWindow": 1000000,
+				"maxTokens": 384000,
+				"compat": {
+					"supportsStore": false,
+					"supportsDeveloperRole": false,
+					"maxTokensField": "max_tokens",
+					"requiresReasoningContentOnAssistantMessages": true,
+					"thinkingFormat": "deepseek",
+					"supportsStrictMode": true,
+					"supportsMidConvoSystemMessages": true
+				},
+				"thinkingLevelMap": {
+					"minimal": null,
+					"low": null,
+					"medium": null,
+					"high": "high",
+					"max": "max"
+				},
+				"type": "chat"
+			},
+			"events": [
+				"error"
+			],
+			"keys": [
+				"role",
+				"content",
+				"api",
+				"provider",
+				"model",
+				"usage",
+				"stopReason",
+				"errorMessage",
+				"timestamp",
+				"durationMs"
+			],
+			"stopReason": "error",
+			"errorMessage": "No API key for provider: deepseek"
+		},
+		{
+			"name": "deepseek/stream",
+			"entry": "stream",
+			"model": {
+				"id": "deepseek-v4-pro",
+				"name": "DeepSeek V4 Pro",
+				"api": "openai-completions",
+				"baseUrl": "https://api.deepseek.com",
+				"provider": "deepseek",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 1.32,
+					"output": 3.96,
+					"cacheRead": 0.044,
+					"cacheWrite": 0
+				},
+				"contextWindow": 1000000,
+				"maxTokens": 384000,
+				"compat": {
+					"supportsStore": false,
+					"supportsDeveloperRole": false,
+					"maxTokensField": "max_tokens",
+					"requiresReasoningContentOnAssistantMessages": true,
+					"thinkingFormat": "deepseek",
+					"supportsStrictMode": true,
+					"supportsMidConvoSystemMessages": true
+				},
+				"thinkingLevelMap": {
+					"minimal": null,
+					"low": null,
+					"medium": null,
+					"high": "high",
+					"max": "max"
+				},
+				"type": "chat"
+			},
+			"events": [
+				"error"
+			],
+			"keys": [
+				"role",
+				"content",
+				"api",
+				"provider",
+				"model",
+				"usage",
+				"stopReason",
+				"timestamp",
+				"errorMessage",
+				"durationMs"
+			],
+			"stopReason": "error",
+			"errorMessage": "No API key for provider: deepseek"
+		}
+	]
+}

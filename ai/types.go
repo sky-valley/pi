@@ -911,9 +911,14 @@ type AssistantMessage struct {
 	// later.
 	DurationMs *int64 `json:"durationMs,omitempty"`
 
-	// errorLiteral marks a message built as pi's one-literal error message
-	// (NewErrorMessage), whose errorMessage precedes its timestamp.
+	// errorLiteral marks a message built as one object literal naming its
+	// errorMessage (NewErrorMessage, NewAssistantMessageLiteral), whose
+	// errorMessage precedes its timestamp.
 	errorLiteral bool
+	// responseIDLiteral marks a message built as one object literal naming
+	// its responseId (NewAssistantMessageLiteral), whose responseId precedes
+	// its timestamp.
+	responseIDLiteral bool
 }
 
 func (AssistantMessage) MessageRole() Role { return RoleAssistant }
@@ -938,6 +943,17 @@ func NewErrorMessage(api Api, provider ProviderId, modelID string, stopReason St
 	}
 }
 
+// NewAssistantMessageLiteral returns a copy of m that serializes as one
+// object literal naming its ErrorMessage and ResponseID, when set, ahead of
+// its timestamp — the order pi's fauxAssistantMessage writes its options in.
+// A message whose fields are filled in as a response streams writes them
+// after its timestamp instead (see MarshalJSON).
+func NewAssistantMessageLiteral(m AssistantMessage) *AssistantMessage {
+	m.errorLiteral = m.ErrorMessage != ""
+	m.responseIDLiteral = m.ResponseID != ""
+	return &m
+}
+
 // MarshalJSON writes the message with the role discriminator and its keys in
 // the order pi's JSON.stringify writes them: the order pi's adapters build the
 // object in — the literal {role, content, api, provider, model, usage,
@@ -945,11 +961,12 @@ func NewErrorMessage(api Api, provider ProviderId, modelID string, stopReason St
 // (providerThinkingLevel from the built params, responseId and responseModel
 // at the start, rawStopReason at the end, diagnostics, errorMessage when it
 // fails), durationMs when the stream ends, and thinkingLevel, which the agent
-// loop assigns to the stream's result (agent-loop.ts Object.assign). Two
+// loop assigns to the stream's result (agent-loop.ts Object.assign). Some
 // literals differ: the Responses adapter's carries providerThinkingLevel right
-// after model, and the error literal of NewErrorMessage carries errorMessage
-// before timestamp. A deferred handle follows stopReason, as faux's literal
-// has it. Absent fields are left out, as pi's undefined is.
+// after model, the error literal of NewErrorMessage carries errorMessage
+// before timestamp, and faux's (NewAssistantMessageLiteral) carries
+// errorMessage and responseId there. A deferred handle follows stopReason, as
+// faux's literal has it. Absent fields are left out, as pi's undefined is.
 func (m AssistantMessage) MarshalJSON() ([]byte, error) {
 	o := make(OrderedObject, 0, 20)
 	add := func(key string, value any, present bool) {
@@ -968,9 +985,10 @@ func (m AssistantMessage) MarshalJSON() ([]byte, error) {
 	add("stopReason", m.StopReason, true)
 	add("deferred", m.Deferred, m.Deferred != nil)
 	add("errorMessage", m.ErrorMessage, m.errorLiteral && m.ErrorMessage != "")
+	add("responseId", m.ResponseID, m.responseIDLiteral && m.ResponseID != "")
 	add("timestamp", m.Timestamp, true)
 	add("providerThinkingLevel", m.ProviderThinkingLevel, !levelFirst && m.ProviderThinkingLevel != "")
-	add("responseId", m.ResponseID, m.ResponseID != "")
+	add("responseId", m.ResponseID, !m.responseIDLiteral && m.ResponseID != "")
 	add("responseModel", m.ResponseModel, m.ResponseModel != "")
 	add("rawStopReason", m.RawStopReason, m.RawStopReason != "")
 	add("endTurn", m.EndTurn, m.EndTurn != nil)

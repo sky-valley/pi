@@ -362,11 +362,55 @@ func hasAnthropicAuthHeader(headers ai.ProviderHeaders) bool {
 	return false
 }
 
+// anthropicAuthToken is ANTHROPIC_AUTH_TOKEN when no key was resolved. pi
+// anthropicApiKeyAuth.resolve() consults ANTHROPIC_AUTH_TOKEN ahead of the
+// OAuth/API-key env vars and, when set, authenticates via Authorization:
+// Bearer (upstream 24e5cc04). GetEnvApiKey deliberately skips it and
+// withEnvAPIKey leaves APIKey empty when it is active, so the token surfaces
+// here only when no key was resolved — an explicit request key or a stored
+// credential (apiKey != "") wins over it, matching pi's credential-first
+// precedence.
+//
+// The arm is the port's own, and has no counterpart in pi's adapter: pi
+// resolves ANTHROPIC_AUTH_TOKEN one layer up into the Authorization header
+// assertRequestAuth accepts, whereas this adapter reads the env value
+// directly so the compat path (ai.StreamSimple, which leaves APIKey empty for
+// it) authenticates too.
+func anthropicAuthToken(model *ai.Model, apiKey string, env map[string]string) string {
+	if model.Provider != "anthropic" || apiKey != "" {
+		return ""
+	}
+	return ai.ProviderEnvValue(ai.AnthropicAuthTokenEnv, env)
+}
+
+// anthropicRequestAuth is pi's gate in front of an Anthropic request:
+// workload identity federation (upstream a9424cd43) when its config is found,
+// otherwise assertRequestAuth — the api key, the auth token, or the credential
+// already sitting in a request header (hasAnthropicAuthHeader).
+func anthropicRequestAuth(model *ai.Model, apiKey, authToken string, headers ai.ProviderHeaders, env map[string]string) (*anthropicFederation, error) {
+	federation := getAnthropicFederation(model, apiKey, authToken, headers, env)
+	if federation == nil && apiKey == "" && authToken == "" && !hasAnthropicAuthHeader(headers) {
+		return nil, fmt.Errorf("No API key for provider: %s", model.Provider)
+	}
+	return federation, nil
+}
+
 // StreamSimpleAnthropic maps unified reasoning to AnthropicOptions then streams.
+//
+// Like pi's streamSimple it asserts the request's auth first (upstream
+// 8b5899dce), ahead of everything else. pi throws there, before a stream
+// exists, and its lazyApi turns the throw into the stream's error with
+// createSetupErrorMessage; under G3 (ai/stream.go) the port renders it as
+// ai.ErrorStream, which builds that same message — errorMessage before
+// timestamp. The full Stream path fails inside its own output object, as pi's
+// stream does.
 func StreamSimpleAnthropic(ctx context.Context, model *ai.Model, req ai.TranscriptContext, opts *ai.SimpleStreamOptions) *ai.AssistantMessageEventStream {
 	var base ai.StreamOptions
 	if opts != nil {
 		base = opts.StreamOptions
+	}
+	if _, err := anthropicRequestAuth(model, base.APIKey, anthropicAuthToken(model, base.APIKey, base.Env), base.Headers, base.Env); err != nil {
+		return ai.ErrorStream(model, err)
 	}
 	// pi buildBaseOptions: maxTokens = clamp(options?.maxTokens ?? model.maxTokens).
 	// Anthropic ignores samplingParams when building its body, exactly like pi.
@@ -548,38 +592,10 @@ func StreamAnthropic(ctx context.Context, model *ai.Model, req ai.TranscriptCont
 		}
 
 		apiKey := opts.APIKey
-		// pi anthropicApiKeyAuth.resolve() consults ANTHROPIC_AUTH_TOKEN ahead of
-		// the OAuth/API-key env vars and, when set, authenticates via
-		// Authorization: Bearer (upstream 24e5cc04). GetEnvApiKey deliberately
-		// skips it and withEnvAPIKey leaves APIKey empty when it is active, so the
-		// token surfaces here only when no key was resolved — an explicit request
-		// key or a stored credential (apiKey != "") wins over it, matching pi's
-		// credential-first precedence.
-		authToken := ""
-		if model.Provider == "anthropic" && apiKey == "" {
-			authToken = ai.ProviderEnvValue(ai.AnthropicAuthTokenEnv, opts.Env)
-		}
-		// pi's gate is assertRequestAuth (see hasAnthropicAuthHeader): the api key,
-		// or the credential already sitting in a request header. Upstream 8b5899dce
-		// re-attached that same assertion eagerly at the top of streamSimple, where
-		// it throws before a stream exists; under G3 (ai/stream.go:90) the port
-		// renders a thrown setup failure as the stream's single terminal error
-		// event, and this gate is the first thing on both the Stream and the
-		// StreamSimple path — so the eager assertion's PRECEDENCE is already what
-		// the port has, and only its acceptance set had to be widened.
-		//
-		// The authToken arm is the port's own, and has no counterpart in pi's
-		// adapter: pi resolves ANTHROPIC_AUTH_TOKEN one layer up into the
-		// Authorization header the arm above accepts, whereas this adapter reads
-		// the env value directly so the compat path (ai.StreamSimple, which leaves
-		// APIKey empty for it) authenticates too.
-		//
-		// Workload identity federation (upstream a9424cd43) is the one other way
-		// through: pi's getAnthropicFederation runs first, and only when it finds
-		// no federation config does assertRequestAuth run.
-		federation := getAnthropicFederation(model, apiKey, authToken, opts.Headers, opts.Env)
-		if federation == nil && apiKey == "" && authToken == "" && !hasAnthropicAuthHeader(opts.Headers) {
-			fail(fmt.Errorf("No API key for provider: %s", model.Provider))
+		authToken := anthropicAuthToken(model, apiKey, opts.Env)
+		federation, err := anthropicRequestAuth(model, apiKey, authToken, opts.Headers, opts.Env)
+		if err != nil {
+			fail(err)
 			return
 		}
 		// pi never sniffs an OAuth token for these two: github-copilot has its own

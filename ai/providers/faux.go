@@ -61,20 +61,46 @@ func FauxToolCall(name string, args map[string]any, id ...string) ai.ToolCall {
 	return ai.ToolCall{ID: tcID, Name: name, Arguments: args}
 }
 
-// FauxAssistantMessage builds an assistant message from content blocks.
-func FauxAssistantMessage(content ai.ContentList, stopReason ai.StopReason) *ai.AssistantMessage {
+// FauxMessageOptions are fauxAssistantMessage's options besides stopReason.
+// pi writes the ones given into the message literal ahead of its timestamp,
+// so they serialize there; a field assigned to the message afterwards
+// serializes where a streamed response's would.
+type FauxMessageOptions struct {
+	Deferred     *ai.DeferredHandle
+	ErrorMessage string
+	ResponseID   string
+	// Timestamp replaces the current time when set (pi's
+	// `options.timestamp ?? Date.now()`).
+	Timestamp *int64
+}
+
+// FauxAssistantMessage builds an assistant message from content blocks (pi
+// fauxAssistantMessage). An empty stopReason is "stop". options holds at most
+// one value; when several are given the last wins.
+func FauxAssistantMessage(content ai.ContentList, stopReason ai.StopReason, options ...FauxMessageOptions) *ai.AssistantMessage {
 	if stopReason == "" {
 		stopReason = ai.StopStop
 	}
-	return &ai.AssistantMessage{
-		Content:    content,
-		Api:        fauxDefaultAPI,
-		Provider:   fauxDefaultProvider,
-		Model:      fauxDefaultModelID,
-		Usage:      fauxDefaultUsage,
-		StopReason: stopReason,
-		Timestamp:  nowMillis(),
+	var o FauxMessageOptions
+	if len(options) > 0 {
+		o = options[len(options)-1]
 	}
+	timestamp := nowMillis()
+	if o.Timestamp != nil {
+		timestamp = *o.Timestamp
+	}
+	return ai.NewAssistantMessageLiteral(ai.AssistantMessage{
+		Content:      content,
+		Api:          fauxDefaultAPI,
+		Provider:     fauxDefaultProvider,
+		Model:        fauxDefaultModelID,
+		Usage:        fauxDefaultUsage,
+		StopReason:   stopReason,
+		Deferred:     o.Deferred,
+		ErrorMessage: o.ErrorMessage,
+		ResponseID:   o.ResponseID,
+		Timestamp:    timestamp,
+	})
 }
 
 // FauxResponseStep produces the assistant message for one stream call.

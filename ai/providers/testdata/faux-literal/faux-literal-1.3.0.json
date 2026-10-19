@@ -1,0 +1,122 @@
+{
+	"piAiVersion": "1.3.0",
+	"rows": [
+		{
+			"name": "no options",
+			"options": {},
+			"literal": [
+				"role",
+				"content",
+				"api",
+				"provider",
+				"model",
+				"usage",
+				"stopReason",
+				"timestamp"
+			],
+			"result": [
+				"role",
+				"content",
+				"api",
+				"provider",
+				"model",
+				"usage",
+				"stopReason",
+				"timestamp",
+				"durationMs"
+			]
+		},
+		{
+			"name": "error message",
+			"options": {
+				"stopReason": "error",
+				"errorMessage": "boom"
+			},
+			"literal": [
+				"role",
+				"content",
+				"api",
+				"provider",
+				"model",
+				"usage",
+				"stopReason",
+				"errorMessage",
+				"timestamp"
+			],
+			"result": [
+				"role",
+				"content",
+				"api",
+				"provider",
+				"model",
+				"usage",
+				"stopReason",
+				"errorMessage",
+				"timestamp",
+				"durationMs"
+			]
+		},
+		{
+			"name": "response id",
+			"options": {
+				"responseId": "resp_1"
+			},
+			"literal": [
+				"role",
+				"content",
+				"api",
+				"provider",
+				"model",
+				"usage",
+				"stopReason",
+				"responseId",
+				"timestamp"
+			],
+			"result": [
+				"role",
+				"content",
+				"api",
+				"provider",
+				"model",
+				"usage",
+				"stopReason",
+				"responseId",
+				"timestamp",
+				"durationMs"
+			]
+		},
+		{
+			"name": "error message and response id",
+			"options": {
+				"stopReason": "error",
+				"errorMessage": "boom",
+				"responseId": "resp_1",
+				"timestamp": 5
+			},
+			"literal": [
+				"role",
+				"content",
+				"api",
+				"provider",
+				"model",
+				"usage",
+				"stopReason",
+				"errorMessage",
+				"responseId",
+				"timestamp"
+			],
+			"result": [
+				"role",
+				"content",
+				"api",
+				"provider",
+				"model",
+				"usage",
+				"stopReason",
+				"errorMessage",
+				"responseId",
+				"timestamp"
+			]
+		}
+	]
+}

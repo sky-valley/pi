@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"os"
 	"slices"
 	"strings"
 	"testing"
@@ -569,5 +570,80 @@ func TestFauxProviderOnResponseErrorFailsStream(t *testing.T) {
 	}
 	if len(reg.State.CancelledDeferred) != 1 {
 		t.Errorf("a vetoed cancel must still be recorded, got %d", len(reg.State.CancelledDeferred))
+	}
+}
+
+// TestFauxAssistantMessageLiteralKeyOrderMatchesPi replays
+// testdata/faux-literal (pi-ai 1.3.0): fauxAssistantMessage writes the
+// errorMessage and responseId options into its object literal ahead of
+// timestamp, and the faux stream spreads that literal into its result, so
+// both serialize with pi's key order.
+func TestFauxAssistantMessageLiteralKeyOrderMatchesPi(t *testing.T) {
+	data, err := os.ReadFile("testdata/faux-literal/faux-literal-1.3.0.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var capture struct {
+		Rows []struct {
+			Name    string `json:"name"`
+			Options struct {
+				StopReason   ai.StopReason `json:"stopReason"`
+				ErrorMessage string        `json:"errorMessage"`
+				ResponseID   string        `json:"responseId"`
+				Timestamp    int64         `json:"timestamp"`
+			} `json:"options"`
+			Literal []string `json:"literal"`
+			Result  []string `json:"result"`
+		} `json:"rows"`
+	}
+	if err := json.Unmarshal(data, &capture); err != nil {
+		t.Fatal(err)
+	}
+	if len(capture.Rows) == 0 {
+		t.Fatal("the faux-literal capture holds no rows")
+	}
+	for _, row := range capture.Rows {
+		t.Run(row.Name, func(t *testing.T) {
+			options := FauxMessageOptions{ErrorMessage: row.Options.ErrorMessage, ResponseID: row.Options.ResponseID}
+			if row.Options.Timestamp != 0 {
+				options.Timestamp = &row.Options.Timestamp
+			}
+			message := FauxAssistantMessage(ai.ContentList{FauxText("hi")}, row.Options.StopReason, options)
+			raw, err := json.Marshal(message)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if keys := topLevelKeys(t, raw); !slices.Equal(keys, row.Literal) {
+				t.Errorf("literal keys %q, pi %q", keys, row.Literal)
+			}
+			if row.Options.Timestamp != 0 && message.Timestamp != row.Options.Timestamp {
+				t.Errorf("timestamp = %d, want the option's %d", message.Timestamp, row.Options.Timestamp)
+			}
+
+			reg := RegisterFauxProvider(RegisterFauxProviderOptions{})
+			defer reg.Unregister()
+			reg.SetResponses([]FauxResponseStep{FauxStatic(message)})
+			stream := ai.StreamSimple(context.Background(), reg.GetModel(), ai.Context{Messages: []ai.Message{ai.NewUserText("hi", 1)}}, nil)
+			for range stream.Events() {
+			}
+			raw, err = json.Marshal(stream.Result())
+			if err != nil {
+				t.Fatal(err)
+			}
+			// durationMs is timing: the stream times a message whose
+			// timestamp does not predate it, and a literal stamped with the
+			// current time may fall in the stream's millisecond or the one
+			// before, in pi as here. Only the explicit old timestamp decides.
+			withoutDuration := func(keys []string) []string {
+				return slices.DeleteFunc(keys, func(key string) bool { return key == "durationMs" })
+			}
+			keys := topLevelKeys(t, raw)
+			if !slices.Equal(withoutDuration(keys), withoutDuration(slices.Clone(row.Result))) {
+				t.Errorf("stream result keys %q, pi %q", keys, row.Result)
+			}
+			if row.Options.Timestamp != 0 && slices.Contains(keys, "durationMs") {
+				t.Errorf("a result stamped before the stream started was timed: %q", keys)
+			}
+		})
 	}
 }
