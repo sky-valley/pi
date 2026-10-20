@@ -373,7 +373,7 @@ func (e *LocalEnv) Exec(ctx context.Context, command string, options *ShellExecO
 		return ShellResult{}, err
 	}
 
-	shell, shellArgs, useStdin, err := getShellConfig()
+	shell, shellArgs, useStdin, err := getShellConfig("")
 	if err != nil {
 		return ShellResult{}, err
 	}

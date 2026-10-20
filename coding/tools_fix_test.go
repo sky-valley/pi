@@ -143,7 +143,7 @@ func TestGetShellConfigUnix(t *testing.T) {
 	}
 	// $SHELL must never be consulted.
 	t.Setenv("SHELL", "/bin/zsh")
-	shell, args, _, err := getShellConfig()
+	shell, args, _, err := getShellConfig("")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -161,7 +161,7 @@ func TestGetShellConfigUnix(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Setenv("PATH", fakeBin)
-	shell, _, _, err = getShellConfig()
+	shell, _, _, err = getShellConfig("")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -171,7 +171,7 @@ func TestGetShellConfigUnix(t *testing.T) {
 
 	// No /bin/bash, nothing on PATH → sh.
 	t.Setenv("PATH", t.TempDir())
-	shell, _, _, err = getShellConfig()
+	shell, _, _, err = getShellConfig("")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -934,5 +934,31 @@ func TestFindMarksDirectoryResults(t *testing.T) {
 	want := "src/\nsrc/nested/\nsrc/nested/a.ts"
 	if got != want {
 		t.Fatalf("find output = %q, want %q", got, want)
+	}
+}
+
+// TestGetShellConfigCustomShellPath ports shell.ts getShellConfig's first step:
+// an explicit shellPath wins over every platform default when it exists, and
+// a missing one is an error rather than a silent fallback.
+func TestGetShellConfigCustomShellPath(t *testing.T) {
+	custom := filepath.Join(t.TempDir(), "mybash")
+	if err := os.WriteFile(custom, []byte("#!/bin/sh\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	shell, args, useStdin, err := getShellConfig(custom)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if shell != custom || useStdin || !reflect.DeepEqual(args, []string{"-c"}) {
+		t.Fatalf("got shell=%q args=%v stdin=%v, want %q -c", shell, args, useStdin, custom)
+	}
+
+	missing := filepath.Join(t.TempDir(), "missing", "bash")
+	_, _, _, err = getShellConfig(missing)
+	if err == nil {
+		t.Fatalf("missing custom shell path: want an error, got none")
+	}
+	if got, want := err.Error(), "Custom shell path not found: "+missing; got != want {
+		t.Fatalf("error\n got: %q\nwant: %q", got, want)
 	}
 }

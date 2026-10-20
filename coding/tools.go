@@ -981,7 +981,7 @@ var bashShellConfig = shellToolConfig{
 	name:           "bash",
 	shellName:      "bash",
 	tempFilePrefix: "pi-bash",
-	resolveShell:   getShellConfig,
+	resolveShell:   func() (string, []string, bool, error) { return getShellConfig("") },
 }
 
 var powershellShellConfig = shellToolConfig{
@@ -1323,8 +1323,17 @@ func getBashShellConfig(shell string) (string, []string, bool) {
 }
 
 // getShellConfig returns the shell, its args, and whether the command must be
-// delivered on stdin (legacy WSL bash) rather than appended to argv.
-func getShellConfig() (shell string, args []string, useStdin bool, err error) {
+// delivered on stdin (legacy WSL bash) rather than appended to argv. A
+// non-empty customShellPath is pi's explicit shellPath: it wins over every
+// platform default, and a missing one is an error, not a fallback.
+func getShellConfig(customShellPath string) (shell string, args []string, useStdin bool, err error) {
+	if customShellPath != "" {
+		if shellExists(customShellPath) {
+			s, a, stdin := getBashShellConfig(customShellPath)
+			return s, a, stdin, nil
+		}
+		return "", nil, false, errors.New("Custom shell path not found: " + customShellPath)
+	}
 	if runtime.GOOS == "windows" {
 		var paths []string
 		if pf := os.Getenv("ProgramFiles"); pf != "" {
