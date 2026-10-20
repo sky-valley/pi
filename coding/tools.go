@@ -25,6 +25,7 @@ import (
 	"github.com/sky-valley/pi/agent"
 	"github.com/sky-valley/pi/ai"
 	"github.com/sky-valley/pi/internal/jstext"
+	"github.com/sky-valley/pi/internal/nodepath"
 	"golang.org/x/text/collate"
 	"golang.org/x/text/language"
 	"golang.org/x/text/unicode/norm"
@@ -1321,19 +1322,41 @@ var localShellHost = shellHost{
 
 // legacyWslBashRE matches the legacy Windows-bundled WSL launcher
 // (C:\Windows\System32\bash.exe, or the WoW64 sysnative redirect) after path
-// normalization. It mishandles `-c "<cmd>"` quoting, so commands go via stdin.
+// normalization, for when the Windows directory is unknown. The launcher
+// mishandles `-c "<cmd>"` quoting, so commands go via stdin.
 var legacyWslBashRE = regexp.MustCompile(`^[a-z]:\\windows\\(?:system32|sysnative)\\bash\.exe$`)
 
-// isLegacyWslBashPath ports pi's isLegacyWslBashPath (shell.ts).
-func isLegacyWslBashPath(path string) bool {
-	normalized := strings.ToLower(strings.ReplaceAll(path, "/", `\`))
+// driveAbsoluteRE is pi's /^[a-z]:[\\/]/i. JavaScript's non-Unicode `i`
+// folds ASCII only, so the class is spelled out rather than given Go's (?i),
+// which would also take the Kelvin sign for a k.
+var driveAbsoluteRE = regexp.MustCompile(`^[a-zA-Z]:[\\/]`)
+
+// isLegacyWslBashPath ports pi's isLegacyWslBashPath (shell.ts, upstream
+// 61060ddf8): the launcher is System32\bash.exe or Sysnative\bash.exe under
+// the actual Windows directory (%SystemRoot%), compared after path.win32
+// normalization and JavaScript lowercasing. A SystemRoot that is not
+// drive-absolute recognizes nothing; the conventional C:\Windows paths are
+// the fallback only when SystemRoot is unset or empty.
+func isLegacyWslBashPath(path, systemRoot string) bool {
+	normalized := jstext.ToLower(nodepath.Win32Normalize(path))
+	if systemRoot != "" {
+		if !driveAbsoluteRE.MatchString(systemRoot) {
+			return false
+		}
+		for _, directory := range []string{"System32", "Sysnative"} {
+			if normalized == jstext.ToLower(nodepath.Win32Join(systemRoot, directory, "bash.exe")) {
+				return true
+			}
+		}
+		return false
+	}
 	return legacyWslBashRE.MatchString(normalized)
 }
 
-// getBashShellConfig ports pi's getBashShellConfig: legacy WSL bash takes the
+// bashShellConfig ports pi's getBashShellConfig: legacy WSL bash takes the
 // command on stdin (`bash -s`); every other bash takes `bash -c <command>`.
-func getBashShellConfig(shell string) (string, []string, bool) {
-	if isLegacyWslBashPath(shell) {
+func (h shellHost) bashShellConfig(shell string) (string, []string, bool) {
+	if isLegacyWslBashPath(shell, h.getenv("SystemRoot")) {
 		return shell, []string{"-s"}, true
 	}
 	return shell, []string{"-c"}, false
@@ -1369,7 +1392,7 @@ func getShellConfig(customShellPath string) (shell string, args []string, useStd
 func (h shellHost) shellConfig(customShellPath string) (shell string, args []string, useStdin bool, err error) {
 	if customShellPath != "" {
 		if h.exists(customShellPath) {
-			s, a, stdin := getBashShellConfig(customShellPath)
+			s, a, stdin := h.bashShellConfig(customShellPath)
 			return s, a, stdin, nil
 		}
 		return "", nil, false, errors.New("Custom shell path not found: " + customShellPath)
@@ -1384,12 +1407,12 @@ func (h shellHost) shellConfig(customShellPath string) (shell string, args []str
 		}
 		for _, p := range paths {
 			if h.exists(p) {
-				s, a, stdin := getBashShellConfig(p)
+				s, a, stdin := h.bashShellConfig(p)
 				return s, a, stdin, nil
 			}
 		}
 		if p := h.findExecutableOnPath("bash.exe"); p != "" {
-			s, a, stdin := getBashShellConfig(p)
+			s, a, stdin := h.bashShellConfig(p)
 			return s, a, stdin, nil
 		}
 		var b strings.Builder
@@ -1409,11 +1432,11 @@ func (h shellHost) shellConfig(customShellPath string) (shell string, args []str
 
 	// Unix: try /bin/bash, then bash on PATH, then fall back to sh.
 	if h.exists("/bin/bash") {
-		s, a, stdin := getBashShellConfig("/bin/bash")
+		s, a, stdin := h.bashShellConfig("/bin/bash")
 		return s, a, stdin, nil
 	}
 	if p := h.findExecutableOnPath("bash"); p != "" {
-		s, a, stdin := getBashShellConfig(p)
+		s, a, stdin := h.bashShellConfig(p)
 		return s, a, stdin, nil
 	}
 	return "sh", []string{"-c"}, false, nil
@@ -1425,7 +1448,10 @@ func (h shellHost) shellConfig(customShellPath string) (shell string, args []str
 var powershellArgs = []string{"-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command"}
 
 // getPowerShellConfig ports pi's getPowerShellConfig: Windows only, preferring
-// PowerShell 7 (pwsh) over Windows PowerShell. pi throws on both failures; the
+// PowerShell 7 (pwsh) over Windows PowerShell. The order (upstream 61060ddf8)
+// is pwsh.exe on PATH, %ProgramFiles%\PowerShell\7\pwsh.exe, powershell.exe
+// on PATH, then %SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe,
+// the directories joined as path.win32 does. pi throws on both failures; the
 // Go shell resolvers report failure as an error, which the tool surfaces to the
 // model verbatim, so the strings are byte-exact.
 func getPowerShellConfig() (shell string, args []string, useStdin bool, err error) {
@@ -1436,12 +1462,26 @@ func (h shellHost) powerShellConfig() (shell string, args []string, useStdin boo
 	if !h.windows {
 		return "", nil, false, errors.New("The powershell tool is only available on Windows.")
 	}
-	for _, executable := range []string{"pwsh.exe", "powershell.exe"} {
-		if p := h.findExecutableOnPath(executable); p != "" {
-			return p, slices.Clone(powershellArgs), false, nil
+	shell = h.findExecutableOnPath("pwsh.exe")
+	// Installation directories may be on any drive and need not be on PATH.
+	if programFiles := h.getenv("ProgramFiles"); shell == "" && programFiles != "" {
+		if pwsh7 := nodepath.Win32Join(programFiles, "PowerShell", "7", "pwsh.exe"); h.exists(pwsh7) {
+			shell = pwsh7
 		}
 	}
-	return "", nil, false, errors.New("No PowerShell executable found. Install PowerShell or add powershell.exe/pwsh.exe to PATH.")
+	if shell == "" {
+		shell = h.findExecutableOnPath("powershell.exe")
+	}
+	if systemRoot := h.getenv("SystemRoot"); shell == "" && systemRoot != "" {
+		windowsPowerShell := nodepath.Win32Join(systemRoot, "System32", "WindowsPowerShell", "v1.0", "powershell.exe")
+		if h.exists(windowsPowerShell) {
+			shell = windowsPowerShell
+		}
+	}
+	if shell == "" {
+		return "", nil, false, errors.New("No PowerShell executable found. Install PowerShell or add powershell.exe/pwsh.exe to PATH.")
+	}
+	return shell, slices.Clone(powershellArgs), false, nil
 }
 
 // ---------------------------------------------------------------------------

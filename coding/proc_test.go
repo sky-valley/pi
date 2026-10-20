@@ -49,8 +49,8 @@ func TestBashKillsProcessTree(t *testing.T) {
 }
 
 // TestTaskkillPath locks pi's absolute resolution of taskkill.exe (upstream
-// 7af2d27dc, pi#6596): utils/shell.ts builds
-// `join(process.env.SystemRoot ?? "C:\\Windows", "System32", "taskkill.exe")`
+// 7af2d27dc, pi#6596; 61060ddf8, pi#9490): utils/shell.ts builds
+// `join(process.env.SystemRoot || "C:\\Windows", "System32", "taskkill.exe")`
 // instead of letting the OS search PATH. Expectations are assembled by hand
 // rather than with filepath.Join so the test pins the components and their
 // order instead of restating the implementation.
@@ -70,17 +70,16 @@ func TestTaskkillPath(t *testing.T) {
 			want:       "C:" + sep + "CustomWindows" + suffix,
 		},
 		{
-			// pi's `??` falls back only when the variable is absent.
 			name:  "unset SystemRoot falls back to C:\\Windows",
 			unset: true,
 			want:  `C:\Windows` + suffix,
 		},
 		{
-			// Present-but-empty is not nullish in pi, so join() keeps it and the
-			// empty leading segment simply drops out.
-			name:       "empty SystemRoot is not the nullish fallback",
+			// pi's `||` takes the fallback for an empty SystemRoot too, so the
+			// path stays absolute (upstream 61060ddf8).
+			name:       "empty SystemRoot falls back to C:\\Windows",
 			systemRoot: "",
-			want:       "System32" + sep + "taskkill.exe",
+			want:       `C:\Windows` + suffix,
 		},
 		{
 			name:       "trailing separator collapses",

@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"strconv"
 	"testing"
 )
 
@@ -164,6 +165,122 @@ func TestShellPathExistsFollowsSymlinks(t *testing.T) {
 			t.Errorf("shellPathExists(%q) = %v, want %v", path, got, want)
 		}
 	}
+}
+
+// TestLegacyWslBashUnderSystemRoot ports windows-shell-config.test.ts and the
+// durable env-node.test.ts transport table (upstream 61060ddf8): the legacy
+// WSL launcher is recognized under the actual Windows directory, a SystemRoot
+// that is not drive-absolute recognizes nothing, and the conventional
+// C:\Windows paths are the fallback only when SystemRoot is unset or empty.
+func TestLegacyWslBashUnderSystemRoot(t *testing.T) {
+	for _, tt := range []struct {
+		systemRoot *string
+		shell      string
+		stdin      bool
+	}{
+		// windows-shell-config.test.ts
+		{ptr(`D:\WinNT\`), `d:/WINNT/System32/BASH.EXE`, true},
+		{ptr(`D:\WinNT`), `D:\WinNT\Sysnative\bash.exe`, true},
+		{nil, `E:\Windows\System32\bash.exe`, true},
+		{ptr(`D:\WinNT`), `D:\Git\bin\bash.exe`, false},
+		{ptr(`D:\WinNT`), `E:\Windows\System32\bash.exe`, false},
+		{ptr(`WinNT`), `C:\Windows\System32\bash.exe`, false},
+		// durable env-node.test.ts
+		{nil, `C:\Windows\System32\bash.exe`, true},
+		{ptr(`D:\WinNT`), `D:\WinNT\System32\bash.exe`, true},
+		{ptr(`D:\WinNT`), `D:\WinNT\Sysnative\bash.exe`, true},
+		{ptr(``), `D:\WinNT\System32\bash.exe`, false},
+		{ptr(`D:\WinNT`), `E:\Windows\System32\bash.exe`, false},
+		// JavaScript's toLowerCase maps U+0130 to "i" + U+0307, not to "i",
+		// so this is not the conventional launcher path to pi.
+		{nil, "C:\\W\u0130NDOWS\\System32\\bash.exe", false},
+		// pi's /^[a-z]:[\\/]/i is not a Unicode regex: the Kelvin sign is
+		// not a drive letter, so this SystemRoot recognizes nothing.
+		{ptr("\u212A:\\WinNT"), `K:\WinNT\System32\bash.exe`, false},
+		// A drive-relative SystemRoot is not drive-absolute either, even when
+		// the shell path joins to it exactly.
+		{ptr(`C:WinNT`), `C:WinNT\System32\bash.exe`, false},
+	} {
+		env := map[string]string{}
+		label := "unset"
+		if tt.systemRoot != nil {
+			env["SystemRoot"] = *tt.systemRoot
+			label = strconv.Quote(*tt.systemRoot)
+		}
+		shell, args, stdin, err := fakeShellHost(true, env, nil, nil).shellConfig(tt.shell)
+		if err != nil {
+			t.Fatalf("SystemRoot=%s %q: %v", label, tt.shell, err)
+		}
+		wantArgs := []string{"-c"}
+		if tt.stdin {
+			wantArgs = []string{"-s"}
+		}
+		if shell != tt.shell || stdin != tt.stdin || !reflect.DeepEqual(args, wantArgs) {
+			t.Errorf("SystemRoot=%s %q: got shell=%q args=%v stdin=%v, want args=%v stdin=%v",
+				label, tt.shell, shell, args, stdin, wantArgs, tt.stdin)
+		}
+	}
+}
+
+// TestGetPowerShellConfigInstallDirs ports powershell-config.test.ts (upstream
+// 61060ddf8, pi#9490): PowerShell is found outside PATH under ProgramFiles and
+// SystemRoot, on any drive, in the order pwsh on PATH, PowerShell 7's install
+// directory, powershell on PATH, Windows PowerShell's system directory.
+func TestGetPowerShellConfigInstallDirs(t *testing.T) {
+	const pwsh7 = `D:\Applications\PowerShell\7\pwsh.exe`
+	const windowsPowerShell = `E:\WinNT\System32\WindowsPowerShell\v1.0\powershell.exe`
+	env := map[string]string{"ProgramFiles": `D:\Applications`, "SystemRoot": `E:\WinNT`}
+
+	for _, tt := range []struct {
+		name   string
+		exists func(string) bool
+		onPath map[string]string
+		want   string
+	}{
+		{
+			name:   "prefers PowerShell 7 on PATH over known installation locations",
+			onPath: map[string]string{"pwsh.exe": `E:\Tools\pwsh.exe`, "powershell.exe": `E:\Tools\pwsh.exe`},
+			want:   `E:\Tools\pwsh.exe`,
+		},
+		{
+			name:   "finds PowerShell 7 under ProgramFiles before Windows PowerShell on PATH",
+			exists: existsOnly(pwsh7, windowsPowerShell),
+			onPath: map[string]string{"powershell.exe": windowsPowerShell},
+			want:   pwsh7,
+		},
+		{
+			name:   "prefers Windows PowerShell on PATH over its system installation",
+			exists: existsOnly(`E:\Tools\powershell.exe`, windowsPowerShell),
+			onPath: map[string]string{"powershell.exe": `E:\Tools\powershell.exe`},
+			want:   `E:\Tools\powershell.exe`,
+		},
+		{
+			name:   "finds Windows PowerShell under SystemRoot when PATH lookup is unavailable",
+			exists: existsOnly(windowsPowerShell),
+			want:   windowsPowerShell,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			shell, args, stdin, err := fakeShellHost(true, env, tt.exists, tt.onPath).powerShellConfig()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if shell != tt.want || stdin || !reflect.DeepEqual(args, powershellArgs) {
+				t.Fatalf("got shell=%q args=%v stdin=%v, want %q %v", shell, args, stdin, tt.want, powershellArgs)
+			}
+		})
+	}
+
+	t.Run("reports an error when no PowerShell installation exists", func(t *testing.T) {
+		_, _, _, err := fakeShellHost(true, env, existsOnly(), nil).powerShellConfig()
+		if err == nil {
+			t.Fatal("want an error, got none")
+		}
+		want := "No PowerShell executable found. Install PowerShell or add powershell.exe/pwsh.exe to PATH."
+		if got := err.Error(); got != want {
+			t.Fatalf("error\n got: %q\nwant: %q", got, want)
+		}
+	})
 }
 
 func TestLocalShellHostUsesShellPathExists(t *testing.T) {

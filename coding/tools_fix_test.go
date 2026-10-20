@@ -190,10 +190,10 @@ func TestLegacyWslBashDetection(t *testing.T) {
 		`C:\Windows\Sysnative\bash.exe`,
 	}
 	for _, p := range legacy {
-		if !isLegacyWslBashPath(p) {
+		if !isLegacyWslBashPath(p, "") {
 			t.Fatalf("%q should be detected as legacy WSL bash", p)
 		}
-		shell, args, useStdin := getBashShellConfig(p)
+		shell, args, useStdin := fakeShellHost(true, nil, nil, nil).bashShellConfig(p)
 		if shell != p || !useStdin || !reflect.DeepEqual(args, []string{"-s"}) {
 			t.Fatalf("%q: got shell=%q args=%v stdin=%v, want -s + stdin", p, shell, args, useStdin)
 		}
@@ -207,10 +207,10 @@ func TestLegacyWslBashDetection(t *testing.T) {
 		`C:\Windows\System32\drivers\bash.exe`,
 	}
 	for _, p := range normal {
-		if isLegacyWslBashPath(p) {
+		if isLegacyWslBashPath(p, "") {
 			t.Fatalf("%q should NOT be detected as legacy WSL bash", p)
 		}
-		shell, args, useStdin := getBashShellConfig(p)
+		shell, args, useStdin := fakeShellHost(true, nil, nil, nil).bashShellConfig(p)
 		if shell != p || useStdin || !reflect.DeepEqual(args, []string{"-c"}) {
 			t.Fatalf("%q: got shell=%q args=%v stdin=%v, want -c + argv", p, shell, args, useStdin)
 		}
