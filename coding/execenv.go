@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 )
@@ -362,7 +363,7 @@ func fileInfoFrom(path string, st os.FileInfo) FileInfo {
 // --- Shell half of LocalEnv ---
 
 // Exec implements Shell by running the command through the machine's shell,
-// the same resolution the bash tool uses (getShellConfig). A non-zero exit is
+// the same resolution the bash tool uses (GetShellConfig). A non-zero exit is
 // reported in the result; an error means the command could not be started, or
 // the context ended it.
 func (e *LocalEnv) Exec(ctx context.Context, command string, options *ShellExecOptions) (ShellResult, error) {
@@ -373,7 +374,7 @@ func (e *LocalEnv) Exec(ctx context.Context, command string, options *ShellExecO
 		return ShellResult{}, err
 	}
 
-	shell, shellArgs, useStdin, err := getShellConfig("")
+	shellConfig, err := GetShellConfig("")
 	if err != nil {
 		return ShellResult{}, err
 	}
@@ -388,11 +389,11 @@ func (e *LocalEnv) Exec(ctx context.Context, command string, options *ShellExecO
 	var cmd *exec.Cmd
 	// Legacy WSL bash takes the command on stdin (`bash -s`); otherwise it is
 	// the final argv entry (`bash -c <command>`). Same split as the bash tool.
-	if useStdin {
-		cmd = exec.CommandContext(runCtx, shell, shellArgs...)
+	if shellConfig.commandFromStdin() {
+		cmd = exec.CommandContext(runCtx, shellConfig.Shell, shellConfig.Args...)
 		cmd.Stdin = strings.NewReader(command)
 	} else {
-		cmd = exec.CommandContext(runCtx, shell, append(shellArgs, command)...)
+		cmd = exec.CommandContext(runCtx, shellConfig.Shell, append(slices.Clone(shellConfig.Args), command)...)
 	}
 
 	dir := options.Cwd

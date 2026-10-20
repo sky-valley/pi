@@ -286,7 +286,7 @@ func TestGrepToolUsesInjectedOperations(t *testing.T) {
 
 // LocalBashOperations must still be the real thing: this runs a command.
 func TestLocalBashOperationsRunsAndReportsExit(t *testing.T) {
-	if _, _, _, err := getShellConfig(""); err != nil {
+	if _, err := GetShellConfig(""); err != nil {
 		t.Skipf("no shell available: %v", err)
 	}
 	ops := LocalBashOperations(bashShellConfig)
@@ -313,7 +313,7 @@ func TestLocalBashOperationsSignalExitCode(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("uses POSIX signals")
 	}
-	if _, _, _, err := getShellConfig(""); err != nil {
+	if _, err := GetShellConfig(""); err != nil {
 		t.Skipf("no shell available: %v", err)
 	}
 	ops := LocalBashOperations(bashShellConfig)
@@ -354,7 +354,7 @@ func TestLocalBashOperationsUnnamedSignalStillFails(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("uses POSIX signals")
 	}
-	if _, _, _, err := getShellConfig(""); err != nil {
+	if _, err := GetShellConfig(""); err != nil {
 		t.Skipf("no shell available: %v", err)
 	}
 	ops := LocalBashOperations(bashShellConfig)
@@ -369,7 +369,7 @@ func TestLocalBashOperationsUnnamedSignalStillFails(t *testing.T) {
 
 // Abort must win over timeout when both fired — pi's precedence.
 func TestLocalBashOperationsAbortWinsOverTimeout(t *testing.T) {
-	if _, _, _, err := getShellConfig(""); err != nil {
+	if _, err := GetShellConfig(""); err != nil {
 		t.Skipf("no shell available: %v", err)
 	}
 	ops := LocalBashOperations(bashShellConfig)
@@ -385,7 +385,7 @@ func TestLocalBashOperationsAbortWinsOverTimeout(t *testing.T) {
 }
 
 func TestLocalBashOperationsTimeout(t *testing.T) {
-	if _, _, _, err := getShellConfig(""); err != nil {
+	if _, err := GetShellConfig(""); err != nil {
 		t.Skipf("no shell available: %v", err)
 	}
 	ops := LocalBashOperations(bashShellConfig)

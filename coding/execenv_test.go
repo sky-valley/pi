@@ -263,7 +263,7 @@ func TestLocalEnvFileSystemRoundTrip(t *testing.T) {
 }
 
 func TestLocalEnvExec(t *testing.T) {
-	if _, _, _, err := getShellConfig(""); err != nil {
+	if _, err := GetShellConfig(""); err != nil {
 		t.Skipf("no shell available: %v", err)
 	}
 	dir := t.TempDir()
@@ -317,7 +317,7 @@ func TestLocalEnvExecSignalKilledExitCode(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("POSIX signals; upstream skips this case on win32")
 	}
-	if _, _, _, err := getShellConfig(""); err != nil {
+	if _, err := GetShellConfig(""); err != nil {
 		t.Skipf("no shell available: %v", err)
 	}
 	env := NewLocalEnv(t.TempDir())

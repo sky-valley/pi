@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -115,7 +116,7 @@ type BashOperations struct {
 func LocalBashOperations(config shellToolConfig) BashOperations {
 	return BashOperations{
 		Exec: func(ctx context.Context, command, cwd string, options BashExecOptions) (*int, error) {
-			shell, shellArgs, useStdin, err := config.resolveShell()
+			shellConfig, err := config.resolveShell()
 			if err != nil {
 				return nil, err
 			}
@@ -131,11 +132,11 @@ func LocalBashOperations(config shellToolConfig) BashOperations {
 			// Legacy WSL bash takes the command on stdin (`bash -s`); otherwise it
 			// is the final argv entry (`bash -c <command>`).
 			var cmd *exec.Cmd
-			if useStdin {
-				cmd = exec.CommandContext(runCtx, shell, shellArgs...)
+			if shellConfig.commandFromStdin() {
+				cmd = exec.CommandContext(runCtx, shellConfig.Shell, shellConfig.Args...)
 				cmd.Stdin = strings.NewReader(command)
 			} else {
-				cmd = exec.CommandContext(runCtx, shell, append(shellArgs, command)...)
+				cmd = exec.CommandContext(runCtx, shellConfig.Shell, append(slices.Clone(shellConfig.Args), command)...)
 			}
 			cmd.Dir = cwd
 			cmd.Env = options.Env

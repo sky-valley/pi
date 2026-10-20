@@ -57,9 +57,9 @@ func TestWindowsStoreShellAliases(t *testing.T) {
 			var shell string
 			var err error
 			if executable == "pwsh.exe" {
-				shell, _, _, err = h.powerShellConfig()
+				shell, _, _, err = unpackShellConfig(h.powerShellConfig())
 			} else {
-				shell, _, _, err = h.shellConfig("")
+				shell, _, _, err = unpackShellConfig(h.shellConfig(""))
 			}
 			if err != nil {
 				t.Fatal(err)
@@ -72,7 +72,7 @@ func TestWindowsStoreShellAliases(t *testing.T) {
 
 	t.Run("accepts an explicitly configured shell alias", func(t *testing.T) {
 		alias := storeAliasesDir + `\bash.exe`
-		shell, _, _, err := fakeShellHost(true, nil, nil, nil).shellConfig(alias)
+		shell, _, _, err := unpackShellConfig(fakeShellHost(true, nil, nil, nil).shellConfig(alias))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -87,7 +87,7 @@ func TestWindowsStoreShellAliases(t *testing.T) {
 			"pwsh.exe":       storeAliasesDir + `\pwsh.exe`,
 			"powershell.exe": windowsPowerShell,
 		})
-		shell, _, _, err := h.powerShellConfig()
+		shell, _, _, err := unpackShellConfig(h.powerShellConfig())
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -102,7 +102,7 @@ func TestWindowsStoreShellAliases(t *testing.T) {
 // failing /bin/bash falls back to bash on PATH.
 func TestUnixShellExistenceChecks(t *testing.T) {
 	t.Run("accepts /bin/bash when access(F_OK) succeeds", func(t *testing.T) {
-		shell, _, _, err := fakeShellHost(false, nil, nil, nil).shellConfig("")
+		shell, _, _, err := unpackShellConfig(fakeShellHost(false, nil, nil, nil).shellConfig(""))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -113,7 +113,7 @@ func TestUnixShellExistenceChecks(t *testing.T) {
 
 	t.Run("falls back to bash on PATH when /bin/bash fails access(F_OK)", func(t *testing.T) {
 		h := fakeShellHost(false, nil, existsOnly(), map[string]string{"bash": "/usr/local/bin/bash"})
-		shell, _, _, err := h.shellConfig("")
+		shell, _, _, err := unpackShellConfig(h.shellConfig(""))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -123,7 +123,7 @@ func TestUnixShellExistenceChecks(t *testing.T) {
 	})
 
 	t.Run("rejects an explicitly configured shell path that fails access(F_OK)", func(t *testing.T) {
-		_, _, _, err := fakeShellHost(false, nil, existsOnly(), nil).shellConfig("/missing/bash")
+		_, _, _, err := unpackShellConfig(fakeShellHost(false, nil, existsOnly(), nil).shellConfig("/missing/bash"))
 		if err == nil {
 			t.Fatal("want an error, got none")
 		}
@@ -207,7 +207,7 @@ func TestLegacyWslBashUnderSystemRoot(t *testing.T) {
 			env["SystemRoot"] = *tt.systemRoot
 			label = strconv.Quote(*tt.systemRoot)
 		}
-		shell, args, stdin, err := fakeShellHost(true, env, nil, nil).shellConfig(tt.shell)
+		shell, args, stdin, err := unpackShellConfig(fakeShellHost(true, env, nil, nil).shellConfig(tt.shell))
 		if err != nil {
 			t.Fatalf("SystemRoot=%s %q: %v", label, tt.shell, err)
 		}
@@ -261,7 +261,7 @@ func TestGetPowerShellConfigInstallDirs(t *testing.T) {
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			shell, args, stdin, err := fakeShellHost(true, env, tt.exists, tt.onPath).powerShellConfig()
+			shell, args, stdin, err := unpackShellConfig(fakeShellHost(true, env, tt.exists, tt.onPath).powerShellConfig())
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -272,7 +272,7 @@ func TestGetPowerShellConfigInstallDirs(t *testing.T) {
 	}
 
 	t.Run("reports an error when no PowerShell installation exists", func(t *testing.T) {
-		_, _, _, err := fakeShellHost(true, env, existsOnly(), nil).powerShellConfig()
+		_, _, _, err := unpackShellConfig(fakeShellHost(true, env, existsOnly(), nil).powerShellConfig())
 		if err == nil {
 			t.Fatal("want an error, got none")
 		}
@@ -288,4 +288,39 @@ func TestLocalShellHostUsesShellPathExists(t *testing.T) {
 	if want := reflect.ValueOf(shellPathExists).Pointer(); got != want {
 		t.Fatal("localShellHost.exists is not shellPathExists")
 	}
+}
+
+// TestShellConfigShape pins pi's ShellConfig values: commandTransport is set
+// ("stdin") only for the legacy WSL launcher and absent everywhere else.
+func TestShellConfigShape(t *testing.T) {
+	h := fakeShellHost(true, nil, nil, map[string]string{"pwsh.exe": `C:\pwsh.exe`})
+	for _, tt := range []struct {
+		got  func() (ShellConfig, error)
+		want ShellConfig
+	}{
+		{func() (ShellConfig, error) { return h.shellConfig(`C:\Windows\System32\bash.exe`) },
+			ShellConfig{Shell: `C:\Windows\System32\bash.exe`, Args: []string{"-s"}, CommandTransport: CommandTransportStdin}},
+		{func() (ShellConfig, error) { return h.shellConfig(`D:\Git\bin\bash.exe`) },
+			ShellConfig{Shell: `D:\Git\bin\bash.exe`, Args: []string{"-c"}}},
+		{h.powerShellConfig, ShellConfig{Shell: `C:\pwsh.exe`, Args: powershellArgs}},
+		{func() (ShellConfig, error) { return fakeShellHost(false, nil, existsOnly(), nil).shellConfig("") },
+			ShellConfig{Shell: "sh", Args: []string{"-c"}}},
+	} {
+		got, err := tt.got()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !reflect.DeepEqual(got, tt.want) {
+			t.Errorf("got %#v, want %#v", got, tt.want)
+		}
+	}
+	if CommandTransportArgv != "argv" || CommandTransportStdin != "stdin" {
+		t.Fatalf("CommandTransport values %q/%q, want pi's argv/stdin", CommandTransportArgv, CommandTransportStdin)
+	}
+}
+
+// unpackShellConfig spreads a resolved ShellConfig into the fields the tests
+// compare.
+func unpackShellConfig(c ShellConfig, err error) (shell string, args []string, stdin bool, _ error) {
+	return c.Shell, c.Args, c.commandFromStdin(), err
 }

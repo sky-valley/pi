@@ -25,7 +25,6 @@ import (
 	"github.com/sky-valley/pi/agent"
 	"github.com/sky-valley/pi/ai"
 	"github.com/sky-valley/pi/internal/jstext"
-	"github.com/sky-valley/pi/internal/nodepath"
 	"golang.org/x/text/collate"
 	"golang.org/x/text/language"
 	"golang.org/x/text/unicode/norm"
@@ -964,9 +963,8 @@ type shellToolConfig struct {
 	// shell. pi applies it inside the operations wrapper, ahead of any
 	// spawn-hook prefix (powershell.ts createLocalPowerShellOperations).
 	commandPrefix string
-	// resolveShell resolves the shell binary, its args, and whether the command
-	// must be delivered on stdin rather than appended to argv.
-	resolveShell func() (shell string, args []string, useStdin bool, err error)
+	// resolveShell resolves the shell to spawn (pi's resolveShellConfig).
+	resolveShell func() (ShellConfig, error)
 }
 
 // utf8OutputPrefix opts PowerShell's console into UTF-8 so non-ASCII output
@@ -982,7 +980,7 @@ var bashShellConfig = shellToolConfig{
 	name:           "bash",
 	shellName:      "bash",
 	tempFilePrefix: "pi-bash",
-	resolveShell:   func() (string, []string, bool, error) { return getShellConfig("") },
+	resolveShell:   func() (ShellConfig, error) { return GetShellConfig("") },
 }
 
 var powershellShellConfig = shellToolConfig{
@@ -990,7 +988,7 @@ var powershellShellConfig = shellToolConfig{
 	shellName:      "PowerShell",
 	tempFilePrefix: "pi-powershell",
 	commandPrefix:  utf8OutputPrefix,
-	resolveShell:   getPowerShellConfig,
+	resolveShell:   GetPowerShellConfig,
 }
 
 func bashTool(cwd string, sessionEnv sessionEnvFn) agent.AgentTool {
@@ -1296,192 +1294,6 @@ func argFloat(params map[string]any, key string) (float64, bool) {
 		return float64(v), true
 	}
 	return 0, false
-}
-
-// shellHost is what pi's shell.ts reads from the process it runs in: the
-// platform, the environment, the filesystem existence check and the PATH
-// search. The resolvers take it as a value so their Windows branches are
-// testable on every host, as pi's tests stub process.platform, process.env,
-// accessSync and spawnSync.
-type shellHost struct {
-	windows bool
-	getenv  func(string) string
-	// exists is pi's shellPathExists.
-	exists func(string) bool
-	// lookPath is the PATH search pi spawns (`where` on Windows, `which`
-	// elsewhere).
-	lookPath func(string) (string, error)
-}
-
-var localShellHost = shellHost{
-	windows:  runtime.GOOS == "windows",
-	getenv:   os.Getenv,
-	exists:   shellPathExists,
-	lookPath: exec.LookPath,
-}
-
-// legacyWslBashRE matches the legacy Windows-bundled WSL launcher
-// (C:\Windows\System32\bash.exe, or the WoW64 sysnative redirect) after path
-// normalization, for when the Windows directory is unknown. The launcher
-// mishandles `-c "<cmd>"` quoting, so commands go via stdin.
-var legacyWslBashRE = regexp.MustCompile(`^[a-z]:\\windows\\(?:system32|sysnative)\\bash\.exe$`)
-
-// driveAbsoluteRE is pi's /^[a-z]:[\\/]/i. JavaScript's non-Unicode `i`
-// folds ASCII only, so the class is spelled out rather than given Go's (?i),
-// which would also take the Kelvin sign for a k.
-var driveAbsoluteRE = regexp.MustCompile(`^[a-zA-Z]:[\\/]`)
-
-// isLegacyWslBashPath ports pi's isLegacyWslBashPath (shell.ts, upstream
-// 61060ddf8): the launcher is System32\bash.exe or Sysnative\bash.exe under
-// the actual Windows directory (%SystemRoot%), compared after path.win32
-// normalization and JavaScript lowercasing. A SystemRoot that is not
-// drive-absolute recognizes nothing; the conventional C:\Windows paths are
-// the fallback only when SystemRoot is unset or empty.
-func isLegacyWslBashPath(path, systemRoot string) bool {
-	normalized := jstext.ToLower(nodepath.Win32.Normalize(path))
-	if systemRoot != "" {
-		if !driveAbsoluteRE.MatchString(systemRoot) {
-			return false
-		}
-		for _, directory := range []string{"System32", "Sysnative"} {
-			if normalized == jstext.ToLower(nodepath.Win32.Join(systemRoot, directory, "bash.exe")) {
-				return true
-			}
-		}
-		return false
-	}
-	return legacyWslBashRE.MatchString(normalized)
-}
-
-// bashShellConfig ports pi's getBashShellConfig: legacy WSL bash takes the
-// command on stdin (`bash -s`); every other bash takes `bash -c <command>`.
-func (h shellHost) bashShellConfig(shell string) (string, []string, bool) {
-	if isLegacyWslBashPath(shell, h.getenv("SystemRoot")) {
-		return shell, []string{"-s"}, true
-	}
-	return shell, []string{"-c"}, false
-}
-
-// findExecutableOnPath ports pi's findExecutableOnPath: the first PATH match,
-// or "" when there is none. On Windows pi re-checks the match with
-// shellPathExists (`where` can print paths that do not exist); elsewhere it
-// trusts `which`.
-func (h shellHost) findExecutableOnPath(executable string) string {
-	p, err := h.lookPath(executable)
-	if err != nil || p == "" {
-		return ""
-	}
-	if h.windows && !h.exists(p) {
-		return ""
-	}
-	return p
-}
-
-// getShellConfig ports pi's getShellConfig (shell.ts). pi never uses $SHELL or
-// cmd: Unix resolves /bin/bash, then bash on PATH, then sh; Windows resolves
-// Git Bash in known locations, then bash.exe on PATH, else errors.
-//
-// It returns the shell, its args, and whether the command must be delivered
-// on stdin (legacy WSL bash) rather than appended to argv. A non-empty
-// customShellPath is pi's explicit shellPath: it wins over every platform
-// default, and a missing one is an error, not a fallback.
-func getShellConfig(customShellPath string) (shell string, args []string, useStdin bool, err error) {
-	return localShellHost.shellConfig(customShellPath)
-}
-
-func (h shellHost) shellConfig(customShellPath string) (shell string, args []string, useStdin bool, err error) {
-	if customShellPath != "" {
-		if h.exists(customShellPath) {
-			s, a, stdin := h.bashShellConfig(customShellPath)
-			return s, a, stdin, nil
-		}
-		return "", nil, false, errors.New("Custom shell path not found: " + customShellPath)
-	}
-	if h.windows {
-		var paths []string
-		if pf := h.getenv("ProgramFiles"); pf != "" {
-			paths = append(paths, pf+`\Git\bin\bash.exe`)
-		}
-		if pf86 := h.getenv("ProgramFiles(x86)"); pf86 != "" {
-			paths = append(paths, pf86+`\Git\bin\bash.exe`)
-		}
-		for _, p := range paths {
-			if h.exists(p) {
-				s, a, stdin := h.bashShellConfig(p)
-				return s, a, stdin, nil
-			}
-		}
-		if p := h.findExecutableOnPath("bash.exe"); p != "" {
-			s, a, stdin := h.bashShellConfig(p)
-			return s, a, stdin, nil
-		}
-		var b strings.Builder
-		b.WriteString("No bash shell found. Options:\n")
-		b.WriteString("  1. Install Git for Windows: https://git-scm.com/download/win\n")
-		b.WriteString("  2. Add your bash to PATH (Cygwin, MSYS2, etc.)\n")
-		b.WriteString("  3. Set shellPath in settings.json\n\n")
-		b.WriteString("Searched Git Bash in:\n")
-		for i, p := range paths {
-			if i > 0 {
-				b.WriteString("\n")
-			}
-			b.WriteString("  " + p)
-		}
-		return "", nil, false, errors.New(b.String())
-	}
-
-	// Unix: try /bin/bash, then bash on PATH, then fall back to sh.
-	if h.exists("/bin/bash") {
-		s, a, stdin := h.bashShellConfig("/bin/bash")
-		return s, a, stdin, nil
-	}
-	if p := h.findExecutableOnPath("bash"); p != "" {
-		s, a, stdin := h.bashShellConfig(p)
-		return s, a, stdin, nil
-	}
-	return "sh", []string{"-c"}, false, nil
-}
-
-// powershellArgs ports pi's POWERSHELL_ARGS (shell.ts, upstream 80e62761f):
-// no profile, no interactive prompts, and a process-scoped execution-policy
-// bypass so the machine policy is left alone.
-var powershellArgs = []string{"-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command"}
-
-// getPowerShellConfig ports pi's getPowerShellConfig: Windows only, preferring
-// PowerShell 7 (pwsh) over Windows PowerShell. The order (upstream 61060ddf8)
-// is pwsh.exe on PATH, %ProgramFiles%\PowerShell\7\pwsh.exe, powershell.exe
-// on PATH, then %SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe,
-// the directories joined as path.win32 does. pi throws on both failures; the
-// Go shell resolvers report failure as an error, which the tool surfaces to the
-// model verbatim, so the strings are byte-exact.
-func getPowerShellConfig() (shell string, args []string, useStdin bool, err error) {
-	return localShellHost.powerShellConfig()
-}
-
-func (h shellHost) powerShellConfig() (shell string, args []string, useStdin bool, err error) {
-	if !h.windows {
-		return "", nil, false, errors.New("The powershell tool is only available on Windows.")
-	}
-	shell = h.findExecutableOnPath("pwsh.exe")
-	// Installation directories may be on any drive and need not be on PATH.
-	if programFiles := h.getenv("ProgramFiles"); shell == "" && programFiles != "" {
-		if pwsh7 := nodepath.Win32.Join(programFiles, "PowerShell", "7", "pwsh.exe"); h.exists(pwsh7) {
-			shell = pwsh7
-		}
-	}
-	if shell == "" {
-		shell = h.findExecutableOnPath("powershell.exe")
-	}
-	if systemRoot := h.getenv("SystemRoot"); shell == "" && systemRoot != "" {
-		windowsPowerShell := nodepath.Win32.Join(systemRoot, "System32", "WindowsPowerShell", "v1.0", "powershell.exe")
-		if h.exists(windowsPowerShell) {
-			shell = windowsPowerShell
-		}
-	}
-	if shell == "" {
-		return "", nil, false, errors.New("No PowerShell executable found. Install PowerShell or add powershell.exe/pwsh.exe to PATH.")
-	}
-	return shell, slices.Clone(powershellArgs), false, nil
 }
 
 // ---------------------------------------------------------------------------

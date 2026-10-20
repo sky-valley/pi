@@ -115,13 +115,13 @@ func TestGetPowerShellConfigOffWindows(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("guard only fires off Windows")
 	}
-	_, _, _, err := getPowerShellConfig()
+	_, _, _, err := unpackShellConfig(GetPowerShellConfig())
 	if err == nil {
 		t.Fatal("expected an error off Windows")
 	}
 	want := "The powershell tool is only available on Windows."
 	if got := err.Error(); got != want {
-		t.Fatalf("getPowerShellConfig error\n got: %q\nwant: %q", got, want)
+		t.Fatalf("GetPowerShellConfig error\n got: %q\nwant: %q", got, want)
 	}
 	tool, err := CreateTool("powershell", t.TempDir())
 	if err != nil {
@@ -157,7 +157,7 @@ func TestShellToolCommandPrefixIsExecuted(t *testing.T) {
 		shellName:      "testshell",
 		tempFilePrefix: "pi-testshell",
 		commandPrefix:  "echo PREFIX\n",
-		resolveShell:   func() (string, []string, bool, error) { return "/bin/sh", []string{"-c"}, false, nil },
+		resolveShell:   func() (ShellConfig, error) { return ShellConfig{Shell: "/bin/sh", Args: []string{"-c"}}, nil },
 	}
 	r, err := run(t, shellTool(t.TempDir(), cfg, nil), map[string]any{"command": "echo BODY"})
 	if err != nil {
@@ -178,7 +178,7 @@ func TestShellToolMissingCwdMessage(t *testing.T) {
 		name:           "testshell",
 		shellName:      "testshell",
 		tempFilePrefix: "pi-testshell",
-		resolveShell:   func() (string, []string, bool, error) { return "/bin/sh", []string{"-c"}, false, nil },
+		resolveShell:   func() (ShellConfig, error) { return ShellConfig{Shell: "/bin/sh", Args: []string{"-c"}}, nil },
 	}
 	missing := t.TempDir() + "/does-not-exist"
 	_, err := run(t, shellTool(missing, cfg, nil), map[string]any{"command": "true"})

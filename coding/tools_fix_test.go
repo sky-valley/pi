@@ -143,7 +143,7 @@ func TestGetShellConfigUnix(t *testing.T) {
 	}
 	// $SHELL must never be consulted.
 	t.Setenv("SHELL", "/bin/zsh")
-	shell, args, _, err := getShellConfig("")
+	shell, args, _, err := unpackShellConfig(GetShellConfig(""))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -160,7 +160,7 @@ func TestGetShellConfigUnix(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Setenv("PATH", fakeBin)
-	shell, _, _, err = noBinBash.shellConfig("")
+	shell, _, _, err = unpackShellConfig(noBinBash.shellConfig(""))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -170,7 +170,7 @@ func TestGetShellConfigUnix(t *testing.T) {
 
 	// No /bin/bash, nothing on PATH → sh.
 	t.Setenv("PATH", t.TempDir())
-	shell, _, _, err = noBinBash.shellConfig("")
+	shell, _, _, err = unpackShellConfig(noBinBash.shellConfig(""))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -193,7 +193,7 @@ func TestLegacyWslBashDetection(t *testing.T) {
 		if !isLegacyWslBashPath(p, "") {
 			t.Fatalf("%q should be detected as legacy WSL bash", p)
 		}
-		shell, args, useStdin := fakeShellHost(true, nil, nil, nil).bashShellConfig(p)
+		shell, args, useStdin, _ := unpackShellConfig(fakeShellHost(true, nil, nil, nil).bashShellConfig(p), nil)
 		if shell != p || !useStdin || !reflect.DeepEqual(args, []string{"-s"}) {
 			t.Fatalf("%q: got shell=%q args=%v stdin=%v, want -s + stdin", p, shell, args, useStdin)
 		}
@@ -210,7 +210,7 @@ func TestLegacyWslBashDetection(t *testing.T) {
 		if isLegacyWslBashPath(p, "") {
 			t.Fatalf("%q should NOT be detected as legacy WSL bash", p)
 		}
-		shell, args, useStdin := fakeShellHost(true, nil, nil, nil).bashShellConfig(p)
+		shell, args, useStdin, _ := unpackShellConfig(fakeShellHost(true, nil, nil, nil).bashShellConfig(p), nil)
 		if shell != p || useStdin || !reflect.DeepEqual(args, []string{"-c"}) {
 			t.Fatalf("%q: got shell=%q args=%v stdin=%v, want -c + argv", p, shell, args, useStdin)
 		}
@@ -944,7 +944,7 @@ func TestGetShellConfigCustomShellPath(t *testing.T) {
 	if err := os.WriteFile(custom, []byte("#!/bin/sh\n"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	shell, args, useStdin, err := getShellConfig(custom)
+	shell, args, useStdin, err := unpackShellConfig(GetShellConfig(custom))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -953,7 +953,7 @@ func TestGetShellConfigCustomShellPath(t *testing.T) {
 	}
 
 	missing := filepath.Join(t.TempDir(), "missing", "bash")
-	_, _, _, err = getShellConfig(missing)
+	_, _, _, err = unpackShellConfig(GetShellConfig(missing))
 	if err == nil {
 		t.Fatalf("missing custom shell path: want an error, got none")
 	}
