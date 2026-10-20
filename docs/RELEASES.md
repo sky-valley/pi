@@ -9,6 +9,8 @@ captured from. The commit-by-commit triage/port ledger lives in
   `Noam Y. Tenne <noam@10ne.org>`.
 - A release tag points at the cycle's ledger/pin-advance commit (the tip of the
   sync), so the catalog + ledger are included.
+- From `v1.3.27` on, a release also tags the `env` submodule `env/vX.Y.Z`, on
+  the commit one past the root tag that points `env/go.mod` at root `vX.Y.Z`.
 - Every tag from `v0.85.21` on also has a **GitHub Release** (body: a short
   highlights header + that tag's Notes entry below), because a bare tag notifies
   no one. Older tags are deliberately left without one.
@@ -23,6 +25,7 @@ captured from. The commit-by-commit triage/port ledger lives in
 
 | Version | Date | Commit | Upstream pin | npm catalog | Headline |
 |---|---|---|---|---|---|
+| [`v1.3.27`](#v1327) | 2026-10-19 | `eadfcb7` | `d2e7d8b7c` | pi-ai 1.3.0 | Eight releases crossed (v1.0.0 → v1.3.0), regenerated once from 1.3.0 — catalog 867,163→939,772 B, 1529→1614 models across 42 providers (+140/−55, 366 changed), `azure-openai-responses` renamed `azure`, draining the catalog-only queue 20→1; **pi-env ported whole, daemon included**, as the new `env` submodule (first tag `env/v1.3.27`): remote execution over SSH with Go daemons for eight platforms embedded; **following upstream's deletions** of the protocol, client and server packages, chord's service runtime and the harness; Azure Chat Completions deployments, Gemini 4 `thinkingLevel`, Anthropic inline mid-conversation tools (SDK 0.129.0) and strict-tool fallback; `pi.ai.request` telemetry; response and tool durations; `*` patterns and `+name/-name` in `ToolNames`; Cloudflare auth and endpoints resolved as pi resolves them; `telemetry/telemetrytest`, pi's adapter conformance suite; **a Cloudflare model reaches the account the environment names from an SDK session too** (the README's pattern sent `{CLOUDFLARE_ACCOUNT_ID}` literally); **Breaking:** `coding.NewSession` returns an error, `coding.DefaultCompactionSettings` is a function, `SessionOptions.APIKey` is removed and `SetModel` takes no key, as in pi — a key goes on the session's `Models` (`coding.RuntimeCredentials`); `ai.BuiltinModels` takes `*CreateModelsOptions`, `ProviderRequestOptions.TelemetryContext` is `Telemetry`, telemetry adapters implement `Metrics()`/`Propagation()`/`AddLink`, and the `protocol`, `client` and `server` packages are removed; difftest 66/66 PASS, all against the published build |
 | [`v0.99.26`](#v09926) | 2026-10-01 | `99e58d5` | `5806068c2` | pi-ai 0.99.2 | Release v0.99.2 crossed — catalog regen 862,603→867,163 B, 1523→1529 models across an unchanged 42 providers (+6/−0, 24 changed); **Anthropic workload identity federation** (the SDK's token exchange and cache, reproduced in Go); **Anthropic tools with bounds or unlisted formats are sent non-strict** instead of failing every turn with a 400; an unreadable Retry-After backs off; **tool schemas serialize as pi sends them** (key order, off-type values kept) and the built-in tools' numeric parameters are `number`; the CLI starts with ANTHROPIC_AUTH_TOKEN or federation alone; difftest 66/66 PASS, all against the published build |
 | [`v0.99.25`](#v09925) | 2026-09-30 | `884377d` | `3dd803d7e` | pi-ai 0.99.1 | Releases v0.99.0 and v0.99.1 crossed — catalog regen 823,821→862,603 B, 1495→1523 models, **41→42 providers (typesafe, classifiers only)** (+59/−31, 1,464 changed, every model typed), draining the catalog-only queue 9→0: Claude Sonnet 5.5 and GPT-6.1 Sol, the new Codex default; **Sign in with ChatGPT requests** leave out the fields a token rejects; **scripts get up to 1 MiB of a shell command's output**, decoded as pi decodes it, and a full output that cannot be saved fails the call; also publishes the 09-24→09-29 cycles (provider stream events, openai SDK 7.19.0, structured tool results and `RunToolCall`, model types, Kimi K3 defaults); **Breaking:** `ai.Models` gains the all-model accessors and `Login` takes `*LoginOptions`, as `OAuthAuth.Login` does, `ai.MergeSamplingParams` is removed, and `chord/delta.Track` returns no error; difftest 65/65 PASS, all against the published build |
 | [`v0.87.24`](#v08724) | 2026-09-23 | `8fd1432` | `b313731b8` | pi-ai 0.87.1 | Release v0.87.1 crossed — catalog regen 791,953→823,821 B, 1445→1495 models across an unchanged 41 providers (+62/−12, 35 changed), draining the catalog-only queue 1→0: Claude Opus 5.5, GPT-6 Sol and Luna, new Copilot models, and Grok 4.7 as the xai default; the split-turn compaction prompt and the neutral summarization system prompt (missed since v0.79.0); **`/new` no longer sends the previous conversation's summary, and resuming a session file resumes its compaction**; costs bit-exact with pi on arm64; **Breaking:** `chord/delta` takes pi's immutable tracker (`Tracker`/`Change`/`Prepared` replace `Track`'s `State`/`Flush`), `Index`/`PathID` widen to `int64`; difftest 60/60 PASS, all against the published build |
@@ -53,6 +56,126 @@ captured from. The commit-by-commit triage/port ledger lives in
 | [`v0.1.0`](#v010) | 2026-06-10 | `1210b0a` | — | — | Initial tagged baseline |
 
 ## Notes
+
+### v1.3.27
+Upstream sync `5806068c2 → d2e7d8b7c` (pi 1.3.0). 338 changes on the union
+range, all first-parent (no merges). 202 port — 129 of them added to the Scope
+queue, 14 catalog-only — 136 n/a, 0 decide. **Eight releases crossed** (v1.0.0,
+v1.0.1, v1.0.2, v1.0.3, v1.0.4, v1.1.0, v1.2.0, v1.3.0), confirmed by an
+explicit tag fetch and by `packages/ai/package.json`; by the owner's ruling the
+intermediate releases were skipped, the catalog was regenerated once, from
+1.3.0, and this is the one release for all eight. It is also the first release
+of the `env` submodule: `env/v1.3.27` (`16d23af`) requires
+root `v1.3.27`.
+
+Catalog: regenerated by executing `JSON.stringify(MODELS)` against the 1.3.0
+build, after first reproducing the outgoing 0.99.2 catalog byte for byte, and
+derived a second time through the build's compat layer. 1,529 → **1,614 models**
+(+140, −55, 366 changed in place) across an unchanged 42 providers, 867,163 →
+939,772 B. Provider `azure-openai-responses` is now `azure` (44 models
+re-keyed). It drains the catalog-only queue **20 → 1**: among them Claude Haiku
+5.5, Kimi Coding on Chat Completions, OpenCode's inference endpoints, GPT-6's
+mid-conversation effort, Xiaomi MiMo's on/off thinking, Codex GPT-6.1 Sol at
+500K context, and `off` thinking on Claude Opus 5 and Haiku 5.5. New defaults:
+NVIDIA's Nemotron 3.5 Super VL and Xiaomi's MiMo v2.6 Pro.
+
+This cycle:
+- **pi-env, ported whole.** `github.com/sky-valley/pi/env` mirrors
+  `@earendil-works/pi-env`: `ConnectSSH` checks the host key, detects the
+  remote platform, deploys the daemon by SHA-256 and returns a
+  `RemoteExecutionEnv` for files, commands, terminals and watches. The daemon,
+  Rust upstream, is ported to Go and its builds for eight platforms ship inside
+  the module, so neither end needs Node or Rust. Upstream's own test suite
+  passes against the Go daemon as it does against the Rust one, on macOS and
+  Linux, and the daemon's replies in its oracle scenarios match the Rust
+  daemon's byte for byte.
+- **Following upstream's deletions.** pi removed its experimental server stack
+  with the client, protocol and server packages, chord's service runtime, and
+  pi-agent-core's harness. Their Go mirrors are gone, and a compaction entry's
+  `retainedTail` no longer changes how a session's context is rebuilt, as in pi
+  1.3.0.
+- **Providers.** Azure Chat Completions deployments, with the base URL and
+  deployment names from the environment; Gemini 4 and later send
+  `thinkingLevel`; GPT-6 keeps its prompt cache when the thinking level
+  changes; sampling parameters per thinking level; a completions chunk's
+  reasoning comes before its content; whitespace-only tool output counts as
+  empty; a replayed Responses item id must match its item type.
+- **Anthropic.** Mid-conversation tools are defined inline (SDK 0.129.0's
+  `inline-tools` beta); requests fall back to non-strict tools when Anthropic's
+  strict-tool limits are hit; error tool results keep their images, sent after
+  the tool results; `off` on Claude Opus 5 and Haiku 5.5 sends disabled
+  thinking; another model's thinking is dropped rather than sent as text; HTTP
+  errors read as the SDK's message.
+- **Tool calls.** Malformed final arguments fail validation with an
+  `argumentsError` that shows the model what it sent, and assistant responses
+  and tool executions record their `durationMs`.
+- **Telemetry.** `Models` requests report pi's `pi.ai.request` and
+  `pi.ai.poll` spans, events and metrics, recorded before the consumer sees
+  each event and the result; the telemetry package gains propagation, span
+  links, metrics and the schema data, and a chord context carries its
+  telemetry parent. `telemetry/telemetrytest` is pi's adapter conformance
+  suite, for any adapter's own tests, and checks the Go-only contract that an
+  adapter is safe for concurrent use.
+- **Coding.** `ToolNames` takes `*` patterns and `+name`/`-name` modifiers;
+  model references resolve through one provider-selection policy; hidden tools
+  stay out of the prompt; the read and bash output schemas follow pi; tool
+  output files are private and created exclusively; compaction summaries leave
+  out thinking, set no output limit and, by default, retry as pi does; a
+  worktree's symlinked AGENTS.md is loaded; read tells a non-vision model its
+  image was left out.
+- **Retries and auth.** Retry patterns from eight upstream commits (capacity,
+  server busy, gateway and node-fetch failures); a started OAuth refresh
+  survives its caller's cancellation; request context is estimated at 3.5
+  characters per token; OpenRouter's catalog is personalised to the key; the
+  Cloudflare AI binding is a plain binding fetch.
+- **Cloudflare and the compat layer.** Workers AI and AI Gateway resolve auth
+  as pi does: the key, the account id and, for the gateway, the gateway id are
+  all required, from the stored credential or the environment, and the
+  endpoint placeholders fill from the request's env. `ai.Stream` sends a
+  built-in model through its built-in provider, as pi's compat layer does, and
+  an unkeyed Cloudflare model through the built-in `Models`, where it is
+  traced. The anthropic and openai adapters refuse a request their SDK could
+  not authenticate, built-in providers' api-key auth carries pi's display
+  names, and the model registry lists in registration order, keeping a model
+  added through `ai.RegisterModel` instead of overwriting it with the catalog.
+- **chord.** An append to a long array is planned and applied without walking
+  the array or copying it twice.
+
+Queued for later slices: the durable runtime (57 deltas, row 8), the chord2
+host runtime (new row 27), codemode (14), MCP (10), and the agent
+`streamProxy` (new row 26). Rows 7, 11 and 14 closed with their upstream
+sources.
+
+**Breaking:** `coding.NewSession` returns `(*Session, error)` (an invalid tool
+list is an error, as in pi). `ProviderRequestOptions.TelemetryContext` is
+`Telemetry` and takes a `telemetry.Span`; a telemetry adapter implements
+`Metrics()`, `Propagation()` and `Span.AddLink`, and `telemetry.NoopContext` is
+a span. `ai.AssistantMessageEventStream` is a struct, no longer an alias, and
+`providers.FauxAssistantMessage` takes options. `coding.DefaultCompactionSettings`
+is a function that returns each caller its own settings, with pi's retry
+defaults. `providers.RegisterBuiltins` no longer replaces an api a host
+registered first, `ai.BuiltinModels` streams through the built-in
+implementations whatever the registry holds, and `ai.GetApiProviders` returns
+registration order instead of sorted. The `protocol`, `client` and
+`server` packages, `coding`'s remote session and transcript, chord's service
+API (`DefineService`, the service wire and value types) and the AI Gateway
+binding shim are removed, following upstream.
+`coding.SessionOptions.APIKey` is removed and `Session.SetModel(model)` takes
+no key, as pi's `createAgentSession` and `setModel` take none: a session's
+requests resolve their auth themselves, through `SessionOptions.Models` — now
+the session's model runtime, which streams its turns, compaction and branch
+summaries — or, without it, from the environment through compat. To give a
+session a key, set it on a `coding.RuntimeCredentials` (pi's
+`ModelRuntime.setRuntimeApiKey`) and pass
+`ai.BuiltinModels(&ai.CreateModelsOptions{Credentials: credentials})` as
+`Models`. `ai.BuiltinModels()` is `ai.BuiltinModels(options
+*ai.CreateModelsOptions)`, as pi's `builtinModels(options?)`; pass nil for the
+old collection. `ai.RegisterBuiltInApiProviders()` with no arguments records
+the registry anew, as pi's does.
+
+Differential harness: re-pinned to 1.3.0 and `d2e7d8b7c`, 66/66 PASS, all
+against the published build; `anthropic-native-tool-changes`, red against
+0.99.2 since the inline-tools beta landed, passes.
 
 ### v0.99.26
 Upstream sync `3dd803d7e → 5806068c2` (pi 0.99.2). 50 changes on the union
