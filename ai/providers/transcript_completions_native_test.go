@@ -22,9 +22,9 @@ import (
 // packages/ai/test/transcript-tool-changes.test.ts at the sha, same fixture and
 // expected values, through ai.StreamSimple as the suite goes through compat.ts
 // streamSimple. Every body is also compared whole to pi's, captured under node
-// at 95fbc0499 by testdata/transcript/capture-completions-native.mts.
+// at caa6967b6 by testdata/transcript/capture-completions-native.mts.
 
-const completionsNativeCaptureFile = "testdata/transcript/completions-native-95fbc0499.json"
+const completionsNativeCaptureFile = "testdata/transcript/completions-native-caa6967b6.json"
 
 // completionsNativeCase is one captured case: pi's model, its raw context, and
 // the body pi built from them — or, for a stream that failed before building
@@ -223,6 +223,36 @@ func TestAnchorsKimiCodingAdditions(t *testing.T) {
 	}
 }
 
+// #10940: Kimi tool messages cannot remove tools, so a removal rewrites the
+// prefix once (upstream caa6967b6, on the catalog's kimi-coding k3).
+func TestKeepsTheKimiPrefixAcrossLoadsAfterARemoval(t *testing.T) {
+	model := ai.GetModel("kimi-coding", "k3")
+	if model == nil {
+		t.Fatal("catalog has no kimi-coding/k3")
+	}
+	bodies := captureToolHistory(t, model)
+	beforeRemoval, afterRemoval := bodies[0], bodies[1:]
+
+	if got := functionNames(decodeCompletionsPayload(t, beforeRemoval).Tools); !slices.Equal(got, []string{"base_tool", "drop_tool"}) {
+		t.Fatalf("tools before the removal = %v, want [base_tool drop_tool]", got)
+	}
+	for i, body := range afterRemoval {
+		if got := functionNames(decodeCompletionsPayload(t, body).Tools); !slices.Equal(got, []string{"base_tool"}) {
+			t.Fatalf("tools %d after the removal = %v, want [base_tool]", i, got)
+		}
+	}
+	expectGrowingPrefix(t, afterRemoval, "messages")
+	var anchored []string
+	for _, message := range decodeCompletionsPayload(t, afterRemoval[len(afterRemoval)-1]).Messages {
+		if message.Tools != nil {
+			anchored = append(anchored, functionNames(*message.Tools)[0])
+		}
+	}
+	if !slices.Equal(anchored, []string{"late_tool", "later_tool"}) {
+		t.Fatalf("tool-bearing message tools = %v, want [late_tool later_tool]", anchored)
+	}
+}
+
 // "keeps Kimi Coding Highspeed additions in top-level tools": Kimi Code
 // Highspeed rejects tool-bearing system messages.
 func TestKeepsKimiCodingHighspeedAdditionsTopLevel(t *testing.T) {
@@ -282,12 +312,13 @@ func TestCopilotInitiatorReadsTheInPlaceTranscript(t *testing.T) {
 // The cases the suite leaves open, each compared whole to pi's body:
 //   - developer-updates-non-additive: with reasoning and supportsDeveloperRole
 //     later messages are developer messages too; the index-0 message renders
-//     its full text and a later one the framed update; a removal makes the
-//     history non-additive, so nothing anchors and the current tools are sent.
-//   - kimi-k3-addition-without-leading-message: "later" is the position in the
-//     transformed transcript, so a system message at index 1 anchors its
-//     additions and renders as an update; its empty text sends no message, and
-//     with no leading message there are no request tools.
+//     its full text and a later one the framed update; a removal in the last
+//     system message folds every one into the request tools (the current
+//     tools), so nothing anchors.
+//   - kimi-k3-addition-without-leading-message: with no leading message no
+//     system message is folded, so the one at index 1 anchors its additions
+//     and renders as an update; its empty text sends no message, and there are
+//     no request tools.
 //   - bridge-after-tool-result / no-bridge-after-(empty-)system-update: a
 //     system message between tool results and a user message sets lastRole to
 //     "system" (pi's branch falls through to `lastRole = msg.role`), so
@@ -297,10 +328,11 @@ func TestCopilotInitiatorReadsTheInPlaceTranscript(t *testing.T) {
 //     grammar tool calls replay against the tools the resolved transcript
 //     declared, so a grammar tool removed later still replays as a custom call
 //     in place, and as a function call once the transcript is collapsed.
-//   - (kimi-k3-)update-after-empty-leading-message: "later" is the index in the
-//     transformed transcript, not the count of messages pushed: after a
-//     tools-only leading message that sends nothing, the next system message
-//     still anchors its additions and renders as an update.
+//   - (kimi-k3-)update-after-empty-leading-message: a message renders as an
+//     update by its index in the transformed transcript, and anchors by its
+//     position among the system messages, not by the count of messages pushed:
+//     after a tools-only leading message that sends nothing, the next system
+//     message still anchors its additions and renders as an update.
 //   - developer-updates-anchor-additions / anchored-grammar-tool-and-later-additions:
 //     the Kimi tools message keeps role "system" beside developer update text,
 //     and converts its tools with the provider's compat (strict, grammar tools).
@@ -312,6 +344,15 @@ func TestCopilotInitiatorReadsTheInPlaceTranscript(t *testing.T) {
 //     without supportsMidConvoSystemMessages collapses the transcript, so a
 //     removed grammar tool is no longer declared.
 //   - whitespace-only-system-update: whitespace is text; the update is sent.
+//   - kimi-k3-redeclared-after-removal: a removed tool declared again moves the
+//     request tools to the state after its redeclaration (Kimi K3 ignores such
+//     a tool in a tools message); the new tool after it stays anchored.
+//   - kimi-k3-aborted-first-assistant: the folded count reads the
+//     untransformed transcript, which has no leading system message, so the
+//     system message after a dropped aborted assistant message anchors its
+//     tools although it is the first transformed message.
+//   - kimi-k3-history-<step>: the suite's tool history on the K3 fixture: a
+//     removal folds the request tools once, and the loads after it anchor.
 func TestCompletionsMidConversationSystemMessageRequestBodies(t *testing.T) {
 	for _, name := range []string{
 		"developer-updates-non-additive",
@@ -329,6 +370,12 @@ func TestCompletionsMidConversationSystemMessageRequestBodies(t *testing.T) {
 		"kimi-k3-redeclaration-is-non-additive",
 		"grammar-call-additions-flag-alone-collapses",
 		"whitespace-only-system-update",
+		"kimi-k3-redeclared-after-removal",
+		"kimi-k3-aborted-first-assistant",
+		"kimi-k3-history-0",
+		"kimi-k3-history-1",
+		"kimi-k3-history-2",
+		"kimi-k3-history-3",
 	} {
 		t.Run(name, func(t *testing.T) {
 			c := completionsNativeCapture(t, name)

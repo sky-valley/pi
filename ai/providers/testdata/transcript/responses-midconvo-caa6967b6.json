@@ -1,5 +1,5 @@
 {
-	"sha": "9e05370b2",
+	"sha": "caa6967b6",
 	"bodies": {
 		"anchors-additional-tools": {
 			"model": {
@@ -68,6 +68,21 @@
 				"model": "gpt-5.4",
 				"input": [
 					{
+						"type": "additional_tools",
+						"role": "developer",
+						"tools": [
+							{
+								"type": "function",
+								"name": "base_tool",
+								"description": "base_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						]
+					},
+					{
 						"role": "developer",
 						"content": "base prompt"
 					},
@@ -79,6 +94,10 @@
 								"text": "before"
 							}
 						]
+					},
+					{
+						"role": "developer",
+						"content": "This is an incremental tools update. Previously declared tools remain available unless explicitly marked unavailable. A tool declared again here is available again, and its latest definition replaces the earlier one."
 					},
 					{
 						"type": "additional_tools",
@@ -103,17 +122,6 @@
 				"stream": true,
 				"store": false,
 				"max_output_tokens": 1000,
-				"tools": [
-					{
-						"type": "function",
-						"name": "base_tool",
-						"description": "base_tool tool",
-						"parameters": {
-							"type": "object",
-							"properties": {}
-						}
-					}
-				],
 				"reasoning": {
 					"effort": "none"
 				}
@@ -330,6 +338,21 @@
 				"model": "gpt-5.4",
 				"input": [
 					{
+						"type": "additional_tools",
+						"role": "developer",
+						"tools": [
+							{
+								"type": "function",
+								"name": "base_tool",
+								"description": "base_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						]
+					},
+					{
 						"role": "developer",
 						"content": "base prompt\n\n<rules>\nold rules\n</rules>\n\n<docs>\nread docs\n</docs>"
 					},
@@ -344,23 +367,31 @@
 					},
 					{
 						"role": "developer",
-						"content": "updated guidance\n\nUpdated system prompt section \"rules\":\n\n<rules>\nnew rules\n</rules>\n\nRemoved system prompt section \"docs\"."
+						"content": "This is an incremental tools update. Previously declared tools remain available unless explicitly marked unavailable. A tool declared again here is available again, and its latest definition replaces the earlier one.\nStill unavailable: base_tool."
+					},
+					{
+						"type": "additional_tools",
+						"role": "developer",
+						"tools": [
+							{
+								"type": "function",
+								"name": "late_tool",
+								"description": "late_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						]
+					},
+					{
+						"role": "developer",
+						"content": "updated guidance\n\nUpdated system prompt section \"rules\":\n\n<rules>\nnew rules\n</rules>\n\nRemoved system prompt section \"docs\".\n\nThe following tools are no longer available. Do not call them:\n- base_tool"
 					}
 				],
 				"stream": true,
 				"store": false,
 				"max_output_tokens": 1000,
-				"tools": [
-					{
-						"type": "function",
-						"name": "late_tool",
-						"description": "late_tool tool",
-						"parameters": {
-							"type": "object",
-							"properties": {}
-						}
-					}
-				],
 				"reasoning": {
 					"effort": "none"
 				}
@@ -545,6 +576,21 @@
 				"model": "gpt-5.4",
 				"input": [
 					{
+						"type": "additional_tools",
+						"role": "developer",
+						"tools": [
+							{
+								"type": "function",
+								"name": "base_tool",
+								"description": "base_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						]
+					},
+					{
 						"role": "developer",
 						"content": "base prompt"
 					},
@@ -556,6 +602,10 @@
 								"text": "before"
 							}
 						]
+					},
+					{
+						"role": "developer",
+						"content": "This is an incremental tools update. Previously declared tools remain available unless explicitly marked unavailable. A tool declared again here is available again, and its latest definition replaces the earlier one."
 					},
 					{
 						"type": "additional_tools",
@@ -580,17 +630,6 @@
 				"stream": true,
 				"store": false,
 				"max_output_tokens": 1000,
-				"tools": [
-					{
-						"type": "function",
-						"name": "base_tool",
-						"description": "base_tool tool",
-						"parameters": {
-							"type": "object",
-							"properties": {}
-						}
-					}
-				],
 				"reasoning": {
 					"effort": "none"
 				}
@@ -1352,6 +1391,22 @@
 				"model": "gpt-5.4",
 				"input": [
 					{
+						"type": "additional_tools",
+						"role": "developer",
+						"tools": [
+							{
+								"type": "function",
+								"name": "base_tool",
+								"description": "base_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								},
+								"strict": false
+							}
+						]
+					},
+					{
 						"role": "developer",
 						"content": "<rules>\nr1\n</rules>"
 					},
@@ -1389,6 +1444,10 @@
 						],
 						"status": "completed",
 						"id": "msg_pi_1_1"
+					},
+					{
+						"role": "developer",
+						"content": "This is an incremental tools update. Previously declared tools remain available unless explicitly marked unavailable. A tool declared again here is available again, and its latest definition replaces the earlier one."
 					},
 					{
 						"type": "additional_tools",
@@ -1441,6 +1500,10 @@
 						"output": "done"
 					},
 					{
+						"role": "developer",
+						"content": "This is an incremental tools update. Previously declared tools remain available unless explicitly marked unavailable. A tool declared again here is available again, and its latest definition replaces the earlier one."
+					},
+					{
 						"type": "additional_tools",
 						"role": "developer",
 						"tools": [
@@ -1482,18 +1545,6 @@
 				"stream": true,
 				"store": false,
 				"max_output_tokens": 1000,
-				"tools": [
-					{
-						"type": "function",
-						"name": "base_tool",
-						"description": "base_tool tool",
-						"parameters": {
-							"type": "object",
-							"properties": {}
-						},
-						"strict": false
-					}
-				],
 				"reasoning": {
 					"effort": "none"
 				}
@@ -1753,6 +1804,22 @@
 				"model": "gpt-5.4",
 				"input": [
 					{
+						"type": "additional_tools",
+						"role": "developer",
+						"tools": [
+							{
+								"type": "custom",
+								"name": "grammar_tool",
+								"description": "grammar_tool tool",
+								"format": {
+									"type": "grammar",
+									"syntax": "lark",
+									"definition": "start: /.+/"
+								}
+							}
+						]
+					},
+					{
 						"role": "developer",
 						"content": "base prompt"
 					},
@@ -1778,6 +1845,29 @@
 						"output": "done"
 					},
 					{
+						"role": "developer",
+						"content": "This is an incremental tools update. Previously declared tools remain available unless explicitly marked unavailable. A tool declared again here is available again, and its latest definition replaces the earlier one.\nStill unavailable: grammar_tool."
+					},
+					{
+						"type": "additional_tools",
+						"role": "developer",
+						"tools": [
+							{
+								"type": "function",
+								"name": "late_tool",
+								"description": "late_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						]
+					},
+					{
+						"role": "developer",
+						"content": "The following tools are no longer available. Do not call them:\n- grammar_tool"
+					},
+					{
 						"role": "user",
 						"content": [
 							{
@@ -1790,17 +1880,6 @@
 				"stream": true,
 				"store": false,
 				"max_output_tokens": 1000,
-				"tools": [
-					{
-						"type": "function",
-						"name": "late_tool",
-						"description": "late_tool tool",
-						"parameters": {
-							"type": "object",
-							"properties": {}
-						}
-					}
-				],
 				"reasoning": {
 					"effort": "none"
 				}
@@ -1925,6 +2004,21 @@
 				"model": "gpt-5.4",
 				"input": [
 					{
+						"type": "additional_tools",
+						"role": "developer",
+						"tools": [
+							{
+								"type": "function",
+								"name": "base_tool",
+								"description": "base_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						]
+					},
+					{
 						"role": "system",
 						"content": "base prompt"
 					},
@@ -1968,6 +2062,10 @@
 						"content": "Updated system prompt section \"rules\":\n\n<rules>\nr1\n</rules>"
 					},
 					{
+						"role": "system",
+						"content": "This is an incremental tools update. Previously declared tools remain available unless explicitly marked unavailable. A tool declared again here is available again, and its latest definition replaces the earlier one."
+					},
+					{
 						"type": "additional_tools",
 						"role": "developer",
 						"tools": [
@@ -1995,17 +2093,6 @@
 				"stream": true,
 				"store": false,
 				"max_output_tokens": 1000,
-				"tools": [
-					{
-						"type": "function",
-						"name": "base_tool",
-						"description": "base_tool tool",
-						"parameters": {
-							"type": "object",
-							"properties": {}
-						}
-					}
-				],
 				"reasoning": {
 					"effort": "none"
 				}
@@ -2359,6 +2446,34 @@
 				"model": "gpt-5.4",
 				"input": [
 					{
+						"type": "tool_search_call",
+						"call_id": "pi_tool_load_1l5pcjd116nawg",
+						"execution": "client",
+						"status": "completed",
+						"arguments": {
+							"query": "base_tool",
+							"limit": 1
+						}
+					},
+					{
+						"type": "tool_search_output",
+						"call_id": "pi_tool_load_1l5pcjd116nawg",
+						"execution": "client",
+						"status": "completed",
+						"tools": [
+							{
+								"type": "function",
+								"name": "base_tool",
+								"description": "base_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								},
+								"defer_loading": true
+							}
+						]
+					},
+					{
 						"role": "developer",
 						"content": "guidance\n\n<rules>\nr1\n</rules>"
 					},
@@ -2429,6 +2544,1659 @@
 				"stream": true,
 				"store": false,
 				"max_output_tokens": 1000,
+				"reasoning": {
+					"effort": "none"
+				}
+			}
+		},
+		"additional-tools-redefinition": {
+			"model": {
+				"baseUrl": "http://127.0.0.1:9",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 100000,
+				"maxTokens": 1000,
+				"id": "gpt-5.4",
+				"name": "GPT-5.4",
+				"api": "openai-responses",
+				"provider": "openai",
+				"compat": {
+					"supportsMidConvoSystemMessages": true,
+					"supportsAdditionalTools": true
+				}
+			},
+			"context": {
+				"messages": [
+					{
+						"role": "system",
+						"content": "base prompt",
+						"toolsAdded": [
+							{
+								"name": "base_tool",
+								"description": "base_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						],
+						"timestamp": 0
+					},
+					{
+						"role": "user",
+						"content": "before",
+						"timestamp": 1
+					},
+					{
+						"role": "system",
+						"content": "",
+						"toolsRemoved": [
+							{
+								"name": "base_tool"
+							}
+						],
+						"toolsAdded": [
+							{
+								"name": "base_tool",
+								"description": "changed",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						],
+						"timestamp": 2
+					}
+				]
+			},
+			"body": {
+				"model": "gpt-5.4",
+				"input": [
+					{
+						"type": "additional_tools",
+						"role": "developer",
+						"tools": [
+							{
+								"type": "function",
+								"name": "base_tool",
+								"description": "base_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						]
+					},
+					{
+						"role": "developer",
+						"content": "base prompt"
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "before"
+							}
+						]
+					},
+					{
+						"role": "developer",
+						"content": "This is an incremental tools update. Previously declared tools remain available unless explicitly marked unavailable. A tool declared again here is available again, and its latest definition replaces the earlier one."
+					},
+					{
+						"type": "additional_tools",
+						"role": "developer",
+						"tools": [
+							{
+								"type": "function",
+								"name": "base_tool",
+								"description": "changed",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						]
+					}
+				],
+				"stream": true,
+				"store": false,
+				"max_output_tokens": 1000,
+				"reasoning": {
+					"effort": "none"
+				}
+			}
+		},
+		"additional-tools-redeclared-after-removal": {
+			"model": {
+				"baseUrl": "http://127.0.0.1:9",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 100000,
+				"maxTokens": 1000,
+				"id": "gpt-5.4",
+				"name": "GPT-5.4",
+				"api": "openai-responses",
+				"provider": "openai",
+				"compat": {
+					"supportsMidConvoSystemMessages": true,
+					"supportsAdditionalTools": true
+				}
+			},
+			"context": {
+				"messages": [
+					{
+						"role": "system",
+						"content": "base prompt",
+						"toolsAdded": [
+							{
+								"name": "base_tool",
+								"description": "base_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							},
+							{
+								"name": "drop_tool",
+								"description": "drop_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						],
+						"timestamp": 0
+					},
+					{
+						"role": "system",
+						"content": "",
+						"toolsRemoved": [
+							{
+								"name": "drop_tool"
+							}
+						],
+						"timestamp": 1
+					},
+					{
+						"role": "system",
+						"content": "",
+						"toolsAdded": [
+							{
+								"name": "drop_tool",
+								"description": "drop_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						],
+						"timestamp": 2
+					},
+					{
+						"role": "user",
+						"content": "go",
+						"timestamp": 3
+					}
+				]
+			},
+			"body": {
+				"model": "gpt-5.4",
+				"input": [
+					{
+						"type": "additional_tools",
+						"role": "developer",
+						"tools": [
+							{
+								"type": "function",
+								"name": "base_tool",
+								"description": "base_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							},
+							{
+								"type": "function",
+								"name": "drop_tool",
+								"description": "drop_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						]
+					},
+					{
+						"role": "developer",
+						"content": "base prompt"
+					},
+					{
+						"role": "developer",
+						"content": "The following tools are no longer available. Do not call them:\n- drop_tool"
+					},
+					{
+						"role": "developer",
+						"content": "This is an incremental tools update. Previously declared tools remain available unless explicitly marked unavailable. A tool declared again here is available again, and its latest definition replaces the earlier one."
+					},
+					{
+						"type": "additional_tools",
+						"role": "developer",
+						"tools": [
+							{
+								"type": "function",
+								"name": "drop_tool",
+								"description": "drop_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						]
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "go"
+							}
+						]
+					}
+				],
+				"stream": true,
+				"store": false,
+				"max_output_tokens": 1000,
+				"reasoning": {
+					"effort": "none"
+				}
+			}
+		},
+		"additional-tools-without-leading-system-message": {
+			"model": {
+				"baseUrl": "http://127.0.0.1:9",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 100000,
+				"maxTokens": 1000,
+				"id": "gpt-5.4",
+				"name": "GPT-5.4",
+				"api": "openai-responses",
+				"provider": "openai",
+				"compat": {
+					"supportsMidConvoSystemMessages": true,
+					"supportsAdditionalTools": true
+				}
+			},
+			"context": {
+				"messages": [
+					{
+						"role": "user",
+						"content": "before",
+						"timestamp": 1
+					},
+					{
+						"role": "system",
+						"content": "",
+						"sections": {
+							"rules": "<rules>\nr1\n</rules>"
+						},
+						"toolsAdded": [
+							{
+								"name": "late_tool",
+								"description": "late_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						],
+						"timestamp": 2
+					},
+					{
+						"role": "user",
+						"content": "after",
+						"timestamp": 3
+					}
+				]
+			},
+			"body": {
+				"model": "gpt-5.4",
+				"input": [
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "before"
+							}
+						]
+					},
+					{
+						"type": "additional_tools",
+						"role": "developer",
+						"tools": [
+							{
+								"type": "function",
+								"name": "late_tool",
+								"description": "late_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						]
+					},
+					{
+						"role": "developer",
+						"content": "Updated system prompt section \"rules\":\n\n<rules>\nr1\n</rules>"
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "after"
+							}
+						]
+					}
+				],
+				"stream": true,
+				"store": false,
+				"max_output_tokens": 1000,
+				"reasoning": {
+					"effort": "none"
+				}
+			}
+		},
+		"additional-tools-history-0": {
+			"model": {
+				"baseUrl": "http://127.0.0.1:9",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 100000,
+				"maxTokens": 1000,
+				"id": "gpt-5.4",
+				"name": "GPT-5.4",
+				"api": "openai-responses",
+				"provider": "openai",
+				"compat": {
+					"supportsMidConvoSystemMessages": true,
+					"supportsAdditionalTools": true
+				}
+			},
+			"context": {
+				"messages": [
+					{
+						"role": "system",
+						"content": "base prompt",
+						"toolsAdded": [
+							{
+								"name": "base_tool",
+								"description": "base_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							},
+							{
+								"name": "drop_tool",
+								"description": "drop_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						],
+						"timestamp": 0
+					},
+					{
+						"role": "user",
+						"content": "first",
+						"timestamp": 1
+					}
+				]
+			},
+			"body": {
+				"model": "gpt-5.4",
+				"input": [
+					{
+						"type": "additional_tools",
+						"role": "developer",
+						"tools": [
+							{
+								"type": "function",
+								"name": "base_tool",
+								"description": "base_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							},
+							{
+								"type": "function",
+								"name": "drop_tool",
+								"description": "drop_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						]
+					},
+					{
+						"role": "developer",
+						"content": "base prompt"
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "first"
+							}
+						]
+					}
+				],
+				"stream": true,
+				"store": false,
+				"max_output_tokens": 1000,
+				"reasoning": {
+					"effort": "none"
+				}
+			}
+		},
+		"tool-search-history-0": {
+			"model": {
+				"baseUrl": "http://127.0.0.1:9",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 100000,
+				"maxTokens": 1000,
+				"id": "gpt-5.4",
+				"name": "GPT-5.4",
+				"api": "openai-responses",
+				"provider": "openai",
+				"compat": {
+					"supportsMidConvoSystemMessages": true,
+					"supportsToolSearch": true
+				}
+			},
+			"context": {
+				"messages": [
+					{
+						"role": "system",
+						"content": "base prompt",
+						"toolsAdded": [
+							{
+								"name": "base_tool",
+								"description": "base_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							},
+							{
+								"name": "drop_tool",
+								"description": "drop_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						],
+						"timestamp": 0
+					},
+					{
+						"role": "user",
+						"content": "first",
+						"timestamp": 1
+					}
+				]
+			},
+			"body": {
+				"model": "gpt-5.4",
+				"input": [
+					{
+						"role": "developer",
+						"content": "base prompt"
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "first"
+							}
+						]
+					}
+				],
+				"stream": true,
+				"store": false,
+				"max_output_tokens": 1000,
+				"tools": [
+					{
+						"type": "function",
+						"name": "base_tool",
+						"description": "base_tool tool",
+						"parameters": {
+							"type": "object",
+							"properties": {}
+						}
+					},
+					{
+						"type": "function",
+						"name": "drop_tool",
+						"description": "drop_tool tool",
+						"parameters": {
+							"type": "object",
+							"properties": {}
+						}
+					}
+				],
+				"reasoning": {
+					"effort": "none"
+				}
+			}
+		},
+		"additional-tools-history-1": {
+			"model": {
+				"baseUrl": "http://127.0.0.1:9",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 100000,
+				"maxTokens": 1000,
+				"id": "gpt-5.4",
+				"name": "GPT-5.4",
+				"api": "openai-responses",
+				"provider": "openai",
+				"compat": {
+					"supportsMidConvoSystemMessages": true,
+					"supportsAdditionalTools": true
+				}
+			},
+			"context": {
+				"messages": [
+					{
+						"role": "system",
+						"content": "base prompt",
+						"toolsAdded": [
+							{
+								"name": "base_tool",
+								"description": "base_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							},
+							{
+								"name": "drop_tool",
+								"description": "drop_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						],
+						"timestamp": 0
+					},
+					{
+						"role": "user",
+						"content": "first",
+						"timestamp": 1
+					},
+					{
+						"role": "system",
+						"content": "",
+						"toolsRemoved": [
+							{
+								"name": "drop_tool"
+							}
+						],
+						"timestamp": 2
+					},
+					{
+						"role": "user",
+						"content": "after removal",
+						"timestamp": 3
+					}
+				]
+			},
+			"body": {
+				"model": "gpt-5.4",
+				"input": [
+					{
+						"type": "additional_tools",
+						"role": "developer",
+						"tools": [
+							{
+								"type": "function",
+								"name": "base_tool",
+								"description": "base_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							},
+							{
+								"type": "function",
+								"name": "drop_tool",
+								"description": "drop_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						]
+					},
+					{
+						"role": "developer",
+						"content": "base prompt"
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "first"
+							}
+						]
+					},
+					{
+						"role": "developer",
+						"content": "The following tools are no longer available. Do not call them:\n- drop_tool"
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "after removal"
+							}
+						]
+					}
+				],
+				"stream": true,
+				"store": false,
+				"max_output_tokens": 1000,
+				"reasoning": {
+					"effort": "none"
+				}
+			}
+		},
+		"tool-search-history-1": {
+			"model": {
+				"baseUrl": "http://127.0.0.1:9",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 100000,
+				"maxTokens": 1000,
+				"id": "gpt-5.4",
+				"name": "GPT-5.4",
+				"api": "openai-responses",
+				"provider": "openai",
+				"compat": {
+					"supportsMidConvoSystemMessages": true,
+					"supportsToolSearch": true
+				}
+			},
+			"context": {
+				"messages": [
+					{
+						"role": "system",
+						"content": "base prompt",
+						"toolsAdded": [
+							{
+								"name": "base_tool",
+								"description": "base_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							},
+							{
+								"name": "drop_tool",
+								"description": "drop_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						],
+						"timestamp": 0
+					},
+					{
+						"role": "user",
+						"content": "first",
+						"timestamp": 1
+					},
+					{
+						"role": "system",
+						"content": "",
+						"toolsRemoved": [
+							{
+								"name": "drop_tool"
+							}
+						],
+						"timestamp": 2
+					},
+					{
+						"role": "user",
+						"content": "after removal",
+						"timestamp": 3
+					}
+				]
+			},
+			"body": {
+				"model": "gpt-5.4",
+				"input": [
+					{
+						"role": "developer",
+						"content": "base prompt"
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "first"
+							}
+						]
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "after removal"
+							}
+						]
+					}
+				],
+				"stream": true,
+				"store": false,
+				"max_output_tokens": 1000,
+				"tools": [
+					{
+						"type": "function",
+						"name": "base_tool",
+						"description": "base_tool tool",
+						"parameters": {
+							"type": "object",
+							"properties": {}
+						}
+					}
+				],
+				"reasoning": {
+					"effort": "none"
+				}
+			}
+		},
+		"additional-tools-history-2": {
+			"model": {
+				"baseUrl": "http://127.0.0.1:9",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 100000,
+				"maxTokens": 1000,
+				"id": "gpt-5.4",
+				"name": "GPT-5.4",
+				"api": "openai-responses",
+				"provider": "openai",
+				"compat": {
+					"supportsMidConvoSystemMessages": true,
+					"supportsAdditionalTools": true
+				}
+			},
+			"context": {
+				"messages": [
+					{
+						"role": "system",
+						"content": "base prompt",
+						"toolsAdded": [
+							{
+								"name": "base_tool",
+								"description": "base_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							},
+							{
+								"name": "drop_tool",
+								"description": "drop_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						],
+						"timestamp": 0
+					},
+					{
+						"role": "user",
+						"content": "first",
+						"timestamp": 1
+					},
+					{
+						"role": "system",
+						"content": "",
+						"toolsRemoved": [
+							{
+								"name": "drop_tool"
+							}
+						],
+						"timestamp": 2
+					},
+					{
+						"role": "user",
+						"content": "after removal",
+						"timestamp": 3
+					},
+					{
+						"role": "system",
+						"content": "",
+						"toolsAdded": [
+							{
+								"name": "late_tool",
+								"description": "late_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						],
+						"timestamp": 4
+					},
+					{
+						"role": "user",
+						"content": "after first load",
+						"timestamp": 5
+					}
+				]
+			},
+			"body": {
+				"model": "gpt-5.4",
+				"input": [
+					{
+						"type": "additional_tools",
+						"role": "developer",
+						"tools": [
+							{
+								"type": "function",
+								"name": "base_tool",
+								"description": "base_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							},
+							{
+								"type": "function",
+								"name": "drop_tool",
+								"description": "drop_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						]
+					},
+					{
+						"role": "developer",
+						"content": "base prompt"
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "first"
+							}
+						]
+					},
+					{
+						"role": "developer",
+						"content": "The following tools are no longer available. Do not call them:\n- drop_tool"
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "after removal"
+							}
+						]
+					},
+					{
+						"role": "developer",
+						"content": "This is an incremental tools update. Previously declared tools remain available unless explicitly marked unavailable. A tool declared again here is available again, and its latest definition replaces the earlier one.\nStill unavailable: drop_tool."
+					},
+					{
+						"type": "additional_tools",
+						"role": "developer",
+						"tools": [
+							{
+								"type": "function",
+								"name": "late_tool",
+								"description": "late_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						]
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "after first load"
+							}
+						]
+					}
+				],
+				"stream": true,
+				"store": false,
+				"max_output_tokens": 1000,
+				"reasoning": {
+					"effort": "none"
+				}
+			}
+		},
+		"tool-search-history-2": {
+			"model": {
+				"baseUrl": "http://127.0.0.1:9",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 100000,
+				"maxTokens": 1000,
+				"id": "gpt-5.4",
+				"name": "GPT-5.4",
+				"api": "openai-responses",
+				"provider": "openai",
+				"compat": {
+					"supportsMidConvoSystemMessages": true,
+					"supportsToolSearch": true
+				}
+			},
+			"context": {
+				"messages": [
+					{
+						"role": "system",
+						"content": "base prompt",
+						"toolsAdded": [
+							{
+								"name": "base_tool",
+								"description": "base_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							},
+							{
+								"name": "drop_tool",
+								"description": "drop_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						],
+						"timestamp": 0
+					},
+					{
+						"role": "user",
+						"content": "first",
+						"timestamp": 1
+					},
+					{
+						"role": "system",
+						"content": "",
+						"toolsRemoved": [
+							{
+								"name": "drop_tool"
+							}
+						],
+						"timestamp": 2
+					},
+					{
+						"role": "user",
+						"content": "after removal",
+						"timestamp": 3
+					},
+					{
+						"role": "system",
+						"content": "",
+						"toolsAdded": [
+							{
+								"name": "late_tool",
+								"description": "late_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						],
+						"timestamp": 4
+					},
+					{
+						"role": "user",
+						"content": "after first load",
+						"timestamp": 5
+					}
+				]
+			},
+			"body": {
+				"model": "gpt-5.4",
+				"input": [
+					{
+						"role": "developer",
+						"content": "base prompt"
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "first"
+							}
+						]
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "after removal"
+							}
+						]
+					},
+					{
+						"type": "tool_search_call",
+						"call_id": "pi_tool_load_fn8db71lcnsqi",
+						"execution": "client",
+						"status": "completed",
+						"arguments": {
+							"query": "late_tool",
+							"limit": 1
+						}
+					},
+					{
+						"type": "tool_search_output",
+						"call_id": "pi_tool_load_fn8db71lcnsqi",
+						"execution": "client",
+						"status": "completed",
+						"tools": [
+							{
+								"type": "function",
+								"name": "late_tool",
+								"description": "late_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								},
+								"defer_loading": true
+							}
+						]
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "after first load"
+							}
+						]
+					}
+				],
+				"stream": true,
+				"store": false,
+				"max_output_tokens": 1000,
+				"tools": [
+					{
+						"type": "function",
+						"name": "base_tool",
+						"description": "base_tool tool",
+						"parameters": {
+							"type": "object",
+							"properties": {}
+						}
+					}
+				],
+				"reasoning": {
+					"effort": "none"
+				}
+			}
+		},
+		"additional-tools-history-3": {
+			"model": {
+				"baseUrl": "http://127.0.0.1:9",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 100000,
+				"maxTokens": 1000,
+				"id": "gpt-5.4",
+				"name": "GPT-5.4",
+				"api": "openai-responses",
+				"provider": "openai",
+				"compat": {
+					"supportsMidConvoSystemMessages": true,
+					"supportsAdditionalTools": true
+				}
+			},
+			"context": {
+				"messages": [
+					{
+						"role": "system",
+						"content": "base prompt",
+						"toolsAdded": [
+							{
+								"name": "base_tool",
+								"description": "base_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							},
+							{
+								"name": "drop_tool",
+								"description": "drop_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						],
+						"timestamp": 0
+					},
+					{
+						"role": "user",
+						"content": "first",
+						"timestamp": 1
+					},
+					{
+						"role": "system",
+						"content": "",
+						"toolsRemoved": [
+							{
+								"name": "drop_tool"
+							}
+						],
+						"timestamp": 2
+					},
+					{
+						"role": "user",
+						"content": "after removal",
+						"timestamp": 3
+					},
+					{
+						"role": "system",
+						"content": "",
+						"toolsAdded": [
+							{
+								"name": "late_tool",
+								"description": "late_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						],
+						"timestamp": 4
+					},
+					{
+						"role": "user",
+						"content": "after first load",
+						"timestamp": 5
+					},
+					{
+						"role": "system",
+						"content": "",
+						"toolsAdded": [
+							{
+								"name": "later_tool",
+								"description": "later_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						],
+						"timestamp": 6
+					},
+					{
+						"role": "user",
+						"content": "after second load",
+						"timestamp": 7
+					}
+				]
+			},
+			"body": {
+				"model": "gpt-5.4",
+				"input": [
+					{
+						"type": "additional_tools",
+						"role": "developer",
+						"tools": [
+							{
+								"type": "function",
+								"name": "base_tool",
+								"description": "base_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							},
+							{
+								"type": "function",
+								"name": "drop_tool",
+								"description": "drop_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						]
+					},
+					{
+						"role": "developer",
+						"content": "base prompt"
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "first"
+							}
+						]
+					},
+					{
+						"role": "developer",
+						"content": "The following tools are no longer available. Do not call them:\n- drop_tool"
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "after removal"
+							}
+						]
+					},
+					{
+						"role": "developer",
+						"content": "This is an incremental tools update. Previously declared tools remain available unless explicitly marked unavailable. A tool declared again here is available again, and its latest definition replaces the earlier one.\nStill unavailable: drop_tool."
+					},
+					{
+						"type": "additional_tools",
+						"role": "developer",
+						"tools": [
+							{
+								"type": "function",
+								"name": "late_tool",
+								"description": "late_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						]
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "after first load"
+							}
+						]
+					},
+					{
+						"role": "developer",
+						"content": "This is an incremental tools update. Previously declared tools remain available unless explicitly marked unavailable. A tool declared again here is available again, and its latest definition replaces the earlier one.\nStill unavailable: drop_tool."
+					},
+					{
+						"type": "additional_tools",
+						"role": "developer",
+						"tools": [
+							{
+								"type": "function",
+								"name": "later_tool",
+								"description": "later_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						]
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "after second load"
+							}
+						]
+					}
+				],
+				"stream": true,
+				"store": false,
+				"max_output_tokens": 1000,
+				"reasoning": {
+					"effort": "none"
+				}
+			}
+		},
+		"tool-search-history-3": {
+			"model": {
+				"baseUrl": "http://127.0.0.1:9",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 100000,
+				"maxTokens": 1000,
+				"id": "gpt-5.4",
+				"name": "GPT-5.4",
+				"api": "openai-responses",
+				"provider": "openai",
+				"compat": {
+					"supportsMidConvoSystemMessages": true,
+					"supportsToolSearch": true
+				}
+			},
+			"context": {
+				"messages": [
+					{
+						"role": "system",
+						"content": "base prompt",
+						"toolsAdded": [
+							{
+								"name": "base_tool",
+								"description": "base_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							},
+							{
+								"name": "drop_tool",
+								"description": "drop_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						],
+						"timestamp": 0
+					},
+					{
+						"role": "user",
+						"content": "first",
+						"timestamp": 1
+					},
+					{
+						"role": "system",
+						"content": "",
+						"toolsRemoved": [
+							{
+								"name": "drop_tool"
+							}
+						],
+						"timestamp": 2
+					},
+					{
+						"role": "user",
+						"content": "after removal",
+						"timestamp": 3
+					},
+					{
+						"role": "system",
+						"content": "",
+						"toolsAdded": [
+							{
+								"name": "late_tool",
+								"description": "late_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						],
+						"timestamp": 4
+					},
+					{
+						"role": "user",
+						"content": "after first load",
+						"timestamp": 5
+					},
+					{
+						"role": "system",
+						"content": "",
+						"toolsAdded": [
+							{
+								"name": "later_tool",
+								"description": "later_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						],
+						"timestamp": 6
+					},
+					{
+						"role": "user",
+						"content": "after second load",
+						"timestamp": 7
+					}
+				]
+			},
+			"body": {
+				"model": "gpt-5.4",
+				"input": [
+					{
+						"role": "developer",
+						"content": "base prompt"
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "first"
+							}
+						]
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "after removal"
+							}
+						]
+					},
+					{
+						"type": "tool_search_call",
+						"call_id": "pi_tool_load_fn8db71lcnsqi",
+						"execution": "client",
+						"status": "completed",
+						"arguments": {
+							"query": "late_tool",
+							"limit": 1
+						}
+					},
+					{
+						"type": "tool_search_output",
+						"call_id": "pi_tool_load_fn8db71lcnsqi",
+						"execution": "client",
+						"status": "completed",
+						"tools": [
+							{
+								"type": "function",
+								"name": "late_tool",
+								"description": "late_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								},
+								"defer_loading": true
+							}
+						]
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "after first load"
+							}
+						]
+					},
+					{
+						"type": "tool_search_call",
+						"call_id": "pi_tool_load_18q5pdcir1a51",
+						"execution": "client",
+						"status": "completed",
+						"arguments": {
+							"query": "later_tool",
+							"limit": 1
+						}
+					},
+					{
+						"type": "tool_search_output",
+						"call_id": "pi_tool_load_18q5pdcir1a51",
+						"execution": "client",
+						"status": "completed",
+						"tools": [
+							{
+								"type": "function",
+								"name": "later_tool",
+								"description": "later_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								},
+								"defer_loading": true
+							}
+						]
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "after second load"
+							}
+						]
+					}
+				],
+				"stream": true,
+				"store": false,
+				"max_output_tokens": 1000,
+				"tools": [
+					{
+						"type": "function",
+						"name": "base_tool",
+						"description": "base_tool tool",
+						"parameters": {
+							"type": "object",
+							"properties": {}
+						}
+					}
+				],
 				"reasoning": {
 					"effort": "none"
 				}

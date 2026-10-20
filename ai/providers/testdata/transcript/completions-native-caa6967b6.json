@@ -1,5 +1,5 @@
 {
-	"sha": "95fbc0499",
+	"sha": "caa6967b6",
 	"kimi-k3-anchors-additions": {
 		"model": {
 			"baseUrl": "http://127.0.0.1:9",
@@ -2256,6 +2256,861 @@
 			},
 			"store": false,
 			"max_completion_tokens": 1000,
+			"tools": [
+				{
+					"type": "function",
+					"function": {
+						"name": "base_tool",
+						"description": "base_tool tool",
+						"parameters": {
+							"type": "object",
+							"properties": {}
+						}
+					}
+				}
+			]
+		}
+	},
+	"kimi-k3-redeclared-after-removal": {
+		"model": {
+			"baseUrl": "http://127.0.0.1:9",
+			"reasoning": true,
+			"input": [
+				"text"
+			],
+			"cost": {
+				"input": 0,
+				"output": 0,
+				"cacheRead": 0,
+				"cacheWrite": 0
+			},
+			"contextWindow": 100000,
+			"maxTokens": 1000,
+			"id": "kimi-k3",
+			"name": "Kimi K3",
+			"api": "openai-completions",
+			"provider": "moonshotai",
+			"compat": {
+				"supportsMidConvoSystemMessages": true,
+				"supportsMidConvoToolAdditions": true
+			}
+		},
+		"context": {
+			"messages": [
+				{
+					"role": "system",
+					"content": "base prompt",
+					"toolsAdded": [
+						{
+							"name": "base_tool",
+							"description": "base_tool tool",
+							"parameters": {
+								"type": "object",
+								"properties": {}
+							}
+						},
+						{
+							"name": "drop_tool",
+							"description": "drop_tool tool",
+							"parameters": {
+								"type": "object",
+								"properties": {}
+							}
+						}
+					],
+					"timestamp": 0
+				},
+				{
+					"role": "user",
+					"content": "before",
+					"timestamp": 1
+				},
+				{
+					"role": "system",
+					"content": "",
+					"toolsRemoved": [
+						{
+							"name": "drop_tool"
+						}
+					],
+					"timestamp": 2
+				},
+				{
+					"role": "system",
+					"content": "",
+					"toolsAdded": [
+						{
+							"name": "drop_tool",
+							"description": "drop_tool tool",
+							"parameters": {
+								"type": "object",
+								"properties": {}
+							}
+						}
+					],
+					"timestamp": 3
+				},
+				{
+					"role": "system",
+					"content": "",
+					"toolsAdded": [
+						{
+							"name": "late_tool",
+							"description": "late_tool tool",
+							"parameters": {
+								"type": "object",
+								"properties": {}
+							}
+						}
+					],
+					"timestamp": 4
+				},
+				{
+					"role": "user",
+					"content": "after",
+					"timestamp": 5
+				}
+			]
+		},
+		"body": {
+			"model": "kimi-k3",
+			"messages": [
+				{
+					"role": "system",
+					"content": "base prompt"
+				},
+				{
+					"role": "user",
+					"content": "before"
+				},
+				{
+					"role": "system",
+					"tools": [
+						{
+							"type": "function",
+							"function": {
+								"name": "late_tool",
+								"description": "late_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						}
+					]
+				},
+				{
+					"role": "user",
+					"content": "after"
+				}
+			],
+			"stream": true,
+			"stream_options": {
+				"include_usage": true
+			},
+			"max_tokens": 1000,
+			"tools": [
+				{
+					"type": "function",
+					"function": {
+						"name": "base_tool",
+						"description": "base_tool tool",
+						"parameters": {
+							"type": "object",
+							"properties": {}
+						}
+					}
+				},
+				{
+					"type": "function",
+					"function": {
+						"name": "drop_tool",
+						"description": "drop_tool tool",
+						"parameters": {
+							"type": "object",
+							"properties": {}
+						}
+					}
+				}
+			]
+		}
+	},
+	"kimi-k3-aborted-first-assistant": {
+		"model": {
+			"baseUrl": "http://127.0.0.1:9",
+			"reasoning": true,
+			"input": [
+				"text"
+			],
+			"cost": {
+				"input": 0,
+				"output": 0,
+				"cacheRead": 0,
+				"cacheWrite": 0
+			},
+			"contextWindow": 100000,
+			"maxTokens": 1000,
+			"id": "kimi-k3",
+			"name": "Kimi K3",
+			"api": "openai-completions",
+			"provider": "moonshotai",
+			"compat": {
+				"supportsMidConvoSystemMessages": true,
+				"supportsMidConvoToolAdditions": true
+			}
+		},
+		"context": {
+			"messages": [
+				{
+					"role": "assistant",
+					"content": [
+						{
+							"type": "text",
+							"text": "partial"
+						}
+					],
+					"api": "openai-completions",
+					"provider": "moonshotai",
+					"model": "kimi-k3",
+					"usage": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"totalTokens": 0,
+						"cost": {
+							"input": 0,
+							"output": 0,
+							"cacheRead": 0,
+							"cacheWrite": 0,
+							"total": 0
+						}
+					},
+					"stopReason": "aborted",
+					"timestamp": 0
+				},
+				{
+					"role": "system",
+					"content": "guidance",
+					"toolsAdded": [
+						{
+							"name": "base_tool",
+							"description": "base_tool tool",
+							"parameters": {
+								"type": "object",
+								"properties": {}
+							}
+						}
+					],
+					"timestamp": 1
+				},
+				{
+					"role": "user",
+					"content": "before",
+					"timestamp": 2
+				},
+				{
+					"role": "system",
+					"content": "",
+					"toolsAdded": [
+						{
+							"name": "late_tool",
+							"description": "late_tool tool",
+							"parameters": {
+								"type": "object",
+								"properties": {}
+							}
+						}
+					],
+					"timestamp": 3
+				},
+				{
+					"role": "user",
+					"content": "after",
+					"timestamp": 4
+				}
+			]
+		},
+		"body": {
+			"model": "kimi-k3",
+			"messages": [
+				{
+					"role": "system",
+					"tools": [
+						{
+							"type": "function",
+							"function": {
+								"name": "base_tool",
+								"description": "base_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						}
+					]
+				},
+				{
+					"role": "system",
+					"content": "guidance"
+				},
+				{
+					"role": "user",
+					"content": "before"
+				},
+				{
+					"role": "system",
+					"tools": [
+						{
+							"type": "function",
+							"function": {
+								"name": "late_tool",
+								"description": "late_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						}
+					]
+				},
+				{
+					"role": "user",
+					"content": "after"
+				}
+			],
+			"stream": true,
+			"stream_options": {
+				"include_usage": true
+			},
+			"max_tokens": 1000
+		}
+	},
+	"kimi-k3-history-0": {
+		"model": {
+			"baseUrl": "http://127.0.0.1:9",
+			"reasoning": true,
+			"input": [
+				"text"
+			],
+			"cost": {
+				"input": 0,
+				"output": 0,
+				"cacheRead": 0,
+				"cacheWrite": 0
+			},
+			"contextWindow": 100000,
+			"maxTokens": 1000,
+			"id": "kimi-k3",
+			"name": "Kimi K3",
+			"api": "openai-completions",
+			"provider": "moonshotai",
+			"compat": {
+				"supportsMidConvoSystemMessages": true,
+				"supportsMidConvoToolAdditions": true
+			}
+		},
+		"context": {
+			"messages": [
+				{
+					"role": "system",
+					"content": "base prompt",
+					"toolsAdded": [
+						{
+							"name": "base_tool",
+							"description": "base_tool tool",
+							"parameters": {
+								"type": "object",
+								"properties": {}
+							}
+						},
+						{
+							"name": "drop_tool",
+							"description": "drop_tool tool",
+							"parameters": {
+								"type": "object",
+								"properties": {}
+							}
+						}
+					],
+					"timestamp": 0
+				},
+				{
+					"role": "user",
+					"content": "first",
+					"timestamp": 1
+				}
+			]
+		},
+		"body": {
+			"model": "kimi-k3",
+			"messages": [
+				{
+					"role": "system",
+					"content": "base prompt"
+				},
+				{
+					"role": "user",
+					"content": "first"
+				}
+			],
+			"stream": true,
+			"stream_options": {
+				"include_usage": true
+			},
+			"max_tokens": 1000,
+			"tools": [
+				{
+					"type": "function",
+					"function": {
+						"name": "base_tool",
+						"description": "base_tool tool",
+						"parameters": {
+							"type": "object",
+							"properties": {}
+						}
+					}
+				},
+				{
+					"type": "function",
+					"function": {
+						"name": "drop_tool",
+						"description": "drop_tool tool",
+						"parameters": {
+							"type": "object",
+							"properties": {}
+						}
+					}
+				}
+			]
+		}
+	},
+	"kimi-k3-history-1": {
+		"model": {
+			"baseUrl": "http://127.0.0.1:9",
+			"reasoning": true,
+			"input": [
+				"text"
+			],
+			"cost": {
+				"input": 0,
+				"output": 0,
+				"cacheRead": 0,
+				"cacheWrite": 0
+			},
+			"contextWindow": 100000,
+			"maxTokens": 1000,
+			"id": "kimi-k3",
+			"name": "Kimi K3",
+			"api": "openai-completions",
+			"provider": "moonshotai",
+			"compat": {
+				"supportsMidConvoSystemMessages": true,
+				"supportsMidConvoToolAdditions": true
+			}
+		},
+		"context": {
+			"messages": [
+				{
+					"role": "system",
+					"content": "base prompt",
+					"toolsAdded": [
+						{
+							"name": "base_tool",
+							"description": "base_tool tool",
+							"parameters": {
+								"type": "object",
+								"properties": {}
+							}
+						},
+						{
+							"name": "drop_tool",
+							"description": "drop_tool tool",
+							"parameters": {
+								"type": "object",
+								"properties": {}
+							}
+						}
+					],
+					"timestamp": 0
+				},
+				{
+					"role": "user",
+					"content": "first",
+					"timestamp": 1
+				},
+				{
+					"role": "system",
+					"content": "",
+					"toolsRemoved": [
+						{
+							"name": "drop_tool"
+						}
+					],
+					"timestamp": 2
+				},
+				{
+					"role": "user",
+					"content": "after removal",
+					"timestamp": 3
+				}
+			]
+		},
+		"body": {
+			"model": "kimi-k3",
+			"messages": [
+				{
+					"role": "system",
+					"content": "base prompt"
+				},
+				{
+					"role": "user",
+					"content": "first"
+				},
+				{
+					"role": "user",
+					"content": "after removal"
+				}
+			],
+			"stream": true,
+			"stream_options": {
+				"include_usage": true
+			},
+			"max_tokens": 1000,
+			"tools": [
+				{
+					"type": "function",
+					"function": {
+						"name": "base_tool",
+						"description": "base_tool tool",
+						"parameters": {
+							"type": "object",
+							"properties": {}
+						}
+					}
+				}
+			]
+		}
+	},
+	"kimi-k3-history-2": {
+		"model": {
+			"baseUrl": "http://127.0.0.1:9",
+			"reasoning": true,
+			"input": [
+				"text"
+			],
+			"cost": {
+				"input": 0,
+				"output": 0,
+				"cacheRead": 0,
+				"cacheWrite": 0
+			},
+			"contextWindow": 100000,
+			"maxTokens": 1000,
+			"id": "kimi-k3",
+			"name": "Kimi K3",
+			"api": "openai-completions",
+			"provider": "moonshotai",
+			"compat": {
+				"supportsMidConvoSystemMessages": true,
+				"supportsMidConvoToolAdditions": true
+			}
+		},
+		"context": {
+			"messages": [
+				{
+					"role": "system",
+					"content": "base prompt",
+					"toolsAdded": [
+						{
+							"name": "base_tool",
+							"description": "base_tool tool",
+							"parameters": {
+								"type": "object",
+								"properties": {}
+							}
+						},
+						{
+							"name": "drop_tool",
+							"description": "drop_tool tool",
+							"parameters": {
+								"type": "object",
+								"properties": {}
+							}
+						}
+					],
+					"timestamp": 0
+				},
+				{
+					"role": "user",
+					"content": "first",
+					"timestamp": 1
+				},
+				{
+					"role": "system",
+					"content": "",
+					"toolsRemoved": [
+						{
+							"name": "drop_tool"
+						}
+					],
+					"timestamp": 2
+				},
+				{
+					"role": "user",
+					"content": "after removal",
+					"timestamp": 3
+				},
+				{
+					"role": "system",
+					"content": "",
+					"toolsAdded": [
+						{
+							"name": "late_tool",
+							"description": "late_tool tool",
+							"parameters": {
+								"type": "object",
+								"properties": {}
+							}
+						}
+					],
+					"timestamp": 4
+				},
+				{
+					"role": "user",
+					"content": "after first load",
+					"timestamp": 5
+				}
+			]
+		},
+		"body": {
+			"model": "kimi-k3",
+			"messages": [
+				{
+					"role": "system",
+					"content": "base prompt"
+				},
+				{
+					"role": "user",
+					"content": "first"
+				},
+				{
+					"role": "user",
+					"content": "after removal"
+				},
+				{
+					"role": "system",
+					"tools": [
+						{
+							"type": "function",
+							"function": {
+								"name": "late_tool",
+								"description": "late_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						}
+					]
+				},
+				{
+					"role": "user",
+					"content": "after first load"
+				}
+			],
+			"stream": true,
+			"stream_options": {
+				"include_usage": true
+			},
+			"max_tokens": 1000,
+			"tools": [
+				{
+					"type": "function",
+					"function": {
+						"name": "base_tool",
+						"description": "base_tool tool",
+						"parameters": {
+							"type": "object",
+							"properties": {}
+						}
+					}
+				}
+			]
+		}
+	},
+	"kimi-k3-history-3": {
+		"model": {
+			"baseUrl": "http://127.0.0.1:9",
+			"reasoning": true,
+			"input": [
+				"text"
+			],
+			"cost": {
+				"input": 0,
+				"output": 0,
+				"cacheRead": 0,
+				"cacheWrite": 0
+			},
+			"contextWindow": 100000,
+			"maxTokens": 1000,
+			"id": "kimi-k3",
+			"name": "Kimi K3",
+			"api": "openai-completions",
+			"provider": "moonshotai",
+			"compat": {
+				"supportsMidConvoSystemMessages": true,
+				"supportsMidConvoToolAdditions": true
+			}
+		},
+		"context": {
+			"messages": [
+				{
+					"role": "system",
+					"content": "base prompt",
+					"toolsAdded": [
+						{
+							"name": "base_tool",
+							"description": "base_tool tool",
+							"parameters": {
+								"type": "object",
+								"properties": {}
+							}
+						},
+						{
+							"name": "drop_tool",
+							"description": "drop_tool tool",
+							"parameters": {
+								"type": "object",
+								"properties": {}
+							}
+						}
+					],
+					"timestamp": 0
+				},
+				{
+					"role": "user",
+					"content": "first",
+					"timestamp": 1
+				},
+				{
+					"role": "system",
+					"content": "",
+					"toolsRemoved": [
+						{
+							"name": "drop_tool"
+						}
+					],
+					"timestamp": 2
+				},
+				{
+					"role": "user",
+					"content": "after removal",
+					"timestamp": 3
+				},
+				{
+					"role": "system",
+					"content": "",
+					"toolsAdded": [
+						{
+							"name": "late_tool",
+							"description": "late_tool tool",
+							"parameters": {
+								"type": "object",
+								"properties": {}
+							}
+						}
+					],
+					"timestamp": 4
+				},
+				{
+					"role": "user",
+					"content": "after first load",
+					"timestamp": 5
+				},
+				{
+					"role": "system",
+					"content": "",
+					"toolsAdded": [
+						{
+							"name": "later_tool",
+							"description": "later_tool tool",
+							"parameters": {
+								"type": "object",
+								"properties": {}
+							}
+						}
+					],
+					"timestamp": 6
+				},
+				{
+					"role": "user",
+					"content": "after second load",
+					"timestamp": 7
+				}
+			]
+		},
+		"body": {
+			"model": "kimi-k3",
+			"messages": [
+				{
+					"role": "system",
+					"content": "base prompt"
+				},
+				{
+					"role": "user",
+					"content": "first"
+				},
+				{
+					"role": "user",
+					"content": "after removal"
+				},
+				{
+					"role": "system",
+					"tools": [
+						{
+							"type": "function",
+							"function": {
+								"name": "late_tool",
+								"description": "late_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						}
+					]
+				},
+				{
+					"role": "user",
+					"content": "after first load"
+				},
+				{
+					"role": "system",
+					"tools": [
+						{
+							"type": "function",
+							"function": {
+								"name": "later_tool",
+								"description": "later_tool tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						}
+					]
+				},
+				{
+					"role": "user",
+					"content": "after second load"
+				}
+			],
+			"stream": true,
+			"stream_options": {
+				"include_usage": true
+			},
+			"max_tokens": 1000,
 			"tools": [
 				{
 					"type": "function",

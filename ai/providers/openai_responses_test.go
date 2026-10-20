@@ -149,9 +149,14 @@ func TestResponsesNonReasoningNoInclude(t *testing.T) {
 
 // A set ToolChoice is forwarded verbatim as the tool_choice request param
 // alongside the tools; unset (nil) omits it so the API defaults to "auto".
-// Mirrors pi's "forwards required tool choice" case (upstream eacaa130).
+// Mirrors pi's "forwards required tool choice" case (upstream eacaa130), on the
+// catalog's gpt-5.4 as pi's is: it declares its tools in additional_tools items
+// (upstream caa6967b6), and tool_choice applies to them.
 func TestResponsesToolChoiceForwarded(t *testing.T) {
-	model := &ai.Model{ID: "gpt-5.4", Api: ai.APIOpenAIResponses, Provider: "openai", Reasoning: true, MaxTokens: 4096}
+	model := ai.GetModel("openai", "gpt-5.4")
+	if model == nil {
+		t.Fatal("catalog has no openai/gpt-5.4")
+	}
 	req := ai.Context{
 		Messages: []ai.Message{ai.NewUserText("Do not call ping. Respond with text instead.", 1)},
 		Tools:    []ai.Tool{{Name: "ping", Description: "Ping", Parameters: ai.Object(ai.Prop("value", ai.String()))}},
@@ -161,24 +166,20 @@ func TestResponsesToolChoiceForwarded(t *testing.T) {
 	if with["tool_choice"] != "required" {
 		t.Fatalf("tool_choice = %v, want required", with["tool_choice"])
 	}
-	if names := responsesToolNames(with); len(names) != 1 || names[0] != "ping" {
-		t.Fatalf("tools = %v, want [ping]", names)
+	input, _ := with["input"].([]any)
+	if len(input) != 2 {
+		t.Fatalf("input = %v, want [additional_tools [ping], user]", input)
+	}
+	first, _ := input[0].(map[string]any)
+	tools, _ := first["tools"].([]map[string]any)
+	if first["type"] != "additional_tools" || len(tools) != 1 || tools[0]["name"] != "ping" {
+		t.Fatalf("input[0] = %v, want additional_tools [ping]", first)
 	}
 
 	without := mustBuildResponsesParams(t, model, req, &OpenAIResponsesOptions{})
 	if _, ok := without["tool_choice"]; ok {
 		t.Fatalf("tool_choice must be omitted when ToolChoice is unset, got %v", without["tool_choice"])
 	}
-}
-
-// responsesToolNames reads the names of a built body's top-level tools.
-func responsesToolNames(body map[string]any) []string {
-	tools, _ := body["tools"].([]map[string]any)
-	out := make([]string, len(tools))
-	for i, tool := range tools {
-		out[i], _ = tool["name"].(string)
-	}
-	return out
 }
 
 // mustResponsesInput converts messages, failing the test on conversion errors.

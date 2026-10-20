@@ -3,13 +3,22 @@
 // openai_responses_midconvo_test.go.
 //
 //   node --experimental-strip-types capture-responses-midconvo.mts <extraction> <out.json> <sha>
-//   e.g. ... capture-responses-midconvo.mts <dir> responses-midconvo-9e05370b2.json 9e05370b2
+//   e.g. ... capture-responses-midconvo.mts <dir> responses-midconvo-caa6967b6.json caa6967b6
 //
 // <extraction> holds packages/ai at <sha> (`git archive <sha> packages/ai` from
 // the upstream clone) and a node_modules resolving pi-ai's dependencies (the npm
 // build's). The npm build 0.85.1 predates upstream 9e05370b2, so these are src
 // captures: re-verify them against the first build that ships it (the BUILD
 // wins).
+//
+// Re-captured at caa6967b6 (2026-10-20) with the 1.3.0 build's node_modules
+// and packages/telemetry/src at the sha as @earendil-works/pi-telemetry (the
+// 1.3.0 build's copy lacks exports pi-ai src now imports). Control: this
+// script as of 9e05370b2's cases, run on src at the parent 73f8de80b, wrote
+// responses-midconvo-9e05370b2.json byte for byte. caa6967b6 declares every
+// tool of an additional_tools model in additional_tools items and announces
+// removals as text, and it added the redefinition, redeclaration, history and
+// unled additional_tools cases below.
 //
 // Each "bodies" case records its model, its context and the body pi hands
 // onPayload, so the Go test decodes the very inputs pi saw. compat.ts
@@ -24,7 +33,9 @@
 // tool_search_output's defer_loading on custom and strict tools,
 // additional_tools winning over tool search, later system messages that add no
 // tools, a transcript without a leading system message, and one whose leading
-// system message follows a dropped aborted assistant message.
+// system message follows a dropped aborted assistant message. The
+// "additional-tools-redefinition", "-redeclared-after-removal" and the two
+// "*-history-<step>" series are the suite's later cases, one body per step.
 //
 // "loneSurrogates" is a body case whose system text carries lone UTF-16
 // surrogates; encoding/json cannot decode those, so its Go test builds the
@@ -282,8 +293,63 @@ const grammarCallSSE = [
 	``,
 ].join("\n\n");
 
+const dropTool = tool("drop_tool");
+
+// transcript-tool-changes.test.ts `captureToolHistory`: the transcript after
+// each step (initial tools, removal of drop_tool, then two loads). Each step's
+// transcript extends the previous one, so the bodies show whether the request
+// prefix survives the removal and the loads after it.
+function toolHistory(): unknown[] {
+	const steps = [
+		[{ role: "user", content: "first", timestamp: 1 }],
+		[
+			{ role: "system", content: "", toolsRemoved: [{ name: "drop_tool" }], timestamp: 2 },
+			{ role: "user", content: "after removal", timestamp: 3 },
+		],
+		[
+			{ role: "system", content: "", toolsAdded: [lateTool], timestamp: 4 },
+			{ role: "user", content: "after first load", timestamp: 5 },
+		],
+		[
+			{ role: "system", content: "", toolsAdded: [tool("later_tool")], timestamp: 6 },
+			{ role: "user", content: "after second load", timestamp: 7 },
+		],
+	];
+	const messages: unknown[] = [{ role: "system", content: "base prompt", toolsAdded: [baseTool, dropTool], timestamp: 0 }];
+	return steps.map((step) => {
+		messages.push(...step);
+		return { messages: [...messages] };
+	});
+}
+
+// 'redefines an OpenAI tool with additional_tools instead of announcing a removal'.
+const redefinitionContext = {
+	messages: [
+		{ role: "system", content: "base prompt", toolsAdded: [baseTool], timestamp: 0 },
+		{ role: "user", content: "before", timestamp: 1 },
+		{
+			role: "system",
+			content: "",
+			toolsRemoved: [{ name: "base_tool" }],
+			toolsAdded: [{ ...baseTool, description: "changed" }],
+			timestamp: 2,
+		},
+	],
+};
+
+// 'stops listing a tool as unavailable once it is declared again'.
+const redeclaredAfterRemovalContext = {
+	messages: [
+		{ role: "system", content: "base prompt", toolsAdded: [baseTool, dropTool], timestamp: 0 },
+		{ role: "system", content: "", toolsRemoved: [{ name: "drop_tool" }], timestamp: 1 },
+		{ role: "system", content: "", toolsAdded: [dropTool], timestamp: 2 },
+		{ role: "user", content: "go", timestamp: 3 },
+	],
+};
+
 const cases: Record<string, { model: unknown; context: unknown }> = {
-	// 'anchors OpenAI additions at their developer message'
+	// 'declares every OpenAI tool in additional_tools at its developer message'
+	// (before upstream caa6967b6: 'anchors OpenAI additions at their developer message')
 	"anchors-additional-tools": {
 		model: gpt54({ supportsMidConvoSystemMessages: true, supportsAdditionalTools: true }),
 		context: additionContext,
@@ -293,7 +359,8 @@ const cases: Record<string, { model: unknown; context: unknown }> = {
 		model: gpt54({ supportsMidConvoSystemMessages: true, supportsToolSearch: true }),
 		context: additionContext,
 	},
-	// 'falls back to the complete current tool state when removals are unsupported'
+	// 'announces OpenAI removals as text' (before upstream caa6967b6: 'falls back
+	// to the complete current tool state when removals are unsupported')
 	"removal-fallback": {
 		model: gpt54({ supportsMidConvoSystemMessages: true, supportsAdditionalTools: true }),
 		context,
@@ -353,7 +420,36 @@ const cases: Record<string, { model: unknown; context: unknown }> = {
 		model: gpt54({ supportsMidConvoSystemMessages: true, supportsToolSearch: true }),
 		context: abortedFirstContext,
 	},
+	// 'redefines an OpenAI tool with additional_tools instead of announcing a removal'
+	"additional-tools-redefinition": {
+		model: gpt54({ supportsMidConvoSystemMessages: true, supportsAdditionalTools: true }),
+		context: redefinitionContext,
+	},
+	// 'stops listing a tool as unavailable once it is declared again'
+	"additional-tools-redeclared-after-removal": {
+		model: gpt54({ supportsMidConvoSystemMessages: true, supportsAdditionalTools: true }),
+		context: redeclaredAfterRemovalContext,
+	},
+	// No leading system message: the first additional_tools item is the later
+	// system message's, so no incremental notice precedes it.
+	"additional-tools-without-leading-system-message": {
+		model: gpt54({ supportsMidConvoSystemMessages: true, supportsAdditionalTools: true }),
+		context: unledContext,
+	},
 };
+// 'keeps the OpenAI request prefix across a removal and later loads' and
+// 'keeps the OpenAI tool search prefix across loads after a removal': one body
+// per step of toolHistory.
+toolHistory().forEach((ctx, step) => {
+	cases[`additional-tools-history-${step}`] = {
+		model: gpt54({ supportsMidConvoSystemMessages: true, supportsAdditionalTools: true }),
+		context: ctx,
+	};
+	cases[`tool-search-history-${step}`] = {
+		model: gpt54({ supportsMidConvoSystemMessages: true, supportsToolSearch: true }),
+		context: ctx,
+	};
+});
 
 const streamCases: Record<string, { model: unknown; context: unknown }> = {
 	"removed-grammar-tool-native": {

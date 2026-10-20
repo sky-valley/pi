@@ -744,8 +744,11 @@ func buildOpenAIParams(model *ai.Model, req ai.TranscriptContext, opts *OpenAIOp
 	// Tool additions anchor in the transcript only where the model takes both
 	// later system messages and the tools they add; otherwise the request
 	// declares the complete current tool set.
-	supportsToolAdditions := compat.SupportsMidConvoSystemMessages && compat.SupportsMidConvoToolAdditions
-	transcriptTools := ai.ResolveTranscriptTools(req.Messages, supportsToolAdditions)
+	toolSupport := ai.TranscriptToolSupportNone
+	if compat.SupportsMidConvoSystemMessages && compat.SupportsMidConvoToolAdditions {
+		toolSupport = ai.TranscriptToolSupportAdditions
+	}
+	transcriptTools := ai.ResolveTranscriptTools(req.Messages, toolSupport)
 
 	// pi's convertMessages resolves the transcript, and its tools, again itself
 	// (a no-op on a transcript the stream already resolved), so a builder handed
@@ -756,7 +759,7 @@ func buildOpenAIParams(model *ai.Model, req ai.TranscriptContext, opts *OpenAIOp
 	transformed := transformMessages(resolved.Messages, model, func(id string) string {
 		return normalizeOpenAIToolCallID(model, id)
 	})
-	anchorsAdditions := ai.ResolveTranscriptTools(resolved.Messages, supportsToolAdditions).AnchorsAdditions
+	foldedSystemMessages := ai.ResolveTranscriptTools(resolved.Messages, toolSupport).FoldedSystemMessages
 	instructionRole := "system"
 	if model.Reasoning && compat.SupportsDeveloperRole {
 		instructionRole = "developer"
@@ -769,6 +772,7 @@ func buildOpenAIParams(model *ai.Model, req ai.TranscriptContext, opts *OpenAIOp
 		}
 	}
 	lastRole := ""
+	systemIndex := 0
 	for i := 0; i < len(transformed); i++ {
 		m := transformed[i]
 		// Some providers don't allow user messages directly after tool results;
@@ -782,9 +786,12 @@ func buildOpenAIParams(model *ai.Model, req ai.TranscriptContext, opts *OpenAIOp
 		}
 
 		if sm, ok := asSystemMsg(m); ok {
-			// i counts the transformed transcript, as pi's loop does: the message
-			// at index 0 is the prompt, any later one an update.
-			if i > 0 && anchorsAdditions && len(sm.ToolsAdded) > 0 {
+			// transformMessages keeps system messages in order, so their
+			// position matches the transcript: the ones past the folded count
+			// anchor their additions.
+			anchorsAdditions := systemIndex >= foldedSystemMessages
+			systemIndex++
+			if anchorsAdditions && len(sm.ToolsAdded) > 0 {
 				tools, err := convertOpenAITools(sm.ToolsAdded, compat)
 				if err != nil {
 					return nil, err
@@ -793,6 +800,8 @@ func buildOpenAIParams(model *ai.Model, req ai.TranscriptContext, opts *OpenAIOp
 				// content field; it declares the additions ahead of the update.
 				messages = append(messages, map[string]any{"role": "system", "tools": tools})
 			}
+			// i counts the transformed transcript, as pi's loop does: the message
+			// at index 0 is the prompt, any later one an update.
 			var text string
 			if i == 0 {
 				text = ai.GetSystemMessageText(sm)

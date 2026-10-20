@@ -318,10 +318,18 @@ func TestToolMapsKeepSlotsLikeJSMap(t *testing.T) {
 	if got, want := jsJSON(t, GetDeclaredTools(messages)), `[{"name":"a","description":"a2","parameters":`+obj+`},{"name":"b","description":"b2","parameters":`+obj+`}]`; got != want {
 		t.Fatalf("GetDeclaredTools\n got %s\nwant %s", got, want)
 	}
-	resolved := ResolveTranscriptTools(messages, true)
-	if resolved.AnchorsAdditions || jsJSON(t, resolved.RequestTools) != jsJSON(t, GetCurrentTools(messages)) {
-		t.Fatalf("non-additive history = %+v, want the current tools and no anchoring", resolved)
+	// The redeclarations in the last message fold every system message.
+	resolved := ResolveTranscriptTools(messages, TranscriptToolSupportAdditions)
+	if resolved.FoldedSystemMessages != 3 || jsJSON(t, resolved.RequestTools) != jsJSON(t, GetCurrentTools(messages)) {
+		t.Fatalf("non-additive history = %+v, want the current tools and 3 folded", resolved)
 	}
+}
+
+// transcriptToolsJSON is a TranscriptTools as pi's toEqual sees it: an empty
+// requestTools is [] however the slice was made.
+func transcriptToolsJSON(t *testing.T, tools TranscriptTools) string {
+	t.Helper()
+	return jsJSON(t, map[string]any{"requestTools": append([]Tool{}, tools.RequestTools...), "foldedSystemMessages": tools.FoldedSystemMessages})
 }
 
 func TestResolveTranscriptToolsAnchorsOnlyAdditiveHistory(t *testing.T) {
@@ -330,18 +338,54 @@ func TestResolveTranscriptToolsAnchorsOnlyAdditiveHistory(t *testing.T) {
 		NewUserText("u", 2),
 		withSystemText("", 3, func(m *SystemMessage) { m.ToolsAdded = []Tool{replayTool("b")} }),
 	}
-	anchored := ResolveTranscriptTools(additive, true)
-	if !anchored.AnchorsAdditions || len(anchored.RequestTools) != 1 || anchored.RequestTools[0].Name != "a" {
-		t.Fatalf("additive with support = %+v, want the initial [a] anchored", anchored)
+	anchored := ResolveTranscriptTools(additive, TranscriptToolSupportAdditions)
+	if anchored.FoldedSystemMessages != 1 || len(anchored.RequestTools) != 1 || anchored.RequestTools[0].Name != "a" {
+		t.Fatalf("additive with support = %+v, want the initial [a] and 1 folded", anchored)
 	}
-	flat := ResolveTranscriptTools(additive, false)
-	if flat.AnchorsAdditions || len(flat.RequestTools) != 2 || flat.RequestTools[1].Name != "b" {
-		t.Fatalf("additive without support = %+v, want the current [a b]", flat)
+	flat := ResolveTranscriptTools(additive, TranscriptToolSupportNone)
+	if flat.FoldedSystemMessages != 2 || len(flat.RequestTools) != 2 || flat.RequestTools[1].Name != "b" {
+		t.Fatalf("additive without support = %+v, want the current [a b] and 2 folded", flat)
 	}
-	// Without a leading system message the initial tool list is empty.
-	noLeading := ResolveTranscriptTools(additive[1:], true)
-	if !noLeading.AnchorsAdditions || len(noLeading.RequestTools) != 0 {
-		t.Fatalf("no leading message = %+v, want [] anchored", noLeading)
+	// Without a leading system message nothing is folded.
+	noLeading := ResolveTranscriptTools(additive[1:], TranscriptToolSupportAdditions)
+	if noLeading.FoldedSystemMessages != 0 || len(noLeading.RequestTools) != 0 {
+		t.Fatalf("no leading message = %+v, want [] and 0 folded", noLeading)
+	}
+}
+
+// #10940: removals and redeclarations move the top-level boundary once; plain
+// additions stay anchored (upstream caa6967b6, transcript-tool-changes.test.ts
+// 'resolves the top-level tool boundary per transport').
+func TestResolveTranscriptToolsBoundaryPerTransport(t *testing.T) {
+	baseTool, dropTool := replayTool("base_tool"), replayTool("drop_tool")
+	messages := []Message{
+		withSystemText("base prompt", 0, func(m *SystemMessage) { m.ToolsAdded = []Tool{baseTool, dropTool} }),
+		withSystemText("", 1, func(m *SystemMessage) { m.ToolsRemoved = []ToolReference{{Name: "drop_tool"}} }),
+		withSystemText("", 2, func(m *SystemMessage) { m.ToolsAdded = []Tool{dropTool} }),
+		withSystemText("", 3, func(m *SystemMessage) { m.ToolsAdded = []Tool{replayTool("late_tool", "x")} }),
+		withSystemText("", 4, func(m *SystemMessage) { m.ToolsAdded = []Tool{replayTool("late_tool", "y")} }),
+	}
+	for _, tc := range []struct {
+		name     string
+		messages []Message
+		support  TranscriptToolSupport
+		want     TranscriptTools
+	}{
+		{"removal", messages[:2], TranscriptToolSupportAdditions, TranscriptTools{RequestTools: []Tool{baseTool}, FoldedSystemMessages: 2}},
+		// Kimi K3 ignores a removed tool that a later tool message declares
+		// again, so the re-added drop_tool moves the boundary; the new late_tool
+		// after it stays anchored.
+		{"re-added after removal", messages[:4], TranscriptToolSupportAdditions, TranscriptTools{RequestTools: []Tool{baseTool, dropTool}, FoldedSystemMessages: 3}},
+		// The redefinition of late_tool moves the boundary to its message.
+		{"redefinition", messages, TranscriptToolSupportAdditions, TranscriptTools{RequestTools: []Tool{baseTool, dropTool, replayTool("late_tool", "y")}, FoldedSystemMessages: 5}},
+		{"changes", messages, TranscriptToolSupportChanges, TranscriptTools{RequestTools: []Tool{}, FoldedSystemMessages: 0}},
+		{"none", messages, TranscriptToolSupportNone, TranscriptTools{RequestTools: []Tool{baseTool, dropTool, replayTool("late_tool", "y")}, FoldedSystemMessages: 5}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got, want := transcriptToolsJSON(t, ResolveTranscriptTools(tc.messages, tc.support)), transcriptToolsJSON(t, tc.want); got != want {
+				t.Fatalf("ResolveTranscriptTools(%s)\n got %s\nwant %s", tc.support, got, want)
+			}
+		})
 	}
 }
 

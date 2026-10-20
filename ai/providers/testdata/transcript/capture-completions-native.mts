@@ -3,7 +3,7 @@
 // transcript_completions_native_test.go in this package.
 //
 //   node --experimental-strip-types capture-completions-native.mts <extraction> <out.json> <sha>
-//   e.g. ... capture-completions-native.mts <dir> completions-native-95fbc0499.json 95fbc0499
+//   e.g. ... capture-completions-native.mts <dir> completions-native-caa6967b6.json caa6967b6
 //
 // <extraction> holds packages/ai at <sha> (`git archive <sha> packages/ai` from
 // the upstream clone) and a node_modules resolving pi-ai's dependencies (the npm
@@ -15,6 +15,15 @@
 // when 890f92088 flipped openai-completions' detected supportsStrictMode to
 // false: the only movement was `"strict":false` leaving every openai-completions
 // tool, since none of these models sets the key. 0.87.0 ships that runtime.
+//
+// Re-captured at caa6967b6 (2026-10-20) with the 1.3.0 build's node_modules
+// and packages/telemetry/src at the sha as @earendil-works/pi-telemetry.
+// Control: this script as of 95fbc0499's cases, run on src at the parent
+// 73f8de80b, wrote completions-native-95fbc0499.json byte for byte, and so did
+// it on caa6967b6: every earlier case is unchanged. caa6967b6 moves the Kimi
+// top-level tools to the state after the last removal or redeclaration and
+// anchors the loads after it; the kimi-k3-redeclared-after-removal,
+// kimi-k3-aborted-first-assistant and kimi-k3-history-<step> cases pin that.
 //
 // Each case records its model and its raw context next to the body. The two
 // Kimi cases are packages/ai/test/transcript-tool-changes.test.ts's
@@ -63,6 +72,32 @@ const modelBase = {
 };
 const baseTool = tool("base_tool");
 const lateTool = tool("late_tool");
+const dropTool = tool("drop_tool");
+
+// transcript-tool-changes.test.ts `captureToolHistory`: the transcript after
+// each step (initial tools, removal of drop_tool, then two loads).
+function toolHistory(): any[] {
+	const steps = [
+		[{ role: "user", content: "first", timestamp: 1 }],
+		[
+			{ role: "system", content: "", toolsRemoved: [{ name: "drop_tool" }], timestamp: 2 },
+			{ role: "user", content: "after removal", timestamp: 3 },
+		],
+		[
+			{ role: "system", content: "", toolsAdded: [lateTool], timestamp: 4 },
+			{ role: "user", content: "after first load", timestamp: 5 },
+		],
+		[
+			{ role: "system", content: "", toolsAdded: [tool("later_tool")], timestamp: 6 },
+			{ role: "user", content: "after second load", timestamp: 7 },
+		],
+	];
+	const messages: any[] = [{ role: "system", content: "base prompt", toolsAdded: [baseTool, dropTool], timestamp: 0 }];
+	return steps.map((step) => {
+		messages.push(...step);
+		return { messages: [...messages] };
+	});
+}
 
 // The suite's `context` (sections, a removal and an addition) and
 // `additionContext` (purely additive).
@@ -290,7 +325,55 @@ const cases: Record<string, { model: any; context: any }> = {
 			],
 		},
 	},
+	// A removed tool that a later tool message declares again counts as a
+	// redeclaration: the top-level tools become the state after it, and the
+	// new tool after it stays anchored (upstream caa6967b6's 'resolves the
+	// top-level tool boundary per transport', through the request).
+	"kimi-k3-redeclared-after-removal": {
+		model: kimiK3,
+		context: {
+			messages: [
+				{ role: "system", content: "base prompt", toolsAdded: [baseTool, dropTool], timestamp: 0 },
+				{ role: "user", content: "before", timestamp: 1 },
+				{ role: "system", content: "", toolsRemoved: [{ name: "drop_tool" }], timestamp: 2 },
+				{ role: "system", content: "", toolsAdded: [dropTool], timestamp: 3 },
+				{ role: "system", content: "", toolsAdded: [lateTool], timestamp: 4 },
+				{ role: "user", content: "after", timestamp: 5 },
+			],
+		},
+	},
+	// transformMessages drops the aborted assistant message, so the system
+	// message after it is the first transformed message, while the
+	// untransformed transcript has no leading system message: no request
+	// tools, and both system messages anchor their tools.
+	"kimi-k3-aborted-first-assistant": {
+		model: kimiK3,
+		context: {
+			messages: [
+				{
+					role: "assistant",
+					content: [{ type: "text", text: "partial" }],
+					api: "openai-completions",
+					provider: "moonshotai",
+					model: "kimi-k3",
+					usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } },
+					stopReason: "aborted",
+					timestamp: 0,
+				},
+				{ role: "system", content: "guidance", toolsAdded: [baseTool], timestamp: 1 },
+				{ role: "user", content: "before", timestamp: 2 },
+				{ role: "system", content: "", toolsAdded: [lateTool], timestamp: 3 },
+				{ role: "user", content: "after", timestamp: 4 },
+			],
+		},
+	},
 };
+// 'keeps the Kimi prefix across loads after a removal': one body per step of
+// the suite's captureToolHistory, on the K3 fixture rather than the catalog's
+// kimi-coding k3 (a source extraction carries no generated catalog).
+toolHistory().forEach((ctx, step) => {
+	cases[`kimi-k3-history-${step}`] = { model: kimiK3, context: ctx };
+});
 
 // Cases streamed to the end against a recorded response: pi's final content,
 // stopReason and errorMessage are recorded next to the SSE it parsed.
