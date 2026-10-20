@@ -19,8 +19,8 @@ func (r *promptRecorder) Prompt(prompt AuthPrompt) (string, error) {
 func (r *promptRecorder) Notify(AuthEvent) {}
 
 // builtinAuthDebt names the built-in providers whose api-key auth still
-// differs from pi's (docs: F1 ledger notes). Each must still differ, so a fix
-// removes it from here.
+// differs from pi's (docs/UPSTREAM.md Known parity debt, K34). Each must
+// still differ, so a fix removes it from here.
 var builtinAuthDebt = map[string]string{
 	// pi's AWS login selects a method first; the port's ambient resolver has
 	// no login.
