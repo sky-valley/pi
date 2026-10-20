@@ -28,8 +28,8 @@ import (
 // their input order; links are printed, never followed. Values are
 // JSON.stringify's text, numbers JavaScript's. pi lists attributes in
 // insertion order, which a Go map does not keep: they come out array-index
-// keys first, ascending, then by UTF-16 code unit. The input is not
-// modified, and a tree of any depth renders without recursion.
+// keys first, ascending, then by UTF-16 code unit (D92(10)). The input is
+// not modified, and a tree of any depth renders without recursion.
 func Trace(spans []telemetry.StoredSpan) string {
 	// pi's Map: a duplicate ID keeps its first position and its last value.
 	var ordered []string

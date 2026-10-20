@@ -35,9 +35,12 @@ type RecordedLink struct {
 type RecordedSpan struct {
 	// ID is assigned in span-start order, from 1.
 	ID int
-	// ParentID is the enclosing span's ID when this recorder owns it, or 0 for
-	// a root or a parent owned by another recorder. pi models this as
-	// `number | null`; IDs start at 1, so 0 is unambiguous here.
+	// ParentID is the enclosing span's ID when this recorder owns it, or 0
+	// for a root, a parent owned by another recorder, or an extracted
+	// own-scope carrier whose span is not a safe integer or is 0 ("", "0").
+	// pi models this as `number | null` and records `Number(span)` there (0,
+	// a fraction, NaN, Infinity). Carrier identifiers are unchecked, so that
+	// case is unspecified.
 	ParentID int
 	// Context is the span's own carrier, what Inject returns for it.
 	Context Carrier

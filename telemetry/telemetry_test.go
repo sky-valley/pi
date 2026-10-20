@@ -97,9 +97,8 @@ func TestNoopContextIgnoresTelemetryPayloads(t *testing.T) {
 }
 
 // TestNoopMetricsShareInertInstruments mirrors pi "shares frozen no-op
-// instruments": every factory hands back the
-// one shared instrument whatever the name or options, and recording on it is
-// inert.
+// instruments": every factory hands back the one shared instrument whatever
+// the name or options, and recording on it is inert.
 func TestNoopMetricsShareInertInstruments(t *testing.T) {
 	options := InstrumentOptions{Description: "Encoded bytes", Unit: "By"}
 	counter := NoopMetrics.Counter("bytes", options)

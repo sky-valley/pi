@@ -50,7 +50,8 @@ func check(t *testing.T, got, want string) {
 }
 
 // pi lists attributes in insertion order; a Go map has none, so they come out
-// array-index keys first, then by UTF-16 code unit (D69's order).
+// array-index keys first, then by UTF-16 code unit (D92(10)), and pi's
+// expected line is reordered to match.
 func TestTraceRendersAttributesDurationsErrorsEventsAndLinks(t *testing.T) {
 	root := span("root", times(1000, 1020), func(s *telemetry.StoredSpan) {
 		s.Attributes = telemetry.SpanAttributes{

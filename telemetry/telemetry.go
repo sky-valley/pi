@@ -113,12 +113,13 @@ type SpanStatus struct {
 }
 
 // Context starts spans for whatever telemetry consumer the host application
-// wired in (pi TelemetryContext). It is an adapter contract for trusted typed
-// inputs; what an adapter makes of malformed ones is unspecified. Every Span is itself a Context, so span
-// parenting travels through values of this interface — start a child from
-// the Span it belongs under — rather than through a context.Context, which
-// StartSpan deliberately does not take: cancellation belongs to the work the
-// callback closes over, not to the tracing of it.
+// wired in (pi TelemetryContext). It is an adapter contract for trusted
+// typed inputs; what an adapter makes of malformed ones is unspecified.
+// Every Span is itself a Context, so span parenting travels through values
+// of this interface — start a child from the Span it belongs under — rather
+// than through a context.Context, which StartSpan deliberately does not
+// take: cancellation belongs to the work the callback closes over, not to
+// the tracing of it.
 //
 // A host keeps its adapter, which starts root spans; request options and
 // invocation contexts carry a Span. The adapter's capabilities stay
@@ -146,9 +147,9 @@ type Context interface {
 
 // Span is a live span: a Context for starting children, plus the mutators
 // that record what happened inside it (pi TelemetrySpan). Every mutator is
-// synchronous and ignored once the span settled. A Span is
-// safe for concurrent use: its mutators and children may be called from
-// several goroutines at once, during its callback and after it.
+// synchronous and ignored once the span settled. A Span is safe for
+// concurrent use: its mutators and children may be called from several
+// goroutines at once, during its callback and after it.
 type Span interface {
 	Context
 	// AddLink relates the span to link.Context without changing its parent.

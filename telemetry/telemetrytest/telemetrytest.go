@@ -1,9 +1,8 @@
 // Package telemetrytest checks a telemetry adapter against pi's adapter
 // conformance suite (@earendil-works/pi-telemetry/testing at d9025a5f5,
 // upstream 48909d987, 2ec55d808 and d9025a5f5), as fstest checks a file
-// system: an
-// adapter's own tests hand it a way to build a fresh adapter, and every case
-// runs against one of its own.
+// system: an adapter's own tests hand it a way to build a fresh adapter, and
+// every case runs against one of its own.
 //
 //	func TestConformance(t *testing.T) {
 //		telemetrytest.Run(t, func(t testing.TB) telemetrytest.Fixture {
