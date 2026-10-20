@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
@@ -143,34 +144,39 @@ func TestRequireProviderAuthNamesCloudflaresVariables(t *testing.T) {
 	}
 }
 
-// cliRecorder answers every request 401 and records its URL and auth header.
-type cliRecorder struct{ url, authorization string }
-
-func (r *cliRecorder) Do(req *http.Request) (*http.Response, error) {
-	r.url, r.authorization = req.URL.String(), req.Header.Get("Authorization")
-	return &http.Response{StatusCode: http.StatusUnauthorized, Status: "401 Unauthorized",
-		Header: http.Header{"Content-Type": []string{"application/json"}},
-		Body:   io.NopCloser(strings.NewReader(`{}`)), Request: req}, nil
-}
-
 // A Cloudflare model the CLI streams reaches the account the environment
-// names, as pi's coding agent's does: its requests resolve auth through the
-// model runtime, which fills the base URL's {CLOUDFLARE_ACCOUNT_ID} from the
-// resolved env (testdata/cloudflare-auth in ai/providers, Models rows).
+// names, as pi's coding agent's does: the session main builds holds no key,
+// so compat resolves the request's auth through the built-in Models, which
+// fills the base URL's {CLOUDFLARE_ACCOUNT_ID} from the resolved env
+// (testdata/cloudflare-auth in ai/providers, Models rows). The model's host
+// moves into a local server's path, placeholder and all, so the request's
+// URL maps back to the one pi sends.
 func TestCLICloudflareRequestReachesTheAccount(t *testing.T) {
 	t.Setenv("CLOUDFLARE_API_KEY", "env-key")
 	t.Setenv("CLOUDFLARE_ACCOUNT_ID", "env-account")
 	t.Setenv("CLOUDFLARE_GATEWAY_ID", "")
-	model := ai.GetModel("cloudflare-workers-ai", "@cf/deepseek-ai/deepseek-v4-flash-0731")
-	if err := requireProviderAuth(model.Provider); err != nil {
+	var url, authorization string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		url, authorization = "https://"+strings.TrimPrefix(r.URL.RequestURI(), "/"), r.Header.Get("Authorization")
+		w.Header().Set("content-type", "text/event-stream")
+		io.WriteString(w, "data: {\"choices\":[{\"delta\":{\"content\":\"ok\"},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n")
+	}))
+	defer server.Close()
+	catalog := ai.GetModel("cloudflare-workers-ai", "@cf/deepseek-ai/deepseek-v4-flash-0731")
+	if err := requireProviderAuth(catalog.Provider); err != nil {
 		t.Fatal(err)
 	}
-	// The CLI's session has no key, so the agent loop sets none on a request.
-	recorder := &cliRecorder{}
-	opts := &ai.SimpleStreamOptions{StreamOptions: ai.StreamOptions{ProviderRequestOptions: ai.ProviderRequestOptions{HTTPClient: recorder}}}
-	ai.StreamSimple(context.Background(), model, ai.Context{}, opts).Result()
+	model := *catalog
+	model.BaseURL = server.URL + "/" + strings.TrimPrefix(catalog.BaseURL, "https://")
+	sess, err := newSession(&model, t.TempDir(), "", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := sess.Run(context.Background(), "hi"); err != nil {
+		t.Fatal(err)
+	}
 	const want = "https://api.cloudflare.com/client/v4/accounts/env-account/ai/v1/chat/completions"
-	if recorder.url != want || recorder.authorization != "Bearer env-key" {
-		t.Fatalf("request to %q with %q, pi to %q with Bearer env-key", recorder.url, recorder.authorization, want)
+	if url != want || authorization != "Bearer env-key" {
+		t.Fatalf("request to %q with %q, pi to %q with Bearer env-key", url, authorization, want)
 	}
 }

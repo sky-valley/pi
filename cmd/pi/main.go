@@ -53,6 +53,20 @@ func requireProviderAuth(provider string) error {
 	return fmt.Errorf("no credentials found for provider %q (set the appropriate *_API_KEY env var)", provider)
 }
 
+// newSession builds the CLI's session. It holds no key, and has no model
+// runtime of its own: each request resolves its auth through compat (see
+// requireProviderAuth).
+func newSession(model *ai.Model, cwd, system, think string) (*coding.Session, error) {
+	return coding.NewSession(coding.SessionOptions{
+		Model:         model,
+		Cwd:           cwd,
+		SystemPrompt:  system,
+		ThinkingLevel: agent.ThinkingLevel(think),
+		// pi enables compaction by default (settings compaction.enabled ?? true).
+		Compaction: coding.DefaultCompactionSettings(),
+	})
+}
+
 func main() {
 	args := os.Args[1:]
 	if len(args) > 0 && args[0] == "models" {
@@ -164,14 +178,7 @@ func main() {
 		think = resumeBranch.ThinkingLevel
 	}
 
-	sess, err := coding.NewSession(coding.SessionOptions{
-		Model:         model,
-		Cwd:           cwd,
-		SystemPrompt:  system,
-		ThinkingLevel: agent.ThinkingLevel(think),
-		// pi enables compaction by default (settings compaction.enabled ?? true).
-		Compaction: coding.DefaultCompactionSettings(),
-	})
+	sess, err := newSession(model, cwd, system, think)
 	if err != nil {
 		fatal(err)
 	}
