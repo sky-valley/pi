@@ -1297,10 +1297,27 @@ func argFloat(params map[string]any, key string) (float64, bool) {
 	return 0, false
 }
 
-// getShellConfig ports pi's getShellConfig (shell.ts:57-110). pi never uses
-// $SHELL or cmd: Unix resolves /bin/bash, then bash on PATH, then sh; Windows
-// resolves Git Bash in known locations, then bash.exe on PATH, else errors.
-var shellExists = pathExistsFS
+// shellHost is what pi's shell.ts reads from the process it runs in: the
+// platform, the environment, the filesystem existence check and the PATH
+// search. The resolvers take it as a value so their Windows branches are
+// testable on every host, as pi's tests stub process.platform, process.env,
+// accessSync and spawnSync.
+type shellHost struct {
+	windows bool
+	getenv  func(string) string
+	// exists is pi's shellPathExists.
+	exists func(string) bool
+	// lookPath is the PATH search pi spawns (`where` on Windows, `which`
+	// elsewhere).
+	lookPath func(string) (string, error)
+}
+
+var localShellHost = shellHost{
+	windows:  runtime.GOOS == "windows",
+	getenv:   os.Getenv,
+	exists:   shellPathExists,
+	lookPath: exec.LookPath,
+}
 
 // legacyWslBashRE matches the legacy Windows-bundled WSL launcher
 // (C:\Windows\System32\bash.exe, or the WoW64 sysnative redirect) after path
@@ -1322,33 +1339,56 @@ func getBashShellConfig(shell string) (string, []string, bool) {
 	return shell, []string{"-c"}, false
 }
 
-// getShellConfig returns the shell, its args, and whether the command must be
-// delivered on stdin (legacy WSL bash) rather than appended to argv. A
-// non-empty customShellPath is pi's explicit shellPath: it wins over every
-// platform default, and a missing one is an error, not a fallback.
+// findExecutableOnPath ports pi's findExecutableOnPath: the first PATH match,
+// or "" when there is none. On Windows pi re-checks the match with
+// shellPathExists (`where` can print paths that do not exist); elsewhere it
+// trusts `which`.
+func (h shellHost) findExecutableOnPath(executable string) string {
+	p, err := h.lookPath(executable)
+	if err != nil || p == "" {
+		return ""
+	}
+	if h.windows && !h.exists(p) {
+		return ""
+	}
+	return p
+}
+
+// getShellConfig ports pi's getShellConfig (shell.ts). pi never uses $SHELL or
+// cmd: Unix resolves /bin/bash, then bash on PATH, then sh; Windows resolves
+// Git Bash in known locations, then bash.exe on PATH, else errors.
+//
+// It returns the shell, its args, and whether the command must be delivered
+// on stdin (legacy WSL bash) rather than appended to argv. A non-empty
+// customShellPath is pi's explicit shellPath: it wins over every platform
+// default, and a missing one is an error, not a fallback.
 func getShellConfig(customShellPath string) (shell string, args []string, useStdin bool, err error) {
+	return localShellHost.shellConfig(customShellPath)
+}
+
+func (h shellHost) shellConfig(customShellPath string) (shell string, args []string, useStdin bool, err error) {
 	if customShellPath != "" {
-		if shellExists(customShellPath) {
+		if h.exists(customShellPath) {
 			s, a, stdin := getBashShellConfig(customShellPath)
 			return s, a, stdin, nil
 		}
 		return "", nil, false, errors.New("Custom shell path not found: " + customShellPath)
 	}
-	if runtime.GOOS == "windows" {
+	if h.windows {
 		var paths []string
-		if pf := os.Getenv("ProgramFiles"); pf != "" {
+		if pf := h.getenv("ProgramFiles"); pf != "" {
 			paths = append(paths, pf+`\Git\bin\bash.exe`)
 		}
-		if pf86 := os.Getenv("ProgramFiles(x86)"); pf86 != "" {
+		if pf86 := h.getenv("ProgramFiles(x86)"); pf86 != "" {
 			paths = append(paths, pf86+`\Git\bin\bash.exe`)
 		}
 		for _, p := range paths {
-			if shellExists(p) {
+			if h.exists(p) {
 				s, a, stdin := getBashShellConfig(p)
 				return s, a, stdin, nil
 			}
 		}
-		if p, err := exec.LookPath("bash.exe"); err == nil && p != "" {
+		if p := h.findExecutableOnPath("bash.exe"); p != "" {
 			s, a, stdin := getBashShellConfig(p)
 			return s, a, stdin, nil
 		}
@@ -1368,11 +1408,11 @@ func getShellConfig(customShellPath string) (shell string, args []string, useStd
 	}
 
 	// Unix: try /bin/bash, then bash on PATH, then fall back to sh.
-	if shellExists("/bin/bash") {
+	if h.exists("/bin/bash") {
 		s, a, stdin := getBashShellConfig("/bin/bash")
 		return s, a, stdin, nil
 	}
-	if p, err := exec.LookPath("bash"); err == nil && p != "" {
+	if p := h.findExecutableOnPath("bash"); p != "" {
 		s, a, stdin := getBashShellConfig(p)
 		return s, a, stdin, nil
 	}
@@ -1389,11 +1429,15 @@ var powershellArgs = []string{"-NoProfile", "-NonInteractive", "-ExecutionPolicy
 // Go shell resolvers report failure as an error, which the tool surfaces to the
 // model verbatim, so the strings are byte-exact.
 func getPowerShellConfig() (shell string, args []string, useStdin bool, err error) {
-	if runtime.GOOS != "windows" {
+	return localShellHost.powerShellConfig()
+}
+
+func (h shellHost) powerShellConfig() (shell string, args []string, useStdin bool, err error) {
+	if !h.windows {
 		return "", nil, false, errors.New("The powershell tool is only available on Windows.")
 	}
 	for _, executable := range []string{"pwsh.exe", "powershell.exe"} {
-		if p, lookErr := exec.LookPath(executable); lookErr == nil && p != "" {
+		if p := h.findExecutableOnPath(executable); p != "" {
 			return p, slices.Clone(powershellArgs), false, nil
 		}
 	}

@@ -152,16 +152,15 @@ func TestGetShellConfigUnix(t *testing.T) {
 	}
 
 	// /bin/bash missing → bash on PATH.
-	orig := shellExists
-	shellExists = func(string) bool { return false }
-	t.Cleanup(func() { shellExists = orig })
+	noBinBash := localShellHost
+	noBinBash.exists = func(string) bool { return false }
 	fakeBin := t.TempDir()
 	fakeBash := filepath.Join(fakeBin, "bash")
 	if err := os.WriteFile(fakeBash, []byte("#!/bin/sh\n"), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	t.Setenv("PATH", fakeBin)
-	shell, _, _, err = getShellConfig("")
+	shell, _, _, err = noBinBash.shellConfig("")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -171,7 +170,7 @@ func TestGetShellConfigUnix(t *testing.T) {
 
 	// No /bin/bash, nothing on PATH → sh.
 	t.Setenv("PATH", t.TempDir())
-	shell, _, _, err = getShellConfig("")
+	shell, _, _, err = noBinBash.shellConfig("")
 	if err != nil {
 		t.Fatal(err)
 	}
