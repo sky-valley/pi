@@ -47,6 +47,9 @@ function setEnv(env) {
 // The only headers that carry Cloudflare auth.
 const AUTH_HEADERS = ["authorization", "x-api-key", "cf-aig-authorization"];
 let requests = [];
+// What the oauth rows read besides auth: each request's anthropic-beta header
+// and its body's first system block.
+let details = [];
 globalThis.fetch = async (input, init) => {
 	const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
 	const headers = new Headers(init?.headers ?? (input instanceof Request ? input.headers : undefined));
@@ -55,6 +58,11 @@ globalThis.fetch = async (input, init) => {
 		if (headers.has(name)) auth[name] = headers.get(name);
 	}
 	requests.push({ method: init?.method ?? "GET", url, headers: auth });
+	let body;
+	try {
+		body = JSON.parse(typeof init?.body === "string" ? init.body : "");
+	} catch {}
+	details.push({ beta: headers.get("anthropic-beta"), systemFirst: body?.system?.[0]?.text ?? null });
 	return new Response(JSON.stringify({ error: { message: "captured", type: "authentication_error" } }), {
 		status: 401,
 		headers: { "content-type": "application/json" },
@@ -122,6 +130,7 @@ function storeWith(credential) {
 
 async function outcome(stream) {
 	requests = [];
+	details = [];
 	let result;
 	try {
 		for await (const _ of stream);
@@ -141,7 +150,7 @@ function plain(value) {
 	return value === undefined ? null : JSON.parse(JSON.stringify(value));
 }
 
-const out = { version, auth: [], login: [], stream: [], direct: [] };
+const out = { version, auth: [], login: [], stream: [], direct: [], oauth: [] };
 for (const [envName, env] of Object.entries(envs)) {
 	setEnv(env);
 	for (const [credName, credential] of Object.entries(credentials)) {
@@ -224,7 +233,30 @@ for (const [api, adapter] of Object.entries(adapters)) {
 	}
 }
 
+// An Anthropic OAuth token (sk-ant-oat...) as the key of a gateway request.
+// compat sends an explicit key to the built-in provider, whose adapter sniffs
+// it as for any provider: OAuth auth (Authorization: Bearer), the oauth beta
+// and the Claude Code identity block. Through Models the gateway's auth owns
+// the request's auth headers and hands the adapter no key, so nothing is
+// sniffed whatever the stored key looks like.
+setEnv(envs["key-account-gateway"]);
+const oauthRows = {
+	"compat-oauth-key": { entry: "compat", options: { apiKey: "sk-ant-oat01-capture" } },
+	"compat-api-key": { entry: "compat", options: { apiKey: "request-key" } },
+	"models-stored-oauth-key": { entry: "models", credential: { type: "api_key", key: "sk-ant-oat01-stored" } },
+};
+for (const [name, row] of Object.entries(oauthRows)) {
+	const { store, ready } = storeWith(row.credential);
+	await ready;
+	const runtime = builtinModels({ credentials: store });
+	const model = runtime.getModel("cloudflare-ai-gateway", "claude-haiku-4-5");
+	const stream = row.entry === "compat" ? compat.stream(model, { messages: [] }, row.options) : runtime.stream(model, { messages: [] }, row.options);
+	const result = await outcome(stream);
+	out.oauth.push({ name, entry: row.entry, provider: model.provider, modelId: model.id, ...result, details });
+}
+setEnv({});
+
 fs.writeFileSync(outFile, `${JSON.stringify(out, null, "\t")}\n`);
 console.log(
-	`wrote ${out.auth.length} auth, ${out.login.length} login, ${out.stream.length} stream and ${out.direct.length} direct rows to ${outFile}`,
+	`wrote ${out.auth.length} auth, ${out.login.length} login, ${out.stream.length} stream, ${out.direct.length} direct and ${out.oauth.length} oauth rows to ${outFile}`,
 );

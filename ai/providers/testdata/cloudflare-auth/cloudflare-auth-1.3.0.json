@@ -20659,5 +20659,76 @@
 			"stopReason": "error",
 			"errorMessage": null
 		}
+	],
+	"oauth": [
+		{
+			"name": "compat-oauth-key",
+			"entry": "compat",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/%7BCLOUDFLARE_ACCOUNT_ID%7D/%7BCLOUDFLARE_GATEWAY_ID%7D/anthropic/v1/messages?beta=true",
+					"headers": {
+						"authorization": "Bearer sk-ant-oat01-capture"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null,
+			"details": [
+				{
+					"beta": "claude-code-20250219,oauth-2025-04-20",
+					"systemFirst": "You are Claude Code, Anthropic's official CLI for Claude."
+				}
+			]
+		},
+		{
+			"name": "compat-api-key",
+			"entry": "compat",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/%7BCLOUDFLARE_ACCOUNT_ID%7D/%7BCLOUDFLARE_GATEWAY_ID%7D/anthropic/v1/messages?beta=true",
+					"headers": {
+						"x-api-key": "request-key"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null,
+			"details": [
+				{
+					"beta": null,
+					"systemFirst": null
+				}
+			]
+		},
+		{
+			"name": "models-stored-oauth-key",
+			"entry": "models",
+			"provider": "cloudflare-ai-gateway",
+			"modelId": "claude-haiku-4-5",
+			"requests": [
+				{
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/env-account/env-gateway/anthropic/v1/messages?beta=true",
+					"headers": {
+						"cf-aig-authorization": "Bearer sk-ant-oat01-stored"
+					}
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": null,
+			"details": [
+				{
+					"beta": null,
+					"systemFirst": null
+				}
+			]
+		}
 	]
 }

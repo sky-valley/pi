@@ -39,6 +39,21 @@ type cloudflareAuthCapture struct {
 		Options string `json:"options"`
 		cloudflareOutcome
 	} `json:"direct"`
+	OAuth []struct {
+		Name     string `json:"name"`
+		Entry    string `json:"entry"`
+		Provider string `json:"provider"`
+		ModelID  string `json:"modelId"`
+		cloudflareOutcome
+		Details []cloudflareDetail `json:"details"`
+	} `json:"oauth"`
+}
+
+// cloudflareDetail is what the oauth rows read of a request besides its
+// auth: the anthropic-beta header and the body's first system block.
+type cloudflareDetail struct {
+	Beta        *string `json:"beta"`
+	SystemFirst *string `json:"systemFirst"`
 }
 
 // cloudflareOutcome is what a row's stream did: its requests, or the setup
@@ -146,6 +161,7 @@ func cloudflareModels(t *testing.T, credential *ai.Credential) ai.MutableModels 
 type cloudflareRecorder struct {
 	mu       sync.Mutex
 	requests []cloudflareRecord
+	details  []cloudflareDetail
 }
 
 func (r *cloudflareRecorder) Do(req *http.Request) (*http.Response, error) {
@@ -155,13 +171,27 @@ func (r *cloudflareRecorder) Do(req *http.Request) (*http.Response, error) {
 			headers[name] = strings.Join(values, ", ")
 		}
 	}
+	var detail cloudflareDetail
+	if values := req.Header.Values("anthropic-beta"); len(values) > 0 {
+		beta := strings.Join(values, ", ")
+		detail.Beta = &beta
+	}
+	if req.Body != nil {
+		raw, _ := io.ReadAll(req.Body)
+		_ = req.Body.Close()
+		var body struct {
+			System []struct {
+				Text string `json:"text"`
+			} `json:"system"`
+		}
+		if json.Unmarshal(raw, &body) == nil && len(body.System) > 0 {
+			detail.SystemFirst = &body.System[0].Text
+		}
+	}
 	r.mu.Lock()
 	r.requests = append(r.requests, cloudflareRecord{Method: req.Method, URL: req.URL.String(), Headers: headers})
+	r.details = append(r.details, detail)
 	r.mu.Unlock()
-	if req.Body != nil {
-		_, _ = io.Copy(io.Discard, req.Body)
-		_ = req.Body.Close()
-	}
 	return &http.Response{
 		StatusCode: http.StatusUnauthorized,
 		Status:     "401 Unauthorized",
@@ -448,6 +478,53 @@ func TestAdapterAuthHeadersMatchPi(t *testing.T) {
 		result := provider.Stream(context.Background(), model, ai.NormalizeContext(ai.Context{}), &options).Result()
 		if got := recordedOutcome(recorder, result); !got.matches(want.cloudflareOutcome) {
 			t.Errorf("%s %s:\n go %s\n pi %s", want.Api, want.Options, describeCloudflareOutcome(got), describeCloudflareOutcome(want.cloudflareOutcome))
+		}
+	}
+}
+
+// TestCloudflareGatewayOAuthKeyMatchesPi: an Anthropic OAuth token
+// (sk-ant-oat...) as the explicit key of a cloudflare-ai-gateway request goes,
+// through compat, to the built-in provider, whose adapter sniffs it as for
+// any provider — OAuth auth (Authorization: Bearer), the oauth beta and the
+// Claude Code identity block — where a plain key goes as x-api-key. Through
+// Models the gateway's auth owns the auth headers and hands the adapter no
+// key, so a stored OAuth-looking key is never sniffed.
+func TestCloudflareGatewayOAuthKeyMatchesPi(t *testing.T) {
+	RegisterBuiltins()
+	capture := loadCloudflareAuthCapture(t)
+	if len(capture.OAuth) == 0 {
+		t.Fatal("the capture has no oauth rows")
+	}
+	setCloudflareEnv(t, cloudflareCaptureEnvs["key-account-gateway"])
+	for _, want := range capture.OAuth {
+		recorder := &cloudflareRecorder{}
+		var result *ai.AssistantMessage
+		switch want.Name {
+		case "compat-oauth-key", "compat-api-key":
+			key := "sk-ant-oat01-capture"
+			if want.Name == "compat-api-key" {
+				key = "request-key"
+			}
+			model := ai.GetModel(want.Provider, want.ModelID)
+			options := cloudflareRequestOptions(key, nil, nil)
+			options.HTTPClient = recorder
+			result = ai.Stream(context.Background(), model, ai.Context{}, &options).Result()
+		case "models-stored-oauth-key":
+			models := cloudflareModels(t, &ai.Credential{Type: ai.CredentialAPIKey, Key: "sk-ant-oat01-stored"})
+			model := models.GetModel(want.Provider, want.ModelID)
+			options := ai.StreamOptions{ProviderRequestOptions: ai.ProviderRequestOptions{HTTPClient: recorder}}
+			result = models.Stream(context.Background(), model, ai.Context{}, &ai.ModelsStreamOptions{StreamOptions: options}).Result()
+		default:
+			t.Fatalf("unknown oauth row %q", want.Name)
+		}
+		got := recordedOutcome(recorder, result)
+		if !got.matches(want.cloudflareOutcome) {
+			t.Errorf("%s:\n go %s\n pi %s", want.Name, describeCloudflareOutcome(got), describeCloudflareOutcome(want.cloudflareOutcome))
+		}
+		if !reflect.DeepEqual(recorder.details, want.Details) {
+			gotJSON, _ := json.Marshal(recorder.details)
+			wantJSON, _ := json.Marshal(want.Details)
+			t.Errorf("%s details:\n go %s\n pi %s", want.Name, gotJSON, wantJSON)
 		}
 	}
 }
