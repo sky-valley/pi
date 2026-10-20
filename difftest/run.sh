@@ -104,8 +104,14 @@ if grep -lq '"backend"[[:space:]]*:[[:space:]]*"src"' "$HERE"/scenarios/*.json 2
 			exit 1
 		}
 	fi
-	# Node resolves bare imports (openai, typebox, ...) through this symlink.
-	ln -sfn "$PI_NPM_DIR/node_modules" "$SRC/node_modules"
+	# Node resolves bare imports through $SRC/node_modules: third-party ones
+	# (openai, typebox, ...) from the published build, and the workspace
+	# packages pi-ai depends on (@earendil-works/pi-telemetry) from the same
+	# sha, since src imports what they have there. See pi/srclink.mjs.
+	node pi/srclink.mjs "$SRC" "$PI_NPM_DIR/node_modules" "$PI_UPSTREAM_DIR" "$PI_UPSTREAM_SHA" || {
+		red "could not link the src backend's node_modules at $PI_UPSTREAM_SHA"
+		exit 1
+	}
 else
 	info "== no \"backend\": \"src\" scenarios; skipping the upstream TS extraction"
 fi

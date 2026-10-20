@@ -183,7 +183,7 @@ port is currently **ahead of the last npm release**:
 | backend | source | when to use |
 | --- | --- | --- |
 | `dist` | `~/.cache/pi-npm/<version>/` — the published `@earendil-works/pi-ai` build | anything that has shipped. Strongest ground truth: it is what real pi actually runs. |
-| `src` | `~/.cache/pi-upstream` at `PI_UPSTREAM_SHA`, extracted read-only via `git archive` into `pisrc/<sha>/` and executed directly under Node's TypeScript type-stripping | changes ported **before** they were released. The published build does not contain them at all, so it cannot be the reference. |
+| `src` | `~/.cache/pi-upstream` at `PI_UPSTREAM_SHA`, extracted read-only via `git archive` into `pisrc/<sha>/` and executed directly under Node's TypeScript type-stripping. Third-party imports resolve from the published build's `node_modules`; the `@earendil-works` workspace packages pi-ai depends on (`pi-telemetry`) come from the same sha, extracted beside it and shimmed to their `src` by `pi/srclink.mjs`, because src imports what the workspace has there, not what the last release shipped | changes ported **before** they were released. The published build does not contain them at all, so it cannot be the reference. |
 
 A `"backend": "src"` scenario says in its `note` which change the published build
 lacks.
@@ -286,16 +286,19 @@ Both sides read the same file, so neither can quietly diverge on inputs.
 | `tools-only-openai-completions` | dist | tools and no `systemPrompt`: the normalized leading system message has empty text and sends no system message (upstream `9e05370b2`; the published build takes the raw context, which renders the same) |
 | `kimi-k3-anchored-tool-additions` | dist | openai-completions Kimi K3 with `supportsMidConvoSystemMessages` + `supportsMidConvoToolAdditions`: `tools` holds the leading message's tools, and a later system message adding a tool is sent in place as a Kimi `{role:"system", tools}` message followed by its rendered update (upstream `9e05370b2`) |
 | `anthropic-native-tool-changes` | dist | anthropic-messages with `supportsMidConvoSystemMessages` + `supportsMidConvoToolChanges` (upstream `9e05370b2`; the 1.3.0 shape, `b271b0a52`): request `tools` holds only the leading message's tools (with the cache breakpoint) and a stable `__pi_deferred_placeholder__`; each later system message is held and sent as a `{role:"system"}` block carrying its rendered update, the first with a `tool_addition` holding an inline `tool_definition`, the closing one with a `tool_removal`, under the `inline-tools-2026-09-15` beta. Red against 0.99.2's `mid-conversation-tool-changes-2026-07-01` shape from `bcbea91` until the 1.3.0 re-pin (`82de5d9`) |
-| `responses-midconvo-additional-tools` | dist | native mid-conversation system messages (upstream `9e05370b2`): additive tool history keeps body.tools to the leading message's tools and loads `late_tool` with an `additional_tools` item before the in-place developer update |
-| `responses-midconvo-tool-search` | dist | the same with `supportsToolSearch`: a completed client `tool_search_call`/`tool_search_output` pair, `call_id` `pi_tool_load_<shortHash("system:<msgIndex>:<names>")>` with a msgIndex the leading system message does not advance |
-| `responses-midconvo-fallback` | dist | a removal makes the tool history non-additive: body.tools is the complete current tool state, no additional_tools item, and the update renders its section changes |
+| `responses-midconvo-additional-tools` | src | native mid-conversation system messages (upstream `9e05370b2`) with `supportsAdditionalTools`: every tool is declared in `additional_tools` items (upstream `caa6967b6`), so there is no body.tools; the leading message's tools go in one at the head of the input, and `late_tool` in a second one, preceded by the incremental tools notice, before the in-place developer update. `src` until a release ships `caa6967b6` (1.3.0 predates it) |
+| `responses-midconvo-tool-search` | dist | additive tool history with `supportsToolSearch`: body.tools keeps the leading message's tools, and `late_tool` loads through a completed client `tool_search_call`/`tool_search_output` pair, `call_id` `pi_tool_load_<shortHash("system:<msgIndex>:<names>")>` with a msgIndex the leading system message does not advance |
+| `responses-midconvo-fallback` | src | the same model with a removal: no body.tools and no fallback to the current tool state (upstream `caa6967b6`); the update renders its section changes followed by the removal notice ("The following tools are no longer available. Do not call them:"), and the incremental tools notice before `late_tool` does not list the tool this update removes (upstream `530015d93`). `src` until a release ships both |
 | `responses-midconvo-off` | dist | native system messages without additional_tools or tool search: every current tool in body.tools, the update still sent in place |
 
 The `backend` column above is a snapshot. Scenarios flip `src` -> `dist` as releases
 ship the surface they cover, so re-read `scenarios/*.json` rather than this table when
-the distinction matters. **As of 2026-10-19 the suite is 66 scenarios, all
-`dist`, against 1.3.0**: the last two `src` scenarios, `sampling-params-stream` and
-`sampling-params-stream-responses` (`c01f687e5`), flipped when 0.99.1 shipped it.
+the distinction matters. **As of 2026-10-20 the suite is 66 scenarios against
+1.3.0 and upstream `fdce48eb4`, all `dist` but two**: `responses-midconvo-additional-tools`
+and `responses-midconvo-fallback` went back to `src` when the port took
+`caa6967b6`/`530015d93`, which 1.3.0 predates; flip them to `dist` at the first
+release that ships both. (The previous two `src` scenarios, `sampling-params-stream`
+and `sampling-params-stream-responses` (`c01f687e5`), flipped when 0.99.1 shipped it.)
 
 From `9e05370b2` on, the api adapters take a normalized transcript that only
 `normalizeContext` produces. Both arms normalize the scenario's `context` before
@@ -356,6 +359,7 @@ classify.py         structural diff + PASS/KNOWN/FAIL/FIXED + exit code
 known-divergences.json   accepted-divergence baseline (tracked debt, not policy)
 scenarios/*.json    inputs, shared verbatim by both sides
 pi/capture.mjs      pi side (dist or src backend)
+pi/srclink.mjs      builds pisrc/<sha>/node_modules (workspace packages from the sha)
 pi/canon.mjs        canonicalizer
 port/main.go          Go side; go.mod has replace -> the pi repo
 port/canon.go         canonicalizer, twin of canon.mjs
