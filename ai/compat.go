@@ -16,8 +16,10 @@ import (
 var (
 	builtinMu sync.RWMutex
 	// builtinApis are the built-in api implementations, as ai/providers hands
-	// them over (pi BUILTIN_APIS). BuiltinModels streams through them.
-	builtinApis = map[Api]ApiProvider{}
+	// them over (pi BUILTIN_APIS), and builtinOrder their apis in hand-over
+	// order. BuiltinModels streams through them.
+	builtinApis  = map[Api]ApiProvider{}
+	builtinOrder []Api
 	// builtinGen counts the handovers that added an api, so compatModels is
 	// rebuilt from a set that grew.
 	builtinGen uint64
@@ -28,27 +30,34 @@ var (
 )
 
 // RegisterBuiltInApiProviders is pi's registerBuiltInApiProviders, which
-// ai/providers runs when it is imported: it registers each built-in api
-// implementation whose api has no provider yet — never replacing one a host
-// registered — and records what the registry now holds for those apis as
-// the built-ins compat's Stream routes through. Running it again records the
-// registry anew. The first implementation handed over for an api is the one
-// BuiltinModels streams through, whatever the registry holds.
+// ai/providers runs when it is imported. providers are the built-in api
+// implementations ai/providers hands over; the first one handed over for an
+// api is the one BuiltinModels streams through, regardless of what the
+// registry holds. Then, for every built-in api handed over so far — as pi's
+// walks all of BUILTIN_APIS, whatever the call — it registers the
+// implementation if the api has no provider, never replacing one a host
+// registered, and records what the registry now holds for the api as the
+// built-in compat's Stream routes through. Called again, with or without
+// providers, it records the registry anew, so an override registered since
+// becomes the baseline.
 func RegisterBuiltInApiProviders(providers ...ApiProvider) {
 	builtinMu.Lock()
 	defer builtinMu.Unlock()
 	for _, p := range providers {
 		if _, ok := builtinApis[p.Api]; !ok {
 			builtinApis[p.Api] = p
+			builtinOrder = append(builtinOrder, p.Api)
 			builtinGen++
 		}
-		if _, ok := GetApiProvider(p.Api); !ok {
-			RegisterApiProvider(builtinApis[p.Api])
+	}
+	for _, api := range builtinOrder {
+		if _, ok := GetApiProvider(api); !ok {
+			RegisterApiProvider(builtinApis[api])
 		}
-		if seq, ok := registration(p.Api); ok {
-			builtinInstances[p.Api] = seq
+		if seq, ok := registration(api); ok {
+			builtinInstances[api] = seq
 		} else {
-			delete(builtinInstances, p.Api)
+			delete(builtinInstances, api)
 		}
 	}
 }

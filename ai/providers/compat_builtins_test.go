@@ -99,6 +99,41 @@ func TestCompatBuiltinsReregisteredKeepTheirRouting(t *testing.T) {
 	}
 }
 
+// TestCompatBuiltinsRecordedAgainWithoutArguments: pi's
+// registerBuiltInApiProviders() takes no arguments and records, for every
+// built-in api, whatever the registry holds now — so an override a host
+// registered becomes the baseline, and compat routes an unkeyed Cloudflare
+// model through the built-in Models again while the registry keeps the
+// override. Probed on npm 1.3.0: "override" with the override registered,
+// "Provider is not configured: cloudflare-workers-ai" after
+// registerBuiltInApiProviders(), and the registry entry still answers
+// "override".
+func TestCompatBuiltinsRecordedAgainWithoutArguments(t *testing.T) {
+	runCompatChild(t, "record-again")
+	if os.Getenv("PI_COMPAT_CHILD") != "record-again" {
+		return
+	}
+	ai.RegisterApiProvider(ai.ApiProvider{
+		Api: ai.APIOpenAICompletions,
+		Stream: func(_ context.Context, model *ai.Model, _ ai.TranscriptContext, _ *ai.StreamOptions) *ai.AssistantMessageEventStream {
+			return ai.ErrorStream(model, errors.New("override"))
+		},
+	}, "compat-record-again-test")
+	if message, spans := compatCloudflareOutcome(t); message != "override" || len(spans) != 1 {
+		t.Fatalf("override registered: got %q with spans %v, pi \"override\" with spans [caller]", message, spans)
+	}
+	ai.RegisterBuiltInApiProviders()
+	const notConfigured = "Provider is not configured: cloudflare-workers-ai"
+	if message, spans := compatCloudflareOutcome(t); message != notConfigured || len(spans) != 2 {
+		t.Errorf("after RegisterBuiltInApiProviders(): got %q with spans %v, pi %q with spans [caller pi.ai.request]", message, spans, notConfigured)
+	}
+	registered, _ := ai.GetApiProvider(ai.APIOpenAICompletions)
+	model := ai.GetModel("cloudflare-workers-ai", "@cf/deepseek-ai/deepseek-v4-flash-0731")
+	if got := registered.Stream(context.Background(), model, ai.TranscriptContext{}, nil).Result().ErrorMessage; got != "override" {
+		t.Errorf("registry entry answers %q, pi keeps the override (\"override\")", got)
+	}
+}
+
 // TestBuiltinModelsStreamThroughTheBuiltins: pi's builtinModels() streams
 // through its own api implementations, whatever the registry holds, so an
 // implementation a host registers changes neither BuiltinModels nor the
