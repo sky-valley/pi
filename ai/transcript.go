@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"slices"
 	"sort"
 	"strings"
 
@@ -513,23 +512,42 @@ func HasToolRedefinitions(messages []Message) bool {
 // HasNonAdditiveToolChanges reports whether tool history contains a removal or
 // a same-name redeclaration that an addition-only transport cannot replay.
 func HasNonAdditiveToolChanges(messages []Message) bool {
-	declared := map[string]bool{}
+	return findLastNonAdditiveToolChange(systemMessagesOf(messages)) >= 0
+}
+
+// systemMessagesOf is pi's messages.filter(isSystemMessage).
+func systemMessagesOf(messages []Message) []Message {
+	var systemMessages []Message
 	for _, message := range messages {
-		system, ok := systemMessageOf(message)
-		if !ok {
-			continue
+		if _, ok := systemMessageOf(message); ok {
+			systemMessages = append(systemMessages, message)
 		}
+	}
+	return systemMessages
+}
+
+// findLastNonAdditiveToolChange returns the index of the last of
+// systemMessages (system messages only) with a removal or a same-name
+// redeclaration, or -1.
+func findLastNonAdditiveToolChange(systemMessages []Message) int {
+	// A name declared before counts as a redeclaration even after its removal:
+	// Kimi K3 ignores a removed tool that a later tool message declares again
+	// (verified upstream, October 2026).
+	declared := map[string]bool{}
+	last := -1
+	for index, message := range systemMessages {
+		system, _ := systemMessageOf(message)
 		if len(system.ToolsRemoved) > 0 {
-			return true
+			last = index
 		}
 		for _, tool := range system.ToolsAdded {
 			if declared[tool.Name] {
-				return true
+				last = index
 			}
 			declared[tool.Name] = true
 		}
 	}
-	return false
+	return last
 }
 
 // TranscriptToolSupport is how a transport can express tool changes after the
@@ -574,37 +592,17 @@ type TranscriptTools struct {
 // addition. With TranscriptToolSupportNone, the top-level list is the current
 // tool set.
 func ResolveTranscriptTools(messages []Message, support TranscriptToolSupport) TranscriptTools {
-	var systemMessages []Message
-	for _, message := range messages {
-		if _, ok := systemMessageOf(message); ok {
-			systemMessages = append(systemMessages, message)
-		}
-	}
+	systemMessages := systemMessagesOf(messages)
 	if support == TranscriptToolSupportNone {
 		return TranscriptTools{RequestTools: GetCurrentTools(systemMessages), FoldedSystemMessages: len(systemMessages)}
 	}
 	if support == TranscriptToolSupportChanges {
 		return TranscriptTools{RequestTools: []Tool{}, FoldedSystemMessages: 0}
 	}
-	folded := 0
+	initial := 0
 	if _, ok := GetInitialSystemMessage(messages); ok {
-		folded = 1
+		initial = 1
 	}
-	if support == TranscriptToolSupportAdditions {
-		// A name declared before counts as a redeclaration even after its
-		// removal: Kimi K3 ignores a removed tool that a later tool message
-		// declares again (verified October 2026).
-		declared := map[string]bool{}
-		for index, message := range systemMessages {
-			system, _ := systemMessageOf(message)
-			redeclares := slices.ContainsFunc(system.ToolsAdded, func(tool Tool) bool { return declared[tool.Name] })
-			if len(system.ToolsRemoved) > 0 || redeclares {
-				folded = max(folded, index+1)
-			}
-			for _, tool := range system.ToolsAdded {
-				declared[tool.Name] = true
-			}
-		}
-	}
+	folded := max(initial, findLastNonAdditiveToolChange(systemMessages)+1)
 	return TranscriptTools{RequestTools: GetCurrentTools(systemMessages[:folded]), FoldedSystemMessages: folded}
 }

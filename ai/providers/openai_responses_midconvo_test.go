@@ -295,6 +295,30 @@ func TestStopsListingAToolAsUnavailableOnceItIsDeclaredAgain(t *testing.T) {
 	}
 }
 
+func TestDoesNotListAToolAsStillUnavailableBeforeItsRemovalIsAnnounced(t *testing.T) {
+	leading := ai.NewSystemText("base prompt", 0)
+	leading.ToolsAdded = []ai.Tool{transcriptTool("base_tool"), transcriptTool("drop_tool")}
+	update := ai.NewSystemText("", 1)
+	update.ToolsAdded = []ai.Tool{transcriptTool("late_tool")}
+	update.ToolsRemoved = []ai.ToolReference{{Name: "drop_tool"}}
+	body := captureStreamSimplePayload(t, additionalToolsModel(), ai.Context{Messages: []ai.Message{leading, update, ai.NewUserText("go", 2)}})
+
+	// Like Codex: notice, then the tools, then the removal notice.
+	input := payloadItems(t, body, "input")
+	if len(input) < 4 {
+		t.Fatalf("input has %d items, want at least 4: %v", len(input), input)
+	}
+	last := input[len(input)-4:]
+	if notice := itemContent(last[0]); !strings.Contains(notice, "incremental tools update") || strings.Contains(notice, "Still unavailable") {
+		t.Fatalf("notice = %q, want the incremental tools notice without a Still unavailable line", notice)
+	}
+	if last[1]["type"] != "additional_tools" || !slices.Equal(toolNames(nestedTools(t, last[1])), []string{"late_tool"}) ||
+		!strings.Contains(itemContent(last[2]), "no longer available. Do not call them:\n- drop_tool") ||
+		last[3]["role"] != "user" {
+		t.Fatalf("input[-3:] = %v, want [additional_tools [late_tool], drop_tool removal notice, user]", last[1:])
+	}
+}
+
 // #10940: synthetic tool search cannot remove tools, so a removal rewrites the
 // prefix once.
 func TestKeepsTheOpenAIToolSearchPrefixAcrossLoadsAfterARemoval(t *testing.T) {
@@ -321,7 +345,7 @@ func TestKeepsTheOpenAIToolSearchPrefixAcrossLoadsAfterARemoval(t *testing.T) {
 	}
 }
 
-const responsesMidConvoCaptureFile = "testdata/transcript/responses-midconvo-caa6967b6.json"
+const responsesMidConvoCaptureFile = "testdata/transcript/responses-midconvo-530015d93.json"
 
 // responsesMidConvoCapture is what capture-responses-midconvo.mts records.
 type responsesMidConvoCapture struct {
@@ -361,8 +385,8 @@ func loadResponsesMidConvoCapture(t *testing.T) responsesMidConvoCapture {
 	if err := json.Unmarshal(data, &capture); err != nil {
 		t.Fatalf("%s: %v", responsesMidConvoCaptureFile, err)
 	}
-	if len(capture.Bodies) != 24 || len(capture.Streams) != 2 || capture.LoneSurrogates.Body == nil {
-		t.Fatalf("%s has %d body cases, %d stream cases and loneSurrogates %t, want 24, 2 and true; rerun capture-responses-midconvo.mts",
+	if len(capture.Bodies) != 25 || len(capture.Streams) != 2 || capture.LoneSurrogates.Body == nil {
+		t.Fatalf("%s has %d body cases, %d stream cases and loneSurrogates %t, want 25, 2 and true; rerun capture-responses-midconvo.mts",
 			responsesMidConvoCaptureFile, len(capture.Bodies), len(capture.Streams), capture.LoneSurrogates.Body != nil)
 	}
 	return capture
@@ -390,7 +414,7 @@ func decodeTranscriptFixture(t *testing.T, raw json.RawMessage) ai.Context {
 }
 
 // The complete request bodies pi builds for native models, captured under node
-// at upstream caa6967b6 by testdata/transcript/capture-responses-midconvo.mts:
+// at upstream 530015d93 by testdata/transcript/capture-responses-midconvo.mts:
 // the suite's cases (one body per step of its tool history, for the
 // additional_tools and the tool search model), then the tool_search call_id seed
 // (pi_tool_load_<shortHash("system:<msgIndex>:<names>")>, where the leading

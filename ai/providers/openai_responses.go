@@ -1362,6 +1362,11 @@ func responsesInput(model *ai.Model, req ai.TranscriptContext, updateEffort stri
 				if len(removed) > 0 {
 					parts = append(parts, renderToolRemovalNotice(removed))
 				}
+				// Recorded after this message's additions, whose notice
+				// precedes this removal notice.
+				for _, name := range removed {
+					tools.markUnavailable(name)
+				}
 			}
 			text := strings.Join(slices.DeleteFunc(parts, func(part string) bool { return part == "" }), "\n\n")
 			if text != "" {
@@ -1617,9 +1622,6 @@ func (c *responsesToolChanges) markAvailable(name string) {
 // ("system:<msgIndex>") with the tool names.
 func (c *responsesToolChanges) appendAdditions(items []any, message ai.SystemMessage, seed string) ([]any, error) {
 	tools := message.ToolsAdded
-	for _, tool := range message.ToolsRemoved {
-		c.markUnavailable(tool.Name)
-	}
 	for _, tool := range tools {
 		c.markAvailable(tool.Name)
 	}

@@ -3,7 +3,7 @@
 // openai_responses_midconvo_test.go.
 //
 //   node --experimental-strip-types capture-responses-midconvo.mts <extraction> <out.json> <sha>
-//   e.g. ... capture-responses-midconvo.mts <dir> responses-midconvo-caa6967b6.json caa6967b6
+//   e.g. ... capture-responses-midconvo.mts <dir> responses-midconvo-530015d93.json 530015d93
 //
 // <extraction> holds packages/ai at <sha> (`git archive <sha> packages/ai` from
 // the upstream clone) and a node_modules resolving pi-ai's dependencies (the npm
@@ -20,6 +20,12 @@
 // removals as text, and it added the redefinition, redeclaration, history and
 // unled additional_tools cases below.
 //
+// Re-captured at 530015d93 (2026-10-20), same setup. Control: this script as
+// of caa6967b6's cases, run on src at caa6967b6, wrote
+// responses-midconvo-caa6967b6.json byte for byte. 530015d93 lists as still
+// unavailable only the removals earlier messages announced (removal-fallback
+// moved), and added "additional-tools-same-message-add-and-remove".
+//
 // Each "bodies" case records its model, its context and the body pi hands
 // onPayload, so the Go test decodes the very inputs pi saw. compat.ts
 // streamSimple is normalizeContext followed by the api's streamSimple, which is
@@ -34,7 +40,8 @@
 // additional_tools winning over tool search, later system messages that add no
 // tools, a transcript without a leading system message, and one whose leading
 // system message follows a dropped aborted assistant message. The
-// "additional-tools-redefinition", "-redeclared-after-removal" and the two
+// "additional-tools-redefinition", "-redeclared-after-removal",
+// "-same-message-add-and-remove" and the two
 // "*-history-<step>" series are the suite's later cases, one body per step.
 //
 // "loneSurrogates" is a body case whose system text carries lone UTF-16
@@ -347,6 +354,21 @@ const redeclaredAfterRemovalContext = {
 	],
 };
 
+// 'does not list a tool as still unavailable before its removal is announced'.
+const sameMessageAddAndRemoveContext = {
+	messages: [
+		{ role: "system", content: "base prompt", toolsAdded: [baseTool, dropTool], timestamp: 0 },
+		{
+			role: "system",
+			content: "",
+			toolsAdded: [lateTool],
+			toolsRemoved: [{ name: "drop_tool" }],
+			timestamp: 1,
+		},
+		{ role: "user", content: "go", timestamp: 2 },
+	],
+};
+
 const cases: Record<string, { model: unknown; context: unknown }> = {
 	// 'declares every OpenAI tool in additional_tools at its developer message'
 	// (before upstream caa6967b6: 'anchors OpenAI additions at their developer message')
@@ -429,6 +451,11 @@ const cases: Record<string, { model: unknown; context: unknown }> = {
 	"additional-tools-redeclared-after-removal": {
 		model: gpt54({ supportsMidConvoSystemMessages: true, supportsAdditionalTools: true }),
 		context: redeclaredAfterRemovalContext,
+	},
+	// 'does not list a tool as still unavailable before its removal is announced'
+	"additional-tools-same-message-add-and-remove": {
+		model: gpt54({ supportsMidConvoSystemMessages: true, supportsAdditionalTools: true }),
+		context: sameMessageAddAndRemoveContext,
 	},
 	// No leading system message: the first additional_tools item is the later
 	// system message's, so no incremental notice precedes it.
