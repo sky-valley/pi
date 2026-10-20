@@ -1,6 +1,7 @@
 package render
 
 import (
+	"math"
 	"reflect"
 	"strconv"
 	"strings"
@@ -190,4 +191,12 @@ func TestTraceRendersDeepTreesWithoutRecursion(t *testing.T) {
 
 func TestTraceRendersEmptyInputAsEmptyString(t *testing.T) {
 	check(t, Trace(nil), "")
+}
+
+// JSON.stringify writes a non-finite number as null and -0 as 0, inside an
+// array too; a float32 is the number it stands for.
+func TestTraceWritesNonFiniteNumbersAsNull(t *testing.T) {
+	check(t, Trace([]telemetry.StoredSpan{span("root", func(s *telemetry.StoredSpan) {
+		s.Attributes = telemetry.SpanAttributes{"i": []float64{math.NaN(), math.Copysign(0, -1), 1e21}, "f": float32(math.NaN())}
+	})}), "root f=null i=[null,0,1e+21] (10ms)")
 }

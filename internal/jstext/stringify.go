@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"maps"
 	"math"
+	"reflect"
 	"strings"
 )
 
@@ -22,8 +23,10 @@ import (
 //     it writes a json.Number (Parse's numbers) as its literal text, where
 //     JSON.stringify spells the number the literal denotes ("1.50" is 1.5,
 //     "1e308" is 1e+308, "1e400" is Infinity). A float64 or json.Number
-//     directly in v or inside its []any and map[string]any is written the
-//     JavaScript way (a type's own MarshalJSON handles its own).
+//     directly in v or inside its []any and map[string]any, and a float of
+//     any type directly in v or inside a slice or array of any element type,
+//     is written the JavaScript way: a float32 as the float64 it stands for
+//     (a type's own MarshalJSON handles its own).
 //
 // What remains is encoding/json's: map keys come out sorted where JS keeps
 // insertion order (the length is the same, the text is not), and a Go string
@@ -122,6 +125,57 @@ func jsNumbers(v any) (out any, changed bool) {
 					copied = maps.Clone(t)
 				}
 				copied[k] = f
+			}
+		}
+		if copied != nil {
+			return copied, true
+		}
+	default:
+		return reflectedNumbers(v)
+	}
+	return v, false
+}
+
+var jsonMarshaler = reflect.TypeFor[json.Marshaler]()
+
+// reflectedNumbers is jsNumbers for the values its type switch does not
+// name: a float of any other type (float32, a named float) and a slice or
+// array of any element type. A non-finite float becomes nil and a float32
+// the float64 it stands for, as JavaScript sees it; a slice or array is
+// rebuilt as []any only when an element changed. A type with its own
+// MarshalJSON is left to it.
+func reflectedNumbers(v any) (out any, changed bool) {
+	if v == nil {
+		return v, false
+	}
+	rv := reflect.ValueOf(v)
+	if rv.Type().Implements(jsonMarshaler) {
+		return v, false
+	}
+	switch rv.Kind() {
+	case reflect.Float32, reflect.Float64:
+		f := rv.Float()
+		if math.IsInf(f, 0) || math.IsNaN(f) {
+			return nil, true
+		}
+		if rv.Kind() == reflect.Float32 {
+			return f, true
+		}
+	case reflect.Slice, reflect.Array:
+		if rv.Kind() == reflect.Slice && rv.IsNil() {
+			return v, false
+		}
+		var copied []any
+		for i := range rv.Len() {
+			f, ch := jsNumbers(rv.Index(i).Interface())
+			if ch && copied == nil {
+				copied = make([]any, rv.Len())
+				for j := range i {
+					copied[j] = rv.Index(j).Interface()
+				}
+			}
+			if copied != nil {
+				copied[i] = f
 			}
 		}
 		if copied != nil {

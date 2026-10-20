@@ -104,3 +104,33 @@ func TestStringifySpellsParsedNumbersLikeJS(t *testing.T) {
 		t.Fatalf("Stringify = %s, want %s", got, want)
 	}
 }
+
+type celsius float64
+
+type marshaled float64
+
+func (marshaled) MarshalJSON() ([]byte, error) { return []byte(`"own"`), nil }
+
+// Floats of any type, and slices and arrays of any element type, are seen as
+// JavaScript sees them; a type with its own MarshalJSON keeps it.
+func TestStringifyTypedFloatsAndSlices(t *testing.T) {
+	for _, c := range []struct {
+		v    any
+		want string
+	}{
+		{float32(math.NaN()), "null"},
+		{float32(0.1), "0.10000000149011612"},
+		{celsius(math.Inf(1)), "null"},
+		{[]float64{math.NaN(), math.Copysign(0, -1), 1e21}, "[null,0,1e+21]"},
+		{[2]float32{1, float32(math.Inf(-1))}, "[1,null]"},
+		{[]int{1, 2}, "[1,2]"},
+		{[]byte("hi"), `"aGk="`},
+		{marshaled(math.NaN()), `"own"`},
+		{[]marshaled{1}, `["own"]`},
+	} {
+		got, err := Stringify(c.v)
+		if err != nil || got != c.want {
+			t.Errorf("Stringify(%#v) = %q, %v; want %q", c.v, got, err, c.want)
+		}
+	}
+}
