@@ -1,0 +1,75 @@
+{
+	"version": "1.3.0",
+	"rows": [
+		{
+			"api": "anthropic-messages",
+			"provider": "anthropic",
+			"model": "claude-fable-5",
+			"dispatch": "Provider anthropic has no API implementation for \"anthropic-messages\"",
+			"unregistered": "No API provider registered for api: anthropic-messages"
+		},
+		{
+			"api": "openai-completions",
+			"provider": "ant-ling",
+			"model": "Ling-2.6-1T",
+			"dispatch": "Provider ant-ling has no API implementation for \"openai-completions\"",
+			"unregistered": "No API provider registered for api: openai-completions"
+		},
+		{
+			"api": "openai-responses",
+			"provider": "cloudflare-ai-gateway",
+			"model": "gpt-4.1",
+			"dispatch": "Provider cloudflare-ai-gateway has no API implementation for \"openai-responses\"",
+			"unregistered": "No API provider registered for api: openai-responses"
+		},
+		{
+			"api": "openai-codex-responses",
+			"provider": "openai-codex",
+			"model": "gpt-5.3-codex-spark",
+			"dispatch": "Provider openai-codex has no API implementation for \"openai-codex-responses\"",
+			"unregistered": "No API provider registered for api: openai-codex-responses"
+		},
+		{
+			"api": "azure-openai-responses",
+			"provider": "azure",
+			"model": "gpt-4",
+			"dispatch": "Provider azure has no API implementation for \"azure-openai-responses\"",
+			"unregistered": "No API provider registered for api: azure-openai-responses"
+		},
+		{
+			"api": "google-generative-ai",
+			"provider": "google",
+			"model": "deep-research-max-preview-04-2026",
+			"dispatch": "Provider google has no API implementation for \"google-generative-ai\"",
+			"unregistered": "No API provider registered for api: google-generative-ai"
+		},
+		{
+			"api": "google-vertex",
+			"provider": "google-vertex",
+			"model": "gemini-2.5-flash",
+			"dispatch": "Provider google-vertex has no API implementation for \"google-vertex\"",
+			"unregistered": "No API provider registered for api: google-vertex"
+		},
+		{
+			"api": "mistral-conversations",
+			"provider": "mistral",
+			"model": "codestral-2508",
+			"dispatch": "Provider mistral has no API implementation for \"mistral-conversations\"",
+			"unregistered": "No API provider registered for api: mistral-conversations"
+		},
+		{
+			"api": "bedrock-converse-stream",
+			"provider": "amazon-bedrock",
+			"model": "amazon.nova-2-lite-v1:0",
+			"dispatch": "Provider amazon-bedrock has no API implementation for \"bedrock-converse-stream\"",
+			"unregistered": "No API provider registered for api: bedrock-converse-stream"
+		},
+		{
+			"api": "pi-messages",
+			"provider": "radius",
+			"model": "balanced",
+			"dispatch": "Provider radius has no API implementation for \"pi-messages\"",
+			"unregistered": "No API provider registered for api: pi-messages"
+		}
+	]
+}

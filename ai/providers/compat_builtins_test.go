@@ -2,6 +2,7 @@ package providers
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"os"
 	"os/exec"
@@ -168,6 +169,98 @@ func TestBuiltinModelsStreamThroughTheBuiltins(t *testing.T) {
 		result := stream(ai.StreamOptions{ProviderRequestOptions: ai.ProviderRequestOptions{HTTPClient: recorder}})
 		if len(recorder.requests) != 1 || recorder.requests[0].URL != want {
 			t.Errorf("%s: requests %v (%q), pi one to %s", name, recorder.requests, result.ErrorMessage, want)
+		}
+	}
+}
+
+// unportedApisCapture is testdata/unported-apis: for one catalog model per
+// built-in api, what pi says when its built-in provider has no implementation
+// of the api (createProvider's dispatch) and what compat says once a host
+// unregistered the api (resolveApiProvider).
+type unportedApisCapture struct {
+	Rows []struct {
+		Api          ai.Api `json:"api"`
+		Provider     string `json:"provider"`
+		Model        string `json:"model"`
+		Dispatch     string `json:"dispatch"`
+		Unregistered string `json:"unregistered"`
+	} `json:"rows"`
+}
+
+func loadUnportedApisCapture(t *testing.T) unportedApisCapture {
+	t.Helper()
+	data, err := os.ReadFile("testdata/unported-apis/unported-apis-1.3.0.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var capture unportedApisCapture
+	if err := json.Unmarshal(data, &capture); err != nil {
+		t.Fatal(err)
+	}
+	if len(capture.Rows) == 0 {
+		t.Fatal("unported-apis capture has no rows")
+	}
+	return capture
+}
+
+// TestUnportedApisFailAsPisDispatch: a built-in model whose api the port has
+// not ported (no implementation handed over, so none registered and none
+// recorded) fails as pi's built-in provider does without that api's
+// implementation — createProvider's dispatch error — through compat's Stream
+// and StreamSimple. It is pi's compat
+// algorithm applied to that state: no registry entry and no recorded
+// built-in compare equal, so getBuiltinProviderForModel hands the request to
+// the built-in provider. An api a host registered and then unregistered
+// fails as pi's compat does, with resolveApiProvider's error (encoded in the
+// stream: G3).
+func TestUnportedApisFailAsPisDispatch(t *testing.T) {
+	capture := loadUnportedApisCapture(t)
+	if os.Getenv("PI_COMPAT_CHILD") == "" {
+		unported := 0
+		for _, row := range capture.Rows {
+			if _, ported := ai.GetApiProvider(row.Api); ported {
+				continue
+			}
+			unported++
+			model := ai.GetModel(row.Provider, row.Model)
+			if model == nil {
+				t.Fatalf("%s/%s is not in the catalog", row.Provider, row.Model)
+			}
+			for path, stream := range map[string]func() *ai.AssistantMessage{
+				"compat Stream": func() *ai.AssistantMessage {
+					return ai.Stream(context.Background(), model, ai.Context{}, nil).Result()
+				},
+				"compat StreamSimple": func() *ai.AssistantMessage {
+					return ai.StreamSimple(context.Background(), model, ai.Context{}, nil).Result()
+				},
+			} {
+				if got := stream().ErrorMessage; got != row.Dispatch {
+					t.Errorf("%s %s: %q, pi %q", row.Api, path, got, row.Dispatch)
+				}
+			}
+		}
+		// When every api is ported this half covers nothing: delete it.
+		if unported == 0 {
+			t.Fatal("every built-in api is ported: the dispatch half covers nothing")
+		}
+	}
+
+	runCompatChild(t, "unregistered")
+	if os.Getenv("PI_COMPAT_CHILD") != "unregistered" {
+		return
+	}
+	for _, row := range capture.Rows {
+		if _, ported := ai.GetApiProvider(row.Api); !ported {
+			continue
+		}
+		model := ai.GetModel(row.Provider, row.Model)
+		if model == nil {
+			t.Fatalf("%s/%s is not in the catalog", row.Provider, row.Model)
+		}
+		ai.RegisterApiProvider(ai.ApiProvider{Api: row.Api}, "unported-apis-test")
+		ai.UnregisterApiProviders("unported-apis-test")
+		if got := ai.StreamSimple(context.Background(), model, ai.Context{}, nil).Result().ErrorMessage; got != row.Unregistered {
+			t.Errorf("%s unregistered: %q, pi %q", row.Api, got, row.Unregistered)
 		}
 	}
 }
