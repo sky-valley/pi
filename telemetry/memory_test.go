@@ -3,6 +3,7 @@ package telemetry
 import (
 	"errors"
 	"fmt"
+	"runtime"
 	"sync"
 	"testing"
 )
@@ -200,6 +201,26 @@ func TestInMemoryContextZeroValueIsUsable(t *testing.T) {
 	}
 	if child.EndSequence != 1 || root.EndSequence != 2 {
 		t.Fatalf("end sequences = child %d, root %d, want 1 then 2", child.EndSequence, root.EndSequence)
+	}
+}
+
+// pi settles a span in a finally block, so it settles however the callback
+// leaves: in Go, runtime.Goexit (a t.FailNow inside the callback) too, with
+// the status it had.
+func TestInMemoryContextSettlesOnGoexit(t *testing.T) {
+	c := NewInMemoryContext()
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		_ = c.StartSpan(SpanOptions{Name: "exiting"}, func(Span) error {
+			runtime.Goexit()
+			return nil
+		})
+	}()
+	<-done
+	s := c.Spans()[0]
+	if !s.Settled || s.EndSequence != 1 || s.Status.Code != StatusOK {
+		t.Fatalf("settled/endSequence/status = %v/%d/%v, want true/1/ok", s.Settled, s.EndSequence, s.Status.Code)
 	}
 }
 

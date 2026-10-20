@@ -8,8 +8,9 @@ type InstrumentOptions struct {
 }
 
 // HistogramOptions add bucket hints to a histogram's description (pi
-// HistogramOptions). Boundaries are finite and strictly increasing; nil is
-// pi's absent `boundaries`. Backends own aggregation and may translate them.
+// HistogramOptions). Callers supply finite, strictly increasing Boundaries;
+// nil is pi's absent `boundaries`. Backends own aggregation and may
+// translate them.
 type HistogramOptions struct {
 	InstrumentOptions
 	Boundaries []float64
@@ -36,19 +37,20 @@ type Histogram interface {
 
 // Metrics is an adapter's optional metric capability, exposed on every
 // context it hands out through Context.Metrics (pi TelemetryMetrics).
-// Factories and recording methods are synchronous, passive, and never panic:
-// an invalid measurement, or an instrument with invalid boundaries, is
-// ignored. Record only values business code already has, and only
-// low-cardinality attributes. Metrics and the instruments it creates are
-// safe for concurrent use by multiple goroutines.
+// Factories and recording methods are synchronous and trust typed inputs:
+// callers supply finite measurements and non-negative counter increments,
+// and what an adapter makes of malformed ones is unspecified. Record only
+// values business code already has, and only low-cardinality attributes.
+// Metrics and the instruments it creates are safe for concurrent use by
+// multiple goroutines.
 type Metrics interface {
 	Counter(name string, options InstrumentOptions) Counter
 	UpDownCounter(name string, options InstrumentOptions) UpDownCounter
 	Histogram(name string, options HistogramOptions) Histogram
 }
 
-// noopMetrics hands out shared instruments that never inspect or retain
-// their inputs (pi NOOP_TELEMETRY_METRICS).
+// noopMetrics hands out shared instruments that discard their measurements
+// (pi NOOP_TELEMETRY_METRICS).
 type noopMetrics struct{}
 
 // noopInstrument is the one inert instrument behind every NoopMetrics
@@ -65,8 +67,8 @@ func (noopMetrics) UpDownCounter(string, InstrumentOptions) UpDownCounter {
 }
 func (noopMetrics) Histogram(string, HistogramOptions) Histogram { return noopInstrument{} }
 
-// NoopMetrics is the shared metric capability that never inspects or retains
-// metadata, measurements or contexts (pi NOOP_TELEMETRY_METRICS).
+// NoopMetrics is the shared metric capability whose shared instruments
+// discard every measurement (pi NOOP_TELEMETRY_METRICS).
 var NoopMetrics Metrics = noopMetrics{}
 
 // TypedMetrics binds instrument names to the metric definitions of one or

@@ -67,12 +67,10 @@ func TestNoopContextPreservesCallbackErrors(t *testing.T) {
 	}
 }
 
-// TestNoopContextIgnoresTelemetryPayloads mirrors pi "does not inspect or
-// retain telemetry payloads". pi proves non-inspection with Proxies that
-// throw on any read; Go cannot intercept reads, so this locks the observable
-// half — every mutator accepts nil and populated payloads without effect —
-// while the fieldless noopSpan type is the structural guarantee that nothing
-// is retained.
+// TestNoopContextIgnoresTelemetryPayloads mirrors pi "ignores typed
+// recording payloads": every mutator accepts nil and populated payloads
+// without effect, and the callback's result comes back; the fieldless
+// noopSpan type is the structural guarantee that nothing is retained.
 func TestNoopContextIgnoresTelemetryPayloads(t *testing.T) {
 	attributes := SpanAttributes{
 		"secret": "prompt content",
@@ -80,6 +78,7 @@ func TestNoopContextIgnoresTelemetryPayloads(t *testing.T) {
 		"tags":   []string{"a", "b"},
 		"absent": nil,
 	}
+	result := 0
 	err := NoopContext.StartSpan(SpanOptions{Name: "operation", Attributes: attributes}, func(span Span) error {
 		span.AddEvent("event", attributes)
 		span.AddEvent("bare", nil)
@@ -88,15 +87,17 @@ func TestNoopContextIgnoresTelemetryPayloads(t *testing.T) {
 		span.SetStatus(SpanStatus{Code: StatusOK})
 		span.SetStatus(SpanStatus{Code: StatusError, Error: &SpanError{Name: "Error", Message: "boom"}})
 		span.SetStatus(SpanStatus{})
+		span.AddLink(SpanLink{Context: span})
+		result = 42
 		return nil
 	})
-	if err != nil {
-		t.Fatalf("a noop span must absorb every payload, got %v", err)
+	if err != nil || result != 42 {
+		t.Fatalf("a noop span must absorb every payload and run its callback: got %v, result %d", err, result)
 	}
 }
 
 // TestNoopMetricsShareInertInstruments mirrors pi "shares frozen no-op
-// instruments without inspecting arguments": every factory hands back the
+// instruments": every factory hands back the
 // one shared instrument whatever the name or options, and recording on it is
 // inert.
 func TestNoopMetricsShareInertInstruments(t *testing.T) {
@@ -113,22 +114,21 @@ func TestNoopMetricsShareInertInstruments(t *testing.T) {
 	histogram.Record(1, attributes, NoopContext)
 }
 
-// TestNoopPropagationNeverInspects mirrors the no-op half of pi "rejects
-// malformed memory carriers and never inspects no-op payloads": injection
-// yields no carrier, extraction yields NoopContext, and a no-op span ignores
-// links.
-func TestNoopPropagationNeverInspects(t *testing.T) {
+// TestNoopPropagationIgnoresArguments mirrors the no-op half of pi "uses the
+// root for absent and unknown carriers": injection yields no carrier,
+// extraction yields NoopContext, and a no-op span ignores links.
+func TestNoopPropagationIgnoresArguments(t *testing.T) {
 	if carrier := NoopPropagation.Inject(NoopContext); carrier != nil {
 		t.Errorf("Inject(NoopContext) = %v, want nil", carrier)
 	}
 	recorder := NewInMemoryContext()
 	_ = recorder.StartSpan(SpanOptions{Name: "recorded"}, func(span Span) error {
 		if carrier := NoopPropagation.Inject(span); carrier != nil {
-			t.Errorf("Inject(recorded span) = %v, want nil: the no-op capability inspects nothing", carrier)
+			t.Errorf("Inject(recorded span) = %v, want nil: the no-op capability recognizes nothing", carrier)
 		}
 		return nil
 	})
-	if parent := NoopPropagation.Extract(Carrier{"bad": "value"}); parent != Context(NoopContext) {
+	if parent := NoopPropagation.Extract(Carrier{"unknown": "format"}); parent != Context(NoopContext) {
 		t.Errorf("Extract = %#v, want NoopContext", parent)
 	}
 	_ = NoopContext.StartSpan(SpanOptions{Name: "noop"}, func(span Span) error {

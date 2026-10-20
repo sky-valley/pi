@@ -1,6 +1,7 @@
 // Package telemetrytest checks a telemetry adapter against pi's adapter
-// conformance suite (@earendil-works/pi-telemetry/testing at d2e7d8b7c,
-// upstream 48909d987 and 2ec55d808), as fstest checks a file system: an
+// conformance suite (@earendil-works/pi-telemetry/testing at d9025a5f5,
+// upstream 48909d987, 2ec55d808 and d9025a5f5), as fstest checks a file
+// system: an
 // adapter's own tests hand it a way to build a fresh adapter, and every case
 // runs against one of its own.
 //
@@ -17,15 +18,12 @@
 // automatic and explicit status, attribute merging, event order, inert
 // calls after settlement, nested and concurrent parentage, and links. A
 // fixture that supplies Propagation is also checked for JSON round trips,
-// hops across fresh adapters and the fallback for unknown carriers; one that
-// supplies Metrics, for ordered measurements, exemplars, input copying and
-// the suppression of invalid measurements.
-//
-// pi's cases that hand the adapter "unreadable" payloads — Proxies whose
-// getters throw — have no Go counterpart, since reading a map or a slice
-// cannot fail; the parts of those cases that can fail in Go are kept.
-// pi's two failure paths, a thrown and a rejected callback, are Go's one
-// returned error.
+// hops across fresh adapters and the root fallback for absent and unknown
+// carriers; one that supplies Metrics, for ordered measurements, exemplars
+// and input copying. The adapter contract trusts typed inputs, so the suite
+// hands an adapter no malformed ones and does not require it to suppress its
+// own or its backend's failures. pi's two failure paths, a thrown and a
+// rejected callback, are Go's one returned error.
 //
 // Go adds one group, "concurrency": pi is single-threaded, but Go code drives
 // one adapter from many goroutines (ai records a request's span from the
@@ -37,7 +35,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math"
 	"reflect"
 	"sync"
 	"testing"
@@ -98,11 +95,11 @@ func Cases(newFixture NewFixture) []Case {
 	}{
 		{"capabilities", "carries adapter capabilities through contexts and spans", carriesCapabilities},
 		{"metrics", "records ordered measurements and optional histogram exemplars", recordsOrderedMeasurements},
-		{"metrics", "copies inputs and suppresses invalid measurements", copiesInputsAndSuppressesInvalidMeasurements},
+		{"metrics", "copies instrument metadata and measurement attributes", copiesMetadataAndAttributes},
 		{"links", "records initial and late links without changing parents", recordsInitialAndLateLinks},
-		{"links", "suppresses malformed links and ignores settled sources", suppressesMalformedLinks},
+		{"links", "ignores links added after source settlement", ignoresLateLinks},
 		{"propagation", "roundtrips parent identity through JSON without retaining the carrier", roundtripsParentIdentity},
-		{"propagation", "unknown carriers produce recorded roots", unknownCarriersProduceRoots},
+		{"propagation", "absent and unknown carriers produce recorded roots", unknownCarriersProduceRoots},
 		{"propagation", "propagates across fresh adapters and multiple hops", propagatesAcrossAdapters},
 		{"callback lifecycle", "admits once synchronously and preserves the result", admitsOnce},
 		{"callback lifecycle", "returns the callback's error unchanged", returnsCallbackError},
@@ -291,7 +288,7 @@ func recordsOrderedMeasurements(t *testing.T, f Fixture, _ NewFixture) {
 	}
 }
 
-func copiesInputsAndSuppressesInvalidMeasurements(t *testing.T, f Fixture, _ NewFixture) {
+func copiesMetadataAndAttributes(t *testing.T, f Fixture, _ NewFixture) {
 	if f.Metrics == nil {
 		t.Skip("the Fixture has no Metrics")
 	}
@@ -309,15 +306,10 @@ func copiesInputsAndSuppressesInvalidMeasurements(t *testing.T, f Fixture, _ New
 	histogram.Record(-1, attributes, nil)
 	tags[0] = "changed"
 	attributes["added"] = true
-	counter := f.Metrics.Counter("invalid", telemetry.InstrumentOptions{})
-	for _, value := range []float64{math.NaN(), math.Inf(1), math.Inf(-1), -1} {
-		counter.Add(value, nil)
-	}
-	f.Metrics.Histogram("bad-boundaries", telemetry.HistogramOptions{Boundaries: []float64{2, 1}}).Record(1, nil, nil)
 
 	recorded := measurements(t, f)
 	if len(recorded) != 1 {
-		t.Fatalf("%d measurements %+v, want the one valid histogram value: a non-finite or negative counter increment and an instrument with unordered boundaries record nothing", len(recorded), recorded)
+		t.Fatalf("%d measurements %+v, want the one recorded", len(recorded), recorded)
 	}
 	m := recorded[0]
 	if !equalJSON(t, m.Attributes, telemetry.SpanAttributes{"tags": []string{"original"}}) {
@@ -368,12 +360,10 @@ func recordsInitialAndLateLinks(t *testing.T, f Fixture, _ NewFixture) {
 	}
 }
 
-func suppressesMalformedLinks(t *testing.T, f Fixture, _ NewFixture) {
+func ignoresLateLinks(t *testing.T, f Fixture, _ NewFixture) {
 	var source telemetry.Span
 	_ = f.Context.StartSpan(telemetry.SpanOptions{Name: "link-source"}, func(span telemetry.Span) error {
 		source = span
-		// Go's malformed link is one with no context at all.
-		span.AddLink(telemetry.SpanLink{Attributes: telemetry.SpanAttributes{"partial": true}})
 		return nil
 	})
 	if source == nil {
@@ -385,7 +375,7 @@ func suppressesMalformedLinks(t *testing.T, f Fixture, _ NewFixture) {
 		return
 	}
 	if links := findSpan(t, recorded, "link-source").Links; len(links) != 0 {
-		t.Errorf("links %+v, want none: a link without a context, and one added after settlement, record nothing", links)
+		t.Errorf("links %+v, want none: a link added after settlement records nothing", links)
 	}
 }
 
@@ -431,13 +421,12 @@ func unknownCarriersProduceRoots(t *testing.T, f Fixture, _ NewFixture) {
 		if context == nil {
 			t.Fatalf("Extract(%v) = nil, want the adapter's root", carrier)
 		}
-		ran := false
-		_ = context.StartSpan(telemetry.SpanOptions{Name: fmt.Sprintf("fallback-%d", i)}, func(telemetry.Span) error {
-			ran = true
+		result := 0
+		if err := context.StartSpan(telemetry.SpanOptions{Name: fmt.Sprintf("fallback-%d", i)}, func(telemetry.Span) error {
+			result = 42
 			return nil
-		})
-		if !ran {
-			t.Errorf("Extract(%v).StartSpan did not run its callback", carrier)
+		}); err != nil || result != 42 {
+			t.Errorf("Extract(%v).StartSpan returned %v with result %d, want its callback run and nil back", carrier, err, result)
 		}
 	}
 	recorded, _ := spans(f)

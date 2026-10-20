@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"math"
 	"reflect"
+	"regexp"
 	"sync"
 	"testing"
 )
@@ -84,9 +85,9 @@ func TestInMemoryExtractedOwnSpanKeepsLocalParent(t *testing.T) {
 	}
 }
 
-// Nothing injects for the no-op context or the recorder's own root, and every
-// carrier the recorder did not write extracts to its root, whose spans are
-// recorded as roots with no parent id.
+// pi "uses the root for absent and unknown carriers": nothing injects for the
+// no-op context or the recorder's own root, and a carrier the recorder does
+// not recognize extracts the recorder itself, whose spans are roots.
 func TestInMemoryUnknownCarriersProduceRoots(t *testing.T) {
 	c := NewInMemoryContext()
 	if carrier := c.Inject(NoopContext); carrier != nil {
@@ -96,8 +97,12 @@ func TestInMemoryUnknownCarriersProduceRoots(t *testing.T) {
 		t.Errorf("Inject(root) = %v, want nil", carrier)
 	}
 	for i, carrier := range []Carrier{nil, {}, {"unknown": "format"}} {
+		context := c.Extract(carrier)
+		if context != Context(c) {
+			t.Errorf("Extract(%v) = %#v, want the recorder itself", carrier, context)
+		}
 		result := 0
-		_ = c.Extract(carrier).StartSpan(SpanOptions{Name: "fallback"}, func(Span) error {
+		_ = context.StartSpan(SpanOptions{Name: "fallback"}, func(Span) error {
 			result = 42
 			return nil
 		})
@@ -116,35 +121,57 @@ func TestInMemoryUnknownCarriersProduceRoots(t *testing.T) {
 	}
 }
 
-// pi's own carrier checks: a scope that is not a lowercase UUID, a span id
-// with a leading zero or sign, or one past Number.MAX_SAFE_INTEGER falls
-// back to the root (InMemoryTelemetryContext.extract's two patterns and
-// Number.isSafeInteger).
-func TestInMemoryExtractRejectsMalformedCarriers(t *testing.T) {
+// pi "treats recognized carrier identifiers as opaque strings": a carrier
+// holding the recorder's three keys extracts a parent whatever their values.
+func TestInMemoryExtractTreatsIdentifiersAsOpaque(t *testing.T) {
+	c := NewInMemoryContext()
+	carrier := Carrier{memoryScopeKey: "external-recorder", memorySpanKey: "external-span", memoryTraceKey: "external-trace"}
+	_ = c.Extract(carrier).StartSpan(SpanOptions{Name: "receiver"}, func(Span) error { return nil })
+	if got := c.Spans()[0].ParentContext; !reflect.DeepEqual(got, carrier) {
+		t.Errorf("parent context = %v, want %v", got, carrier)
+	}
+}
+
+// pi's extract reads three string identities; a carrier missing any of them
+// is not the recorder's and extracts its root. Keys beyond the three are
+// dropped.
+func TestInMemoryExtractRequiresEveryCarrierKey(t *testing.T) {
 	c := NewInMemoryContext()
 	var carrier Carrier
 	_ = c.StartSpan(SpanOptions{Name: "s"}, func(span Span) error {
 		carrier = c.Inject(span)
 		return nil
 	})
-	scope := carrier[memoryScopeKey]
-	for _, bad := range []Carrier{
-		{memoryScopeKey: "bad", memorySpanKey: "1"},
-		{memoryScopeKey: scope},
-		{memorySpanKey: "1"},
-		{memoryScopeKey: scope, memorySpanKey: "0"},
-		{memoryScopeKey: scope, memorySpanKey: "01"},
-		{memoryScopeKey: scope, memorySpanKey: "+1"},
-		{memoryScopeKey: scope, memorySpanKey: "1\n"},
-		{memoryScopeKey: scope, memorySpanKey: "9007199254740992"},
-		{memoryScopeKey: "ABCDEF01-2345-6789-abcd-ef0123456789", memorySpanKey: "1"},
-	} {
-		if got := c.Extract(bad); got != Context(c) {
-			t.Errorf("Extract(%v) = %#v, want the recorder itself", bad, got)
+	if len(carrier) != 3 {
+		t.Fatalf("carrier = %v, want scope, span and trace", carrier)
+	}
+	for key := range carrier {
+		incomplete := copyCarrier(carrier)
+		delete(incomplete, key)
+		if got := c.Extract(incomplete); got != Context(c) {
+			t.Errorf("Extract(%v) = %#v, want the recorder itself", incomplete, got)
 		}
 	}
-	if got := c.Extract(Carrier{memoryScopeKey: scope, memorySpanKey: "9007199254740991", "extra": "x"}); got == Context(c) {
-		t.Error("the largest safe span id must extract a parent")
+	extra := copyCarrier(carrier)
+	extra["extra"] = "x"
+	if got := c.Inject(c.Extract(extra)); !reflect.DeepEqual(got, carrier) {
+		t.Errorf("Inject(Extract(carrier with an extra key)) = %v, want %v", got, carrier)
+	}
+}
+
+// pi takes Number(span) as the local parent id of a carrier in the
+// recorder's own scope, without looking the span up.
+func TestInMemoryExtractOwnScopeTakesTheSpanNumber(t *testing.T) {
+	c := NewInMemoryContext()
+	var carrier Carrier
+	_ = c.StartSpan(SpanOptions{Name: "s"}, func(span Span) error {
+		carrier = c.Inject(span)
+		return nil
+	})
+	carrier[memorySpanKey] = "7"
+	_ = c.Extract(carrier).StartSpan(SpanOptions{Name: "child"}, func(Span) error { return nil })
+	if got := findSpan(t, c.Spans(), "child").ParentID; got != 7 {
+		t.Errorf("parent id = %d, want 7", got)
 	}
 }
 
@@ -399,27 +426,23 @@ func TestInMemoryMeasurementsAreDetached(t *testing.T) {
 	}
 }
 
-// "ignores malformed metadata, nonfinite values, and unreadable attributes",
-// Go half: invalid boundaries make an instrument inert, non-finite values
-// and negative counter increments are dropped, and an exemplar the recorder
-// does not know records no context.
-func TestInMemoryIgnoresInvalidMeasurements(t *testing.T) {
+// The in-memory adapter trusts typed inputs, as pi's has since d9025a5f5: it
+// records every value it is handed, unvalidated, and keeps a histogram's
+// boundaries as given. An exemplar it does not know records no context.
+func TestInMemoryRecordsMeasurementsAsGiven(t *testing.T) {
 	c := NewInMemoryContext()
-	for _, boundaries := range [][]float64{{1, 1}, {2, 1}, {math.NaN()}, {math.Inf(1)}} {
-		c.Histogram("bad", HistogramOptions{Boundaries: boundaries}).Record(1, nil, nil)
+	c.Counter("counter", InstrumentOptions{}).Add(-1, nil)
+	c.UpDownCounter("updown", InstrumentOptions{}).Add(math.Inf(1), nil)
+	c.Histogram("histogram", HistogramOptions{Boundaries: []float64{2, 1}}).Record(-1, SpanAttributes{}, NoopContext)
+	got := c.Measurements()
+	if len(got) != 3 {
+		t.Fatalf("measurements = %+v, want all three", got)
 	}
-	for _, value := range []float64{math.NaN(), math.Inf(1), math.Inf(-1)} {
-		c.Counter("bad", InstrumentOptions{}).Add(value, nil)
-		c.UpDownCounter("bad", InstrumentOptions{}).Add(value, nil)
-		c.Histogram("bad", HistogramOptions{}).Record(value, nil, nil)
+	if got[0].Value != -1 || !math.IsInf(got[1].Value, 1) || got[2].Value != -1 {
+		t.Errorf("values = %v, %v, %v; want -1, +Inf, -1", got[0].Value, got[1].Value, got[2].Value)
 	}
-	c.Counter("bad", InstrumentOptions{}).Add(-1, nil)
-	if got := c.Measurements(); len(got) != 0 {
-		t.Fatalf("measurements = %+v, want none", got)
-	}
-	c.Histogram("valid", HistogramOptions{}).Record(-1, SpanAttributes{}, NoopContext)
-	if got := c.Measurements(); len(got) != 1 || got[0].Context != nil || got[0].Value != -1 {
-		t.Errorf("measurements = %+v, want one with no exemplar", got)
+	if !reflect.DeepEqual(got[2].Boundaries, []float64{2, 1}) || got[2].Context != nil {
+		t.Errorf("histogram boundaries/context = %v/%v, want [2 1] and none", got[2].Boundaries, got[2].Context)
 	}
 }
 
@@ -450,8 +473,9 @@ func TestInMemoryOpenSpanSnapshot(t *testing.T) {
 }
 
 // Every span carries a carrier naming its recorder's scope — a lowercase
-// v4 UUID, as crypto.randomUUID() returns — and its own id, and its
-// children carry it as their parent context.
+// v4 UUID, as crypto.randomUUID() returns — its own id, and its trace: the
+// root's scope and id, which every descendant inherits. Its children carry
+// it as their parent context.
 func TestInMemorySpanCarriers(t *testing.T) {
 	var c InMemoryContext
 	_ = c.StartSpan(SpanOptions{Name: "root"}, func(root Span) error {
@@ -459,13 +483,13 @@ func TestInMemorySpanCarriers(t *testing.T) {
 	})
 	spans := c.Spans()
 	scope := spans[0].Context[memoryScopeKey]
-	if !memoryScopePattern.MatchString(scope) || scope[14] != '4' || !containsRune("89ab", rune(scope[19])) {
+	if !regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`).MatchString(scope) || scope[14] != '4' || !containsRune("89ab", rune(scope[19])) {
 		t.Errorf("scope = %q, want a lowercase v4 UUID", scope)
 	}
-	if want := (Carrier{memoryScopeKey: scope, memorySpanKey: "1"}); !reflect.DeepEqual(spans[0].Context, want) || spans[0].ParentContext != nil {
+	if want := (Carrier{memoryScopeKey: scope, memorySpanKey: "1", memoryTraceKey: scope + ":1"}); !reflect.DeepEqual(spans[0].Context, want) || spans[0].ParentContext != nil {
 		t.Errorf("root context/parent = %v/%v, want %v/nil", spans[0].Context, spans[0].ParentContext, want)
 	}
-	if want := (Carrier{memoryScopeKey: scope, memorySpanKey: "2"}); !reflect.DeepEqual(spans[1].Context, want) || !reflect.DeepEqual(spans[1].ParentContext, spans[0].Context) {
+	if want := (Carrier{memoryScopeKey: scope, memorySpanKey: "2", memoryTraceKey: scope + ":1"}); !reflect.DeepEqual(spans[1].Context, want) || !reflect.DeepEqual(spans[1].ParentContext, spans[0].Context) {
 		t.Errorf("child context/parent = %v/%v", spans[1].Context, spans[1].ParentContext)
 	}
 	if other := NewInMemoryContext(); other.Extract(spans[0].Context) == Context(other) {

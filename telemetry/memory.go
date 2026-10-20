@@ -1,14 +1,19 @@
 package telemetry
 
 import (
+	"context"
 	"crypto/rand"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
 	"reflect"
-	"regexp"
+	"slices"
 	"strconv"
 	"sync"
+	"time"
+
+	"github.com/sky-valley/pi/internal/jstext"
 )
 
 // RecordedEvent is one point-in-time event captured on a recorded span
@@ -54,7 +59,7 @@ type RecordedSpan struct {
 
 // RecordedMeasurement is one measurement an InMemoryContext's instruments
 // recorded (pi RecordedTelemetryMeasurement). It is a log entry, not an
-// aggregate, and carries no timestamp.
+// aggregate; the recorder keeps its time for FindMetrics, not here.
 type RecordedMeasurement struct {
 	Kind MetricKind
 	Name string
@@ -69,21 +74,37 @@ type RecordedMeasurement struct {
 	Context Carrier
 }
 
-// The in-memory carrier: the recorder's scope and the span's id. The keys are
-// an implementation detail, not a wire format for other adapters.
+// The in-memory carrier: the recorder's scope, the span's id, and the trace
+// it belongs to. The keys are an implementation detail, not a wire format for
+// other adapters.
 const (
 	memoryScopeKey = "pi-memory-scope"
 	memorySpanKey  = "pi-memory-span"
+	memoryTraceKey = "pi-memory-trace"
 )
 
+// carrierID is a carrier's globally unique span ID, "<scope>:<span>" (pi
+// carrierId): a StoredSpan's ID, and a root's trace ID.
+func carrierID(carrier Carrier) string {
+	return carrier[memoryScopeKey] + ":" + carrier[memorySpanKey]
+}
+
+// processStart is the origin of performanceNow, as pi's performance.now()
+// counts from the process's time origin.
+var processStart = time.Now()
+
+// dateNow and performanceNow are pi's Date.now() — wall-clock epoch
+// milliseconds, which a span's start and a measurement's interval read — and
+// performance.now() — monotonic milliseconds, which durations and event
+// offsets read. Tests replace them, as pi's mock the globals.
 var (
-	memoryScopePattern = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
-	memorySpanPattern  = regexp.MustCompile(`^[1-9][0-9]*$`)
+	dateNow        = func() float64 { return float64(time.Now().UnixMilli()) }
+	performanceNow = func() float64 { return float64(time.Since(processStart)) / float64(time.Millisecond) }
 )
 
-// maxSafeInteger is JavaScript's Number.MAX_SAFE_INTEGER, the largest span id
-// pi's Number.isSafeInteger check accepts from a carrier.
-const maxSafeInteger = 1<<53 - 1
+// intervalLength is the width of the metric intervals FindMetrics reports a
+// measurement in, ten seconds.
+const intervalLength = 10_000
 
 // InMemoryContext is the backend-neutral reference adapter that records spans
 // and measurements in process memory (pi InMemoryTelemetryContext). It is
@@ -96,6 +117,10 @@ const maxSafeInteger = 1<<53 - 1
 // registry. Inject recognizes the spans and extracted parents of every
 // InMemoryContext, as pi's module-wide registry does, so a link or exemplar
 // may name another recorder's span.
+//
+// It is a Store too: FindTraces, GetTrace and FindMetrics read back what it
+// recorded, with the wall-clock start and monotonic duration of every span,
+// each measurement a count-one row in its ten-second interval.
 //
 // It is safe for concurrent use, as the Context contract requires of every
 // adapter: the recorder takes a mutex around its state. The lock is never
@@ -111,7 +136,7 @@ type InMemoryContext struct {
 	mu           sync.Mutex
 	scope        string
 	spans        []*recordedSpan
-	measurements []RecordedMeasurement
+	measurements []timedMeasurement
 	// settledCount is the number of spans settled so far; the next one to
 	// settle takes settledCount+1 as its end-sequence.
 	settledCount int
@@ -121,10 +146,23 @@ type InMemoryContext struct {
 // usable; this exists for symmetry with the rest of the package.
 func NewInMemoryContext() *InMemoryContext { return &InMemoryContext{} }
 
+// timedMeasurement is a measurement and the start of the interval it was
+// recorded in (pi's { intervalMs, measurement } log entry).
+type timedMeasurement struct {
+	intervalMs  float64
+	measurement RecordedMeasurement
+}
+
 // recordedSpan is the mutable state behind a live span
-// (pi MutableRecordedTelemetrySpan). id, parentID, context, parentContext and
-// name never change after creation, so they are read without the lock.
+// (pi MutableRecordedTelemetrySpan). id, parentID, context, parentContext,
+// name, startedMs and clock never change after creation, so they are read
+// without the lock.
 type recordedSpan struct {
+	// startedMs is the wall-clock start (pi Date.now()); clock the monotonic
+	// one (pi performance.now()) that durations and event offsets count from.
+	startedMs      float64
+	clock          float64
+	endedMs        float64
 	id             int
 	parentID       int
 	context        Carrier
@@ -132,11 +170,18 @@ type recordedSpan struct {
 	links          []RecordedLink
 	name           string
 	attributes     SpanAttributes
-	events         []RecordedEvent
+	events         []timedEvent
 	status         SpanStatus
 	explicitStatus bool
 	settled        bool
 	endSequence    int
+}
+
+// timedEvent is a recorded event and its offset from the span's start
+// (pi MutableRecordedTelemetryEvent).
+type timedEvent struct {
+	timeMs float64
+	event  RecordedEvent
 }
 
 // inMemoryParent is where a new span belongs (pi InMemoryParent): the
@@ -169,57 +214,59 @@ func (c *InMemoryContext) Inject(target Context) Carrier {
 	return copyCarrier(carrier)
 }
 
-// Extract returns a parent for carrier. A carrier this recorder did not
-// write — nil, missing a key, or holding a malformed scope or span id —
-// falls back to the recorder itself, so the work is still recorded as a root.
-// Keys other than the recorder's two are dropped.
+// Extract returns a parent for carrier. A carrier missing any of the
+// recorder's three keys falls back to the recorder itself, so the work is
+// still recorded as a root; their values are opaque and not checked. Keys
+// other than the three are dropped.
 func (c *InMemoryContext) Extract(carrier Carrier) Context {
 	scope, hasScope := carrier[memoryScopeKey]
 	spanID, hasSpan := carrier[memorySpanKey]
-	if !hasScope || !hasSpan || !memoryScopePattern.MatchString(scope) || !memorySpanPattern.MatchString(spanID) {
-		return c
-	}
-	id, err := strconv.ParseUint(spanID, 10, 64)
-	if err != nil || id > maxSafeInteger {
+	traceID, hasTrace := carrier[memoryTraceKey]
+	if !hasScope || !hasSpan || !hasTrace {
 		return c
 	}
 	parent := &extractedParent{
 		recorder: c,
-		parent:   inMemoryParent{context: Carrier{memoryScopeKey: scope, memorySpanKey: spanID}},
+		parent:   inMemoryParent{context: Carrier{memoryScopeKey: scope, memorySpanKey: spanID, memoryTraceKey: traceID}},
 	}
 	c.mu.Lock()
-	// Span ids are assigned densely from 1, so the id names one of this
-	// recorder's spans exactly when it is in range.
-	if scope == c.scopeLocked() && id <= uint64(len(c.spans)) {
-		parent.parent.localID = int(id)
+	// pi takes Number(span) in its own scope without looking the span up; a
+	// number that is no Go int (pi's NaN, a fraction) names no local parent.
+	if scope == c.scopeLocked() {
+		if n := jstext.StringToNumber(spanID); n == math.Trunc(n) && math.Abs(n) <= 1<<53 {
+			parent.parent.localID = int(n)
+		}
 	}
 	c.mu.Unlock()
 	return parent
 }
 
-// Counter creates a counter that records non-negative finite increments.
+// Counter creates a counter. Increments are recorded as given: callers
+// supply finite, non-negative ones.
 func (c *InMemoryContext) Counter(name string, options InstrumentOptions) Counter {
 	return inMemoryCounter{c.instrument(MetricCounter, name, options, nil)}
 }
 
-// UpDownCounter creates an up-down counter that records finite increments.
+// UpDownCounter creates an up-down counter. Increments are recorded as given.
 func (c *InMemoryContext) UpDownCounter(name string, options InstrumentOptions) UpDownCounter {
 	return inMemoryCounter{c.instrument(MetricUpDownCounter, name, options, nil)}
 }
 
-// Histogram creates a histogram that records finite values. Boundaries that
-// are not finite and strictly increasing make it record nothing.
+// Histogram creates a histogram. Values and boundaries are recorded as
+// given: callers supply finite values and strictly increasing boundaries.
 func (c *InMemoryContext) Histogram(name string, options HistogramOptions) Histogram {
 	return inMemoryHistogram{c.instrument(MetricHistogram, name, options.InstrumentOptions, options.Boundaries)}
 }
 
 // Measurements returns detached measurements in recording order, without
-// aggregation (pi getMetrics; Metrics is the capability accessor here).
+// aggregation or their times (pi getMetrics; Metrics is the capability
+// accessor here).
 func (c *InMemoryContext) Measurements() []RecordedMeasurement {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	out := make([]RecordedMeasurement, 0, len(c.measurements))
-	for _, m := range c.measurements {
+	for _, timed := range c.measurements {
+		m := timed.measurement
 		m.Boundaries = copyBoundaries(m.Boundaries)
 		m.Attributes = copyAttributes(m.Attributes)
 		m.Context = copyCarrier(m.Context)
@@ -241,7 +288,7 @@ func (c *InMemoryContext) Spans() []RecordedSpan {
 		}
 		events := make([]RecordedEvent, 0, len(s.events))
 		for _, e := range s.events {
-			events = append(events, RecordedEvent{Name: e.Name, Attributes: copyAttributes(e.Attributes)})
+			events = append(events, RecordedEvent{Name: e.event.Name, Attributes: copyAttributes(e.event.Attributes)})
 		}
 		out = append(out, RecordedSpan{
 			ID:            s.id,
@@ -289,9 +336,20 @@ func (c *InMemoryContext) startSpan(parent *inMemoryParent, options SpanOptions,
 		return inertSpan{c}.StartSpan(options, callback)
 	}
 	id := len(c.spans) + 1
+	scope := c.scopeLocked()
+	// A root starts a trace named by its own global ID; every descendant,
+	// local or across a carrier, inherits it.
+	trace := scope + ":" + strconv.Itoa(id)
+	if parent != nil {
+		if inherited, ok := parent.context[memoryTraceKey]; ok {
+			trace = inherited
+		}
+	}
 	span := &recordedSpan{
+		startedMs:  dateNow(),
+		clock:      performanceNow(),
 		id:         id,
-		context:    Carrier{memoryScopeKey: c.scopeLocked(), memorySpanKey: strconv.Itoa(id)},
+		context:    Carrier{memoryScopeKey: scope, memorySpanKey: strconv.Itoa(id), memoryTraceKey: trace},
 		links:      links,
 		name:       options.Name,
 		attributes: copyAttributes(options.Attributes),
@@ -306,40 +364,45 @@ func (c *InMemoryContext) startSpan(parent *inMemoryParent, options SpanOptions,
 
 	live := &inMemorySpan{recorder: c, span: span}
 
-	// pi settles the span on a synchronous throw and rethrows. Go's analog is
-	// a panic: settle it as a failure, then let it keep unwinding. settle is
-	// idempotent, so the normal path below is unaffected.
+	// pi's try/catch/finally: a throw sets the automatic error status and
+	// rethrows, and the span settles however the callback leaves. Go's throw
+	// is a panic, which keeps unwinding once the span settled; a
+	// runtime.Goexit settles it with the status it had.
+	returned := false
 	defer func() {
-		if r := recover(); r != nil {
-			c.settle(span, true, panicError{value: r})
+		if returned {
+			return
+		}
+		r := recover()
+		if r != nil {
+			c.settle(span, panicError{value: r})
 			panic(r)
 		}
+		c.settle(span, nil)
 	}()
-
 	err := callback(live)
-	c.settle(span, err != nil, err)
+	returned = true
+	c.settle(span, err)
 	return err
 }
 
-// settle closes a span exactly once, stamping the end-sequence that orders
-// settlement across spans (pi settleSpan).
-func (c *InMemoryContext) settle(span *recordedSpan, failed bool, err error) {
+// settle closes a span, stamping its end time and the end-sequence that
+// orders settlement across spans (pi's finally block). A non-nil err fails a
+// span whose status was not set explicitly (pi's catch block).
+func (c *InMemoryContext) settle(span *recordedSpan, err error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if span.settled {
-		return
-	}
-	if failed && !span.explicitStatus {
+	if err != nil && !span.explicitStatus {
 		span.status = automaticErrorStatus(err)
 	}
 	span.settled = true
+	span.endedMs = span.startedMs + performanceNow() - span.clock
 	c.settledCount++
 	span.endSequence = c.settledCount
 }
 
 // measurementRecorder appends one instrument's measurements (pi
-// createMeasurementRecorder). A nil recorder is an instrument whose metadata
-// was invalid; it records nothing.
+// createMeasurementRecorder).
 type measurementRecorder struct {
 	recorder *InMemoryContext
 	metadata RecordedMeasurement
@@ -348,11 +411,6 @@ type measurementRecorder struct {
 func (c *InMemoryContext) instrument(kind MetricKind, name string, options InstrumentOptions, boundaries []float64) *measurementRecorder {
 	if kind != MetricHistogram {
 		boundaries = nil
-	}
-	for i, b := range boundaries {
-		if math.IsNaN(b) || math.IsInf(b, 0) || (i > 0 && b <= boundaries[i-1]) {
-			return nil
-		}
 	}
 	return &measurementRecorder{recorder: c, metadata: RecordedMeasurement{
 		Kind:        kind,
@@ -364,16 +422,14 @@ func (c *InMemoryContext) instrument(kind MetricKind, name string, options Instr
 }
 
 func (r *measurementRecorder) record(value float64, attributes SpanAttributes, context Context) {
-	if r == nil || math.IsNaN(value) || math.IsInf(value, 0) || (r.metadata.Kind == MetricCounter && value < 0) {
-		return
-	}
 	m := r.metadata
 	m.Boundaries = copyBoundaries(m.Boundaries)
 	m.Value = value
 	m.Attributes = copyAttributes(attributes)
 	m.Context = copyCarrier(carrierOf(context))
+	interval := math.Floor(dateNow()/intervalLength) * intervalLength
 	r.recorder.mu.Lock()
-	r.recorder.measurements = append(r.recorder.measurements, m)
+	r.recorder.measurements = append(r.recorder.measurements, timedMeasurement{intervalMs: interval, measurement: m})
 	r.recorder.mu.Unlock()
 }
 
@@ -432,8 +488,8 @@ func (s *inMemorySpan) StartSpan(options SpanOptions, callback func(span Span) e
 func (s *inMemorySpan) Metrics() Metrics         { return s.recorder }
 func (s *inMemorySpan) Propagation() Propagation { return s.recorder }
 
-// Recording is passive: every mutator below is a no-op once the span settled,
-// matching pi's guards.
+// Every mutator below is a no-op once the span settled, matching pi's
+// guards.
 
 func (s *inMemorySpan) AddLink(link SpanLink) {
 	recorded, ok := copyLink(link)
@@ -454,7 +510,10 @@ func (s *inMemorySpan) AddEvent(name string, attributes SpanAttributes) {
 	if s.span.settled {
 		return
 	}
-	s.span.events = append(s.span.events, RecordedEvent{Name: name, Attributes: copyAttributes(attributes)})
+	s.span.events = append(s.span.events, timedEvent{
+		timeMs: performanceNow() - s.span.clock,
+		event:  RecordedEvent{Name: name, Attributes: copyAttributes(attributes)},
+	})
 }
 
 func (s *inMemorySpan) SetAttributes(attributes SpanAttributes) {
@@ -593,6 +652,253 @@ func copyAttributeValue(value AttributeValue) AttributeValue {
 	clone := reflect.MakeSlice(rv.Type(), rv.Len(), rv.Len())
 	reflect.Copy(clone, rv)
 	return clone.Interface()
+}
+
+// storedSpansLocked returns detached StoredSpan snapshots of the settled
+// spans, by start time with span ID breaking ties (pi storedSpans).
+func (c *InMemoryContext) storedSpansLocked() []StoredSpan {
+	out := []StoredSpan{}
+	for _, s := range c.spans {
+		if !s.settled {
+			continue
+		}
+		events := make([]StoredEvent, 0, len(s.events))
+		for _, e := range s.events {
+			events = append(events, StoredEvent{Name: e.event.Name, TimeMs: e.timeMs, Attributes: copyAttributes(e.event.Attributes)})
+		}
+		links := make([]StoredLink, 0, len(s.links))
+		for _, l := range s.links {
+			links = append(links, StoredLink{TraceID: l.Context[memoryTraceKey], SpanID: carrierID(l.Context), Attributes: copyAttributes(l.Attributes)})
+		}
+		stored := StoredSpan{
+			ID:         carrierID(s.context),
+			TraceID:    s.context[memoryTraceKey],
+			Name:       s.name,
+			StartedMs:  s.startedMs,
+			EndedMs:    s.endedMs,
+			Attributes: copyAttributes(s.attributes),
+			Events:     events,
+			Links:      links,
+			Status:     copyStatus(s.status),
+		}
+		if s.parentContext != nil {
+			stored.ParentID = carrierID(s.parentContext)
+		}
+		out = append(out, stored)
+	}
+	slices.SortStableFunc(out, func(a, b StoredSpan) int {
+		if a.StartedMs != b.StartedMs {
+			return compareNumbers(a.StartedMs, b.StartedMs)
+		}
+		return jstext.CompareUTF16(a.ID, b.ID)
+	})
+	return out
+}
+
+// compareNumbers orders a before b as pi's `a - b` comparator does.
+func compareNumbers(a, b float64) int {
+	switch {
+	case a < b:
+		return -1
+	case a > b:
+		return 1
+	}
+	return 0
+}
+
+// GetTrace returns the settled spans of traceID, or nil when the recorder
+// holds none.
+func (c *InMemoryContext) GetTrace(_ context.Context, traceID string) (*StoredTrace, error) {
+	c.mu.Lock()
+	all := c.storedSpansLocked()
+	c.mu.Unlock()
+	var spans []StoredSpan
+	for _, span := range all {
+		if span.TraceID == traceID {
+			spans = append(spans, span)
+		}
+	}
+	if len(spans) == 0 {
+		return nil, nil
+	}
+	return &StoredTrace{TraceID: traceID, Spans: spans}, nil
+}
+
+// FindTraces returns a page of the traces of settled spans that query
+// matches. Its cursor is pi's JSON [first span start, trace ID]; a cursor it
+// did not write is refused.
+func (c *InMemoryContext) FindTraces(_ context.Context, query TraceQuery) (TracePage, error) {
+	limit := query.Limit
+	if limit == 0 {
+		limit = 20
+	}
+	var after *traceCursor
+	if query.Cursor != "" {
+		cursor, err := parseTraceCursor(query.Cursor)
+		if err != nil {
+			return TracePage{}, err
+		}
+		after = &cursor
+	}
+	c.mu.Lock()
+	all := c.storedSpansLocked()
+	c.mu.Unlock()
+
+	var grouped []*StoredTrace
+	byID := map[string]*StoredTrace{}
+	for _, span := range all {
+		trace := byID[span.TraceID]
+		if trace == nil {
+			trace = &StoredTrace{TraceID: span.TraceID}
+			byID[span.TraceID] = trace
+			grouped = append(grouped, trace)
+		}
+		trace.Spans = append(trace.Spans, span)
+	}
+	matches := []StoredTrace{}
+	for _, trace := range grouped {
+		if traceMatches(*trace, query, after) {
+			matches = append(matches, *trace)
+		}
+	}
+	slices.SortStableFunc(matches, func(a, b StoredTrace) int {
+		if a.Spans[0].StartedMs != b.Spans[0].StartedMs {
+			return compareNumbers(b.Spans[0].StartedMs, a.Spans[0].StartedMs)
+		}
+		return jstext.CompareUTF16(a.TraceID, b.TraceID)
+	})
+	page := TracePage{Traces: matches[:min(limit, len(matches))]}
+	if len(matches) > limit {
+		last := page.Traces[len(page.Traces)-1]
+		cursor, err := jstext.Stringify([]any{last.Spans[0].StartedMs, last.TraceID})
+		if err != nil {
+			return TracePage{}, fmt.Errorf("telemetry: encode the next page's cursor: %w", err)
+		}
+		page.Cursor = cursor
+	}
+	return page, nil
+}
+
+// traceCursor is where a page of FindTraces ended: its last trace's first
+// span start and trace ID.
+type traceCursor struct {
+	startedMs float64
+	traceID   string
+}
+
+func parseTraceCursor(cursor string) (traceCursor, error) {
+	var fields []any
+	if err := json.Unmarshal([]byte(cursor), &fields); err == nil && len(fields) == 2 {
+		startedMs, isNumber := fields[0].(float64)
+		traceID, isString := fields[1].(string)
+		if isNumber && isString {
+			return traceCursor{startedMs: startedMs, traceID: traceID}, nil
+		}
+	}
+	return traceCursor{}, fmt.Errorf("telemetry: trace cursor %q is not one FindTraces returned; pass the Cursor of the previous page unchanged, with the same filters, or none for the first page", cursor)
+}
+
+// traceMatches applies pi findTraces' filter to a trace whose spans are in
+// stored order.
+func traceMatches(trace StoredTrace, query TraceQuery, after *traceCursor) bool {
+	first := trace.Spans[0]
+	if query.Name != "" && first.Name != query.Name {
+		return false
+	}
+	if query.StartMin != nil && !(first.StartedMs >= *query.StartMin) {
+		return false
+	}
+	if query.StartMax != nil && !(first.StartedMs <= *query.StartMax) {
+		return false
+	}
+	if after != nil && !(first.StartedMs < after.startedMs || (first.StartedMs == after.startedMs && jstext.CompareUTF16(trace.TraceID, after.traceID) > 0)) {
+		return false
+	}
+	if query.Errors && !slices.ContainsFunc(trace.Spans, func(span StoredSpan) bool { return span.Status.Code == StatusError }) {
+		return false
+	}
+	if len(query.Attributes) > 0 && !slices.ContainsFunc(trace.Spans, func(span StoredSpan) bool { return attributesMatch(span.Attributes, query.Attributes) }) {
+		return false
+	}
+	return true
+}
+
+// attributesMatch reports whether every queried attribute strictly equals
+// (pi's ===) the one in attributes.
+func attributesMatch(attributes, query SpanAttributes) bool {
+	for key, value := range query {
+		if !strictEqual(attributes[key], value) {
+			return false
+		}
+	}
+	return true
+}
+
+// strictEqual is JavaScript's === between attribute values: numbers compare
+// as numbers whatever their Go kind, NaN equals nothing, a nil is pi's
+// undefined, and an array equals nothing (no two are the same object).
+func strictEqual(a, b AttributeValue) bool {
+	if a == nil || b == nil {
+		return a == nil && b == nil
+	}
+	if x, ok := attributeNumber(a); ok {
+		y, ok := attributeNumber(b)
+		return ok && x == y
+	}
+	switch x := a.(type) {
+	case string:
+		y, ok := b.(string)
+		return ok && x == y
+	case bool:
+		y, ok := b.(bool)
+		return ok && x == y
+	}
+	return false
+}
+
+// attributeNumber returns an attribute value of any Go number kind as the
+// JavaScript number it stands for.
+func attributeNumber(value AttributeValue) (float64, bool) {
+	v := reflect.ValueOf(value)
+	switch v.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return float64(v.Int()), true
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		return float64(v.Uint()), true
+	case reflect.Float32, reflect.Float64:
+		return v.Float(), true
+	}
+	return 0, false
+}
+
+// FindMetrics returns every recorded measurement query matches as a
+// count-one row in its ten-second interval, in recording order, without
+// aggregating them.
+func (c *InMemoryContext) FindMetrics(_ context.Context, query MetricQuery) ([]StoredMetric, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	rows := []StoredMetric{}
+	for _, timed := range c.measurements {
+		m := timed.measurement
+		if m.Name != query.Name ||
+			(query.StartMin != nil && !(timed.intervalMs >= *query.StartMin)) ||
+			(query.StartMax != nil && !(timed.intervalMs <= *query.StartMax)) ||
+			!attributesMatch(m.Attributes, query.Attributes) {
+			continue
+		}
+		rows = append(rows, StoredMetric{
+			IntervalMs: timed.intervalMs,
+			Name:       m.Name,
+			Kind:       m.Kind,
+			Unit:       m.Unit,
+			Attributes: copyAttributes(m.Attributes),
+			Count:      1,
+			Sum:        m.Value,
+			Min:        m.Value,
+			Max:        m.Value,
+		})
+	}
+	return rows, nil
 }
 
 func copyStatus(status SpanStatus) SpanStatus {
