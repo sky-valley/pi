@@ -25,6 +25,9 @@
 // responses-midconvo-caa6967b6.json byte for byte. 530015d93 lists as still
 // unavailable only the removals earlier messages announced (removal-fallback
 // moved), and added "additional-tools-same-message-add-and-remove".
+// "additional-tools-multi-removal" was added at 530015d93 after review, to pin
+// the JS Set order of the "Still unavailable" list (control: the script
+// without it rewrote the golden byte for byte first).
 //
 // Each "bodies" case records its model, its context and the body pi hands
 // onPayload, so the Go test decodes the very inputs pi saw. compat.ts
@@ -369,6 +372,49 @@ const sameMessageAddAndRemoveContext = {
 	],
 };
 
+// Several removals across messages, in an order that is not sorted: the
+// incremental tools notice lists the still-unavailable tools in JS Set
+// insertion order — a re-added tool leaves the set, its re-removal appends it
+// again, a duplicate removal in one message adds once, a removal of a name
+// never declared (nope) is listed too, and a redefinition (c, removed and
+// added in one message) is not a removal. The notices read "c, a", "c",
+// "c, b", "b, a, nope" and "b, a, nope, x".
+const multiRemovalContext = (() => {
+	const [A, B, C, D, X, Y, Z] = ["a", "b", "c", "d", "x", "y", "z"].map((name) => tool(name));
+	const u = (content: string, timestamp: number) => ({ role: "user", content, timestamp });
+	return {
+		messages: [
+			{ role: "system", content: "base", toolsAdded: [A, B, C, D], timestamp: 0 },
+			u("1", 1),
+			{
+				role: "system",
+				content: "rm c a",
+				sections: { rules: "<rules>\nr\n</rules>" },
+				toolsRemoved: [{ name: "c" }, { name: "a" }],
+				timestamp: 2,
+			},
+			u("2", 3),
+			{ role: "system", content: "", toolsAdded: [X], timestamp: 4 },
+			u("3", 5),
+			{ role: "system", content: "", toolsRemoved: [{ name: "b" }], toolsAdded: [A], timestamp: 6 },
+			u("4", 7),
+			{ role: "system", content: "", toolsAdded: [Y], timestamp: 8 },
+			{ role: "system", content: "", toolsRemoved: [{ name: "a" }, { name: "a" }, { name: "nope" }], timestamp: 9 },
+			u("5", 10),
+			{
+				role: "system",
+				content: "z",
+				toolsAdded: [Z, { ...C, description: "c2" }],
+				toolsRemoved: [{ name: "c" }, { name: "x" }],
+				timestamp: 11,
+			},
+			u("6", 12),
+			{ role: "system", content: "", toolsAdded: [D], timestamp: 13 },
+			u("7", 14),
+		],
+	};
+})();
+
 const cases: Record<string, { model: unknown; context: unknown }> = {
 	// 'declares every OpenAI tool in additional_tools at its developer message'
 	// (before upstream caa6967b6: 'anchors OpenAI additions at their developer message')
@@ -456,6 +502,10 @@ const cases: Record<string, { model: unknown; context: unknown }> = {
 	"additional-tools-same-message-add-and-remove": {
 		model: gpt54({ supportsMidConvoSystemMessages: true, supportsAdditionalTools: true }),
 		context: sameMessageAddAndRemoveContext,
+	},
+	"additional-tools-multi-removal": {
+		model: gpt54({ supportsMidConvoSystemMessages: true, supportsAdditionalTools: true }),
+		context: multiRemovalContext,
 	},
 	// No leading system message: the first additional_tools item is the later
 	// system message's, so no incremental notice precedes it.

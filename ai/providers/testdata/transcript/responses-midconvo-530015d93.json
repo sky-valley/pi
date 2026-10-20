@@ -2977,6 +2977,477 @@
 				}
 			}
 		},
+		"additional-tools-multi-removal": {
+			"model": {
+				"baseUrl": "http://127.0.0.1:9",
+				"reasoning": true,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 100000,
+				"maxTokens": 1000,
+				"id": "gpt-5.4",
+				"name": "GPT-5.4",
+				"api": "openai-responses",
+				"provider": "openai",
+				"compat": {
+					"supportsMidConvoSystemMessages": true,
+					"supportsAdditionalTools": true
+				}
+			},
+			"context": {
+				"messages": [
+					{
+						"role": "system",
+						"content": "base",
+						"toolsAdded": [
+							{
+								"name": "a",
+								"description": "a tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							},
+							{
+								"name": "b",
+								"description": "b tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							},
+							{
+								"name": "c",
+								"description": "c tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							},
+							{
+								"name": "d",
+								"description": "d tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						],
+						"timestamp": 0
+					},
+					{
+						"role": "user",
+						"content": "1",
+						"timestamp": 1
+					},
+					{
+						"role": "system",
+						"content": "rm c a",
+						"sections": {
+							"rules": "<rules>\nr\n</rules>"
+						},
+						"toolsRemoved": [
+							{
+								"name": "c"
+							},
+							{
+								"name": "a"
+							}
+						],
+						"timestamp": 2
+					},
+					{
+						"role": "user",
+						"content": "2",
+						"timestamp": 3
+					},
+					{
+						"role": "system",
+						"content": "",
+						"toolsAdded": [
+							{
+								"name": "x",
+								"description": "x tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						],
+						"timestamp": 4
+					},
+					{
+						"role": "user",
+						"content": "3",
+						"timestamp": 5
+					},
+					{
+						"role": "system",
+						"content": "",
+						"toolsRemoved": [
+							{
+								"name": "b"
+							}
+						],
+						"toolsAdded": [
+							{
+								"name": "a",
+								"description": "a tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						],
+						"timestamp": 6
+					},
+					{
+						"role": "user",
+						"content": "4",
+						"timestamp": 7
+					},
+					{
+						"role": "system",
+						"content": "",
+						"toolsAdded": [
+							{
+								"name": "y",
+								"description": "y tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						],
+						"timestamp": 8
+					},
+					{
+						"role": "system",
+						"content": "",
+						"toolsRemoved": [
+							{
+								"name": "a"
+							},
+							{
+								"name": "a"
+							},
+							{
+								"name": "nope"
+							}
+						],
+						"timestamp": 9
+					},
+					{
+						"role": "user",
+						"content": "5",
+						"timestamp": 10
+					},
+					{
+						"role": "system",
+						"content": "z",
+						"toolsAdded": [
+							{
+								"name": "z",
+								"description": "z tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							},
+							{
+								"name": "c",
+								"description": "c2",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						],
+						"toolsRemoved": [
+							{
+								"name": "c"
+							},
+							{
+								"name": "x"
+							}
+						],
+						"timestamp": 11
+					},
+					{
+						"role": "user",
+						"content": "6",
+						"timestamp": 12
+					},
+					{
+						"role": "system",
+						"content": "",
+						"toolsAdded": [
+							{
+								"name": "d",
+								"description": "d tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						],
+						"timestamp": 13
+					},
+					{
+						"role": "user",
+						"content": "7",
+						"timestamp": 14
+					}
+				]
+			},
+			"body": {
+				"model": "gpt-5.4",
+				"input": [
+					{
+						"type": "additional_tools",
+						"role": "developer",
+						"tools": [
+							{
+								"type": "function",
+								"name": "a",
+								"description": "a tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							},
+							{
+								"type": "function",
+								"name": "b",
+								"description": "b tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							},
+							{
+								"type": "function",
+								"name": "c",
+								"description": "c tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							},
+							{
+								"type": "function",
+								"name": "d",
+								"description": "d tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						]
+					},
+					{
+						"role": "developer",
+						"content": "base"
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "1"
+							}
+						]
+					},
+					{
+						"role": "developer",
+						"content": "rm c a\n\nUpdated system prompt section \"rules\":\n\n<rules>\nr\n</rules>\n\nThe following tools are no longer available. Do not call them:\n- c\n- a"
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "2"
+							}
+						]
+					},
+					{
+						"role": "developer",
+						"content": "This is an incremental tools update. Previously declared tools remain available unless explicitly marked unavailable. A tool declared again here is available again, and its latest definition replaces the earlier one.\nStill unavailable: c, a."
+					},
+					{
+						"type": "additional_tools",
+						"role": "developer",
+						"tools": [
+							{
+								"type": "function",
+								"name": "x",
+								"description": "x tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						]
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "3"
+							}
+						]
+					},
+					{
+						"role": "developer",
+						"content": "This is an incremental tools update. Previously declared tools remain available unless explicitly marked unavailable. A tool declared again here is available again, and its latest definition replaces the earlier one.\nStill unavailable: c."
+					},
+					{
+						"type": "additional_tools",
+						"role": "developer",
+						"tools": [
+							{
+								"type": "function",
+								"name": "a",
+								"description": "a tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						]
+					},
+					{
+						"role": "developer",
+						"content": "The following tools are no longer available. Do not call them:\n- b"
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "4"
+							}
+						]
+					},
+					{
+						"role": "developer",
+						"content": "This is an incremental tools update. Previously declared tools remain available unless explicitly marked unavailable. A tool declared again here is available again, and its latest definition replaces the earlier one.\nStill unavailable: c, b."
+					},
+					{
+						"type": "additional_tools",
+						"role": "developer",
+						"tools": [
+							{
+								"type": "function",
+								"name": "y",
+								"description": "y tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						]
+					},
+					{
+						"role": "developer",
+						"content": "The following tools are no longer available. Do not call them:\n- a\n- a\n- nope"
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "5"
+							}
+						]
+					},
+					{
+						"role": "developer",
+						"content": "This is an incremental tools update. Previously declared tools remain available unless explicitly marked unavailable. A tool declared again here is available again, and its latest definition replaces the earlier one.\nStill unavailable: b, a, nope."
+					},
+					{
+						"type": "additional_tools",
+						"role": "developer",
+						"tools": [
+							{
+								"type": "function",
+								"name": "z",
+								"description": "z tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							},
+							{
+								"type": "function",
+								"name": "c",
+								"description": "c2",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						]
+					},
+					{
+						"role": "developer",
+						"content": "z\n\nThe following tools are no longer available. Do not call them:\n- x"
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "6"
+							}
+						]
+					},
+					{
+						"role": "developer",
+						"content": "This is an incremental tools update. Previously declared tools remain available unless explicitly marked unavailable. A tool declared again here is available again, and its latest definition replaces the earlier one.\nStill unavailable: b, a, nope, x."
+					},
+					{
+						"type": "additional_tools",
+						"role": "developer",
+						"tools": [
+							{
+								"type": "function",
+								"name": "d",
+								"description": "d tool",
+								"parameters": {
+									"type": "object",
+									"properties": {}
+								}
+							}
+						]
+					},
+					{
+						"role": "user",
+						"content": [
+							{
+								"type": "input_text",
+								"text": "7"
+							}
+						]
+					}
+				],
+				"stream": true,
+				"store": false,
+				"max_output_tokens": 1000,
+				"reasoning": {
+					"effort": "none"
+				}
+			}
+		},
 		"additional-tools-without-leading-system-message": {
 			"model": {
 				"baseUrl": "http://127.0.0.1:9",

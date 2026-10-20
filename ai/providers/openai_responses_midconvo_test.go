@@ -385,8 +385,8 @@ func loadResponsesMidConvoCapture(t *testing.T) responsesMidConvoCapture {
 	if err := json.Unmarshal(data, &capture); err != nil {
 		t.Fatalf("%s: %v", responsesMidConvoCaptureFile, err)
 	}
-	if len(capture.Bodies) != 25 || len(capture.Streams) != 2 || capture.LoneSurrogates.Body == nil {
-		t.Fatalf("%s has %d body cases, %d stream cases and loneSurrogates %t, want 25, 2 and true; rerun capture-responses-midconvo.mts",
+	if len(capture.Bodies) != 26 || len(capture.Streams) != 2 || capture.LoneSurrogates.Body == nil {
+		t.Fatalf("%s has %d body cases, %d stream cases and loneSurrogates %t, want 26, 2 and true; rerun capture-responses-midconvo.mts",
 			responsesMidConvoCaptureFile, len(capture.Bodies), len(capture.Streams), capture.LoneSurrogates.Body != nil)
 	}
 	return capture
