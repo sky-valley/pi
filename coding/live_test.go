@@ -75,7 +75,6 @@ func runLiveToolCall(t *testing.T, model *ai.Model, key string) {
 		Cwd:          t.TempDir(),
 		Tools:        []agent.AgentTool{weather},
 		SystemPrompt: "You are a helpful assistant. Use tools when relevant.",
-		APIKey:       key,
 		SessionID:    "live-test",
 	})
 

@@ -19,6 +19,7 @@ import (
 // all make it onto the wire.
 func TestSDKOptionsReachProvider(t *testing.T) {
 	providers.RegisterOpenAICompletions()
+	t.Setenv("OPENAI_API_KEY", "k")
 
 	var gotBody map[string]any
 	var gotHeader string
@@ -40,7 +41,6 @@ func TestSDKOptionsReachProvider(t *testing.T) {
 		Model:       model,
 		Cwd:         t.TempDir(),
 		NoTools:     NoToolsAll,
-		APIKey:      "k",
 		Temperature: &temp,
 		MaxTokens:   &maxTok,
 		Headers:     ai.ProviderHeaders{"OpenAI-Organization": ai.HeaderValue("org-123")},
@@ -88,7 +88,6 @@ func TestSDKOptionsForwardProviderStreamEvents(t *testing.T) {
 		Model:   model,
 		Cwd:     t.TempDir(),
 		NoTools: NoToolsAll,
-		APIKey:  "k",
 		OnProviderStreamEvent: func(data any, m *ai.Model) error {
 			events = append(events, event{data: data, provider: m.Provider, api: string(m.Api), modelID: m.ID})
 			return nil
@@ -135,6 +134,7 @@ func keysOfCoding(m map[string]any) []string {
 
 func TestProviderErrorFormatting(t *testing.T) {
 	providers.RegisterOpenAICompletions()
+	t.Setenv("OPENAI_API_KEY", "k")
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(400)
 		io.WriteString(w, `{"error":{"message":"Invalid 'model' parameter","code":"model_not_found"}}`)
@@ -142,7 +142,7 @@ func TestProviderErrorFormatting(t *testing.T) {
 	defer server.Close()
 
 	model := &ai.Model{ID: "bad", Api: ai.APIOpenAICompletions, Provider: "openai", BaseURL: server.URL, MaxTokens: 100}
-	sess := newTestSession(t, SessionOptions{Model: model, Cwd: t.TempDir(), NoTools: NoToolsAll, APIKey: "k", MaxRetries: 1})
+	sess := newTestSession(t, SessionOptions{Model: model, Cwd: t.TempDir(), NoTools: NoToolsAll, MaxRetries: 1})
 	_, err := sess.Run(context.Background(), "hi")
 	if err == nil || !strings.Contains(err.Error(), "Invalid 'model' parameter") || !strings.Contains(err.Error(), "model_not_found") {
 		t.Fatalf("expected parsed provider error, got: %v", err)

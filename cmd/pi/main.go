@@ -298,7 +298,7 @@ func handleSlash(sess *coding.Session, line string) bool {
 			fmt.Fprintf(os.Stderr, "\033[31m%v\033[0m\n", err)
 			break
 		}
-		sess.SetModel(m, "")
+		sess.SetModel(m)
 		fmt.Printf("switched to %s/%s\n", m.Provider, m.ID)
 	case "/think":
 		sess.SetThinkingLevel(agent.ThinkingLevel(arg))

@@ -20,8 +20,12 @@ func main() {
 	if err != nil {
 		fail(err)
 	}
-	apiKey := ai.GetEnvApiKey(model.Provider, nil) // reads OPENAI_API_KEY
-	if apiKey == "" {
+	// The session holds no key, as pi's does not: each request resolves the
+	// provider's auth, here OPENAI_API_KEY from the environment. To hand it a
+	// key instead, set it on a coding.RuntimeCredentials and pass
+	// ai.BuiltinModels(&ai.CreateModelsOptions{Credentials: credentials}) as
+	// SessionOptions.Models.
+	if ai.GetEnvApiKey(model.Provider, nil) == "" {
 		fail(fmt.Errorf("set OPENAI_API_KEY"))
 	}
 
@@ -49,7 +53,6 @@ func main() {
 		Cwd:          cwd,
 		Tools:        []agent.AgentTool{weather},
 		SystemPrompt: "You are a helpful assistant. Use tools when relevant.",
-		APIKey:       apiKey,
 		SessionID:    "demo-session", // enables OpenAI prompt caching across turns
 	})
 	if err != nil {

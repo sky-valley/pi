@@ -75,16 +75,10 @@ providers (Anthropic, OpenAI, Google) are unaffected.
 ## Using the library
 
 ```go
-import (
-    "github.com/sky-valley/pi/ai"
-    "github.com/sky-valley/pi/coding"
-)
+import "github.com/sky-valley/pi/coding"
 
 model, _ := coding.ResolveModel("anthropic/claude-sonnet-4-5")
-sess, err := coding.NewSession(coding.SessionOptions{
-    Model:  model,
-    APIKey: ai.GetEnvApiKey(model.Provider, nil),
-})
+sess, err := coding.NewSession(coding.SessionOptions{Model: model}) // ANTHROPIC_API_KEY
 if err != nil {
     return err
 }
@@ -107,8 +101,7 @@ tools, streaming via `Subscribe`, and exposes the full provider control surface.
 model, _ := coding.ResolveModel("openai/gpt-5")            // uses the Responses API
 
 sess, err := coding.NewSession(coding.SessionOptions{
-    Model:  model,
-    APIKey: ai.GetEnvApiKey(model.Provider, nil),          // OPENAI_API_KEY
+    Model: model,                                           // auth: OPENAI_API_KEY
 
     // Tool selection (allow/deny/none + your own tools), mirrors createAgentSession.
     // Entries may be * patterns; a list of only +name/-name entries edits the
@@ -142,6 +135,20 @@ sess.Subscribe(func(ctx context.Context, e agent.AgentEvent) error {
 res, err := sess.Run(ctx, "refactor foo.go and add a test")
 // res.Text, res.ToolCalls, res.Messages, res.StopReason,
 // res.Usage (tokens + $cost, aggregated across the whole tool loop)
+```
+
+A session holds no API key, as pi's `createAgentSession` takes none: each
+request resolves its provider's auth itself, from the environment by default
+(Cloudflare's account and gateway ids too). To hand it a key, set it on the
+session's model runtime, as pi's `modelRuntime.setRuntimeApiKey` does:
+
+```go
+credentials := coding.NewRuntimeCredentials(nil)
+credentials.SetRuntimeApiKey(model.Provider, key)
+sess, err := coding.NewSession(coding.SessionOptions{
+    Model:  model,
+    Models: ai.BuiltinModels(&ai.CreateModelsOptions{Credentials: credentials}),
+})
 ```
 
 Mid-session you can `sess.SetModel`, `sess.SetThinkingLevel`, `sess.Steer`,

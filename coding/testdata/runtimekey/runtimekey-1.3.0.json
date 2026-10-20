@@ -1,0 +1,295 @@
+{
+	"version": "1.3.0",
+	"scenarios": [
+		{
+			"name": "env",
+			"env": {
+				"CLOUDFLARE_API_KEY": "env-key",
+				"CLOUDFLARE_ACCOUNT_ID": "env-account",
+				"CLOUDFLARE_GATEWAY_ID": "env-gateway"
+			},
+			"models": [
+				[
+					"cloudflare-workers-ai",
+					"@cf/meta/llama-3.3-70b-instruct-fp8-fast"
+				]
+			],
+			"compact": true,
+			"requests": [
+				{
+					"phase": "prompt",
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/env-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer env-key"
+					}
+				},
+				{
+					"phase": "prompt",
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/env-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer env-key"
+					}
+				},
+				{
+					"phase": "compaction",
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/env-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer env-key"
+					}
+				},
+				{
+					"phase": "compaction",
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/env-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer env-key"
+					}
+				}
+			],
+			"errors": []
+		},
+		{
+			"name": "runtime-key",
+			"env": {
+				"CLOUDFLARE_API_KEY": "env-key",
+				"CLOUDFLARE_ACCOUNT_ID": "env-account",
+				"CLOUDFLARE_GATEWAY_ID": "env-gateway"
+			},
+			"runtimeKeys": {
+				"cloudflare-workers-ai": "runtime-key"
+			},
+			"models": [
+				[
+					"cloudflare-workers-ai",
+					"@cf/meta/llama-3.3-70b-instruct-fp8-fast"
+				]
+			],
+			"compact": true,
+			"requests": [
+				{
+					"phase": "prompt",
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/env-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer runtime-key"
+					}
+				},
+				{
+					"phase": "prompt",
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/env-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer runtime-key"
+					}
+				},
+				{
+					"phase": "compaction",
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/env-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer runtime-key"
+					}
+				},
+				{
+					"phase": "compaction",
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/env-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer runtime-key"
+					}
+				}
+			],
+			"errors": []
+		},
+		{
+			"name": "stored",
+			"env": {
+				"CLOUDFLARE_API_KEY": "env-key",
+				"CLOUDFLARE_ACCOUNT_ID": "env-account",
+				"CLOUDFLARE_GATEWAY_ID": "env-gateway"
+			},
+			"stored": {
+				"cloudflare-workers-ai": {
+					"type": "api_key",
+					"key": "stored-key",
+					"env": {
+						"CLOUDFLARE_ACCOUNT_ID": "stored-account"
+					}
+				}
+			},
+			"models": [
+				[
+					"cloudflare-workers-ai",
+					"@cf/meta/llama-3.3-70b-instruct-fp8-fast"
+				]
+			],
+			"compact": true,
+			"requests": [
+				{
+					"phase": "prompt",
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/stored-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer stored-key"
+					}
+				},
+				{
+					"phase": "prompt",
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/stored-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer stored-key"
+					}
+				},
+				{
+					"phase": "compaction",
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/stored-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer stored-key"
+					}
+				},
+				{
+					"phase": "compaction",
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/stored-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer stored-key"
+					}
+				}
+			],
+			"errors": []
+		},
+		{
+			"name": "runtime-key-masks-stored",
+			"env": {
+				"CLOUDFLARE_API_KEY": "env-key",
+				"CLOUDFLARE_ACCOUNT_ID": "env-account",
+				"CLOUDFLARE_GATEWAY_ID": "env-gateway"
+			},
+			"stored": {
+				"cloudflare-workers-ai": {
+					"type": "api_key",
+					"key": "stored-key",
+					"env": {
+						"CLOUDFLARE_ACCOUNT_ID": "stored-account"
+					}
+				}
+			},
+			"runtimeKeys": {
+				"cloudflare-workers-ai": "runtime-key"
+			},
+			"models": [
+				[
+					"cloudflare-workers-ai",
+					"@cf/meta/llama-3.3-70b-instruct-fp8-fast"
+				]
+			],
+			"compact": true,
+			"requests": [
+				{
+					"phase": "prompt",
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/env-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer runtime-key"
+					}
+				},
+				{
+					"phase": "prompt",
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/env-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer runtime-key"
+					}
+				},
+				{
+					"phase": "compaction",
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/env-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer runtime-key"
+					}
+				},
+				{
+					"phase": "compaction",
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/env-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer runtime-key"
+					}
+				}
+			],
+			"errors": []
+		},
+		{
+			"name": "set-model",
+			"env": {
+				"CLOUDFLARE_API_KEY": "env-key",
+				"CLOUDFLARE_ACCOUNT_ID": "env-account",
+				"CLOUDFLARE_GATEWAY_ID": "env-gateway"
+			},
+			"runtimeKeys": {
+				"cloudflare-workers-ai": "workers-runtime-key",
+				"cloudflare-ai-gateway": "gateway-runtime-key"
+			},
+			"models": [
+				[
+					"cloudflare-workers-ai",
+					"@cf/meta/llama-3.3-70b-instruct-fp8-fast"
+				],
+				[
+					"cloudflare-ai-gateway",
+					"workers-ai/@cf/meta/llama-3.3-70b-instruct-fp8-fast"
+				]
+			],
+			"compact": true,
+			"requests": [
+				{
+					"phase": "prompt",
+					"method": "POST",
+					"url": "https://api.cloudflare.com/client/v4/accounts/env-account/ai/v1/chat/completions",
+					"headers": {
+						"authorization": "Bearer workers-runtime-key"
+					}
+				},
+				{
+					"phase": "prompt",
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/env-account/env-gateway/compat/chat/completions",
+					"headers": {
+						"cf-aig-authorization": "Bearer gateway-runtime-key"
+					}
+				},
+				{
+					"phase": "prompt",
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/env-account/env-gateway/compat/chat/completions",
+					"headers": {
+						"cf-aig-authorization": "Bearer gateway-runtime-key"
+					}
+				},
+				{
+					"phase": "compaction",
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/env-account/env-gateway/compat/chat/completions",
+					"headers": {
+						"cf-aig-authorization": "Bearer gateway-runtime-key"
+					}
+				},
+				{
+					"phase": "compaction",
+					"method": "POST",
+					"url": "https://gateway.ai.cloudflare.com/v1/env-account/env-gateway/compat/chat/completions",
+					"headers": {
+						"cf-aig-authorization": "Bearer gateway-runtime-key"
+					}
+				}
+			],
+			"errors": []
+		}
+	]
+}

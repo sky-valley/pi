@@ -489,7 +489,7 @@ func TestReadToolUsesSessionModelProfile(t *testing.T) {
 	}
 
 	// Switching the model mid-session must reach the already-built tool.
-	sess.SetModel(narrowModel, "")
+	sess.SetModel(narrowModel)
 	if w, h := readImage(); w > maxWidth || h > maxHeight {
 		t.Fatalf("read image %dx%d exceeds the model profile %dx%d", w, h, maxWidth, maxHeight)
 	}
@@ -618,7 +618,7 @@ func TestImageResizeProfileIsRaceFreeAcrossSetModel(t *testing.T) {
 	go func() {
 		defer close(done)
 		for i := 0; i < 200; i++ {
-			sess.SetModel(reg.Models[i%2], "")
+			sess.SetModel(reg.Models[i%2])
 		}
 	}()
 	for i := 0; i < 200; i++ {

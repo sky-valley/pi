@@ -338,7 +338,7 @@ func TestSessionBashEnvIsLive(t *testing.T) {
 		t.Fatalf("session id should be absent without a recorder: %#v", env)
 	}
 
-	sess.SetModel(&ai.Model{ID: "model-b", Provider: "prov-b", Name: "B"}, "")
+	sess.SetModel(&ai.Model{ID: "model-b", Provider: "prov-b", Name: "B"})
 	env = sess.bashSessionEnv()
 	if env["PI_MODEL"] != "model-b" || env["PI_PROVIDER"] != "prov-b" {
 		t.Fatalf("model switch not reflected: %#v", env)
@@ -393,10 +393,10 @@ func TestBashSessionEnvRaceWithSetModel(t *testing.T) {
 	go func() {
 		defer close(done)
 		for i := 0; i < 20; i++ {
-			sess.SetModel(&ai.Model{ID: "model-b", Provider: "prov-b", Name: "B"}, "")
+			sess.SetModel(&ai.Model{ID: "model-b", Provider: "prov-b", Name: "B"})
 			sess.Record(nil)
 			sess.SetThinkingLevel(agent.ThinkOff)
-			sess.SetModel(&ai.Model{ID: "model-a", Provider: "prov-a", Name: "A"}, "")
+			sess.SetModel(&ai.Model{ID: "model-a", Provider: "prov-a", Name: "A"})
 		}
 	}()
 	for i := 0; i < 20; i++ {

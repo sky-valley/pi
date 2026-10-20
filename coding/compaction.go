@@ -853,35 +853,86 @@ func messagesAsLlm(messages []agent.AgentMessage) []ai.Message {
 	return llmMessages
 }
 
-// summarizationRequestModel returns the model a summarization request must
-// actually be sent to (pi AgentSession._getSummarizationRequestAuth, upstream
-// 18d65de62 / #6768).
+// summarizationRequest is the model and auth a summarization request is sent
+// with (pi AgentSession._getSummarizationRequestAuth, upstream 18d65de62 /
+// #6768): the auth the session's Models resolves for its model — the API
+// key, the headers less the ones the auth deletes, and the env (a Cloudflare
+// account id, for one, which fills the endpoint) — and the model rebuilt on
+// the base URL the auth carries.
 //
 // A provider can carry its endpoint in the credential rather than in the
 // catalog: GitHub Copilot's Business/Enterprise base URL comes from the stored
-// OAuth credential's toAuth(). The Models runtime normally rebuilds the request
-// model from resolved auth, but a request that carries an explicit apiKey
-// override short-circuits resolution to the api-key path (auth_resolve.go:
-// "overrides?.apiKey !== undefined"), which never reaches the stored OAuth
-// credential — so no base URL is resolved and no rebuild happens. Summarization
-// always passes the session's key, so without this a Copilot compaction request
-// goes to the Individual endpoint on a Business/Enterprise account.
+// OAuth credential's toAuth(). The request that follows carries the resolved
+// key explicitly, and an explicit key short-circuits Models' resolution to the
+// api-key path (auth_resolve.go: "overrides?.apiKey !== undefined"), which
+// never reaches the stored OAuth credential — so the base URL must be taken
+// here, or a Copilot compaction request goes to the Individual endpoint on a
+// Business/Enterprise account.
 //
-// Resolution is best-effort, exactly like pi's: any failure falls back to the
-// session's own model. Unlike pi, the port does not take the resolved apiKey or
-// headers here — a coding Session is constructed with the caller's already
-// resolved key and headers, where pi's AgentSession resolves them at this point.
-func (s *Session) summarizationRequestModel(ctx context.Context) *ai.Model {
+// Resolution is best-effort, as pi's is: when it fails or resolves nothing,
+// the request goes to the session's own model with no auth of its own, and
+// the stream resolves it. A session without Models has no runtime to ask, and
+// its compat stream resolves each request's key from the environment.
+func (s *Session) summarizationRequest(ctx context.Context) (*ai.Model, summarizationAuth) {
 	if s.models == nil || s.Model == nil {
-		return s.Model
+		return s.Model, summarizationAuth{}
 	}
 	result, err := s.models.GetAuth(ctx, s.Model, nil)
-	if err != nil || result == nil || result.Auth.BaseURL == "" {
-		return s.Model
+	if err != nil || result == nil {
+		return s.Model, summarizationAuth{}
+	}
+	auth := summarizationAuth{apiKey: result.Auth.APIKey, headers: withoutDeletedHeaders(result.Auth.Headers), env: result.Env}
+	if result.Auth.BaseURL == "" {
+		return s.Model, auth
 	}
 	requestModel := *s.Model
 	requestModel.BaseURL = result.Auth.BaseURL
-	return &requestModel
+	return &requestModel, auth
+}
+
+// summarizationAuth is the auth summarizationRequest resolved.
+type summarizationAuth struct {
+	apiKey  string
+	headers ai.ProviderHeaders
+	env     map[string]string
+}
+
+// withoutDeletedHeaders is pi's withoutDeletedHeaders (agent-session.ts): the
+// headers less the ones an auth deletes (nil values).
+func withoutDeletedHeaders(headers ai.ProviderHeaders) ai.ProviderHeaders {
+	if headers == nil {
+		return nil
+	}
+	kept := make(ai.ProviderHeaders, len(headers))
+	for name, value := range headers {
+		if value != nil {
+			kept[name] = value
+		}
+	}
+	return kept
+}
+
+// withSessionHeaders lays the session's Headers over a summary's auth
+// headers, as they lie over every request the session makes; a session
+// header replaces an auth header of the same name in any case. pi has no
+// session headers.
+func withSessionHeaders(auth, session ai.ProviderHeaders) ai.ProviderHeaders {
+	if len(session) == 0 {
+		return auth
+	}
+	merged := make(ai.ProviderHeaders, len(auth)+len(session))
+	for name, value := range auth {
+		merged[name] = value
+	}
+	for name, value := range session {
+		for existing := range merged {
+			if jstext.ToLower(existing) == jstext.ToLower(name) {
+				delete(merged, existing)
+			}
+		}
+		merged[name] = value
+	}
+	return merged
 }
 
 // summarizationFailed reports whether a summarization response is unsafe to
@@ -902,9 +953,10 @@ func summarizationFailed(reason ai.StopReason) bool {
 }
 
 // completeSummarization sends one summarization request (pi completeSummarization
-// + createSummarizationOptions): the session's API key, headers, and — when the
-// model supports reasoning and the session's thinking level is set and not off —
-// the thinking level are passed through. It sets no maxTokens (upstream
+// + createSummarizationOptions): the auth summarizationRequest resolved (its
+// key, headers and env), the session's headers, and — when the model supports
+// reasoning and the session's thinking level is set and not off — the thinking
+// level are passed through. It sets no maxTokens (upstream
 // 6fcb48670): the provider sizes the output from the actual request, the
 // model's output limit reduced to fit the remaining context, as for normal
 // turns, so ReserveTokens only decides when compaction starts. The request
@@ -927,11 +979,12 @@ func (s *Session) completeSummarization(ctx context.Context, promptText string, 
 	if sessionID == "" {
 		sessionID = mustUUIDv7()
 	}
-	requestModel := s.summarizationRequestModel(ctx)
+	requestModel, auth := s.summarizationRequest(ctx)
 	opts := &ai.SimpleStreamOptions{StreamOptions: ai.StreamOptions{
 		ProviderRequestOptions: ai.ProviderRequestOptions{
-			APIKey:  s.apiKey,
-			Headers: s.Agent.Headers,
+			APIKey:  auth.apiKey,
+			Headers: withSessionHeaders(auth.headers, s.Agent.Headers),
+			Env:     auth.env,
 		},
 		CacheRetention: ai.CacheNone,
 		SessionID:      sessionID,

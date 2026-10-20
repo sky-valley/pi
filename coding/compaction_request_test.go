@@ -315,9 +315,10 @@ func TestSummarizationIsolatesRouting(t *testing.T) {
 // The provider mirrors upstream's: the Enterprise base URL is reachable only
 // through the stored OAuth credential's toAuth. An explicit apiKey override
 // short-circuits resolution to the api-key path, so the Models runtime resolves
-// no base URL and never rebuilds the request model — summarization always passes
-// the session's key, which is exactly how the Individual endpoint leaked
-// through. This exercises the real ai.Models runtime, not a stream double.
+// no base URL and never rebuilds the request model — and summarization passes
+// the key it resolved explicitly, which is exactly how the Individual endpoint
+// leaked through. The session streams through the real ai.Models runtime, as
+// upstream's SDK-style stream wrapper does, not a stream double.
 func TestSummarizationUsesAuthResolvedBaseURL(t *testing.T) {
 	const individualBaseURL = "https://api.individual.githubcopilot.com"
 	const enterpriseBaseURL = "https://api.enterprise.githubcopilot.com"
@@ -376,18 +377,10 @@ func TestSummarizationUsesAuthResolvedBaseURL(t *testing.T) {
 	models := ai.CreateModels(&ai.CreateModelsOptions{Credentials: credentials})
 	models.SetProvider(provider)
 
-	// The SDK-style wrapper upstream installs as the session's stream function.
-	streamFn := func(ctx context.Context, m *ai.Model, req ai.TranscriptContext, opts *ai.SimpleStreamOptions) *ai.AssistantMessageEventStream {
-		var runtimeOpts ai.ModelsSimpleStreamOptions
-		if opts != nil {
-			runtimeOpts.SimpleStreamOptions = *opts
-		}
-		return models.StreamSimple(ctx, m, ai.Context{Messages: req.Messages}, &runtimeOpts)
-	}
-
+	// The session streams through models, as upstream's SDK-style wrapper
+	// streams through the model runtime.
 	sess := newTestSession(t, SessionOptions{
-		Model: catalogModel, APIKey: "session-key", Cwd: t.TempDir(),
-		NoTools: NoToolsAll, StreamFn: streamFn, Models: models,
+		Model: catalogModel, Cwd: t.TempDir(), NoTools: NoToolsAll, Models: models,
 	})
 	older := []agent.AgentMessage{
 		ai.NewUserText("summarize me", 1),
@@ -465,9 +458,14 @@ func TestSummarizationFallbacksComeFromTheCatalog(t *testing.T) {
 			if tc.compat != "" {
 				model.Compat = []byte(tc.compat)
 			}
+			// The adapter directly, with a key, as a session's request carries one.
+			withKey := func(ctx context.Context, m *ai.Model, req ai.TranscriptContext, opts *ai.SimpleStreamOptions) *ai.AssistantMessageEventStream {
+				keyed := *opts
+				keyed.APIKey = "k"
+				return providers.StreamSimpleAnthropic(ctx, m, req, &keyed)
+			}
 			sess := newTestSession(t, SessionOptions{
-				Model: model, APIKey: "k", Cwd: t.TempDir(), NoTools: NoToolsAll,
-				StreamFn: providers.StreamSimpleAnthropic,
+				Model: model, Cwd: t.TempDir(), NoTools: NoToolsAll, StreamFn: withKey,
 			})
 			older := []agent.AgentMessage{
 				ai.NewUserText("summarize me", 1),

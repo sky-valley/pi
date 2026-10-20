@@ -189,7 +189,7 @@ func TestSessionDeclaresPromptAcrossTurnsLikePi(t *testing.T) {
 					states = append(states, state)
 					if then := reply.Then; then != nil {
 						if then.Model != "" {
-							sess.SetModel(reg.GetModel(then.Model), "")
+							sess.SetModel(reg.GetModel(then.Model))
 						}
 						if then.ThinkingLevel != "" {
 							sess.SetThinkingLevel(agent.ThinkingLevel(then.ThinkingLevel))

@@ -58,7 +58,6 @@ type SessionOptions struct {
 
 	SystemPrompt  string
 	ThinkingLevel agent.ThinkingLevel
-	APIKey        string
 	SessionID     string
 
 	// TrustProject enables discovery of project-local resources under
@@ -70,11 +69,16 @@ type SessionOptions struct {
 	// of the prompt. See LoadSkillsWithTrust.
 	TrustProject bool
 
-	// Models, when set, is the model runtime used to resolve request auth for
-	// summarization requests (pi AgentSession's _modelRuntime). It is needed
-	// only for providers that carry their endpoint in the credential rather
-	// than the catalog — see Session.summarizationRequestModel. Nil leaves
-	// summarization on the session's own model, as before.
+	// Models is the session's model runtime (pi createAgentSession's
+	// modelRuntime): every request the session makes — turns, compaction and
+	// branch summaries — streams through its StreamSimple, which resolves the
+	// request's auth from its credential store and the environment as the
+	// model's provider does, and a summary takes the auth it resolves. A
+	// session holds no API key of its own, as pi's does not: a host that has
+	// a key sets it on the runtime's credentials (see RuntimeCredentials).
+	// Nil streams through the compat global ai.StreamSimple, which resolves
+	// each request's key from the environment — pi's default runtime reads
+	// auth.json as well, which the port does not have.
 	Models ai.Models
 
 	// Per-request provider controls (all optional).
@@ -114,8 +118,9 @@ type SessionOptions struct {
 	// Compaction, when non-nil, installs automatic context-window compaction.
 	// Use DefaultCompactionSettings() for pi's defaults.
 	Compaction *CompactionSettings
-	// StreamFn overrides the stream function (for tests). Default: ai.StreamSimple.
-	// Either way the session asserts a chat model first (see sessionStreamFn).
+	// StreamFn overrides the stream function (for tests). Default: Models'
+	// StreamSimple, or ai.StreamSimple without Models. Either way the session
+	// asserts a chat model first (see sessionStreamFn).
 	StreamFn agent.StreamFn
 }
 
@@ -125,13 +130,24 @@ type SessionOptions struct {
 // through ModelRuntime.streamSimple, whose first act is assertChatModel
 // (upstream a328aa89a), so a model of another type fails with "Model
 // <provider>/<id> is not a chat model" before any provider dispatch. The port's
-// session streams through ai.StreamSimple, the compat global, which asserts
+// session streams through models' StreamSimple, which asserts it too, or,
+// without models, through ai.StreamSimple, the compat global, which asserts
 // nothing (pi's compat streamSimple does not either), so the session asserts
-// here and then delegates to next, or to ai.StreamSimple when next is nil.
-func sessionStreamFn(next agent.StreamFn) agent.StreamFn {
+// here and then delegates to next, or to models or ai.StreamSimple when next
+// is nil.
+func sessionStreamFn(models ai.Models, next agent.StreamFn) agent.StreamFn {
 	if next == nil {
 		next = func(ctx context.Context, model *ai.Model, req ai.TranscriptContext, opts *ai.SimpleStreamOptions) *ai.AssistantMessageEventStream {
 			return ai.StreamSimple(ctx, model, ai.Context{Messages: req.Messages}, opts)
+		}
+		if models != nil {
+			next = func(ctx context.Context, model *ai.Model, req ai.TranscriptContext, opts *ai.SimpleStreamOptions) *ai.AssistantMessageEventStream {
+				var options *ai.ModelsSimpleStreamOptions
+				if opts != nil {
+					options = &ai.ModelsSimpleStreamOptions{SimpleStreamOptions: *opts}
+				}
+				return models.StreamSimple(ctx, model, ai.Context{Messages: req.Messages}, options)
+			}
 		}
 	}
 	return func(ctx context.Context, model *ai.Model, req ai.TranscriptContext, opts *ai.SimpleStreamOptions) *ai.AssistantMessageEventStream {
@@ -416,7 +432,6 @@ type Session struct {
 	Model    *ai.Model
 	Cwd      string
 	Recorder *SessionRecorder
-	apiKey   string
 	models   ai.Models
 	// recMu guards Recorder against the tool-execution goroutine reading it for
 	// bash session metadata while Record attaches one.
@@ -540,12 +555,12 @@ func (s *Session) LoadBranch(p BranchProjection) {
 	s.setCompaction(resumedCompaction(p))
 }
 
-// SetModel switches the active model (and API key) for future turns.
-func (s *Session) SetModel(model *ai.Model, apiKey string) {
+// SetModel switches the active model for future turns. As pi's setModel, it
+// takes no key: the session's requests resolve the new model's auth as they
+// did the old one's (see SessionOptions.Models).
+func (s *Session) SetModel(model *ai.Model) {
 	s.Model = model
-	s.apiKey = apiKey
 	s.Agent.SetModel(model)
-	s.Agent.GetApiKey = func(provider string) string { return apiKey }
 	if r := s.recorder(); r != nil {
 		r.RecordModelChange(model.Provider, model.ID)
 	}
@@ -602,7 +617,7 @@ func NewSession(opts SessionOptions) (*Session, error) {
 	// reads them off the live ExtensionContext per call). The Session is
 	// allocated up front so the closure captures a stable, non-nil pointer; its
 	// Agent is filled in below, before NewSession returns and any tool can run.
-	sess := &Session{Cwd: cwd, Model: opts.Model, apiKey: opts.APIKey, models: opts.Models}
+	sess := &Session{Cwd: cwd, Model: opts.Model, models: opts.Models}
 	tools, err := resolveTools(cwd, opts, sess.bashSessionEnv, sess.currentModel)
 	if err != nil {
 		return nil, err
@@ -654,9 +669,8 @@ func NewSession(opts SessionOptions) (*Session, error) {
 			Model:         opts.Model,
 			ThinkingLevel: thinking,
 		},
-		StreamFn:        sessionStreamFn(opts.StreamFn),
+		StreamFn:        sessionStreamFn(opts.Models, opts.StreamFn),
 		SessionID:       opts.SessionID,
-		GetApiKey:       func(provider string) string { return opts.APIKey },
 		Temperature:     opts.Temperature,
 		MaxTokens:       opts.MaxTokens,
 		CacheRetention:  opts.CacheRetention,
