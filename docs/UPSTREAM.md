@@ -10,10 +10,10 @@ commit-by-commit sync pipeline that keeps it current.
 
 | What | Value |
 |---|---|
-| TS source fully reviewed/ported | **`5806068c2`** — "fix(coding-agent): store MCP OAuth credentials per server name and URL" (advanced 2026-10-01). **50 changes in `3dd803d7e..5806068c2` on the union range, 45 first-parent**: merge `8f89293a2` carries the five async-SQLite commits of PR #10232 and `d4d74eb19` is empty. **One release crossed:** v0.99.2 (`005af57d8`), confirmed by an explicit tag fetch and `packages/ai/package.json` (0.99.2). Upstream `ci.yml` is green on HEAD and on every ported sha; the release commit has no run of its own. **Verdicts: 30 port / 20 n/a / 0 decide.** **Shipped:** the 0.99.2 regen → `54e4e1b`; `2bbfcca43` → `facf542`; `295cc72b0` → `df6cf46`; `a9424cd43` → `74ff0ec`. Review fixes: `637eee4`, `954a549` (ai.Schema keeps pi's keyword order and off-type values), `dd52be4` (federation: no panic on an uncomparable client, credential URLs refused). Boy scout: `97537b1` (the built-in tools' numeric parameters were `integer` since the initial commit; pi's are `number`), `ad7f0c6` (the CLI gates on the provider's auth check, so ANTHROPIC_AUTH_TOKEN-only and federated setups start). **Queued (26):** row 1 +1 (`7a11fe1c7`), row 8 +11 (the async-SQLite PR with its merge, Packages 19–23), row 19 +1 (`c34f2d6ad`), row 20 +1 (`028c0ec56`), row 21 +10, row 22 +2 (`d2931ad3d`, plus the codemode halves of `1c7e7df76`/`e029c3ed0`, counted under row 21), row 24 +1 (`a0660b174`). The release commit counts as port for the regen. **n/a (20):** `4a42f8faf` (Bun binary packaging — E1; `workerUrl: string \| URL` has no meaning under wazero), `dc83372f8` (`core/extensions/loader.ts` — E1), `0582d9c11` (renderers and previews — E1), `db6cc71dc` (`defaultTools` on `/reload`: settings and the reload lifecycle — E1; its `sdk.ts` flag feeds only that path), `b35af04f4` and `41169ba2a` (TUI — E1), `0c453048b` (`cli/args`, `main.ts` — E1), `5609b0d6c` and `70c036211` (the experimental TUI agent on pi-durable — E1, not exported, `dist/experimental` unpublished), `65117e31f` and `17f3dccbe` (`packages/tui`), `a4715ec9b` (CI), `d4d74eb19` (empty merge), and seven docs or changelog commits (`96377f5c2`, `b72cf98ec`, `4bae86775`, `5b5ccddfa`, `37c9d0d20`, `002c183e1`, `955cc6665`). |
-| npm build the byte-goldens were captured from | `@earendil-works/pi-ai` **0.99.2** (and `pi-coding-agent` 0.99.2), integrity checked against the registry; `ai/models_catalog.json` is regenerated from it (`54e4e1b`: +6 models, −0, no `thinkingLevelMap`/compat/api/fallback change). The lockfile moves no SDK in range (`@anthropic-ai/sdk` stays 0.124.0, which federation's oracle runs). **New captures, all from 0.99.2:** `ai/providers/testdata/retry-delay/retry-delay-0.99.2.json`, `ai/providers/testdata/anthropic-strict-keywords/strict-keywords-0.99.2.json`, `ai/providers/testdata/anthropic-federation/anthropic-federation-0.99.2.json`, `coding/testdata/toolschemas/toolschemas-0.99.2.json`. **Re-captured:** `coding/testdata/defaultmodels/default-models-5806068c2.json` (src at the pin; identical to the 0.99.2 dist's table and to the previous capture). |
-| Parity proofs at the pin | **2026-10-01.** Every behaviour change was observed RED for a behavioural reason before it shipped, and each commit carries its red; each new capture discriminates against 0.99.1 (retry 8/12 rows, strict keywords 22/28) or against the pre-fix tree. Catalog: endpoint-pinned — the outgoing file reproduced from 0.99.1 byte for byte, the new one derived twice from 0.99.2 (`MODELS`, and compat's `getProviders`/`getModels`). **difftest re-pinned** (`31eefbc`: `PI_UPSTREAM_SHA` 5806068c2, `PI_NPM_VERSION` 0.99.2) at **66 PASS / 0 KNOWN / 0 FAIL, all against the published build**; the new `strict-tools-anthropic-rejected-keywords` scenario fails against the tree before `df6cf46`. Full gate on the integrated tree: `gofmt -l` clean, `go build`/`go vet`, `go test -race ./... -count=1` green, `GOOS=windows` build + vet, `GOOS=linux GOARCH=386` build. |
-| Reviewed via | 2026-10-01 — triage of all 50 changes from the real diffs (hunks read for every ai, agent and coding-agent core change; merges diffed against each parent). **One round:** pi-go-review and pi-parity-review over `826398c..5013717` (regen, retry, strict keywords): all faithful on the measured paths (41 retry header cases, 46 strict schemas x2 against the 0.99.2 dist). Fixed: the strict check's keyword order and decode lossiness (`954a549`), dead code and stale comments plus `1e+21` rendering (`637eee4`), an over-claiming test, and the boy-scout tool-schema types (`97537b1`). A judgement review of `74ff0ec` (both lenses) against the SDK 0.124.0 it mirrors: faithful on the porter's 29 oracle rows and 46 more of the reviewer's; **three MEDs, all fixed** — a panic comparing an uncomparable HTTP client, the exchange skipping the credential-URL refusal, the CLI gate — plus the abort race, the double clock read, sleep-synchronized tests and a Models test that could not see the env hand-off (`dd52be4`, `ad7f0c6`; each red observed, five mutations killed). Left as is: `http://127.1` stays refused (pi canonicalizes it to loopback; Go is stricter). D61 extended: federation follows the auth-token arm. New debt: **K30** (V8's fallback `Date.parse` for a Retry-After). |
+| TS source fully reviewed/ported | **`d2e7d8b7c`** — "feat(ai): add MiniMax-M3.1-Flash and hide only old MiniMax models" (advanced 2026-10-19). **338 changes in `5806068c2..d2e7d8b7c` on the union range, 338 first-parent** (no merges). **Eight releases crossed:** v1.0.0 `a13d35a74`, v1.0.1 `a7229ddc2`, v1.0.2 `cd32f7725`, v1.0.3 `d78dc83d6`, v1.0.4 `7c10bd433`, v1.1.0 `abe508e1b`, v1.2.0 `06a466935`, v1.3.0 `71023aec1`; the intermediate ones were skipped and the catalog regenerated once, from 1.3.0 (2026-10-19 ruling). Upstream `ci.yml` (workflow-scoped): HEAD green; over the 338 shas 159 success / 65 failure / 39 cancelled / 75 no run (v1.3.0's release commit has none of its own). The ported shas with a red run (`27075fe07`, `36a686ee8`/`3ba22ce17`/`f284a2460`, `091bcc099`, `d7f7e0dfe`, `0fbdbd3f8`, `d677d0ee7`, `ee409a85f`, `48909d987`) failed on test-side issues fixed later in range; every port took its final form, at the green HEAD. **Verdicts: 202 port / 136 n/a / 0 decide** — 59 ordinary (8 of them release commits, drained by the one regen), 129 QUEUED, 14 CATALOG-ONLY (13 drained, `d2e7d8b7c` queued). **Shipped:** deletions `83a344c` (`7472cda0d`: protocol, client, server), `d202916` (`0104fef1e`: chord's service runtime), `8adf788` + `0e4f9e1` (`7fd478a2e`: harness provenance, `retainedTail`); regen `32e6dd2`, `797d14f`, `6d97ae3`, `ada8e8c`; ai core `d59beea`–`2fc2222` (eight retry patterns, OAuth refresh past cancellation, 3.5 chars/token, response and tool durations, OpenRouter personalization, the AI binding fetch); openai/google/json/azure `a6c1668`–`48bf4b6`; anthropic `bcbea91`–`7f552de` (inline tools, SDK 0.129.0, strict fallback, error-result images, off thinking, cross-model thinking); telemetry `061629c`, `7fedbfa`, `32eca5d`, `348aa86` (`telemetrytest`, pi's adapter conformance suite); coding `b8327f7`–`9a6d5bd`; chord `4b8f194` (`091bcc099`); **pi-env, ported whole** (owner ruling 2026-10-19) as the `env/` submodule — daemon `27ec0f5`–`1ef0b3e`, client `6e35a53`–`b2ac22b`, merged `1de18ae`. Boy scout and review fixes: `ae51965` (`fed6009cc`), `602450c` (`55adba4f2`), `8c84cb3` (`8e53e0e49`), `418b74e` (`2f4f283cc`), `9c569f5` (K18's anthropic half), `ddb890c`, `1cfe8ea`, `59ec9e7`, `e12b8e6`, `1849a00`, `1363606`; T's `156067c`–`6e11500`, C1's `3e43a9c`–`7be8238`, C2's `828dd7a`–`f323fab` and F1's `9a4a5ff`–`e5478ac`, among them Cloudflare auth and endpoints as pi has them (`828dd7a`, `ccefe2b`; pre-pin `129eb460c`, `49fbe6834`, `bdd5c53bc`, `9993c9690`, `fed6009cc`, `a7d17e39a`), pi's runtime API key on a session's `Models` (`059d9c6`, `4a4de98`) and `BuiltinModels(*CreateModelsOptions)` (`9a4a5ff`). **Queued (129):** row 1 +3, 2 +1, 3 +3, 6 +2, 8 +57, 9 +2, 10 +1, 12 +3, 20 +2, 21 +10, 22 +14, new row 27 (chord2 runtime) +14, plus riders from ordinary ports on rows 3–6, 8, 9, 12, 19–23 and new row 26 (agent `streamProxy`). The 15 pi-env deltas shipped in-cycle (triage's proposed row 25 was never opened), `b39979799` closed row 14, and `48dd1e2f0`'s server/experimental hunks died with `7472cda0d`. Rows 7, 11 and 14 closed. **n/a (136):** 53 E1 host, 60 noise (docs, CHANGELOG, CI, nix and packaging, repo scripts), 19 upstream-test-only, 1 E3 (`0f4b1465a`), 3 with no meaning in Go (`b30a6dd77` worker_threads resize replies, `4130bd5b3` Node `--watch` worker messages, `7d75a0e3e` chord's `nodeLoader`). |
+| npm build the byte-goldens were captured from | `@earendil-works/pi-ai` **1.3.0** (and `pi-coding-agent`, `pi-env`, `pi-durable` 1.3.0). `ai/models_catalog.json` regenerated once from it (`797d14f`): 867,163 → 939,772 B, 1,529 → **1,614 models** (+140/−55, 44 re-keyed, 366 changed) across an unchanged 42 providers, `azure-openai-responses` renamed `azure`. `@anthropic-ai/sdk` 0.124.0 → **0.129.0** (`b271b0a52`; diff audited, federation re-captured over a 0.124.0 control). **New captures** (1.3.0 build unless noted): `ai/testdata/{envkeys,setup-error-timing,key-order,validation-errors,builtin-auth}` and `telemetry` (src at `d2e7d8b7c`: requests, and compat's routing); 17 under `ai/providers/testdata` (`blank-tool-output` src at `4dd2b149d`; `cloudflare-auth`, 1,106 rows incl. 3 oauth), `ai/providers/testdata/unported-apis`, `coding/testdata/runtimekey` (a real pi `AgentSession` over `ModelRuntime.create`, 5 scenarios, 21 requests); `coding/testdata/{toolselection,modelresolver,readimagenote}`; sessparity `22_compaction_retained_tail`; in `env/`, `daemon/testdata/oracle/{darwin,linux}.json` (npm 1.3.0's Rust daemons), `testdata/{differential,wire,connection,ssh}` and `internal/nodepath/testdata/node.json`. **Re-captured**, each with a control at the sha's parent: retry-classify, response-model, streaming-json, google-thinking, openai-stream, anthropic-sse, httperror (+ byte rows), stream-abort, abort-before-response, jstrim, transcript anthropic-native, systemprompt and toolschemas (now from the build), defaultmodels (src `d2e7d8b7c`), chord/delta's `upstream_delta.json` (src `d2e7d8b7c`; every earlier record byte-identical). **Src captures to redo from the first release that ships them:** compaction `requests`/`resume` (`6fcb48670`), both telemetry files (`2ec55d808`). |
+| Parity proofs at the pin | **2026-10-19.** Every behaviour change was observed RED for a behavioural reason before it shipped (the reds are in the commit bodies), and every re-capture carries a control at the sha's parent that reproduces the old file. Catalog endpoint-pinned (0.99.2 reproduced byte for byte; 1.3.0 derived twice) plus a 23-pair payload sweep against 1.3.0's compat `streamSimple`. pi-env: upstream's `packages/env/test` at `d2e7d8b7c` passes against the Go daemon exactly as against the Rust one (85 pass / 2 skip darwin-arm64, 86 / 1 linux-arm64), `TestOracle` replies are byte-equal to the Rust daemon's (darwin; Linux against the musl build), the client's ported suites pass against both daemons, and 41 of 42 mutants were killed (the survivor is equivalent on every input tested). **difftest** re-pinned to `d2e7d8b7c` / npm 1.3.0 (`82de5d9`): 66 PASS / 0 KNOWN / 0 FAIL on `e5478ac`; `anthropic-native-tool-changes`, red against 0.99.2 since `bcbea91` (the inline-tools beta, `b271b0a52`), passes. **Gate on the integrated tree (`e5478ac`), green:** `gofmt -l` clean, build + vet, `go test -race ./...` (11 packages, `telemetry/telemetrytest` new), windows build + vet, linux/386 build, difftest build, `go test -race ./ai -count=30` (the C1-era flake, fixed by `156067c`); env through a workspace over root + env: build, vet, `go test -race ./...` (5 packages), windows and linux/386 build + vet; env with `GOWORK=off` (root v0.99.26 from the proxy): build + vet. |
+| Reviewed via | 2026-10-19 — triage of all 338 changes from the real diffs in six ranges (one per release interval), hunks read for every ai, agent, coding-agent core/extensions, chord, durable, env, mcp and codemode change. **One judgement round per slice** (pi-go-review + pi-parity-review, parity to the stem and idiomatic Go) over the slices D (deletions), R (regen), A1 (ai core), A2 (openai/google/json/azure), A3 (anthropic), T (telemetry), C1 (coding), C2 (chord and the T/C1 fixes), env daemon and env client; C2's findings were fixed in a last pass, F1. Every finding was fixed in-cycle, each shown red first, but two recorded as divergences (OpenRouter's null `min_prompt_tokens`, D94, with its reviewer's agreement; the hint appended to "Invalid tools option", D108): R's two (Gemini 4 `thinkingLevel` `2c687bb`; Azure Chat Completions `48bf4b6`, replacing the refusal stand-in), A1's three (setup-error timing `1cfe8ea`, OpenRouter's swappable fetch `59ec9e7`, assistant key order `1849a00`), A2's one (pi-messages `argumentsError` `e12b8e6`), A3's one (the eager no-credential setup error `1363606`), the daemon's six (the macOS watcher following links, Android < 12's pidfd SIGSYS, musl `execvp` and `realpath`, a closed handle killing in-flight reads, opendir with NUL, raw non-UTF-8 bytes in replies: `af8336f`–`1ef0b3e`, with Linux run for the first time, in a container), the client's seven (an oversized request hanging, a silent daemon behind a blocked write, Close from onChange deadlocking, concurrent onChange, a random abort, the maintainer's go env leaking into the embedded daemons, concurrent OnLog: `9c0794d`–`b2ac22b`), T's six (observe before delivering, the race behind C1's ~10% flake `156067c`; a `StartSpan` that never calls back failing like pi's instead of hanging `4cebca3`; no observer without telemetry, and the instrument cache's caveats `7d7826f`; compat's Cloudflare branch observed through `Models` `6e11500`; `telemetrytest` and the concurrency contract `348aa86`), C1's four (a modifier-only list under NoTools "all" `3e43a9c`, compaction's default retry `24adc3e`, catalog registration order `669ffcc`, a dead helper `7be8238`), C2's five plus its Cloudflare finding (compat's built-in baseline recorded at registration `c5dbe91`, `RegisterModel` loading the catalog first `f9b38af`, `GetApiProviders` in registration order `8f2816b`, setup-error timing before the observer `e2e1c3a`, a fresh `DefaultCompactionSettings()` per caller `0eba718`; Cloudflare auth `828dd7a`/`ccefe2b`, and on the way the SDKs' refusal of a request they cannot authenticate `fc3b432` and pi's display names on built-in api-key auth `f323fab`). F1's review (`82de5d9..f323fab`): Cloudflare auth, endpoints and headers faithful; one MED — the README's SDK pattern (a session key) sent Cloudflare requests to `{CLOUDFLARE_ACCOUNT_ID}` — fixed by mirroring pi's runtime key (`059d9c6`, `4a4de98`); six LOWs fixed or pinned (`9a4a5ff`, `a8dd334`, `ba9c7b2`, `aa4dce4`, `868e1e8`, `e5478ac`). New divergences D91–D109 and debt K31–K35; K18 narrowed to google; D16 retired; D62 deleted (the adapters build no gateway auth); D18, D24, D27–D29, D32–D34 and D43–D60 pruned with the code they described. |
 
 ## The scope boundary (rewritten 2026-08-27 — read this before triaging anything)
 
@@ -84,10 +84,10 @@ ledger has already recorded twice:
 
 | file | ported half | host half |
 |---|---|---|
-| `core/model-resolver.ts` | `defaultModelPerProvider` and the fallback-model construction → `coding/resolve.go` (`defaultModelPerProvider`, `buildFallbackModel`) | the host resolution flow. **The table has been the source of a MISS twice** (2026-07-26 `24e5cc04`, 2026-08-04 `c1019d920`); the standing rule to diff `defaultModelPerProvider` on every touch is still in force. At every re-pin, re-capture `coding/testdata/defaultmodels` — from the npm build when the pin is a release, from a src extraction at the pin otherwise (`capture.mjs --src`, file named by the sha) — and point the test at it: `TestDefaultModelPerProviderMatchesPi` requires the whole table to equal it |
+| `core/model-resolver.ts` | `defaultModelPerProvider`, the fallback-model construction and (since `9a6d5bd`, `d7f7e0dfe`) the reference-resolution policy → `coding/resolve.go` (`defaultModelPerProvider`, `buildFallbackModel`, `resolveModelReference`, `resolveCliModel`) | the host resolution flow: `resolveModelScope*`, `findInitialModel`, `restoreModelFromSession`. **The table has been the source of a MISS twice** (2026-07-26 `24e5cc04`, 2026-08-04 `c1019d920`); the standing rule to diff `defaultModelPerProvider` on every touch is still in force. At every re-pin, re-capture `coding/testdata/defaultmodels` — from the npm build when the pin is a release, from a src extraction at the pin otherwise (`capture.mjs --src`, file named by the sha) — and point the test at it: `TestDefaultModelPerProviderMatchesPi` requires the whole table to equal it |
 | `core/package-manager.ts` | project/user skill discovery → `coding/resources.go` (it is the `if (projectTrusted)` site the 2026-08-27 trust ruling cites) | npm install / self-update, no Go surface |
 | `core/trust-manager.ts` | the trust decision and gate (2026-08-27) | the prompt, selector and persistent store |
-| `packages/telemetry/src/index.ts` | the runtime `Span` contract (2026-08-06) | the schema half — E3 |
+| `packages/telemetry/src/index.ts` | the runtime contract (2026-08-06) with its propagation, links, metrics and capabilities, and the schema DATA (`telemetry/schema.go`, `NewTypedMetrics`; 2026-10-19) | the schema's type inference — E3 |
 | `core/model-runtime.ts` (2026-09-24) | the `Models` contract it forwards — the typed accessors and the chat guard on `stream`/`streamSimple`/`streamDeferred`/`cancelDeferred` → `ai.Models` (`ai/models_runtime.go`); image/classifier operations → Scope queue row 3 | auth.json credential store, models.json + extension composition (`provider-composer.ts`), radius wiring; the remote-catalog wrapping is row 19 |
 
 Three riders:
@@ -177,14 +177,18 @@ front of it.
 
 Fires when the construct is a **TypeScript type-level artifact with no runtime
 behavior**, so there is nothing to port. Today this is exactly one thing: the
-schema/type-inference half of `packages/telemetry` (`defineTelemetrySchema`,
-`Infer*`, `SchemaTelemetrySpan` — 2026-08-06). It is root-exported, which is
-why it needs E3 rather than reachability: exported *types* are not runtime
-surface. It shares `src/index.ts` with the ported runtime half, so **this one
-must be split by HUNK** — and it is the standing example of an exclusion that
-is not expressible as a path.
+type inference of `packages/telemetry`'s schema (`defineTelemetrySchema`'s
+typing, `Infer*`, `SchemaTelemetrySpan`, `createTypedSpanStarter`'s typing,
+`TypedTelemetryMetrics` — 2026-08-06, narrowed 2026-10-19). It is
+root-exported, which is why it needs E3 rather than reachability: exported
+*types* are not runtime surface. **The schema's DATA is not E3** and is ported
+(`telemetry/schema.go`): since `2ec55d808` pi-ai reads `AI_TELEMETRY_SCHEMA` at
+runtime, through `createTypedMetrics`, to hand adapters each metric's
+description, unit and boundaries. Inference and data share `src/index.ts` with
+the runtime contract, so **this one must be split by HUNK** — and it is the
+standing example of an exclusion that is not expressible as a path.
 
-Go generics do not change the answer: pi's schema half exists to make
+Go generics do not change the answer: the inference exists to make
 `Infer<typeof schema>` produce a compile-time span type, which is a TypeScript
 type-system feature with no runtime residue at all.
 
@@ -206,9 +210,8 @@ type-system feature with no runtime residue at all.
 | the built-in extensions' host files — `extensions/mcp/ui.ts`, `extensions/mcp/cli.ts` + `cli.lazy.ts`, `extensions/codemode/renderer.ts` | E1 | 2026-09-29. The `/mcp` screen, `pi mcp list\|login\|logout`, and codemode's TUI rendering. `extensions/mcp/index.ts` is not here: it mixes registration with ~20 lines of `/mcp` command and `ctx.ui` code, so it splits by hunk. |
 | `builtin:<name>` extension resolution — `package-manager.ts`'s built-in extension half, `resource-loader.ts`'s built-in loading, `source-info.ts` `BUILTIN_PATH_PREFIX`/`isSyntheticPath` | E1 (operator configuration) | 2026-09-29 (`4259686d9`). It enables and disables built-ins through the `extensions` setting (`-builtin:mcp`) and `-e builtin:<name>`; the Go features are switched on by session options, so it has no Go analog. `package-manager.ts`'s skill-discovery half is unaffected and stays split by hunk. |
 | `packages/evals` | E1 | 1,277 LOC. Upstream's own eval harness. |
-| — | — | **Not out, but not homed:** `packages/coding-agent/src/server/**` (161 LOC, `create-harness.ts`) was ruled IN on 2026-08-07 and is the harness factory; it is covered by Scope queue entry 8, not by this table. |
 | — | — | **No longer out:** `amazon-bedrock` and `openai-codex` are IN scope as queue entries 9 and 10, not exclusions. Their dependency consults were both ANSWERED 2026-08-31 (bedrock: `aws-sdk-go-v2` in a submodule; codex: no dependency needed to ship) — see E2. |
-| the telemetry schema/type-inference half | E3 | Split by HUNK — shares `src/index.ts` with the ported runtime half. |
+| the telemetry schema's type inference | E3 | Split by HUNK — shares `src/index.ts` with the ported runtime contract and the ported schema data. |
 | the trust prompt, selector and store — `cli/project-trust.ts`, `modes/interactive/components/trust-selector.ts`, and `core/trust-manager.ts`'s persistence | E1 | Asking the user is host surface. The trust *decision and gate* are ported (2026-08-27), so **`core/trust-manager.ts` splits by HUNK** — see the table above. |
 | docs, CHANGELOG, CI, `.github/`, `.pi/`, examples, per-package `package.json` version bumps, repo-root `scripts/` | — | Always noise; not a scope question. |
 
@@ -218,6 +221,55 @@ direction this boundary has always moved. If you believe something belongs out
 and no test reaches it, that is a `decide`: it means a test needs changing.
 
 ### Rulings (answers to `decide` escalations — triage must not re-ask)
+
+- **2026-10-19 — GOVERNING: pi-env is ported in full, this cycle, daemon
+  included. The daemon is rewritten in Go, its binaries are embedded with
+  `go:embed` in the `env` submodule, and `github.com/fsnotify/fsnotify` is
+  allowed as a dependency of that submodule.** Owner ruling, answering the
+  CONSULT every triage range that met `packages/env` raised (`ba03e03f2` added
+  `@earendil-works/pi-env`, first published in 1.0.4: a Durable `ExecutionEnv`
+  over SSH, with a Rust daemon shipped as prebuilt binaries in the npm package
+  and deployed by SHA-256). Triage split — one range recommended a Go daemon,
+  another deploying upstream's Rust binaries as a byte-golden peer — and the
+  owner chose the Go daemon: the mirror, with no foreign binaries in the
+  module.
+
+  What it settles, and what triage may therefore never re-ask:
+  1. `packages/env` is IN and has a Go base: the client (`src/**`) is package
+     `github.com/sky-valley/pi/env`, the daemon (`daemon/src/**`) is
+     `env/daemon` (mirrored module by module) with its binary `env/cmd/pi-env`.
+     **A Rust-only upstream change to `packages/env/daemon` is an ordinary
+     `port`** to `env/daemon`, never "the peer changed, re-check goldens". The
+     oracle is the npm build's Rust daemon: `TestOracle` compares replies byte
+     for byte, and upstream's `packages/env/test` runs against both daemons.
+  2. The embedded daemons (`env/bin/pi-env-<platform>-<arch>.gz` +
+     `manifest.json`, eight targets) are generated: `go generate ./...` in `env`
+     rebuilds them reproducibly (pinned go environment, `-trimpath`, recorded
+     toolchain). Any change to `env/daemon`, `env/internal/frame` or
+     `env/cmd/pi-env` regenerates and commits `env/bin` in the same change;
+     `TestEmbeddedDaemonsAreCurrent` fails until it does.
+  3. The submodule's dependencies are `golang.org/x/sys` and `fsnotify` (Linux
+     and Windows watching; macOS uses the daemon's own kqueue watcher), plus the
+     root module's `x/image` and `x/text` reached through `coding`.
+     `env/internal/policy` holds the daemon's graph to {x/sys, fsnotify} and
+     forbids cgo. The root module's graph is unchanged.
+  4. `env` is the first real submodule — see "Submodule shape" for its tag
+     series and release steps. The daemon's `Version` tracks pi-env's npm
+     version (`1.3.0`), since `hello.version` reports it.
+  5. The Durable types the client needs (`FileError`, `ExecutionError`,
+     `BinaryReader`, `WatchTarget`, …) live in package `env` until Scope queue
+     row 8 lands the durable `ExecutionEnv`; then they move there.
+
+- **2026-10-19 — skip the intermediate releases: one regen, from the last
+  release crossed, and one port release.** Owner, on this cycle's drift (eight
+  releases, v1.0.0 to v1.3.0). The catalog is regenerated once, from npm 1.3.0,
+  and goldens are captured from that build; the triage worklists' per-release
+  regens (1.0.2, 1.0.3/1.0.4, 1.1.0, 1.2.0) are drained by it, not run; and one
+  tag is cut, versioned by the last release (`v1.3.27`). The intermediate
+  releases get no regen, no tag and no `RELEASES.md` row, and the catalog-only
+  queue drains by ancestry of the LAST release (`git merge-base
+  --is-ancestor`). This is how the earlier two-release cycles ran too (v0.86.22,
+  v0.85.21), and it matches pi-sync's one-tag-per-cycle rule.
 
 - **2026-09-29 — GOVERNING: the built-in extensions pi's SDK exports are Go SDK
   features. MCP, codemode and tool_search are IN; the port mirrors their file
@@ -298,10 +350,11 @@ and no test reaches it, that is a `decide`: it means a test needs changing.
      `coding/` as the port's harness and port only the delta — is dead. It bought
      cheapness at the price of a layout that drifts from upstream's, and the
      owner has priced that trade the other way. `chord/` becomes a Go package in
-     this monorepo, and `agent/harness/**` grows beside `coding/`. Note what
-     mirroring actually requires here: upstream runs the harness and
+     this monorepo, and the durable runtime grows beside `coding/` (upstream's
+     `agent/src/harness` until `7fd478a2e` deleted it; `packages/durable` now).
+     Note what mirroring actually requires here: upstream runs the durable and
      coding-agent forks side by side with zero cross-imports, so the mirror
-     keeps **both** — see "Harness shape" below before assuming a merge.
+     keeps **both** — see "Durable shape" below before assuming a merge.
   2. **Upstream deletes, we delete.** No shims, no aliases, no deprecation
      window, no keeping a symbol because a tag published it. The 2026-08-19
      revert ruling's "unless a cut tag already published it" carve-out is
@@ -366,15 +419,6 @@ and no test reaches it, that is a `decide`: it means a test needs changing.
   first factory site — the question is who decides a context is installed, not
   who installs it; and prefer a no-op grounding to a category grounding, because
   a no-op survives a boundary rewrite.
-
-- **Do NOT make the CBOR decoder order-preserving.** `protocol/cbor/decoder.go`
-  resolves a CBOR map to `map[string]any`, losing wire key order, while the
-  encoder preserves an authored order via `OrderedObject`. The asymmetry is
-  deliberate: pi's decoder builds a plain JS object and gets insertion order for
-  free, so preserving it in Go would be invented machinery with no upstream
-  counterpart. Emission is what a peer observes and is correct. **Do not
-  "complete the symmetry."** Safe only while a decoded transcript stays a display
-  surface and never reaches a model.
 
 - **Two verified-and-rejected parity findings; do not re-raise.** (1) The 15s
   OAuth refresh bound belongs to `resolveStoredOAuth` only
@@ -567,72 +611,45 @@ and no test reaches it, that is a `decide`: it means a test needs changing.
   `internal/policy/deps_test.go` when the submodule actually exists. Absent CI it
   is a release-checklist step run at each pin advance.
 
-- **2026-08-31 — the session-backends driver consult is answered NEITHER, NOT
-  YET: entry 7 stays queued and the root module takes no SQLite driver.** The
-  question as posed ("`modernc.org/sqlite` or `mattn/go-sqlite3`?") rested on a
-  premise that had gone stale. Verified at the pin, not from the 08-27 note:
-  `git grep -l better-sqlite3 853a80d26` exits 1 — the string is absent from the
-  whole upstream tree — and `packages/session-backends/sqlite-node/package.json`
-  lists exactly two dependencies, `@earendil-works/pi-ai` and
-  `@earendil-works/pi-agent-core`, **no sqlite dependency of any kind**. The
-  backend is Node's builtin `node:sqlite` gated by `engines.node >=22.19.0`, and
-  upstream split the package out so the core would not pull native sqlite in.
-  Taking either Go driver would therefore add a native dependency in order to
-  match an upstream that has none. The second and stronger reason: entry 7 is a
-  backend *implementation* of the 8c `SessionStorage`/`SessionRepo` seam, and 8c
-  is recorded here as "NOT STARTED, owner-gated … do not fund until the owner
-  wants pluggable durability as a product feature". Choosing a driver now picks
-  flooring for an unapproved storey — nothing in the port imports session
-  storage today (`SessionRepo`/`SessionStorage` appear in no Go file; the lone
-  grep hit is a substring of `TestRemoteSessionReportsSubscriberFailures`).
+- **2026-08-31 — SQLite: when the port needs it, the driver is
+  `modernc.org/sqlite`, in a `github.com/sky-valley/pi/backends/sqlite`
+  submodule with its own tag series, never in the root module.** Asked first
+  for `packages/session-backends`, which `7fd478a2e` deleted (Scope queue row 7
+  closed); it now governs the SQLite storage on row 8 — durable's
+  `storage/sqlite/**`, whose drivers `c268154ca` moved into chord's `./sqlite`,
+  `./sqlite/node` and `./sqlite/cloudflare` exports. Upstream still takes no
+  sqlite package: the node driver is Node's builtin `node:sqlite`, and the
+  cloudflare one adapts a Durable Object's `ctx.storage.sql`, which has no
+  meaning in Go (dropped when row 8 lands).
 
-  **The merits are nonetheless settled, so 8c can be answered in one line.**
-  Established by EXECUTING a probe against both drivers, not by reading docs:
-  `modernc.org/sqlite` v1.57.0 (SQLite 3.53.3) passes every exotic construct the
-  upstream schema uses — FTS5 external-content with `content_rowid`, the
+  **The merits, established by EXECUTING a probe against both drivers:**
+  `modernc.org/sqlite` v1.57.0 (SQLite 3.53.3) passes every exotic construct
+  the upstream schema used — FTS5 external-content with `content_rowid`, the
   `trigram remove_diacritics 1` tokenizer, the `ai`/`ad`/`au` sync triggers,
   `VALUES('rebuild')`, `bm25()` + `MATCH`, conditional `UPSERT … RETURNING`,
   nested `SAVEPOINT`/`ROLLBACK TO`, `WITHOUT ROWID`, WAL and `BEGIN IMMEDIATE` —
   **with no build tags**. `mattn/go-sqlite3` needs cgo *and* a non-default
   `-tags sqlite_fts5`, failing at runtime with `no such module: fts5` without
-  it. If 8c ever opens, the driver is `modernc.org/sqlite`, and it belongs in a
-  `github.com/sky-valley/pi/backends/sqlite` submodule with its own tag series —
-  never in the root module. Measured cost of putting it in the root: non-stdlib
-  modules **2 → 11**, binary **13.9 → ~21.9 MB**, and the loss of the
-  dragonfly, solaris, illumos and aix targets that build clean today.
+  it. Measured cost of putting the driver in the root: non-stdlib modules
+  **2 → 11**, binary **13.9 → ~21.9 MB**, and the loss of the dragonfly,
+  solaris, illumos and aix targets that build clean today. Re-run the probe
+  against durable's schema at the sha when row 8's storage slice opens. Land
+  the in-memory backend in the same slice, so the storage seam never ships
+  with zero implementers.
 
   **Correction to the enforcement story, worth more than the ruling itself.**
-  The no-cgo stance in E2 is prose with no mechanical check, and the obvious
-  check does not work: adding `mattn/go-sqlite3` and building with
-  `CGO_ENABLED=0` **succeeds**, because mattn ships a build-tagged stub — the
-  binary then fails at runtime with "requires cgo to work. This is a stub". A CI
-  rule of the form "`CGO_ENABLED=0 go build ./...` must pass" is therefore
-  structurally incapable of catching the regression it would exist to prevent.
-  The gate that works asserts the dependency set (`go list -deps ./...`, or a
-  `go.mod` allowlist). **A second, subtler trap was found while implementing
-  it:** the natural fallback — "assert no package has `CgoFiles`" — is blind for
-  the same reason if it runs with cgo off, because the toolchain excludes cgo
-  files by build constraint before `go list` sees them. Measured on
-  `mattn/go-sqlite3 v1.14.50`: `cgofiles=0` under `CGO_ENABLED=0`, `cgofiles=10`
-  under `CGO_ENABLED=1`. Any cgo check must therefore force `CGO_ENABLED=1`; a
-  dependency-set assertion is immune either way. **Implemented 2026-08-31** as
-  `internal/policy/deps_test.go` — two independent tests (allowlist, cgo),
-  both proven to fail against a real violation before being landed, the cgo one
-  against third-party *and* first-party `import "C"`. Package count 13 → 14,
-  test-carrying 10 → 11.
-
-  **Known cost of this answer, and the tells that reopen it.** A driver-free
-  seam is not free: porting the interface with zero in-tree implementers repeats
-  the "ported seam with no implementers" failure already recorded against entry
-  1 (OAuth) and `server.Service`. If 8c is funded, land the in-memory backend
-  from `session/memory.ts` in the same slice so the seam has one real
-  implementer, and keep `modernc.org/sqlite` behind a build-tagged **test-only**
-  import so conformance runs against a real database without the root module
-  requiring it. Reopen this ruling on either of two upstream tells, neither
-  present at the pin: a **second** backend sibling appearing under
-  `packages/session-backends/` (a `bun-sqlite` or `pg`), or `packages/coding-agent`
-  gaining its first real import of `SqliteSessionRepository` — at `853a80d26`
-  it has none. Either means durability has become a product feature.
+  The obvious no-cgo check does not work: adding `mattn/go-sqlite3` and
+  building with `CGO_ENABLED=0` **succeeds**, because mattn ships a
+  build-tagged stub that fails only at runtime ("requires cgo to work. This is
+  a stub"). And "assert no package has `CgoFiles`" is blind for the same
+  reason when it runs with cgo off (`mattn/go-sqlite3 v1.14.50`: `cgofiles=0`
+  under `CGO_ENABLED=0`, `10` under `CGO_ENABLED=1`). The gate that works
+  asserts the dependency set, and any cgo check forces `CGO_ENABLED=1`.
+  **Implemented 2026-08-31** as `internal/policy/deps_test.go` — two
+  independent tests (allowlist, cgo), both proven to fail against a real
+  violation before landing, the cgo one against third-party *and* first-party
+  `import "C"`. `env/internal/policy` follows the same shape for the env
+  submodule.
 
 - **2026-08-27 — scope is decided by EXCLUSION TESTS, not by a path list; the three
   tests are in "The scope boundary" above and they are authoritative over
@@ -743,38 +760,20 @@ and no test reaches it, that is a `decide`: it means a test needs changing.
   precondition for the entry surviving. The stdlib-plus-`golang.org/x/*`
   preference stays as a stated preference and a thing to weigh, not a gate.
 
-- **2026-08-27 (evening) — the agent harness is FUNDED. The owner ruled "harness
-  is in"; it is no longer deferred and the pin's asterisk is retired on
-  completion.** Supersedes the "decision owed" ruling below in its operative
-  half: the question is closed, only the schedule remains. Scope queue entry 8
-  becomes an active drain rather than a parked item, and triage carries its
-  backlog as ordinary queued deltas.
-  **Scoping fact established when the work started, and it changes the shape of
-  the job rather than the decision:** `packages/agent/src/harness` is NOT a
-  relocation of code the port already has. It is a **second, parallel agent
-  implementation** — upstream's reusable "durable harness" for embedders — that
-  coexists with `packages/coding-agent/src/core`, the thing the Go port actually
-  ported. Both exist at `ccfe79ed2` with genuinely different implementations
-  (compaction 848 vs 1012 lines; bash tool 161 vs 544). The coupling is narrow:
-  the ported coding-agent consumes exactly **9** harness symbols through the
-  package root — `createBashTool`, `createEditTool`, `BashToolOptions`,
-  `convertToLlm`, `buildSessionContext`, `CompactionResult`, `SessionStats`,
-  `COMPACTION_SUMMARY_PREFIX`, `createBranchSummaryMessage` — every one of which
-  the port has already absorbed into `coding/` while porting coding-agent.
-  **So the open question is no longer "port it?" but "in what SHAPE?"** — see
-  the Scope queue entry, which records the three options and the default.
-
-- **2026-08-27 — the agent harness is the one item still owed an owner
-  decision, and "IN-but-deferred" is not an answer.** Recorded here so it stops
-  being re-derived every cycle. Status is unchanged — IN scope since 2026-08-07,
-  backlog now 12 — but the state itself is the most expensive one available: it
-  generates triage work every cycle and produces no parity, and the pin has
-  carried a qualifying asterisk for 12+ consecutive cycles. Sized at ~24
-  port-cycles (~10.3k lines of harness + search src, ~5.7k lines of upstream
-  test, plus ~1.6 upstream commits/day of new obligation). **The owner owes one
-  call: fund it, or rule it out under E1.** Until then it stays at the
-  bottom of the scope queue and the pin keeps its asterisk. Triage must not
-  escalate it again; it must simply carry the backlog.
+- **2026-08-27 (evening) — the durable runtime is FUNDED (ruled as "harness is
+  in").** Scope queue entry 8 is an active drain, not a parked item, and triage
+  carries its backlog as ordinary queued deltas; its shape is the 2026-09-03
+  mirror. **The subject moved twice, the funding did not:** the Pico kernel
+  left `packages/agent/src` for the new `packages/durable` package
+  (`080160162`, 2026-09-18), and `7fd478a2e` (2026-10-01) deleted
+  `packages/agent/src/harness/**`, `search/**`, the harness subpath exports and
+  `packages/session-backends`, leaving pi-agent-core as `agent.ts`,
+  `agent-loop.ts`, `proxy.ts`, `stream-fn.ts` and `types.ts`. **Applied
+  2026-10-19:** the Go mirror of the deleted trees is gone (`0e4f9e1`: the
+  harness-only compaction `retainedTail`), and `coding/execenv.go` is NOT
+  deleted, because its upstream source moved rather than died — it is
+  `packages/durable/src/env/{index,node}.ts` (published `./env`, `./env/node`),
+  re-pointed in `8adf788`. Entry 8 is now `packages/durable`.
 
 - **[AMENDED 2026-08-27] 2026-08-25 — the `pi-triage` skill's `port` definition is the single list of
   in-scope trees, and this ledger is authoritative over it.** Closing an item
@@ -786,9 +785,7 @@ and no test reaches it, that is a `decide`: it means a test needs changing.
   no tree was added or removed, the definition was made to match rulings already
   given. The duplicate map is gone; there is now ONE table, in the verdict rules.
   If the table and this file ever disagree again, this file wins and the table
-  gets fixed. Two carve-outs from the 2026-08-01 ruling are formally retired as
-  dead text: `server/src/legacy/**` (deleted upstream in `05bf9df65`) and
-  `server/src/testing/**` (ported as `server/internal/servertest/`).
+  gets fixed.
 
 
   > **AMENDED 2026-08-27.** The mechanism this ruling installed — one
@@ -883,146 +880,50 @@ and no test reaches it, that is a `decide`: it means a test needs changing.
   `exports` map carries a `"./api/*"` wildcard), and latency-pending-a-runtime
   was judged not to matter.
 
-  **The subject is VOID as of 2026-09-03.** Upstream deleted
-  `packages/ai/src/api/cloudflare-gateway-binding.ts` (`55adba4f2`), replacing
-  the translating shim with a plain passthrough fetch; under the mirror ruling
-  `ai/providers/cloudflare_gateway_binding.go` and its six exported identifiers
-  are deleted with it. Do not cite this ruling's scope-as-ported paragraph — it
-  described a file that no longer exists.
+  **Its subject was replaced, and the port followed on 2026-10-19 (`602450c`).**
+  Upstream deleted `packages/ai/src/api/cloudflare-gateway-binding.ts`
+  (`55adba4f2`) for `api/cloudflare-ai-binding.ts`, a plain binding fetch
+  (`AiBinding`, `createAiBindingFetch`, the auth sentinel
+  `"cloudflare-gateway-binding"`). The translating shim
+  `ai/providers/cloudflare_gateway_binding.go` is deleted and the binding fetch
+  is ported as `ai/providers/cloudflare_ai_binding.go` (`AIBinding`,
+  `CreateAIBindingFetch`, `CloudflareGatewayBindingAuthSentinel`) — latent, as
+  pi's is outside a Worker.
 
-- **2026-08-07 — the agent-harness exclusion is REOPENED. The harness tree and
-  the session backends are IN scope, but are DEFERRED, not ported.** (re:
-  `6fb2d766a` "feat(coding-agent): add configurable Harness factory", with
-  riders `9ab91fb93` — which refactored ported `core/tools/*.ts` purely to feed
-  it — and `5cd46ee11`, the docs commit that deleted the protective clause.)
-  Both halves of the 2026-08-05 standing tripwire fired in one cycle:
-  (1) `packages/coding-agent/src/server/create-harness.ts` now imports
-  `AgentHarness`/`AgentHarnessOptions`/`AgentHarnessTool`/`HarnessTool` from
-  `@earendil-works/pi-agent-core` **and** wires them to surface we already port
-  (`core/system-prompt.ts` plus the new `*SystemPromptContribution` exports);
-  (2) the blanket constraint *"No work package may modify coding-agent source,
-  tests, RPC, UI, or package metadata except I0's telemetry build-order
-  integration"* is **gone** from `harness-v2.md` — what remains is scoped to
-  Track O alone. The 2026-08-06 entry's "watch whether the carve-out widens"
-  is exactly what happened; it did not widen, it was removed.
-  **The deciding fact was the npm registry, not the source tree.** Owner call
-  (noam), on a conditional — hold if the harness is not an operational part of
-  the release, reopen if the release surfaces it as a real thing.
-  `@earendil-works/pi-session-backend-sqlite-node` has exactly two published
-  versions, **0.84.0 and 0.84.1, both inside this delta**, and its predecessor
-  `packages/storage` was never published under any name. v0.84.0 is therefore
-  the first release in pi's history to ship a harness-v2 component as an
-  independently installable artifact, and `pi-agent-core@0.84.1` publicly
-  exports the harness API. Verdict: **(c) reopen fully.**
-  **Recorded counter-fact, so this is not re-litigated from one side:**
-  `create-harness.ts` is reachable from nothing — not re-exported from
-  `src/index.ts`, absent from the package `exports` map (only `.`,
-  `./rpc-entry`, `./client`), and imported by no runtime path — so the shipped
-  `pi` binary still does not run on the harness, and *"Coding-agent migration"*
-  is still a written Non-goal. That argued for holding; it was judged to be
-  about coding-agent **migration**, which was never the trigger this ruling set.
-  **Scope, and the deferral.** Newly in scope: `packages/agent/src/harness/**`,
-  `packages/session-backends/**`, `packages/coding-agent/src/server/**`. That is
-  ~12.4k lines of TypeScript (41 harness src files ≈ 9,919 lines; sqlite backend
-  ≈ 2,284 src + 1,665 test; the factory 159) which **predates this delta and is
-  not ported**. It is a separate project, not a daily-sync item, and the pin
-  advanced without it — so from 2026-08-07 the pin means *"everything in scope
-  is reviewed and ported **except the harness tree, tracked here**"*, not
-  "everything in scope is ported". Do not read a pin advance as harness parity
-  until this paragraph is deleted.
-  **Standing caution**: upstream's own compatibility policy still says *"All
-  other formats and APIs in `packages/agent/src/harness` and
-  `packages/session-backends/sqlite-node` may break"*, and R0 remains the only
-  checked box in the work-package list — `session/session.ts` was rewritten
-  twice in a single earlier cycle. Port against the published npm surface, which
-  is the part carrying a stability claim, rather than head-of-churn.
-  Triage from here: harness/session-backend commits are `port` (deferred —
-  add them to the backlog, do not silently mark them `n/a`), and the 2026-08-05
-  tripwires are retired.
+- **2026-08-07 — a package published to npm is SDK surface, whatever its
+  maturity.** (re: `6fb2d766a`, the Harness factory.) The deciding fact was the
+  npm registry, not the source tree: `@earendil-works/pi-session-backend-sqlite-node`
+  0.84.0 and 0.84.1 were the first releases to ship a harness-v2 component as an
+  independently installable artifact, and `pi-agent-core@0.84.1` exported the
+  harness API, so both trees were reopened IN. Both are deleted upstream since
+  `7fd478a2e`; what survives is the rule, and its corollary: port against the
+  published npm surface, which carries the stability claim, rather than
+  head-of-churn.
 
-- **2026-08-06 — the telemetry package is IN scope; port its runtime tracing
-  surface** (re: `04d6447f7` "feat: add typed telemetry contracts" +
-  `6b461b75b` "feat: extract telemetry package", escalated because the only
-  in-scope residue was `ProviderRequestOptions.telemetryContext`, whose type
-  lives in the brand-new `@earendil-works/pi-telemetry` workspace package — a
-  package this ledger had never tracked). Owner call (noam): **port the
-  telemetry as well.** Scope as ported: a new top-level Go `telemetry` package
-  carrying the RUNTIME contract — `Context`/`Span` (callback-scoped
-  `StartSpan`; `AddEvent`/`SetAttributes`/`SetStatus`),
-  `SpanOptions`/`SpanAttributes`/`SpanStatus`, and the shared noop context —
-  plus `ai.ProviderRequestOptions.TelemetryContext` (latent until a host
-  passes a real tracer; the `StreamOptions.Env` precedent). The
-  schema-definition / type-inference half of upstream's package
-  (`defineTelemetrySchema`, `TelemetryAttributeDefinition` and friends,
-  `SchemaTelemetrySpan`, all `Infer*` helpers) is **excluded**: compile-time
-  TS machinery whose only consumers are the unported agent harness
-  (`agent/src/harness/telemetry.ts`) and its docs generator. Going forward:
-  commits to `packages/telemetry`'s runtime surface are `port`; commits to its
-  schema/typing half or to harness span catalogs stay `n/a` under the
-  2026-08-05 harness ruling.
+- **2026-08-06 — the telemetry package is IN scope** (re: `04d6447f7` +
+  `6b461b75b`, `@earendil-works/pi-telemetry`). Owner call (noam): **port the
+  telemetry as well.** Scope as ported, widened 2026-10-19 by `48909d987` and
+  `2ec55d808` (`061629c`, `7fedbfa`, `32eca5d`): the top-level Go `telemetry`
+  package — `Context`/`Span` (callback-scoped `StartSpan`;
+  `AddEvent`/`SetAttributes`/`SetStatus`/`AddLink`), `SpanOptions` with links,
+  the `Metrics` and `Propagation` capabilities with their no-op forms,
+  `NoopContext` (a span, as pi's `NOOP_TELEMETRY_CONTEXT` is), the in-memory
+  recorder, the schema DATA (`telemetry/schema.go`, `NewTypedMetrics`), and
+  pi's adapter conformance suite (`src/testing/**` → `telemetry/telemetrytest`,
+  `348aa86`); chord's context member (`chord.Telemetry`, `WithTelemetry`, `TraceIn`); and
+  `ai.ProviderRequestOptions.Telemetry telemetry.Span` (renamed from
+  `TelemetryContext`), under which `Models` emits pi's `pi.ai.request` /
+  `pi.ai.poll` spans, events and metrics (`ai.TelemetrySchema`). **Excluded:**
+  only the schema's TypeScript type inference (E3). The 2026-08-06 text
+  excluded the whole schema half as "compile-time machinery whose only consumer
+  is the unported agent harness"; that stopped holding when pi-ai began reading
+  `AI_TELEMETRY_SCHEMA` at runtime. Going forward: commits to the runtime
+  contract or the schema data are `port`; commits to the inference typing are
+  `n/a` (E3); durable's span catalog (`DURABLE_TELEMETRY_SCHEMA`) is row 8.
+  One Go-only contract rides it: every `Context`, `Span`, `Metrics`,
+  instrument and `Propagation` must be safe for concurrent use (documented on
+  each; `telemetrytest`'s `concurrency` group checks it under `-race`).
 
-- **[SUPERSEDED 2026-08-07 and 2026-08-27] 2026-08-05 — the agent-harness exclusion HOLDS even though harness-v2 is now
-  `packages/agent`'s promoted public API. No cutover, no date; watch a tripwire
-  instead.** (re: `44289550a` "feat(agent): promote durable harness API", with
-  riders `f119b01cb`, `79cc1ef00`, `591f22a61`, `7bdeeb8f9`, `1e95e16b6`,
-  `651d5d6a5`, `a80008b96`.) Triaged `decide` because it looked like the
-  2026-08-01 test firing — a non-ported area becoming load-bearing for the SDK:
-  `agent/src/index.ts` now re-exports `harness/session/` and `harness/result.ts`
-  wholesale while ~9,000 lines of the pre-v2 harness and its tests are DELETED,
-  not deprecated (`session/{jsonl-repo,memory-repo,repository}.ts`,
-  `array-session-index.ts`, `keyed-operation-queue.ts`, `agent-harness.test.ts`
-  −1280, `repo.test.ts` −645); `04133eb01` deleted 2,503 lines of superseded
-  design docs leaving `harness-v2.md` the sole plan of record; `a80008b96` +
-  `79cc1ef00` productized the backend layer (`packages/storage` →
-  `packages/session-backends`, with its own tests). That is a replacement, not
-  an experiment.
-  **It still does not obligate us, on upstream's own written terms.**
-  `harness-v2.md` states as an explicit **non-goal**: *"Coding-agent migration.
-  `packages/coding-agent` remains on its current runtime and is not modified by
-  this implementation plan."* §21 hardens it into a per-work-package constraint
-  — *"No work package may modify coding-agent source, tests, RPC, UI, or package
-  metadata"* — and the plan's final package (O4) lists "`packages/coding-agent/**`
-  is unchanged" as an acceptance criterion. The plan ENDS before the thing that
-  would force our hand.
-  **Verified, not assumed**: every `@earendil-works/pi-agent-core` import across
-  `coding-agent/src` is agent-loop primitives only (`Agent`, `AgentEvent`,
-  `AgentMessage`, `AgentState`, `AgentTool`, `PrepareNextTurnContext`,
-  `ThinkingLevel`, `uuidv7`) — **zero harness symbols**. Confirming detail:
-  `44289550a` deleted the old session-repository exports from `packages/agent`'s
-  public index and nothing in coding-agent broke, because nothing imported them.
-  The harness is a parallel tree that duplicates coding-agent core (the tell:
-  upstream currently has TWO `skills.ts` and TWO `prompt-templates.ts`, one per
-  tree — and the Go port's `coding/resources.go` ports the **coding-agent** one).
-  **The compatibility policy cuts in our favour.** Verbatim: *"Old coding-agent
-  v3 JSONL sessions must open and restore idle. This is the only
-  backward-compatibility requirement. All other formats and APIs in
-  `packages/agent/src/harness` and `packages/session-backends/sqlite-node` may
-  break. We do not write migrations, schema versioning, or conversion paths for
-  anything else."* Coding-agent v3 JSONL is exactly what `coding/session_store.go`
-  implements, byte-golden with a fixture corpus — so our session format is not a
-  casualty of harness-v2, it is the one fixed point harness-v2 has committed to
-  reading. Work package J2 is a v3 decoder; when it lands it is a free
-  cross-implementation parity oracle for our format. And "all other formats may
-  break" is upstream's own warrant for not tracking head-of-churn: `651d5d6a5`
-  is titled "**partial** harness v2/json backend", `session/session.ts` was
-  rewritten twice in this one cycle, and R0 is the only checked box in §21.
-  **Standing tripwire — check both every sync; the doc moves before the code
-  does.** (1) `git grep -l "pi-agent-core" -- packages/coding-agent/src | xargs
-  grep -l "AgentHarness\|harness/session\|LaneId"` — any hit means the harness
-  has become load-bearing for surface we already port, and this ruling reopens.
-  (2) Diff `harness-v2.md`'s Non-goals and the §21 constraint: if *"Coding-agent
-  migration"* leaves the non-goal list, or §21 stops saying
-  `packages/coding-agent/**` is untouched, that is the announcement — expect it
-  weeks before the first import.
-  Until one fires, `packages/agent/src/harness/**`,
-  `packages/session-backends/**`, and `packages/agent/docs/harness-v2.md` remain
-  `n/a` and triage must not re-escalate them.
-
-
-  > **SUPERSEDED 2026-08-07** (reopened IN scope) and again **2026-08-27**
-  > (queued, entries 7 and 8). Its closing instruction that the harness and
-  > session-backends "remain `n/a`" is DEAD TEXT — do not act on it. Retained
-  > only for the reasoning trail.
 - **2026-08-04 — null-`ProviderHeaders` suppression is now IN scope; port it**
   (re: `a24fb9e96` "preserve auth header deletion markers", #7539). Owner call
   (noam): **port it.** This closes the 2026-06-24 deferral on its own terms —
@@ -1060,65 +961,13 @@ and no test reaches it, that is a `decide`: it means a test needs changing.
   stabilizes — a later commit may simply edit the surface without ever removing
   the word. So there is no upstream signal to wait *for*, which is part of why
   holding was the weaker option. Candidate signals if we want a rule later:
-  first release tag that ships the surface; the surface surviving N sync cycles
-  unmoved; or upstream's own `server/protocol.ts` dropping its
-  `"Deferred assistant messages are not supported by protocol v1"` throw.
+  first release tag that ships the surface, or the surface surviving N sync
+  cycles unmoved.
   **Standing caution while this is interim**: the new `StopReason` value
-  `"deferred"` enters the **session/message format** (a byte-golden surface),
-  and upstream itself refuses to serialize it over protocol v1. Port it, but
-  treat any golden movement it causes as requiring an explicit parity note
-  rather than a silent regen, and expect churn — this surface is not frozen
-  upstream (same class of caution as `protocol/src/schemas.ts` under the
-  2026-08-01 ruling).
-
-- **2026-08-01 — the remote-session stack (protocol + client + server core) is
-  IN scope.** *[Live in its scope half; its FILE NAMES are stale. Upstream
-  deleted `protocol/src/schemas.ts`, `server/src/{protocol,sessions,snapshots}.ts`,
-  `server/src/testing/service.ts`, `client/src/{session-handle,state}.ts` and
-  `coding-agent/src/client/{remote-session,transcript}.ts` on 2026-09-03 and
-  rebuilt the stack on service-addressed routing. `packages/{protocol,client,server}`
-  remain IN scope and the wire remains a golden class; the specific files named
-  below no longer exist, and their Go counterparts are deleted under the mirror
-  ruling.]* (re: `06a1ceb8d` "coding-agent remote client controller", with
-  riders `5a38a1c12` (`packages/client`), `7d5fc9499` (unix transport),
-  `73b24639f` (`packages/server` core), `03eba409c` (server/protocol
-  invariants)). Owner call (noam): **full functionality of the pi SDK as
-  represented in Go — close faith to the source architecture while leaning into
-  Go's idioms and upsides.** Judgement: `pi-coding-agent/client` is a published,
-  programmatic entrypoint (new package subpath `./client`), i.e. exactly the SDK
-  use case the port exists to serve — not the TUI/host machinery the boundary
-  excludes. **All server core is in**, so a Go consumer can serve as well as
-  connect. **Port**: `packages/protocol/src` (cbor encoder/decoder/options,
-  `codec.ts`, `framing.ts`, `schemas.ts`) → new `protocol/` package;
-  `packages/client/src` (`client`/`connection`/`state`/`session-handle`/
-  `unix`/`promise`/`errors`/`transport`/`types`) → new `client/` package;
-  `packages/server/src` **minus `legacy/`** (`server`/`protocol`/`sessions`/
-  `snapshots`/`listener`/`connection`/`errors`/`types` + `transports/unix`) →
-  new `server/` package; `coding-agent/src/client/{remote-session,transcript}.ts`
-  → `coding/remotesession.go` + `coding/transcript.go`.
-  **Not ported**: `packages/server/src/legacy/**` (`radius.ts` OAuth acquisition,
-  `supervisor.ts`, `rpc-process.ts`, `cli.ts`, `serve.ts`, `config.ts`,
-  `storage.ts`, the `ipc/` pair) — process/CLI/OAuth-acquisition machinery,
-  excluded under the 2026-07-14 Radius ruling and the standing host-wiring
-  boundary. `packages/server/src/testing/**` is upstream's own fake backend;
-  port only if the Go server tests want the same shape.
-  **The agent-harness exclusion is UNAFFECTED**: dependency edges were traced at
-  ruling time — `server/src/{server,protocol,sessions,types}.ts` import only
-  `@earendil-works/pi-protocol` + `node:crypto`, with the agent runtime behind an
-  injected `Backend` interface (`server/src/types.ts`), and `remote-session.ts`
-  imports only `pi-client` + `pi-protocol` + its own `transcript.ts`. Nothing in
-  this stack reaches `AgentHarness`, so the "no `harness/` tree in the Go port"
-  ruling stands and the session-store refactors stay `n/a`.
-  **New golden class — the wire.** `protocol/` is byte-golden in a way no prior
-  ported surface is: CBOR encoding and frame layout are observable to a *peer*,
-  so a Go implementation must be byte-compatible with a Node one or interop
-  fails. This needs its own fixture corpus (encode/decode round-trips +
-  cross-implementation frame vectors), not the usual request-body diff. Note
-  `protocol/src/schemas.ts` moved twice in its first cycle (`73b24639f`,
-  `03eba409c`) — it is not frozen upstream; re-check it every sync.
-  Future commits to `packages/{protocol,client}/src`, `packages/server/src`
-  (non-`legacy/`), and `coding-agent/src/client/` are `port` under this ruling;
-  commits confined to `server/src/legacy/**` are `n/a`.
+  `"deferred"` enters the **session/message format** (a byte-golden surface).
+  Port it, but treat any golden movement it causes as requiring an explicit
+  parity note rather than a silent regen, and expect churn — this surface is
+  not frozen upstream.
 
 - **[PARTLY SUPERSEDED 2026-08-27] 2026-07-17 — the model-runtime facade is ported SDK-scoped** (re:
   `ff28097a` "merge model runtime facade" + rider `bd9e09db` "expose dynamic
@@ -1137,13 +986,12 @@ and no test reaches it, that is a `decide`: it means a test needs changing.
   **Not ported**: the OAuth reorg (`utils/oauth`→`auth/oauth` — acquisition),
   `cli.ts`, extension-oauth compat types, the host `coding-agent/src/core`
   restructuring (`model-runtime`/`model-config`/`provider-composer`/
-  `models-store`/`runtime-credentials`/`remote-catalog-provider` + the
+  `models-store`/`remote-catalog-provider` + the
   `model-registry` collapse and `ModelRegistry`→`ModelRuntime` renames), the
-  radius provider (2026-07-14 ruling stands), and `bun-oauth.ts`. The
-  compat-routing and inline-cloudflare divergences (2026-06-24) and the
-  no-lazyStream divergence (defined at `ai/stream.go:90` "G3") stand — pi's new `compat.ts` routing converges
-  toward Go's raw-provider+env-key path (cloudflare exception ≡ Go's inline
-  `resolveCloudflareBaseURL`). Future commits to the facade surface in
+  radius provider (2026-07-14 ruling stands), and `bun-oauth.ts`. G3 stands
+  (`ai.Stream`'s doc: a setup failure is an error in the stream, where pi
+  throws); the compat-routing and inline-Cloudflare divergences this ruling
+  also kept were ported away 2026-10-19 (see 2026-06-24). Future commits to the facade surface in
   `packages/ai/src` are `port`; commits only to the host runtime files above
   are `n/a`.
 
@@ -1152,7 +1000,7 @@ and no test reaches it, that is a `decide`: it means a test needs changing.
   > **OAuth reorg / acquisition tree is now IN scope and queued** (entry 1),
   > and `radius`/`radius-config` with it (E2). `cli.ts` and the host
   > `coding-agent/src/core` restructuring (`model-runtime`, `model-config`,
-  > `provider-composer`, `models-store`, `runtime-credentials`,
+  > `provider-composer`, `models-store`,
   > `remote-catalog-provider`) stay out — `cli.ts` under E1 directly, the `core`
   > cluster under E1's only-consumers clause where every consumer is host.
   >
@@ -1169,8 +1017,12 @@ and no test reaches it, that is a `decide`: it means a test needs changing.
   > stay OUT on E1's operator-configuration ground, not the only-consumers one:
   > they layer models.json and extension registrations, and `ModelRuntime`
   > bypasses the composer entirely when neither layer exists
-  > (`model-runtime.ts:276-280`). `models-store.ts` and `runtime-credentials.ts`
-  > were not re-examined this cycle.
+  > (`model-runtime.ts:276-280`). `core/runtime-credentials.ts` was re-examined
+  > 2026-10-20: PORTED as `coding.RuntimeCredentials` (`059d9c6`). It is pi's
+  > only way to hand an SDK session a key (`ModelRuntime.setRuntimeApiKey`;
+  > `createAgentSession` takes none), so it is SDK surface whatever its one
+  > importer is; it is exported because its owner, `ModelRuntime`, is not ported
+  > (D109). `models-store.ts` was not re-examined.
 - **[PARTLY SUPERSEDED 2026-08-27] 2026-07-14 — port the `pi-messages` provider API; leave Radius OAuth + host
   wiring out** (re: `961fa6c1` "feat(ai): add Radius gateway support"). The
   commit adds a new first-class provider API `pi-messages` — a generic
@@ -1221,14 +1073,14 @@ and no test reaches it, that is a `decide`: it means a test needs changing.
 
 - **2026-06-24 — models-runtime migration completed under the "globals stay as
   compat" divergence** (re: the `129eb460` "complete models runtime migration"
-  consolidation). The 06-23 adopt ruling stands (maximum parity + Go idioms);
-  this records WHERE the Go port deliberately diverges in *structure* while
-  staying byte-faithful through its actual consumer path. The Go coding agent
-  streams via the **compat globals** (`ai.Stream` → `withEnvAPIKey` → raw
-  provider), NOT the Models runtime — the on-record "globals stay as compat"
-  divergence. Three pieces of `129eb460` are therefore **not transliterated**;
-  the 2026-06-24 parity review confirmed each is observably byte-identical
-  through the compat path (they "compensate precisely"):
+  consolidation). **[The three pieces it left untransliterated are all ported
+  now — (1) 2026-08-04, (2) and (3) 2026-10-19; only its premise stands.]** A
+  coding session streams through `SessionOptions.Models` — pi's `modelRuntime` —
+  when the host gives it one, and through the **compat globals**
+  (`ai.StreamSimple` → `withEnvAPIKey` → the built-in provider) when it does not
+  (D109; `4a4de98`). No session carries an API key of its own; `cmd/pi`'s
+  session has no `Models` and `requireProviderAuth` only gates, so compat
+  resolves auth per request. The three pieces:
   1. **`ProviderHeaders` null-suppression** (`Record<string,string|null>`) —
      **[SUPERSEDED 2026-08-04: this is PORTED. See the 2026-08-04 ruling above;
      the public-API-break objection below is additionally void under the
@@ -1240,20 +1092,31 @@ and no test reaches it, that is a `decide`: it means a test needs changing.
      real null use (cloudflare-ai-gateway suppressing `Authorization`) is
      already handled in Go by a conditional skip, not a null marker. Revisit
      only if a consumer needs to suppress a default header.
-  2. **Cloudflare base-URL placeholder resolution + `cf-aig-authorization`** —
-     kept **inline** in the openai providers (`resolveCloudflareBaseURL`) rather
-     than relocated to a `cloudflare-auth` layer. Verified byte-identical
-     baseURL + headers vs pi's relocated version for gateway + workers-ai.
-  3. **compat `shouldUseBuiltinModels` routing** — NOT ported. pi routes catalog
-     models through the Models runtime (empty credential store + env-only auth +
-     cloudflare-auth baseURL); Go's "raw provider + `withEnvAPIKey` + inline
-     cloudflare" path resolves to the same bytes. Divergences (1)+(3) cancel.
-     One consequence since `a328aa89a`: pi's compat `stream`/`streamSimple`
-     assert nothing, except on the cloudflare-* branch without resolved auth,
-     which forwards to `compatModels` and so hits `requireChatProvider`. A
-     caller-built NON-chat model there fails `Model <p>/<id> is not a chat
-     model` in pi and streams in Go. Catalog data cannot reach it.
-  In scope and ported this cycle (all faithful): `ef231c49` (request-scoped auth
+  2. **Cloudflare base-URL placeholders + gateway auth** — PORTED 2026-10-19
+     (`828dd7a`, `ccefe2b`; upstream `129eb460c`, `49fbe6834`, `bdd5c53bc`,
+     `9993c9690`, `fed6009cc`, `a7d17e39a`) where pi has them:
+     `ai/cloudflare_auth.go` (`cloudflareWorkersAIAuth`/`cloudflareAIGatewayAuth`:
+     key, account id and, for the gateway, gateway id all required, each read
+     from the credential and then the env; the ids handed on as resolution env;
+     the gateway key as header-owned auth with `Authorization`/`x-api-key`
+     markers; pi's login prompts) and `ai/cloudflare_stream.go`
+     (`cloudflareStreams`: placeholders filled from the request env alone, never
+     failing). The adapters carry no Cloudflare code (`ai/providers/cloudflare.go`
+     deleted). The inline version this item kept was not byte-identical, as it
+     claimed: with an explicit key or a `cf-aig-authorization` header, 65 compat
+     rows of `ai/providers/testdata/cloudflare-auth` differed (pi sends the key
+     as `Authorization`/`x-api-key` to a URL whose unfilled placeholders stay
+     literal, `%7BCLOUDFLARE_ACCOUNT_ID%7D`; the port filled them from the process
+     env and sent `cf-aig-authorization`).
+  3. **compat `shouldUseBuiltinModels` routing** — PORTED 2026-10-19 (`6e11500`,
+     `c5dbe91`). compat `Stream`/`StreamSimple` send a built-in model through its
+     built-in provider (`builtinProviderFor` = `getBuiltinProviderForModel`: the
+     registry must still hold the registration `RegisterBuiltInApiProviders`
+     recorded for the api) with `withEnvAPIKey`, and a Cloudflare model without
+     a key or `cf-aig-authorization` of its own through `compatModels`
+     (`BuiltinModels`), where it is observed under `opts.Telemetry` and must be
+     a chat model, as in pi.
+  In scope and ported that cycle (all faithful): `ef231c49` (request-scoped auth
   overrides — the named `auth/resolve.ts` boundary edge), `49fbe683`
   (`api-key`→`api_key`, credential `metadata`→`env`), `cd95c274` (OpenAI
   Responses terminal-event requirement + compaction zero-usage guard),
@@ -1262,8 +1125,8 @@ and no test reaches it, that is a `decide`: it means a test needs changing.
   `getClientApiKey` "unused" sentinel + vercel routing ungate (byte-safe for the
   catalog). The catalog-data reorg (per-provider `*.models.ts` + huggingface
   registration provider) landed via the 0.80.2 regen. Future commits to the
-  null-`ProviderHeaders` plumbing or compat-routing in `packages/ai/src` re-open
-  this — re-judge against the compat-path equivalence above.
+  null-`ProviderHeaders` plumbing, compat routing or Cloudflare auth in
+  `packages/ai/src` are `port`.
 
 - **2026-06-23 — adopt the SDK-side model-registry / env-resolution overhaul**
   (re: the `732bb161` "Merge model-registry into main" merge + rider
@@ -1296,9 +1159,11 @@ and no test reaches it, that is a `decide`: it means a test needs changing.
   `7f29e7a3`). Owner call: maximum parity. `StreamOptions.Env`
   (`map[string]string`) is consulted ahead of `os.Getenv` (helper
   `getProviderEnvValue`: non-empty scoped value wins, empty falls through —
-  pi's `||`) for the two ported consumers pi touches: `PI_CACHE_RETENTION` and
-  Cloudflare base-URL placeholders, across anthropic/openai-completions/
-  openai-responses. pi's `getBunSandboxEnvValue` `/proc/self/environ` fallback
+  pi's `||`) for the consumer pi touches: `PI_CACHE_RETENTION`, across
+  anthropic/openai-completions/openai-responses. (Cloudflare's base-URL
+  placeholders were the second until `9993c9690`; pi, and since 2026-10-19 the
+  port, fills them in `cloudflareStreams` from the request env alone — no
+  process env, and `??`, so an empty value fills.) pi's `getBunSandboxEnvValue` `/proc/self/environ` fallback
   is DELIBERATELY OMITTED — it works around oven-sh/bun#27802 (Bun compiled
   binaries expose an empty `process.env` in Linux sandboxes), a runtime defect
   Go does not have. The host-side population machinery stays unported (field
@@ -1388,61 +1253,74 @@ Drain order is value-first, not size-first. Sizes are upstream source lines at
 
 | # | entry | size | est. | why here | queued deltas |
 |---|---|---|---|---|---|
-| 1 | **OAuth token acquisition** (`auth/oauth/**`, `oauth.ts`) | 2,983 LOC / 12 files — **corrected 2026-08-31**: the old parenthetical read "2,439 excluding `openai-codex.ts`, whose adapter is OUT under E2", which has been stale since the 2026-08-27 rewrite (the Codex adapter is entry 10, back in scope) and contradicted it. `openai-codex.ts` is the 544-line **OAuth** file and belongs to this entry; note it is also inside entry 10's 2,228, so the two entries **double-count** those 544 lines — 2,983 − 2,439 = 544. Do not sum the queue's sizes | ~3 | Highest value in the queue. `OAuthAuth.Refresh`/`ToAuth` and `LazyOAuth` are **ported seams with zero implementers** — Anthropic Pro/Max, Copilot, OpenRouter, Kimi and xAI subscription auth are simply unreachable from Go. Needs nothing beyond `crypto/rand`, `crypto/sha256`, `net/http`, `os/exec`. Carries `auth/oauth/radius.ts` (403), so land it with entry 2. | **+1 (2026-09-20)** — `b73412a37`: `metaOAuth` (`auth/oauth/meta.ts`, 208 LOC), Meta's Muse SUBSCRIPTION flow — `isSubscription: true` with a `Sign in with Meta` login label, the first entry-1 row that is a subscription rather than a key exchange. The provider's models, base URL and env-key auth already arrived with the 0.86.1 regen and `7cb43ec`; only the acquisition is missing, so a Meta user with `META_API_KEY` set is served today and one relying on the subscription is not. **+2 (2026-09-30)** — `4df157433`: one loopback callback server and sign-in page for every flow that takes a browser redirect (`auth/oauth/callback-server.ts`, new; `utils/oauth-page.ts`, moved from `auth/oauth/`); the anthropic, openai-codex, openrouter and radius flows use it, and so does MCP's (row 21). Oracle: `oauth-callback-server.test.ts`. `02eed88fd`: Sign in with ChatGPT — `auth/oauth/openai-chatgpt.ts` (the flow; it sends `LoginOptions.getDeviceId()` as the agent host ID), and the `openai` provider gains `oauth: lazyOAuth({name: "OpenAI (ChatGPT subscription)", isSubscription: true, loginLabel: "Sign in with ChatGPT"})` beside its API key. Its request side (fields a token omits, the usage hint, retry patterns, `LoginOptions`) shipped (`d8532cc`). Oracles: `openai-chatgpt-oauth.test.ts`, `oauth-auth.test.ts` › 'OpenAI exposes ChatGPT OAuth alongside API-key auth'. **+1 (2026-10-01)** — `7a11fe1c7`: `anthropicOAuth.login` prompts a `select` between "browser" (the existing callback-server flow) and "copy_code" (headless): PKCE with `redirect_uri` `https://platform.claude.com/oauth/code/callback` and `code=true`, an `auth_url` notify, a `manual_code` prompt parsed as `code#state` (state must equal the verifier), then the same code exchange. Unknown method ids throw `Unknown Anthropic login method: <id>`. Oracle: `anthropic-oauth.test.ts`. |
-| 2 | **Radius provider** (`providers/radius.ts`, `providers/radius-config.ts`) | **178 LOC** | ~0.5 | Smallest entry by an order of magnitude, and it closes the **2026-08-22 tripwire**, which is loaded and will fire on the next behavioral commit: `radius-config.ts` is reachable through pi-ai's `"./providers/*"` exports wildcard, i.e. published SDK surface the 2026-07-14 ruling did not name. Only ~8 first-parent commits in 90 days touch anything Radius-named, so this is bought for the tripwire, not for churn relief. | **+1 (2026-09-20)** — `4d38031fb`: `radiusProvider` stops serving only the dynamically fetched list. It now merges a STATIC baseline (`RADIUS_MODELS`, 27 models, shipped in the 0.86.1 catalog and present in the port's embedded copy since this cycle's regen) under the fetched ones, by id, and only when the gateway is the default. So an offline or unreachable gateway still lists models. The port carries the catalog rows already; what is missing is the merge and the fetch. **Also carried, found by the 0.86.1 parity review:** the 27 Radius catalog models carry three keys no other provider has — `lab`, `enabled` and `providers` — and `ai.Model` has no field for any of them, so the port decodes those rows and silently drops the keys. Harmless while nothing reads them; the base port has to decide what they mean before it can serve Radius's routing faithfully. |
-| 3 | **Non-chat model operations — image generation + classification** (widened 2026-09-24) | at `a328aa89a`: ~670 LOC of image/classifier files in `packages/ai/src` (`api/openrouter-images.ts`, `api/typesafe-system-one.ts` 187, `providers/typesafe.ts`, `image-models.ts`, `images.ts`, `images-api-registry.ts`, `providers/images/register-builtins.ts`) + ~90 in `models.ts` + ~120 of `types.ts`. The old "684 is `image-models.generated.ts`" figure is dead: `a328aa89a` deleted that file | ~2.5 | Root-export surface (2026-08-27 ruling). **Widened 2026-09-24:** `a328aa89a` unified image generation and a new `classifier` model type (TypeSafe System One, provider `typesafe`, model `typesafe/jev-latest`) on the ONE `Models`/`Provider`/`createProvider` infrastructure, and both catalogs now come out of `models.generated.ts` (`IMAGE_MODELS`, `CLASSIFIER_MODELS`), so they queue together. **The base port must build on `ai.Models`/`ai.Provider`, never an `ImagesModels` collection** — upstream deleted `images-models.ts` and the separate `openrouter-images` provider. The chat-side half of the same commit SHIPPED this cycle (`Model.Type`, `GetModelType`/`IsModelType`, `AssertChatModel`, the optional `AllModelsLister`/`AllModelsFilterer`, the typed `Models` accessors, the unknown-type store filter, `TYPESAFE_API_KEY`). Contents still owed: `Model.Output` for image models; `Models.GenerateImages`/`Classify` (never reject — `imageErrorResult`/`classifierErrorResult`: stopReason `aborted` when the signal is aborted else `error`, errorMessage = message); `Provider` optional generate/classify; `CreateProviderOptions` `Images`/`Classifiers` maps and their arms of the `Provider <id>: at least one of "api", "images", or "classifiers" is required.` validation; `assertImageModel`/`assertClassifierModel` (`Model p/id is not an image model` / `… a classifier model`); dispatch errors `Provider X does not support image generation` / `… classification` and `Provider X has no image generation implementation for "<api>"` / `… no classifier implementation for …`; the openrouter-images api + the openrouter provider's `images` wiring (OAuth via row 1); the typesafe-system-one api (POST `systemone` under the base URL, bool questions sent as `type:"noul"`, headers `providerHeadersToRecord({authorization, content-type}, model.headers, options.headers)` — so a null marker can delete the adapter's own authorization — retry maxRetries 2, `Request timed out after ${ms}ms`) + `typesafeProvider()` in `builtinProviders()`; the compat `image-models.ts`/`images.ts`/`images-api-registry.ts`/`register-builtins.ts`; embedding the `IMAGE_MODELS`/`CLASSIFIER_MODELS` dumps from the npm build. **Known gap this row closes:** pi's `builtinModels()` registers `typesafe` (classifier-only) so `Models.getProviders()`, `checkAuth` and `getAllModels("typesafe")` see it; the port's catalog-derived `BuiltinModels` cannot until the classifier base lands. `scripts/generate-image-models.ts` no longer exists (the image catalog is `generate-models.ts` + `scripts/openrouter-catalog.ts`). Oracles: `typesafe-system-one.test.ts`, `classifier-models.test.ts` (classify half), `images-models.test.ts` (generateImages cases), `openrouter-images.test.ts`, `images.test.ts`, coding-agent `model-runtime-images.test.ts` (a),(d),(e) and case (g)'s built-in half, `model-runtime-classifiers.test.ts`. | **SUBSUMED 2026-09-24:** the four image-catalog deltas this cell carried (`5ce4afbd9`, `fbc87d25a`, `bdee230f1`, `b7f4b05c7`) targeted `image-models.generated.ts`, which `a328aa89a` deleted — they are retired, not replayed; the image catalog now lands whole as the `IMAGE_MODELS` dump of whichever npm build the base port pins. **+1 (2026-09-24)** — `a328aa89a`: the unification above, including the new `typesafe` classifier provider. **+1 (2026-09-25)** — `a7d17e39a`: the classifier operation reaches two more providers. OpenRouter serves TypeSafe's System One protocol at `/api/v1/systemone`, so `providers/openrouter.ts` lists its decision models and registers `classifiers: {"typesafe-system-one": typesafeSystemOneApi()}`; Cloudflare Workers AI gets a `cloudflare-workers-ai-system-one` classifier API (`api/cloudflare-workers-ai-system-one.ts` + `.lazy.ts`: `POST <base>/run` with `{model, input}`, answers read out of Cloudflare's `{success, result: {state: "Completed", result: {answers}}}` envelope, errors joined from `errors[].message` as "Cloudflare Workers AI error: …"), wrapped in `cloudflareClassifier` (`providers/cloudflare-stream.ts`, the `{CLOUDFLARE_ACCOUNT_ID}` base-URL substitution for classifiers, with `resolveCloudflareModel` generalized to any model with a `baseUrl`). Request building and answer parsing move from `typesafe-system-one.ts` into a shared `api/system-one-shared.ts` (`classifySystemOne(transport, …)`), which the base port should mirror rather than duplicate; `KnownClassifierApi` gains `"cloudflare-workers-ai-system-one"`, and `api/cloudflare.ts` exports `CLOUDFLARE_WORKERS_AI_REST_BASE_URL`. Its generator hunks are catalog-only. Upstream CI failed on it until `567469096` fixed two model-count tests. **+1 (2026-09-29)** — `04efdfc38`: a llama.cpp classifier API, `api/llama-cpp-classify.ts` (458 lines) + its `.lazy.ts` loader — `KnownClassifierApi` gains `"llama-cpp-classify"` — and `ClassifierOptions.temperature` (answer logits divided by it before normalization; APIs that cannot apply it ignore it). Oracle: `llama-cpp-classify.test.ts`. Its `extensions/llama/provider.ts` half is E1. **+2 (2026-09-30)** — `33e203354`: OpenCode Zen and Vercel AI Gateway serve System One (`classifiers: {"typesafe-system-one": typesafeSystemOneApi()}` and their `*_CLASSIFIER_MODELS`). `89a5c7bda`: `ClassifierResult.usage` from System One's `{input_tokens, output_tokens}`, priced at the catalog rate and set before the answers parse (a malformed answer was still billed); the transports return the whole output (`output`, was `answers`). Oracles: `classifier-models.test.ts`, `typesafe-system-one.test.ts`. **Known gap at 0.99.1 (1e45b11):** the embedded catalog is chat-only, so every non-chat model is missing from the Go `Models` accessors — openrouter's 57 image and 7 classifier models, 2 opencode, 1 cloudflare-workers-ai, 1 vercel-ai-gateway and typesafe's 1 classifier — and `BuiltinModels` passes over `typesafe`, a provider with no chat models, which pi registers through `createProvider`'s `classifiers` — so `BuiltinModels().GetProvider("typesafe")` is nil and `CheckAuth` reports nothing for it where pi reports `TYPESAFE_API_KEY`. `TestCatalogProvidersWithoutChatModels` fails if that set grows. Landing this row embeds `IMAGE_MODELS`/`CLASSIFIER_MODELS` and removes the skip. |
-| 4 | **Azure OpenAI responses** | 364 LOC | ~1 | JSON over HTTPS, header auth. | **+1 (2026-09-24)** — `002fc8385`: `stream()` forwards `options.onProviderStreamEvent` into `processResponsesStream`; landing on the Go responses loop inherits `openai_responses.go`'s callback site (shipped this cycle). Oracle: `azure-openai-base-url.test.ts` › 'forwards parsed events in order before normalizing the response' (response.created + response.completed, identity, responseId `resp_azure`). **+1 (2026-09-27)** — `c01f687e5`: `buildParams` ends `Object.assign(params, model.samplingParams, options?.samplingParams)`: the model's defaults, then the request's per key, after the named request fields. Land it as `openai_responses.go`'s `buildResponsesParams` does since `433fcdd`. Oracle: `sampling-options.test.ts` › the azure-openai-responses row of 'applies model-level sampling params with request keys taking precedence for %s'. |
-| 5 | **Google Vertex** | 710 LOC | ~2 | IN under E2's transparent-wrapper rider (`@google/genai`). ADC is the risk — scope it to the credential paths Go reaches with stdlib. | **+1 (2026-09-24)** — `002fc8385`: `onProviderStreamEvent` fires first in the googleStream loop with the `generateContentResponseFromVertex` shape (+ `sdkHttpResponse`); mirror `google.go`'s shipped callback (the Generative-AI half shipped this cycle). Oracle: the Vertex case of `google-raw-stop-reason.test.ts` › 'forwards each SDK chunk in order before normalizing it'. **Rider (`a328aa89a`):** route `options.headers`/`model.headers` through `headerObject.applyAsRecord(h, literals...)` (the case-folding `providerHeadersToRecord` shipped this cycle), passing the SDK's own default headers as literals in their exact spelling, never a bespoke merge. |
-| 6 | **Mistral conversations** | 963 LOC | ~1.5 | JSON over HTTPS, header auth. | **3** — `6c87d9a02` (2026-08-29: merge indexed Mistral tool-call chunks — `consumeChatStream`'s `toolBlocksByKey` is rekeyed from the composite `` `${callId}:${index}` `` string to `toolCall.index ?? callId`, so chunks of one call that arrive with differing ids still merge. No Go base: `ai/providers/` has no mistral adapter, only registry-level references in `ai/envkeys.go`, `ai/types.go` and `coding/resolve.go`), `96617628e` (2026-09-08: `usesReasoningEffort` widens from the exact ids `mistral-medium-3.5` to the prefix `mistral-medium-`, so every reasoning-capable `mistral-medium-*` model sends `reasoning_effort` instead of prompt-mode reasoning. No Go base: `ai/providers/` still has no mistral adapter, only registry-level references in `ai/envkeys.go`, `ai/types.go` and `coding/resolve.go`), `4bd3f48df` (2026-09-10: `usesReasoningEffort` gains the exact id `zai-glm-5-2`, so Mistral-hosted GLM-5.2 sends `reasoning_effort` when thinking is on instead of `prompt_mode`, which Mistral ignores for that model (#9375); thinking off still sends neither. `mistral/zai-glm-5-2` is already in the shipped catalog as a `mistral-conversations` model, so the adapter must carry the id when it lands, and pi's two new `mistral-reasoning-mode.test.ts` cases are its oracle. No Go base: `ai/providers/` still has no mistral adapter) **+1 (2026-09-24)** — `002fc8385`: `consumeChatStream` takes `onProviderStreamEvent` and awaits it on `event.data` before `output.responseId ||= chunk.id`. Oracle: `mistral-http-transport.test.ts` › 'forwards each parsed SSE payload before normalizing it' (unknown `provider_metadata` round-trips). **+1 (2026-09-27)** — `8930b9ec0`: `consumeChatStream` skips an empty text delta (a string item, or a `{type: "text"}` item whose text is empty after `sanitizeSurrogates`) instead of opening a text block: GLM models on Mistral send empty deltas around thinking and tool calls, and a block opened for one splits the thinking into several blocks, which Mistral rejects on replay. Oracle: `mistral-http-transport.test.ts` › 'ignores empty content deltas'. **+1 (2026-09-29)** — `dc84c1ac0`: `streamSimple` sends the requested thinking level to Mistral reasoning models. A reasoning model with a `thinkingLevelMap` sends `reasoning_effort` = the map's value for the clamped level (`?? "high"`), or the map's `off` value when reasoning is off; one without a map (Magistral) sends `prompt_mode: "reasoning"`. `usesReasoningEffort`/`usesPromptModeReasoning`/`mapReasoningEffort` and their model-id lists are deleted, and `MistralReasoningEffort` widens to `none|low|medium|high|max`. Oracle: `mistral-reasoning-mode.test.ts`. Its generator half is catalog-only. |
-| 7 | **session-backends** (`packages/session-backends/**`) | 2,389 LOC src | ~4 | IN scope since 2026-08-07, never given a home until now — the skill has been telling triage to append deltas to an entry that did not exist. **CONSULT ANSWERED (2026-08-31) — NEITHER DRIVER, NOT YET.** The 2026-08-27 premise was stale: at `853a80d26` `better-sqlite3` appears **nowhere** in upstream (`git grep -l better-sqlite3 853a80d26` exits 1) and `packages/session-backends/sqlite-node/package.json` declares **zero** sqlite dependencies — the backend is Node's *builtin* `node:sqlite` behind `engines.node >=22.19.0`. The consult was therefore asking which native dependency to take in order to match an upstream that deliberately took none. Entry 7 is a backend for the **8c** `SessionStorage`/`SessionRepo` seam, which is owner-gated and unfunded, so the entry stays queued and the root module takes no driver. Merits settled for whenever 8c opens: `modernc.org/sqlite`. See the 2026-08-31 ruling. | **4** — `e7fb8eb2a`, plus the sqlite halves of `7bdb16c28`, `a4453b79b`, `b75be04d9` (reassigned from entry 8, 2026-08-27) |
-| 9 | **Bedrock adapter** | 1,459 LOC | ~3 + consult | **CONSULT ANSWERED (2026-08-31) — TAKE `aws-sdk-go-v2` (with `config`), CONFINED TO A `github.com/sky-valley/pi/providers/bedrock` SUBMODULE** with its own tag series; the root module's graph stays at its two `golang.org/x/*` requires. Back in scope 2026-08-27. The 2026-08-27 note that parity "favours hand-rolling" is **withdrawn**: it is true that there is no pi-authored byte sequence to match, but it priced only the signer. Signing is roughly a third of the work and the credential chain is the rest — and pi carries **no credential-resolution code at all**, so `AWS_PROFILE`, ECS task roles and IRSA (all advertised in `packages/coding-agent/docs/providers.md`) work only because the SDK's default chain is linked in. Hand-rolling ships a documented-feature regression. See the 2026-08-31 ruling. | **2** — `a63fb12c1` (2026-09-01: `utils/node-http-proxy.ts` rewrites `NO_PROXY` matching — entries are normalized by stripping a leading `*.`/`.`/`*` to a bare domain, then matched by exact host OR dot-suffix, with `stripBrackets` applied to BOTH the entry and the target host, and port-scoped entries parsed for bare and bracketed IPv6. `bedrock-converse-stream.ts:207` is one of the file's only two importers, so this lands with the adapter. **Do NOT assume `http.ProxyFromEnvironment` covers it** — measured non-equivalence, see the 2026-09-01 cycle note), `8a7b0c03d` (2026-09-15: `bedrock-converse-stream.ts` `handleMetadata` sets `usage.cacheWrite1h` to the sum of `event.usage.cacheDetails[].inputTokens` over entries whose `ttl === CacheTTL.ONE_HOUR`, so the shared cost path bills Bedrock's 1h cache writes at 2× input (#9457). Checked against the 2026-07-21 generic-collapse lesson and it does NOT collapse: the generic half — `Usage.CacheWrite1h` (`ai/types.go:446`) and the `rateInput*2*longWrite` term in `ai/models.go` `CalculateCost` — shipped with the Anthropic port, and upstream's `models.ts` is untouched in range; the delta is adapter-local extraction with no Go home until the adapter lands. Oracle: `packages/ai/test/bedrock-cache-write-1h-cost.test.ts` (new, 78 lines) as amended by `4c2d91339`, which derives the expected `cost.cacheWrite` from `model.cost` instead of the literal 7.75. **Rider:** the comment at `ai/types.go:444–445` says only Anthropic reports this split — true of the port today and false the day this lands; fix it in the same commit) **+1 (2026-09-24)** — `002fc8385`: `onProviderStreamEvent` fires first for every SDK union item, exception items included, BEFORE the adapter throws on them. Oracle: `bedrock-raw-stop-reason.test.ts` (errorMessage `bedrock stream failed`). **Rider (`a328aa89a`):** custom headers via `headerObject.applyAsRecord(h, literals...)`, the SDK's defaults passed as literals. |
-| 10 | **Codex adapter** | 2,228 LOC | ~3 + consult | **CONSULT ANSWERED (2026-08-31) — NO DEPENDENCY REQUIRED TO SHIP.** Upstream takes no third-party package here (`node:zlib` builtin, `globalThis.WebSocket`), and the consult's premise — "zstd decompression" — does not exist: it is request-body compression only, SSE-path only, with a `return null` fallback to plain JSON. **zstd: take nothing**, mirroring upstream's own null-compression branch. **WebSocket: deferred to the WS slice**, pre-decided as `github.com/coder/websocket` in the **root** module (not a submodule — see the ruling). Ship SSE first; an SSE-only adapter is an upstream-defined runtime state, not a parity gap. **Blocked on entry 1** — Codex is OAuth-only and the port's OAuth seams have zero implementers. Back in scope 2026-08-27. | **2** — `a63fb12c1` (2026-09-01: the same `utils/node-http-proxy.ts` `NO_PROXY` rewrite; `openai-codex-responses.ts:972` is the file's other importer. Shares the delta with entry 9 — **the two entries do not sum**, it is one upstream change landing in whichever adapter ships first), `e86102f18` (2026-09-10: `buildRequestBody` stops collapsing a `null` `thinkingLevelMap.off` into `"none"` — `reasoningEffort: "none"` now sends the mapped value only when the key is DEFINED, so a null mapping suppresses the `reasoning` block instead of forcing `effort: "none"` — and a request that passes NO `reasoningEffort` at all now sends `reasoning: {effort: thinkingLevelMap.off ?? "none"}` whenever the model reasons and `off` is not null. No Go base: `grep -rin codex --include='*.go'` finds only the `APIOpenAICodexResponses` api id, a tool-call-id provider-set entry and a default-model row — `ai/types.go:583` states the adapter is deliberately not ported. Checked against the 2026-07-21 generic-collapse lesson and it does NOT collapse: `openai_responses.go` is a different adapter with its own effort mapping) **+1 (2026-09-24)** — `002fc8385`: `mapCodexEvents` fires the callback for every parsed SSE and WebSocket event before the type check; a throwing callback is wrapped as `ProviderStreamEventCallbackError` (message `formatThrownValue(cause)`), which `isCodexNonTransportError` accepts, so it skips the WebSocket retry and the SSE fallback. Oracle: `openai-codex-stream.test.ts` (5 events, `response.done` in the WS fixture). **+1 (2026-09-30)** — `02eed88fd`: the provider's display name becomes "OpenAI Codex (legacy)" now that the `openai` provider signs in with ChatGPT. The Go provider is named by its id until this row lands. |
-| 8 | **Agent harness + search** | 10,273 LOC src (+5,733 LOC upstream test) | see below | **FUNDED 2026-08-27** — the owner ruled it in. Active drain, not a parked item. **Shape not yet fixed:** the harness is a parallel implementation of surface `coding/` already has, so the estimate depends on the shape chosen — see "Harness shape" below. Backlog: **12** against its own tree (13 minus `e7fb8eb2a`, reassigned to entry 7) — of which 3 are already satisfied in `coding/` and 3 are upstream dead code, leaving **5** load-bearing (`3e4bc2680` is the fifth, added 2026-09-09, and it is the first entry here to arrive already part-shipped). See "Harness delta" below. **Slice 8b SHIPPED 2026-08-28** (`b677517`, `ce76e94`, `cd0e3b9`, `1f49233`), and the re-measure split it into **8b-i** (`ExecutionEnv`, harness source, 7 symbols closed) and **8b-ii** (the seven `*Operations` seams, coding-agent source, invisible to this entry's counter) — 8b-ii ships with a named remainder. The entry stays open on 8c and 8d, and the backlog count is unaffected because 8b was a base-port slice rather than one of the deferred commits. | **15** — `cf8d5fac3` (2026-09-18: `agent/src/pico/{index,memory-storage,types}.ts`, 494 new lines — the Pico storage foundation lands OUTSIDE `harness/`, a sibling of it, so it is this entry's tree by feature rather than by path; filed here with `46b66c59a` so the Pico line stays in one place. The commit's OTHER hunks are `n/a`: `ai/src/types.ts`'s `JsonRepresentation`/`IsJsonCompatible`/conditional `ToolResultMessage<TDetails>` and the `ToolResultMessage<unknown>` → `ToolResultMessage` ripples through `harness/execution/tools.ts` and `harness/runtime/drive/**` are type-level only — **E3** — and Go's `any`/`json.RawMessage` already carries them), `46b66c59a` (2026-09-14: `agent/src/harness/pico3/**`, ~7,500 src lines across 15 files plus 24 test files. The hardened Pico3 kernel — scheduler, membrane, view, memory, session, and the `kinds/**` generation/tool/job/plugin surface. **It survives at upstream HEAD**: `56cd5989e` deleted only the earlier `harness/pico/**` prototype and `729d5cb74` deleted only the design docs, so reading either as "Pico was reverted" is wrong — check the tree at the sha, not the subject lines. No Go base anywhere: `grep -rn --include='*.go' -e Pico -e pico` is empty), `c37b0e03b` (2026-09-09: the retry-cap change's harness half. `DEFAULT_RETRY_POLICY` gains `maxAgentDelayMs`, `validateRetryPolicy` validates it, `NormalizedRetryPolicy` carries it, and `runtime/drive/retry.ts`'s local `retryDelay` is DELETED for pi-ai's new shared `retryDelayMs` — so `retryNotBefore` now takes the whole policy rather than a bare `baseDelayMs`. No Go base: `grep -rn --include='*.go' -e NormalizedRetryPolicy -e retryNotBefore` exits 1 and there is no drive/lane runtime at all. The pi-ai half of the same commit SHIPPED this cycle as `ai/retry_loop.go`'s `RetryDelayMs` + `MaxAgentDelayMs`, so this row carries only the harness wiring), `3e4bc2680` (2026-09-08, a 12-commit merge of `dev-named-forks-streaming`; 23 files, every source file under `packages/agent/src/harness/**`). Named-branch streaming forks. `fork-policy.ts` is re-cut from a classifier into a projector: `classifyForkAddress`/`ForkDisposition` are DELETED for `selectBranchFork` + `projectForkCurrentStateWrite`, which rewrites `pi.branch.tip` to the destination tip and emits a fresh idle `pi.lane.state` in place, instead of tagging those rows "reconstruct" for a tail append. JSONL parse/publish splits into a new `session/jsonl/io.ts`, and the whole-file snapshot fork becomes a two-scan streaming fork (`session/jsonl/fork.ts`, `runJsonlFork`) that never writes its source, stops at the `nextSeq` captured on the source commit queue, and throws on a transaction straddling that boundary. `legacy-v3.ts`'s eager `normalizeLegacyV3Records` becomes a streaming `LegacyV3Source`: forking an **open** v3 session now rejects, a **closed** one forks through format 4. `MemoryStorage.fork()` builds the destination state directly via `InMemoryStorageState.createFork`. The same merge also RELAXED WP08 — seq preservation left the fork contract and "bounded memory" became "streaming, index may be resident" — so port the relaxed contract, not the work package as first written. **The `FileSystem` half is NOT queued: it SHIPPED 2026-09-09** (`7c3ea77`). `harness/types.ts`'s `FileSystem` is `coding/execenv.go` (slice 8b-i), so `openTextLineReader` + `TextLine`/`TextLineReader` landed as `OpenTextLineReader`/`TextLine`/`TextLineReader`, `ReadTextLines` was rebuilt on the reader exactly as upstream rebuilt `readTextLines`, and `splitLines` died with its last caller. **The general lesson, worth more than the delta:** "this tree is queued" is a statement about a tree, and a commit that touches a queued tree can still touch shipped Go surface inside it. Split the merge by hunk before filing it, or a portable delta gets parked under a heading that says the Go code does not exist. **Still queued (the rest):** no `SessionRepo`, `ForkOptions`, JSONL v4 storage, lane or label surface exists anywhere in `agent/` or `coding/` — `coding/session_store.go` is an append-only v3 recorder and `coding/session_tree.go` a whole-file parser. That half lands with slice **8c**, sequenced inside entry 11. **Path correction, 2026-09-20 — the detector earned its keep.** `080160162` MOVED the Pico kernel out of `packages/agent/src/pico` into a NEW published top-level package, `packages/durable` (`@earendil-works/pi-durable`, versioned with the rest at 0.86.1, `exports` mapping `.` to `dist/index.js`). Nothing in a pathspec written before that day would have printed it; the no-pathspec detector sweep did. `a16ccd9be` and `0db565924` then reworked it in place — record and query contracts tightened, memory-storage queries indexed. The tree is IN scope on reachability (a published SDK package, no exclusion fires) and QUEUED as before; only its path changed. **Do not read `packages/agent/src/pico` as evidence of anything again** — it is gone, and a grep for it at HEAD returns nothing. **+2 (2026-09-22)** — `47a18e37b`: `harness/tools/image.ts`'s `detectSupportedImageMimeType` requires the full `GIF87a`/`GIF89a` signature, the same fix `coding/tools.go` shipped this cycle for `utils/mime.ts` (pi #9755); land it with the harness image tool. `10d1ad621`: `harness/pico3/chord.ts` moves from `state` + `publish()` to the transactional `change(ctx, draft => …)` / `replace(ctx, value)` API (see entry 11's +1 the same day). **+6 (2026-09-23)** — `packages/durable` (`@earendil-works/pi-durable`): `8158b0321` versioned document storage (memory storage + types); `5901c9b9e` a SQLite storage backend on Node's builtin `node:sqlite` (`storage/sqlite/**`, new `./storage/sqlite` and `./storage/sqlite/node` exports) — the driver question is already answered by the 2026-08-31 ruling: `modernc.org/sqlite` in a `backends/sqlite` submodule, never the root module; `898ab8040` a JSONL storage backend plus `env/**` (node environment, output capture, truncation, adaptive publisher); `b313731b8` JSONL sidecar reclamation. `9a139c62b`'s agent half: `harness/pico3/legacy-tracker.ts` (new, a flush-shaped adapter over chord's immutable tracker), `session.ts`, `view.ts` — build them on `chord/delta`'s `Tracker`/`Change`/`Prepared`, which shipped this cycle. And a trap for the harness port: `d192bd6dc` did NOT touch `harness/compaction/compaction.ts`, which at `b313731b8` keeps the old `TURN_PREFIX_SUMMARIZATION_PROMPT` and `<conversation>` wrapper, so the harness must carry its own constants, never reuse `coding`'s (the same name now holds a different value in each place). **+1 (2026-09-24)** — `b45597504`: `packages/durable`'s storage conformance suite moves from `test/` into a published `./testing` export (`createStorageConformance`, `registerStorageConformance(runner, name, withStorage)`, `createExpectAssertions`, the `StorageConformance*` types) and the memory/JSONL/SQLite backend tests are rewired onto it. Land it with the durable base port as a Go testing helper package, the way `server/src/testing` became `server/internal/servertest`. **+6 (2026-09-25)** — `packages/durable`: `601437d5a` `env/utils/output-capture.ts` reports `truncatedBy` from the retained window's own decision and a trailing newline's `lastLineBytes`, keeps a four-byte allowance past twice the byte limit, and fixes `truncateHead`/`truncateTail`'s `truncatedBy` (only omitted lines prove the line limit) — durable's fork only: `coding-agent/src/core/tools/truncate.ts`, which `coding/truncate.go` mirrors, keeps the old rule at `49681e1b7`, so the port must not carry the fix across; `3f0573877` exports the storage benchmark workloads from `./testing`; `19a0361be`'s durable half, transactional sessions and documents (`session/{session,transaction,publications}.ts`, `documents.ts`, the storage backends and `types.ts`), which copies with chord's `copyJson` — build it on `chord.CopyJSON`, shipped this cycle; `5d4de953c` checkpoints and document migrations; `5fd446ca1` document replay (conformance cases added). Also `d5cba1d97`'s `harness/pico3/legacy-tracker.ts`: it drops its Proxy wrapper over chord's drafts, since the overlay itself deletes an object member written `undefined` — build it on `chord/delta`'s overlay `Tracker`. **+2 (2026-09-27)** — `packages/durable`: `507d7649e` conversation document forks (`session/forks.ts`: when a fork is created, the backend copies the conversation's documents by policy; `Tx.createConversation()` is split from `Tx.forkConversation()` and raw conversation-record input goes; `ConversationQuery` on Storage and transaction conversation scans; `errors.ts` holds `ReadAfterWrite` and the new `StorageRejected`, for a batch storage rejected before any durable effect; conformance cases added); `04b5bad66` typed IDs and explicit ownership (branded numeric ID types in `ids.ts` replace untyped record ids and the `TaskRef` wrapper, with a result-typed `TaskId<R>`, branded commit sequences and a generic `Storage.mintId()`; a conversation is created explicitly ownerless or task-owned; a task's conversation membership is immutable after creation). `d6af72e18` rewrites only `test/scratch.ts`'s usage examples (n/a). **+4 (2026-09-29)** — `packages/durable`: `35180b9df`'s durable half, document states and buffered watches (`session/observation.ts`, new, 289 lines; `session/session.ts`, `session/transaction.ts`, `types.ts`; `session/publications.ts` shrinks as delivery moves into observation); `11894012d`, deltas since base exposed to checkpoint predicates (`documents.ts`, `session/{session,transaction}.ts`, `storage/memory.ts`, `storage/sqlite/storage.ts`, `types.ts`); `3883fcb1f`, the openable Harness with its registry and conversation config (`harness/{config,context,harness,registry,types}.ts`, new, ~1,035 lines; `entries.ts`, `index.ts`); `cb7969d21`, the durable task runtime (`harness/scheduler.ts`, new, 703 lines; `tasks.ts`, `types.ts`). No Go base: `grep -rn --include='*.go' -i -e pi-durable -e 'package durable'` is empty. The milestone docs commits `cd5ff1125` and `034be02d2` are n/a. **+5 (2026-09-30)** — `837d8a16b` (Package 15: the first runnable chat turn — `harness/{generation,scheduler,submissions,prompt,live}.ts`, `session/transaction.ts`), `445770e03` (Package 16: the first coding-agent tool turn — `harness/{tool,output,post-tools}.ts`, `env/{node,utils/output-capture,utils/adaptive-publisher}.ts`, `tools/{bash,edit,edit-diff,read,write,image}.ts`), `47f65f1a3` (Package 17: inbox, reset, usage, conversation view and experimental events — `harness/{inbox,usage,view,events}.ts`, `session/observation.ts`), `2532a0bef` (Package 18: conversation abort, ownership cascades, subagent handles), and `ba7d5fbed`'s durable half (TypeBox dropped from `harness/generation.ts`; its `pi-ai/models` package entry is packaging, E1). `1b347794e` adds only race tests for `2532a0bef` — the oracle to start from. The spec and README commits are n/a. **+11 (2026-10-01)** — the async SQLite storage PR (`f3e68e8ea` async storage, `fd3af5ee2` transaction handle to callbacks, `cd0ba2fab` SQL-text queries with a per-connection statement cache, `77ac62f22`, `a0feabda7`, `ed391c4f0` queue and close hardening, carried by merge `8f89293a2`; `storage/sqlite/**`), `03180653c` (Package 19: structured concurrency — task ownership, waiting, completing holds, bottom-up abort; `harness/scheduler.ts`, `post-tools.ts` deleted), `ed0d6b91b` (Package 20: compaction and overflow — new `harness/compaction.ts`), `b56702ad3` (Package 21: extensions and per-conversation agents — new `harness/{agent,define}.ts`, `registry.ts` −334, `config.ts` emptied), `49683a364` (Packages 22–23: lifecycle conformance and the task-graph view, new `harness/task-graph.ts`). The spec and README commits are n/a; `5609b0d6c`'s experimental TUI agent on pi-durable is E1 (unexported, `dist/experimental` is not published). |
-| 11 | **The 2026-09-03 architecture migration** — `packages/chord` (new published package, 39 files), `packages/protocol`/`client`/`server` rebuilt on service-addressed routing, `packages/agent` grown into the durable-drive harness (214 files), `coding-agent/src/experimental/**` (~8k LOC) | see map | ~77 slices | **OPENED 2026-09-03** under the mirror ruling. Carries the ~50 in-scope commits of the dev-branch fast-forward that are not Phase 0 fixes, **and the eleven deletions**: `protocol/schemas.go`, `server/{protocol,sessions,snapshots}.go`, `server/internal/servertest/service.go`, `client/{session_handle,state}.go`, `coding/{remotesession,transcript}.go`, `ai/providers/cloudflare_gateway_binding.go` die with their upstream sources. Zero new root-module dependencies — every candidate (esbuild, json-patch, go-diff, uuid, sqlx, migrate, fxamacker/cbor, x/sync) was argued down to stdlib; `modernc.org/sqlite` goes in a `backends/sqlite` submodule. Order: chord → protocol → (server+client ∥ agent/harness) → experimental → sqlite. **Chord's `bundler.ts` + `node/bundle*.ts` are NOT mirrored** (JS facet bundling has no Go subject — owner, 2026-09-03). **Strict-decoder boundary, settled 2026-09-03 (standing formula, not an owner call):** the any-tree strict decoder in `protocol/decode.go`+`unions.go` moves to `internal/jsonstrict`, imported by BOTH `protocol/` and `chord/`; upstream's own `boundary.test.ts` permits `node:` builtins and an `internal/` package is the Go analogue. Layering stays upstream's — `protocol` → `chord`, never the reverse — and `chord.IsValue` does not accept `cbor.OrderedObject`. **The pin sha was advanced to `64eeb82a4` on 2026-09-04 ahead of this row draining (owner's call), so THIS ROW is now the only record of the unported balance — a drift check that reads the pin alone will miss it.** | **+1 (2026-09-20)** — `b7f788194`: `experimental/client.ts` awaits the terminal remote-prompt event before resolving, 15 added lines. Small, but it is the class of bug that only shows up under a real peer: without the await the client can resolve a prompt before the peer's terminal event arrives, so a caller sees an incomplete turn. **+1 (2026-09-22)** — `10d1ad621` "transactional replicated state": `MutableReplicatedState` drops the `state` proxy + `publish(context)` for `change(context, mutate(draft))` (synchronous copy-on-write, handles revoked on return, async callbacks and non-JSON values throw) and `replace(context, value)`; new `chord/src/state/{draft,diff,value}.ts` (~1k LOC) computes the op delta from a draft; `services/{state,provider}.ts` rebuilt on it; `experimental/services/{connection,models-provider,server,transcript-provider}.ts` migrated. **Its `delta/index.ts` half shipped** (`4fd7875`, the `m` permute op) — the rest waits on this row's runtime slice, since the port mirrors only chord's value/wire types (D52). **Drained 2026-09-23:** its `chord/src/state/{draft,diff,value}.ts` half shipped with the `9a139c62b` port (`0dcd440`, `chord/delta/{draft,diff,value,tracker}.go`) — `9a139c62b` moved those files into `delta/` (`state/diff.ts` replaced by `delta/diff.ts`), so the `state/` paths no longer exist upstream. Still on this row from `10d1ad621`: `services/{state,provider}.ts` and `experimental/services/**`. **+1 (2026-09-23)** — `9a139c62b`'s services half: `services/state.ts` rebuilds `MutableReplicatedStateImpl` on `Tracker.beginChange`/`prepare`/`adopt`, adds `ReplicatedStatePublisher`, `AttachedReplicatedStateImpl` and `attachReplicatedStateSource`, and `ReplicatedStateReplica` adopts through `JsonRevisionStore.adopt`; `api.ts` gains the `replicatedState(source, options)` overload; `types.ts` adds `ReplicatedStateSource`/`SourceAttachment`/`SourceFrame`/`SourceOptions` and `AttachedReplicatedState`; `services/provider.ts` takes a member's initial snapshot in one step (`member.state.snapshot()`), and `services/state-internals.ts` replaces `sequence`/`value` with that atomic `snapshot()` — keep the atomic-snapshot contract when this lands; `src/index.ts` re-exports `Draft` from delta and the new types. No Go home (D52). Build it on `chord/delta`'s shipped `Tracker`, and port the replica's revision validator with it (D76; `JsonRevisionStore` is gone — see the +1 of 2026-09-25). **+1 (2026-09-25)** — `d5cba1d97`'s services half: `ReplicatedStateReplica` validates each revision with the new `delta/revision-validator.ts` (`JsonRevisionValidator`, "Replicated state …" texts, skipping containers validated in earlier revisions) where it adopted through `JsonRevisionStore.adopt`, which is gone; `api.ts`/`types.ts` document `replicatedState`/`replace` as taking ownership of an alias-free strict-JSON root, and `change` as an overlay mutation that copies placements and deletes an object member assigned `undefined`. Port the validator with the replica (D76). **+1 (2026-09-29)** — `35180b9df`'s chord runtime half: replicated-state delivery becomes bounded and serialized per subscription — at most 100 deliveries wait behind a running callback, and on overflow the provider sends a full `reset` rebaseline (`services/{consumer,provider,state}.ts`); `ReplicatedState.subscribe` gains an async-listener overload; the state codec restarts its path dictionaries on a reset (`services/state-codec.ts`); `InstanceDirectory.values()` (`services/instances.ts`). No Go home: `grep -rln --include='*.go' -e ReplicatedState -e InstanceDirectory -e 'type .*Consumer' chord protocol client server` is empty. **Its wire half shipped this cycle** (`chord/types.go` `ResetUpdate`, `chord/wire.go`): the reset arm lands on the ported wire grammar, so it was an ordinary `port`, not an append here. **+1 (2026-09-30)** — `02eed88fd`: `experimental/micro/runtime.ts` passes `{getDeviceId: () => settings.getOrCreateDeviceId()}` to `modelRuntime.login` (`settings-manager.ts`'s `deviceId`, global settings only, is E1). |
-| 12 | **`SessionManager` / `AgentSession` base port** — `core/session-manager.ts` (1,746 LOC), `core/agent-session.ts` (3,524 LOC) | 5,270 LOC src | ~6 as hunk-ports, ~16 as base ports | **OPENED 2026-09-03.** The port has no `SessionManager` class: `SessionRecorder` is an append-only writer keyed to a file, `SessionTree` a read-only parser; there are **no label entries** (`grep -c label coding/session.go coding/session_store.go coding/session_tree.go` = 0; the only `coding/session*` hits are a fixture and comments in `session_tree_test.go`), no `createBranchedSession` fork writer, no `inMemory` constructor. Read-side version migration is NOT a gap: `coding/session_store.go` `readSessionEntries` → `migrateSessionEntries` ports `migrateToCurrentVersion` V1→V2→V3 on both read paths. `coding/session.go` has `WaitForIdle` but no `IsIdle` and no compaction/branch-summary abort controllers. **`core/session-manager.ts` is PARTLY ported — split it by HUNK (2026-09-16):** its static discovery surface is `coding/session_store.go` — `getDefaultSessionDir` → `DefaultSessionDir`, `list` → `ListSessions`, `LatestSession`, `findById` → `FindSessionByID` (`57a3304`), `readSessionHeader`/`readSessionHeaderForDiscovery`, the `list`/`findById` cwd-filter prologue (`sessionListingDir`, `sessionCwdMatches`), plus `generateId`, the safe-path encoding and the migrations — so a hunk on that half is an ordinary `port` (the row-8 lesson: this cycle's draft parked `findById` here first, and the adversarial pass caught it); only hunks on the class itself (labels, fork, `inMemory`, tree navigation, compaction/abort state, `SessionInfo`'s full shape) queue here. Known remainder inside the ported half, carried by this row: `SessionInfo` is a five-field shape, and `ListSessions` orders by header timestamp where pi's `list()` orders by `modified` (last message activity → header → mtime). | **8** — `2631b25c3` (preserve compaction boundary when forking: `firstKeptEntryId` re-chained through removed labels), `2b768ba42` (`inMemory(cwd, options, entries)` + `_loadEntries`), `bea67d90d` (abort cancels compaction + branch summary; `isIdle` includes compacting), `e266507b6` (drop duplicate `auto_retry_end` event type), `e44d75c20` (2026-09-04: branch-summary output cap `maxTokens: 2048` → `Math.min(4096, model.maxTokens > 0 ? model.maxTokens : Infinity)`, plus the `reserveTokens` doc correction — it reserves for *history selection*, not for prompt+response. No Go base: `coding/compaction.go` ports the COMPACTION summarizer (`summaryMaxTokens(frac, reserveTokens)`), a different function; `generateBranchSummary` itself is unported and its only `src` consumer is `core/agent-session.ts`. The port renders branch summaries (`coding/messages.go`, `coding/session_tree.go`) but never generates one), `e687434a6` (2026-09-07: `navigateTree` gains an `isCompacting` guard beside its existing `isStreaming` one, throwing "Wait for the current compaction or tree navigation to finish before navigating the session tree." No Go base: the port has no tree-navigation API at all — no `Navigate`/`SetLeaf`/`ResetLeaf`/`Branch` surface and no compaction-state flag in `coding/`). `c37b0e03b` (2026-09-09: `_scheduleAutoRetry`'s delay becomes `retryDelayMs(settings, this._retryAttempt)` instead of the inline `settings.baseDelayMs * 2 ** (this._retryAttempt - 1)`, so the AgentSession auto-retry inherits the 60s cap. No Go base: `grep -rni --include='*.go' -e auto_retry -e retryPolicy -e retryCallbacks coding/ agent/` returns nothing — the port has no AgentSession auto-retry loop. The shared helper it now calls DID ship this cycle as `ai.RetryDelayMs`, so this delta is the call site only), `46bde88a1` (2026-09-07: the four `settingsManager.getCompactionSettings()` call sites become `getCompactionSettings(model)`, so compaction budgets resolve against the CURRENT model at each call rather than once. The resolution itself is host surface — `core/settings-manager.ts`'s new `compaction.modelOverrides` table, E1, and the port has no settings reader (`grep -rn SettingsManager --include='*.go'` finds three comments and no type) — but the CALL SITES are `core/agent-session.ts`, this entry's tree, and the portable semantic is that pi RE-RESOLVES per call where `coding/compaction.go` freezes `CompactionSettings` at `EnableCompaction` while reading `s.Model.ContextWindow` live. Filed here rather than `n/a` on this file's own rule that a queued tree is never `n/a`; that is not in tension with 2026-09-09's `faa9863cb` ruling, which turned on a provable no-op — the whole path there was gated on an extension runtime the port lacks, and nothing gates this one). **Counter corrected 2026-09-08: this cell read `**4**` while enumerating FIVE deltas** — `e44d75c20` was appended by `cb254e1` without bumping the number — so appending `e687434a6` took it to 6, not 5; the 2026-09-10 cycle's two took it to 8. **+2 (2026-09-20), taking it to 10.** `de2de549b`: compaction cancellation races. `abort()` now sets `_agentRunAbortRequested` while a run is active, and every continuation point in `_runAgentPrompt`/`_handlePostAgentRun` consults it, so an abort during a retry or an auto-compaction stops the loop instead of being overtaken by the next continue; `_willRetryAfterAgentEnd` returns false outright; the summarization auth call takes the compaction `AbortSignal`; and `aborted` is decided by `signal.aborted || cancelledByExtension` rather than by STRING-MATCHING the error message, which is the part worth carrying — the port would inherit the same fragility if it copied the old shape. `3c75b2747`: bug reporting adds `AgentSession.summarizeForBugReport` (asks the current model to describe what went wrong, for a user who declines to share the transcript) and splits `serializeSessionBranch` out of `exportSessionToJsonl`. The rest of that commit is E1 — `modes/interactive/bug-report.ts`, the `/bug` slash command, `utils/zip.ts`, `core/crash-log.ts` and the upload — and the port has no session export at all. **+1 (2026-09-22)** — `466db0fec` "canonical session context boundaries", the SessionManager/AgentSession half. **Shipped this cycle on the static half:** `context_edit` entries, retain-none compaction and the newest-compaction-only rule in `SessionTree.BuildContext`/`BuildProjection` (`fb1f9df`), and `estimateTokens`' system case. **Queued here:** `SessionManager.appendContextEdit` (validation: target on the active branch, editable role, string→text-block normalization for assistant/toolResult), `appendCompaction(summary, null, …)` storing its own id, the fork-path re-chaining of a self-referencing `firstKeptEntryId`, `ReadonlySessionManager.buildSessionProjection`; `compaction.ts`'s projection-based `prepareCompaction` (`findProjectedCutPoint` with the recovery-omission suffix rule, `estimateProjectedContextTokens` invalidating usage after a later `context_edit`/compaction); and `agent-session.ts` making the SessionManager projection canonical for every provider request via `agent.prepareRequest` (assigning `agent.state.messages` no longer changes history), turn-end boundary drafts committed through `agent.finishTurn`, and post-run recovery omitting the failed attempt with a persisted `context_edit` instead of slicing agent state. The agent hooks it builds on (`finishTurn`, `prepareRequest`, `peekQueuedMessages`) SHIPPED (`5c6af5a`). The extension boundary events (`turn_end` result, `agent_before_settle`) are E1. **Two estimate gaps this entry must close when the cut-point rework lands** (measured 2026-09-22 against pi 0.87.0): (a) `SessionTree` converts `bashExecution`, `branchSummary` and `compactionSummary` to user messages at load, so `EstimateMessageTokens` weighs the wrapped text where pi's `estimateTokens` weighs the raw fields (6/30/32 vs 3/5/5 tokens on the reviewer's fixtures) — `BuildProjection`'s per-entry messages carry the converted form, and `findProjectedCutPoint` will consume them, so carry the raw role's weight through the projection first; (b) without trusted usage the port counts every system patch, where pi's `estimateProjectedContextTokens` counts only `getCurrentSystemMessage(projection.messages)` once. **+ (2026-09-23)** — **Shipped ahead of the base port, from this cycle's reviews:** a compaction aborted mid-summary is no longer checkpointed (pi's `throwIfAborted()` before `appendCompaction`; `224fd46`); resuming a session file resumes its compaction (`Session.LoadBranch`; `edc0727`, `11ebece`); and the invalidation half of `estimateProjectedContextTokens` — usage recorded before the latest compaction or `context_edit` is not trusted, and without trusted usage the current system message counts once (`9ad9374`), which closes estimate gap (b) on that path; gap (a) stays open. **Queued here — compaction trigger timing** (measured 2026-09-23 against 0.87.1 by the round-4 review): pi checks at three sites — before the prompt lands, on the last assistant's usage alone; at `agent_end`, on the final assistant's usage (`_checkCompaction`); and between turns, in `_compactBeforeNextAssistantResponse` via `prepareNextTurn` — while the port checks only in the per-request transform, after the new prompt and its system declaration are in the transcript. Measured effects: a large prompt that tips the estimate compacts one turn early and moves the cut; a threshold crossed at the end of a run compacts at the next request with the new prompt already inside, so the cut can land on it; a switch to a model with a larger window right after the threshold skips a compaction pi performs (32 messages sent where pi sends 10); a thinking-level change after the threshold makes the summarization requests carry the new level. With small prompts the bytes are identical. Fix shape: mirror the three sites and keep the transform only to re-apply the checkpoint, locked by a live pi-vs-Go capture whose prompts are big enough to move the cut; lock two estimate mutants with it (the current system message dropped from the estimate, and usage distrusted exactly at the boundary). Drains with the `agent.prepareRequest` item above. **+1 (2026-09-24)** — measured at `a328aa89a` `agent-session.ts:1677-1690`: `AgentSession.prompt()` throws before any streaming when neither `hasConfiguredAuth(provider)` nor `checkAuth(provider)` passes — `Authentication failed for "<p>". Credentials may have expired or network is unavailable. Run '/login <p>' to re-authenticate.` for OAuth, `formatNoApiKeyFoundMessage(provider)` otherwise. `coding/` holds neither text. So pi reaches `a328aa89a`'s chat assertion from `prompt()` only once auth is configured, while the port's session chat guard (`6e78ccc`, `sessionStreamFn`) runs for any session. **+2 (2026-09-27)** — `e473b5cd8`: `prompt()` reports how an accepted prompt was dispatched through `preflightResult(disposition)` — `"handled"` (an extension command, or input an extension handler consumed), `"queued"` (steered or followed up while streaming) or `"started"` — and no longer calls it on a rejection, which still throws; `steer()` and `followUp()` return a `QueuedInputDisposition` (`"handled" | "queued"`). `coding.Session`'s `Steer`/`FollowUp` pass messages to the agent's queues and are not this text-input API, so nothing in `coding/` changes; the RPC consumers are host (E1). `ff72faba2`'s `createBranchedSession` half: a fork writes its file at once iff the branched path already holds a user or assistant message (`_hasConversation`, the rule `_persist` uses, which `SessionRecorder` ships since `c0687e6`), otherwise the first such message creates it. Oracles: `tree-traversal.test.ts` › 'does not duplicate entries when forking from before the first user message' and 'writes file immediately when forking at a user message'. |
+| 1 | **OAuth token acquisition** (`auth/oauth/**`, `oauth.ts`) | 2,983 LOC / 12 files — **corrected 2026-08-31**: the old parenthetical read "2,439 excluding `openai-codex.ts`, whose adapter is OUT under E2", which has been stale since the 2026-08-27 rewrite (the Codex adapter is entry 10, back in scope) and contradicted it. `openai-codex.ts` is the 544-line **OAuth** file and belongs to this entry; note it is also inside entry 10's 2,228, so the two entries **double-count** those 544 lines — 2,983 − 2,439 = 544. Do not sum the queue's sizes | ~3 | Highest value in the queue. `OAuthAuth.Refresh`/`ToAuth` and `LazyOAuth` are **ported seams with zero implementers** — Anthropic Pro/Max, Copilot, OpenRouter, Kimi and xAI subscription auth are simply unreachable from Go. Needs nothing beyond `crypto/rand`, `crypto/sha256`, `net/http`, `os/exec`. Carries `auth/oauth/radius.ts` (403), so land it with entry 2. | **+1 (2026-09-20)** — `b73412a37`: `metaOAuth` (`auth/oauth/meta.ts`, 208 LOC), Meta's Muse SUBSCRIPTION flow — `isSubscription: true` with a `Sign in with Meta` login label, the first entry-1 row that is a subscription rather than a key exchange. The provider's models, base URL and env-key auth already arrived with the 0.86.1 regen and `7cb43ec`; only the acquisition is missing, so a Meta user with `META_API_KEY` set is served today and one relying on the subscription is not. **+2 (2026-09-30)** — `4df157433`: one loopback callback server and sign-in page for every flow that takes a browser redirect (`auth/oauth/callback-server.ts`, new; `utils/oauth-page.ts`, moved from `auth/oauth/`); the anthropic, openai-codex, openrouter and radius flows use it, and so does MCP's (row 21). Oracle: `oauth-callback-server.test.ts`. `02eed88fd`: Sign in with ChatGPT — `auth/oauth/openai-chatgpt.ts` (the flow; it sends `LoginOptions.getDeviceId()` as the agent host ID), and the `openai` provider gains `oauth: lazyOAuth({name: "OpenAI (ChatGPT subscription)", isSubscription: true, loginLabel: "Sign in with ChatGPT"})` beside its API key. Its request side (fields a token omits, the usage hint, retry patterns, `LoginOptions`) shipped (`d8532cc`). Oracles: `openai-chatgpt-oauth.test.ts`, `oauth-auth.test.ts` › 'OpenAI exposes ChatGPT OAuth alongside API-key auth'. **+1 (2026-10-01)** — `7a11fe1c7`: `anthropicOAuth.login` prompts a `select` between "browser" (the existing callback-server flow) and "copy_code" (headless): PKCE with `redirect_uri` `https://platform.claude.com/oauth/code/callback` and `code=true`, an `auth_url` notify, a `manual_code` prompt parsed as `code#state` (state must equal the verifier), then the same code exchange. Unknown method ids throw `Unknown Anthropic login method: <id>`. Oracle: `anthropic-oauth.test.ts`. **+4 (2026-10-19)** — `233f17440`: the sign-in page's `LOGO_SVG` is coloured (`utils/oauth-page.ts`). `eeac84ca9`: `openai-chatgpt.ts` throws "Port … is in use …" on `EADDRINUSE` instead of falling back to a manual paste. `8d8ae2fc2`: Anthropic's callback server falls back to a free port when its own is taken (`auth/oauth/anthropic.ts`). `9ad083102`'s flow half: the ChatGPT and Codex flows name the app with `LoginOptions.agentName` (the field shipped, `47bdcc8`); its two tests are the oracle. |
+| 2 | **Radius provider** (`providers/radius.ts`, `providers/radius-config.ts`) | **178 LOC** | ~0.5 | Smallest entry by an order of magnitude, and it closes the **2026-08-22 tripwire**, which is loaded and will fire on the next behavioral commit: `radius-config.ts` is reachable through pi-ai's `"./providers/*"` exports wildcard, i.e. published SDK surface the 2026-07-14 ruling did not name. Only ~8 first-parent commits in 90 days touch anything Radius-named, so this is bought for the tripwire, not for churn relief. | **+1 (2026-09-20)** — `4d38031fb`: `radiusProvider` stops serving only the dynamically fetched list. It now merges a STATIC baseline (`RADIUS_MODELS`, 27 models, shipped in the 0.86.1 catalog and present in the port's embedded copy since this cycle's regen) under the fetched ones, by id, and only when the gateway is the default. So an offline or unreachable gateway still lists models. The port carries the catalog rows already; what is missing is the merge and the fetch. **Also carried, found by the 0.86.1 parity review:** the 27 Radius catalog models carry three keys no other provider has — `lab`, `enabled` and `providers` — and `ai.Model` has no field for any of them, so the port decodes those rows and silently drops the keys. Harmless while nothing reads them; the base port has to decide what they mean before it can serve Radius's routing faithfully. **+1 (2026-10-19)** — `43d376399`: once the gateway's catalog is known (fetched, or restored from the store) it REPLACES the static baseline instead of merging over it — `getModels` is `dynamicModels ?? baselineModels` — so a model an organization owner disabled stops being listed; the baseline covers only the time before any catalog exists. Supersedes the 2026-09-20 merge above. Oracle: `radius-provider.test.ts`. |
+| 3 | **Non-chat model operations — image generation + classification** (widened 2026-09-24) | at `a328aa89a`: ~670 LOC of image/classifier files in `packages/ai/src` (`api/openrouter-images.ts`, `api/typesafe-system-one.ts` 187, `providers/typesafe.ts`, `image-models.ts`, `images.ts`, `images-api-registry.ts`, `providers/images/register-builtins.ts`) + ~90 in `models.ts` + ~120 of `types.ts`. The old "684 is `image-models.generated.ts`" figure is dead: `a328aa89a` deleted that file | ~2.5 | Root-export surface (2026-08-27 ruling). **Widened 2026-09-24:** `a328aa89a` unified image generation and a new `classifier` model type (TypeSafe System One, provider `typesafe`, model `typesafe/jev-latest`) on the ONE `Models`/`Provider`/`createProvider` infrastructure, and both catalogs now come out of `models.generated.ts` (`IMAGE_MODELS`, `CLASSIFIER_MODELS`), so they queue together. **The base port must build on `ai.Models`/`ai.Provider`, never an `ImagesModels` collection** — upstream deleted `images-models.ts` and the separate `openrouter-images` provider. The chat-side half of the same commit SHIPPED this cycle (`Model.Type`, `GetModelType`/`IsModelType`, `AssertChatModel`, the optional `AllModelsLister`/`AllModelsFilterer`, the typed `Models` accessors, the unknown-type store filter, `TYPESAFE_API_KEY`). Contents still owed: `Model.Output` for image models; `Models.GenerateImages`/`Classify` (never reject — `imageErrorResult`/`classifierErrorResult`: stopReason `aborted` when the signal is aborted else `error`, errorMessage = message); `Provider` optional generate/classify; `CreateProviderOptions` `Images`/`Classifiers` maps and their arms of the `Provider <id>: at least one of "api", "images", or "classifiers" is required.` validation; `assertImageModel`/`assertClassifierModel` (`Model p/id is not an image model` / `… a classifier model`); dispatch errors `Provider X does not support image generation` / `… classification` and `Provider X has no image generation implementation for "<api>"` / `… no classifier implementation for …`; the openrouter-images api + the openrouter provider's `images` wiring (OAuth via row 1); the typesafe-system-one api (POST `systemone` under the base URL, bool questions sent as `type:"noul"`, headers `providerHeadersToRecord({authorization, content-type}, model.headers, options.headers)` — so a null marker can delete the adapter's own authorization — retry maxRetries 2, `Request timed out after ${ms}ms`) + `typesafeProvider()` in `builtinProviders()`; the compat `image-models.ts`/`images.ts`/`images-api-registry.ts`/`register-builtins.ts`; embedding the `IMAGE_MODELS`/`CLASSIFIER_MODELS` dumps from the npm build. **Known gap this row closes:** pi's `builtinModels()` registers `typesafe` (classifier-only) so `Models.getProviders()`, `checkAuth` and `getAllModels("typesafe")` see it; the port's catalog-derived `BuiltinModels` cannot until the classifier base lands. `scripts/generate-image-models.ts` no longer exists (the image catalog is `generate-models.ts` + `scripts/openrouter-catalog.ts`). Oracles: `typesafe-system-one.test.ts`, `classifier-models.test.ts` (classify half), `images-models.test.ts` (generateImages cases), `openrouter-images.test.ts`, `images.test.ts`, coding-agent `model-runtime-images.test.ts` (a),(d),(e) and case (g)'s built-in half, `model-runtime-classifiers.test.ts`. | **SUBSUMED 2026-09-24:** the four image-catalog deltas this cell carried (`5ce4afbd9`, `fbc87d25a`, `bdee230f1`, `b7f4b05c7`) targeted `image-models.generated.ts`, which `a328aa89a` deleted — they are retired, not replayed; the image catalog now lands whole as the `IMAGE_MODELS` dump of whichever npm build the base port pins. **+1 (2026-09-24)** — `a328aa89a`: the unification above, including the new `typesafe` classifier provider. **+1 (2026-09-25)** — `a7d17e39a`: the classifier operation reaches two more providers. OpenRouter serves TypeSafe's System One protocol at `/api/v1/systemone`, so `providers/openrouter.ts` lists its decision models and registers `classifiers: {"typesafe-system-one": typesafeSystemOneApi()}`; Cloudflare Workers AI gets a `cloudflare-workers-ai-system-one` classifier API (`api/cloudflare-workers-ai-system-one.ts` + `.lazy.ts`: `POST <base>/run` with `{model, input}`, answers read out of Cloudflare's `{success, result: {state: "Completed", result: {answers}}}` envelope, errors joined from `errors[].message` as "Cloudflare Workers AI error: …"), wrapped in `cloudflareClassifier` (`providers/cloudflare-stream.ts`, the `{CLOUDFLARE_ACCOUNT_ID}` base-URL substitution for classifiers, with `resolveCloudflareModel` generalized to any model with a `baseUrl`). Request building and answer parsing move from `typesafe-system-one.ts` into a shared `api/system-one-shared.ts` (`classifySystemOne(transport, …)`), which the base port should mirror rather than duplicate; `KnownClassifierApi` gains `"cloudflare-workers-ai-system-one"`, and `api/cloudflare.ts` exports `CLOUDFLARE_WORKERS_AI_REST_BASE_URL`. Its generator hunks are catalog-only. Upstream CI failed on it until `567469096` fixed two model-count tests. **+1 (2026-09-29)** — `04efdfc38`: a llama.cpp classifier API, `api/llama-cpp-classify.ts` (458 lines) + its `.lazy.ts` loader — `KnownClassifierApi` gains `"llama-cpp-classify"` — and `ClassifierOptions.temperature` (answer logits divided by it before normalization; APIs that cannot apply it ignore it). Oracle: `llama-cpp-classify.test.ts`. Its `extensions/llama/provider.ts` half is E1. **+2 (2026-09-30)** — `33e203354`: OpenCode Zen and Vercel AI Gateway serve System One (`classifiers: {"typesafe-system-one": typesafeSystemOneApi()}` and their `*_CLASSIFIER_MODELS`). `89a5c7bda`: `ClassifierResult.usage` from System One's `{input_tokens, output_tokens}`, priced at the catalog rate and set before the answers parse (a malformed answer was still billed); the transports return the whole output (`output`, was `answers`). Oracles: `classifier-models.test.ts`, `typesafe-system-one.test.ts`. **Known gap at 1.3.0 (`797d14f`):** the embedded catalog is chat-only, so every non-chat model is missing from the Go `Models` accessors — the 60 image and 40 classifier models in this row's 2026-10-19 delta — and `BuiltinModels` passes over `typesafe`, a provider with no chat models, which pi registers through `createProvider`'s `classifiers` — so `BuiltinModels().GetProvider("typesafe")` is nil and `CheckAuth` reports nothing for it where pi reports `TYPESAFE_API_KEY`. `TestCatalogProvidersWithoutChatModels` fails if that set grows. Landing this row embeds `IMAGE_MODELS`/`CLASSIFIER_MODELS` and removes the skip. **+3 (2026-10-19)** — `4812cb268`: `api/cloudflare-workers-ai-system-one.ts`'s `output()` accepts Cloudflare's direct `{model, answers, usage}` result as well as the run record (the Clef classifiers). `ce8972a0e`: the `openai-decisions` classifier API (OpenAI Decisions, `gpt-6-luna`), `classifier-shared.ts`, `ClassifierContext.images` with `assertClassifierInputSupported` (in `models.ts` and `model-runtime.ts`'s classifier half), the openai provider hiding classifiers under OAuth (`filterAllModels`), and `provider-retry.ts`'s `noRetryStatuses`, whose Go home is `ai/providers/retry.go` but whose only consumer is openai-decisions. `6b5854454`: empty OpenAI classifier catalogs are typed. Rider: `195120a91`'s opencode Jev URLs (`/inference/v1/systemone`, `classifier-models.test.ts`). **The 1.3.0 dumps (not embedded):** `IMAGE_MODELS` 60, all openrouter on `openrouter-images` (57 at 0.99.2); `CLASSIFIER_MODELS` 40 across six providers — cloudflare-workers-ai 3, openai 1, opencode 2, openrouter 23, typesafe 1, vercel-ai-gateway 10 (15 at 0.99.2). `TestCatalogProvidersWithoutChatModels` still reads `[typesafe]`. |
+| 4 | **Azure OpenAI Responses** — provider `azure` (renamed from `azure-openai-responses` by `a37306d43`; the api id is unchanged): `api/azure-openai-responses.ts` and the Responses half of `providers/azure.ts` | 249 + 55 LOC at `d2e7d8b7c` | ~1 | JSON over HTTPS, header auth. **The Chat Completions half SHIPPED** (`48bf4b6`): `api/azure-openai-config.ts`'s base-URL and deployment-name resolution (env only) and `providers/azure.ts`'s completions wrapper, keyed on provider `azure` inside `StreamOpenAICompletions` because Go dispatches by api. **Still owed:** the options layer (`azureBaseUrl`, `azureResourceName`, `azureDeploymentName`, `azureApiVersion`, which precede the env in pi's resolvers), `resolveAzureConfig`'s api version (`AZURE_OPENAI_API_VERSION`, default `v1`), the AzureOpenAI client's semantics (the `api-version` query, its auth header), `formatAzureOpenAIError` ("Azure OpenAI API error"), `AZURE_TOOL_CALL_PROVIDERS`, and its own buildParams and stream over `responsesInput` and the Responses event processing — factor that out of `StreamOpenAIResponses`' goroutine. Until then an azure Responses model fails "Provider azure has no API implementation for "azure-openai-responses"" (D107). | **+1 (2026-09-24)** — `002fc8385`: `stream()` forwards `options.onProviderStreamEvent` into `processResponsesStream`; landing on the Go responses loop inherits `openai_responses.go`'s callback site (shipped this cycle). Oracle: `azure-openai-base-url.test.ts` › 'forwards parsed events in order before normalizing the response' (response.created + response.completed, identity, responseId `resp_azure`). **+1 (2026-09-27)** — `c01f687e5`: `buildParams` ends `Object.assign(params, model.samplingParams, options?.samplingParams)`: the model's defaults, then the request's per key, after the named request fields. Land it as `openai_responses.go`'s `buildResponsesParams` does since `433fcdd`. Oracle: `sampling-options.test.ts` › the azure-openai-responses row of 'applies model-level sampling params with request keys taking precedence for %s'. **+2 (2026-10-19)** — `a37306d43`: the provider rename and `providers/azure.ts`'s api table (`azure-openai-responses` → `azureOpenAIResponsesApi()`); its completions half shipped. `76dfb88f6`: `azure-openai-responses.ts` resolves sampling params per thinking level (`resolveSamplingParams` at `reasoningEffort ?? (reasoningSummary ? "medium" : undefined) ?? "off"`), as `openai_responses.go` does since `f6a41b0`. |
+| 5 | **Google Vertex** | 710 LOC | ~2 | IN under E2's transparent-wrapper rider (`@google/genai`). ADC is the risk — scope it to the credential paths Go reaches with stdlib. | **+1 (2026-09-24)** — `002fc8385`: `onProviderStreamEvent` fires first in the googleStream loop with the `generateContentResponseFromVertex` shape (+ `sdkHttpResponse`); mirror `google.go`'s shipped callback (the Generative-AI half shipped this cycle). Oracle: the Vertex case of `google-raw-stop-reason.test.ts` › 'forwards each SDK chunk in order before normalizing it'. **Rider (`a328aa89a`):** route `options.headers`/`model.headers` through `headerObject.applyAsRecord(h, literals...)` (the case-folding `providerHeadersToRecord` shipped this cycle), passing the SDK's own default headers as literals in their exact spelling, never a bespoke merge. **+1 (2026-10-19)** — `1692bba63`: Gemini 4 and later send `thinkingLevel` (`usesGoogleThinkingLevel`, shared with `google.go`, shipped `2c687bb`). The motivating model is catalog `google-vertex/gemini-4-argon` (#10890: Vertex rejects `thinkingBudget`), which fails "Provider google-vertex has no API implementation for "google-vertex"" until this row lands (D107). Measured against pi 1.3.0: with an api key it posts to `https://aiplatform.googleapis.com/v1/publishers/google/models/gemini-4-argon:streamGenerateContent?alt=sse` with google's `thinkingConfig`. |
+| 6 | **Mistral conversations** | 963 LOC | ~1.5 | JSON over HTTPS, header auth. | **3** — `6c87d9a02` (2026-08-29: merge indexed Mistral tool-call chunks — `consumeChatStream`'s `toolBlocksByKey` is rekeyed from the composite `` `${callId}:${index}` `` string to `toolCall.index ?? callId`, so chunks of one call that arrive with differing ids still merge. No Go base: `ai/providers/` has no mistral adapter, only registry-level references in `ai/envkeys.go`, `ai/types.go` and `coding/resolve.go`), `96617628e` (2026-09-08: `usesReasoningEffort` widens from the exact ids `mistral-medium-3.5` to the prefix `mistral-medium-`, so every reasoning-capable `mistral-medium-*` model sends `reasoning_effort` instead of prompt-mode reasoning. No Go base: `ai/providers/` still has no mistral adapter, only registry-level references in `ai/envkeys.go`, `ai/types.go` and `coding/resolve.go`), `4bd3f48df` (2026-09-10: `usesReasoningEffort` gains the exact id `zai-glm-5-2`, so Mistral-hosted GLM-5.2 sends `reasoning_effort` when thinking is on instead of `prompt_mode`, which Mistral ignores for that model (#9375); thinking off still sends neither. `mistral/zai-glm-5-2` is already in the shipped catalog as a `mistral-conversations` model, so the adapter must carry the id when it lands, and pi's two new `mistral-reasoning-mode.test.ts` cases are its oracle. No Go base: `ai/providers/` still has no mistral adapter) **+1 (2026-09-24)** — `002fc8385`: `consumeChatStream` takes `onProviderStreamEvent` and awaits it on `event.data` before `output.responseId \|\|= chunk.id`. Oracle: `mistral-http-transport.test.ts` › 'forwards each parsed SSE payload before normalizing it' (unknown `provider_metadata` round-trips). **+1 (2026-09-27)** — `8930b9ec0`: `consumeChatStream` skips an empty text delta (a string item, or a `{type: "text"}` item whose text is empty after `sanitizeSurrogates`) instead of opening a text block: GLM models on Mistral send empty deltas around thinking and tool calls, and a block opened for one splits the thinking into several blocks, which Mistral rejects on replay. Oracle: `mistral-http-transport.test.ts` › 'ignores empty content deltas'. **+1 (2026-09-29)** — `dc84c1ac0`: `streamSimple` sends the requested thinking level to Mistral reasoning models. A reasoning model with a `thinkingLevelMap` sends `reasoning_effort` = the map's value for the clamped level (`?? "high"`), or the map's `off` value when reasoning is off; one without a map (Magistral) sends `prompt_mode: "reasoning"`. `usesReasoningEffort`/`usesPromptModeReasoning`/`mapReasoningEffort` and their model-id lists are deleted, and `MistralReasoningEffort` widens to `none\|low\|medium\|high\|max`. Oracle: `mistral-reasoning-mode.test.ts`. Its generator half is catalog-only. **+4 (2026-10-19)** — `7fb59f995`: a `finish_reason: "error"` becomes `Provider stopped with: error (server error)`, which the retry patterns accept. `6b07b4e57`: the request timeout covers only the wait for response headers ("Mistral response headers timed out after Nms"); body reads abort only on the caller's signal. `87f9a3641`'s mistral hunk: finished tool-call arguments go through `parseToolCallArguments` (`Object.assign(block, …)`; Go's `ToolCall.ArgumentsError` is ready). `911309429`: another model's thinking is dropped, through the shared `transformMessages` (`ai/providers/transform.go`), automatic once the adapter uses it. |
+| 7 | ~~**session-backends**~~ (`packages/session-backends/**`) | — | — | **CLOSED 2026-10-19** — `7fd478a2e` deleted `packages/session-backends` (sqlite-node was its only backend); the port had no code for it, and the four sqlite deltas it carried died with it. Its driver answer now governs row 8's storage (Rulings, 2026-08-31 SQLite). | — |
+| 9 | **Bedrock adapter** | 1,459 LOC | ~3 + consult | **CONSULT ANSWERED (2026-08-31) — TAKE `aws-sdk-go-v2` (with `config`), CONFINED TO A `github.com/sky-valley/pi/providers/bedrock` SUBMODULE** with its own tag series; the root module's graph stays at its two `golang.org/x/*` requires. Back in scope 2026-08-27. The 2026-08-27 note that parity "favours hand-rolling" is **withdrawn**: it is true that there is no pi-authored byte sequence to match, but it priced only the signer. Signing is roughly a third of the work and the credential chain is the rest — and pi carries **no credential-resolution code at all**, so `AWS_PROFILE`, ECS task roles and IRSA (all advertised in `packages/coding-agent/docs/providers.md`) work only because the SDK's default chain is linked in. Hand-rolling ships a documented-feature regression. See the 2026-08-31 ruling. | **2** — `a63fb12c1` (2026-09-01: `utils/node-http-proxy.ts` rewrites `NO_PROXY` matching — entries are normalized by stripping a leading `*.`/`.`/`*` to a bare domain, then matched by exact host OR dot-suffix, with `stripBrackets` applied to BOTH the entry and the target host, and port-scoped entries parsed for bare and bracketed IPv6. `bedrock-converse-stream.ts:207` is one of the file's only two importers, so this lands with the adapter. **Do NOT assume `http.ProxyFromEnvironment` covers it** — measured non-equivalence, see the 2026-09-01 cycle note), `8a7b0c03d` (2026-09-15: `bedrock-converse-stream.ts` `handleMetadata` sets `usage.cacheWrite1h` to the sum of `event.usage.cacheDetails[].inputTokens` over entries whose `ttl === CacheTTL.ONE_HOUR`, so the shared cost path bills Bedrock's 1h cache writes at 2× input (#9457). Checked against the 2026-07-21 generic-collapse lesson and it does NOT collapse: the generic half — `Usage.CacheWrite1h` (`ai/types.go:446`) and the `rateInput*2*longWrite` term in `ai/models.go` `CalculateCost` — shipped with the Anthropic port, and upstream's `models.ts` is untouched in range; the delta is adapter-local extraction with no Go home until the adapter lands. Oracle: `packages/ai/test/bedrock-cache-write-1h-cost.test.ts` (new, 78 lines) as amended by `4c2d91339`, which derives the expected `cost.cacheWrite` from `model.cost` instead of the literal 7.75. **Rider:** the comment at `ai/types.go:444–445` says only Anthropic reports this split — true of the port today and false the day this lands; fix it in the same commit) **+1 (2026-09-24)** — `002fc8385`: `onProviderStreamEvent` fires first for every SDK union item, exception items included, BEFORE the adapter throws on them. Oracle: `bedrock-raw-stop-reason.test.ts` (errorMessage `bedrock stream failed`). **Rider (`a328aa89a`):** custom headers via `headerObject.applyAsRecord(h, literals...)`, the SDK's defaults passed as literals. **+6 (2026-10-19)** — `69f0be6f0`: Claude replays send `thinking.block_binding {prefix_mismatch_behavior: "drop_block"}` and `anthropic_beta: ["thinking-binding-controls-2026-08-01"]` for Opus 4.7/4.8/5, Sonnet 5 and Fable 5, never on GovCloud. `2989eb581`: reasoning effort for OpenAI models on Bedrock. `f76c1db66`'s bedrock half: Haiku 5.5 joins the adaptive-thinking, xhigh, block-binding and prompt-caching predicates. `87f9a3641`'s bedrock hunk: finished-call arguments through `parseToolCallArguments`. `5ab7fe74c`'s bedrock hunk (Claude only): an error tool result's images go after the tool results, through `splitErrorToolResultImages` (`ai/providers/transform.go`) as `convertAnthropicMessages` does. `911309429`, through the shared `transformMessages`. |
+| 10 | **Codex adapter** | 2,228 LOC | ~3 + consult | **CONSULT ANSWERED (2026-08-31) — NO DEPENDENCY REQUIRED TO SHIP.** Upstream takes no third-party package here (`node:zlib` builtin, `globalThis.WebSocket`), and the consult's premise — "zstd decompression" — does not exist: it is request-body compression only, SSE-path only, with a `return null` fallback to plain JSON. **zstd: take nothing**, mirroring upstream's own null-compression branch. **WebSocket: deferred to the WS slice**, pre-decided as `github.com/coder/websocket` in the **root** module (not a submodule — see the ruling). Ship SSE first; an SSE-only adapter is an upstream-defined runtime state, not a parity gap. **Blocked on entry 1** — Codex is OAuth-only and the port's OAuth seams have zero implementers. Back in scope 2026-08-27. | **2** — `a63fb12c1` (2026-09-01: the same `utils/node-http-proxy.ts` `NO_PROXY` rewrite; `openai-codex-responses.ts:972` is the file's other importer. Shares the delta with entry 9 — **the two entries do not sum**, it is one upstream change landing in whichever adapter ships first), `e86102f18` (2026-09-10: `buildRequestBody` stops collapsing a `null` `thinkingLevelMap.off` into `"none"` — `reasoningEffort: "none"` now sends the mapped value only when the key is DEFINED, so a null mapping suppresses the `reasoning` block instead of forcing `effort: "none"` — and a request that passes NO `reasoningEffort` at all now sends `reasoning: {effort: thinkingLevelMap.off ?? "none"}` whenever the model reasons and `off` is not null. No Go base: `grep -rin codex --include='*.go'` finds only the `APIOpenAICodexResponses` api id, a tool-call-id provider-set entry and a default-model row — `ai/types.go:583` states the adapter is deliberately not ported. Checked against the 2026-07-21 generic-collapse lesson and it does NOT collapse: `openai_responses.go` is a different adapter with its own effort mapping) **+1 (2026-09-24)** — `002fc8385`: `mapCodexEvents` fires the callback for every parsed SSE and WebSocket event before the type check; a throwing callback is wrapped as `ProviderStreamEventCallbackError` (message `formatThrownValue(cause)`), which `isCodexNonTransportError` accepts, so it skips the WebSocket retry and the SSE fallback. Oracle: `openai-codex-stream.test.ts` (5 events, `response.done` in the WS fixture). **+1 (2026-09-30)** — `02eed88fd`: the provider's display name becomes "OpenAI Codex (legacy)" now that the `openai` provider signs in with ChatGPT. The Go provider is named by its id until this row lands. **+1 (2026-10-19)** — `0cf65d2bf`: `buildBaseCodexHeaders` sets its `originator`/User-Agent defaults first, so a caller's headers override them. |
+| 8 | **Durable** — `packages/durable` (`@earendil-works/pi-durable`: the durable harness and task runtime, storage backends, the `env/` ExecutionEnv, its tools and code mode, the `./testing` suites), plus the chord exports whose consumer is durable (`./output`, `./sqlite`, `./sqlite/node`) | 26,012 LOC / 84 files of `src` at `d2e7d8b7c` | not yet sized | **FUNDED 2026-08-27**; shape: the 2026-09-03 mirror (see "Durable shape"). **Retitled 2026-10-19:** `7fd478a2e` deleted `packages/agent/src/harness/**` and `search/**`, so this row is `packages/durable` alone (the Pico kernel moved there on 2026-09-18, `080160162`), and the harness, `pico3/**` and agent-Pico deltas it carried are pruned. **Shipped ahead of the base:** slice 8b-i (`b677517`, `7c3ea77`) — the `ExecutionEnv`/`FileSystem`/`Shell` contract as `coding/execenv.go`, at the harness shape of `ccfe79ed2` + `3e4bc2680`, its provenance re-pointed to `packages/durable/src/env/{index,node}.ts` (`8adf788`); a hunk on a method `LocalEnv` has is an ordinary `port`. **Durable `ExecutionEnv` members with no Go interface yet** (measured at `d2e7d8b7c`): `FileSystem.id` (`"node:local"`); `openBinaryReader` → `BinaryReader{info, read, scanLines → LineScan, close}`; `truncateFile`; `flushFile`; optional `listFiles` (`ListFilesOptions`, `FileListing`); `openDirReader` → `DirReader`; `watch` (`WatchTarget`, `WatchChange`, `FileWatcher{mode, close}`); `createDir`; `remove`; `createTempDir`; `createTempFile`; `cleanup` on FileSystem (Go has `Shell.Cleanup` only); `writeFile`/`appendFile` of `string \| Uint8Array`; and Durable's `exec` — `string \| argv` (argv runs without a shell), output only through `onOutput(text, ctx, {stream, skipped?})`, `spill` and `window` options, `{exitCode, spillPath?}` — where `coding.Shell.Exec` is the older collect-stdout/stderr shape; typed `ExecutionError{code, spillPath?}` and `FileError{code, path?}`. Semantics that already differ: `readTextLines` with `maxLines <= 0` returns `[]` (Go: no limit); a non-file/dir/symlink is `FileError("invalid")` (Go: `FileKindOther`); exec `timeout <= 0` is `ExecutionError("timeout")` (Go: no timeout). **pi-env carries these types today** in package `env` (`FileError`, `ExecutionError`, `BinaryReader`, `DirReader`, `LineScan`, `ListFilesOptions`, `FileListing`, `WatchTarget`, `WatchChange`, the exec option types; `RemoteExecutionEnv.RunShell`/`RunProgram` for Durable's exec). When this row lands they move to the Go durable package, `RemoteExecutionEnv` implements its `ExecutionEnv`, and pi-env's differential "read and bash tool results" case lands with Durable's tools. Re-align `TestTextLineReaderMatchesPiContract` (transliterated from the deleted harness test at `3e4bc2680`) with `packages/durable/test/env-node.test.ts` then. SQLite: Rulings, 2026-08-31 SQLite. Durable Object adapters (`da866ada1`'s `./storage/sqlite/cloudflare`, now chord's `./sqlite/cloudflare`) have no meaning in Go and are dropped. | **Carried: 32** (durable only). **+4 (2026-09-23)** — `packages/durable` (`@earendil-works/pi-durable`): `8158b0321` versioned document storage (memory storage + types); `5901c9b9e` a SQLite storage backend on Node's builtin `node:sqlite` (`storage/sqlite/**`, new `./storage/sqlite` and `./storage/sqlite/node` exports) — the driver question is already answered by the 2026-08-31 ruling: `modernc.org/sqlite` in a `backends/sqlite` submodule, never the root module; `898ab8040` a JSONL storage backend plus `env/**` (node environment, output capture, truncation, adaptive publisher); `b313731b8` JSONL sidecar reclamation. **+1 (2026-09-24)** — `b45597504`: `packages/durable`'s storage conformance suite moves from `test/` into a published `./testing` export (`createStorageConformance`, `registerStorageConformance(runner, name, withStorage)`, `createExpectAssertions`, the `StorageConformance*` types) and the memory/JSONL/SQLite backend tests are rewired onto it. Land it with the durable base port as a Go testing helper package. **+5 (2026-09-25)** — `packages/durable`: `601437d5a` `env/utils/output-capture.ts` reports `truncatedBy` from the retained window's own decision and a trailing newline's `lastLineBytes`, keeps a four-byte allowance past twice the byte limit, and fixes `truncateHead`/`truncateTail`'s `truncatedBy` (only omitted lines prove the line limit) — durable's fork only: `coding-agent/src/core/tools/truncate.ts`, which `coding/truncate.go` mirrors, keeps the old rule at `49681e1b7`, so the port must not carry the fix across; `3f0573877` exports the storage benchmark workloads from `./testing`; `19a0361be`'s durable half, transactional sessions and documents (`session/{session,transaction,publications}.ts`, `documents.ts`, the storage backends and `types.ts`), which copies with chord's `copyJson` — build it on `chord.CopyJSON`, shipped this cycle; `5d4de953c` checkpoints and document migrations; `5fd446ca1` document replay (conformance cases added). **+2 (2026-09-27)** — `packages/durable`: `507d7649e` conversation document forks (`session/forks.ts`: when a fork is created, the backend copies the conversation's documents by policy; `Tx.createConversation()` is split from `Tx.forkConversation()` and raw conversation-record input goes; `ConversationQuery` on Storage and transaction conversation scans; `errors.ts` holds `ReadAfterWrite` and the new `StorageRejected`, for a batch storage rejected before any durable effect; conformance cases added); `04b5bad66` typed IDs and explicit ownership (branded numeric ID types in `ids.ts` replace untyped record ids and the `TaskRef` wrapper, with a result-typed `TaskId<R>`, branded commit sequences and a generic `Storage.mintId()`; a conversation is created explicitly ownerless or task-owned; a task's conversation membership is immutable after creation). `d6af72e18` rewrites only `test/scratch.ts`'s usage examples (n/a). **+4 (2026-09-29)** — `packages/durable`: `35180b9df`'s durable half, document states and buffered watches (`session/observation.ts`, new, 289 lines; `session/session.ts`, `session/transaction.ts`, `types.ts`; `session/publications.ts` shrinks as delivery moves into observation); `11894012d`, deltas since base exposed to checkpoint predicates (`documents.ts`, `session/{session,transaction}.ts`, `storage/memory.ts`, `storage/sqlite/storage.ts`, `types.ts`); `3883fcb1f`, the openable Harness with its registry and conversation config (`harness/{config,context,harness,registry,types}.ts`, new, ~1,035 lines; `entries.ts`, `index.ts`); `cb7969d21`, the durable task runtime (`harness/scheduler.ts`, new, 703 lines; `tasks.ts`, `types.ts`). No Go base: `grep -rn --include='*.go' -i -e pi-durable -e 'package durable'` is empty. The milestone docs commits `cd5ff1125` and `034be02d2` are n/a. **+5 (2026-09-30)** — `837d8a16b` (Package 15: the first runnable chat turn — `harness/{generation,scheduler,submissions,prompt,live}.ts`, `session/transaction.ts`), `445770e03` (Package 16: the first coding-agent tool turn — `harness/{tool,output,post-tools}.ts`, `env/{node,utils/output-capture,utils/adaptive-publisher}.ts`, `tools/{bash,edit,edit-diff,read,write,image}.ts`), `47f65f1a3` (Package 17: inbox, reset, usage, conversation view and experimental events — `harness/{inbox,usage,view,events}.ts`, `session/observation.ts`), `2532a0bef` (Package 18: conversation abort, ownership cascades, subagent handles), and `ba7d5fbed`'s durable half (TypeBox dropped from `harness/generation.ts`; its `pi-ai/models` package entry is packaging, E1). `1b347794e` adds only race tests for `2532a0bef` — the oracle to start from. The spec and README commits are n/a. **+11 (2026-10-01)** — the async SQLite storage PR (`f3e68e8ea` async storage, `fd3af5ee2` transaction handle to callbacks, `cd0ba2fab` SQL-text queries with a per-connection statement cache, `77ac62f22`, `a0feabda7`, `ed391c4f0` queue and close hardening, carried by merge `8f89293a2`; `storage/sqlite/**`), `03180653c` (Package 19: structured concurrency — task ownership, waiting, completing holds, bottom-up abort; `harness/scheduler.ts`, `post-tools.ts` deleted), `ed0d6b91b` (Package 20: compaction and overflow — new `harness/compaction.ts`), `b56702ad3` (Package 21: extensions and per-conversation agents — new `harness/{agent,define}.ts`, `registry.ts` −334, `config.ts` emptied), `49683a364` (Packages 22–23: lifecycle conformance and the task-graph view, new `harness/task-graph.ts`). The spec and README commits are n/a; `5609b0d6c`'s experimental TUI agent on pi-durable is E1 (unexported, `dist/experimental` is not published). **+57 (2026-10-19)**, plus riders. *Env:* `1543dd8f6` (`flushFile` on a directory is `is_directory`), `4748c627a` (bounded binary and directory readers, argv exec with stream info, the published `./testing` env conformance suite), `acfc60198` and `be882f3fa` (conformance timing), `a19c09d9b` (a bounded read tool over `BinaryReader.scanLines`; `env/{decode,line-scan}.ts`), `a84510819` (`FileSystem.watch`, `env/node-watch.ts`), `864777ba6` (polling watches on Windows), `1965a8069` (the FSEvents 500 ms settle rescan), `cd60a5b99` (watcher coverage, growing reads, output BOM), `abfe62928` (optional `listFiles` with conformance). *Tools and output:* `cdf79797b` (windowed shell output with counted skips, `ShellOutputSkip`), `68c22123b` (powershell over argv exec), `42a3497d0` (read returns images; Photon's Go equivalent is `coding/imageresize.go`, no consult), `cdaf6c227` (image preparation off-thread: a goroutine), `b04299717` (base64 with `btoa`), `4a5d37291` (`OutputBuffer` and `Progress` move to chord's `./output`), `f75b3240a` and `ec1be23eb` (`Progress` takes an injectable `ProgressClock`; its timer re-checks the clock). *Harness:* `70eceaade` (a persisted per-conversation provider session id, UUIDv7), `674d64f09` (configurable progress commit intervals), `68ccef176` (a scanned context range reused), `b0114ef5f` (models on `ToolExecutionApi`/`HookApi`), `76f6c06da` and `636703a0a` (context as of an earlier entry, as an options object), `92216fa15` (the initial system message leads context), `ae92585d3` (settings failures reported), `eba849739` (nested tool calls, structured output, callers; storage errors end the Session), `cb4375493`, `4ac0bd8c7` (one document per nested call, `ownedTasks()`), `e37cdc420`, `ea448f454` and `eb2fce43d` (scheduler indexes, bounded ownership, wait-cycle rejection), `f44707e7f` (`documentRetentionMs`), `e6b9a6af5` (inputs as application entries), `89e5c2c07` (a failed blocking compaction fails the run), `d77d2752e` (a schema tool's error result gives programs its output), `5713c9507` (the system baseline after a compaction that keeps assistant messages), `77332f7a3` (deferred tools and `tool_search`), `6085986e4` with `c4cf7957b`/`790271cd0` netting to its tree (per-model `compaction.modelOverrides`; `ToolControl.terminate` a boolean), `7ec1f648e` (`models`/`settings` as per-use getters), `ea7c64843` and `00bf7193d` (Durable Object hosting timers), `a30c2a81d`, `440a5fcdb`, `5ba1cbaf3` and `91b33cab3` (crash-loop guard, report sources, a failed-run inbox, blocked tasks, typed `ReportInfo` reasons). *Code mode:* `7b597d148`, `127b77121`, `04566631c`, `8bb180bec`, `c661bc574` (`pi-durable/codemode`). *Storage:* `4dd2af42c` (scans in either order), `da866ada1` (in-memory context; its Durable Object SQLite adapter is dropped), `f7e3cb543` (namespaced SQLite, #10937), `c268154ca` (the SQLite drivers move to chord's `./sqlite{,/node,/cloudflare}`). *Telemetry:* `48909d987`'s `HarnessOptions.telemetry`; `2ec55d808`'s `DURABLE_TELEMETRY_SCHEMA`, the `pi.durable.submit`/`pi.durable.phase` spans, stored trace carriers on submissions and tasks, `TaskOptions.trace`/links, the phase/active-task/report metrics and `harness/telemetry.ts` — the Go pieces it needs (propagation, links, `NewTypedMetrics`, `SchemaDefinition`) shipped in `061629c`. Riders: `15e7bdc14` (no thinking in the compaction summary), `f11e50f72` (`output.ts`'s linear join), `36a686ee8` (durable task times), `ed94330a2` (the output decoder is `TextDecoder(ignoreBOM)`). |
+| 11 | ~~**The 2026-09-03 architecture migration**~~ | — | — | **CLOSED 2026-10-19 — every subject it carried was deleted upstream.** `7472cda0d` deleted `packages/{protocol,client,server}` and `coding-agent/src/{client,experimental,cli/experimental}/**` (Go: `83a344c`, ten of the eleven deletions this row listed); `7fd478a2e` deleted the harness (row 8 is durable now); `0104fef1e` deleted chord's service runtime (`d202916`, with `internal/jsonstrict`). The eleventh deletion was a re-port: `cloudflare-ai-binding.ts` (`602450c`, Rulings 2026-08-11). The chord2 host runtime that replaced the services is row **27**; the `services/**` and `experimental/**` deltas recorded here died with their sources. | — |
+| 12 | **`SessionManager` / `AgentSession` base port** — `core/session-manager.ts` (1,746 LOC), `core/agent-session.ts` (3,524 LOC) | 5,270 LOC src | ~6 as hunk-ports, ~16 as base ports | **OPENED 2026-09-03.** The port has no `SessionManager` class: `SessionRecorder` is an append-only writer keyed to a file, `SessionTree` a read-only parser; there are **no label entries** (`grep -c label coding/session.go coding/session_store.go coding/session_tree.go` = 0; the only `coding/session*` hits are a fixture and comments in `session_tree_test.go`), no `createBranchedSession` fork writer, no `inMemory` constructor. Read-side version migration is NOT a gap: `coding/session_store.go` `readSessionEntries` → `migrateSessionEntries` ports `migrateToCurrentVersion` V1→V2→V3 on both read paths. `coding/session.go` has `WaitForIdle` but no `IsIdle` and no compaction/branch-summary abort controllers. **`core/session-manager.ts` is PARTLY ported — split it by HUNK (2026-09-16):** its static discovery surface is `coding/session_store.go` — `getDefaultSessionDir` → `DefaultSessionDir`, `list` → `ListSessions`, `LatestSession`, `findById` → `FindSessionByID` (`57a3304`), `readSessionHeader`/`readSessionHeaderForDiscovery`, the `list`/`findById` cwd-filter prologue (`sessionListingDir`, `sessionCwdMatches`), plus `generateId`, the safe-path encoding and the migrations — so a hunk on that half is an ordinary `port` (the row-8 lesson: this cycle's draft parked `findById` here first, and the adversarial pass caught it); only hunks on the class itself (labels, fork, `inMemory`, tree navigation, compaction/abort state, `SessionInfo`'s full shape) queue here. Known remainder inside the ported half, carried by this row: `SessionInfo` is a five-field shape, and `ListSessions` orders by header timestamp where pi's `list()` orders by `modified` (last message activity → header → mtime). | **8** — `2631b25c3` (preserve compaction boundary when forking: `firstKeptEntryId` re-chained through removed labels), `2b768ba42` (`inMemory(cwd, options, entries)` + `_loadEntries`), `bea67d90d` (abort cancels compaction + branch summary; `isIdle` includes compacting), `e266507b6` (drop duplicate `auto_retry_end` event type), `e44d75c20` (2026-09-04: branch-summary output cap `maxTokens: 2048` → `Math.min(4096, model.maxTokens > 0 ? model.maxTokens : Infinity)`, plus the `reserveTokens` doc correction — it reserves for *history selection*, not for prompt+response. No Go base: `coding/compaction.go` ports the COMPACTION summarizer (`summaryMaxTokens(frac, reserveTokens)`), a different function; `generateBranchSummary` itself is unported and its only `src` consumer is `core/agent-session.ts`. The port renders branch summaries (`coding/messages.go`, `coding/session_tree.go`) but never generates one), `e687434a6` (2026-09-07: `navigateTree` gains an `isCompacting` guard beside its existing `isStreaming` one, throwing "Wait for the current compaction or tree navigation to finish before navigating the session tree." No Go base: the port has no tree-navigation API at all — no `Navigate`/`SetLeaf`/`ResetLeaf`/`Branch` surface and no compaction-state flag in `coding/`). `c37b0e03b` (2026-09-09: `_scheduleAutoRetry`'s delay becomes `retryDelayMs(settings, this._retryAttempt)` instead of the inline `settings.baseDelayMs * 2 ** (this._retryAttempt - 1)`, so the AgentSession auto-retry inherits the 60s cap. No Go base: `grep -rni --include='*.go' -e auto_retry -e retryPolicy -e retryCallbacks coding/ agent/` returns nothing — the port has no AgentSession auto-retry loop. The shared helper it now calls DID ship this cycle as `ai.RetryDelayMs`, so this delta is the call site only), `46bde88a1` (2026-09-07: the four `settingsManager.getCompactionSettings()` call sites become `getCompactionSettings(model)`, so compaction budgets resolve against the CURRENT model at each call rather than once. The resolution itself is host surface — `core/settings-manager.ts`'s new `compaction.modelOverrides` table, E1, and the port has no settings reader (`grep -rn SettingsManager --include='*.go'` finds three comments and no type) — but the CALL SITES are `core/agent-session.ts`, this entry's tree, and the portable semantic is that pi RE-RESOLVES per call where `coding/compaction.go` freezes `CompactionSettings` at `EnableCompaction` while reading `s.Model.ContextWindow` live. Filed here rather than `n/a` on this file's own rule that a queued tree is never `n/a`; that is not in tension with 2026-09-09's `faa9863cb` ruling, which turned on a provable no-op — the whole path there was gated on an extension runtime the port lacks, and nothing gates this one). **Counter corrected 2026-09-08: this cell read `**4**` while enumerating FIVE deltas** — `e44d75c20` was appended by `cb254e1` without bumping the number — so appending `e687434a6` took it to 6, not 5; the 2026-09-10 cycle's two took it to 8. **+2 (2026-09-20), taking it to 10.** `de2de549b`: compaction cancellation races. `abort()` now sets `_agentRunAbortRequested` while a run is active, and every continuation point in `_runAgentPrompt`/`_handlePostAgentRun` consults it, so an abort during a retry or an auto-compaction stops the loop instead of being overtaken by the next continue; `_willRetryAfterAgentEnd` returns false outright; the summarization auth call takes the compaction `AbortSignal`; and `aborted` is decided by `signal.aborted \|\| cancelledByExtension` rather than by STRING-MATCHING the error message, which is the part worth carrying — the port would inherit the same fragility if it copied the old shape. `3c75b2747`: bug reporting adds `AgentSession.summarizeForBugReport` (asks the current model to describe what went wrong, for a user who declines to share the transcript) and splits `serializeSessionBranch` out of `exportSessionToJsonl`. The rest of that commit is E1 — `modes/interactive/bug-report.ts`, the `/bug` slash command, `utils/zip.ts`, `core/crash-log.ts` and the upload — and the port has no session export at all. **+1 (2026-09-22)** — `466db0fec` "canonical session context boundaries", the SessionManager/AgentSession half. **Shipped this cycle on the static half:** `context_edit` entries, retain-none compaction and the newest-compaction-only rule in `SessionTree.BuildContext`/`BuildProjection` (`fb1f9df`), and `estimateTokens`' system case. **Queued here:** `SessionManager.appendContextEdit` (validation: target on the active branch, editable role, string→text-block normalization for assistant/toolResult), `appendCompaction(summary, null, …)` storing its own id, the fork-path re-chaining of a self-referencing `firstKeptEntryId`, `ReadonlySessionManager.buildSessionProjection`; `compaction.ts`'s projection-based `prepareCompaction` (`findProjectedCutPoint` with the recovery-omission suffix rule, `estimateProjectedContextTokens` invalidating usage after a later `context_edit`/compaction); and `agent-session.ts` making the SessionManager projection canonical for every provider request via `agent.prepareRequest` (assigning `agent.state.messages` no longer changes history), turn-end boundary drafts committed through `agent.finishTurn`, and post-run recovery omitting the failed attempt with a persisted `context_edit` instead of slicing agent state. The agent hooks it builds on (`finishTurn`, `prepareRequest`, `peekQueuedMessages`) SHIPPED (`5c6af5a`). The extension boundary events (`turn_end` result, `agent_before_settle`) are E1. **Two estimate gaps this entry must close when the cut-point rework lands** (measured 2026-09-22 against pi 0.87.0): (a) `SessionTree` converts `bashExecution`, `branchSummary` and `compactionSummary` to user messages at load, so `EstimateMessageTokens` weighs the wrapped text where pi's `estimateTokens` weighs the raw fields (6/30/32 vs 3/5/5 tokens on the reviewer's fixtures) — `BuildProjection`'s per-entry messages carry the converted form, and `findProjectedCutPoint` will consume them, so carry the raw role's weight through the projection first; (b) without trusted usage the port counts every system patch, where pi's `estimateProjectedContextTokens` counts only `getCurrentSystemMessage(projection.messages)` once. **+ (2026-09-23)** — **Shipped ahead of the base port, from this cycle's reviews:** a compaction aborted mid-summary is no longer checkpointed (pi's `throwIfAborted()` before `appendCompaction`; `224fd46`); resuming a session file resumes its compaction (`Session.LoadBranch`; `edc0727`, `11ebece`); and the invalidation half of `estimateProjectedContextTokens` — usage recorded before the latest compaction or `context_edit` is not trusted, and without trusted usage the current system message counts once (`9ad9374`), which closes estimate gap (b) on that path; gap (a) stays open. **Queued here — compaction trigger timing** (measured 2026-09-23 against 0.87.1 by the round-4 review): pi checks at three sites — before the prompt lands, on the last assistant's usage alone; at `agent_end`, on the final assistant's usage (`_checkCompaction`); and between turns, in `_compactBeforeNextAssistantResponse` via `prepareNextTurn` — while the port checks only in the per-request transform, after the new prompt and its system declaration are in the transcript. Measured effects: a large prompt that tips the estimate compacts one turn early and moves the cut; a threshold crossed at the end of a run compacts at the next request with the new prompt already inside, so the cut can land on it; a switch to a model with a larger window right after the threshold skips a compaction pi performs (32 messages sent where pi sends 10); a thinking-level change after the threshold makes the summarization requests carry the new level. With small prompts the bytes are identical. Fix shape: mirror the three sites and keep the transform only to re-apply the checkpoint, locked by a live pi-vs-Go capture whose prompts are big enough to move the cut; lock two estimate mutants with it (the current system message dropped from the estimate, and usage distrusted exactly at the boundary). Drains with the `agent.prepareRequest` item above. **+1 (2026-09-24)** — measured at `a328aa89a` `agent-session.ts:1677-1690`: `AgentSession.prompt()` throws before any streaming when neither `hasConfiguredAuth(provider)` nor `checkAuth(provider)` passes — `Authentication failed for "<p>". Credentials may have expired or network is unavailable. Run '/login <p>' to re-authenticate.` for OAuth, `formatNoApiKeyFoundMessage(provider)` otherwise. `coding/` holds neither text. So pi reaches `a328aa89a`'s chat assertion from `prompt()` only once auth is configured, while the port's session chat guard (`6e78ccc`, `sessionStreamFn`) runs for any session. **+2 (2026-09-27)** — `e473b5cd8`: `prompt()` reports how an accepted prompt was dispatched through `preflightResult(disposition)` — `"handled"` (an extension command, or input an extension handler consumed), `"queued"` (steered or followed up while streaming) or `"started"` — and no longer calls it on a rejection, which still throws; `steer()` and `followUp()` return a `QueuedInputDisposition` (`"handled" \| "queued"`). `coding.Session`'s `Steer`/`FollowUp` pass messages to the agent's queues and are not this text-input API, so nothing in `coding/` changes; the RPC consumers are host (E1). `ff72faba2`'s `createBranchedSession` half: a fork writes its file at once iff the branched path already holds a user or assistant message (`_hasConversation`, the rule `_persist` uses, which `SessionRecorder` ships since `c0687e6`), otherwise the first such message creates it. Oracles: `tree-traversal.test.ts` › 'does not duplicate entries when forking from before the first user message' and 'writes file immediately when forking at a user message'. **+5 (2026-10-19)** — `27c7b6ff4`: the user `!` command strips an ANSI sequence split across output chunks (`core/bash-executor.ts`'s `executeBashWithOperations`, `utils/ansi.ts`'s `splitIncompleteAnsiSuffix`; Go has neither). `503c60552`: `agent_settled` gains `aborted: boolean` (Go has no `agent_settled`). `a447ba11f`: `_startRun`/`_prepareRun` give `sendCustomMessage({triggerTurn})` the same setup as `prompt()` — `before_agent_start` fires for custom-message runs, the session is busy from setup, held messages flush after preparation, and an abort during setup aborts at `agent_start`. `6fcb48670`'s branch-summary half: `generateBranchSummary` sets no `maxTokens` (the `e44d75c20` cap above is gone). `8e53e0e49`'s session half (pre-pin): `_runDefaultCompaction` passes `settingsManager.getRetrySettings()` (enabled by default; `maxRetries`, `baseDelayMs`, `maxAgentDelayMs` from `SETTINGS_DEFAULTS`) and `_summarizationRetryCallbacks` (`summarization_retry_scheduled`/`_finished` events). Its compact() half shipped (`8c84cb3`: `CompactionSettings.Retry`/`RetryCallbacks`, nil = no retry), and `DefaultCompactionSettings().Retry` is pi's `SETTINGS_DEFAULTS.retry` (`24adc3e`, `0eba718`); what stays here is a *configured* retry setting (`getRetrySettings` with user overrides) and the `summarization_retry_*` events. pi passes `sessionId: undefined` there; Go's `CompactionSettings.SessionID` stays compact()'s parameter. |
 | 13 | **Edit-tool result `details`** — `core/tools/edit-diff.ts` (structured diff + unified patch + `firstChangedLine`) | 556 LOC | ~1 | **OPENED 2026-09-03.** pi's edit returns `details: {diff, patch, firstChangedLine}` (`core/tools/edit.ts:211`); the Go edit tool returns a bare `textResult("Successfully replaced %d block(s) in %s.")` with no details (`coding/tools.go`). Surfaced while auditing every `Details` site during the write-tool port. Not a one-liner: it lands a new structured payload on the session entry and the server bridge, so it carries its own goldens. Slice: port `edit-diff.ts` as `coding/editdiff.go` with parity tests against pi's diff/patch text, then wire it into the edit result. The ~500-line matching/apply engine is byte-identical between upstream's two forks, so it is shared (`internal/`), not duplicated. | — |
-| 14 | **`assistant-message-frame.ts`** — `packages/ai/src/utils/assistant-message-frame.ts` (`AssistantMessageFrameEncoder` + the frame reducer) | ~330 LOC | ~1 | **OPENED 2026-09-04.** IN scope and unported: it is root-exported pi-ai SDK surface (`packages/ai/src/index.ts:39`) and no exclusion test fires, but the port has no frame encoder at all (`grep -rl 'FrameEncoder' --include='*.go'` is empty) and no row named it. Added upstream by `a829de0a7` (2026-08-17) and it has taken **four** commits since with nothing landing port-side — the 2026-09-03 pin advance recorded only the streamSimple half of `5c6655e76`, not its framing half. Same class as **K15** (`utils/overflow.ts`): published SDK surface whose only consumer is the unported durable-drive harness, so it drains with entry 11 rather than ahead of it. | **2** — `8b5899dce` (2026-09-03: `isJsonPrefix` relaxes the catch-up check — a legacy grammar call's delta stream starts at an empty input, so its parsed arguments may EXTEND the start snapshot rather than reproduce it exactly), `0fdec07ba` (2026-09-03: `cloneStartMessage` carries `providerThinkingLevel` through the frame) |
+| 14 | ~~**`assistant-message-frame.ts`**~~ | — | — | **CLOSED 2026-10-19** — `b39979799` deleted `utils/assistant-message-frame.ts` and its root export. The port never had a frame encoder, so there was nothing to delete; its two deltas died with it. | — |
 | 15 | **Mirror pi's attribution placement** — `core/provider-attribution.ts` is homed in `ai/providers/attribution.go`, and pi's new `providers/opencode-headers.ts` has no Go counterpart | — | ~1 | **OPENED 2026-09-09.** Deliberately a queue row and **not** a Divergences row: a recorded divergence makes every future finding against it refuted-by-default, and this is fixable work with a known shape. pi splits this surface in two, and `561a2e066` is what made the split load-bearing: the **ai** package injects `x-opencode-session` from `options.sessionId` for the opencode/opencode-go providers alone (`providers/opencode-headers.ts`), while `x-opencode-client`, the `opencode.ai` host gate and the whole default-attribution bundle stay in **coding-agent** and reach the request through `transformHeaders` (`core/sdk.ts:331` → `core/provider-attribution.ts`). The port collapses both halves into the ai layer. That is precisely why `561a2e066` needed no Go change — the port had already closed the gap upstream was closing — and it is why three cells still differ on the **bare-SDK** path, all in the same direction (the port sends MORE than pi's ai package): it also sends `x-opencode-client`; it also honours the `opencode.ai` host gate; and it puts the session header BELOW `model.Headers`, where post-commit pi's bare path puts it above. A fourth, narrower cell — a caller's case-variant deletion marker suppressed the header on the three `defaultHeaders` adapters but not on google — **CLOSED 2026-09-24** (`a328aa89a`'s case-folding `providerHeadersToRecord`, ported in `44bf5a7`; `TestOpenCodeSessionHeaderCallerDeletionMarker` now asserts google too). **None of the three is reachable from `coding.Session`**, which matches pi's coding-agent path exactly. With one Go function standing in for two pi paths that now disagree, the port matches whichever path its own consumers take — and that is the right one to match, which is why this is a ~1 and not urgent. The slice: move the attribution bundle into `coding/` behind the `TransformHeaders` seam the port already has (`ai/models_runtime.go`), leave the ai layer holding only the opencode session header keyed on provider identity, and keep `ai/providers/opencode_provider_headers_test.go` green throughout. **Landing it changes a recorded Go-home mapping** — the `pi-triage` skill's table sends `core/provider-attribution.ts` → `ai/providers/attribution.go` — so fix that table in the same commit, per this file's own rule that the test wins and the list follows. Deferred out of the 2026-09-09 cycle under the 2026-09-02 boy-scout **boundary**, not against the rule: the repair changes a subsystem's shape and carries every provider's header order as its parity surface. | — |
 | 16 | **Context-overflow detection** — `packages/ai/src/utils/overflow.ts` | 180 LOC / 1 file (at `16292398a`) | ~1 | **OPENED 2026-09-18.** `isContextOverflow` and its `OVERFLOW_PATTERNS` / `NON_OVERFLOW_PATTERNS` decide whether a failed assistant turn was a context overflow — the signal that drives compaction rather than a retry. The port has **no Go base**: `grep -rn --include='*.go' -e context_length_exceeded -e 'too many tokens' -e 'token limit exceeded' ai coding agent` is empty, and `coding/compaction.go` triggers on its own estimate alone, never on a provider's refusal. So the port cannot react to a provider that says "too long" when the estimate said otherwise. Root-exported (`export * from "./utils/overflow.ts"`), no dependency question, and the patterns are the same JS-RegExp-under-RE2 translation `ai/retry_classify.go` already solves with `buildProviderErrorPattern` — so this is a small, well-shaped slice, not a research problem. Land it beside `retry_classify.go`, not inside `coding/`. | **1** — `661619e87` (2026-09-18: the Cerebras bodyless-400/413 pattern moves OUT of `OVERFLOW_PATTERNS` into its own `CEREBRAS_BODYLESS_OVERFLOW_PATTERN`, applied only when `message.provider === "cerebras"` (#9482). A bodyless 400/413 from any other provider stops counting as an overflow. Port it WITH the base, not after: shipping the base without it would build in the bug upstream just fixed.) **+1 (2026-09-20)** — `0e283203c`: `OVERFLOW_PATTERNS`' first entry widens from `/prompt is too long/i` to `/prompt (?:is )?too long/i`, so z.ai's `{"code":"1261","message":"Prompt too long"}` is recognised as an overflow instead of a hard failure. z.ai also overflows SILENTLY on other paths (`usage.input > contextWindow`), which the same file handles; the doc comment is updated to stop claiming z.ai never errors. Land the widened pattern with the base port — it is one character class, but it is the whole value of the row for z.ai users. **+1 (2026-09-22)** — `466db0fec`: `_checkCompaction` now treats an explicit `stopReason: "error"` overflow as recoverable only while the assistant is still projected (no later `context_edit` hid it), and the recovery omits the attempt with a persisted `context_edit` (entry 12) rather than dropping it from agent state. Land together with entry 12's recovery half. **+1 (2026-09-30)** — `3dd803d7e`: `OVERFLOW_PATTERNS` gains `/prompt exceeds max length/i`, Z.AI's CN endpoint's `{"code":"1261","message":"Prompt exceeds max length"}`. Oracle: `overflow.test.ts`. |
 | 17 | **Prompt cache warming** — `core/cache-warmer.ts` (437 LOC) plus its wiring: `core/cache-stats.ts`, `core/usage-totals.ts`, and the `createAgentSession` streamFn refactor in `core/sdk.ts` (`provider-composer.ts`'s `promptCache` merge was listed here until 2026-09-24; it is the models.json layer, E1 — see the out-table) | ~500 LOC src | ~1.5 | **OPENED 2026-09-20** (`c596d09d9`, rider `3390bd936`). pi issues SPECULATIVE provider requests to keep a prompt cache alive between turns, driven by the new `Model.promptCache` lifetimes. The data half SHIPPED this cycle (`120e5d9`: `ai.ModelPromptCache` + `Model.PromptCache`, and the 0.86.1 catalog carries it for 14 anthropic models), so the port reads the lifetimes and does nothing with them. The warmer itself has no Go base: `grep -rn 'CacheWarmer\|cache_warm' --include='*.go'` returns nothing, and its collaborators are absent too — no `UsageTotals`, no `CacheStats`. **Not E1**, and that is the call worth recording: its consumers are mixed (`core/sdk.ts` and `core/agent-session.ts` alongside `settings-manager`, `model-registry` and the interactive footer), so the only-consumers clause does not fire and the default is IN. It changes what requests reach the provider, which is SDK behaviour, not presentation. `3390bd936` is already a bug fix on it — a late refresh must be skipped once the context it was warming has moved on — so expect the upstream shape to keep moving; take it after entry 16, which is smaller and unblocks compaction. | **1** — `3390bd936` (skip late cache-warming refreshes) **+1 (2026-09-30)** — `9a100c7cc`: `combineUsage` moves from `compaction/compaction.ts` to `usage-totals.ts`, exported (compaction imports it; behaviour unchanged), and becomes the adder for nested-call usage (row 20). |
-| 18 | **A model on the tool execution context** — pi's `AgentTool.execute` receives a ctx carrying the request's `model`; the port's `agent.AgentTool.Execute(ctx, toolCallID, params, onUpdate)` does not | ~1 | ~1 | **OPENED 2026-09-20** (`f5c946480`). The read tool reads `ctx?.model?.inputLimits?.images?.resize` to pick an image resize profile, and pi's own `ReadToolOptions.resizeOptions` exists as the fallback for a context with no model. The port shipped that fallback this cycle (`c87df16`) as an `imageResizeFn` getter installed by `NewSession`, read per call so a mid-session `SetModel` still reaches the tool — which covers this case completely. The row is open because the SEAM is missing, not the behaviour: every future upstream change that reads something else off `ctx.model` inside a tool will need the same bespoke getter, and at the second one that is a worse trade than widening `Execute`. Cheap, and an API break the mirror ruling already permits. | — |
-| 19 | **pi.dev remote model-catalog overlay** — `core/remote-catalog-provider.ts` (`withRemoteCatalog`, the stored-overlay restore, the ETag/Last-Modified refresh protocol, `?types=` negotiation, `minimumPiVersion`) | ~250 LOC src at `a328aa89a` | ~1.5 | **OPENED 2026-09-24.** Filed `n/a` since 2026-07-17 under E1's only-consumers clause, whose premise is false at `a328aa89a`: its sole importer is `core/model-runtime.ts`, which `createAgentSession` (`core/sdk.ts`, SDK) defaults via `ModelRuntime.create`, and `ModelRuntime.create` wraps every built-in except radius and runs `refresh({allowNetwork:false})`, which publishes the restored stored overlay; the networked path is reached from `experimental/services/models-provider.ts` (entry 11). Mixed consumers, so the clause does not fire and no other E1 category fits a catalog fetch. No Go base (`grep -rn --include='*.go' -e 'api/models/providers' -e withRemoteCatalog -e parseCatalog ai coding agent cmd internal` is empty apart from the attribution HTTP-Referer); the `ai.ModelsStoreEntry.{Etag,LastModified,CheckedAt}` seams are already ported and latent. Wire note: `url.searchParams.set("types", "chat,image,classifier")` percent-encodes the commas (`types=chat%2Cimage%2Cclassifier`), which `url.Values.Encode` reproduces and a hand-built query does not. Oracles: `remote-catalog-provider.test.ts`, `model-catalog-protocol.test.ts` (`7fd564cbb`: the `?types=` request, the 307 to `&pi-version=<VERSION>`, per-`minimumPiVersion` selection). | **1** — `a328aa89a`: type-aware overlay — `REMOTE_CATALOG_MODEL_TYPES = ["chat","image","classifier"]`, `parseCatalog` keeps entries whose `type` is undefined or a listed string (drops `"video"`; drops `type: null`, unlike pi-ai's `getModelType`), `mergeModels` replaces by `(getModelType, id)`. **+1 (2026-10-01)** — `c34f2d6ad`: `mergeModels` builds a `Map` keyed `` `${getModelType}\0${id}` `` over `[...baseline, ...dynamic]` — positions match the old replace-in-place, but duplicate keys inside `baseline` now collapse to one entry (the last wins, at the first's position). |
-| 20 | **Tool orchestration core** — the general mechanisms `8562bcf66` adds for tools that call tools: `ToolExposure` (`direct`, `model-only`, `codemode`, `deferred`, `hidden`) and `defaultActive`; `prepareLoadout` and the hidden-declarations projection over the transcript's system messages; `ctx.executeTool()` through `core/nested-tool-calls.ts`'s `NestedToolCallRunner` (bounded `nestedCalls` recorded onto the calling tool's result message at `message_start`; `parentToolCallId` on nested `tool_execution_*` events and `tool_call`/`tool_result` hooks); `getCallableToolNames`; `setActiveToolsByName`'s dedup and hidden filtering; loadout restore from the transcript through `setActiveToolsByName` | ~550 LOC src at `4259686d9` (`nested-tool-calls.ts` 238 + the `agent-session.ts` hunks + the `ExecuteToolOptions`/`ToolLoadout`/`ExtensionToolContext` types) | ~2 | **OPENED 2026-09-29** under the ruling of that date. Rows 21-23 stand on it. The agent-core half shipped this cycle (`7559a04`: `RunToolCall`, `AgentToolCallOutcome`, structured content, `IsError` results, `OutputSchema`), as did the `nestedCalls` record type and its compaction reader (`58ad297`), so this row is the session half only. No Go base: `grep -rn --include='*.go' -e Exposure -e prepareLoadout -e NestedToolCallRunner -e parentToolCallId coding agent` is empty. **Carries a Go-only requirement from the review of `7559a04`:** `agent.RunToolCall` runs its hooks on the caller's goroutine, outside the parallel executor's `serialMu`, so nested hook bodies must be serialized with the loop's own (pi gets this free from its single thread). A lock private to the runner is not enough — `serialMu` is a local of `executeToolCallsParallel` — so either the session installs mutex-wrapped hooks on the Agent and hands the same wrappers to `RunToolCall`, or agent core exposes its lock. Nested `tool_execution_*` emits take the same lock (the loop serializes its listeners through `safeEmit`). Hold it around hook bodies and emits only, never across a nested tool's `Execute`, which can itself call tools and would deadlock a non-reentrant mutex. Serializing whole hook bodies is stricter than pi, which interleaves at awaits (a pending permission prompt would stall sibling tools), and matches what the loop already does for `AfterToolCall`. The refuter's `-race` repro — two parallel tools calling `RunToolCall` with the agent's hooks — is the test to start from. | **+1 (2026-09-30)** — `9a100c7cc`: `NestedCallRecorder.addUsage` sums the `usage` of every nested result, calls dropped from the record included; `takeRecord` returns `{calls, usage}`; `AgentSession` adds that usage onto the calling tool's result message at `message_start` (`combineUsage`), so the session's cost counts codemode's nested calls. Oracles: `nested-tool-calls.test.ts`, `suite/agent-session-codemode.test.ts`. **+1 (2026-10-01)** — `028c0ec56`: tools in `_hiddenDeclarations` are dropped from the system prompt's tool snippets, both in `_rebuildSystemPrompt` and in the per-request section diff, so the `<tools>` list matches the declarations the request carries (codemode `only`). Oracle: the commit's `agent-session` codemode test. |
-| 21 | **MCP** — `packages/mcp` (`@earendil-works/pi-mcp`: JSON-RPC client, stdio and streamable-HTTP transports, OAuth discovery/flow/provider, protocol content types, in-memory transport and `./testing`) and `extensions/mcp/**` (config from global and trusted-project `mcp.json` plus `pi.registerMcpServer`, lazily loaded runtimes, tool exposure per server, resources, OAuth token storage, log), `core/mcp-servers.ts` (registry and config validation), `core/tools/truncate.ts`'s `truncateMiddle` (its only consumer is `extensions/mcp/tools.ts`), and `mcp.json`'s project-trust gate (`trust-manager.ts` lists it as trust-requiring) | 3,020 LOC / 18 files (`packages/mcp/src`) + 2,742 of `extensions/mcp`'s 3,586 (`ui.ts`, `cli.ts`, `cli.lazy.ts` are E1) + 237 + 38, at `4259686d9` | ~6 | **OPENED 2026-09-29** under the ruling of that date. Shape: a Go package mirroring `packages/mcp`, the extension's logic mirrored file for file, a thin session option on top. `cross-spawn` → `os/exec`, no dependency. `extensions/mcp/index.ts` splits by hunk. After row 20. | **1** — `1d74741e1`: MCP OAuth refreshes are serialized across processes, because rotating refresh tokens (Cloudflare) were lost when two pi processes refreshed at once. A refresh holds a per-server lock file (`proper-lockfile` on `mcp-auth-refresh-<sha256(key)[:16]>` in the agent dir; stale after 20s, waits up to 25s at 100ms retries) from reading the tokens to saving new ones, reuses tokens another process already refreshed, bounds each refresh request to 15s, and closing a connection waits for a running refresh (`McpAuthProvider.settled()`; `extensions/mcp/{oauth,runtime}.ts`). Oracle: `mcp-oauth-refresh.test.ts`. **+1 (2026-09-30)** — `4df157433`: MCP's OAuth callback (`packages/mcp/src/oauth/callback.ts`, `extensions/mcp/oauth.ts`) uses the shared callback server and sign-in page (row 1). Oracle: `packages/mcp/test/oauth.test.ts`. `5257d0d5f`'s `renderCall`/`renderResult` on MCP tools are host rendering (E1). **+10 (2026-10-01)** — `7ef68d4f2` (Streamable HTTP calls `fetch` without a receiver), `7c9fe6645` (custom OAuth `clientName` per server), `b29db895c` (MCP tool names aligned with codemode identifiers; its `core/extensions/loader.ts` hunk is E1), `91f9f3b5d` (a server can authenticate with a provider login: `auth: {provider}` in config, `runtime.ts` resolves the provider's credential), `e029c3ed0` (the first prompt stops waiting for MCP servers to connect; `extensions/mcp/index.ts` +215, with codemode and tool_search adjusting to late tools), `1c7e7df76` (codemode lists MCP servers rather than their tools; `core/mcp-servers.ts`, `extensions/mcp/{index,tools,config}.ts`), `d850edee9` (`oauth.authServerMetadataUrl` and the RFC 9207 `iss` check — `packages/mcp/src/oauth/{discovery,errors,flow,types}.ts`), `8ce69e9d2` (empty and null optional OAuth fields read as absent), `e529a82c9` (step-up authorization keeps granted scopes), `5806068c2` (OAuth credentials stored per server name AND URL). `a4715ec9b` adds upstream's run of the official MCP client conformance suite in CI — the oracle to start from. `0582d9c11`'s result previews and `41169ba2a`'s clickable login link are E1. |
-| 22 | **codemode** — `packages/codemode` (`@earendil-works/pi-codemode`: a QuickJS wasm VM in a worker, the host/worker protocol, tool declarations rendered for scripts, source handling) and `extensions/codemode/**` (the Codex-compatible `codemode` tool, `on`/`only` modes, per-session store, catalog and classifier access from scripts, large results to a JSON temp file) | 1,579 LOC / 10 files + 933 of `extensions/codemode`'s 1,047 (`renderer.ts` is E1), at `4259686d9` | ~4 + submodule | **OPENED 2026-09-29** under the ruling of that date. Dependency pre-decided by the formula (ruling point 5): `github.com/tetratelabs/wazero` running the same `quickjs-wasi` wasm, in a `codemode` submodule; a CONSULT only if the slice meets cgo, a lost target or a shape change. Needs row 20's nested calls. | **+1 (2026-09-30)** — `9a100c7cc`: codemode reports its classifier usage and its nested tools' usage in the session cost (`extensions/codemode/{execute,tool}.ts`; `renderer.ts` is E1). `1ff5b6fdd`'s 1 MiB structured bash output, which codemode scripts receive, shipped (`9c75fa1`). **+2 (2026-10-01)** — `d2931ad3d`: the prelude's `image()` validates base64 and detects the image type (`runtime/prelude-source.ts`); `1c7e7df76`/`e029c3ed0`'s codemode halves (`extensions/codemode/{execute,tool}.ts`: MCP servers listed instead of their tools, late-connecting servers). `4a42f8faf`'s `workerUrl: string | URL` exists for Bun's compiled binary and has no meaning under wazero (dropped; its `config.ts` half is packaging, E1). |
-| 23 | **tool_search** — `extensions/tool-search/**`: a tool that lets the model look up `deferred` tools instead of seeing every declaration up front | 287 LOC at `4259686d9` | ~0.5 | **OPENED 2026-09-29** under the ruling of that date. Needs row 20's `deferred` exposure and loadout. | — |
+| 18 | **A model on the tool execution context** — pi's `AgentTool.execute` receives a ctx carrying the request's `model`; the port's `agent.AgentTool.Execute(ctx, toolCallID, params, onUpdate)` does not | ~1 | ~1 | **OPENED 2026-09-20** (`f5c946480`). The read tool reads `ctx?.model?.inputLimits?.images?.resize` to pick an image resize profile, and pi's own `ReadToolOptions.resizeOptions` exists as the fallback for a context with no model. The port shipped that fallback this cycle (`c87df16`) as an `imageResizeFn` getter installed by `NewSession`, read per call so a mid-session `SetModel` still reaches the tool. **The second reader has arrived:** `getNonVisionImageNote` (`2f4f283cc`, pre-pin) also reads `ctx.model`, and was missing until `418b74e` generalized the getter to the request's model (`toolModelFn`, `Session.currentModel`). The read tool now reads two things off the model through a bespoke getter, which by this row's own measure is the point where widening `Execute` is the better trade. Cheap, and an API break the mirror ruling already permits. | — |
+| 19 | **pi.dev remote model-catalog overlay** — `core/remote-catalog-provider.ts` (`withRemoteCatalog`, the stored-overlay restore, the ETag/Last-Modified refresh protocol, `?types=` negotiation, `minimumPiVersion`) | ~250 LOC src at `a328aa89a` | ~1.5 | **OPENED 2026-09-24.** Filed `n/a` since 2026-07-17 under E1's only-consumers clause, whose premise is false at `a328aa89a`: its sole importer is `core/model-runtime.ts`, which `createAgentSession` (`core/sdk.ts`, SDK) defaults via `ModelRuntime.create`, and `ModelRuntime.create` wraps every built-in except radius and runs `refresh({allowNetwork:false})`, which publishes the restored stored overlay; the networked path is `ModelRuntime.create`'s `refreshFromNetwork` (its earlier `experimental/services/models-provider.ts` caller died with `7472cda0d`). Mixed consumers, so the clause does not fire and no other E1 category fits a catalog fetch. No Go base (`grep -rn --include='*.go' -e 'api/models/providers' -e withRemoteCatalog -e parseCatalog ai coding agent cmd internal` is empty apart from the attribution HTTP-Referer); the `ai.ModelsStoreEntry.{Etag,LastModified,CheckedAt}` seams are already ported and latent. Wire note: `url.searchParams.set("types", "chat,image,classifier")` percent-encodes the commas (`types=chat%2Cimage%2Cclassifier`), which `url.Values.Encode` reproduces and a hand-built query does not. Oracles: `remote-catalog-provider.test.ts`, `model-catalog-protocol.test.ts` (`7fd564cbb`: the `?types=` request, the 307 to `&pi-version=<VERSION>`, per-`minimumPiVersion` selection). | **1** — `a328aa89a`: type-aware overlay — `REMOTE_CATALOG_MODEL_TYPES = ["chat","image","classifier"]`, `parseCatalog` keeps entries whose `type` is undefined or a listed string (drops `"video"`; drops `type: null`, unlike pi-ai's `getModelType`), `mergeModels` replaces by `(getModelType, id)`. **+1 (2026-10-01)** — `c34f2d6ad`: `mergeModels` builds a `Map` keyed `` `${getModelType}\0${id}` `` over `[...baseline, ...dynamic]` — positions match the old replace-in-place, but duplicate keys inside `baseline` now collapse to one entry (the last wins, at the first's position). **+2 (2026-10-19)** — `ee409a85f`'s session half: `withPersonalizedCatalog` (`remote-catalog-provider.ts`) and `model-runtime.ts`'s OpenRouter branch; the ai half shipped (`7f6069b`: `providers.PersonalizeOpenRouterCatalog`, `RefreshModelsContext.BaseURL`). `a3f265b1c`'s `scripts/publish-model-catalog.mjs` raises `MINIMUM_PI_VERSION` to 1.2.1: the overlay serves the kimi-coding Chat Completions catalog only to clients declaring at least 1.2.1, a bar the port's `pi-version` must clear when this lands. |
+| 20 | **Tool orchestration core** — the general mechanisms `8562bcf66` adds for tools that call tools: `ToolExposure` (`direct`, `model-only`, `codemode`, `deferred`, `hidden`) and `defaultActive`; `prepareLoadout` and the hidden-declarations projection over the transcript's system messages; `ctx.executeTool()` through `core/nested-tool-calls.ts`'s `NestedToolCallRunner` (bounded `nestedCalls` recorded onto the calling tool's result message at `message_start`; `parentToolCallId` on nested `tool_execution_*` events and `tool_call`/`tool_result` hooks); `getCallableToolNames`; `setActiveToolsByName`'s dedup and hidden filtering; loadout restore from the transcript through `setActiveToolsByName` | ~550 LOC src at `4259686d9` (`nested-tool-calls.ts` 238 + the `agent-session.ts` hunks + the `ExecuteToolOptions`/`ToolLoadout`/`ExtensionToolContext` types) | ~2 | **OPENED 2026-09-29** under the ruling of that date. Rows 21-23 stand on it. The agent-core half shipped this cycle (`7559a04`: `RunToolCall`, `AgentToolCallOutcome`, structured content, `IsError` results, `OutputSchema`), as did the `nestedCalls` record type and its compaction reader (`58ad297`), so this row is the session half only. No Go base: `grep -rn --include='*.go' -e Exposure -e prepareLoadout -e NestedToolCallRunner -e parentToolCallId coding agent` is empty. **Carries a Go-only requirement from the review of `7559a04`:** `agent.RunToolCall` runs its hooks on the caller's goroutine, outside the parallel executor's `serialMu`, so nested hook bodies must be serialized with the loop's own (pi gets this free from its single thread). A lock private to the runner is not enough — `serialMu` is a local of `executeToolCallsParallel` — so either the session installs mutex-wrapped hooks on the Agent and hands the same wrappers to `RunToolCall`, or agent core exposes its lock. Nested `tool_execution_*` emits take the same lock (the loop serializes its listeners through `safeEmit`). Hold it around hook bodies and emits only, never across a nested tool's `Execute`, which can itself call tools and would deadlock a non-reentrant mutex. Serializing whole hook bodies is stricter than pi, which interleaves at awaits (a pending permission prompt would stall sibling tools), and matches what the loop already does for `AfterToolCall`. The refuter's `-race` repro — two parallel tools calling `RunToolCall` with the agent's hooks — is the test to start from. | **+1 (2026-09-30)** — `9a100c7cc`: `NestedCallRecorder.addUsage` sums the `usage` of every nested result, calls dropped from the record included; `takeRecord` returns `{calls, usage}`; `AgentSession` adds that usage onto the calling tool's result message at `message_start` (`combineUsage`), so the session's cost counts codemode's nested calls. Oracles: `nested-tool-calls.test.ts`, `suite/agent-session-codemode.test.ts`. **+1 (2026-10-01)** — `028c0ec56`: tools in `_hiddenDeclarations` are dropped from the system prompt's tool snippets, both in `_rebuildSystemPrompt` and in the per-request section diff, so the `<tools>` list matches the declarations the request carries (codemode `only`). Oracle: the commit's `agent-session` codemode test. **+6 (2026-10-19)** — `c662ec7e3`: restored or reloaded loadout tools that are not registered yet wait in `_pendingToolNames` and activate when registered (dropped when `setActiveToolsByName` deactivates them or the next run starts); `_restoreToolsFromTranscript` goes through `_setActiveTools`. `6f2f164ab`: resume restores the transcript's loadout when `usesDefaultTools`, applying `defaultToolModifiers` (#10887). `04b97ef00`'s `_isActivatable` (MCP tools stay activatable under an allowlist; `toolNameMatcher` shipped, `602d46e`). `c30840c2e`'s session wiring: `_hiddenDeclarations` feed `hiddenTools` into `_rebuildSystemPrompt`, and `ToolLoadout.getPromptGuidelines` (`BuildSystemPromptOptions.HiddenTools` shipped, `51cba15`; `NewSession` sets none). `36a686ee8`'s `nested-tool-calls.ts` rider (nested results carry `durationMs`). `24382bedd`: `reachesTools(input)` passed through on tool info. |
+| 21 | **MCP** — `packages/mcp` (`@earendil-works/pi-mcp`: JSON-RPC client, stdio and streamable-HTTP transports, OAuth discovery/flow/provider, protocol content types, in-memory transport and `./testing`) and `extensions/mcp/**` (config from global and trusted-project `mcp.json` plus `pi.registerMcpServer`, lazily loaded runtimes, tool exposure per server, resources, OAuth token storage, log), `core/mcp-servers.ts` (registry and config validation), `core/tools/truncate.ts`'s `truncateMiddle` (its only consumer is `extensions/mcp/tools.ts`), and `mcp.json`'s project-trust gate (`trust-manager.ts` lists it as trust-requiring) | 3,020 LOC / 18 files (`packages/mcp/src`) + 2,742 of `extensions/mcp`'s 3,586 (`ui.ts`, `cli.ts`, `cli.lazy.ts` are E1) + 237 + 38, at `4259686d9` | ~6 | **OPENED 2026-09-29** under the ruling of that date. Shape: a Go package mirroring `packages/mcp`, the extension's logic mirrored file for file, a thin session option on top. `cross-spawn` → `os/exec`, no dependency. `extensions/mcp/index.ts` splits by hunk. After row 20. | **1** — `1d74741e1`: MCP OAuth refreshes are serialized across processes, because rotating refresh tokens (Cloudflare) were lost when two pi processes refreshed at once. A refresh holds a per-server lock file (`proper-lockfile` on `mcp-auth-refresh-<sha256(key)[:16]>` in the agent dir; stale after 20s, waits up to 25s at 100ms retries) from reading the tokens to saving new ones, reuses tokens another process already refreshed, bounds each refresh request to 15s, and closing a connection waits for a running refresh (`McpAuthProvider.settled()`; `extensions/mcp/{oauth,runtime}.ts`). Oracle: `mcp-oauth-refresh.test.ts`. **+1 (2026-09-30)** — `4df157433`: MCP's OAuth callback (`packages/mcp/src/oauth/callback.ts`, `extensions/mcp/oauth.ts`) uses the shared callback server and sign-in page (row 1). Oracle: `packages/mcp/test/oauth.test.ts`. `5257d0d5f`'s `renderCall`/`renderResult` on MCP tools are host rendering (E1). **+10 (2026-10-01)** — `7ef68d4f2` (Streamable HTTP calls `fetch` without a receiver), `7c9fe6645` (custom OAuth `clientName` per server), `b29db895c` (MCP tool names aligned with codemode identifiers; its `core/extensions/loader.ts` hunk is E1), `91f9f3b5d` (a server can authenticate with a provider login: `auth: {provider}` in config, `runtime.ts` resolves the provider's credential), `e029c3ed0` (the first prompt stops waiting for MCP servers to connect; `extensions/mcp/index.ts` +215, with codemode and tool_search adjusting to late tools), `1c7e7df76` (codemode lists MCP servers rather than their tools; `core/mcp-servers.ts`, `extensions/mcp/{index,tools,config}.ts`), `d850edee9` (`oauth.authServerMetadataUrl` and the RFC 9207 `iss` check — `packages/mcp/src/oauth/{discovery,errors,flow,types}.ts`), `8ce69e9d2` (empty and null optional OAuth fields read as absent), `e529a82c9` (step-up authorization keeps granted scopes), `5806068c2` (OAuth credentials stored per server name AND URL). `a4715ec9b` adds upstream's run of the official MCP client conformance suite in CI — the oracle to start from. `0582d9c11`'s result previews and `41169ba2a`'s clickable login link are E1. **+10 (2026-10-19)** — `1499466d8` (opt-in OAuth CIMD: `oauth.clientRegistration: "dcr"\|"cimd"`, exact redirect-URI acceptance), `1387af7b4` (a trusted project `mcp.json` overrides a global server's `enabled` and exposure; keep the trust gate), `147b50281` (`application_type` in OAuth DCR), `8c911797c` (shutdown cancels connecting servers and their retry sleeps), `2db5e359b` (connection attempts, `getClient` resolving the current connection, serialized reconnects), `f10993bc7` (cancellable OAuth sign-ins; no refresh after close), `c5f5b3282` (**security**, the RFC 9207 mix-up: reject `iss` when no AS metadata was discovered — land it with the OAuth flow), `f4cca2dc2` (no resource listing on connect), `67996ab75` (`structuredContent` is any JSON — Go's `StructuredContent` must admit arrays and null), `da0eadf04` (a per-request signal on `McpTransport.send`; no retry of a cancelled request after an auth refresh). Riders: `6f1072cc0` (`renderServersSection`'s intro per reach, `serversSectionIntro`), `d677d0ee7` (`saveToTempFile` through `writeOutputFile`; `createOutputFile` shipped, `1a5f453`), `04b97ef00` (`isMcpToolName`, `_allowlistFiltersMcp`: an allowlist with no `mcp__` entry keeps MCP tools registered for codemode and tool_search, so `isAllowed` gains pi's third arm), `24382bedd` (activation driven by `reachesTools`, namespace aliases, a self-describing result schema). |
+| 22 | **codemode** — `packages/codemode` (`@earendil-works/pi-codemode`: a QuickJS wasm VM in a worker, the host/worker protocol, tool declarations rendered for scripts, source handling) and `extensions/codemode/**` (the Codex-compatible `codemode` tool, `on`/`only` modes, per-session store, catalog and classifier access from scripts, large results to a JSON temp file) | 1,579 LOC / 10 files + 933 of `extensions/codemode`'s 1,047 (`renderer.ts` is E1), at `4259686d9` | ~4 + submodule | **OPENED 2026-09-29** under the ruling of that date. Dependency pre-decided by the formula (ruling point 5): `github.com/tetratelabs/wazero` running the same `quickjs-wasi` wasm, in a `codemode` submodule; a CONSULT only if the slice meets cgo, a lost target or a shape change. Needs row 20's nested calls. | **+1 (2026-09-30)** — `9a100c7cc`: codemode reports its classifier usage and its nested tools' usage in the session cost (`extensions/codemode/{execute,tool}.ts`; `renderer.ts` is E1). `1ff5b6fdd`'s 1 MiB structured bash output, which codemode scripts receive, shipped (`9c75fa1`). **+2 (2026-10-01)** — `d2931ad3d`: the prelude's `image()` validates base64 and detects the image type (`runtime/prelude-source.ts`); `1c7e7df76`/`e029c3ed0`'s codemode halves (`extensions/codemode/{execute,tool}.ts`: MCP servers listed instead of their tools, late-connecting servers). `4a42f8faf`'s `workerUrl: string \| URL` exists for Bun's compiled binary and has no meaning under wazero (dropped; its `config.ts` half is packaging, E1). **+14 (2026-10-19)** — `aab34df65` (`models.generateImages()` for scripts; needs row 3), `319fecb89` (a cap on script output), `b223082bb` (scripts that patch built-ins), `269121616` (lookup helpers described as async), `eb326d265` (separate output items), `748b351fe` (the execution/inline/vm/remote host split and `/portable`; `cloudflare.ts`, a Worker Durable Object module, has no Go subject and is dropped), `0fb1aee74` (deterministic runs: a virtual clock, seeded randomness, `sandbox.start`), `8a9c051f8` (schema constraints as `@` tags in declarations), `427052247` (description: schema tools resolve with a value on failure), `24382bedd` (MCP decoupled from codemode: `MCP_TYPESCRIPT_PREAMBLE` and `mcpStructuredContentSchema` leave pi-codemode), `f11e50f72` (linear output joining), `014873d7d` (an initial empty `details` update before the first nested call), `b6d505cd1` (a `// @options:` line that is not the first throws `CodemodeSourceError`), `3daa20280` (the cancellation prompt kept and bounded). Riders: `6f1072cc0` (`renderToolOutputType`, `prelude-source.ts`, the shrunk prompt), `d677d0ee7` (`image()` output saved to private temp files, labelled `[Image saved to …]`), `c30840c2e` (guidelines in declarations), `ce8972a0e` (classifier images in `execute.ts`). |
+| 23 | **tool_search** — `extensions/tool-search/**`: a tool that lets the model look up `deferred` tools instead of seeing every declaration up front | 287 LOC at `4259686d9` | ~0.5 | **OPENED 2026-09-29** under the ruling of that date. Needs row 20's `deferred` exposure and loadout. | **+1 (2026-10-19)** — `24382bedd`'s tool-search hunk: activation through `reachesTools`. |
 | 24 | **Virtual models** — `core/virtual-models.ts` (`VirtualModelDefinition`, `ModelRoute`, `getBranchSelection`, `VIRTUAL_MODEL_STATE_ENTRY` router state on the session branch), `ModelRuntime.registerVirtualModel`/`unregisterVirtualModel`/`resolveModel` and the routing of direct `streamSimple` calls (credentials withheld from another provider's model, output budget capped to the routed model), `AgentSession`'s per-request routing and `model_change`-based selection, and `sdk.ts` restoring the session model through `getBranchSelection` | ~650 LOC src at `540e174c7` (`virtual-models.ts` 227 + the `model-runtime.ts`, `agent-session.ts` and `sdk.ts` hunks) | ~2 | **OPENED 2026-09-29** (`540e174c7`). IN on reachability: `ModelRuntime` is root-exported and `createAgentSession` takes one, so a virtual model can be registered without the extension API (`pi.registerVirtualModel`, E1). The agent-loop half shipped this cycle (`86fd2a4`: responses record the requested `thinkingLevel`). The `sdk.ts` restore differs from `buildSessionContext().model` only for a virtual selection, so it lands here, not before. Off the spine; independent of rows 20-23. | **+1 (2026-10-01)** — `a0660b174`: `getBranchSelection` scans the branch backwards and returns at the first `model_change` or physical assistant response, looking up at most one model (the last `model_change` before that response) to decide whether a virtual selection holds. Equivalent to the forward scan except that it no longer calls `getModel` per entry. |
+| 26 | **agent `streamProxy`** — `packages/agent/src/proxy.ts` (`streamProxy`, `ProxyStreamOptions`, `ProxyAssistantMessageEvent`), root-exported by pi-agent-core (`export * from "./proxy.ts"`) | 393 LOC at `d2e7d8b7c` | ~1 | **OPENED 2026-10-19** (triage of `f284a2460`). A stream function for apps that route model calls through their own server: the server holds the credentials and sends events with `partial` stripped, and `streamProxy` rebuilds the message from them. IN on reachability, no exclusion fires, and no Go home (`grep -rn streamProxy --include='*.go'` is empty); earlier cycles filed its hunks "subsumed, no Go analog" without opening a row. Independent of every other row. (Row 25 was never opened: triage's proposed pi-env row shipped in the same cycle.) | **1** — `f284a2460`: `streamProxy` returns a real `AssistantMessageEventStream` (`createAssistantMessageEventStream()`), so proxied responses get `durationMs` (shipped for the port's own streams, `a1fec17`). |
+| 27 | **chord2 host runtime** — `packages/chord/src` beyond the ported value layer: `contract`, `declare`, `cell`, `cluster`, `connection`, `host`, `link`, `loader`, `manager`, `object`, `publish`, `registry`, `reload`, `remote`, `schema`, `state` (replicated state; the renamed `services/state.ts`), `types`, `websocket`, `wire` (frames), `errors` (`ChordError`) and `./node` (host manager, child control, process locks) | 9,189 LOC / 22 files at `d2e7d8b7c` | not yet sized | **OPENED 2026-10-19**, from row 11's chord half — a row of its own because row 11's other subjects are all deleted and this one is new code with a new size, so the title should say what is owed. `0104fef1e` deleted the facet and service runtime the port mirrored (`d202916`) and put this runtime in its place. Go `chord` keeps `context.go` (with its telemetry member, `7fedbfa`), `json.go` and `delta/`. The WebSocket link takes `github.com/coder/websocket`, pre-decided (2026-08-31 Codex ruling), so no consult. `loader.ts`'s `nodeLoader` (`node:module` hooks and dynamic `import()`) has no meaning in Go and is not mirrored (`7d75a0e3e`). chord's `./output` and `./sqlite*` exports are durable's code and ride row 8. Carries the runtime interfaces the old value/wire mirror (D52, pruned) left to the runtime slices: `ReplicatedState`/`MutableReplicatedState`, `ReplicatedStateDelivery`, and the source-backed `replicatedState(source, options)` family (`ReplicatedStateSource`, `…Attachment`, `…Frame`, `…Options`, `AttachedReplicatedState`). **Slice `state.ts` first:** durable (row 8) imports `replicatedState` and `AttachedReplicatedState` from chord's root. | **15** — `0104fef1e` (the runtime itself), `7f022043f` (never keep a connection whose link was already closed), `cd6b2a555` (the process-lock socket path fits `sun_path` on macOS), `90f17f59a` (wire frames declared once, as the schema that validates them; `CHORD_ERROR_CODES`; its `delta/index.ts` widening needs no Go change), `018c87ddc` (large frame payloads deflated on links), `a4d040d30` (a forked child host does not inherit `CHORD2_LOCK`), `db6497c3d` (end-to-end flow control: `ack` frames, `hello.acks`, a call limit per link), `2688aba7d` (concepts renamed — `record.ts` → `object.ts` — object variants, a link protocol version, object lifetimes), `d20c6e966` (declarations by name, void and no-arg methods, per-cell state versions), `00d8d0495` (reload and retirement across hosts), `39294a5e9` (a failed IPC write ends the link), `301617df7` (lifetime `"host"` checked by the type system), `aa9cf15be` (init for state, typed principals, contract placement: protocol 3), `b45e0ebcc` (references hydrate their state before use: protocol 4), `9a3ca68bd` (remote references refuse a foreign ctx). |
 
-Entries 1–6 total **~10 port-cycles**. Entry 7 is gated on slice 8c, no driver
-in the root module. Entry 8's shape was settled 2026-09-03 (mirror; see
-"Harness shape"), and its work is now sequenced inside entry 11. Entry 11 is
-the spine: ~77 slices on its critical path, with Phase 0's independent fixes
-already shipped ahead of it. Entries 16, 17 and 18 are off that spine and
-depend on nothing in it — take them in any cycle with room, smallest first:
-18 is an afternoon, 16 is one slice, 17 is about one and a half. Entries 20-24 were opened by the 2026-09-29 ruling: 20, then 21, 23 and 22
-in that order; 24 is independent.
+Entries 1–6 total **~10 port-cycles**. Entries 7, 11 and 14 are CLOSED
+(2026-10-19: their sources were deleted upstream); their rows stay one line
+long so older references resolve. Entry 8 (durable) is the spine now that 11
+is gone. It needs one slice of entry 27 (chord2) first: replicated state
+(`state.ts`'s `replicatedState`, `AttachedReplicatedState`), which durable
+imports from chord's root beside `Context`, `JsonValue` and `copyJson`; the rest
+of 27 is independent of 8. Entries 16, 17, 18 and 26 are off that spine and depend on
+nothing in it — take them in any cycle with room, smallest first: 18 is an
+afternoon, 16 and 26 one slice each, 17 about one and a half. Entries 20-24 were
+opened by the 2026-09-29 ruling: 20, then 21, 23 and 22 in that order; 24 is
+independent.
 
 ### Catalog regen checklist
 
 The `port-but-CATALOG-ONLY` queue: `packages/ai/scripts` deltas that land only
 when a release tag is crossed and `ai/models_catalog.json` is regenerated from
-the matching npm build. **Currently 0: drained 9 → 0 on 2026-09-30 by the
-0.99.1 regen (`1e45b11`).** Every drained row (`fde38ed7c`, `a328aa89a`,
-`a7d17e39a`, `dc84c1ac0`, `c1449660c`, `c90d9ea58`, `33e203354`, `89a5c7bda`,
-`12c416e1a`) was checked as an ancestor of the v0.99.1 release commit
-(`git merge-base --is-ancestor <delta> d86654abb`, per row, never by log order),
-the generator log `f07218c4d..d86654abb -- packages/ai/scripts` is exactly those
-nine, and each landed as its row predicted. The measurements are in `1e45b11`'s
-message.
+the matching npm build. **Currently 1 (`d2e7d8b7c`). Drained 20 on 2026-10-19
+by the 1.3.0 regen (`797d14f`):** `28eaccb8e`, `c10bfb0d7`, `4665fafb4`,
+`c71a496ff` (a no-op, as predicted), `4812cb268`, `a37306d43`'s generator hunk,
+`f76c1db66`, `943a10e74`, `a2eef9eb6`, `ce8972a0e`'s generator hunk,
+`ce950d78f`, the generator halves of `ee409a85f`, `195120a91`, `60ac3bcc3` and
+`dc939913f`, `6374c2baf`, `5712b134e`, and `b06c1f2cf`/`6a1f799b6`/`a3f265b1c`
+(a switch, its revert and its reapply). Each was checked as an ancestor of the
+v1.3.0 release commit (`git merge-base --is-ancestor <delta> 71023aec1`, per row,
+never by log order), the generator log `5806068c2..71023aec1 --
+packages/ai/scripts` is exactly those twenty, and each landed as its row
+predicted. The measurements are in `797d14f`'s message.
 
 **How the regen is decided, and it is not by reading git.** Catalog data is
 generated at publish time and never committed upstream, so a `git diff` over
 the delta can never see it (2026-07-30). Execute `JSON.stringify(MODELS)`
 against `dist/models.generated.js` in both npm builds and compare. **Verify the
 method before trusting the output:** dumping the OLD version must reproduce the
-committed catalog byte for byte. On 2026-09-30 that check passed at 823,821
-bytes (0.87.1), and a second derivation of the new file, through the build's
-`compat.getProviders()`/`getModels()`, matched the 0.99.1 dump byte for byte.
+committed catalog byte for byte. On 2026-10-19 that check passed at 867,163
+bytes (0.99.2), and a second derivation of the new file, through the build's
+`compat.getProviders()`/`getModels()`, matched the 1.3.0 dump byte for byte
+(939,772 B). Also re-capture `ai/testdata/envkeys` at every regen
+(`capture.mjs`): `TestAPIKeyEnvVarsMatchPi` fails when a catalog provider is
+missing from the capture. Re-capture `ai/testdata/builtin-auth` too:
+`TestBuiltinAPIKeyAuthNamesMatchPi` walks the capture, so a provider added
+since is not checked until it is in it.
 
 **A queued row can be killed by a later upstream change, and this queue is
 where that gets noticed.** `d92eb8d4b` queued `supportsToolReferences: true`
@@ -1455,6 +1333,7 @@ replaying it** (`git -C <clone> grep -n "<the key>" origin/main -- packages/ai`)
 
 | delta | what regenerates |
 |---|---|
+| `d2e7d8b7c` | `generate-models.ts`: MiniMax-M3.1-Flash added; the MiniMax denylist narrowed to the old models only; MiniMax's adaptive thinking with effort levels (`thinkingLevelMap`, request-body-affecting). Landed after v1.3.0, so the next release's regen drains it. |
 
 **Regen tripwire — BILLING.** `allowedFallbackModels` entries must carry
 `provider`. A regen that drops it decodes fine, but `anthropicFallbackModelCost`
@@ -1463,7 +1342,7 @@ matches and every fallback-served response is billed at the requested model's
 rates. `TestAnthropicCatalogFallbacksAreLive` does NOT catch this — the wire
 projection strips `provider`. Check the generator shape by eye after any regen
 touching `applyAnthropicAllowedFallbackModelMetadata`. Checked and clean at
-0.99.1 (claude-fable-5, 2/2 entries carry it).
+1.3.0 (claude-fable-5, 2/2 entries carry it).
 
 **Regen tripwire — thinkingLevelMap is request-body-affecting.** Since
 `265a33393` most of the tree derives it from models.dev rather than a
@@ -1473,7 +1352,10 @@ google/vertex (`aa50fe778`), and the direction matched each row's prediction. At
 0.99.1 it moved 13: seven mistral maps (`dc84c1ac0`), the openrouter aliases
 `~anthropic/claude-sonnet-latest` and `~openai/gpt-sol-latest` (off `none` →
 null, their targets moved), three radius models (Radius's own catalog) and
-cloudflare-workers-ai `gpt-oss-20b` (models.dev reasoning options).
+cloudflare-workers-ai `gpt-oss-20b` (models.dev reasoning options). At 1.3.0 it
+moved 24, among them xiaomi's on/off maps (`6374c2baf`) and claude-opus-5 and
+claude-haiku-5-5 losing `off: null` (`dc939913f`), which made `off` selectable
+and needed that commit's runtime half (`24b908d`) to send disabled thinking.
 
 **Regen tripwire — a hard-coded generator entry can be displaced by models.dev.**
 The generator hard-codes a model "until models.dev includes it"; once models.dev
@@ -1499,7 +1381,7 @@ changes from `[typesafe]`; record the new provider on row 3 before moving it.
 (iii) Per-provider key order can churn under `localeCompare`: compare dumps
 parsed, after reproducing the outgoing catalog byte for byte. (iv) Dump
 `IMAGE_MODELS` and `CLASSIFIER_MODELS` at every regen for row 3's record; do
-not embed them until it lands (0.99.1: 57 image, 12 classifier).
+not embed them until it lands (1.3.0: 60 image, 40 classifier).
 
 **Regen tripwire — a copilot model moving onto Responses changes its code
 path.** `ai/providers/openai_responses.go` carries `github-copilot`-specific
@@ -1510,7 +1392,11 @@ hand and is correct. **The hole this exposed is now closed:**
 `TestCopilotGPTModelsUseResponsesApi` derives every `github-copilot` `gpt-*`
 model from the catalog and asserts the Responses api, with a precondition check
 so the loop cannot go vacuous — before it, nothing pinned any copilot model's
-api and the flip would have happened in silence.
+api and the flip would have happened in silence. The same holds for any api
+flip: at 1.3.0 four kimi-coding models moved from `anthropic-messages` to
+`openai-completions` at `https://api.kimi.com/coding/v1` (`a3f265b1c`), and
+opencode-go's qwen3.7-plus and qwen3.8-max the other way (models.dev data); each
+flipped model's payload was swept against the 1.3.0 build.
 
 **Regen tripwire — model ids are load-bearing in Go tests.** A regen that
 removes a model can turn a green test red or, worse, leave it green while it
@@ -1540,8 +1426,35 @@ same kind should follow it or say why they depart from it.
 
 ```
 github.com/sky-valley/pi                     root — stdlib + golang.org/x/* only
-github.com/sky-valley/pi/providers/bedrock   own go.mod, own tag series, requires root
+github.com/sky-valley/pi/env                 SHIPPED 2026-10-19 — pi-env; x/sys + fsnotify; tags env/vX.Y.Z
+github.com/sky-valley/pi/providers/bedrock   planned (row 9) — own go.mod, own tag series, requires root
 ```
+
+**`env` is the first real submodule** (2026-10-19 pi-env ruling). Its go.mod
+requires the published root (`github.com/sky-valley/pi v0.99.26` when it
+landed; bumped at every release), `golang.org/x/sys` and
+`github.com/fsnotify/fsnotify`, with the root's `x/image` and `x/text` as
+indirect requires reached through `coding`. What it adds to the rules below:
+- **Development runs in an uncommitted workspace** (`go.work` listing the root
+  and `env/`; never commit one), because the client imports root packages that
+  change in the same cycle. `GOWORK=off` builds against the required root tag,
+  so between releases it proves only what that tag already had; both are gated
+  (pi-sync §4).
+- **Two-step release, in this order:** tag root `vX.Y.Z`, push it; in `env/`,
+  bump the root require to `vX.Y.Z` and run `GOWORK=off go mod tidy`; commit;
+  tag that commit `env/vX.Y.Z`; push. The env tag points one commit past the
+  root tag (pi-sync §5).
+- **Generated artifacts:** `env/bin` (the eight gzipped daemons and
+  `manifest.json`) is rebuilt by `go generate ./...` in `env` whenever
+  `env/daemon`, `env/internal/frame` or `env/cmd/pi-env` change, and committed
+  with that change; the staleness tests fail until it is.
+- **Its own dependency gate:** `env/internal/policy` holds the daemon's graph
+  (`./cmd/pi-env`) to {x/sys, fsnotify}, the module to those plus the root's
+  allowlist, and forbids cgo on every target. The root's
+  `internal/policy/deps_test.go` never sees `env/`, by the rule below.
+- Root `internal/` packages are importable from `env` (same module path
+  prefix); the daemon avoids `internal/jstext` because it drags `x/text` into
+  the daemon graph.
 
 Rules that make it work, all verified in prototype rather than assumed:
 
@@ -1559,221 +1472,58 @@ Rules that make it work, all verified in prototype rather than assumed:
   each cycle — the submodule's dependencies never enter the root graph because
   `go list ./...` in the root does not descend into a nested module.
 
-The cost is the risk recorded in the ruling: with no CI, only the root is built,
-so the submodule can rot silently against root API changes. That cost is
-accepted deliberately. It is the price of keeping the root module's dependency
-budget, which is the port's most-stated invariant.
+The cost is the risk recorded in the Bedrock ruling: with no CI, a submodule
+the cycle gate does not build can rot silently against root API changes. That
+cost is accepted deliberately — it is the price of keeping the root module's
+dependency budget, the port's most-stated invariant — and it is why the cycle
+gate builds every submodule that exists (`env` since 2026-10-19).
 
-### Harness shape — SETTLED 2026-09-03: mirror upstream
+### Durable shape — SETTLED 2026-09-03: mirror upstream
 
-Closed by the 2026-09-03 governing ruling above. The three-option table that
-stood here (mirror / delta-only / extract) and its "default is (b)"
-recommendation are withdrawn — see git history for what they said.
-
-**`coding/` STAYS. `agent/harness/**` grows beside it. They are not merged** —
-and this is what mirroring upstream *means* here, not an exception to it.
-Measured at `64eeb82a4`: upstream maintains both forks deliberately, with **zero
-cross-imports** between `packages/agent/src/harness` (21,838 LOC) and
-`packages/coding-agent/src/core` (25,585 LOC). `grep -l AgentHarness` over
-`packages/**/src` outside `packages/agent` returns only
-`coding-agent/src/experimental/**` and one SQL comment; `core/agent-session.ts`
-still drives `Agent`, not `AgentHarness`; `session-manager.ts` still carries
-`CURRENT_SESSION_VERSION = 3`. The forks have diverged on purpose —
-`compaction` 865 vs 1012 lines, `skills` 396 vs 509, `tools/bash` 145 vs 401.
-**Merging `coding/` into a Go harness package would be a divergence FROM
-upstream, not convergence on it.**
+Closed by the 2026-09-03 governing ruling. **`coding/` STAYS, and a Go
+`durable` package mirroring `packages/durable` grows beside it. They are not
+merged** — upstream keeps `packages/coding-agent/src/core` and
+`packages/durable/src` side by side with zero cross-imports (as it kept the
+`agent/src/harness` fork until `7fd478a2e` deleted it), and the forks differ on
+purpose. Merging `coding/` into a Go durable package would be a divergence FROM
+upstream, not convergence on it.
 
 Three riders that are not optional:
-- **`coding/execenv.go` is a relocation, not a fork.** Its own doc comment cites
-  `packages/agent/src/harness/types.ts` as its source, and upstream has exactly
-  one `ExecutionEnv`, there. Nine exported symbols leave package `coding` for
-  `agent/harness`, and the seven `Env*Operations` bridges in
-  `coding/tooloperations.go` absorb the break.
+- **`coding/execenv.go` is a relocation, not a fork.** Upstream has exactly one
+  `ExecutionEnv`, in `packages/durable/src/env` (it was
+  `agent/src/harness/types.ts` until `7fd478a2e`; provenance re-pointed in
+  `8adf788`). Its exported symbols leave package `coding` for the Go durable
+  package when row 8's env slice lands, the seven `Env*Operations` bridges in
+  `coding/tooloperations.go` absorb the break, and pi-env's Durable types move
+  with them (2026-10-19 pi-env ruling).
 - **Genuinely identical halves get shared, not duplicated.** `edit-diff.ts`
   diverges between the forks by 69 lines, *all* of them TUI-preview deletions —
   the ~500-line matching/apply engine is byte-identical. Those move to
-  `internal/`. Fork only where upstream forked.
+  `internal/`. Fork only where upstream forked, and never reuse one fork's
+  constant for the other: the same name can hold a different value in each.
 - **Mirror at file level inside a package, not at directory level.** Upstream's
-  TS graph has real cycles Go forbids (`runtime/drive/*.ts` ↔ `runtime/lane.ts`;
-  `core/extensions/loader.ts` → `../../index.ts`). Fold such directories into one
-  Go package.
+  TS graph has real cycles Go forbids (`core/extensions/loader.ts` →
+  `../../index.ts`). Fold such directories into one Go package.
 
-The open work is no longer *which shape* but *what the mirror contains and in
-what order*, which is a plan, not a decision.
+**Slice 8b-ii's remainder — coding-agent code, shipped 2026-08-28 with a
+remainder, and not entry 8's tree.** The seven per-tool `*Operations` seams
+(`coding/tooloperations.go`, `ce76e94`, `cd0e3b9`, `1f49233`; structs of funcs,
+since pi's members are individually overridable): (a) three members are
+declared, defaulted, bridged and **never consulted** — `EditOperations.Access`,
+`LsOperations.Exists`, `FindOperations.Glob` — while pi consults all three
+(`edit.ts:349`, `ls.ts:133`, `find.ts:169-178`); `Glob` is the substantive one,
+since upstream a supplied glob replaces the matcher wholesale. (b) **No host can
+reach any of this** — every `*ToolOps` constructor is unexported and
+`CreateTool`/`CreateCodingTools`/`CreateAllTools` take only `cwd`. (c)
+`EnvBashOperations` drops `BashExecOptions.Env` (the `PI_*` session metadata
+never reaches the child) and never yields `ErrShellAborted`/`*ShellTimeoutError`.
+(d) find and grep still enumerate the local disk directly, faithful to pi's
+fd/ripgrep architecture but meaning an injected remote filesystem enumerates
+nothing.
 
 **Queue discipline.** An entry untouched for more than ~10 cycles is evidence
 the ruling that created it was wrong; re-open the ruling rather than letting the
-row rot. That is the lesson entry 8 has been teaching for 16 cycles.
-
-### Harness delta, measured 2026-08-27 — and why most of entry 8 should wait
-
-The funding decision stands. The measurement changes what it buys, and the
-finding is large enough to state first:
-
-**Upstream's `AgentHarness` is not implemented at `ccfe79ed2`.**
-`packages/agent/src/harness/agent-harness.ts` is 508 lines of which ~450 are
-type declarations, and the class body has **27 sites** that throw
-`HarnessNotImplemented(...)` or return `this.unavailable(...)` — `prompt`,
-`skill`, `compact`, `navigateTree`, `resume`, `abort`, `steer`, `followUp`,
-`nextRun`, `cancelQueued`, `recordUsage`, `waitForIdle`, `peekAction`,
-`executeAction`, `runToCompletion`, `watch`, `lane`, `createLane`, `lanes`,
-`watchSession`, all of them. Its own test file is named
-`agent-harness-scaffold.test.ts`. Corroborating, verified by grep at the sha:
-`reducer.ts` (667 LOC) and `events.ts` (102 LOC) are **not exported from
-`packages/agent/src/index.ts`** and have exactly one importer each — their own
-tests; `startAiSpan`/`startHarnessSpan` are exported and called from nowhere in
-the monorepo. That tree took **79 first-parent commits in 90 days**.
-
-So a large part of entry 8 is upstream's own unfinished rewrite. Porting it now
-would mean porting a spec mid-flight, on the port's most parity-sensitive
-surface, to deliver a recovery kernel with nothing to recover, a durable
-protocol with no writer, and a session format with no data in it.
-
-**Correction to the funding ruling's scoping note.** It said the ported
-coding-agent consumes 9 harness symbols. Measured properly: those 9 names are
-coding-agent's own **local definitions** of the same names, not imports. The
-real coupling is **10 symbols through one file**,
-`packages/coding-agent/src/server/create-harness.ts` — `AgentHarness`,
-`AgentHarnessOptions`, `AgentHarnessTool`, `HarnessTool`, `ExecutionEnv`,
-`ExecutionToolContext`, `createBashTool`, `createEditTool`, `createReadTool`,
-`createWriteTool`. This strengthens shape (b) rather than weakening it: the two
-trees are independent implementations, not a shared core.
-
-**Symbol delta:** 333 export sites / 329 unique names → **93 HAVE, 171
-MISSING-REAL, 69 MISSING-MOOT**. `messages.ts` is 13/13 HAVE; `utils/truncate.ts`
-9/9; `compaction/utils.ts` 6/6; tools 26/36; compaction 22/34. The port's
-existing behavior is coding-agent's — the *richer* of the two implementations
-(544-line bash tool vs the harness's 161).
-
-#### Revised sequencing — rewritten 2026-08-28, after 8b shipped
-
-The 2026-08-27 table was written before slice 8b landed. Re-measuring it against
-the shipped code found three of its numbers wrong **as originally written** —
-`packages/agent` is tree-identical across `ccfe79ed2..56f3f33a9`, so nothing
-upstream moved and none of these is staleness. They are corrected below and the
-old values are named so nobody reconciles to them again.
-
-**Correction 1 — `FileSystem` is a `cwd` field + 17 methods, not 13.** The old
-row's "13 methods (…)" listed twelve and counted the `cwd` field as the
-thirteenth — and that list describes what the **port** shipped, not upstream's
-interface. Upstream adds `createDir`, `remove`, `createTempDir`, `createTempFile`
-and a `cleanup`. So the shape claim was measuring the wrong object.
-
-**Correction 2 — the conformance suite is 30 cases in 5 groups, not 13**
-(entries and lanes 8, records and log 8, repository and forks 6, queries and
-facts 4, validation and immutability 4). Count it with
-`git show <sha>:packages/agent/src/harness/session/testing/conformance.ts | grep -c '^\t\tcreateCase('`
-— a single-line regex under-reports, because 14 of the 30 call sites wrap their
-arguments.
-
-**Correction 3 — the symbol universe is 334 export sites / 330 unique names**,
-not 333/329. Every per-file denominator the old row quoted reproduces exactly
-(`messages.ts` 13, `utils/truncate.ts` 9, `compaction/utils.ts` 6, tools/ 36,
-compaction/ 34), so the extraction rule is the same rule, off by one site and one
-name. **The dropped site was never located** — do not repeat the guess that it
-was `harness/env/nodejs.ts`; that was proposed and left untested.
-
-**Symbol delta, stated honestly: 100 HAVE / 165 MISSING-REAL / 69 MISSING-MOOT**
-— which is the prior 93/171/69 **plus 7 movers, not an independent recount**. The
-buckets were not re-derived this cycle, and the split is contingent on the
-unlocated 334th site being MISSING-REAL. Per-file scores that were re-verified
-and are unchanged: `messages.ts` 13/13, `utils/truncate.ts` 9/9,
-`compaction/utils.ts` 6/6, tools/ **26/36**, compaction/ 22/34.
-
-**The structural finding that broke the old model, and the reason this table is
-now split.** Slice 8b as shipped straddles two upstream trees. `ExecutionEnv` /
-`FileSystem` / `Shell` are **harness** source (`harness/types.ts:231-315`), inside
-entry 8. All seven `*Operations` interfaces are **coding-agent** source —
-`packages/coding-agent/src/core/tools/{read:49,edit:96,write:31,bash:63,grep:56,find:55,ls:37}.ts`,
-and a grep for them across `packages/agent` returns empty. `tooloperations.go` is
-522 of the 955 shipped Go lines, and **entry 8's counter cannot see any of it**.
-A single row holding both will keep mis-predicting, because half the row is
-invisible to the measure that scores it. Hence 8b-i and 8b-ii.
-
-| # | slice | est. | state | what it bought, and what remains |
-|---|---|---|---|---|
-| ~~8a~~ | ~~Telemetry `pi.ai.request` emission~~ | — | **STRUCK 2026-08-27** | Struck the same day it was proposed, on a check that should have come first: **pi does not emit this span either.** `git grep -ln "startAiSpan\|pi.ai.request" <sha> -- packages/ai` is EMPTY; the only callers of `startAiSpan`/`AI_TELEMETRY_SCHEMA` in the monorepo are the doc generator and their own test. The port's telemetry seam is latent because pi's is. Emitting would be the port INVENTING behavior pi lacks. Re-open only when upstream's own request paths start a span. |
-| 8b-i | **`ExecutionEnv` + `LocalEnv`** — harness source, inside entry 8 | 2-3 | **SHIPPED 2026-08-28** (`b677517`) | `coding/execenv.go`, **433 LOC** + 294 test. Closes **7 export sites** MISSING-REAL → HAVE: `ExecutionEnv`, `FileSystem`, `Shell`, `FileInfo`, `FileKind`, `ShellExecOptions`, `NodeExecutionEnv`→`LocalEnv`. Two of the seven (`ShellExecOptions`, `FileInfo`) sit on a judgement boundary — the pre-8b bash tool already carried cwd/env/timeout inline and ls used `os.Stat` metadata, which the same shape-collapsed rule scores HAVE elsewhere. **Coverage is 13 of 18 members** (counting `cleanup` on the `Shell` side): `cwd`→`Cwd()` plus 12 methods, `fileInfo`→`Stat` (a Go method may not share its return type's name). **Unported and uncommented: `createDir`, `remove`, `createTempDir`, `createTempFile`.** `Shell` is 2/2. Side effect worth carrying: the port now has a Go stand-in for a `harness/` runtime class for the first time, so "no Go home, therefore zero owed" is no longer available for `harness/env/nodejs.ts` — it remains available for `harness/session/**`, `harness/tools/**`, `events.ts` and `agent-harness.ts`. |
-| 8b-ii | **The seven per-tool `*Operations` seams** — coding-agent source, **NOT entry 8** | not estimated | **SHIPPED 2026-08-28, with a remainder** (`ce76e94`, `cd0e3b9`, `1f49233`) | `coding/tooloperations.go`, **522 LOC** + 371 test, plus 207 changed lines in `coding/tools.go`. Seven seams / 16 members, matching pi member-for-member, as **structs of funcs** rather than interfaces (pi's members are individually overridable and one is optional). Seven `Env*Operations` bridges turn an `ExecutionEnv` into each seam — a port-only construct with no single upstream file behind it. **REMAINDER, and it is why this is not "done":** (a) three members are declared, defaulted, bridged and **never consulted** — `EditOperations.Access`, `LsOperations.Exists`, `FindOperations.Glob` — while pi consults all three (`edit.ts:349`, `ls.ts:133`, `find.ts:169-178`); `Glob` is the substantive one, since upstream a supplied glob replaces the matcher wholesale, so an injected find seam cannot yet change what find finds. (b) **No host can reach any of this** — every `*ToolOps` constructor is unexported and `CreateTool`/`CreateCodingTools`/`CreateAllTools` take only `cwd`, so injection works from inside package `coding` and its tests only. The slice's stated purpose, pointing the agent at a sandbox, has not shipped. (c) `EnvBashOperations` drops `BashExecOptions.Env` (the `PI_*` session metadata never reaches the child) and never yields `ErrShellAborted`/`*ShellTimeoutError`, so an `ExecutionEnv`-backed shell tool renders neither "Command aborted" nor "Command timed out". (d) find and grep still enumerate the local disk directly (`tools.go:1617`, `:1820`), faithful to pi's fd/ripgrep architecture but meaning an injected remote filesystem would enumerate nothing. |
-| 8c | **`SessionStorage`/`SessionRepo` seam + in-memory backend + conformance suite** | re-derive — the old 3.5-4 was set against wrong numbers | **NOT STARTED, owner-gated** | Re-sized at `56f3f33a9`: `SessionStorage` is **17 methods** (`session/types.ts:290-326`), `SessionRepo` **5** (create, open, list, delete, fork); in-memory backend `session/memory.ts` 192 LOC; conformance `session/testing/conformance.ts` **1,016 LOC / 30 cases**. Three honest tiers, because the seam alone does not compile: **narrow 1,280 LOC**, **buildable 1,623** (the interfaces are typed against the `Entry`/`RecordBase`/`EntryQuery`/`SessionError` substrate in the same file), **whole non-JSONL session subtree 2,379**. The gate is unchanged and still correct: the port's v3 recorder cannot conform — no records, no lanes, no facts — so this is a design decision, not a mechanical port. Do not fund until the owner wants pluggable durability as a product feature. |
-| 8d | **`search/`** (`b75be04d9`) | 0.5 | **NOT STARTED, rides with 8c** | **208 LOC src** (`search/index.ts` 32 + `search/scanning.ts` 176), 12 exported symbols, +125 LOC upstream test. All 12 MISSING-REAL; the port has zero analogue and 8b changed that not at all. Published SDK surface (`export * from "./search/index.ts"`). Confirmed still worthless before 8c: `scanning.ts` types its entire substrate against the `SessionStorage` query surface — `ScanningReadable` is a `Pick<>` of it. |
-| — | **`reducer.ts`, JSONL v4, `agent-harness.ts`, `events.ts`** | ~6-8 | **DEFERRED — tripwire FIRED 2026-09-09** | **2,134 LOC src + 2,836 LOC test** — 21% of entry 8's source but **49% of its test mass**, which is itself an argument for deferring. All four are dead or stub code upstream: `events.ts`'s only importer at the pin is its own test, and `agent-harness.ts` is a scaffold. Re-open on the first upstream commit that makes them real. |
-
-**The tripwire — FIRED, and re-pointed 2026-09-09.** Checked because this cycle
-touched the harness tree, which is the rule that saved it.
-
-The recorded command
-`git show <sha>:packages/agent/src/harness/agent-harness.ts | grep -cE "HarnessNotImplemented|this\.unavailable\("`
-was **27** at `ccfe79ed2` and at `56f3f33a9` — not merely equal but the same blob
-(`3802900d`, 508 lines), split 5 `HarnessNotImplemented` + 22 `this.unavailable(`.
-
-It returns **0** at `96617628e` and at `be26e3270`, and **that 0 is not the signal
-it looks like.** The file was repurposed into a types/contract module (blob
-`55b853e1`, 622 lines, last touched `e26afb63a`, 2026-09-02) and the marker was
-renamed `HarnessNotImplemented` → `SliceNotImplemented`, which now lives in
-`runtime/types.ts`. A command that greps a renamed symbol inside a repurposed
-file reports "every stub is gone" whether or not a single line was implemented —
-so a tripwire pinned to a path and a spelling reads as PASSED at exactly the
-moment it should be firing. **Re-point one the moment its subject moves.**
-
-Re-measured where the harness actually lives now, **the condition is met**:
-upstream grew `packages/agent/src/harness/runtime/**` (10 entries, including
-`drive/`, `reducer.ts`, `restore.ts`, `transcript.ts`) starting at `5c6655e76`
-(2026-08-25); `runtime/harness.ts` is 408 lines of real method bodies; and
-exactly **one** unimplemented site survives anywhere in the tree —
-`runtime/harness.ts:306`, `throw new SliceNotImplemented("watchSession")`. So
-**27 stub sites → 1**. The writer side landed on 2026-08-25 and went unnoticed
-for two cycles; this cycle's own delta (`3e4bc2680`, 12 commits of real JSONL v4
-fork work) is the second confirmation.
-
-**Consequence.** The DEFERRED row above no longer holds as written: `reducer.ts`,
-JSONL v4 and `agent-harness.ts` are not "dead or stub code upstream" any more,
-and that row's re-open condition has been satisfied. The deferral itself stands —
-that work is sequenced inside entry 11 — but it now stands on COST, not on the
-absence of a real consumer, and it may not be defended on the old ground again.
-
-**The re-pointed tripwire, so it stays checkable:**
-`git grep -c "SliceNotImplemented" <sha> -- packages/agent/src/harness` is **5**
-at `be26e3270`: one `throw`, plus the class, its `name`, its import and its
-re-export. **Watch the `throw` count, not the symbol count** — and re-derive both
-if the file moves again.
-
-**Spent and remaining.** 8b shipped in 4 commits over 2 days: **1,737(+)/90(−)
-across 5 files**, 955 LOC of new implementation and 665 of new test, 24 new test
-functions. Read the estimate as "about right for the scoped part, and the slice
-then grew to roughly twice it" — not as pessimism, since 8b-ii was never scoped
-here at all. What remains of the callable delta is **8b-ii's remainder** (the
-three dead members and, more importantly, an exported injection point), then
-8c + 8d, both still owner-gated. Entry 8 does **not** close.
-
-**Estimating rule this rewrite establishes:** score a slice by what it closes in
-the entry-8 symbol universe, not by lines shipped. 8b moved **7 sites** for 1,737
-inserted lines, and the gap is not waste — it is 8b-ii, which is real
-coding-agent parity that entry 8's counter structurally cannot see. A slice that
-cannot be scored by the counter needs its own row.
-
-#### The 12-item backlog, enumerated — and recounted
-
-The counter is honest as a count of deferred commits (11 against
-`harness`/`search` + `e7fb8eb2a` against `session-backends` = 12, cross-checked
-against upstream; none reverted). It is misleading as work owed:
-
-| bucket | items | owed under shape (b) |
-|---|---|---|
-| **Already satisfied in `coding/`** | `ca21c1686` (single-edit guard → `coding/tools.go:725`, reached via `PrepareArguments: prepareEditArguments` at `:624`; the pre-8b citation `:664` was invalidated by 8b's rewire), `8c2529dae` (root-md skills → `coding/resources.go`), `7af2d27dc` (taskkill → `coding/proc_taskkill.go`) | **zero** |
-| **Belongs to entry 7, not 8** | `e7fb8eb2a` (touches no harness/search source at all), plus the sqlite halves of `7bdb16c28`, `a4453b79b`, `b75be04d9` | move to entry 7 |
-| **Real code, no upstream consumer** | `14ad9801b`, `d1a305613`, `1dd235405` — the whole of `events.ts` | discretionary; deferred above |
-| **Genuine load-bearing delta** | `b75be04d9` (search, → 8d), and `7aca0d7b3` / `4a0e2f115` / `7bdb16c28`-harness (all edits to the harness's **own JSONL v4 store**, → 8c) | 4 items |
-| **Subsumed** | `a4453b79b`-harness — the file it retyped was deleted three commits later | zero |
-
-**Drain against the tree state at the pin, never by replaying the commits.**
-Two items prove it: `4a0e2f115`'s try/catch became a `Result` check, and
-`a4453b79b` retyped a field on a file `b75be04d9` then deleted — **22** upstream commits later, though the very next backlog commit (both landed 2026-08-11); the "three commits later" written here previously is wrong under either reading. A commit-replay
-drain would port two things that no longer exist in that form.
-
-**Ledger corrections applied:** entry 7 now carries the four sqlite deltas;
-entry 8's backlog is 11 commits against its own tree (12 from 2026-09-09, 13 from 2026-09-10), of which 3 are already
-satisfied and 3 are upstream dead code.
+row rot. Entry 8 taught it for 16 cycles.
 
 ## Divergences
 
@@ -1932,15 +1682,13 @@ here.
 prepends pi's own bin directory to `PATH`; `coding/tools.go:795` passes
 `os.Environ()` verbatim. Pre-existing, never ported.
 
-**D16 — `strings.TrimSpace` ≠ JS `.trim()` (repo-wide).** JS strips U+FEFF but
-not U+0085; Go strips U+0085 but not U+FEFF. Executed against node over a
-15-case table: 6 divergences. Two known sites: `coding/resources.go:742`
-`parseFrontmatter` body trim (latent), and `ai/providers/google.go:802,815,832`
-empty-block skips, where content that is *only* U+FEFF or *only* U+0085 changes
-the request body for all google models. Converging the two vocabularies is one
-decision: fix everywhere or not at all. **No off-the-shelf helper survives** —
-`trimJSWhitespace` is unexported in package `ai`, and `trimJS` lives in
-`coding/remotesession.go`, which the mirror deletion removes.
+**D16 — retired 2026-09-17 (`16dda13`).** pi trims with
+`String.prototype.trim` (strips U+FEFF, keeps U+0085), `strings.TrimSpace` the
+reverse. Every site whose pi counterpart is a trim now uses
+`internal/jstext.Trim`/`TrimStart`/`TrimEnd` (node's whitespace set, pinned by
+`testdata/whitespace-node.json`); `strings.TrimSpace` remains only where pi's
+counterpart is not a trim (the site table is in `16dda13`'s message). Kept as a
+row because code comments cite D16 for that rule.
 
 **D17 — session repair is narrower than pi's.** pi repairs an unterminated tail
 inside its one shared loader, so read-only loads repair too and merely listing
@@ -1958,12 +1706,6 @@ before appending. Two unobservable deltas in the rewritten bytes: sorted key
 order rather than pi's insertion order (the recorder already writes sorted), and
 the v1 id walk registers each generated id in its collision set where pi's
 `migrateV1ToV2` never adds to `ids`.
-
-**D18 — `assertWireIsClean` is deliberately stronger than upstream.** It
-re-encodes through `protocol.EncodeServerMessage` and greps the **frame bytes**;
-upstream's equivalent greps `JSON.stringify(response)`. Mutation-verified
-non-vacuous. An upstream reword fails our suite loudly rather than passing
-silently. **Do not relax it toward upstream's form.**
 
 **D19 — auth substrate ships as files in package `ai`, not a subpackage.
 DECIDED 2026-09-03: the carve-out stays.** pi keeps auth resolution in
@@ -2009,18 +1751,6 @@ PAST, pi adds the negative size to the offset and walks backwards; with
 verbatim transcription hangs until SIGALRM). The port returns -1 there —
 orientation 1 — because there is no non-hanging value to match. Deliberate.
 
-**D24 — compaction `retainedTail` is honoured on read.** `coding/session_tree.go`
-parses a compaction entry's inlined `retainedTail` and, when present,
-reconstructs context as summary + retainedTail, skipping the `firstKeptEntryId`
-walk (upstream `9e7582aa` JSONL/session-tree half). Core pi's v3
-`CompactionEntry` has no such field: it belongs to the harness `Entry`
-substrate (`agent/src/harness/session/types.ts`), and `legacy-v3.ts` *derives*
-it from a v3 file. A pi-written v3 file never carries it, so the branch is
-unreachable on pi-written sessions; it exists so harness-shaped compaction
-entries rebuild identically. Golden-covered by
-`session_tree_retained_tail_test.go`; the 8 pi-captured `sessparity` fixtures
-do not use it.
-
 **D25 — `AssistantMessageEvent.partial` is an event-time snapshot, not pi's
 shared live object.** pi's `partial` (types.ts docblock, rewritten by
 `5c6655e76`) is "the shared live response-so-far helper": every event points at
@@ -2055,20 +1785,16 @@ the port's compat path sends the auth token and exchanges nothing — pi's
 resolver order end to end (the auth token resolves before federation is
 consulted), though pi's own compat `stream()`, which never reads the auth
 token, would federate. Pinned by `TestAnthropicFederationAuthTokenWins`.
-
-**D62 — no `cf-aig-authorization` is synthesized without a gateway credential.**
-Widening D61's gate made `cloudflare-ai-gateway` reachable with an empty api
-key, and `applyAnthropicHeaders` built its gateway bundle unconditionally, so a
-header-owned request went out carrying `cf-aig-authorization: "Bearer "` — an
-empty credential pi never sends (pi's adapter never mentions Cloudflare; on the
-"api key or header-owned auth" branch it passes `apiKey ?? null` and sends the
-caller's headers alone). The bundle is now built only from a non-empty key,
-which is what pi's resolver does — it produces the bundle, markers included,
-only when it HAS a gateway credential. Recorded because the bundle's deletion
-markers (`Authorization: nil`, `x-api-key: nil`) are load-bearing: skipping the
-bundle also skips the suppression, which is correct precisely because there is
-no synthesized header left to suppress. Pinned by
-`TestAnthropicStreamSimpleGatewayHeaderOwnedAuthSendsNoEmptyGatewayBearer`.
+**Behind the gate, the SDKs' own check (`fc3b432`):** pi builds the request
+through the vendor SDK, whose `validateHeaders` runs after pi's gate. A request
+whose only credential is a `cf-aig-authorization` header (no key, no
+`Authorization`/`x-api-key` deletion marker) passes `assertRequestAuth` and then
+fails in `@anthropic-ai/sdk` 0.129.0 with "Could not resolve authentication
+method. …", as does an `X-Api-Key` or `Authorization` the caller replaced with
+`""` (openai 7.19.0 likewise for an empty `Authorization`). The port runs both
+SDKs' checks and fails those requests as pi does (`TestAdapterAuthHeadersMatchPi`,
+21 rows). The Models path is unaffected: `cloudflareAIGatewayAuth` hands the
+adapter its markers, which satisfy the SDK.
 
 **D63 — a terminal event releases the consumers it did not reach; pi leaves them
 pending.** pi's `push` hands the terminal event to one waiter and leaves every
@@ -2083,32 +1809,22 @@ goroutine is a leak. This preserves the behaviour the port has had since the
 `sync.Cond` implementation, where `Broadcast` woke every consumer and the
 `done` check returned them. Deliberate.
 
-### chord (ported 2026-09-03, upstream `packages/chord` at `64eeb82a4`)
+### chord (ported 2026-09-03, upstream `packages/chord` at `64eeb82a4`; service runtime deleted 2026-10-19)
 
 Recorded by the porters and re-verified by independent reviewers, several by
-running pi under node against the Go function on identical inputs. Layering:
-`chord/` imports nothing from this module except `internal/jsonstrict`, its
-`chord/delta`, and `chord/internal/jsonvalue` (the strict-JSON rules both
-share); `chord.IsValue` does not accept `cbor.OrderedObject`. Not mirrored:
-`bundler.ts` and `node/bundle*.ts` (JS facet bundling; no Go subject).
+running pi under node against the Go function on identical inputs. Go `chord`
+mirrors chord's value layer — `context/index.ts`, `json.ts` and `delta/` — and
+imports only `chord/delta`, `chord/internal/jsonvalue` (the strict-JSON rules
+both share) and `telemetry` (since `7fedbfa`; upstream's boundary test allows
+pi-telemetry since `1402973a9`). The facet and service runtime it also mirrored
+was deleted upstream by `0104fef1e` and here by `d202916`; the chord2 runtime
+that replaced it is Scope queue row 27.
 
-**D26 — chord core.** Context: chord defines NO Context type, no BACKGROUND_CONTEXT/TODO_CONTEXT, no withAbortSignal/withCancel/withoutAbortSignal/awaitWithContext. Upstream's src/context/index.ts is a TypeScript reimplementation of Go's context (README: "a Go-like context system"); the mirror is context.Context + typed keys. Key[T] is a pointer identity (upstream Symbol), Key.Value returns (T, bool) (upstream T | undefined), WithValue is a generic free function over context.WithValue so T binds at both ends. The upstream toString assertions ("[Context BACKGROUND_CONTEXT].WithValue(first)...") are context-implementation internals and are not mirrored; Key.String() returns its name so Go's own ctx.String() reads sensibly.
-
-**D27 — chord core.** DefineService panics on an invalid ID instead of returning an error. A service token is a declaration (package-level var, like every upstream call site `const Models = defineService<Models>("test.models")`), so a bad ID is a programming error caught at init — the regexp.MustCompile / http.Handle idiom, not a runtime error path. Messages are upstream's verbatim with a "chord: " prefix.
-
-**D28 — chord core.** defineService's `{local: true}` overload becomes a second constructor, DefineLocalService[T]; Go cannot express upstream's RemoteServiceContract<T> compile-time JSON check, so the doc says the wire layer checks values as they cross.
-
-**D29 — chord core.** Service[T] is a comparable value type (id + local), not an object identity: two definitions of the same ID compare equal. Upstream's provider/instance tables key on service.id (instances.ts, host.ts), so this is the identity that matters; T is a phantom type parameter.
+**D26 — chord core.** Context: chord defines NO Context type, no BACKGROUND_CONTEXT/TODO_CONTEXT, no withAbortSignal/withCancel/withoutAbortSignal/awaitWithContext. Upstream's src/context/index.ts is a TypeScript reimplementation of Go's context (README: "a Go-like context system"); the mirror is context.Context + typed keys. Key[T] is a pointer identity (upstream Symbol), Key.Value returns (T, bool) (upstream T | undefined), WithValue is a generic free function over context.WithValue so T binds at both ends. The upstream toString assertions ("[Context BACKGROUND_CONTEXT].WithValue(first)...") are context-implementation internals and are not mirrored; Key.String() returns its name so Go's own ctx.String() reads sensibly. **Telemetry member (`48909d987`, `2ec55d808`; `7fedbfa`):** upstream's `Context.telemetry` (always a `TelemetrySpan`, `NOOP_TELEMETRY_CONTEXT` by default) is a value under an unexported `Key[telemetry.Span]`, read through `chord.Telemetry(ctx)`, which defaults to `telemetry.NoopContext`; `WithTelemetry(ctx, span)` and `TraceIn(ctx, options, fn)` mirror `withTelemetry` and `traceIn`.
 
 **D30 — chord core.** IsValue and CopyJSON (`chord/internal/jsonvalue`, which draft placements share) are one Go spelling of strict JSON. Every Go numeric kind is a number, and so is a json.Number (JS has one number type); only finite ones pass; []byte is rejected (upstream rejects Uint8Array; encoding/json would base64 it); structs are rejected as class instances; pointers/funcs/chans/complex have no JSON form; any string-kind map key is an object key, and a typed slice, array or map copies to the plain one. No depth limit since `19a0361be`: a cycle is refused by an ancestor set keyed by a map's header, or a slice's backing array plus its length — a descendant equal to an ancestor in both is the same array, so the key is sound (the claim this row used to make, that no visited set could be, was wrong). Go has no undefined, so upstream's `{omitted: undefined}` case is pinned as an object holding a non-JSON member (a func), and copyJson's `omitUndefinedProperties` has no Go form. A `*delta.Draft` is not a value to CopyJSON, where pi's copyJson reads a proxy through its traps; placed in another draft, a draft is copied as it holds its content now.
 
 **D31 — chord core.** Value is `type Value = any` (alias), so a decoded tree already is one; IsValue is the contract check. Upstream JsonRepresentation<T> is a type-level mapping with no Go form and is not mirrored.
-
-**D32 — chord core.** Errors: RemoteServiceError.Error() returns the message alone (upstream Error.message); the `name = "RemoteServiceError"` field has no Go analogue — the type is the name. IsRemoteServiceErrorCode takes a string, not unknown: a non-string peer value is already not a string. Constants are named ServiceNotAllowed etc. (the code strings' own prefix), following protocol's ProtocolErrorCode style; RemoteServiceErrorCodes is a slice var, not a readonly tuple.
-
-**D33 — chord core.** internal/jsonstrict: the package-global registry/field-cache/maxSafeInteger of protocol/decode.go became a per-package `*Decoder` value with Tag and Root fields, so protocol (`cbor`, root "message") and chord (`json`) own independent union tables. RegisterUnion/DecodeMember are generic free functions taking the decoder because Go methods cannot have type parameters. protocol.ValidationError and protocol.Validator are now type aliases of jsonstrict.Error/Validator: every `*protocol.ValidationError` construction, errors.As and type assertion in protocol/client/server compiles and behaves unchanged. One message text changed, in a developer-facing (never wire) error for a mis-declared Go field: "protocol objects have string keys" → "objects have string keys", because the package no longer knows it serves the protocol; no test pinned it.
-
-**D34 — chord core.** Not created, by ruling: no Go counterparts for src/bundler.ts, src/node/*.
 
 **D35 — chord/delta.** `chord/delta` — a path segment that is neither a string nor an integral number (null, bool, object, 1.5) is refused by ParseOp/ParseWireOp/Path.UnmarshalJSON as an ErrInvalidOp-wrapped shape error; upstream's assertSafePath throws UnsafePathError(seg) for it. Both refuse before any walk; only the error class differs, because such a value is not a Seg in Go (Seg is sealed to Key and Index). A negative or unsafely large integer IS an Index, decodes, and fails Validate as *UnsafePathError exactly as upstream.
 
@@ -2124,49 +1840,11 @@ share); `chord.IsValue` does not accept `cbor.OrderedObject`. Not mirrored:
 
 **D42 — chord/core.** IsValue rejects a fixed-size [N]byte as well as []byte. Upstream's only oracle is the Uint8Array case, which maps to []byte; a Go [N]byte has no upstream counterpart (encoding/json would write it as a number array, not base64). The port treats every byte container as a binary blob rather than an array; unreachable from the wire, no test pins it either way, so the reviewer's narrowing mutation survives by design rather than by gap.
 
-**D43 — chord/core.** When protocol/decode.go's strict decoder was extracted into internal/jsonstrict, the developer-facing error for a Go map field declared with a non-string key type dropped the word "protocol" because the package no longer knows which wire it serves. It never reaches the wire and no test pinned it; describe() with Root="message" still yields protocol's exact former strings for every wire-reachable error.
-
-### chord wire types + protocol raw-span (ported 2026-09-03/04, reviewed FAITHFUL)
-
-**D44 — chord/types+wire.** Containers are generic over the op grammar — ServiceMemberSnapshot[O], ServiceInstanceSnapshot[O], ServiceSubscriptionSnapshot[O], ServiceProviderUpdate[O] with O ∈ {delta.Op, delta.WireOp} — where upstream spells each shape twice (X and WireX). Upstream's own walkers are already parametrized by the op validator (assertSubscriptionSnapshot(value, assertOp)); in Go the field's op type selects it through the jsonstrict union table. The Wire* names survive as generic type aliases (go 1.26) so pi's index.ts names all resolve. The seal methods take O (member(O), update(O)) so that a StateUpdate[delta.Op] does NOT satisfy ServiceProviderUpdate[delta.WireOp] — a marker without O would let the two grammars mix at interface level, which delta went to lengths to prevent. Consequence: the op-free arms (MethodSnapshot, UnavailableUpdate, ClosedUpdate) are generic too; pinned by TestSealsBindToOneGrammar and mutation M3.
-
-**D45 — chord/types+wire.** Unions are sealed interfaces with per-arm structs (MethodSnapshot/StateSnapshot; StateUpdate/UnavailableUpdate/ReplacedUpdate/SpawnedUpdate/ClosedUpdate; CatalogueCall/SubscribeCall/UnsubscribeCall) rather than kind-tagged structs; the discriminator ("kind"/"type") is the Go type, emitted first by each arm's MarshalJSON and stripped from the tree before jsonstrict fills the arm.
-
-**D46 — chord/types+wire.** createServiceCatalogueCall/SubscribeCall/UnsubscribeCall became a Call() method on the sealed ServiceControlCall arms (encode direction); decodeServiceControlCall → DecodeServiceControlCall(call) (ServiceControlCall, bool), false where upstream returns undefined (ordinary or malformed control call, provider's to refuse). Bytes of all three encodings confirmed against wire.ts under node.
-
-**D47 — chord/types+wire.** Parse failures are *ServiceValueError{What, Err}: What is upstream's description verbatim ("service call", "service catalogue", "service subscription snapshot", "service provider update"), Err the jsonstrict or delta rule that failed with its path ("instance.members[0]: ...", "ops[0]: ..."). Messages are lowercase Go style and carry the fix, per the errors-carry-resolution-hints rule; upstream throws TypeError("Invalid <description>") with no detail. Verified the text never crosses the wire: server.ts catches parseServiceCall and answers a fixed "Invalid service call". Residual: jsonstrict's prefixError flattens nested errors into a new *jsonstrict.Error, so errors.Is(err, delta.ErrInvalidOp) does not hold through a parser (the op's text is preserved); fixing that is internal/jsonstrict's, outside this slice.
-
-**D48 — chord/types+wire.** Numbers: parsers take envelope trees (float64/int64), as upstream's do; a Go int in a hand-built map is not a wire number. jsonstrict refuses integers beyond Number.MAX_SAFE_INTEGER where pi's Number.isInteger accepts 1e300 for sequence/generation — unreachable from any pi producer (both count up from 0/1), same class as D36's residual.
-
-**D49 — chord/types+wire.** DecodeServiceControlCall reads the mode argument as either a string or a ServiceMode-typed value (a Go caller building Args by hand; identical JSON). Upstream compares strings only.
-
-**D50 — chord/types+wire.** Nil slices are empty arrays: Members/Instances/Ops/Args marshal as [] and validate as empty (matching delta's Splice{Items: nil} → []); parsed values are always non-nil (pinned by TestParsedValuesAreComplete). Upstream has no nil/empty distinction.
-
-**D51 — chord/types+wire.** Validate is complete for a Go-built value (walks address, members, instances, ops) so a provider can check what it publishes with one call; jsonstrict therefore validates nested structs twice (once as it fills them, once from the parent) — cheap, kept for the API.
-
-**D52 — chord/types+wire.** types.go mirrors only the value/wire types of src/types.ts (ServiceMode, catalogue entry, address, snapshots, updates, ServiceCall). The runtime interfaces there — ReplicatedState/MutableReplicatedState, ServiceSpawner, RemoteServices, ServiceSubscription, RemoteServiceTransport, RemoteServiceBinding(+Options), FacetEnvironment/Facet/FacetHost/FacetLoader/LoadedFacets/FacetOptions/RemoteServiceSource, ReplicatedStateDelivery, and (since `9a139c62b`) the source-backed ReplicatedStateSource/ReplicatedStateSourceAttachment/ReplicatedStateSourceFrame/ReplicatedStateSourceOptions/AttachedReplicatedState behind `replicatedState(source, options)` — hinge on generic methods (use<T>) and the Promise/undefined-vs-null result mapping, which are design decisions of the consumer/provider/state/facet slices; left to them rather than pre-committed here. No Context/JsonRepresentation types per D26/D31.
-
-**D53 — chord/types+wire.** service-wire.test.ts cases 4-7 exercise createServiceStateEncoder/Decoder (state-codec.ts) and createRemoteServiceEndpoint (provider.ts), neither in this slice's files; their wire shapes are pinned here as parse/marshal goldens and the behaviours (dictionary reset, per-member isolation, keyed codec lifecycle incl. the "Unknown service state" throw, endpoint dispose) are those slices' to port.
-
-**D54 — chord/types+wire.** marshalJSON (compact, SetEscapeHTML(false), as JSON.stringify writes) is a second copy of delta's unexported helper; chord and delta are separate packages and the helper is six lines.
-
-**D55 — chord/wire (reviewer, cosmetic-class).** Go refuses an integral number above Number.MAX_SAFE_INTEGER where pi accepts it. Confirmed under node: parseServiceProviderUpdate({sequence:1e300}) and {instance:{generation:9007199254740992}} are accepted by pi and rejected by Go ('must be an integer'); 9007199254740991 is accepted by both. Unreachable from any pi producer (sequence and generation count up from 0/1), same class as ledger D36; the porter lists it in divergences. Needs a ledger entry, not a code change.
-
-**D56 — protocol/cbor RawItem.** RawItem / DecodeRaw have no upstream counterpart: pi never needs them because a JS object preserves insertion order through decode→re-encode. They are the Go representation of upstream's opaque JsonValue relay guarantee, per the S27 design decision; documented as such in the RawItem doc comment. The UPSTREAM.md ruling 'Do NOT make the CBOR decoder order-preserving' still holds — the decoder still yields map[string]any for every map; spans are captured as bytes, not as an ordered container.
-
-**D57 — protocol/cbor RawItem.** Encode validates a RawItem (one complete readable item under the encoder's limits at its depth) before writing it verbatim. Upstream has no such path to mirror; the check follows this package's existing rule (buildStructLayout, encodeOrderedObject duplicate keys) that Encode must not produce bytes its own Decode refuses, and matters more here because a peer's message decoder fails permanently on its first bad frame. Cost is one readItem pass over the payload bytes on the send path.
-
-**D58 — protocol/cbor RawItem.** Capture is top-level-key only (depth 0 map entries), which is all upstream's envelopes need (`call`, `result`, `update` are envelope-level). A general path-based designation was not built.
-
-**D59 — protocol/cbor RawItem.** Goldens live inline in raw_test.go (hex constants) rather than as protocol/cbor/testdata/*.json plus a gen-*.ts script, because testdata/ was outside this slice's file allowance. The generating script is reproduced in the test's header comment and kept at scratchpad/gen-raw.ts; it imports upstream's packages/protocol/src/cbor/index.ts directly from ~/.cache/pi-upstream at 64eeb82a4. If the orchestrator prefers the testdata convention, moving the seven vectors into testdata/upstream_raw.json + gen-raw.ts is a mechanical follow-up.
-
-**D60 — protocol/cbor RawItem (reviewer).** RawItem relay is byte-exact even for maps with integer-like keys authored out of JS enumeration order; a Node peer relaying the same frame re-emits integer-like keys first. The Go port is strictly more faithful to the wire than pi is to itself. Interop-safe (CBOR maps are order-independent; pi's decoder accepts any order) and no wire a Node peer produces can exhibit it, so no change is warranted — recorded so nobody 'fixes' it toward JS semantics.
-
 ### chord/delta immutable tracking (ported 2026-09-23 at `9a139c62b`; the overlay tracker 2026-09-25 at `9e70c3d50`)
 
-Upstream replaced the diff-based tracker with an overlay (`d5cba1d97`): `track(initial)` takes ownership of the root in O(1), `beginChange()` opens an overlay whose nodes record writes, deletions and structural edits, `prepare()` emits the ops those records mean — without diffing — and materializes the revision, `adopt()` swaps the root and stales every competing change. `diffRevisions` stays, unused by the tracker. The oracle is `chord/delta/testdata/upstream_delta.json`, captured by `testdata/capture.mts` from pi's own `packages/chord/src/delta` at `9e70c3d50` (identical at `49681e1b7`; no npm build carries either): 284 diffRevisions pairs (upstream's state-diff suite, 120 random identity-sharing arrays, the op cap, the anchor and semantic-table budgets, and the snapshot threshold and each cost term at pi's flip point), 118 tracker/draft scenarios, 16 generated cases (dense regions, the op cap, a 20,000-op queue, fragmentation, 100,000-item inserts, a whole-root replacement), state-fuzz's 100 seeds × 100 steps, and 20 random scripts over every draft operation. Every batch is compared byte for byte: a tracker's in pi's own order, a diff's modulo D69.
+Upstream replaced the diff-based tracker with an overlay (`d5cba1d97`): `track(initial)` takes ownership of the root in O(1), `beginChange()` opens an overlay whose nodes record writes, deletions and structural edits, `prepare()` emits the ops those records mean — without diffing — and materializes the revision, `adopt()` swaps the root and stales every competing change. `diffRevisions` stays, unused by the tracker. The oracle is `chord/delta/testdata/upstream_delta.json`, captured by `testdata/capture.mts` from pi's own `packages/chord/src/delta` at `d2e7d8b7c` (recaptured with `091bcc099`'s append path, `4b8f194`; every record of the `9e70c3d50` capture byte-identical; no npm build carries either): 284 diffRevisions pairs (upstream's state-diff suite, 120 random identity-sharing arrays, the op cap, the anchor and semantic-table budgets, and the snapshot threshold and each cost term at pi's flip point), 119 tracker/draft scenarios, 17 generated cases (dense regions, the op cap, a 20,000-op queue, fragmentation, 100,000-item inserts, an append to a 10,000-item array, a whole-root replacement), state-fuzz's 100 seeds × 100 steps, and 20 random scripts over every draft operation. Every batch is compared byte for byte: a tracker's in pi's own order, a diff's modulo D69.
 
-**D69 — chord/delta.** Object member order, in the diff. JavaScript enumerates an object's keys integer-like first (ascending), then in insertion order; a Go map keeps none, so `DiffRevisions` visits a revision's members — and `Draft.Keys` lists them — integer-like first, then by UTF-16 code unit: the order of an object whose keys were inserted sorted (`Draft.Keys` lists the string keys a change adds after them, in the order it added them, as pi does). Where pi's insertion order differs, a diff lists the same member ops in a different order (sets, then deletes, on both sides; nothing else moves) — upstream's own state-diff case "emits sets and deletes" is one (`change` was inserted before `add`). A tracker's batches are not affected since `d5cba1d97`: the overlay emits in the order the change made its edits, which the Go overlay keeps (`chord/delta/ordered.go`), so they match pi's op for op, in pi's order. encoding/json marshals a payload's members in a third order, byte order (`{"10","9","a","｡","😀"}` in that order, where `Draft.Keys` gives `9 10 a 😀 ｡`), so a pi replica decoding a Go payload inserts them in byte order. The replica is the same value either way. Not fixable without an ordered object in the port's value model, which the port declines for the whole wire (Rulings, "Do NOT make the CBOR decoder order-preserving"); the golden records pi's own diff order as `raw` beside Go's.
+**D69 — chord/delta.** Object member order, in the diff. JavaScript enumerates an object's keys integer-like first (ascending), then in insertion order; a Go map keeps none, so `DiffRevisions` visits a revision's members — and `Draft.Keys` lists them — integer-like first, then by UTF-16 code unit: the order of an object whose keys were inserted sorted (`Draft.Keys` lists the string keys a change adds after them, in the order it added them, as pi does). Where pi's insertion order differs, a diff lists the same member ops in a different order (sets, then deletes, on both sides; nothing else moves) — upstream's own state-diff case "emits sets and deletes" is one (`change` was inserted before `add`). A tracker's batches are not affected since `d5cba1d97`: the overlay emits in the order the change made its edits, which the Go overlay keeps (`chord/delta/ordered.go`), so they match pi's op for op, in pi's order. encoding/json marshals a payload's members in a third order, byte order (`{"10","9","a","｡","😀"}` in that order, where `Draft.Keys` gives `9 10 a 😀 ｡`), so a pi replica decoding a Go payload inserts them in byte order. The replica is the same value either way. Not fixable without an ordered object in the port's value model, which has none (`chord.Value` is `any`, D31) and adds none, since a replica is the same value either way; the golden records pi's own diff order as `raw` beside Go's.
 
 **D70 — chord/delta.** The draft is methods, not a Proxy; doc.go maps each trap to its method. Consequences: a write through a settled draft returns `ErrDraftSettled` and a read panics with it (pi throws a TypeError from both); `Has` on an array sees its indices and `"length"`, not `Array.prototype`'s members (`"push" in draft` is true in pi), and `Get` of a named key on an array reads nothing where pi reads the prototype's; `Pop`/`Shift` return `(value, present, err)` where pi returns undefined; an array method on an object draft fails with upstream's "Array mutator called on incompatible receiver" (pi's text for a borrowed mutator), and `SetLen` on an object draft is refused (pi's `obj.length = n` writes a member, as `Set("length", n)` does here); `Splice` always takes a start and a count, so upstream's zero- and one-argument forms have no Go spelling; Go has no undefined, so `Set(k, nil)` writes null where pi's `draft.k = undefined` deletes (that is `Delete(k)` here); a numeric Go key is the key its integer spells, and an integral float past int64 saturates (`Set(1e21, v)` writes `"9223372036854775807"` where pi's `draft[1e21]` writes `"1e+21"`); `Change.State` still returns the draft after the change settles, where pi's getter throws, and fails on first use instead; the traps with no Go spelling (defineProperty, getPrototypeOf, setPrototypeOf, preventExtensions, symbol keys, `6966636db`'s `then` probe) have no port. `Get("length")` and `Set("length", v)` on an array are kept, since they are the property they spell; `Set` converts `v` as ArraySetLength does (ToNumber: null 0, booleans 0/1, strings by StringToNumber, arrays through their string form, an object with a "toString" member a TypeError), pinned by 64 assignments captured from pi.
 
@@ -2180,7 +1858,7 @@ Upstream replaced the diff-based tracker with an overlay (`d5cba1d97`): `track(i
 
 **D75 — chord/delta.** Go values in, JSON values out. Track and PrepareReplace take the root as it is, in O(1), as pi does — a nil map or slice root is null, which a change cannot draft nor a replacement be (ErrScalarRevision, pi's refusal of a null root): it must already be strict JSON in the representation encoding/json decodes (float64 numbers, []any, map[string]any, no nil map or slice — encoding/json writes one as null, which a replica cannot hold members of — and no container reachable twice), and one that is not has unspecified behavior, as in pi. `chord.CopyJSON` makes exactly that representation from any Go value; `chord.IsValue` accepts more (aliases, other numeric kinds, typed and nil containers), so it is no check for a root. Every value a draft places is copyJson's copy (D30): any Go numeric kind or json.Number becomes a float64, a typed slice, array or string-keyed map the plain one, a typed nil container an empty one, and anything else is refused with pi's copyJson text before the draft changes. The Go errors also name the offending type, and a map is walked in key order, so that of several bad members the one reported is always the same.
 
-**D76 — chord/delta.** Not ported: `delta/revision-validator.ts`'s `JsonRevisionValidator` (`d5cba1d97`), whose one caller is `services/state.ts`'s `ReplicatedStateReplica` — the replicated-state runtime D52 leaves to its own slice (Scope queue entry 11), where it lands. `value.ts` (the `JsonRevisionStore`) and `draft.ts`'s `produce` helpers are gone upstream, and so is their Go.
+**D76 — chord/delta.** Not ported: `delta/revision-validator.ts`'s `JsonRevisionValidator` (`d5cba1d97`). Its one caller, `services/state.ts`'s `ReplicatedStateReplica`, went with `0104fef1e`: at `d2e7d8b7c` the file survives with no caller in `packages/chord/src` (only `test/delta-traversal.bench.ts` imports it) and no export (`./delta`'s `index.ts` does not re-export it), and `src/state.ts`, the renamed replicated state, holds no replica. So there is nothing to mirror (C2). Port it with its first caller, which would land on Scope queue row 27. `value.ts` (the `JsonRevisionStore`) and `draft.ts`'s `produce` helpers are gone upstream, and so is their Go.
 
 ### coding shell exit status (ported 2026-09-18, upstream `a8b3dd199`)
 
@@ -2284,7 +1962,11 @@ a block's stop, `undefined + <number>` makes pi's partialJson NaN, which only
 non-object arguments show.
 Each measured row is a tagged scenario in the capture oracles
 (`ai/providers/testdata/{google-stream-events,openai-stream,streaming-json,pi-messages,anthropic-sse}`);
-the observer (`OnProviderStreamEvent`) still sees pi's value.
+the observer (`OnProviderStreamEvent`) still sees pi's value. A pi-messages `toolcall_end` carrying a tool-call key outside pi's `ToolCall`
+type (a gateway's extra) loses it here, where pi keeps it through
+`Object.assign`; a null or non-string `argumentsError` persists as `""` or its
+JS string where pi keeps the raw value (validation outcome and text identical;
+`e12b8e6`).
 
 **D83 — port limits pi does not have.** Each fails with a hinted error: an
 openai or anthropic SSE line past 16 MiB (`maxOpenAISSELine`,
@@ -2301,7 +1983,10 @@ reads in a row; this is a port guard against a broken body reader, report it
 with the provider: multiple Read calls return no data or error`, wrapping
 `io.ErrNoProgress`), and a pi-messages message holding more than 1,024 unset
 content slots at once (`piMessagesMaxContentHoles`; pi's sparse array holds any
-number).
+number). And JSON repair (`87f9a3641`): should Go's decoder ever refuse a text
+V8's `JSON.parse` accepts, the `argumentsError` is the decoder's error plus
+"(JSON.parse accepts this text; report it as a port bug)" — not observed over
+the 5,500-input capture.
 
 **D84 — an openai-completions error whose `metadata.raw` cannot be stringified.**
 pi's completions catch block throws inside itself (e.g. `{toString: 1}`) and its
@@ -2392,6 +2077,258 @@ output: <cause>; point TMPDIR (TMP on Windows) at a writable directory with
 free space" (`coding/tools.go`, `da98715`). Measured against pi's own
 accumulator and bash tool at `3dd803d7e`.
 
+**D91 — telemetry's instrument cache holds one slot.** pi caches the four
+request instruments per metrics capability in a WeakMap. Go has no ephemeron
+map: any map holding the instruments would pin the adapter they record into,
+and with it, for an `InMemoryContext`, every recorded span. So
+`ai.instrumentsFor` keeps one slot, holding the last capability; a program that
+alternates between adapters re-creates the instruments at each switch, which
+only an adapter counting its factory calls can see. The no-op capability never
+takes the slot, and a capability that is not comparable is not cached. With one
+adapter per host, the normal shape, the result is pi's. The slot's two costs
+are on its comment (`7d7826f`): it keeps the last adapter, and what that adapter
+recorded, alive until another takes the slot; and it compares with `==`, so
+equal values of a comparable value type share one entry where pi's WeakMap
+keeps one per object.
+
+**D92 — telemetry's shape in Go.** (1) pi's optional `metrics?`/`propagation?`
+members are `Context.Metrics()`/`Propagation()` methods that return nil when the
+capability is absent, so a tracing-only adapter adds two one-line methods. (2)
+`RecordedSpan.ParentID` is 0 for pi's null, and `InMemoryContext.Measurements()`
+is pi's `getMetrics()`, since `Metrics()` is the capability accessor. (3)
+`StartSpan` is callback-scoped, so a traced request runs the span's callback on
+a goroutine that hands the span back and waits for the request to finish; a
+stream that never ends keeps that goroutine, as pi keeps a pending promise. (4)
+`errorMessage.slice(0, 500)` can end on a lone high surrogate no Go string
+holds; `ai.truncateUTF16Units` writes U+FFFD there — one code unit, pi's length,
+and what encoding/json makes of pi's value (capture row `error-bounded`). (5)
+Whether the request span or the caller's span settles first is scheduling on
+both sides (microtasks in pi, goroutines here); upstream's own tests wait
+rather than assert it, and the capture does not compare `endSequence`. Go does
+not wait for the adapter to settle the request span before delivering, which
+would hang a request whose adapter never returns from `StartSpan`. (6) pi's
+"unreadable" Proxy payloads (getters that throw) have no Go form. (7) Order
+(`156067c`): the observer records each event before the consumer sees it, and
+the result before the terminal event and `End`, as pi's lazyStream does, so no
+Go consumer sees a result whose telemetry is unrecorded. pi's own lazyStream
+test registers a `result()` reaction inside `onEvent` and pins
+`["event","resolved","result"]`; Go cannot order a `Result` waiter apart from an
+iterating consumer, so both come after `onResult`: `["event","result","resolved"]`
+(a pi `await complete()` can see an unrecorded result). (8) An adapter whose
+`StartSpan` returns without running its callback (`4cebca3`) fails the request
+as pi does — the first event delivered, then an error event and an error
+result; a stream without events ends with its own result — with a hinted Go
+message where pi's is the TypeError reading `addEvent` of undefined. On a setup
+failure pi then never ends the stream, and its `onResult` throw is an unhandled
+rejection; Go ends the stream with the setup error and records nothing. (9)
+`telemetrytest` (`348aa86`) is pi's `./testing` (`Cases` =
+`createTelemetryAdapterConformance`, `Run` = pi README's registration loop). The
+cases that are nothing but unreadable payloads are not ported, and those whose
+content shrank are renamed; a fixture with nil `Spans` is a non-recording
+adapter, checked for behaviour only (how `NoopContext` runs it; pi requires
+`getSpans`); recorded values compare as JSON (pi `deepStrictEqual`), so an
+adapter may normalize `[]string` to `[]any` or ints to floats; and a Go-only
+`concurrency` group drives one adapter from many goroutines (run it with
+`-race`).
+
+**D93 — a stream that ends without a result: pi waits forever, the port ends.**
+pi's `forwardStream` (the `Models` lazy stream) awaits `source.result()`, which
+never resolves when a provider ends with neither a result nor a terminal event;
+the port ends the outer stream with no result and reports `onResult(nil)` to
+telemetry. Coding's `completeSummarization` likewise fails such an attempt like
+a dropped stream (retryable under its policy) where pi would wait. A hang cannot
+be ported (D63's class), and no well-formed provider reaches either.
+
+**D94 — OpenRouter: a present-but-null `min_prompt_tokens`.** pi's
+`openRouterCost` keeps it as `inputTokensAbove: null`; Go's
+`ModelCostTier.InputTokensAbove` is an int, so 0. Pricing is identical
+(`input > null` coerces null to 0); only the persisted JSON differs, and the
+shape is unrealistic, so the capture has no row for it. Its kin, commented in
+`ai/providers/openrouter.go` and not pinned: a price object with an own
+`toString` key, a non-array `overrides` and a null override throw in pi and fall
+back here.
+
+**D95 — tool selection around the port's extra tool.** `web_fetch` (Go-only) is
+admitted by its exact name only — a plain allowlist entry or `+web_fetch` — and
+a `*` pattern never opts it in, so `ToolNames: ["*"]` selects exactly pi's eight
+built-ins (`TestSessionWebFetchOptInByNameOnly`). The `Tools` override, Go's
+analog of `baseToolsOverride`, supplies the default selection that
+`+name`/`-name` modifiers edit, as it already supplied the default active set.
+
+**D96 — `localeCompare` in the model resolver is a root-locale collator.**
+`bestFuzzyMatch`'s `b.id.localeCompare(a.id)` and the ambiguity list's sort use
+a root-locale `collate` collator, as the ls tool does. Byte order would differ
+for `_`, case and some symbols; pi's ICU tailoring (Danish "aa", for one)
+depends on the machine's locale.
+
+**D107 — compat's error for a built-in model whose api the port has not
+ported.** With `ai/providers` imported, a built-in model on one of the five
+unported apis (`bedrock-converse-stream`, `mistral-conversations`,
+`google-vertex`, `openai-codex-responses`, `azure-openai-responses`) fails,
+through compat's `Stream`/`StreamSimple`, `Provider <provider> has no API
+implementation for "<api>"` — pi's `createProvider` dispatch error — where
+before `c5dbe91` it failed `No API provider registered for api: <api>`; a host
+that does not import `ai/providers` gets the same for every built-in api. This
+is pi's compat algorithm on the port's state: such an api has no registry entry
+and no recorded built-in, which compare equal (`getBuiltinProviderForModel`:
+`undefined === undefined`), so the request goes to the built-in provider, which
+has no implementation of the api. Unreachable in pi, whose `BUILTIN_APIS`
+implement all ten apis and register them at load. An api registered and later
+unregistered (a recorded built-in, no entry) fails `No API provider registered
+for api: <api>`, as pi's does. Through `Models` an unconfigured provider fails
+`Provider is not configured: <provider>` before dispatch, as pi's does. Pinned
+by `TestUnportedApisFailAsPisDispatch` (`testdata/unported-apis`, npm 1.3.0:
+both texts for one catalog model per built-in api).
+
+**D108 — "Invalid tools option" carries a hint.** `coding.NewSession` fails an
+invalid `ToolNames` list with pi's "Invalid tools option: <problem>", followed
+by how to fix it: " (pass either tool names and * patterns, or only +name/-name
+entries naming exact tools, e.g. ["+grep", "-write"])" — errors carry
+resolution hints. `TestSessionToolSelectionMatchesPi` compares pi's text as a
+prefix followed by " (".
+
+**D109 — a coding session without `Models` streams through compat, and the
+runtime-key overlay is a public type.** pi's `createAgentSession` always has a
+model runtime: `options.modelRuntime ?? ModelRuntime.create()`, which composes
+`auth.json`, `models.json`, the remote catalog and extension providers (E1). The
+port has no `ModelRuntime`. A session given `SessionOptions.Models` streams
+turns, compaction and branch summaries through `Models.StreamSimple`, as pi's
+streams through `modelRuntime.streamSimple`; a session without one streams
+through compat's `ai.StreamSimple`, which resolves each request's key from the
+environment (env keys, ambient auth, an unkeyed Cloudflare model through the
+built-in Models). For auth that comes from the environment the requests are
+pi's (`TestSessionRequestsResolveAuthAsPi`, scenario `env/compat`); they differ
+only where pi's default runtime would read `auth.json`, `models.json` or an
+extension provider. `coding.RuntimeCredentials` is exported although pi's is
+internal to `ModelRuntime`, because it is the only place a Go host can set pi's
+runtime key: `NewRuntimeCredentials(store)` with
+`ai.BuiltinModels(&ai.CreateModelsOptions{Credentials: credentials})` as
+`SessionOptions.Models`. A nil store is an empty in-memory one (pi's default is
+`auth.json`), and setting a key does not refresh the provider's models (pi's
+`setRuntimeApiKey` also runs `synchronizeCredentialState`, a `ModelRuntime`
+composition step). A summary lays the session's `Headers` (a Go-only option)
+over the auth headers it resolved; pi has no session headers.
+
+### pi-env (ported 2026-10-19, upstream `packages/env` at `d2e7d8b7c`, npm 1.3.0)
+
+The daemon is measured against npm 1.3.0's Rust daemons (`TestOracle`; the
+`PI_ENV_RUST_DAEMON` differentials) and upstream's own suite, the client against
+upstream's TS client (wire, connection and ssh oracles) and `NodeExecutionEnv`
+(the differential). **Run only on darwin-arm64 and linux-arm64 (a container).**
+The Windows code, a line-by-line port of `sys/windows.rs`, and the Android
+behaviours are cross-built and vetted, never run; Android's pidfd case was shown
+under a seccomp filter, not on a device.
+
+**D97 — macOS watching is the daemon's own kqueue watcher, not FSEvents.**
+FSEvents needs a C callback (cgo). `watch_darwin.go` (x/sys only) lists a
+directory again on NOTE_WRITE and opens regular files with O_SYMLINK for their
+writes, never following links; Linux and Windows watch through fsnotify
+(inotify on Linux, as the notify crate does). Cost on a 710-file, 90-directory
+worktree: 857 descriptors and 442 ms to `ready`, against Rust's 7 and 26 ms,
+because every ancestor's entries are opened too. A tree beyond the descriptor
+limit falls back to polling with `overflow`, the path Rust takes when it runs
+out of watches. The FSEvents 500 ms settle rescan is kept for its timing.
+
+**D98 — android/amd64 is a tagged linux/amd64 build.** Go links android/amd64
+only with cgo, so that daemon is `GOOS=linux GOARCH=amd64 -tags pienv_android`,
+which flips the three Android behaviours (`hello.os` "android", `$PREFIX/tmp`,
+bionic's default PATH; `env/daemon/onandroid*.go`). Commands start through
+`syscall.ForkExec` and `wait4`, never `os.StartProcess`, so Go's pidfd probe,
+which Android < 12's seccomp kills with SIGSYS, never runs (`970d4ed`). Other
+GOOS=android-only runtime behaviour is absent; none is known to matter.
+android/arm64 is a real GOOS=android build.
+
+**D99 — signals the daemon inherited ignored.** Children always get SIG_DFL and
+an empty mask, as in Rust (`c4db8fa`, `a941ed1`). The daemon itself keeps
+ignoring SIGHUP, SIGINT, SIGTSTP, SIGTTIN and SIGTTOU when started with them
+ignored, but the Go runtime installs its handler over any other inherited
+SIG_IGN before `main` and keeps no record of it: a daemon started with SIGTERM
+ignored dies on SIGTERM, where Rust's keeps ignoring it.
+
+**D100 — the daemon answers what Rust's cannot, and takes its whole descriptor
+budget.** An exec `timeoutMs` that is negative or beyond a Duration panics
+Rust's request thread (`Duration::from_secs_f64`) and the request never
+settles; Go replies `EINVAL invalid field timeoutMs` (the client validates
+timeouts first, so it never sends one). At start Go raises the soft
+RLIMIT_NOFILE to the hard limit (children get the original back), so under a
+low `ulimit -n` it reaches its own 4,096-handle EMFILE where Rust hits the
+system's limit first.
+
+**D101 — the C library's behaviour is emulated, not linked.** Rust's daemons
+link musl (Linux), Apple's libc and bionic (Android). `execvp` is foreseen
+rather than called: each candidate's `execve` outcome is predicted from
+stat/access (and on macOS from `#!`/Mach-O magic, since a failed pty child
+revokes the terminal there), and only the predicted-runnable one starts; a
+failure metadata cannot show (ETXTBSY, a foreign-arch ELF) ends the search where
+the library might move on, and macOS execvP's "path too long" stderr line is not
+reproduced. `realpath` is ported line for line, musl's on Linux and Apple's on
+macOS (getattrlist case, mount points), and pinned by `TestOracle/musl` and an
+8,000-path differential. Bionic's `execvpe` (`.` for an empty entry,
+`/system/bin/sh` for ENOEXEC) and realpath (the glibc walk, taken to agree) come
+from source and were never run. On Windows, `remove_dir_all` is `os.RemoveAll`,
+which continues past errors, and environment values that are not valid UTF-16
+decode lossily where Rust's `env::var` treats them as unset.
+
+**D102 — the embedded daemons' size.** Stripped Go daemons are 3.1–3.55 MB per
+target (Rust: 1.9–2.6 MB), 26.5 MB raw for the eight; embedded gzipped, they add
+**11.1 MB** to any program that imports package `env`. That is the price of
+`go:embed` under the owner's ruling.
+
+**D103 — client contexts.** `Connection.Request` waits for the daemon to start
+without its ctx, as upstream does (the cancel follows the request). Where
+upstream checks for an abort right after that wait — file operations,
+`RenameFile`, `Watch`, `Exec`/`RunShell`/`RunProgram`, `ListFiles` — a Go
+operation stops waiting when ctx ends: the same `aborted`, earlier.
+`AbsolutePath`, `JoinPath`, `CreateTempDir` and every post-request path lookup
+wait as upstream does. `Connection.Info(ctx)` stops waiting for a start when ctx
+ends (a started daemon's info is returned regardless), and
+`ScanHostKey`/`DetectPlatform`/`DeployDaemon`/`ConnectSSH` kill ssh when ctx
+ends, where upstream has only its timeouts.
+
+**D104 — client values: zero means unset, and numbers are integers.**
+`SSHTarget.User`/`IdentityFile`/`ConfigFile` `""` and `Port` 0 are not passed
+(upstream refuses `""` and 0, and passes `-F ""`); `RunOptions.Timeout` 0 is no
+timeout (upstream: "Invalid timeout"); `CreateTempDir(ctx, "")` uses `tmp-`
+(upstream keeps `""`); zero `RemoteWatchOptions` fields are not sent. Offsets,
+lengths, bounds and `timeoutMs` are integers, so upstream's `1.5` conformance
+assertions are not ported. `ReadTextLines(ctx, path, maxLines)` follows
+`coding.FileSystem` — `maxLines <= 0` reads every line — where Durable returns
+`[]` without opening the file (row 8 re-aligns it).
+
+**D105 — client delivery and hangs.** A `watch` or `pty` request that ends
+successfully before `ready`/`started` leaves upstream's promise pending
+forever; Go returns an error. A panicking `onChange` is recovered, as upstream
+catches a throwing one. `onChange` runs on the watcher's own goroutine, one call
+at a time: `Close` from another goroutine while a call runs returns without
+waiting for it (no call starts after it returns), and a reopened watcher's
+`Overflow` is queued when the new watch is ready, so it always precedes that
+watch's changes (upstream can deliver a change from the same chunk first).
+`OnLog` runs on the connection's own goroutine, in order, possibly after the
+output that caused it. Queues are unbounded, like Node's buffering. Upstream has
+one thread, so none of this arises there.
+
+**D106 — client packaging and representation.** `PackagedDaemon` returns the
+embedded bytes (upstream: a path into the npm package); `LocalDaemon` writes
+them to `os.UserCacheDir()/pi-env/pi-env-<sha256[:32]>[.exe]` (0700, temp and
+rename), and a Connection whose command is such a path re-verifies and rewrites
+it at each start; the SHA-256 that names the remote file is over the
+uncompressed bytes. Durable's `FileError`/`ExecutionError` live in package `env`
+until row 8; `FileError.Error()` is the message alone, and both also answer
+`errors.Is(fs.ErrNotExist|fs.ErrPermission)`, `errors.Is(coding.ErrShellAborted)`
+and `errors.As(*coding.ShellTimeoutError)`; spawn failures copy Node's
+`spawn <program> ENOENT|EACCES`, others carry Go's text. A request's `env` object
+encodes sorted where JS keeps insertion order; neither daemon sees the order
+(serde_json's BTreeMap, a Go map), and every other request field is
+byte-identical (the wire oracle). `readTextFile` decodes the whole file once
+(WHATWG, BOM kept) where Node streams through StringDecoder at 512 KiB reads —
+equivalent, since StringDecoder splits only where WHATWG ends a sequence (the
+differential's 600 KB "é" file crosses those boundaries). `LocalExecutionEnv`
+embeds `coding.LocalEnv`, not Durable's `NodeExecutionEnv` (row 8), so only its
+`ListFiles` is pi-env's.
+
+**Upstream-shared, not a port defect:** `ssh -o SendEnv=-*` does not stop a
+`SendEnv` in an ssh config file (OpenSSH 10.3). Upstream passes the same option,
+and the port keeps it.
 
 ## Open re-judgements
 
@@ -2422,6 +2359,69 @@ Places the port is KNOWN WRONG and pi is right, with no fix scheduled. Distinct
 from Divergences: these are bugs, not decisions. **Not
 `difftest/known-divergences.json`** — that file excuses one scenario at one
 request-body JSON path, and only D3/D9-class items can ever be entries in it.
+
+**K31 — JSON key order that one layout cannot reproduce.** The port writes
+each message type with one key layout — pi's, since `1849a00`, measured by
+`ai/testdata/key-order/key-order-1.3.0.json` (five adapters × success/400 ×
+stream/agentLoop) — but pi's order depends on which adapter assembled the
+object and when (`Object.assign`, late writes): (1) anthropic's strict-fallback
+`diagnostics` sit right after `timestamp`/`providerThinkingLevel`; (2)
+anthropic's `usage.reasoning` comes last, after `cacheWrite1h`; (3)
+pi-messages' done and error events order their keys their own way; (4) a
+Responses tool call whose `namespace` first appears at `output_item.done` gets
+`argumentsError` before `namespace` (the port always writes `argumentsError`
+last); (5) a message decoded from a pi session and re-encoded takes the
+encoder's layout (canonical; Responses' `providerThinkingLevel` first by api;
+the error literal only for messages built with `ai.NewErrorMessage`), so a
+pi-written error literal re-encodes with `errorMessage` after `timestamp`; (6)
+`endTurn` (codex only, unported) sits after `rawStopReason` with no oracle; (7)
+`ai.Model` and `ModelCostTier` serialize in Go's struct order rather than the
+catalog's (`type` first, a tier's `inputTokensAbove` last), which only
+models-store persistence shows. Values are equal after parsing and no model or
+provider sees the order — K12/K24/K28's class. Fix shape: per-adapter layouts
+captured from pi, as `key-order` does for the common case.
+
+**K32 — `Models` streams take no API-native options.** pi's
+`ModelsApiStreamOptions` can carry an api's native fields (bedrock's and
+pi-messages' `reasoning: ThinkingLevel`, among others); Go's
+`ModelsStreamOptions` is `StreamOptions` plus transforms, so a Go caller cannot
+pass native options through `Models` at all. Seen through telemetry's
+`reasoning` start attribute, which pi reads from `options.reasoning` when it is
+a string: no Go input reaches that branch, so the capture's `stream` row passes
+none. Predates `2ec55d808`. Fix shape: a native-options field on
+`ModelsStreamOptions`, forwarded to the adapter, with telemetry reading it as pi
+does.
+
+**K33 — pi-env's `nodepath.FileURLToPath` parses no IPv6 or IDNA host.**
+`file://[::1]/x` and punycode or non-ASCII hosts are kept as typed (an ordinary
+relative path), where Node v26's `url.fileURLToPath` returns a UNC path on a
+Windows remote: 3 cases of the 13,260-answer node corpus, logged by
+`TestAgreesWithNode` and not asserted. POSIX remotes are unaffected (Node
+refuses any host there too).
+
+**K34 — four built-in providers' api-key auth still differs from pi's.**
+`TestBuiltinAPIKeyAuthNamesMatchPi` (`ai/testdata/builtin-auth`, npm 1.3.0)
+compares every built-in provider's api-key auth name and login prompts, and its
+`builtinAuthDebt` pins these as still differing: `amazon-bedrock` and
+`google-vertex` (pi's api-key logins first ask for an auth method — "Select
+Amazon Bedrock authentication method:", "Select Google Vertex AI authentication
+method:" — and the port's ambient resolvers have no `Login`; the names match),
+`openai-codex` (pi has OAuth auth only; the port keeps an ambient api-key
+resolver because its OAuth login is unported and a `ProviderAuth` needs a
+method), and `typesafe` (classifier-only; `BuiltinModels` passes over it).
+Login acquisition is Scope queue row 1, typesafe row 3; each closes there.
+
+**K35 — the session's auth gates.** pi's `AgentSession.setModel` throws
+``No API key for ${provider}/${id}`` when `modelRuntime.checkAuth` finds
+nothing, and `prompt` refuses before sending with
+`formatNoApiKeyFoundMessage(provider)` when the runtime has no auth for the
+model. The port's `Session.SetModel(model)` switches regardless and returns
+nothing, and `Run` sends the request, which fails in the stream (`Provider is
+not configured: <provider>` through `Models`, the adapter's own error through
+compat). `cmd/pi` gates both with `requireProviderAuth`. Fixing it is `SetModel`
+returning an error after `Models.CheckAuth` (compat:
+`ai.BuiltinModels(nil).CheckAuth`, as `requireProviderAuth`), and the prompt
+pre-check with pi's message; an API break the mirror ruling permits.
 
 **K30 — a Retry-After that only V8's fallback date parser reads backs off in
 Go; pi retries at once.** pi reads a `Retry-After` that `parseFloat` rejects
@@ -2553,55 +2553,30 @@ thinkingLevel ...string)`, `Branch(fromID ...string)`, `BuildContext(leafID
 ...string)`) become an options struct + named variants in one change; and pi's
 `uuidv7` is public SDK API (`packages/ai/src/index.ts:47`) where the port keeps
 it unexported in `coding/session_store.go` — it moves to `ai.UUIDv7`/`ai.UUIDv7At`
-with entry 11.
+with entry 12.
 
-**K18 — google and anthropic HTTP-error messages do not match pi's; measured.**
-`ai/providers/testdata/httperror/pi-ai-src-2b0a123de.json` (captured by
-`capture.mjs --src` from pi-ai's src at `2b0a123de` with openai 7.19.0; an
-interim oracle, to be re-captured from the first published build that ships
-`ab30693d6`) carries all four adapters' `errorMessage` for 52 bodies, and a
-`failFast` section: the retry fail-fast quote for 7 bodies (429, retry-after
-120, maxRetries 1) on openai-responses (and its xai variant),
-openai-completions and anthropic-messages, all of which the port matches
-(`TestHTTPErrorFailFastMatchesPi`).
-For `{"error":{"message":"blocked"}}` at 403, pi's google adapter surfaces the
-body verbatim with no status — `{"error":{"message":"blocked"}}` (the
-`@google/genai` error's message already carries the body, so
-`formatProviderError` returns it unchanged) — and pi's anthropic adapter
-surfaces the Anthropic SDK's message, `403 {"error":{"message":"blocked"}}`
-(`${status} ${JSON.stringify(body)}`, the whole body, never capped: 6,028 units
-on the astral row). The port's google and anthropic non-2xx branches both route
-through `formatProviderError(label, status, body)` and say
-`Google API error 403: blocked` / `Anthropic API error 403: blocked`, capped at
-4,000. `errors.go` already holds `anthropicSDKErrorMessage`, which replicates the SDK
-message (with a 4,000-unit cap pi does not apply) but is wired only into the
-retry fail-fast quote — `StreamAnthropic` passes it to `retryFromOptions`, for
-`validateServerRetryDelay` in `retry.go` — not the terminal non-2xx path;
-google passes nil, and no google counterpart exists. `failFast` is that
-retry-after case, but none of its bodies passes 4,000 units; add one to decide
-the retry-path cap. Both openai loops follow pi: Responses since `b32a55b`,
-completions since `b9de81e` (D20 retired). anthropic reads its error body as
-its SDK does (`f68f0b5`: a failed read quotes its error, `terminated` for a
-dropped connection), so once its formatter follows pi, stream-abort's `the
-connection drops while an error body is read` can run for anthropic (pi `500
-terminated`; the port says `Anthropic API error 500: terminated`). **Fix as one slice:** per-adapter formatters at the two call
-sites against the oracle's `google-generative-ai` and `anthropic-messages`
-columns (the capture already records them), and rewrite the tests that pin the
-Go shape. Not folded into the 2026-09-14 cycle under the boy-scout boundary: two
-other adapters, each with its own test surface. **One transport-level gap is shared by every adapter, measured
-2026-09-14 against the same build over 72 probe bodies:** pi's `fetch` decodes
-the body with the WHATWG UTF-8 decoder before any client parses it, so invalid
-UTF-8 becomes U+FFFD per maximal subpart; the port passes the raw bytes through
-(and `encoding/json` replaces per byte on the JSON path). 9 of the 72 differed,
-all of them bodies carrying raw invalid UTF-8 (latin-1 gateway HTML, truncated
-multi-byte sequences). **Partly closed 2026-09-24:** the decoder now exists as
-`jstext.DecodeUTF8` (checked against node's TextDecoder) and is wired into the
-anthropic and pi-messages SSE streams, pi-messages' non-2xx body (pi's
-`response.text()`) and both openai stream readers. The error-body path in
-`errors.go` that the HTTP-error formatters share still strips one BOM and passes
-the raw bytes; wire the decoder in there with this row's formatter slice, and
-teach `capture.mjs` to carry byte bodies (base64) so the oracle can hold the
-rows.
+**K18 — google HTTP-error messages do not match pi's; measured.**
+`ai/providers/testdata/httperror/pi-ai-1.3.0.json` (the published build: 52
+rows, plus 5 `byteRows` with base64 bodies carrying invalid UTF-8, every
+adapter's column recorded) holds all four adapters' `errorMessage` and a
+`failFast` section, the retry fail-fast quote, which the port matches
+(`TestHTTPErrorFailFastMatchesPi`). For `{"error":{"message":"blocked"}}` at 403
+pi's google adapter surfaces the body verbatim with no status — the
+`@google/genai` error's message already carries it, so `formatProviderError`
+returns it unchanged — where the port says `Google API error 403: blocked`,
+capped at 4,000; google hands the retry quote no SDK message, and no google
+counterpart of `anthropicSDKErrorMessage` exists. **The anthropic half is
+FIXED** (`9c569f5`): a terminal non-2xx is the SDK's message
+(`${status} ${JSON.stringify(body)}`, uncapped, over `jstext.DecodeUTF8` text),
+the retry quote is uncapped too, and stream-abort's "the connection drops while
+an error body is read" now runs for anthropic. Both openai loops follow pi
+(Responses `b32a55b`, completions `b9de81e`). **One transport gap remains on the
+openai paths:** pi's fetch decodes an error body with the WHATWG UTF-8 decoder
+(U+FFFD per maximal subpart) before any client parses it, while the error-body
+path in `errors.go` passes the raw bytes; the byte rows' openai columns show
+pi's U+FFFD. Fix shape: google's formatter at its call site against the
+`google-generative-ai` column, and `jstext.DecodeUTF8` in `errors.go`'s shared
+body path; rewrite the tests that pin the Go shape.
 
 **K22 — request headers undici's fetch adds by default.** Measured after
 `c231659`: pi's wire carries `accept: */*` when no Accept is present (always on
@@ -2759,5 +2734,6 @@ the golden keeps its section, frozen at the last sha that had the source (so it
 can never be regenerated by mistake), its generator says so, and the test
 `t.Fatal`s on an empty section. A table-driven test whose table can become
 empty is not a test: `TestAssertCompleteFrameMatchesUpstream` passed for a cycle
-iterating nothing after the `assertCases` section was dropped (frozen at
-`96317e50b` since).
+iterating nothing after the `assertCases` section was dropped (the test went
+with `protocol/` in `83a344c`). A golden whose user the port deletes goes with
+it; freezing is for goldens the port still uses.

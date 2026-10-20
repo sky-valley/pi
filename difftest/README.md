@@ -285,7 +285,7 @@ Both sides read the same file, so neither can quietly diverge on inputs.
 | `tool-choice-with-tools-control` | dist | control for the row above: with tools present the key is sent too, so arm one passes on the guard's absence rather than on the key never being written |
 | `tools-only-openai-completions` | dist | tools and no `systemPrompt`: the normalized leading system message has empty text and sends no system message (upstream `9e05370b2`; the published build takes the raw context, which renders the same) |
 | `kimi-k3-anchored-tool-additions` | dist | openai-completions Kimi K3 with `supportsMidConvoSystemMessages` + `supportsMidConvoToolAdditions`: `tools` holds the leading message's tools, and a later system message adding a tool is sent in place as a Kimi `{role:"system", tools}` message followed by its rendered update (upstream `9e05370b2`) |
-| `anthropic-native-tool-changes` | dist | anthropic-messages with `supportsMidConvoSystemMessages` + `supportsMidConvoToolChanges`: the leading message's tools stay active with the cache breakpoint, a stable `__pi_deferred_placeholder__` and every later declaration are sent with `defer_loading`, and the later system message is held and sent as a `{role:"system"}` block carrying its rendered update plus `tool_removal`/`tool_addition` references, with the `mid-conversation-tool-changes-2026-07-01` beta (upstream `9e05370b2`) |
+| `anthropic-native-tool-changes` | dist | anthropic-messages with `supportsMidConvoSystemMessages` + `supportsMidConvoToolChanges` (upstream `9e05370b2`; the 1.3.0 shape, `b271b0a52`): request `tools` holds only the leading message's tools (with the cache breakpoint) and a stable `__pi_deferred_placeholder__`; each later system message is held and sent as a `{role:"system"}` block carrying its rendered update, the first with a `tool_addition` holding an inline `tool_definition`, the closing one with a `tool_removal`, under the `inline-tools-2026-09-15` beta. Red against 0.99.2's `mid-conversation-tool-changes-2026-07-01` shape from `bcbea91` until the 1.3.0 re-pin (`82de5d9`) |
 | `responses-midconvo-additional-tools` | dist | native mid-conversation system messages (upstream `9e05370b2`): additive tool history keeps body.tools to the leading message's tools and loads `late_tool` with an `additional_tools` item before the in-place developer update |
 | `responses-midconvo-tool-search` | dist | the same with `supportsToolSearch`: a completed client `tool_search_call`/`tool_search_output` pair, `call_id` `pi_tool_load_<shortHash("system:<msgIndex>:<names>")>` with a msgIndex the leading system message does not advance |
 | `responses-midconvo-fallback` | dist | a removal makes the tool history non-additive: body.tools is the complete current tool state, no additional_tools item, and the update renders its section changes |
@@ -293,8 +293,8 @@ Both sides read the same file, so neither can quietly diverge on inputs.
 
 The `backend` column above is a snapshot. Scenarios flip `src` -> `dist` as releases
 ship the surface they cover, so re-read `scenarios/*.json` rather than this table when
-the distinction matters. **As of 2026-09-30 the suite is 65 scenarios, all
-`dist`**: the last two `src` scenarios, `sampling-params-stream` and
+the distinction matters. **As of 2026-10-19 the suite is 66 scenarios, all
+`dist`, against 1.3.0**: the last two `src` scenarios, `sampling-params-stream` and
 `sampling-params-stream-responses` (`c01f687e5`), flipped when 0.99.1 shipped it.
 
 From `9e05370b2` on, the api adapters take a normalized transcript that only

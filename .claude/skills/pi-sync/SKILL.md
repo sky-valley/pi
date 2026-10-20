@@ -11,8 +11,8 @@ stopped.
 
 ## 0. Preflight
 - Repo: clean working tree on `main`, `git pull` first. Full gate must be
-  green BEFORE starting (`go build ./... && go vet ./... && go test ./...`);
-  never start a sync on a broken base.
+  green BEFORE starting (`go build ./... && go vet ./... && go test ./...`, and
+  the env module's gate from §4); never start a sync on a broken base.
 - Upstream clone at `$PI_UPSTREAM_DIR` (default `~/.cache/pi-upstream`); clone
   if missing, `git fetch origin main`, then **fast-forward its working tree**:
   `git -C "$dir" checkout -B main origin/main`. The clone is a read-only mirror
@@ -37,8 +37,11 @@ stopped.
   parents. Judge a merge by diffing it against EACH parent. If empty: record the
   check date in UPSTREAM.md and stop.
 - If the delta contains a release tag: refresh the npm reference build
-  (`npm i @earendil-works/pi-ai@<ver> @earendil-works/pi-coding-agent@<ver>`
-  in the scratch dir) so parity review compares against what now ships.
+  (`npm i @earendil-works/pi-ai@<ver> @earendil-works/pi-coding-agent@<ver>
+  @earendil-works/pi-env@<ver> @earendil-works/pi-durable@<ver>` in the scratch
+  dir) so parity review compares against what now ships. pi-env's `bin/` holds
+  the Rust daemons `env/daemon`'s oracle is captured from, and the env daemon's
+  `Version` follows pi-env's npm version (`hello.version` reports it).
 - Re-capture `coding/testdata/defaultmodels` at EVERY re-pin (npm build at a
   release, `capture.mjs --src <sha>` between releases): it pins the whole
   `defaultModelPerProvider` table, which has caused a miss twice.
@@ -83,6 +86,26 @@ but no Go home yet" is a Scope queue row, not a `decide`.
   gated on a `//go:build windows` file changing: the two constrained files are
   called from unconstrained code, so an ordinary `coding/` rename breaks the
   cross-target build while touching no constrained file.
+- **The env submodule** (`env/`, its own module since 2026-10-19), built twice,
+  because it imports root packages that may have changed this cycle:
+  1. Against the working root, through a workspace file kept OUTSIDE the repo
+     (never commit a `go.work`) that reads `go 1.26` and `use (<repo> <repo>/env)`:
+     `GOWORK=<that file>` with `cd env && go build ./... && go vet ./... &&
+     go test -race ./... -count=1`, plus `GOOS=windows go build ./... && GOOS=windows
+     go vet ./...` and `GOOS=linux GOARCH=386 go build ./...`. This runs
+     `env/internal/policy` (daemon graph ⊆ x/sys + fsnotify, no cgo) and the
+     staleness tests (`TestEmbeddedDaemonsAreCurrent`, which fails with "run go
+     generate ./... in env" when `env/bin` is stale).
+  2. Against the root version its go.mod requires: `cd env && GOWORK=off go build
+     ./... && GOWORK=off go vet ./...`. Between releases this proves only what the
+     required root tag already had; a failure here that the workspace build does
+     not show means the env change needs the next root tag (fine — the release
+     step bumps it), not a fix.
+- If anything under `env/daemon`, `env/internal/frame` or `env/cmd/pi-env`
+  changed: `cd env && go generate ./...` and commit `env/bin` (the eight gzipped
+  daemons and `manifest.json`) in the same commit. The build is reproducible
+  (pinned go environment, recorded toolchain); `TestEmbeddedDaemonsRebuildIdentically`
+  skips when the local toolchain differs from the manifest's.
 - Every behaviour change is observed red for a **behavioural** reason before it
   ships. A compile-error red proves only that a symbol moved; re-engineer the
   test until it fails by asserting. Label a characterization test as such.
@@ -136,11 +159,22 @@ but no Go home yet" is a Scope queue row, not a `decide`.
     **annotated, unsigned** tag, tagger `Noam Y. Tenne <noam@10ne.org>`:
     `git -c user.name="Noam Y. Tenne" -c user.email="noam@10ne.org" tag -a
     vX.Y.Z <sha> -m "vX.Y.Z — upstream pin <sha>, npm pi-ai <ver> …"`.
+  - **Then tag the env submodule, two-step** (its go.mod requires a tagged root,
+    so the root tag must exist and be pushed first): push `vX.Y.Z`; in `env/`,
+    set the `github.com/sky-valley/pi` require to `vX.Y.Z`, run `GOWORK=off go
+    mod tidy` (it keeps `golang.org/x/image` and `golang.org/x/text` as indirect
+    requires; if the module proxy has not seen the new tag yet, use
+    `GOPROXY=direct`), check `GOWORK=off go build ./... && GOWORK=off go vet
+    ./...`, and commit (`build(env): require the root at vX.Y.Z`). Tag that
+    commit `env/vX.Y.Z` the same way (`-m "env/vX.Y.Z — pi-env <ver>, requires
+    root vX.Y.Z"`) and push it. The env tag is one commit past the root tag;
+    both carry the same version. Name both tags in the RELEASES.md Notes entry.
   - Add the row + a Notes entry to `docs/RELEASES.md` (version, date, tagged
     commit, upstream pin, npm catalog, headline). If RELEASES.md is behind the
     tag list, backfill the missing tags from their `git tag -n99` messages first.
-  - Push the tag: `git -c credential.helper='!gh auth git-credential' push
-    https://github.com/sky-valley/pi.git vX.Y.Z` (HTTPS, same as the branch push).
+  - Push the tags: `git -c credential.helper='!gh auth git-credential' push
+    https://github.com/sky-valley/pi.git vX.Y.Z` (HTTPS, same as the branch
+    push), then the env bump commit and `env/vX.Y.Z` the same way.
   - **Publish a GitHub Release for the tag** (since 2026-09-21 — a bare tag
     notifies nobody; watchers and the repo's "Latest" badge only see Release
     objects). Body = a short plain-language header, then the RELEASES.md Notes
@@ -185,7 +219,7 @@ but no Go home yet" is a Scope queue row, not a `decide`.
     version it tracks; up to 3 high-level `:: `-prefixed changes (plain, no jargon
     dump); link the **repo, not the release**; keep the upbeat tone.
 - Report the **Scope queue** state (entries drained, deltas appended) alongside
-  the catalog-only queue. (The harness backlog is entry 8's queued-deltas column.)
+  the catalog-only queue. (The durable backlog is entry 8's queued-deltas column.)
 - Report: N changes — X ported (with commits), Y n/a, Z escalated; the release
   tag if one was cut; any test count change; any new deliberate divergence added
   to UPSTREAM.md.

@@ -22,6 +22,7 @@ for cancellation, goroutines for parallel tool execution).
 | [`agent`](agent/) | `@earendil-works/pi-agent-core` | The agent runtime: low-level `AgentLoop`, the stateful `Agent` with tool calling, hooks, steering/follow-up queues, sequential + parallel tool execution. |
 | [`coding`](coding/) | `@earendil-works/pi-coding-agent` | The coding agent: the eight built-in tools (`read`, `write`, `edit`, `bash`, `powershell`, `ls`, `find`, `grep`), the system prompt builder (with AGENTS.override.md/AGENTS.md/CLAUDE.md context files + Agent Skills), model resolver, the session runner, and JSONL session persistence. |
 | [`cmd/pi`](cmd/pi/) | `pi` CLI | The `pi` command — print mode, interactive REPL with slash commands, session resume, `pi models`, `pi sessions`. |
+| [`env`](env/) | `@earendil-works/pi-env` | A remote execution environment over SSH: `ConnectSSH` deploys a small daemon to the remote host and `RemoteExecutionEnv` runs files, commands, terminals and watches through it. A separate module (`go get github.com/sky-valley/pi/env`), with its own tags (`env/vX.Y.Z`). The daemon is ported to Go as well (`env/daemon`, `env/cmd/pi-env`), and its builds for eight platforms are embedded, so nothing needs Node or Rust on either end. |
 
 Alongside those, [`difftest/`](difftest/) is the differential harness: for
 identical inputs it captures the exact HTTP request body that **real pi** builds
@@ -182,8 +183,9 @@ This port reproduces pi's core engine and coding agent faithfully:
 Not yet ported from the (much larger) upstream: the interactive TUI and the host/mode layer
 that drives it, the extensions runtime, and the wire APIs whose transport or credential chain
 Go cannot reach without a third-party dependency (AWS Bedrock's SigV4 + eventstream framing,
-OpenAI Codex's WebSocket + zstd). OAuth token acquisition and the Azure/Mistral/Vertex/Radius
-adapters are in scope and queued — see `docs/UPSTREAM.md`. The architecture leaves clean seams
+OpenAI Codex's WebSocket + zstd). OAuth token acquisition, Azure's Responses API (its Chat
+Completions deployments are served) and the Mistral/Vertex/Radius adapters are in scope and
+queued — see `docs/UPSTREAM.md`. The architecture leaves clean seams
 for all of these: providers register through `ai.RegisterApiProvider`, tools are plain
 `agent.AgentTool` values, and the agent loop is provider- and tool-agnostic.
 

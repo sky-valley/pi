@@ -50,7 +50,8 @@ first-parent change: a merged PR is ONE unit, analyzed via `git diff <sha>^1..<s
        an outside Go dependency, open a Scope queue row flagged `CONSULT` and
        put the specific question to the owner — never `n/a` it yourself.
      - **E3 no Go representation** — a TS type-level construct with no runtime
-       behavior (today: the telemetry schema half only).
+       behavior (today: the telemetry schema's type inference only; its schema
+       DATA is IN).
 
      **Reachability is evidence, not a test.** Root-exported means "probably SDK
      surface" and is why the default is IN — but it argues one direction only
@@ -61,16 +62,14 @@ first-parent change: a merged PR is ONE unit, analyzed via `git diff <sha>^1..<s
      |---|---|---|
      | `packages/ai/src` | `ai/`, `ai/providers/` | **OUT:** only `cli.ts` (E1). `amazon-bedrock` and `openai-codex` are IN scope with open dependency consults (queue entries 9 and 10) as of 2026-08-27 — do NOT mark them `n/a`. Azure, Mistral, Vertex, Radius, images and `auth/oauth/**` are IN as of 2026-08-27 — most are QUEUED, see below |
      | `packages/ai/scripts` | `ai/models_catalog.json` **at the next release regen** | generator-only; verdict is `port-but-CATALOG-ONLY`. Includes `openrouter-catalog.ts` and `model-data.ts` (`generate-image-models.ts` was deleted by `a328aa89a`; images and classifiers now come out of `generate-models.ts`) |
-     | `packages/agent/src` | `agent/` (harness deltas land per the chosen shape — default `coding/`) | `harness/**` and `search/**` are IN scope, FUNDED and draining as QUEUED (entry 8) — backlog them, never `n/a`, and **never escalate them again** (2026-08-27). **But split the commit by hunk before you queue it:** parts of that tree are already SHIPPED, so a hunk there can be an ordinary `port`. Today `harness/types.ts`'s `FileSystem`/`ExecutionEnv` and `harness/env/nodejs.ts`'s `NodeExecutionEnv` are `coding/execenv.go` (slice 8b-i), and 2026-09-09 parked-then-recovered a portable delta (`openTextLineReader`) under a heading that said the Go code did not exist |
+     | `packages/agent/src` | `agent/` | Since `7fd478a2e` (2026-10-01) pi-agent-core is only `agent.ts`, `agent-loop.ts`, `proxy.ts`, `stream-fn.ts`, `types.ts`; the harness and `search/**` are deleted. `proxy.ts` (`streamProxy`) has no Go home yet: Scope queue 26 |
      | `packages/coding-agent/src/extensions` | Scope queue 21-23 (no Go base yet) | **2026-09-29 ruling:** `mcp/**`, `codemode/**`, `tool-search/**` are IN as Go SDK features — root-exported and wired into `createAgentSession` — except their host files `mcp/ui.ts`, `mcp/cli.ts` + `cli.lazy.ts`, `codemode/renderer.ts` (E1). `mcp/index.ts` splits by HUNK. `llama/**` is E1 (only `main.ts` loads it; not root-exported). A NEW built-in: check the root export before judging it |
      | `packages/mcp`, `packages/codemode` | Scope queue 21, 22 | 2026-09-29, IN — published packages. codemode's `quickjs-wasi` → wazero in a submodule (pre-decided) |
-     | `packages/durable` | Scope queue 8 | IN, QUEUED — the Pico kernel moved here from `packages/agent/src/pico` on 2026-09-18 |
-     | `packages/protocol/src` | `protocol/`, `protocol/cbor/` | 2026-08-01. Byte-golden to a PEER: CBOR + frame layout |
-     | `packages/client/src` | `client/` | 2026-08-01 |
-     | `packages/server/src` | `server/`, `server/unix/`, `server/internal/servertest/` | 2026-08-01. Both of that ruling's carve-outs are stale and NOT to be re-applied: `server/src/legacy/**` no longer exists (`05bf9df65`), and `server/src/testing/**` IS ported |
-     | `packages/telemetry` | `telemetry/` | 2026-08-06, **runtime half only** — the schema/type-inference half (`defineTelemetrySchema`, `Infer*`, `SchemaTelemetrySpan`) is `n/a` and shares `src/index.ts` with the ported half, so this one must be split by HUNK |
-     | `packages/session-backends` | — | 2026-08-07: IN scope but QUEUED |
-     | `packages/coding-agent/src/{core,client,utils,server}` | `coding/` (`src/server/` is the harness factory — queue entry 8) | **OUT** (E1, and this list must match the ledger's out-table exactly): `core/extensions/**`, `core/export-html/**`, `core/settings-manager.ts`, `core/prompt-templates.ts`, `core/agent-session-runtime.ts` + the session-reload / `/new` lifecycle, `core/model-registry.ts`, `core/resolve-config-value.ts`, `core/radius.ts`, `core/resource-loader.ts` source-info accessors, `core/provider-composer.ts`, `core/model-config.ts`, `migrations.ts`, `core/keybindings.ts`, `core/tools/renderers/**`, and the `builtin:<name>` extension resolution (`source-info.ts`'s `BUILTIN_PATH_PREFIX`, `package-manager.ts`'s and `resource-loader.ts`'s built-in extension halves). **Partly ported, split by HUNK, never diffstat-dispatched:** `core/model-resolver.ts`, `core/package-manager.ts`, `core/trust-manager.ts`, `core/model-runtime.ts` (its `Models` contract is `ai.Models`, 2026-09-24). `core/remote-catalog-provider.ts` is Scope queue row 19. The trust *decision and gate* are IN (2026-08-27); the trust prompt, selector and store are host. **Also split by HUNK, inside the IN-scope queued tree:** `core/session-manager.ts` — its static discovery surface (`DefaultSessionDir`, `ListSessions`, `LatestSession`, `FindSessionByID`, the header reader, id generation, migrations) is `coding/session_store.go`, the class itself is Scope queue entry 12; a hunk on the shipped half is an ordinary `port`, never an entry-12 append (2026-09-16: the draft parked `findById` and the adversarial pass caught it). Two hunks land in `ai/providers/` instead: `utils/pi-user-agent.ts` -> `pi_user_agent.go`, `core/provider-attribution.ts` -> `attribution.go` |
+     | `packages/durable` | Scope queue 8 | IN, FUNDED, QUEUED — never `n/a`, never escalate. **Split by hunk before you queue it:** `src/env/{index,node}.ts`'s `ExecutionEnv`/`FileSystem`/`Shell`/`NodeExecutionEnv` are SHIPPED as `coding/execenv.go` (slice 8b-i, at the old harness shape), so a hunk on a method `LocalEnv` has is an ordinary `port`; the members it lacks are listed on row 8. Durable Object adapters (`*/cloudflare`) have no meaning in Go — drop them |
+     | `packages/chord/src` | `chord/` (`context/index.ts` → `context.go`, `json.ts` → `json.go` + `internal/jsonvalue`), `delta/**` → `chord/delta/` | The chord2 host runtime (everything else, and `./node`) is Scope queue 27. `./output` and `./sqlite*` are durable's code: Scope queue 8. `loader.ts`'s `nodeLoader` has no meaning in Go (`7d75a0e3e`) |
+     | `packages/env` | `env/` — its own module, `github.com/sky-valley/pi/env` (2026-10-19 ruling) | Client `src/**` → package `env` (+ `env/internal/nodepath`); daemon `daemon/src/**` (Rust) → `env/daemon`, ported Go, so **a Rust-only change to the daemon is an ordinary `port`**, judged against npm's Rust daemon. A daemon port regenerates `env/bin` (`go generate ./...` in `env`) |
+     | `packages/telemetry` | `telemetry/`; `src/testing/**` → `telemetry/telemetrytest` | 2026-08-06, widened 2026-10-19: the runtime contract (propagation, links, metrics, capabilities), the schema DATA (`telemetry/schema.go`) and the adapter conformance suite are IN; only the schema's type inference (`defineTelemetrySchema`'s typing, `Infer*`, `SchemaTelemetrySpan`, `TypedTelemetryMetrics`) is E3. The contract, the data and the inference share `src/index.ts`, so split it by HUNK |
+     | `packages/coding-agent/src/{core,utils}` | `coding/` | `src/client/**` and `src/experimental/**` are deleted (`7472cda0d`) but for `experimental/source-resolver.ts`, which has no Go subject. **OUT** (E1, and this list must match the ledger's out-table exactly): `core/extensions/**`, `core/export-html/**`, `core/settings-manager.ts`, `core/prompt-templates.ts`, `core/agent-session-runtime.ts` + the session-reload / `/new` lifecycle, `core/model-registry.ts`, `core/resolve-config-value.ts`, `core/radius.ts`, `core/resource-loader.ts` source-info accessors, `core/provider-composer.ts`, `core/model-config.ts`, `migrations.ts`, `core/keybindings.ts`, `core/tools/renderers/**`, and the `builtin:<name>` extension resolution (`source-info.ts`'s `BUILTIN_PATH_PREFIX`, `package-manager.ts`'s and `resource-loader.ts`'s built-in extension halves). **Partly ported, split by HUNK, never diffstat-dispatched:** `core/model-resolver.ts`, `core/package-manager.ts`, `core/trust-manager.ts`, `core/model-runtime.ts` (its `Models` contract is `ai.Models`, 2026-09-24). `core/remote-catalog-provider.ts` is Scope queue row 19. The trust *decision and gate* are IN (2026-08-27); the trust prompt, selector and store are host. **Also split by HUNK, inside the IN-scope queued tree:** `core/session-manager.ts` — its static discovery surface (`DefaultSessionDir`, `ListSessions`, `LatestSession`, `FindSessionByID`, the header reader, id generation, migrations) is `coding/session_store.go`, the class itself is Scope queue entry 12; a hunk on the shipped half is an ordinary `port`, never an entry-12 append (2026-09-16: the draft parked `findById` and the adversarial pass caught it). Two hunks land in `ai/providers/` instead: `utils/pi-user-agent.ts` -> `pi_user_agent.go`, `core/provider-attribution.ts` -> `attribution.go` |
 
      `utils/` is judged **by its consumer, not its path** — in scope only when a
      ported core file consumes it.
@@ -85,8 +84,7 @@ first-parent change: a merged PR is ONE unit, analyzed via `git diff <sha>^1..<s
      `port`; no Go commit this cycle; append the delta to its entry in
      `docs/UPSTREAM.md` → "Scope queue" instead. This is the
      `port-but-CATALOG-ONLY` pattern generalized. The current entries are the
-     rows in `docs/UPSTREAM.md` -> "Scope queue" (today: OAuth acquisition,
-     the rows in `docs/UPSTREAM.md` -> "Scope queue") —
+     rows in `docs/UPSTREAM.md` -> "Scope queue" —
      read them there rather than trusting any list here, and **open a new row
      yourself** when an in-scope change has no Go home. Once an entry's base
      port ships, the entry closes and that tree triages as ordinary `port`.
@@ -127,12 +125,13 @@ first-parent change: a merged PR is ONE unit, analyzed via `git diff <sha>^1..<s
      a miss TWICE — diff it on every touch), `core/package-manager.ts` (skill
      discovery is `coding/resources.go`), `core/trust-manager.ts` (decision and
      gate are ported), `core/model-runtime.ts` (its `Models` contract is
-     `ai.Models`, 2026-09-24), `packages/telemetry/src/index.ts` (E3). **A commit spanning the seam is triaged on its
+     `ai.Models`, 2026-09-24), `packages/telemetry/src/index.ts` (schema data
+     IN, type inference E3). **A commit spanning the seam is triaged on its
      non-host hunks alone and NEVER escalates on account of the host half.**
      This is the rule that removes most of the per-commit cost — roughly half of
      all mixed commits are mixed only because of host content.
 
-     Also `n/a`: the telemetry schema half (E3 — split by HUNK, it shares `src/index.ts` with the ported runtime half); the trust prompt,
+     Also `n/a`: the telemetry schema's type inference (E3 — split by HUNK, it shares `src/index.ts` with the ported contract and schema data); the trust prompt,
      selector and store; and the always-noise set — docs, CHANGELOG, CI,
      `.github/`, `.pi/`, examples, per-package `package.json` version bumps,
      repo-root `scripts/`.
@@ -161,11 +160,14 @@ first-parent change: a merged PR is ONE unit, analyzed via `git diff <sha>^1..<s
      - **anything E1 covers** — never escalate on a host hunk (2026-08-27);
      - **whether an SDK adapter is in scope** — it is. A dependency question is
        a `CONSULT` queue row, not a `decide` and never an `n/a` (2026-08-27);
-     - **the agent harness** — FUNDED 2026-08-27, and its SHAPE was SETTLED
-       2026-09-03 as a mirror of upstream's layout (`agent/harness/**` grows
-       beside `coding/`; they are not merged, because upstream keeps both forks
-       with zero cross-imports). Not a triage question any more. Carry its
-       deltas as `port-but-QUEUED` against Scope queue entry 8;
+     - **the durable runtime** (the agent harness until `7fd478a2e` deleted it)
+       — FUNDED 2026-08-27, and its SHAPE was SETTLED 2026-09-03 as a mirror of
+       upstream's layout (a Go `durable` package grows beside `coding/`; they
+       are not merged, because upstream keeps both forks with zero
+       cross-imports). Not a triage question any more. Carry its deltas as
+       `port-but-QUEUED` against Scope queue entry 8;
+     - **pi-env and its daemon** — ported whole, daemon in Go (2026-10-19). A
+       Rust-only daemon change is an ordinary `port`;
      - **whether following upstream into an API break is allowed** — it is
        (2026-09-03 mirror ruling). Upstream deletes, we delete;
      - **whether a construct with no meaning in Go is in scope** — if its whole
@@ -178,8 +180,8 @@ first-parent change: a merged PR is ONE unit, analyzed via `git diff <sha>^1..<s
      `docs/UPSTREAM.md`. Escalating here is exactly how the harness got stuck.
 
      A genuinely new question changes a **test**, not a path. The two that
-     exist: *"should the port take a third-party dependency?"* (which would move
-     bedrock/codex and decide session-backends) and a transport that changes the
+     exist: *"should the port take a third-party dependency?"* (answered for
+     bedrock, codex, SQLite, codemode and pi-env) and a transport that changes the
      `ai.HTTPDoer` seam itself. Both are owner policy questions with durable
      answers.
 4. For `port` verdicts: map upstream files → our Go files (e.g.
@@ -254,24 +256,20 @@ Specific rulings (from pilot runs — keep appending):
   never by citing a current ruling. Sub-path carve-outs fail three ways, all
   observed here:
   - **They hide live code.** `coding-agent/src` holds ported code well outside
-    `core/`: `src/client/{remote-session,transcript}.ts` →
-    `coding/remotesession.go` + `coding/transcript.go`, and
+    `core/`:
     `src/utils/{text,mime,paths,frontmatter,image-resize-core,image-process,tool-result-images}.ts`
     → `coding/{text,tools,resources,imageresize}.go`. A guard scoped to
     `src/core` prints none of them. Note this also makes the "judge `utils/` by
     the consumer, not the path" rule above *unexecutable*: you cannot judge a
     path the sweep never printed.
   - **They outlive the tree they describe.** The 2026-08-01 ruling's "minus
-    `server/src/legacy/`" is dead text — upstream deleted that directory in
-    `05bf9df65`. And `server/src/testing/**`, ruled "port only if the Go server
-    tests want the same shape", quietly became ported
-    (`server/internal/servertest/service.go` says so in its package doc). A
-    carve-out inherited from a ruling reads as coverage while giving none.
-  - **Some real exclusions are unexpressible as paths.** The 2026-08-06
-    telemetry ruling excludes the schema/type-inference half of
-    `packages/telemetry` — but `defineTelemetrySchema` and the ported runtime
-    `Span` contract share `src/index.ts`. Only a human reading the hunk can
-    separate them.
+    `server/src/legacy/`" was dead text for weeks before upstream deleted the
+    rest of `packages/server` (`05bf9df65`, then `7472cda0d`). A carve-out
+    inherited from a ruling reads as coverage while giving none.
+  - **Some real exclusions are unexpressible as paths.** The telemetry ruling
+    excludes the schema's type inference — but `defineTelemetrySchema`, the
+    ported schema data and the ported runtime `Span` contract share
+    `src/index.ts`. Only a human reading the hunk can separate them.
 
   Exclusions belong in the CLASSIFICATION step, executed on a hunk, never in
   the pathspec. The pathspec's job is to put paths on your screen.
