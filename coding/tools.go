@@ -1338,13 +1338,13 @@ var driveAbsoluteRE = regexp.MustCompile(`^[a-zA-Z]:[\\/]`)
 // drive-absolute recognizes nothing; the conventional C:\Windows paths are
 // the fallback only when SystemRoot is unset or empty.
 func isLegacyWslBashPath(path, systemRoot string) bool {
-	normalized := jstext.ToLower(nodepath.Win32Normalize(path))
+	normalized := jstext.ToLower(nodepath.Win32.Normalize(path))
 	if systemRoot != "" {
 		if !driveAbsoluteRE.MatchString(systemRoot) {
 			return false
 		}
 		for _, directory := range []string{"System32", "Sysnative"} {
-			if normalized == jstext.ToLower(nodepath.Win32Join(systemRoot, directory, "bash.exe")) {
+			if normalized == jstext.ToLower(nodepath.Win32.Join(systemRoot, directory, "bash.exe")) {
 				return true
 			}
 		}
@@ -1465,7 +1465,7 @@ func (h shellHost) powerShellConfig() (shell string, args []string, useStdin boo
 	shell = h.findExecutableOnPath("pwsh.exe")
 	// Installation directories may be on any drive and need not be on PATH.
 	if programFiles := h.getenv("ProgramFiles"); shell == "" && programFiles != "" {
-		if pwsh7 := nodepath.Win32Join(programFiles, "PowerShell", "7", "pwsh.exe"); h.exists(pwsh7) {
+		if pwsh7 := nodepath.Win32.Join(programFiles, "PowerShell", "7", "pwsh.exe"); h.exists(pwsh7) {
 			shell = pwsh7
 		}
 	}
@@ -1473,7 +1473,7 @@ func (h shellHost) powerShellConfig() (shell string, args []string, useStdin boo
 		shell = h.findExecutableOnPath("powershell.exe")
 	}
 	if systemRoot := h.getenv("SystemRoot"); shell == "" && systemRoot != "" {
-		windowsPowerShell := nodepath.Win32Join(systemRoot, "System32", "WindowsPowerShell", "v1.0", "powershell.exe")
+		windowsPowerShell := nodepath.Win32.Join(systemRoot, "System32", "WindowsPowerShell", "v1.0", "powershell.exe")
 		if h.exists(windowsPowerShell) {
 			shell = windowsPowerShell
 		}

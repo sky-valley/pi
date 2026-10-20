@@ -1,128 +1,141 @@
-// Package nodepath is the part of Node's path.win32 the root module needs —
-// normalize and join — independent of the system this program runs on, so
-// Windows path arithmetic is the same (and testable) on every host.
-//
-// It is a copy of the same functions in the env module's internal/nodepath,
-// which follow lib/path.js of Node v26.4.0 line by line; the env module
-// builds against a released root module, so it cannot import this package
-// until it next requires one that has it. nodepath_test.go runs both against
-// that package's corpus of Node's own answers.
 package nodepath
 
-import "strings"
+import (
+	"strings"
 
-func isPathSeparator(c byte) bool      { return c == '/' || c == '\\' }
-func isPosixPathSeparator(c byte) bool { return c == '/' }
+	"github.com/sky-valley/pi/internal/jstext"
+)
 
-func isWindowsDeviceRoot(c byte) bool {
-	return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')
-}
+// Win32Path is Node's path.win32, reading Host where Node reads the process.
+type Win32Path struct{ Host *Host }
 
-var windowsReservedNames = []string{
-	"CON", "PRN", "AUX", "NUL",
-	"COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
-	"LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
-	"COM¹", "COM²", "COM³",
-	"LPT¹", "LPT²", "LPT³",
-}
+func (Win32Path) Separator() string { return "\\" }
 
-// isWindowsReservedName is Node's check of path.slice(0, colonIndex); a
-// colonIndex of -1 slices to the last character, as JavaScript's slice does.
-func isWindowsReservedName(path string, colonIndex int) bool {
-	device := strings.ToUpper(jsSlice(path, 0, colonIndex))
-	for _, name := range windowsReservedNames {
-		if device == name {
-			return true
-		}
-	}
-	return false
-}
-
-// jsSlice is String.prototype.slice(start, end) for byte offsets: negative
-// offsets count from the end.
-func jsSlice(s string, start, end int) string {
-	if start < 0 {
-		start = max(len(s)+start, 0)
-	}
-	if end < 0 {
-		end = max(len(s)+end, 0)
-	}
-	start, end = min(start, len(s)), min(end, len(s))
-	if start >= end {
-		return ""
-	}
-	return s[start:end]
-}
-
-// normalizeString resolves . and .. elements in a path with directory names.
-func normalizeString(path string, allowAboveRoot bool, separator byte, isSeparator func(byte) bool) string {
-	res := ""
-	lastSegmentLength := 0
-	lastSlash := -1
-	dots := 0
-	var code byte
-	for i := 0; i <= len(path); i++ {
-		if i < len(path) {
-			code = path[i]
-		} else if isSeparator(code) {
-			break
-		} else {
-			code = '/'
-		}
-		if isSeparator(code) {
-			if lastSlash == i-1 || dots == 1 {
-				// NOOP
-			} else if dots == 2 {
-				if len(res) < 2 || lastSegmentLength != 2 || res[len(res)-1] != '.' || res[len(res)-2] != '.' {
-					if len(res) > 2 {
-						lastSlashIndex := len(res) - lastSegmentLength - 1
-						if lastSlashIndex == -1 {
-							res = ""
-							lastSegmentLength = 0
-						} else {
-							res = res[:lastSlashIndex]
-							lastSegmentLength = len(res) - 1 - strings.LastIndexByte(res, separator)
-						}
-						lastSlash = i
-						dots = 0
-						continue
-					} else if len(res) != 0 {
-						res = ""
-						lastSegmentLength = 0
-						lastSlash = i
-						dots = 0
-						continue
-					}
+// Resolve is path.win32.resolve.
+func (p Win32Path) Resolve(paths ...string) string {
+	resolvedDevice := ""
+	resolvedTail := ""
+	resolvedAbsolute := false
+	for i := len(paths) - 1; i >= -1; i-- {
+		var path string
+		if i >= 0 {
+			path = paths[i]
+			if path == "" {
+				continue
+			}
+		} else if resolvedDevice == "" {
+			path = p.Host.Cwd()
+			// Fast path for current directory.
+			if len(paths) == 0 || (len(paths) == 1 && (paths[0] == "" || paths[0] == ".") && isPathSeparator(at(path, 0))) {
+				if !p.Host.Windows {
+					path = strings.ReplaceAll(path, "/", "\\")
 				}
-				if allowAboveRoot {
-					if len(res) > 0 {
-						res += string(separator) + ".."
-					} else {
-						res = ".."
-					}
-					lastSegmentLength = 2
+				return path
+			}
+		} else {
+			// Windows' drive-specific working directories: the drive's, or the
+			// process's when it is on that drive, else the drive's root.
+			path = p.Host.Getenv("=" + resolvedDevice)
+			if path == "" {
+				path = p.Host.Cwd()
+			}
+			if jstext.ToLower(jsSlice(path, 0, 2)) != jstext.ToLower(resolvedDevice) && at(path, 2) == '\\' {
+				path = resolvedDevice + "\\"
+			}
+		}
+
+		rootEnd, device, isAbsolute := win32Root(path)
+		if device != "" {
+			if resolvedDevice != "" {
+				if jstext.ToLower(device) != jstext.ToLower(resolvedDevice) {
+					// This path points to another device, so it is not applicable.
+					continue
 				}
 			} else {
-				if len(res) > 0 {
-					res += string(separator) + path[lastSlash+1:i]
-				} else {
-					res = path[lastSlash+1 : i]
-				}
-				lastSegmentLength = i - lastSlash - 1
+				resolvedDevice = device
 			}
-			lastSlash = i
-			dots = 0
-		} else if code == '.' && dots != -1 {
-			dots++
+		}
+		if resolvedAbsolute {
+			if resolvedDevice != "" {
+				break
+			}
 		} else {
-			dots = -1
+			resolvedTail = path[rootEnd:] + "\\" + resolvedTail
+			resolvedAbsolute = isAbsolute
+			if isAbsolute && resolvedDevice != "" {
+				break
+			}
 		}
 	}
-	return res
+	resolvedTail = normalizeString(resolvedTail, !resolvedAbsolute, '\\', isPathSeparator)
+	if resolvedAbsolute {
+		return resolvedDevice + "\\" + resolvedTail
+	}
+	if s := resolvedDevice + resolvedTail; s != "" {
+		return s
+	}
+	return "."
 }
 
-// Win32Normalize is path.win32.normalize.
-func Win32Normalize(path string) string {
+// win32Root matches the root of path as resolve does: where it ends, its
+// device (a drive, a UNC share, or \\. and \\?), and whether the path is
+// absolute.
+func win32Root(path string) (rootEnd int, device string, isAbsolute bool) {
+	n := len(path)
+	if n == 0 {
+		return 0, "", false
+	}
+	code := path[0]
+	if n == 1 {
+		if isPathSeparator(code) {
+			return 1, "", true
+		}
+		return 0, "", false
+	}
+	if isPathSeparator(code) {
+		// Possible UNC root; a leading separator makes the path absolute.
+		isAbsolute = true
+		if !isPathSeparator(path[1]) {
+			return 1, "", true
+		}
+		j := 2
+		last := j
+		for j < n && !isPathSeparator(path[j]) {
+			j++
+		}
+		if j < n && j != last {
+			firstPart := path[last:j]
+			last = j
+			for j < n && isPathSeparator(path[j]) {
+				j++
+			}
+			if j < n && j != last {
+				last = j
+				for j < n && !isPathSeparator(path[j]) {
+					j++
+				}
+				if j == n || j != last {
+					if firstPart == "." || firstPart == "?" {
+						// A device root, such as \\.\PHYSICALDRIVE0.
+						return 4, "\\\\" + firstPart, true
+					}
+					return j, "\\\\" + firstPart + "\\" + path[last:j], true
+				}
+			}
+		}
+		return 0, "", true
+	}
+	if isWindowsDeviceRoot(code) && path[1] == ':' {
+		if n > 2 && isPathSeparator(path[2]) {
+			return 3, path[:2], true
+		}
+		return 2, path[:2], false
+	}
+	return 0, "", false
+}
+
+// Normalize is path.win32.normalize.
+func (Win32Path) Normalize(path string) string {
 	n := len(path)
 	if n == 0 {
 		return "."
@@ -238,8 +251,17 @@ func Win32Normalize(path string) string {
 	return device + tail
 }
 
-// Win32Join is path.win32.join.
-func Win32Join(paths ...string) string {
+// IsAbsolute is path.win32.isAbsolute.
+func (Win32Path) IsAbsolute(path string) bool {
+	if path == "" {
+		return false
+	}
+	return isPathSeparator(path[0]) ||
+		(len(path) > 2 && isWindowsDeviceRoot(path[0]) && path[1] == ':' && isPathSeparator(path[2]))
+}
+
+// Join is path.win32.join.
+func (p Win32Path) Join(paths ...string) string {
 	var parts []string
 	for _, path := range paths {
 		if path != "" {
@@ -285,5 +307,30 @@ func Win32Join(paths ...string) string {
 			return strings.ReplaceAll(joined, "/", "\\")
 		}
 	}
-	return Win32Normalize(joined)
+	return p.Normalize(joined)
+}
+
+// Basename is path.win32.basename without a suffix.
+func (Win32Path) Basename(path string) string {
+	start, end := 0, -1
+	matchedSlash := true
+	// A drive letter's colon is not a separator to drop at the end.
+	if len(path) >= 2 && isWindowsDeviceRoot(path[0]) && path[1] == ':' {
+		start = 2
+	}
+	for i := len(path) - 1; i >= start; i-- {
+		if isPathSeparator(path[i]) {
+			if !matchedSlash {
+				start = i + 1
+				break
+			}
+		} else if end == -1 {
+			matchedSlash = false
+			end = i + 1
+		}
+	}
+	if end == -1 {
+		return ""
+	}
+	return path[start:end]
 }
