@@ -1031,19 +1031,10 @@ func createShellTool(cwd string, config shellToolConfig, options *BashToolOption
 				command = commandPrefix + "\n" + command
 			}
 			spawnContext := resolveSpawnContext(command, cwd, spawnHook, exposeSessionEnvironment, sessionEnv)
-			// pi resolveTimeoutMs (bash.ts) validates the timeout before spawning:
-			// reject a non-positive value and cap it at INT32_MAX ms, surfacing the
-			// raw error as the tool result. JSON numbers are always finite, so pi's
-			// !Number.isFinite guard collapses into the non-positive rejection here.
+			// The timeout goes to the operations as given: pi validates it in
+			// the local operations (resolveTimeoutMs), so a custom
+			// implementation sees the model's value.
 			timeout, hasTimeout := argFloat(params, "timeout")
-			if hasTimeout {
-				if timeout <= 0 {
-					return agent.AgentToolResult{}, fmt.Errorf("Invalid timeout: must be a finite number of seconds")
-				}
-				if timeout*1000 > maxBashTimeoutMs {
-					return agent.AgentToolResult{}, fmt.Errorf("Invalid timeout: maximum is %s seconds", maxBashTimeoutSeconds)
-				}
-			}
 			// Stream output through the rolling OutputAccumulator (bounded memory,
 			// incremental temp-file writes) with throttled partial onUpdate emits
 			// including a trailing-edge flush (port of bash.ts:291-348).
@@ -1052,9 +1043,9 @@ func createShellTool(cwd string, config shellToolConfig, options *BashToolOption
 				// pi emits an initial empty update before spawning (bash.ts:332-334).
 				onUpdate(agent.AgentToolResult{Content: ai.ContentList{}, Details: nil})
 			}
-			execTimeout := 0.0
+			var execTimeout *float64
 			if hasTimeout {
-				execTimeout = timeout
+				execTimeout = &timeout
 			}
 			startedAt := time.Now()
 			exitCode, execErr := ops.Exec(ctx, spawnContext.Command, spawnContext.Cwd, BashExecOptions{

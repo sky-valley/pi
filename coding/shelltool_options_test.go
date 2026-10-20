@@ -2,6 +2,7 @@ package coding
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -9,6 +10,8 @@ import (
 	"slices"
 	"strings"
 	"testing"
+
+	"github.com/sky-valley/pi/agent"
 )
 
 // recordedExec is one call a recordingShellOps saw.
@@ -165,6 +168,60 @@ func TestPowerShellToolCustomOperations(t *testing.T) {
 	}
 	if hooked != "Write-Output hi" || calls[0].command != "Write-Output hi" {
 		t.Fatalf("hook saw %q, operations ran %q; want the bare command", hooked, calls[0].command)
+	}
+}
+
+// TestShellTimeoutValidationBelongsToLocalOperations: pi validates the
+// timeout in createLocalShellOperations (resolveTimeoutMs), not in the tool,
+// so custom operations receive the model's value as is, and the tool's
+// initial empty update has already gone out when the local operations reject
+// it.
+func TestShellTimeoutValidationBelongsToLocalOperations(t *testing.T) {
+	t.Run("custom operations get the raw timeout", func(t *testing.T) {
+		var got *float64
+		ops := &BashOperations{Exec: func(_ context.Context, _, _ string, o BashExecOptions) (*int, error) {
+			got = o.TimeoutSeconds
+			zero := 0
+			return &zero, nil
+		}}
+		if _, err := run(t, CreateBashTool("/work", &BashToolOptions{Operations: ops}), map[string]any{"command": "x", "timeout": -1}); err != nil {
+			t.Fatalf("custom operations: %v", err)
+		}
+		if got == nil || *got != -1 {
+			t.Fatalf("custom operations got timeout %v, want -1", got)
+		}
+
+	})
+	t.Run("the initial update precedes the rejection", func(t *testing.T) {
+		updates := 0
+		tool := CreateBashTool(t.TempDir(), nil)
+		_, err := tool.Execute(context.Background(), "1", map[string]any{"command": "x", "timeout": 0}, func(agent.AgentToolResult) { updates++ })
+		if err == nil || err.Error() != "Invalid timeout: must be a finite number of seconds" {
+			t.Fatalf("local operations: err = %v", err)
+		}
+		if updates != 1 {
+			t.Fatalf("%d updates before the rejection, want pi's 1 initial empty update", updates)
+		}
+
+	})
+	t.Run("local operations validate", func(t *testing.T) {
+		_, err := LocalBashOperations(LocalBashOptions{}).Exec(context.Background(), "true", t.TempDir(), BashExecOptions{TimeoutSeconds: ptr(2147484.0)})
+		if err == nil || err.Error() != "Invalid timeout: maximum is 2147483.647 seconds" {
+			t.Fatalf("LocalBashOperations oversized timeout: err = %v", err)
+		}
+	})
+}
+
+// TestLocalShellOperationsAbortedBeforeResolving: pi's
+// createLocalShellOperations throws "aborted" for an already aborted signal
+// before it resolves the shell.
+func TestLocalShellOperationsAbortedBeforeResolving(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	missing := filepath.Join(t.TempDir(), "nope", "bash")
+	_, err := LocalBashOperations(LocalBashOptions{ShellPath: missing}).Exec(ctx, "true", t.TempDir(), BashExecOptions{})
+	if !errors.Is(err, ErrShellAborted) {
+		t.Fatalf("err = %v, want ErrShellAborted", err)
 	}
 }
 

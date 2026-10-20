@@ -376,7 +376,7 @@ func TestLocalBashOperationsAbortWinsOverTimeout(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() { time.Sleep(50 * time.Millisecond); cancel() }()
 	_, err := ops.Exec(ctx, "sleep 5", t.TempDir(), BashExecOptions{
-		TimeoutSeconds: 0.2, // would also fire
+		TimeoutSeconds: ptr(0.2), // would also fire
 		Env:            os.Environ(),
 	})
 	if !errors.Is(err, ErrShellAborted) {
@@ -390,7 +390,7 @@ func TestLocalBashOperationsTimeout(t *testing.T) {
 	}
 	ops := LocalBashOperations(LocalBashOptions{})
 	_, err := ops.Exec(context.Background(), "sleep 5", t.TempDir(), BashExecOptions{
-		TimeoutSeconds: 0.2,
+		TimeoutSeconds: ptr(0.2),
 		Env:            os.Environ(),
 	})
 	var te *ShellTimeoutError

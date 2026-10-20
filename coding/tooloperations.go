@@ -92,8 +92,10 @@ func (e *ShellTimeoutError) Error() string {
 type BashExecOptions struct {
 	// OnData receives interleaved stdout/stderr as it is produced.
 	OnData func(data []byte)
-	// TimeoutSeconds bounds the command; zero or less means no timeout.
-	TimeoutSeconds float64
+	// TimeoutSeconds is pi's `timeout?: number`, in seconds: nil is no
+	// timeout. It reaches the operations as the model gave it; the local
+	// operations validate it (pi's resolveTimeoutMs), custom ones decide.
+	TimeoutSeconds *float64
 	// Env is the child environment, already assembled.
 	Env []string
 }
@@ -144,12 +146,34 @@ func withUTF8OutputPrefix(operations BashOperations) BashOperations {
 	}
 }
 
+// validateShellTimeout ports pi's resolveTimeoutMs (bash.ts): a non-positive
+// timeout is rejected and one above INT32_MAX ms is capped with an error,
+// both surfaced raw as the tool result. JSON numbers are always finite, so
+// pi's !Number.isFinite guard collapses into the non-positive rejection.
+func validateShellTimeout(seconds float64) error {
+	if seconds <= 0 {
+		return errors.New("Invalid timeout: must be a finite number of seconds")
+	}
+	if seconds*1000 > maxBashTimeoutMs {
+		return fmt.Errorf("Invalid timeout: maximum is %s seconds", maxBashTimeoutSeconds)
+	}
+	return nil
+}
+
 // localShellOperations ports pi's createLocalShellOperations (bash.ts), the
 // process execution both built-in shells share; shellName goes into the
 // missing-working-directory error.
 func localShellOperations(shellName string, resolveShellConfig func() (ShellConfig, error)) BashOperations {
 	return BashOperations{
 		Exec: func(ctx context.Context, command, cwd string, options BashExecOptions) (*int, error) {
+			if options.TimeoutSeconds != nil {
+				if err := validateShellTimeout(*options.TimeoutSeconds); err != nil {
+					return nil, err
+				}
+			}
+			if ctx.Err() != nil {
+				return nil, ErrShellAborted
+			}
 			shellConfig, err := resolveShellConfig()
 			if err != nil {
 				return nil, err
@@ -158,9 +182,13 @@ func localShellOperations(shellName string, resolveShellConfig func() (ShellConf
 				return nil, fmt.Errorf("Working directory does not exist: %s\nCannot execute %s commands.", cwd, shellName)
 			}
 			runCtx := ctx
-			if options.TimeoutSeconds > 0 {
+			timeoutSeconds := 0.0
+			if options.TimeoutSeconds != nil {
+				timeoutSeconds = *options.TimeoutSeconds
+			}
+			if timeoutSeconds > 0 {
 				var cancel context.CancelFunc
-				runCtx, cancel = context.WithTimeout(ctx, time.Duration(options.TimeoutSeconds*float64(time.Second)))
+				runCtx, cancel = context.WithTimeout(ctx, time.Duration(timeoutSeconds*float64(time.Second)))
 				defer cancel()
 			}
 			// Legacy WSL bash takes the command on stdin (`bash -s`); otherwise it
@@ -185,7 +213,7 @@ func localShellOperations(shellName string, resolveShellConfig func() (ShellConf
 
 			runErr := runBashCommand(cmd, onDataWriter(options.OnData))
 
-			return classifyShellRun(ctx.Err(), runCtx.Err(), runErr, options.TimeoutSeconds)
+			return classifyShellRun(ctx.Err(), runCtx.Err(), runErr, timeoutSeconds)
 		},
 	}
 }
@@ -285,9 +313,13 @@ func EnvBashOperations(env ExecutionEnv) BashOperations {
 					options.OnData([]byte(chunk))
 				}
 			}
+			timeoutSeconds := 0
+			if options.TimeoutSeconds != nil {
+				timeoutSeconds = int(*options.TimeoutSeconds)
+			}
 			res, err := env.Exec(ctx, command, &ShellExecOptions{
 				Cwd:            cwd,
-				TimeoutSeconds: int(options.TimeoutSeconds),
+				TimeoutSeconds: timeoutSeconds,
 				OnStdout:       emit,
 				OnStderr:       emit,
 			})
