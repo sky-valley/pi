@@ -369,8 +369,6 @@ func TestInMemoryStoreConformance(t *testing.T) {
 	})
 }
 
-var _ Store = (*InMemoryContext)(nil)
-
 // "records wall-clock boundaries and relative event times without changing
 // normalized event snapshots"
 func TestInMemoryStoreRecordsWallClockBoundariesAndRelativeEventTimes(t *testing.T) {
@@ -504,5 +502,41 @@ func TestInMemoryFindTracesRejectsNegativeLimit(t *testing.T) {
 		if err == nil || !strings.Contains(err.Error(), "pass a positive page size, or 0 for the default of 20") {
 			t.Errorf("%d traces: FindTraces(Limit -1) error = %v, want a refusal naming the valid page sizes", traces, err)
 		}
+	}
+}
+
+// pi orders a trace's spans by start time, then by ID as JavaScript compares
+// strings: with eleven spans in one millisecond, "<scope>:10" sorts before
+// "<scope>:2".
+func TestInMemoryGetTraceBreaksStartTiesByUTF16ID(t *testing.T) {
+	mockClock(t, &dateNow, 20_000)
+	c := NewInMemoryContext()
+	var trace string
+	_ = c.StartSpan(SpanOptions{Name: "root"}, func(root Span) error {
+		trace = carrierID(c.Inject(root))
+		for range 10 {
+			_ = root.StartSpan(SpanOptions{Name: "child"}, func(Span) error { return nil })
+		}
+		return nil
+	})
+	scope := strings.TrimSuffix(trace, ":1")
+	var got []string
+	for _, span := range mustGetTrace(t, c, trace).Spans {
+		got = append(got, strings.TrimPrefix(span.ID, scope+":"))
+	}
+	if want := []string{"1", "10", "11", "2", "3", "4", "5", "6", "7", "8", "9"}; !reflect.DeepEqual(got, want) {
+		t.Errorf("span ids = %q, want %q", got, want)
+	}
+}
+
+// A measurement's interval is the ten seconds it falls in, floored: 15_999
+// is in the interval starting at 10_000.
+func TestInMemoryFindMetricsFloorsTheInterval(t *testing.T) {
+	mockClock(t, &dateNow, 15_999)
+	c := NewInMemoryContext()
+	c.Counter("calls", InstrumentOptions{}).Add(1, nil)
+	rows := mustFindMetrics(t, c, MetricQuery{Name: "calls"})
+	if len(rows) != 1 || rows[0].IntervalMs != 10_000 {
+		t.Errorf("rows = %+v, want one at interval 10000", rows)
 	}
 }

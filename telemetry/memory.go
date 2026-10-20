@@ -146,6 +146,8 @@ type InMemoryContext struct {
 // usable; this exists for symmetry with the rest of the package.
 func NewInMemoryContext() *InMemoryContext { return &InMemoryContext{} }
 
+var _ Store = (*InMemoryContext)(nil)
+
 // timedMeasurement is a measurement and the start of the interval it was
 // recorded in (pi's { intervalMs, measurement } log entry).
 type timedMeasurement struct {
