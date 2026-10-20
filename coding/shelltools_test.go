@@ -138,10 +138,10 @@ func TestGetPowerShellConfigOffWindows(t *testing.T) {
 // (powershell.ts UTF8_OUTPUT_PREFIX).
 func TestPowerShellUTF8CommandPrefix(t *testing.T) {
 	want := "try { [Console]::OutputEncoding=[System.Text.Encoding]::UTF8 } catch {}\n"
-	if got := powershellShellConfig.commandPrefix; got != want {
+	if got := powershellToolConfig.commandPrefix; got != want {
 		t.Fatalf("powershell command prefix\n got: %q\nwant: %q", got, want)
 	}
-	if got := bashShellConfig.commandPrefix; got != "" {
+	if got := bashToolConfig.commandPrefix; got != "" {
 		t.Fatalf("bash must carry no command prefix, got %q", got)
 	}
 }

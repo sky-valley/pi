@@ -976,14 +976,14 @@ const utf8OutputPrefix = "try { [Console]::OutputEncoding=[System.Text.Encoding]
 // to the system prompt (pi bb3d7d39, shared by powershell.ts since 80e62761f).
 const piSessionEnvGuideline = "You can inspect PI_* environment variables for current model and session details."
 
-var bashShellConfig = shellToolConfig{
+var bashToolConfig = shellToolConfig{
 	name:           "bash",
 	shellName:      "bash",
 	tempFilePrefix: "pi-bash",
 	resolveShell:   func() (ShellConfig, error) { return GetShellConfig("") },
 }
 
-var powershellShellConfig = shellToolConfig{
+var powershellToolConfig = shellToolConfig{
 	name:           "powershell",
 	shellName:      "PowerShell",
 	tempFilePrefix: "pi-powershell",
@@ -992,11 +992,11 @@ var powershellShellConfig = shellToolConfig{
 }
 
 func bashTool(cwd string, sessionEnv sessionEnvFn) agent.AgentTool {
-	return shellTool(cwd, bashShellConfig, sessionEnv)
+	return shellTool(cwd, bashToolConfig, sessionEnv)
 }
 
 func powershellTool(cwd string, sessionEnv sessionEnvFn) agent.AgentTool {
-	return shellTool(cwd, powershellShellConfig, sessionEnv)
+	return shellTool(cwd, powershellToolConfig, sessionEnv)
 }
 
 func shellTool(cwd string, config shellToolConfig, sessionEnv sessionEnvFn) agent.AgentTool {

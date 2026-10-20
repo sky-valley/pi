@@ -200,7 +200,7 @@ func fakeShellOps(out string, exit *int, err error) BashOperations {
 func TestShellToolUsesInjectedExec(t *testing.T) {
 	zero := 0
 	ops := fakeShellOps("from the injected shell\n", &zero, nil)
-	tool := shellToolOps("/nowhere", bashShellConfig, nil, &ops)
+	tool := shellToolOps("/nowhere", bashToolConfig, nil, &ops)
 	res, err := tool.Execute(context.Background(), "1", map[string]any{"command": "whatever"}, nil)
 	if err != nil {
 		t.Fatalf("execute: %v", err)
@@ -214,7 +214,7 @@ func TestShellToolUsesInjectedExec(t *testing.T) {
 // keep whatever output arrived first.
 func TestShellToolRendersAbort(t *testing.T) {
 	ops := fakeShellOps("partial\n", nil, ErrShellAborted)
-	tool := shellToolOps("/nowhere", bashShellConfig, nil, &ops)
+	tool := shellToolOps("/nowhere", bashToolConfig, nil, &ops)
 	_, err := tool.Execute(context.Background(), "1", map[string]any{"command": "x"}, nil)
 	if err == nil || !strings.Contains(err.Error(), "Command aborted") {
 		t.Fatalf("err = %v, want Command aborted", err)
@@ -227,7 +227,7 @@ func TestShellToolRendersAbort(t *testing.T) {
 // pi's `timeout:<secs>` carries the RAW value, so 0.5 renders "0.5".
 func TestShellToolRendersTimeoutWithRawSeconds(t *testing.T) {
 	ops := fakeShellOps("", nil, &ShellTimeoutError{Seconds: 0.5})
-	tool := shellToolOps("/nowhere", bashShellConfig, nil, &ops)
+	tool := shellToolOps("/nowhere", bashToolConfig, nil, &ops)
 	_, err := tool.Execute(context.Background(), "1", map[string]any{"command": "x"}, nil)
 	if err == nil || !strings.Contains(err.Error(), "Command timed out after 0.5 seconds") {
 		t.Fatalf("err = %v, want the raw 0.5", err)
@@ -240,7 +240,7 @@ func TestShellToolRendersTimeoutWithRawSeconds(t *testing.T) {
 // command FAILS with the partial output preserved (bash.ts:366-368).
 func TestShellToolNilExitCodeFails(t *testing.T) {
 	ops := fakeShellOps("partial\n", nil, nil)
-	tool := shellToolOps("/nowhere", bashShellConfig, nil, &ops)
+	tool := shellToolOps("/nowhere", bashToolConfig, nil, &ops)
 	_, err := tool.Execute(context.Background(), "1", map[string]any{"command": "x"}, nil)
 	if err == nil {
 		t.Fatal("a nil exit code must be an error")
@@ -255,7 +255,7 @@ func TestShellToolNilExitCodeFails(t *testing.T) {
 func TestShellToolNonZeroExitIsReported(t *testing.T) {
 	three := 3
 	ops := fakeShellOps("oops\n", &three, nil)
-	tool := shellToolOps("/nowhere", bashShellConfig, nil, &ops)
+	tool := shellToolOps("/nowhere", bashToolConfig, nil, &ops)
 	res, err := tool.Execute(context.Background(), "1", map[string]any{"command": "x"}, nil)
 	if err != nil || !res.IsError || resultText(res) != "oops\n\n\nCommand exited with code 3" {
 		t.Fatalf("got %+v, err %v, want an error result reporting exit code 3", res, err)
@@ -289,7 +289,7 @@ func TestLocalBashOperationsRunsAndReportsExit(t *testing.T) {
 	if _, err := GetShellConfig(""); err != nil {
 		t.Skipf("no shell available: %v", err)
 	}
-	ops := LocalBashOperations(bashShellConfig)
+	ops := LocalBashOperations(bashToolConfig)
 	var got strings.Builder
 	code, err := ops.Exec(context.Background(), "printf 'hey'; exit 7", t.TempDir(), BashExecOptions{
 		OnData: func(p []byte) { got.Write(p) },
@@ -316,7 +316,7 @@ func TestLocalBashOperationsSignalExitCode(t *testing.T) {
 	if _, err := GetShellConfig(""); err != nil {
 		t.Skipf("no shell available: %v", err)
 	}
-	ops := LocalBashOperations(bashShellConfig)
+	ops := LocalBashOperations(bashToolConfig)
 	for _, tt := range []struct {
 		signal string
 		want   int
@@ -357,7 +357,7 @@ func TestLocalBashOperationsUnnamedSignalStillFails(t *testing.T) {
 	if _, err := GetShellConfig(""); err != nil {
 		t.Skipf("no shell available: %v", err)
 	}
-	ops := LocalBashOperations(bashShellConfig)
+	ops := LocalBashOperations(bashToolConfig)
 	code, err := ops.Exec(context.Background(), "kill -7 $$", t.TempDir(), BashExecOptions{Env: os.Environ()})
 	if err != nil {
 		t.Fatalf("Exec: %v", err)
@@ -372,7 +372,7 @@ func TestLocalBashOperationsAbortWinsOverTimeout(t *testing.T) {
 	if _, err := GetShellConfig(""); err != nil {
 		t.Skipf("no shell available: %v", err)
 	}
-	ops := LocalBashOperations(bashShellConfig)
+	ops := LocalBashOperations(bashToolConfig)
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() { time.Sleep(50 * time.Millisecond); cancel() }()
 	_, err := ops.Exec(ctx, "sleep 5", t.TempDir(), BashExecOptions{
@@ -388,7 +388,7 @@ func TestLocalBashOperationsTimeout(t *testing.T) {
 	if _, err := GetShellConfig(""); err != nil {
 		t.Skipf("no shell available: %v", err)
 	}
-	ops := LocalBashOperations(bashShellConfig)
+	ops := LocalBashOperations(bashToolConfig)
 	_, err := ops.Exec(context.Background(), "sleep 5", t.TempDir(), BashExecOptions{
 		TimeoutSeconds: 0.2,
 		Env:            os.Environ(),
