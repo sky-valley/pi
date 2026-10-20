@@ -1,7 +1,6 @@
 package coding
 
 import (
-	"errors"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -13,7 +12,8 @@ import (
 // fakeShellHost stands in for pi's stubbed process.platform, process.env,
 // accessSync and spawnSync: env holds the variables that are set, exists
 // answers access(F_OK) (every path exists when it is nil), and onPath is what
-// `where`/`which` print first for an executable.
+// `where`/`which` print for an executable (a failed search when absent, or
+// when the platform's search command is not the one spawned).
 func fakeShellHost(windows bool, env map[string]string, exists func(string) bool, onPath map[string]string) shellHost {
 	if exists == nil {
 		exists = func(string) bool { return true }
@@ -22,11 +22,16 @@ func fakeShellHost(windows bool, env map[string]string, exists func(string) bool
 		windows: windows,
 		getenv:  func(key string) string { return env[key] },
 		exists:  exists,
-		lookPath: func(executable string) (string, error) {
-			if p, ok := onPath[executable]; ok {
-				return p, nil
+		searchPath: func(command, executable string) (string, bool) {
+			want := "which"
+			if windows {
+				want = "where"
 			}
-			return "", errors.New("executable file not found in %PATH%")
+			p, ok := onPath[executable]
+			if command != want || !ok {
+				return "", false
+			}
+			return p + "\r\n", true
 		},
 	}
 }
@@ -131,6 +136,67 @@ func TestUnixShellExistenceChecks(t *testing.T) {
 			t.Fatalf("error\n got: %q\nwant: %q", got, want)
 		}
 	})
+}
+
+// TestFindExecutableOnPathRunsWhich: pi spawns `which` and trusts its first
+// line, so a bash found through a relative PATH entry is used, where Go's
+// exec.LookPath refuses it (exec.ErrDot) and resolution would fall to sh.
+func TestFindExecutableOnPathRunsWhich(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("unix `which`")
+	}
+	if _, err := os.Stat("/usr/bin/which"); err != nil {
+		t.Skip("no /usr/bin/which")
+	}
+	dir := t.TempDir()
+	if err := os.Mkdir(filepath.Join(dir, "sub"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "sub", "bash"), []byte("#!/bin/sh\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(dir)
+	t.Setenv("PATH", "sub:/bin:/usr/bin")
+	noBinBash := localShellHost
+	noBinBash.exists = func(string) bool { return false }
+	shell, _, _, err := unpackShellConfig(noBinBash.shellConfig(""))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if shell != "sub/bash" {
+		t.Fatalf("shell = %q, want which's sub/bash", shell)
+	}
+}
+
+// TestFindExecutableOnPathOutput pins how pi reads the search's output: only
+// a zero exit with output counts, the output is trimmed, and the first line
+// (split on \r?\n) is the match; Windows re-checks it, unix trusts it.
+func TestFindExecutableOnPathOutput(t *testing.T) {
+	for _, tt := range []struct {
+		windows bool
+		stdout  string
+		ok      bool
+		exists  func(string) bool
+		want    string
+	}{
+		{false, "/usr/local/bin/bash\n/usr/bin/bash\n", true, existsOnly(), "/usr/local/bin/bash"},
+		{false, "  \n/opt/bash\r\n", true, nil, "/opt/bash"},
+		{false, "/usr/local/bin/bash\n", false, nil, ""},
+		{false, "", true, nil, ""},
+		{false, " \n ", true, nil, ""},
+		{true, "C:\\a\\bash.exe\r\nC:\\b\\bash.exe\r\n", true, existsOnly(`C:\a\bash.exe`), `C:\a\bash.exe`},
+		{true, "C:\\a\\bash.exe\r\nC:\\b\\bash.exe\r\n", true, existsOnly(`C:\b\bash.exe`), ""},
+	} {
+		h := fakeShellHost(tt.windows, nil, tt.exists, nil)
+		var gotCommand string
+		h.searchPath = func(command, _ string) (string, bool) { gotCommand = command; return tt.stdout, tt.ok }
+		if got := h.findExecutableOnPath("bash"); got != tt.want {
+			t.Errorf("windows=%v stdout=%q ok=%v: got %q, want %q", tt.windows, tt.stdout, tt.ok, got, tt.want)
+		}
+		if want := map[bool]string{false: "which", true: "where"}[tt.windows]; gotCommand != want {
+			t.Errorf("windows=%v ran %q, want %q", tt.windows, gotCommand, want)
+		}
+	}
 }
 
 // TestShellPathExistsFollowsSymlinks pins access(F_OK) on the real filesystem:

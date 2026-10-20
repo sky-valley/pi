@@ -1,6 +1,7 @@
 package coding
 
 import (
+	"context"
 	"errors"
 	"os"
 	"os/exec"
@@ -8,6 +9,7 @@ import (
 	"runtime"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/sky-valley/pi/internal/jstext"
 	"github.com/sky-valley/pi/internal/nodepath"
@@ -52,17 +54,42 @@ type shellHost struct {
 	getenv  func(string) string
 	// exists is pi's shellPathExists.
 	exists func(string) bool
-	// lookPath is the PATH search pi spawns (`where` on Windows, `which`
-	// elsewhere).
-	lookPath func(string) (string, error)
+	// searchPath runs pi's PATH search command (`where` on Windows, `which`
+	// elsewhere) for an executable and reports its stdout and whether it
+	// exited 0.
+	searchPath func(command, executable string) (stdout string, ok bool)
 }
 
 var localShellHost = shellHost{
-	windows:  runtime.GOOS == "windows",
-	getenv:   os.Getenv,
-	exists:   shellPathExists,
-	lookPath: exec.LookPath,
+	windows:    runtime.GOOS == "windows",
+	getenv:     os.Getenv,
+	exists:     shellPathExists,
+	searchPath: spawnPathSearch,
 }
+
+// pathSearchTimeout is pi's spawnSync timeout for `where` / `which`.
+const pathSearchTimeout = 5 * time.Second
+
+// spawnPathSearch is pi's spawnSync(command, [executable], {timeout: 5000}):
+// the search command runs from PATH as Node would spawn it, a relative PATH
+// entry included (os/exec reports that as exec.ErrDot, which is cleared), and
+// only a zero exit counts.
+func spawnPathSearch(command, executable string) (string, bool) {
+	ctx, cancel := context.WithTimeout(context.Background(), pathSearchTimeout)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, command, executable)
+	if errors.Is(cmd.Err, exec.ErrDot) {
+		cmd.Err = nil
+	}
+	out, err := cmd.Output()
+	if err != nil {
+		return "", false
+	}
+	return string(out), true
+}
+
+// lineBreakRE is pi's /\r?\n/.
+var lineBreakRE = regexp.MustCompile(`\r?\n`)
 
 // legacyWslBashRE matches the legacy Windows-bundled WSL launcher
 // (C:\Windows\System32\bash.exe, or the WoW64 sysnative redirect) after path
@@ -107,19 +134,28 @@ func (h shellHost) bashShellConfig(shell string) ShellConfig {
 	return ShellConfig{Shell: shell, Args: []string{"-c"}}
 }
 
-// findExecutableOnPath ports pi's findExecutableOnPath: the first PATH match,
-// or "" when there is none. On Windows pi re-checks the match with
-// shellPathExists (`where` can print paths that do not exist); elsewhere it
-// trusts `which`.
+// findExecutableOnPath ports pi's findExecutableOnPath: it runs `where`
+// (Windows) or `which` and takes the first line of the trimmed output, or ""
+// when the search fails or prints nothing. On Windows pi re-checks the match
+// with shellPathExists (`where` can print paths that do not exist);
+// elsewhere it trusts `which` (Termux and special filesystems).
 func (h shellHost) findExecutableOnPath(executable string) string {
-	p, err := h.lookPath(executable)
-	if err != nil || p == "" {
+	command := "which"
+	if h.windows {
+		command = "where"
+	}
+	stdout, ok := h.searchPath(command, executable)
+	if !ok || stdout == "" {
 		return ""
 	}
-	if h.windows && !h.exists(p) {
+	firstMatch := lineBreakRE.Split(jstext.Trim(stdout), 2)[0]
+	if firstMatch == "" {
 		return ""
 	}
-	return p
+	if h.windows && !h.exists(firstMatch) {
+		return ""
+	}
+	return firstMatch
 }
 
 // GetShellConfig ports pi's getShellConfig (shell.ts), root-exported upstream.

@@ -159,7 +159,8 @@ func TestGetShellConfigUnix(t *testing.T) {
 	if err := os.WriteFile(fakeBash, []byte("#!/bin/sh\n"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	t.Setenv("PATH", fakeBin)
+	// The search is pi's `which`, so PATH must still reach it.
+	t.Setenv("PATH", fakeBin+string(os.PathListSeparator)+"/usr/bin"+string(os.PathListSeparator)+"/bin")
 	shell, _, _, err = unpackShellConfig(noBinBash.shellConfig(""))
 	if err != nil {
 		t.Fatal(err)
@@ -168,7 +169,8 @@ func TestGetShellConfigUnix(t *testing.T) {
 		t.Fatalf("expected bash from PATH %q, got %q", fakeBash, shell)
 	}
 
-	// No /bin/bash, nothing on PATH → sh.
+	// No /bin/bash, nothing on PATH (not even `which`, so the search fails as
+	// pi's spawnSync does) → sh.
 	t.Setenv("PATH", t.TempDir())
 	shell, _, _, err = unpackShellConfig(noBinBash.shellConfig(""))
 	if err != nil {
