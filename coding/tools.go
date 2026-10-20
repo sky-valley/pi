@@ -959,12 +959,6 @@ type shellToolConfig struct {
 	name           string
 	shellName      string
 	tempFilePrefix string
-	// commandPrefix is prepended verbatim to every command before it reaches the
-	// shell. pi applies it inside the operations wrapper, ahead of any
-	// spawn-hook prefix (powershell.ts createLocalPowerShellOperations).
-	commandPrefix string
-	// resolveShell resolves the shell to spawn (pi's resolveShellConfig).
-	resolveShell func() (ShellConfig, error)
 }
 
 // utf8OutputPrefix opts PowerShell's console into UTF-8 so non-ASCII output
@@ -980,41 +974,51 @@ var bashToolConfig = shellToolConfig{
 	name:           "bash",
 	shellName:      "bash",
 	tempFilePrefix: "pi-bash",
-	resolveShell:   func() (ShellConfig, error) { return GetShellConfig("") },
 }
 
 var powershellToolConfig = shellToolConfig{
 	name:           "powershell",
 	shellName:      "PowerShell",
 	tempFilePrefix: "pi-powershell",
-	commandPrefix:  utf8OutputPrefix,
-	resolveShell:   GetPowerShellConfig,
 }
 
 func bashTool(cwd string, sessionEnv sessionEnvFn) agent.AgentTool {
-	return shellTool(cwd, bashToolConfig, sessionEnv)
+	return createShellTool(cwd, bashToolConfig, nil, sessionEnv)
 }
 
 func powershellTool(cwd string, sessionEnv sessionEnvFn) agent.AgentTool {
-	return shellTool(cwd, powershellToolConfig, sessionEnv)
+	return createPowerShellTool(cwd, nil, sessionEnv)
 }
 
-func shellTool(cwd string, config shellToolConfig, sessionEnv sessionEnvFn) agent.AgentTool {
-	return shellToolOps(cwd, config, sessionEnv, nil)
-}
-
-// shellToolOps builds a shell tool against injectable process execution,
-// porting pi's BashOperations seam (core/tools/bash.ts:63), which pi shares
-// between bash and powershell. Only the SPAWN is injectable: the output
-// accumulator, truncation, temp-file overflow and status formatting stay in the
-// tool, exactly as they do upstream.
-func shellToolOps(cwd string, config shellToolConfig, sessionEnv sessionEnvFn, custom *BashOperations) agent.AgentTool {
-	ops := resolveBashOperations(custom, config)
+// createShellTool ports pi's createShellToolDefinition (bash.ts), which bash
+// and powershell share. Only the spawn is injectable (options.Operations,
+// local operations over options.ShellPath by default): the output
+// accumulator, truncation, temp-file overflow and status formatting stay in
+// the tool, as they do upstream. sessionEnv supplies the PI_* session
+// metadata where pi reads it off the extension context; nil is pi's tool
+// running without one.
+func createShellTool(cwd string, config shellToolConfig, options *BashToolOptions, sessionEnv sessionEnvFn) agent.AgentTool {
+	if options == nil {
+		options = &BashToolOptions{}
+	}
+	var ops BashOperations
+	if options.Operations != nil {
+		ops = *options.Operations
+	} else {
+		ops = LocalBashOperations(LocalBashOptions{ShellPath: options.ShellPath})
+	}
+	commandPrefix := options.CommandPrefix
+	exposeSessionEnvironment := options.ExposeSessionEnvironment == nil || *options.ExposeSessionEnvironment
+	spawnHook := options.SpawnHook
+	var promptGuidelines []string
+	if exposeSessionEnvironment {
+		promptGuidelines = []string{piSessionEnvGuideline}
+	}
 	return agent.AgentTool{
 		Name:             config.name,
 		Label:            config.name,
 		Description:      fmt.Sprintf("Execute a %s command in the current working directory. Returns stdout and stderr. Output is truncated to last %d lines or %dKB (whichever is hit first). If truncated, full output is saved to a temp file. Optionally provide a timeout in seconds.", config.shellName, DefaultMaxLines, DefaultMaxBytes/1024),
-		PromptGuidelines: []string{piSessionEnvGuideline},
+		PromptGuidelines: promptGuidelines,
 		Parameters: ai.Object(
 			ai.Prop("command", ai.String("Shell command to execute")),
 			ai.Opt("timeout", ai.Number("Timeout in seconds (optional, no default timeout)")),
@@ -1022,7 +1026,11 @@ func shellToolOps(cwd string, config shellToolConfig, sessionEnv sessionEnvFn, c
 		ConstrainedSampling: preferStrictToolSampling,
 		OutputSchema:        bashOutputSchema(),
 		Execute: func(ctx context.Context, id string, params map[string]any, onUpdate agent.ToolUpdateFunc) (agent.AgentToolResult, error) {
-			command := config.commandPrefix + argStr(params, "command")
+			command := argStr(params, "command")
+			if commandPrefix != "" {
+				command = commandPrefix + "\n" + command
+			}
+			spawnContext := resolveSpawnContext(command, cwd, spawnHook, exposeSessionEnvironment, sessionEnv)
 			// pi resolveTimeoutMs (bash.ts) validates the timeout before spawning:
 			// reject a non-positive value and cap it at INT32_MAX ms, surfacing the
 			// raw error as the tool result. JSON numbers are always finite, so pi's
@@ -1049,10 +1057,10 @@ func shellToolOps(cwd string, config shellToolConfig, sessionEnv sessionEnvFn, c
 				execTimeout = timeout
 			}
 			startedAt := time.Now()
-			exitCode, execErr := ops.Exec(ctx, command, cwd, BashExecOptions{
+			exitCode, execErr := ops.Exec(ctx, spawnContext.Command, spawnContext.Cwd, BashExecOptions{
 				OnData:         func(p []byte) { u.Write(p) },
 				TimeoutSeconds: execTimeout,
-				Env:            bashCommandEnv(sessionEnv),
+				Env:            spawnContext.Env,
 			})
 
 			snap, err := u.finish()

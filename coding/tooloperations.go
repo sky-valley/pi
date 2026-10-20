@@ -111,17 +111,51 @@ type BashOperations struct {
 	Exec func(ctx context.Context, command, cwd string, options BashExecOptions) (exitCode *int, err error)
 }
 
-// LocalBashOperations runs commands on the local machine through the shell the
-// tool config resolves, porting pi's createLocalBashOperations (bash.ts:84).
-func LocalBashOperations(config shellToolConfig) BashOperations {
+// LocalBashOptions are pi's createLocalBashOperations options.
+type LocalBashOptions struct {
+	// ShellPath is an explicit shell (pi's shellPath setting). Empty resolves
+	// the platform default; a missing path fails each command.
+	ShellPath string
+}
+
+// LocalBashOperations runs commands on the local machine through bash,
+// porting pi's createLocalBashOperations (bash.ts): the shell is resolved
+// per command with GetShellConfig(options.ShellPath).
+func LocalBashOperations(options LocalBashOptions) BashOperations {
+	return localShellOperations("bash", func() (ShellConfig, error) { return GetShellConfig(options.ShellPath) })
+}
+
+// LocalPowerShellOperations runs commands on the local machine through
+// PowerShell, porting pi's createLocalPowerShellOperations (powershell.ts):
+// GetPowerShellConfig per command, every command prefixed with
+// UTF8_OUTPUT_PREFIX.
+func LocalPowerShellOperations() PowerShellOperations {
+	return withUTF8OutputPrefix(localShellOperations("PowerShell", GetPowerShellConfig))
+}
+
+// withUTF8OutputPrefix is createLocalPowerShellOperations' wrapper: the
+// prefix belongs to the local operations, so custom PowerShell operations and
+// the spawn hook see the command as the tool built it.
+func withUTF8OutputPrefix(operations BashOperations) BashOperations {
 	return BashOperations{
 		Exec: func(ctx context.Context, command, cwd string, options BashExecOptions) (*int, error) {
-			shellConfig, err := config.resolveShell()
+			return operations.Exec(ctx, utf8OutputPrefix+command, cwd, options)
+		},
+	}
+}
+
+// localShellOperations ports pi's createLocalShellOperations (bash.ts), the
+// process execution both built-in shells share; shellName goes into the
+// missing-working-directory error.
+func localShellOperations(shellName string, resolveShellConfig func() (ShellConfig, error)) BashOperations {
+	return BashOperations{
+		Exec: func(ctx context.Context, command, cwd string, options BashExecOptions) (*int, error) {
+			shellConfig, err := resolveShellConfig()
 			if err != nil {
 				return nil, err
 			}
 			if _, err := os.Stat(cwd); err != nil {
-				return nil, fmt.Errorf("Working directory does not exist: %s\nCannot execute %s commands.", cwd, config.shellName)
+				return nil, fmt.Errorf("Working directory does not exist: %s\nCannot execute %s commands.", cwd, shellName)
 			}
 			runCtx := ctx
 			if options.TimeoutSeconds > 0 {
@@ -185,13 +219,6 @@ func classifyShellRun(ctxErr, runCtxErr, runErr error, timeoutSeconds float64) (
 	}
 	zero := 0
 	return &zero, nil
-}
-
-func resolveBashOperations(ops *BashOperations, config shellToolConfig) BashOperations {
-	if ops == nil {
-		return LocalBashOperations(config)
-	}
-	return *ops
 }
 
 // onDataWriter adapts pi's onData callback to the io.Writer runBashCommand

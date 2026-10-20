@@ -138,28 +138,30 @@ func TestGetPowerShellConfigOffWindows(t *testing.T) {
 // (powershell.ts UTF8_OUTPUT_PREFIX).
 func TestPowerShellUTF8CommandPrefix(t *testing.T) {
 	want := "try { [Console]::OutputEncoding=[System.Text.Encoding]::UTF8 } catch {}\n"
-	if got := powershellToolConfig.commandPrefix; got != want {
+	if got := utf8OutputPrefix; got != want {
 		t.Fatalf("powershell command prefix\n got: %q\nwant: %q", got, want)
-	}
-	if got := bashToolConfig.commandPrefix; got != "" {
-		t.Fatalf("bash must carry no command prefix, got %q", got)
 	}
 }
 
+// testShellOperations is the shared local process execution over /bin/sh,
+// under a test shell name.
+func testShellOperations() *BashOperations {
+	ops := localShellOperations("testshell", func() (ShellConfig, error) {
+		return ShellConfig{Shell: "/bin/sh", Args: []string{"-c"}}, nil
+	})
+	return &ops
+}
+
+var testShellToolConfig = shellToolConfig{name: "testshell", shellName: "testshell", tempFilePrefix: "pi-testshell"}
+
 // TestShellToolCommandPrefixIsExecuted proves the prefix reaches the shell
-// ahead of the model's command rather than only being stored on the config.
+// ahead of the model's command rather than only being stored on the options.
 func TestShellToolCommandPrefixIsExecuted(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("uses /bin/sh")
 	}
-	cfg := shellToolConfig{
-		name:           "testshell",
-		shellName:      "testshell",
-		tempFilePrefix: "pi-testshell",
-		commandPrefix:  "echo PREFIX\n",
-		resolveShell:   func() (ShellConfig, error) { return ShellConfig{Shell: "/bin/sh", Args: []string{"-c"}}, nil },
-	}
-	r, err := run(t, shellTool(t.TempDir(), cfg, nil), map[string]any{"command": "echo BODY"})
+	opts := &BashToolOptions{Operations: testShellOperations(), CommandPrefix: "echo PREFIX"}
+	r, err := run(t, createShellTool(t.TempDir(), testShellToolConfig, opts, nil), map[string]any{"command": "echo BODY"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -174,14 +176,9 @@ func TestShellToolMissingCwdMessage(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("uses /bin/sh")
 	}
-	cfg := shellToolConfig{
-		name:           "testshell",
-		shellName:      "testshell",
-		tempFilePrefix: "pi-testshell",
-		resolveShell:   func() (ShellConfig, error) { return ShellConfig{Shell: "/bin/sh", Args: []string{"-c"}}, nil },
-	}
 	missing := t.TempDir() + "/does-not-exist"
-	_, err := run(t, shellTool(missing, cfg, nil), map[string]any{"command": "true"})
+	opts := &BashToolOptions{Operations: testShellOperations()}
+	_, err := run(t, createShellTool(missing, testShellToolConfig, opts, nil), map[string]any{"command": "true"})
 	want := "Working directory does not exist: " + missing + "\nCannot execute testshell commands."
 	if err == nil || err.Error() != want {
 		t.Fatalf("missing cwd error\n got: %v\nwant: %q", err, want)
