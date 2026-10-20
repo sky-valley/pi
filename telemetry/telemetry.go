@@ -255,7 +255,8 @@ type TraceQuery struct {
 	// span's start time.
 	StartMin *float64
 	StartMax *float64
-	// Limit is the page size; 0 is pi's default of 20.
+	// Limit is the page size, positive; 0 is pi's default of 20. A negative
+	// Limit is refused.
 	Limit int
 	// Cursor continues after the page that returned it; pass the same
 	// filters with it. Empty starts at the newest trace.

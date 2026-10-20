@@ -728,6 +728,9 @@ func (c *InMemoryContext) GetTrace(_ context.Context, traceID string) (*StoredTr
 // matches. Its cursor is pi's JSON [first span start, trace ID]; a cursor it
 // did not write is refused.
 func (c *InMemoryContext) FindTraces(_ context.Context, query TraceQuery) (TracePage, error) {
+	if query.Limit < 0 {
+		return TracePage{}, fmt.Errorf("telemetry: trace query Limit %d is negative; pass a positive page size, or 0 for the default of 20", query.Limit)
+	}
 	limit := query.Limit
 	if limit == 0 {
 		limit = 20

@@ -487,3 +487,22 @@ func TestInMemoryFindTracesCursorIsPisJSON(t *testing.T) {
 		t.Errorf("cursor = %q, want %q", page.Cursor, want)
 	}
 }
+
+// A negative Limit is outside pi's contract (a positive page size), where pi
+// throws a TypeError or drops the last trace; it is refused with a hint,
+// with or without traces to page.
+func TestInMemoryFindTracesRejectsNegativeLimit(t *testing.T) {
+	c := NewInMemoryContext()
+	for traces := range 3 {
+		if traces > 0 {
+			_ = c.StartSpan(SpanOptions{Name: "root"}, func(Span) error { return nil })
+		}
+		if traces == 1 {
+			continue
+		}
+		_, err := c.FindTraces(context.Background(), TraceQuery{Limit: -1})
+		if err == nil || !strings.Contains(err.Error(), "pass a positive page size, or 0 for the default of 20") {
+			t.Errorf("%d traces: FindTraces(Limit -1) error = %v, want a refusal naming the valid page sizes", traces, err)
+		}
+	}
+}
