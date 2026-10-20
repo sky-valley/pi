@@ -337,7 +337,7 @@ func TestKeepsTheOpenAIToolSearchPrefixAcrossLoadsAfterARemoval(t *testing.T) {
 	var loaded []string
 	for _, item := range payloadItems(t, afterRemoval[len(afterRemoval)-1], "input") {
 		if item["type"] == "tool_search_output" {
-			loaded = append(loaded, toolNames(nestedTools(t, item))[0])
+			loaded = append(loaded, toolNames(nestedTools(t, item))...)
 		}
 	}
 	if !slices.Equal(loaded, []string{"late_tool", "later_tool"}) {

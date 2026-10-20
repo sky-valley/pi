@@ -245,7 +245,7 @@ func TestKeepsTheKimiPrefixAcrossLoadsAfterARemoval(t *testing.T) {
 	var anchored []string
 	for _, message := range decodeCompletionsPayload(t, afterRemoval[len(afterRemoval)-1]).Messages {
 		if message.Tools != nil {
-			anchored = append(anchored, functionNames(*message.Tools)[0])
+			anchored = append(anchored, functionNames(*message.Tools)...)
 		}
 	}
 	if !slices.Equal(anchored, []string{"late_tool", "later_tool"}) {
