@@ -138,11 +138,7 @@ func cloudflareModels(t *testing.T, credential *ai.Credential) ai.MutableModels 
 			}
 		}
 	}
-	models := ai.CreateModels(&ai.CreateModelsOptions{Credentials: store})
-	for _, provider := range ai.BuiltinModels().GetProviders() {
-		models.SetProvider(provider)
-	}
-	return models
+	return ai.BuiltinModels(&ai.CreateModelsOptions{Credentials: store})
 }
 
 // cloudflareRecorder answers every request 401 (no SDK retries it) and
@@ -282,10 +278,7 @@ func TestCloudflareAuthMatchesPi(t *testing.T) {
 	setCloudflareEnv(t, nil)
 	for _, row := range capture.Login {
 		store := ai.NewInMemoryCredentialStore()
-		models := ai.CreateModels(&ai.CreateModelsOptions{Credentials: store})
-		for _, provider := range ai.BuiltinModels().GetProviders() {
-			models.SetProvider(provider)
-		}
+		models := ai.BuiltinModels(&ai.CreateModelsOptions{Credentials: store})
 		if got := models.GetProvider(row.Provider).Auth().APIKey.Name; got != row.Name {
 			t.Errorf("%s: name %q, pi %q", row.Provider, got, row.Name)
 		}

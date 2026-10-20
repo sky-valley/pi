@@ -492,7 +492,7 @@ func TestAnthropicUsageModelLeavesCatalogModelAlone(t *testing.T) {
 // deliberately hard-coded: the point is to notice when a regen changes it.
 func TestAnthropicCatalogFallbacksAreLive(t *testing.T) {
 	ai.LoadBuiltinModels()
-	models := ai.BuiltinModels().GetModels("anthropic")
+	models := ai.BuiltinModels(nil).GetModels("anthropic")
 
 	// Exactly the models the 0.85.1 catalog gives fallbacks to, and the order of
 	// each one's list, which is the order Anthropic receives.

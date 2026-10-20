@@ -37,7 +37,7 @@ import (
 // through the built-in Models, whose auth fills its endpoint's account and
 // gateway ids from the environment.
 func requireProviderAuth(provider string) error {
-	check, err := ai.BuiltinModels().CheckAuth(context.Background(), provider)
+	check, err := ai.BuiltinModels(nil).CheckAuth(context.Background(), provider)
 	if err != nil {
 		return err
 	}

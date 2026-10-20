@@ -8,18 +8,21 @@ import (
 // BuiltinModels constructs a Models collection from the embedded catalog,
 // wiring each provider's models, ProviderAuth, and built-in api
 // implementations into the runtime Provider/Models object-model (pi
-// builtinModels over createModels/createProvider). The implementations are the
-// ones the ai/providers package hands over on import
-// (RegisterBuiltInApiProviders) — like pi's, whatever the ApiProvider registry
-// holds; a host that imports ai/providers gets fully streamable providers,
+// builtinModels over createModels/createProvider). options configure the
+// collection as they do CreateModels — its credential store, models store
+// and auth context — and may be nil, as pi's builtinModels(options?) passes
+// them to createModels. The implementations are the ones the ai/providers
+// package hands over on import (RegisterBuiltInApiProviders), regardless of
+// what the ApiProvider registry holds, as pi's builtinModels uses its own api
+// objects; a host that imports ai/providers gets fully streamable providers,
 // otherwise GetAuth/GetModels still work and unwired apis error on stream
 // (matching unported apis).
 //
 // The pre-existing global free functions (Stream/GetModel/GetEnvApiKey, …)
 // remain the compat surface — pi's "@earendil-works/pi-ai/compat".
-func BuiltinModels() MutableModels {
+func BuiltinModels(options *CreateModelsOptions) MutableModels {
 	LoadBuiltinModels()
-	m := CreateModels(nil)
+	m := CreateModels(options)
 
 	providerIDs := GetProviders()
 	sort.Strings(providerIDs) // deterministic collection order

@@ -162,7 +162,7 @@ func TestQwenTokenPlanEnvKeys(t *testing.T) {
 		// plan's env var rather than introducing its own.
 		"qwen-token-plan-individual": "QWEN_TOKEN_PLAN_API_KEY",
 	}
-	m := BuiltinModels()
+	m := BuiltinModels(nil)
 	for provider, envVar := range want {
 		vars := apiKeyEnvVars(provider)
 		if len(vars) != 1 || vars[0] != envVar {

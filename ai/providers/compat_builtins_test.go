@@ -123,7 +123,7 @@ func TestBuiltinModelsStreamThroughTheBuiltins(t *testing.T) {
 	const want = "https://api.cloudflare.com/client/v4/accounts/a/ai/v1/chat/completions"
 	for name, stream := range map[string]func(ai.StreamOptions) *ai.AssistantMessage{
 		"BuiltinModels": func(options ai.StreamOptions) *ai.AssistantMessage {
-			return ai.BuiltinModels().Stream(context.Background(), model, ai.Context{}, &ai.ModelsStreamOptions{StreamOptions: options}).Result()
+			return ai.BuiltinModels(nil).Stream(context.Background(), model, ai.Context{}, &ai.ModelsStreamOptions{StreamOptions: options}).Result()
 		},
 		"compat": func(options ai.StreamOptions) *ai.AssistantMessage {
 			return ai.Stream(context.Background(), model, ai.Context{}, &options).Result()

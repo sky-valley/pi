@@ -53,7 +53,7 @@ func TestBuiltinAPIKeyAuthNamesMatchPi(t *testing.T) {
 	if err := json.Unmarshal(data, &capture); err != nil {
 		t.Fatal(err)
 	}
-	models := BuiltinModels()
+	models := BuiltinModels(nil)
 	for _, want := range capture.Providers {
 		var diffs []string
 		provider := models.GetProvider(want.ID)

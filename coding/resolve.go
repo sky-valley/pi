@@ -123,7 +123,7 @@ func configuredAuthCheck() func(provider string) bool {
 			return usable
 		}
 		if models == nil {
-			models = ai.BuiltinModels()
+			models = ai.BuiltinModels(nil)
 		}
 		check, err := models.CheckAuth(context.Background(), provider)
 		checked[provider] = err == nil && check != nil

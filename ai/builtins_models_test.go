@@ -14,7 +14,7 @@ import (
 func TestBuiltinModelsCatalogAndAuth(t *testing.T) {
 	t.Setenv("OPENAI_API_KEY", "sk-builtin-test")
 
-	m := BuiltinModels()
+	m := BuiltinModels(nil)
 
 	p := m.GetProvider("openai")
 	if p == nil {
@@ -47,7 +47,7 @@ func TestBuiltinModelsCatalogAndAuth(t *testing.T) {
 // filterModels: an OAuth credential carrying availableModelIds restricts the
 // catalog; a credential without the field leaves it untouched.
 func TestBuiltinGithubCopilotFilterModels(t *testing.T) {
-	m := BuiltinModels()
+	m := BuiltinModels(nil)
 	p := m.GetProvider("github-copilot")
 	if p == nil {
 		t.Fatal("github-copilot provider not present")

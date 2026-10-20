@@ -468,8 +468,7 @@ func TestAnthropicFederationThroughModels(t *testing.T) {
 		t.Setenv(name, "")
 	}
 	srv := newFederationServer(t, []federationResponse{grantedToken("federated-token")}, nil)
-	m := ai.CreateModels(&ai.CreateModelsOptions{AuthContext: federationAuthContext(writeIdentityToken(t, "jwt"))})
-	m.SetProvider(ai.BuiltinModels().GetProvider("anthropic"))
+	m := ai.BuiltinModels(&ai.CreateModelsOptions{AuthContext: federationAuthContext(writeIdentityToken(t, "jwt"))})
 	model := federationTestModel("anthropic", srv.URL)
 	final := m.StreamSimple(context.Background(), model, ai.Context{Messages: []ai.Message{ai.NewUserText("Hello", 1)}}, nil).Result()
 	if final.StopReason != ai.StopStop {

@@ -77,7 +77,7 @@ func compatModels() MutableModels {
 	compatState.Lock()
 	defer compatState.Unlock()
 	if compatState.models == nil || compatState.gen != gen {
-		compatState.models = BuiltinModels()
+		compatState.models = BuiltinModels(nil)
 		compatState.gen = gen
 	}
 	return compatState.models
