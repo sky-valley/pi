@@ -3,16 +3,19 @@
 // in package ai.
 //
 //   node --experimental-strip-types capture.mts <extraction> <out.json> <sha>
-//   e.g. ... capture.mts <dir> classify-d2e7d8b7c.json d2e7d8b7c
+//   e.g. ... capture.mts <dir> classify-cedefc532.json cedefc532
 //
 // <extraction> holds packages/ai at <sha> (`git archive <sha> packages/ai` from
 // the upstream clone) and a node_modules resolving pi-ai's dependencies (the npm
 // build's). It is a src capture, checked against the build when a release
-// ships the source it read (the BUILD wins): classify-d2e7d8b7c.json was
-// captured from src at d2e7d8b7c with the 1.3.0 build's node_modules. v1.3.0
-// (71023aec1) ships every alternative but the five 0fbdbd3f8 and 698a2d23b
-// added after it: its dist/utils/retry.js builds the limit pattern with exactly
-// this source and the retryable one with this source less those five, both "i".
+// ships the source it read (the BUILD wins): classify-cedefc532.json was
+// captured from src at cedefc532 with the 1.3.0 build's node_modules and
+// pi-telemetry shimmed to its src at the same sha (src ai imports exports the
+// 1.3.0 telemetry build lacks). v1.3.0 (71023aec1) ships every alternative but
+// the five 0fbdbd3f8 and 698a2d23b added after it and the limit alternative
+// cedefc532 added: its dist/utils/retry.js builds the limit pattern with this
+// source less that one and the retryable one with this source less those five,
+// both "i".
 //
 // Every row records three answers: isRetryableAssistantError on the message
 // retry.test.ts would build (fauxAssistantMessage), and RegExp.prototype.test of
@@ -75,6 +78,8 @@ const wrappedDnsLookupError =
 	"The pending stream has been canceled (caused by: getaddrinfo ENOTFOUND bedrock-runtime.us-east-1.amazonaws.com)";
 const chatGPTUsageLimitMessage =
 	'OpenAI API error (429): {"code":"subscription_sharing_usage_limit_exceeded","message":"Usage limit reached."}';
+const chatGPTWorkspaceLimitMessage =
+	'OpenAI API error (429): {"code":"subscription_sharing_workplace_individual_usage_limit_exceeded","message":"Usage limit reached."}';
 const azurePeakLoadError =
 	"The system is currently experiencing high demand and cannot process your request. Your request exceeds the maximum usage size allowed during peak load. For improved capacity reliability, consider switching to Provisioned Throughput.";
 
@@ -99,6 +104,7 @@ const rows: Row[] = [
 	error("pi: retryAssistantCall non-retryable", "insufficient_quota"),
 	error("pi: retryAssistantCall transient", "terminated"),
 	error("pi: ChatGPT subscription usage limit", chatGPTUsageLimitMessage),
+	error("pi: ChatGPT Business workspace usage limit", chatGPTWorkspaceLimitMessage),
 	error("pi: temporary ChatGPT usage error", "subscription_sharing_usage_unavailable: Usage cannot be checked."),
 	error("pi: temporary ChatGPT user error", "subscription_sharing_user_unavailable: User cannot be loaded."),
 	error("pi: HTTP/2 pending stream cancellation (#10379)", "The pending stream has been canceled"),
@@ -201,6 +207,10 @@ const rows: Row[] = [
 	error("quota exceeded", "Quota Exceeded: 429"),
 	error("billing", "BILLING 502"),
 	error("subscription_sharing_usage_limit_exceeded", "Subscription_Sharing_Usage_Limit_Exceeded (429)"),
+	error(
+		"subscription_sharing_workplace_individual_usage_limit_exceeded",
+		"SUBSCRIPTION_SHARING_WORKPLACE_INDIVIDUAL_USAGE_LIMIT_EXCEEDED (429)",
+	),
 
 	// Limit near-misses: the retryable status stands.
 	error("near-miss limit", "GoUsageLimit 429"),
@@ -211,6 +221,7 @@ const rows: Row[] = [
 	error("near-miss limit", "quota exceed 429"),
 	error("near-miss limit", "bill 502"),
 	error("near-miss limit", "subscription sharing usage limit exceeded 429"),
+	error("near-miss limit", "subscription_sharing_workplace_usage_limit_exceeded 429"),
 
 	// Retryable near-misses.
 	error("near-miss", "model refused to answer"),

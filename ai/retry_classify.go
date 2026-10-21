@@ -143,6 +143,9 @@ var nonRetryableProviderLimitErrorPattern = buildProviderErrorPattern([]string{
 	// Sign in with ChatGPT: the subscription's shared usage limit, which resets
 	// after hours rather than seconds.
 	"subscription_sharing_usage_limit_exceeded",
+	// Sign in with ChatGPT on a ChatGPT Business plan: a usage limit set by the
+	// workspace admin. Only the admin can raise it.
+	"subscription_sharing_workplace_individual_usage_limit_exceeded",
 })
 
 // retryableProviderErrorPattern matches provider/transport error text that

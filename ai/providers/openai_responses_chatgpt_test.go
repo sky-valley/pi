@@ -144,3 +144,30 @@ func TestResponsesChatGPTUsageLimitLinksToUsage(t *testing.T) {
 		}
 	})
 }
+
+// pi's CHATGPT_WORKSPACE_LIMIT_HINT (upstream cedefc532).
+const chatGPTWorkspaceHint = "\nYou've reached your ChatGPT workspace's usage limit. Ask your workspace admin to increase it at admin.openai.com → Workspace → Usage limits."
+
+func TestResponsesChatGPTWorkspaceLimitAsksTheAdmin(t *testing.T) {
+	t.Run("the request is rejected", func(t *testing.T) {
+		msg := chatGPTUsageLimitError(t, cannedDoer{
+			status: http.StatusTooManyRequests,
+			body:   `{"error":{"code":"subscription_sharing_workplace_individual_usage_limit_exceeded","message":"Usage limit reached.","type":"rate_limit_error"}}`,
+		})
+		want := `OpenAI API error (429): {"code":"subscription_sharing_workplace_individual_usage_limit_exceeded","message":"Usage limit reached.","type":"rate_limit_error"}` + chatGPTWorkspaceHint
+		if msg != want {
+			t.Errorf("errorMessage = %q, want %q", msg, want)
+		}
+	})
+	t.Run("the stream fails", func(t *testing.T) {
+		msg := chatGPTUsageLimitError(t, cannedDoer{
+			status: http.StatusOK,
+			body: "event: response.failed\ndata: " +
+				`{"type":"response.failed","sequence_number":0,"response":{"id":"resp_failed","status":"failed","error":{"code":"subscription_sharing_workplace_individual_usage_limit_exceeded","message":"Usage limit reached."}}}` +
+				"\n\n",
+		})
+		if want := "subscription_sharing_workplace_individual_usage_limit_exceeded: Usage limit reached." + chatGPTWorkspaceHint; msg != want {
+			t.Errorf("errorMessage = %q, want %q", msg, want)
+		}
+	})
+}
