@@ -218,6 +218,33 @@ func TestWindowsAccessPathIsNamespaced(t *testing.T) {
 	}
 }
 
+// TestWindowsGitBashCandidates pins pi's Git Bash search: %ProgramFiles%
+// then %ProgramFiles(x86)%, each \Git\bin\bash.exe, and the no-bash error
+// lists both candidates in that order.
+func TestWindowsGitBashCandidates(t *testing.T) {
+	env := map[string]string{"ProgramFiles": `C:\Program Files`, "ProgramFiles(x86)": `C:\Program Files (x86)`}
+	x86 := `C:\Program Files (x86)\Git\bin\bash.exe`
+	shell, args, stdin, err := unpackShellConfig(fakeShellHost(true, env, existsOnly(x86), nil).shellConfig(""))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if shell != x86 || stdin || !reflect.DeepEqual(args, []string{"-c"}) {
+		t.Fatalf("got shell=%q args=%v stdin=%v, want %q -c", shell, args, stdin, x86)
+	}
+
+	_, err = fakeShellHost(true, env, existsOnly(), nil).shellConfig("")
+	want := "No bash shell found. Options:\n" +
+		"  1. Install Git for Windows: https://git-scm.com/download/win\n" +
+		"  2. Add your bash to PATH (Cygwin, MSYS2, etc.)\n" +
+		"  3. Set shellPath in settings.json\n\n" +
+		"Searched Git Bash in:\n" +
+		"  C:\\Program Files\\Git\\bin\\bash.exe\n" +
+		"  C:\\Program Files (x86)\\Git\\bin\\bash.exe"
+	if err == nil || err.Error() != want {
+		t.Fatalf("no-bash error\n got: %v\nwant: %q", err, want)
+	}
+}
+
 // TestShellPathExistsFollowsSymlinks pins access(F_OK) on the real filesystem:
 // it follows symlinks, so a dangling one does not exist, and a directory does.
 func TestShellPathExistsFollowsSymlinks(t *testing.T) {
