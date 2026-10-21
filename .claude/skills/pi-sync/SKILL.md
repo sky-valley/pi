@@ -89,7 +89,7 @@ but no Go home yet" is a Scope queue row, not a `decide`.
 - **The env submodule** (`env/`, its own module since 2026-10-19), built twice,
   because it imports root packages that may have changed this cycle:
   1. Against the working root, through a workspace file kept OUTSIDE the repo
-     (never commit a `go.work`) that reads `go 1.26` and `use (<repo> <repo>/env)`:
+     (never commit a `go.work`) that reads `go 1.26.0` (a bare `go 1.26` is refused) and `use (<repo> <repo>/env)`:
      `GOWORK=<that file>` with `cd env && go build ./... && go vet ./... &&
      go test -race ./... -count=1`, plus `GOOS=windows go build ./... && GOOS=windows
      go vet ./...` and `GOOS=linux GOARCH=386 go build ./...`. This runs
