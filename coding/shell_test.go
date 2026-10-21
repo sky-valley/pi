@@ -199,6 +199,25 @@ func TestFindExecutableOnPathOutput(t *testing.T) {
 	}
 }
 
+// TestWindowsAccessPathIsNamespaced: Node's fs bindings pass every path
+// through path.toNamespacedPath before libuv sees it, so on Windows
+// access(F_OK) asks GetFileAttributesW about the long form (which also lifts
+// MAX_PATH). Expectations are Node v26.4.0's own answers.
+func TestWindowsAccessPathIsNamespaced(t *testing.T) {
+	for in, want := range map[string]string{
+		`C:\a\..\b`:                    `\\?\C:\b`,
+		`c:/Windows/System32/bash.exe`: `\\?\c:\Windows\System32\bash.exe`,
+		`\\server\share\dir\bash.exe`:  `\\?\UNC\server\share\dir\bash.exe`,
+		`\\?\c:\a\..\b`:                `\\?\c:\b`,
+		`\\.\pipe\x`:                   `\\.\pipe\x`,
+		storeAliasesDir + `\pwsh.exe`:  `\\?\` + storeAliasesDir + `\pwsh.exe`,
+	} {
+		if got := windowsAccessPath(in); got != want {
+			t.Errorf("windowsAccessPath(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
 // TestShellPathExistsFollowsSymlinks pins access(F_OK) on the real filesystem:
 // it follows symlinks, so a dangling one does not exist, and a directory does.
 func TestShellPathExistsFollowsSymlinks(t *testing.T) {

@@ -91,6 +91,12 @@ func spawnPathSearch(command, executable string) (string, bool) {
 // lineBreakRE is pi's /\r?\n/.
 var lineBreakRE = regexp.MustCompile(`\r?\n`)
 
+// windowsAccessPath is the path Node's fs bindings hand libuv on Windows:
+// path.win32.toNamespacedPath of the given one, resolved against the working
+// directory and in its long `\\?\` (or `\\?\UNC\`) form, which also lifts
+// MAX_PATH. It is here, unconstrained, so it is testable on every host.
+func windowsAccessPath(path string) string { return nodepath.Win32.ToNamespacedPath(path) }
+
 // legacyWslBashRE matches the legacy Windows-bundled WSL launcher
 // (C:\Windows\System32\bash.exe, or the WoW64 sysnative redirect) after path
 // normalization, for when the Windows directory is unknown. The launcher

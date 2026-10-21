@@ -93,6 +93,9 @@ func (p PosixPath) Join(paths ...string) string {
 	return p.Normalize(strings.Join(parts, "/"))
 }
 
+// ToNamespacedPath is path.posix.toNamespacedPath, the identity.
+func (PosixPath) ToNamespacedPath(path string) string { return path }
+
 // Basename is path.posix.basename without a suffix.
 func (PosixPath) Basename(path string) string {
 	start, end := 0, -1

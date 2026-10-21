@@ -310,6 +310,44 @@ func (p Win32Path) Join(paths ...string) string {
 	return p.Normalize(joined)
 }
 
+// ToNamespacedPath is path.win32.toNamespacedPath: the resolved path in its
+// long form, `\\?\C:\...` for a drive path and `\\?\UNC\server\share\...`
+// for a UNC one. Paths already in the `\\?\` or `\\.\` namespace, and those
+// that resolve to two characters or fewer, are left alone.
+func (p Win32Path) ToNamespacedPath(path string) string {
+	if path == "" {
+		return path
+	}
+	resolvedPath := p.Resolve(path)
+	// Node measures in UTF-16 code units, not bytes: "\ü" is two.
+	if utf16Len(resolvedPath) <= 2 {
+		return path
+	}
+	if resolvedPath[0] == '\\' {
+		if resolvedPath[1] == '\\' {
+			if code := resolvedPath[2]; code != '?' && code != '.' {
+				return `\\?\UNC\` + resolvedPath[2:]
+			}
+		}
+	} else if isWindowsDeviceRoot(resolvedPath[0]) && resolvedPath[1] == ':' && resolvedPath[2] == '\\' {
+		return `\\?\` + resolvedPath
+	}
+	return resolvedPath
+}
+
+// utf16Len is JavaScript's String length: UTF-16 code units.
+func utf16Len(s string) int {
+	n := 0
+	for _, r := range s {
+		if r >= 0x10000 {
+			n += 2
+		} else {
+			n++
+		}
+	}
+	return n
+}
+
 // Basename is path.win32.basename without a suffix.
 func (Win32Path) Basename(path string) string {
 	start, end := 0, -1

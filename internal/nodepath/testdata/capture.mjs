@@ -22,7 +22,16 @@ const atoms = [
 	"CONx", "lpt1.txt:", "C:\\COM1:", "a/b:c/d",
 ];
 
-const posixBases = ["/home/u", "/", "rel/dir", "", "/a/b/"];
+// Extra inputs for toNamespacedPath (Node's fs bindings namespace every
+// path on Windows): long, device and UNC forms, and shell paths.
+const namespaceAtoms = [
+	"\\\\?\\UNC\\server\\share\\x", "\\\\?\\c:\\a\\..\\b", "\\\\.\\pipe\\x", "//server/share/a/../b",
+	"C:\\Program Files\\Git\\bin\\bash.exe", "c:/Windows/System32/bash.exe", "C:\\a\\..\\..\\x",
+	"D:\\Users\\test\\AppData\\Local\\Microsoft\\WindowsApps\\pwsh.exe", "\\\\server\\share\\dir\\bash.exe",
+	"C:x\\y", "\\x\\y", "x\\y", "C:\\", "\\\\?\\", "\\\\.\\", "\\\\a", "ab",
+];
+
+const posixBases =["/home/u", "/", "rel/dir", "", "/a/b/"];
 const win32Bases = ["C:\\work", "c:\\", "\\\\srv\\share\\dir", "D:", "rel", "", "\\top"];
 
 const cases = [];
@@ -45,6 +54,9 @@ for (const [name, flavor, bases] of [
 		record(`${name}.resolve`, [a], () => flavor.resolve(a));
 		for (const base of bases) record(`${name}.resolve`, [base, a], () => flavor.resolve(base, a));
 		for (const b of atoms) record(`${name}.join`, [a, b], () => flavor.join(a, b));
+	}
+	for (const a of [...atoms, ...namespaceAtoms]) {
+		record(`${name}.toNamespacedPath`, [a], () => flavor.toNamespacedPath(a));
 	}
 	record(`${name}.resolve`, [], () => flavor.resolve());
 	record(`${name}.join`, [], () => flavor.join());

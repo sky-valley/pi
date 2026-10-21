@@ -67,6 +67,8 @@ func TestAgreesWithNode(t *testing.T) {
 				got = flavor.IsAbsolute(strs[0])
 			case "basename":
 				got = flavor.Basename(strs[0])
+			case "toNamespacedPath":
+				got = flavor.ToNamespacedPath(strs[0])
 			case "resolve":
 				got = flavor.Resolve(strs...)
 			case "join":

@@ -13,7 +13,9 @@
 // The root module's shell resolution (coding) uses path.win32 the same way,
 // so Windows path arithmetic is identical and testable on every host. The env
 // module keeps its own copy (env/internal/nodepath) only until it requires a
-// root release that has this package; the two are kept identical.
+// root release that has this package. This copy is a superset of that one
+// (it adds ToNamespacedPath and its corpus rows); the env copy never diverges
+// from it otherwise.
 package nodepath
 
 import (
@@ -52,6 +54,9 @@ type Flavor interface {
 	Normalize(path string) string
 	IsAbsolute(path string) bool
 	Basename(path string) string
+	// ToNamespacedPath is `toNamespacedPath`, which Node's fs bindings apply
+	// to every path on Windows.
+	ToNamespacedPath(path string) string
 	// Separator is `sep`.
 	Separator() string
 }
