@@ -152,3 +152,19 @@ func TestCostTotalFromProviderJSON(t *testing.T) {
 		t.Errorf("a string totalFromProvider decoded without error")
 	}
 }
+
+// Or reads an unset property as its default and a set one as itself.
+func TestOptBoolOr(t *testing.T) {
+	for _, tc := range []struct {
+		b         OptBool
+		def, want bool
+	}{
+		{OptBoolUnset, false, false}, {OptBoolUnset, true, true},
+		{OptBoolFalse, true, false}, {OptBoolFalse, false, false},
+		{OptBoolTrue, false, true}, {OptBoolTrue, true, true},
+	} {
+		if got := tc.b.Or(tc.def); got != tc.want {
+			t.Errorf("%v.Or(%v) = %v, want %v", tc.b, tc.def, got, tc.want)
+		}
+	}
+}

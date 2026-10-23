@@ -18,25 +18,31 @@ func openCodeStreams(streams ProviderStreams) ProviderStreams {
 	wrapped := streams
 	if stream := streams.Stream; stream != nil {
 		wrapped.Stream = func(ctx context.Context, model *Model, req TranscriptContext, opts *StreamOptions) *AssistantMessageEventStream {
-			if opts != nil && opts.SessionID != "" && !hasHeaderName(opts.Headers, openCodeSessionHeader) {
-				next := *opts
-				next.Headers = withHeader(opts.Headers, openCodeSessionHeader, opts.SessionID)
-				opts = &next
-			}
-			return stream(ctx, model, req, opts)
+			return stream(ctx, model, req, withOpenCodeSession(opts))
 		}
 	}
 	if streamSimple := streams.StreamSimple; streamSimple != nil {
 		wrapped.StreamSimple = func(ctx context.Context, model *Model, req TranscriptContext, opts *SimpleStreamOptions) *AssistantMessageEventStream {
-			if opts != nil && opts.SessionID != "" && !hasHeaderName(opts.Headers, openCodeSessionHeader) {
+			if opts != nil {
 				next := *opts
-				next.Headers = withHeader(opts.Headers, openCodeSessionHeader, opts.SessionID)
+				next.StreamOptions = *withOpenCodeSession(&opts.StreamOptions)
 				opts = &next
 			}
 			return streamSimple(ctx, model, req, opts)
 		}
 	}
 	return wrapped
+}
+
+// withOpenCodeSession is pi's withSessionHeader: opts with the session header
+// added, or opts itself when it has no session or already names the header.
+func withOpenCodeSession(opts *StreamOptions) *StreamOptions {
+	if opts == nil || opts.SessionID == "" || hasHeaderName(opts.Headers, openCodeSessionHeader) {
+		return opts
+	}
+	next := *opts
+	next.Headers = withHeader(opts.Headers, openCodeSessionHeader, opts.SessionID)
+	return &next
 }
 
 // hasHeaderName is pi's hasHeader in opencode-headers.ts: whether headers
@@ -48,6 +54,18 @@ func hasHeaderName(headers ProviderHeaders, name string) bool {
 		}
 	}
 	return false
+}
+
+// stringHeaders is a plain string record as ProviderHeaders, nil when empty.
+func stringHeaders(record map[string]string) ProviderHeaders {
+	if len(record) == 0 {
+		return nil
+	}
+	headers := make(ProviderHeaders, len(record))
+	for name, value := range record {
+		headers[name] = HeaderValue(value)
+	}
+	return headers
 }
 
 // withHeader is `{ ...headers, [name]: value }`: a copy, so the caller's map

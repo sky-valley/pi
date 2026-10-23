@@ -1112,6 +1112,7 @@ func StreamAnthropic(ctx context.Context, model *ai.Model, req ai.TranscriptCont
 				// runtime, although its OpenAPI schema and the Anthropic SDK do not
 				// type those fields (upstream cae8d69e5).
 				if isOpenRouterModel(model) && rawTruthy(ev["usage"]) {
+					// usage is a member of a frame already decoded, so it decodes.
 					if reported, err := ai.DecodeOrderedValue(ev["usage"]); err == nil {
 						applyOpenRouterReportedCost(&output.Usage, reported)
 					}

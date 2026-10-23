@@ -496,8 +496,11 @@ type CostBreakdown struct {
 type OptBool uint8
 
 const (
+	// OptBoolUnset is an absent property, which pi reads as undefined.
 	OptBoolUnset OptBool = iota
+	// OptBoolFalse is a property set to false.
 	OptBoolFalse
+	// OptBoolTrue is a property set to true.
 	OptBoolTrue
 )
 
@@ -509,8 +512,15 @@ func OptBoolOf(v bool) OptBool {
 	return OptBoolFalse
 }
 
-// True is `=== true`: unset and false are both false.
-func (b OptBool) True() bool { return b == OptBoolTrue }
+// Or is the value, or def when unset: `value ?? def`. Each property names
+// its own default — CostBreakdown.TotalFromProvider.Or(false),
+// AuthEvent.OpenBrowserOnConfirm.Or(true).
+func (b OptBool) Or(def bool) bool {
+	if b == OptBoolUnset {
+		return def
+	}
+	return b == OptBoolTrue
+}
 
 // MarshalJSON writes true or false; omitzero keeps an unset OptBool out.
 func (b OptBool) MarshalJSON() ([]byte, error) {

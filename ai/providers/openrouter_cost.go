@@ -23,8 +23,8 @@ func isOpenRouterModel(model *ai.Model) bool {
 	return model.Provider == "openrouter" || strings.Contains(model.BaseURL, "openrouter.ai")
 }
 
-// isValidOpenRouterCost is pi's isValidCost: a finite, non-negative number.
-func isValidOpenRouterCost(value any) (float64, bool) {
+// validOpenRouterCost is pi's isValidCost: a finite, non-negative number.
+func validOpenRouterCost(value any) (float64, bool) {
 	f, ok := value.(float64)
 	return f, ok && !math.IsInf(f, 0) && !math.IsNaN(f) && f >= 0
 }
@@ -36,7 +36,7 @@ func isValidOpenRouterCost(value any) (float64, bool) {
 // it is the cost plus the upstream inference cost, or its two parts when
 // OpenRouter omits that total (null). Anything else leaves the usage alone.
 func applyOpenRouterReportedCost(usage *ai.Usage, reported any) {
-	cost, ok := isValidOpenRouterCost(jsGet(reported, "cost"))
+	cost, ok := validOpenRouterCost(jsGet(reported, "cost"))
 	if !ok {
 		return
 	}
@@ -51,14 +51,14 @@ func applyOpenRouterReportedCost(usage *ai.Usage, reported any) {
 		}
 		upstream := jsGet(details, "upstream_inference_cost")
 		if upstream == nil {
-			prompt, promptOK := isValidOpenRouterCost(jsGet(details, "upstream_inference_prompt_cost"))
-			completions, completionsOK := isValidOpenRouterCost(jsGet(details, "upstream_inference_completions_cost"))
+			prompt, promptOK := validOpenRouterCost(jsGet(details, "upstream_inference_prompt_cost"))
+			completions, completionsOK := validOpenRouterCost(jsGet(details, "upstream_inference_completions_cost"))
 			if !promptOK || !completionsOK {
 				return
 			}
 			upstream = prompt + completions
 		}
-		upstreamCost, ok := isValidOpenRouterCost(upstream)
+		upstreamCost, ok := validOpenRouterCost(upstream)
 		if !ok {
 			return
 		}

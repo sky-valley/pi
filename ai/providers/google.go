@@ -418,12 +418,11 @@ func StreamGoogle(ctx context.Context, model *ai.Model, req ai.TranscriptContext
 			if err != nil {
 				return nil, err
 			}
-			// pi builds one merged object — mergeProviderAttributionHeaders puts
-			// the attribution bundle at the bottom, then model.headers, then the
-			// consumer's options.headers — and hands it to the SDK as
-			// providerHeadersToRecord({"User-Agent": getPiUserAgent(),
-			// ...model.headers, ...optionsHeaders}) (upstream 87af49dec added
-			// the leading user agent; google sent none before).
+			// pi builds one merged record and hands it to the SDK:
+			// providerHeadersToRecord(getIdentityHeaders(model, identity),
+			// model.headers, optionsHeaders) (upstream adc5fa9f8) — the
+			// identity's User-Agent and attribution at the bottom, then the
+			// model's headers, then the consumer's.
 			// The conversion folds names case-insensitively (upstream
 			// a328aa89a): the last slot for a name wins, so a marker cancels pi's
 			// default or an earlier source's value whatever its spelling. It
@@ -443,8 +442,8 @@ func StreamGoogle(ctx context.Context, model *ai.Model, req ai.TranscriptContext
 			// sent at all (docs/UPSTREAM.md D10/D12).
 			o := &headerObject{}
 			setIdentityHeaders(o, model, opts.Identity)
-			o.merge(model.Headers)
-			o.merge(opts.Headers)
+			o.mergeRecord(model.Headers)
+			o.mergeRecord(opts.Headers)
 			if err := o.applyAsRecord(r.Header, recordEntry{"Content-Type", "application/json"}); err != nil {
 				return nil, err
 			}

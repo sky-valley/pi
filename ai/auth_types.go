@@ -188,8 +188,8 @@ type AuthEvent struct {
 	// OpenBrowserOnConfirm and CopyCodeOnConfirm (device_code only) are pi's
 	// `openBrowserOnConfirm?` and `copyCodeOnConfirm?` (upstream 7151099d0):
 	// whether a client offers to open VerificationURI, best-effort, and to copy
-	// UserCode over the clipboard once the user confirms. Unset means true, and
-	// clients may ignore them.
+	// UserCode over the clipboard once the user confirms. Unset means true
+	// (read them with Or(true)), and clients may ignore them.
 	OpenBrowserOnConfirm OptBool
 	CopyCodeOnConfirm    OptBool
 	IntervalSeconds      int

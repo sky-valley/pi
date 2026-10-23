@@ -104,7 +104,7 @@ func translateProviderErrorPattern(pattern string) string {
 					open = len("(?<!")
 				}
 				end := strings.Index(rest, "])")
-				if rest[open] != '[' || end < open {
+				if len(rest) <= open || rest[open] != '[' || end < open {
 					unsupported("a lookaround other than of one class")
 				}
 				class := lookaroundClass(rest[open+1:end], unsupported)

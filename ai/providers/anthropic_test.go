@@ -1582,7 +1582,8 @@ data: {"type":"message_stop"}
 
 // The anthropic-messages user-agent surface (pi 9d2ec7ffa's kimi-coding force,
 // reversed into a plain default by 87af49dec) is pinned in
-// pi_user_agent_wire_test.go alongside the other adapters.
+// user_agent_wire_test.go alongside the other adapters, and its values against
+// pi's own adapter in identity_test.go.
 
 // A shape allowedFallbackModels cannot read must not take the boolean compat
 // flags down with it — getAnthropicCompat resolves every compat key on its own

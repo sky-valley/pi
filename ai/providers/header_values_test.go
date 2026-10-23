@@ -68,7 +68,7 @@ func wireAdapters() []wireAdapter {
 			return StreamGoogle(context.Background(), model("gemini-2.5-flash", ai.APIGoogleGenerativeAI, "google", baseURL), req(),
 				&GoogleOptions{StreamOptions: opts}).Result()
 		}},
-		{name: "openai-completions", sse: attrDoneSSE, auth: "authorization", bearer: true, run: func(baseURL string, client *http.Client, opts ai.StreamOptions) *ai.AssistantMessage {
+		{name: "openai-completions", sse: completionsDoneSSE, auth: "authorization", bearer: true, run: func(baseURL string, client *http.Client, opts ai.StreamOptions) *ai.AssistantMessage {
 			opts.HTTPClient = client
 			return StreamOpenAICompletions(context.Background(), model("gpt-test", ai.APIOpenAICompletions, "openai", baseURL), req(),
 				&OpenAIOptions{StreamOptions: opts}).Result()

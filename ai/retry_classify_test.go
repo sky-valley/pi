@@ -3,6 +3,7 @@ package ai
 import (
 	"encoding/json"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -273,14 +274,26 @@ func TestTranslateProviderErrorPatternRefusesUnportedSyntax(t *testing.T) {
 		"(?<name>429)",     // a named group
 		"[a-z]429",         // a bare class
 		"429)",             // unbalanced
+		"429(?!",           // a lookahead with nothing after it
+		"(?<!",             // a lookbehind with nothing after it
 	} {
 		func() {
 			defer func() {
-				if recover() == nil {
-					t.Errorf("translateProviderErrorPattern(%q) did not panic", pattern)
+				msg, _ := recover().(string)
+				if !strings.Contains(msg, "teach translateProviderErrorPattern") {
+					t.Errorf("translateProviderErrorPattern(%q) = panic %q, want the translator's refusal", pattern, msg)
 				}
 			}()
 			translateProviderErrorPattern(pattern)
 		}()
+	}
+}
+
+// A lookaround class is compared with the A-Z-lowercased input, so an
+// upper-case class translates as its lower-case spelling, which is the "i"
+// class.
+func TestTranslateProviderErrorPatternFoldsLookaroundClasses(t *testing.T) {
+	if upper, lower := translateProviderErrorPattern("(?<![A-Z0-9])429(?![A-Z])"), translateProviderErrorPattern("(?<![a-z0-9])429(?![a-z])"); upper != lower {
+		t.Fatalf("upper-case class %q, lower-case class %q", upper, lower)
 	}
 }

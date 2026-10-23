@@ -1519,10 +1519,7 @@ func (m *modelsImpl) applyAuth(
 		clone.BaseURL = auth.BaseURL
 		requestModel = &clone
 	}
-	var sessionHeaders ProviderHeaders
-	for name, value := range GetOpenCodeSessionHeaders(requestModel.IdentityTarget(), sessionID) {
-		sessionHeaders = ProviderHeaders{name: HeaderValue(value)}
-	}
+	sessionHeaders := stringHeaders(GetOpenCodeSessionHeaders(requestModel.IdentityTarget(), sessionID))
 	headers := mergeHeaders(mergeHeaders(sessionHeaders, auth.Headers), ro.Headers)
 	if transforms.TransformHeaders != nil {
 		if headers == nil {

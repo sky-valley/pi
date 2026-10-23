@@ -229,9 +229,8 @@ func TestModelHeadersOverridePiUserAgent(t *testing.T) {
 	})
 }
 
-// The anthropic OAuth branch supplies its own `user-agent: claude-cli/<v>`
-// AFTER the seeded default in pi's merge, so the Claude Code identity still
-// wins — the reversal did not disturb it.
+// The anthropic OAuth branch sends Claude Code's `user-agent: claude-cli/<v>`
+// and no client identity at all (upstream adc5fa9f8).
 func TestAnthropicOAuthUserAgentBeatsPiDefault(t *testing.T) {
 	h := captureAnthropicHeaders(t, anthropicUAModel(), anthropicUAOptions(ai.ProviderRequestOptions{
 		APIKey: "sk-ant-oat-token",
@@ -252,15 +251,11 @@ func TestOptionsHeadersOverridePiUserAgentAndModelHeaders(t *testing.T) {
 		}))
 		wantUserAgent(t, h, "custom-client")
 	})
-	// …with ONE exception, and it is a spelling exception, not a precedence
-	// one: the anthropic OAuth branch holds its identity under the lowercase
-	// name at a later slot than the seeded "User-Agent", so a caller spelling
-	// the name "User-Agent" writes back into slot 0 and still loses. Executed
-	// against @anthropic-ai/sdk 0.91.1 from ~/.cache/pi-npm/0.84.2, driving the
-	// real client with the object mergeClientHeaders builds at 87af49dec:
-	// {"User-Agent": custom-agent} → wire `user-agent: claude-cli/<v>`,
-	// {"user-agent": custom-agent} → wire `user-agent: custom-agent`.
-	t.Run("anthropic oauth identity loses to the seed spelling too", func(t *testing.T) {
+	// The OAuth branch has no seeded "User-Agent" slot since upstream
+	// adc5fa9f8, so a caller's agent in any spelling takes a slot after
+	// Claude Code's and wins (TestIdentityHeadersMatchPi's "anthropic OAuth:
+	// request …" rows are pi's own answers).
+	t.Run("anthropic oauth identity loses to the User-Agent spelling", func(t *testing.T) {
 		h := captureAnthropicHeaders(t, anthropicUAModel(), anthropicUAOptions(ai.ProviderRequestOptions{
 			APIKey:  "sk-ant-oat-token",
 			Headers: ai.ProviderHeaders{"User-Agent": strPtr("custom-client")},
@@ -347,10 +342,9 @@ func TestUserAgentMarkerBeatsPiDefault(t *testing.T) {
 			t.Fatalf("a marker must suppress pi's default user agent, got %q", got)
 		}
 	})
-	// A marker only empties the SLOT it names. On the OAuth branch slot 0 is
-	// the seeded "User-Agent" and the claude-cli identity sits at a later slot,
-	// so cancelling the default leaves the identity standing — probe against
-	// @anthropic-ai/sdk 0.91.1: {"User-Agent": null} → `claude-cli/<v>`.
+	// With no seeded slot on the OAuth branch, a marker in any spelling
+	// deletes Claude Code's agent itself; what reaches the wire then is the
+	// transport's default (D12).
 	t.Run("anthropic oauth marker removes Claude Code's agent", func(t *testing.T) {
 		h := captureAnthropicHeaders(t, anthropicUAModel(), anthropicUAOptions(ai.ProviderRequestOptions{
 			APIKey:  "sk-ant-oat-token",
@@ -513,9 +507,10 @@ func TestGoogleCaseCollidingModelUserAgentWins(t *testing.T) {
 	}
 }
 
-// Cross-source precedence is decided by slot, not by spelling: a consumer
-// header spelled differently from the catalog's still wins, because its name is
-// new to the merge and takes a slot after it.
+// On google each source folds into the record on its own (upstream adc5fa9f8:
+// providerHeadersToRecord(identity, model.headers, options.headers)), so a
+// consumer header wins over the catalog's in any spelling: it deletes every
+// earlier spelling of its name and takes the last slot.
 func TestOptionsHeadersWinAcrossSpellingsOnGoogle(t *testing.T) {
 	model := &ai.Model{ID: "gemini-2.5-flash", Api: ai.APIGoogleGenerativeAI, Provider: "google",
 		Input: []string{"text"}, MaxTokens: 4096,

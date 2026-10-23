@@ -198,6 +198,22 @@ const rows: Row[] = [
 		identity: { attribution: PI },
 		env: { ANTHROPIC_CUSTOM_HEADERS: env },
 	})),
+	// Cross-source spellings: google and pi-messages fold each source into a
+	// record by lowercased name (providerHeadersToRecord), so a later source's
+	// entry wins whatever spelling an earlier one used; the SDK adapters spread
+	// one object, where a later source spelled like slot 0 writes back into it.
+	...["openai-completions", "openai-responses", "anthropic-messages", "google-generative-ai", "pi-messages"].flatMap((api): Row[] => {
+		const base = api === "google-generative-ai" ? LOCAL : OTHER;
+		const router = api === "google-generative-ai" ? LOCAL : OPENROUTER;
+		const key = api === "anthropic-messages" ? "sk-ant-api-test" : "key";
+		return [
+			{ name: `${api}: request User-Agent over model user-agent`, api, provider: "plain", baseUrl: base, apiKey: key, identity: { userAgent: { custom: "I" } }, modelHeaders: { "user-agent": "M" }, headers: { "User-Agent": "O" } },
+			{ name: `${api} models: request User-Agent over model user-agent`, api, provider: "plain", baseUrl: base, apiKey: key, via: "models", identity: { userAgent: { custom: "I" } }, modelHeaders: { "user-agent": "M" }, headers: { "User-Agent": "O" } },
+			{ name: `${api}: request User-Agent marker over model user-agent`, api, provider: "plain", baseUrl: base, apiKey: key, modelHeaders: { "user-agent": "M" }, headers: { "User-Agent": null } },
+			{ name: `${api}: request attribution spelling over the model's`, api, provider: "openrouter", baseUrl: router, apiKey: key, identity: { attribution: PI }, modelHeaders: { "x-openrouter-title": "M" }, headers: { "X-OpenRouter-Title": "O" } },
+			{ name: `${api}: two spellings in one request`, api, provider: "plain", baseUrl: base, apiKey: key, headers: { "USER-AGENT": "x", "User-Agent": "y" } },
+		];
+	}),
 	// pi-messages' fixed headers are part of its record now.
 	{ name: "pi-messages request marker removes accept", api: "pi-messages", provider: "plain", baseUrl: OTHER, apiKey: "key", headers: { accept: null } },
 	// Session headers: no adapter adds x-opencode-session itself.
@@ -307,6 +323,13 @@ const targets = [
 	{ provider: "custom", baseUrl: "foo://opencode.ai/x" },
 	{ provider: "custom", baseUrl: "https://opencode.ai./zen" },
 	{ provider: "custom", baseUrl: "integrate.api.nvidia.com/v1" },
+	{ provider: "custom", baseUrl: " https://opencode.ai/zen" },
+	{ provider: "custom", baseUrl: "https://opencode.ai/zen\n" },
+	{ provider: "custom", baseUrl: "https://open\tcode.ai/zen" },
+	{ provider: "custom", baseUrl: "https:\\\\opencode.ai\\zen" },
+	{ provider: "custom", baseUrl: "HTTPS:\\\\OPENCODE.AI" },
+	{ provider: "custom", baseUrl: "foo:\\\\opencode.ai" },
+	{ provider: "custom", baseUrl: "\u0000https://opencode.ai/zen" },
 	{ provider: "opencode-go", baseUrl: "" },
 	{ provider: "", baseUrl: "" },
 ];

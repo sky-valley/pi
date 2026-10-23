@@ -994,7 +994,7 @@ func StreamPiMessages(ctx context.Context, model *ai.Model, req ai.TranscriptCon
 		o.set("authorization", "Bearer "+apiKey)
 		o.set("accept", "text/event-stream")
 		o.set("content-type", "application/json")
-		o.merge(opts.Headers)
+		o.mergeRecord(opts.Headers)
 		if err := o.applyAsFetchInit(httpReq.Header); err != nil {
 			fail(err)
 			return

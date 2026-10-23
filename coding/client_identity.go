@@ -38,6 +38,5 @@ func isInstallTelemetryEnabled() bool {
 
 // isTruthyEnvFlag is pi's isTruthyEnvFlag: "1", or "true" or "yes" in any case.
 func isTruthyEnvFlag(value string) bool {
-	lower := strings.ToLower(value)
-	return value == "1" || lower == "true" || lower == "yes"
+	return value == "1" || strings.EqualFold(value, "true") || strings.EqualFold(value, "yes")
 }

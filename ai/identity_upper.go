@@ -1,4 +1,7 @@
-// Code generated from Node v26.4.0's String.prototype.toUpperCase over the BMP; DO NOT EDIT.
+// Derived from Node v26.4.0's String.prototype.toUpperCase over the BMP and
+// pinned by TestJSToUpperMatchesNode against
+// testdata/identity/to-upper-node-v26.4.0.json: when a Node or Go upgrade
+// moves a character, that test names the entry to add or drop here.
 
 package ai
 

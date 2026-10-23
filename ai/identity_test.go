@@ -126,3 +126,93 @@ func TestWithClientIdentityKeepsMutableModelsMutable(t *testing.T) {
 }
 
 type immutableModels struct{ Models }
+
+// Every request method of the WithClientIdentity wrapper merges its identity
+// beneath the request's own and over the collection's (pi withClientIdentity's
+// withIdentity on stream, complete, streamSimple, completeSimple,
+// streamDeferred, fetchDeferred and cancelDeferred).
+func TestWithClientIdentityMergesOnEveryRequestMethod(t *testing.T) {
+	var received *ClientIdentity
+	done := func(model *Model) *AssistantMessageEventStream {
+		stream := NewAssistantMessageEventStream()
+		message := &AssistantMessage{Model: model.ID, StopReason: StopStop}
+		stream.Push(AssistantMessageEvent{Type: EventDone, Reason: StopStop, Message: message})
+		stream.End(message)
+		return stream
+	}
+	streams := &ProviderStreams{
+		Stream: func(_ context.Context, model *Model, _ TranscriptContext, opts *StreamOptions) *AssistantMessageEventStream {
+			received = opts.Identity
+			return done(model)
+		},
+		StreamSimple: func(_ context.Context, model *Model, _ TranscriptContext, opts *SimpleStreamOptions) *AssistantMessageEventStream {
+			received = opts.Identity
+			return done(model)
+		},
+		FetchDeferred: func(_ context.Context, model *Model, _ DeferredHandle, opts *DeferredFetchOptions) *AssistantMessageEventStream {
+			received = opts.Identity
+			return done(model)
+		},
+		CancelDeferred: func(_ context.Context, _ *Model, _ DeferredHandle, opts *DeferredCancelOptions) error {
+			received = opts.Identity
+			return nil
+		},
+	}
+	model := &Model{ID: "m", Name: "m", Api: "test-api", Provider: "p", Input: []string{"text"}, ContextWindow: 1000, MaxTokens: 100}
+	models := CreateModels(&CreateModelsOptions{Identity: &ClientIdentity{Version: "1.0.0", UserAgent: UserAgentShort}})
+	models.SetProvider(CreateProvider(CreateProviderOptions{ID: "p", Auth: noAuthConfigured(), Models: []*Model{model}, API: streams}))
+	wrapper := &ClientAttribution{Name: "wrapper", URL: "https://acme.example"}
+	wrapped := WithClientIdentity(models, ClientIdentity{Attribution: wrapper, Version: "2.0.0"})
+	request := &ClientIdentity{Version: "3.0.0"}
+	handle := DeferredHandle{Provider: "p", ModelID: "m", Api: "test-api", ID: "h"}
+	ctx := context.Background()
+	req := Context{Messages: []Message{NewUserText("hi", 1)}}
+	for name, call := range map[string]func(){
+		"Stream": func() {
+			wrapped.Stream(ctx, model, req, &ModelsStreamOptions{StreamOptions: StreamOptions{ProviderRequestOptions: ProviderRequestOptions{Identity: request}}}).Result()
+		},
+		"Complete": func() {
+			wrapped.Complete(ctx, model, req, &ModelsStreamOptions{StreamOptions: StreamOptions{ProviderRequestOptions: ProviderRequestOptions{Identity: request}}})
+		},
+		"StreamSimple": func() {
+			wrapped.StreamSimple(ctx, model, req, &ModelsSimpleStreamOptions{SimpleStreamOptions: SimpleStreamOptions{StreamOptions: StreamOptions{ProviderRequestOptions: ProviderRequestOptions{Identity: request}}}}).Result()
+		},
+		"CompleteSimple": func() {
+			wrapped.CompleteSimple(ctx, model, req, &ModelsSimpleStreamOptions{SimpleStreamOptions: SimpleStreamOptions{StreamOptions: StreamOptions{ProviderRequestOptions: ProviderRequestOptions{Identity: request}}}})
+		},
+		"StreamDeferred": func() {
+			wrapped.StreamDeferred(ctx, model, handle, &ModelsDeferredFetchOptions{DeferredFetchOptions: DeferredFetchOptions{ProviderRequestOptions: ProviderRequestOptions{Identity: request}}}).Result()
+		},
+		"FetchDeferred": func() {
+			wrapped.FetchDeferred(ctx, model, handle, &ModelsDeferredFetchOptions{DeferredFetchOptions: DeferredFetchOptions{ProviderRequestOptions: ProviderRequestOptions{Identity: request}}})
+		},
+		"CancelDeferred": func() {
+			if err := wrapped.CancelDeferred(ctx, model, handle, &ModelsDeferredCancelOptions{DeferredCancelOptions: ProviderRequestOptions{Identity: request}}); err != nil {
+				t.Fatalf("CancelDeferred: %v", err)
+			}
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			received = nil
+			call()
+			// The collection's user agent, the wrapper's attribution, the request's version.
+			if received == nil || received.UserAgent != UserAgentShort || received.Attribution != wrapper || received.Version != "3.0.0" {
+				t.Fatalf("identity = %+v, want short, the wrapper's attribution, version 3.0.0", received)
+			}
+		})
+	}
+}
+
+// The wrapper's ClearProviders reaches the collection.
+func TestWithClientIdentityClearsProviders(t *testing.T) {
+	models := CreateModels(nil)
+	models.SetProvider(CreateProvider(CreateProviderOptions{ID: "p", Auth: noAuthConfigured(), API: &ProviderStreams{
+		Stream: func(context.Context, *Model, TranscriptContext, *StreamOptions) *AssistantMessageEventStream {
+			return nil
+		},
+	}}))
+	WithClientIdentity(models, ClientIdentity{}).(MutableModels).ClearProviders()
+	if len(models.GetProviders()) != 0 {
+		t.Fatalf("ClearProviders through the wrapper left %d providers", len(models.GetProviders()))
+	}
+}

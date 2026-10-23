@@ -426,3 +426,34 @@ func identitySourcesJSON(values []json.RawMessage) []byte {
 	out, _ := json.Marshal(values)
 	return out
 }
+
+// setIdentityHeaders writes pi's getIdentityHeaders object in its order — the
+// User-Agent, then the target's attribution headers as pi lists them — and
+// identityHeaderOrder names every header GetIdentityHeaders can return.
+func TestIdentityHeaderOrder(t *testing.T) {
+	pi := &ai.ClientIdentity{Attribution: &ai.PiAttribution}
+	for _, tc := range []struct {
+		provider string
+		want     []string
+	}{
+		{"openrouter", []string{"User-Agent", "HTTP-Referer", "X-OpenRouter-Title", "X-OpenRouter-Categories"}},
+		{"nvidia", []string{"User-Agent", "X-BILLING-INVOKE-ORIGIN"}},
+		{"opencode", []string{"User-Agent", "x-opencode-client"}},
+		{"plain", []string{"User-Agent"}},
+	} {
+		o := &headerObject{}
+		setIdentityHeaders(o, &ai.Model{Provider: tc.provider}, pi)
+		if !reflect.DeepEqual(o.names, tc.want) {
+			t.Errorf("%s: slots %v, want %v", tc.provider, o.names, tc.want)
+		}
+		known := map[string]bool{}
+		for _, name := range identityHeaderOrder {
+			known[name] = true
+		}
+		for name := range ai.GetIdentityHeaders(ai.ClientIdentityTarget{Provider: tc.provider}, pi) {
+			if !known[name] {
+				t.Errorf("%s: GetIdentityHeaders returns %q, which identityHeaderOrder does not name", tc.provider, name)
+			}
+		}
+	}
+}

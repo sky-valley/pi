@@ -30,10 +30,11 @@ import (
 //     pi-messages) run the merged headers through providerHeadersToRecord
 //     (pi utils/headers.ts), which folds names case-insensitively: the last
 //     slot for a name wins, and a null there deletes every earlier spelling
-//     of it from the record (upstream a328aa89a). The record is then spread
-//     over the adapter's own literal headers, so a null still cannot remove a
-//     header the adapter set literally. headerObject.applyAsRecord (google)
-//     and applyAsFetchInit (pi-messages) are that path.
+//     of it from the record (upstream a328aa89a). google spreads the record
+//     over @google/genai's own literal headers, so a null cannot remove one of
+//     those; pi-messages' fixed headers are part of its record (upstream
+//     adc5fa9f8), so a null removes them too. headerObject.applyAsRecord
+//     (google) and applyAsFetchInit (pi-messages) are that path.
 //
 // Both paths end in a fetch Headers object in pi — the SDK's, or the one fetch
 // builds from pi-messages' plain object — and Headers.append/set normalize
@@ -76,13 +77,12 @@ import (
 // exactly the slot information an http.Header cannot hold.
 //
 // Folding every source into this before touching the request is what keeps the
-// two agreeing. Concretely, on the anthropic OAuth branch pi's object holds
-// "User-Agent" (the seeded pi default) at slot 0 and "user-agent"
-// (claude-cli/<v>) at a later slot, so a caller spelling the name "User-Agent"
-// lands back in slot 0 and loses to the Claude Code identity — while a caller
-// spelling it "user-agent" or "USER-AGENT" wins. Writing straight to an
-// http.Header made the later WRITE win regardless of spelling, which is not
-// what pi does.
+// two agreeing. Concretely, ANTHROPIC_CUSTOM_HEADERS' entries take the first
+// slots of the anthropic object, so "user-agent: x" there holds slot 0 and
+// the OAuth branch's "user-agent" (claude-cli/<v>) writes back into it, while
+// a source spelled "User-Agent" takes a later slot and wins. Writing straight
+// to an http.Header made the later WRITE win regardless of spelling, which is
+// not what pi does.
 type headerObject struct {
 	// names in insertion order; every name is a key of values.
 	names []string
@@ -168,6 +168,30 @@ func arrayIndex(name string) (uint32, bool) {
 func (o *headerObject) merge(source ai.ProviderHeaders) {
 	for _, name := range sortedNames(source) {
 		o.setValue(name, source[name])
+	}
+}
+
+// mergeRecord folds one source in the way pi's providerHeadersToRecord does
+// across its sources (upstream adc5fa9f8 hands it the identity, model and
+// request headers as separate sources): each entry first deletes every
+// spelling of its name the object already holds, case-insensitively, then
+// takes a new slot, so a later source wins whatever spelling an earlier one
+// used, and a marker deletes the name outright. merge is the JS object spread
+// the SDK adapters build instead, where a later source spelled like an
+// earlier slot writes back into it. Within one source, sorted name order is
+// the tie-break, as for merge.
+func (o *headerObject) mergeRecord(source ai.ProviderHeaders) {
+	for _, name := range sortedNames(source) {
+		folded := jstext.ToLower(name)
+		for _, held := range slices.Clone(o.names) {
+			if jstext.ToLower(held) == folded {
+				o.names = slices.DeleteFunc(o.names, func(n string) bool { return n == held })
+				delete(o.values, held)
+			}
+		}
+		if value := source[name]; value != nil {
+			o.setValue(name, value)
+		}
 	}
 }
 
@@ -519,16 +543,14 @@ func (o *headerObject) record() []recordEntry {
 // reaches h (see record), so a marker cancels every spelling an earlier slot
 // gave its name.
 //
-// pi spreads the record over the adapter's literal headers — pi-messages'
-// `{authorization, accept, "content-type", ...record}`, or @google/genai's own
-// defaults — and the transport builds its Headers from that plain object with
-// Headers.append. literals are those headers, spelled exactly as pi's object
-// spells them, and this replays both steps: a record entry whose name matches
-// a literal EXACTLY replaces its value in place (JS spread), while one that
-// matches only case-insensitively is a second key there, and Headers.append
-// joins the two with ", " in slot order — literal first. Measured with node
-// fetch: opts {"Authorization": "x"} on pi-messages sends
-// `authorization: Bearer <key>, x`, where {"authorization": "x"} sends `x`.
+// pi spreads the record over @google/genai's own literal headers, and the
+// transport builds its Headers from that plain object with Headers.append.
+// literals are those headers, spelled exactly as the object spells them, and
+// this replays both steps: a record entry whose name matches a literal EXACTLY
+// replaces its value in place (JS spread), while one that matches only
+// case-insensitively is a second key there, and Headers.append joins the two
+// with ", " in slot order — literal first. Measured through genai 2.21.0:
+// record {"content-type": "text/plain"} sends `application/json, text/plain`.
 //
 // It never deletes from h: a marker is not part of the record, so it cannot
 // remove a literal. Nor does it touch a header the adapter sets on h after
@@ -560,8 +582,11 @@ func (o *headerObject) applyAsRecord(h http.Header, literals ...recordEntry) err
 // convert fails the request ahead of an earlier entry that converts but is
 // refused. Measured with node fetch: {"X-B": "a\nb", "X-C": U+65E5} fails on
 // X-C's conversion here, and on X-B's LF on every other adapter.
-func (o *headerObject) applyAsFetchInit(h http.Header, literals ...recordEntry) error {
-	object := o.spread(literals)
+//
+// pi-messages has no literals outside its record (upstream adc5fa9f8), so the
+// object is the record alone, enumerated as a plain object enumerates it.
+func (o *headerObject) applyAsFetchInit(h http.Header) error {
+	object := o.spread(nil)
 	converted := make([]convertedEntry, len(object))
 	for i, e := range object {
 		c, err := convertEntry(e)

@@ -69,7 +69,8 @@ type ClientAttribution struct {
 }
 
 // PiAttribution is pi's attribution, used by the agent loop and the coding
-// agent (pi PI_ATTRIBUTION).
+// agent (pi PI_ATTRIBUTION). Requests share it by pointer, its Categories
+// slice included: treat it as read-only.
 var PiAttribution = ClientAttribution{Name: "pi", URL: "https://pi.dev", Categories: []string{"cli-agent"}}
 
 // NoAttribution, as ClientIdentity.Attribution, is pi's `attribution: null`:
@@ -196,22 +197,40 @@ func nodeArch() string {
 }
 
 // matchesHost is pi's matchesHost: whether baseURL parses as a URL whose
-// hostname is expectedHost. A URL that does not parse matches nothing. The
-// WHATWG parser pi uses lowercases the host of a special-scheme URL (http,
-// https, ws, wss, ftp, file) and keeps any other scheme's host as written;
-// Go's parser keeps every host as written, so the special ones are folded
-// here.
+// hostname is expectedHost. A URL that does not parse matches nothing. pi
+// parses with the WHATWG URL parser, so the input is first normalized as that
+// parser normalizes it (see whatwgURLInput), and the host of a special-scheme
+// URL is compared lowercased, as the parser lowers it; any other scheme's
+// host stays as written.
 func matchesHost(baseURL, expectedHost string) bool {
-	u, err := url.Parse(baseURL)
+	u, err := url.Parse(whatwgURLInput(baseURL))
 	if err != nil || u.Hostname() == "" {
 		return false
 	}
 	host := u.Hostname()
-	switch strings.ToLower(u.Scheme) {
-	case "http", "https", "ws", "wss", "ftp", "file":
+	if whatwgSpecialSchemes[u.Scheme] { // url.Parse lowercases the scheme
 		host = strings.ToLower(host)
 	}
 	return host == expectedHost
+}
+
+var whatwgSpecialSchemes = map[string]bool{"http": true, "https": true, "ws": true, "wss": true, "ftp": true, "file": true}
+
+// whatwgURLInput is the WHATWG parser's preprocessing of a URL string: leading
+// and trailing C0 controls and spaces are trimmed, every tab and newline is
+// removed, and after a special scheme a backslash reads as a slash.
+func whatwgURLInput(raw string) string {
+	raw = strings.TrimFunc(raw, func(r rune) bool { return r <= 0x20 })
+	raw = strings.Map(func(r rune) rune {
+		if r == '\t' || r == '\n' || r == '\r' {
+			return -1
+		}
+		return r
+	}, raw)
+	if i := strings.IndexByte(raw, ':'); i > 0 && whatwgSpecialSchemes[strings.ToLower(raw[:i])] {
+		raw = raw[:i+1] + strings.ReplaceAll(raw[i+1:], `\`, "/")
+	}
+	return raw
 }
 
 func isOpenRouterTarget(target ClientIdentityTarget) bool {
