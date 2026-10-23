@@ -15,7 +15,9 @@ captured from. The commit-by-commit triage/port ledger lives in
   highlights header + that tag's Notes entry below), because a bare tag notifies
   no one. Older tags are deliberately left without one.
 - The version lives in the tag — there is no `VERSION` file or in-source version
-  constant. **As of `v0.80.11` the port's `major.minor` follows the upstream
+  constant for the port. (`ai.PiAIVersion` is pi's `PI_AI_VERSION`, the
+  upstream pi-ai version the catalog tracks, which the detailed User-Agent
+  carries.) **As of `v0.80.11` the port's `major.minor` follows the upstream
   `pi-ai` catalog `major.minor`; `patch` is the port's own monotonic counter**
   (it never resets, so it stays distinct from pi's patch — e.g. `v0.80.11` syncs
   pi 0.80.7). Earlier tags (`v0.1.0`–`v0.2.10`) used an independent `v0.2.x`
@@ -25,6 +27,7 @@ captured from. The commit-by-commit triage/port ledger lives in
 
 | Version | Date | Commit | Upstream pin | npm catalog | Headline |
 |---|---|---|---|---|---|
+| [`v1.4.28`](#v1428) | 2026-10-23 | `10b2596` | `9ffd27cfa` | pi-ai 1.4.0 | Release v1.4.0 crossed — catalog 939,772→931,909 B, 1614→1599 models across 42 providers (+43/−58, 158 changed), draining the catalog-only queue 4→0; **client identity follows pi into pi-ai**: `ai.ClientIdentity` chooses the User-Agent (`pi/<version> (<platform>; go/<version>; <arch>)` by default) and the provider attribution, which a bare `ai` request no longer sends, the agent loop sends for pi and a coding session sends while install telemetry is on; **OpenRouter usage reports the billed cost** (`totalFromProvider`); status codes inside request ids no longer retry; Anthropic system updates held past dropped replies and a fixed `low` top-level effort; pi-messages `responseModel`; macOS stops a shell group before killing it; env daemon reports pi-env 1.4.0 (`env/v1.4.28`); difftest 66/66 PASS, all against the published build |
 | [`v1.3.27`](#v1327) | 2026-10-19 | `eadfcb7` | `d2e7d8b7c` | pi-ai 1.3.0 | Eight releases crossed (v1.0.0 → v1.3.0), regenerated once from 1.3.0 — catalog 867,163→939,772 B, 1529→1614 models across 42 providers (+140/−55, 366 changed), `azure-openai-responses` renamed `azure`, draining the catalog-only queue 20→1; **pi-env ported whole, daemon included**, as the new `env` submodule (first tag `env/v1.3.27`): remote execution over SSH with Go daemons for eight platforms embedded; **following upstream's deletions** of the protocol, client and server packages, chord's service runtime and the harness; Azure Chat Completions deployments, Gemini 4 `thinkingLevel`, Anthropic inline mid-conversation tools (SDK 0.129.0) and strict-tool fallback; `pi.ai.request` telemetry; response and tool durations; `*` patterns and `+name/-name` in `ToolNames`; Cloudflare auth and endpoints resolved as pi resolves them; `telemetry/telemetrytest`, pi's adapter conformance suite; **a Cloudflare model reaches the account the environment names from an SDK session too** (the README's pattern sent `{CLOUDFLARE_ACCOUNT_ID}` literally); **Breaking:** `coding.NewSession` returns an error, `coding.DefaultCompactionSettings` is a function, `SessionOptions.APIKey` is removed and `SetModel` takes no key, as in pi — a key goes on the session's `Models` (`coding.RuntimeCredentials`); `ai.BuiltinModels` takes `*CreateModelsOptions`, `ProviderRequestOptions.TelemetryContext` is `Telemetry`, telemetry adapters implement `Metrics()`/`Propagation()`/`AddLink`, and the `protocol`, `client` and `server` packages are removed; difftest 66/66 PASS, all against the published build |
 | [`v0.99.26`](#v09926) | 2026-10-01 | `99e58d5` | `5806068c2` | pi-ai 0.99.2 | Release v0.99.2 crossed — catalog regen 862,603→867,163 B, 1523→1529 models across an unchanged 42 providers (+6/−0, 24 changed); **Anthropic workload identity federation** (the SDK's token exchange and cache, reproduced in Go); **Anthropic tools with bounds or unlisted formats are sent non-strict** instead of failing every turn with a 400; an unreadable Retry-After backs off; **tool schemas serialize as pi sends them** (key order, off-type values kept) and the built-in tools' numeric parameters are `number`; the CLI starts with ANTHROPIC_AUTH_TOKEN or federation alone; difftest 66/66 PASS, all against the published build |
 | [`v0.99.25`](#v09925) | 2026-09-30 | `884377d` | `3dd803d7e` | pi-ai 0.99.1 | Releases v0.99.0 and v0.99.1 crossed — catalog regen 823,821→862,603 B, 1495→1523 models, **41→42 providers (typesafe, classifiers only)** (+59/−31, 1,464 changed, every model typed), draining the catalog-only queue 9→0: Claude Sonnet 5.5 and GPT-6.1 Sol, the new Codex default; **Sign in with ChatGPT requests** leave out the fields a token rejects; **scripts get up to 1 MiB of a shell command's output**, decoded as pi decodes it, and a full output that cannot be saved fails the call; also publishes the 09-24→09-29 cycles (provider stream events, openai SDK 7.19.0, structured tool results and `RunToolCall`, model types, Kimi K3 defaults); **Breaking:** `ai.Models` gains the all-model accessors and `Login` takes `*LoginOptions`, as `OAuthAuth.Login` does, `ai.MergeSamplingParams` is removed, and `chord/delta.Track` returns no error; difftest 65/65 PASS, all against the published build |
@@ -56,6 +59,50 @@ captured from. The commit-by-commit triage/port ledger lives in
 | [`v0.1.0`](#v010) | 2026-06-10 | `1210b0a` | — | — | Initial tagged baseline |
 
 ## Notes
+
+### v1.4.28
+Upstream sync `82432219a → 9ffd27cfa` (pi 1.4.0). 47 changes on the union
+range, 46 first-parent (one merge, `scripts/` noise). 22 port — 10 of them
+added to the Scope queue — 25 n/a, 0 decide. **Release v1.4.0 crossed**,
+confirmed by an explicit tag fetch and by `packages/ai/package.json`. The env
+submodule tags alongside: `env/v1.4.28` (`8562ba2`) requires root `v1.4.28`.
+
+Catalog: regenerated by executing `JSON.stringify(MODELS)` against the 1.4.0
+build, after first reproducing the outgoing 1.3.0 catalog byte for byte, and
+derived a second time through the build's compat layer. 1,614 → **1,599
+models** (+43, −58, 158 changed in place) across an unchanged 42 providers,
+939,772 → 931,909 B. It drains the catalog-only queue **4 → 0**: MiniMax
+M3.1 Flash with adaptive effort levels, Codex's gpt-5.5 and gpt-5.3 Spark
+retired, models.dev's retirements, and the classifiers' image-input compat.
+
+This cycle:
+- **Client identity and attribution, now pi-ai's.** `ai.ClientIdentity`
+  (on `ProviderRequestOptions`, `CreateModelsOptions`, `ai.WithClientIdentity`
+  and `agent.AgentOptions`) chooses the `User-Agent` — detailed by default,
+  `pi/1.4.0 (<platform>; go/<version>; <arch>)`, or `ai.UserAgentShort`, or a
+  custom one — and the provider attribution headers (OpenRouter, NVIDIA,
+  OpenCode). A bare `ai` request sends no attribution; the agent loop
+  attributes to pi; a coding session does too while install telemetry is on
+  (`PI_TELEMETRY=0` turns it off). Anthropic's OAuth branch sends Claude
+  Code's identity alone. `x-opencode-session` comes from the Models layer, for
+  any provider pointing at OpenCode, and Cloudflare no longer gets a
+  `pi-coding-agent` user agent. pi-messages sends the identity too, and a
+  caller's header in any spelling now replaces its fixed headers. Matched
+  against 204 requests sent through pi's own adapters.
+- **Cost.** Every computed cost records `totalFromProvider`, and OpenRouter
+  requests (Chat Completions and Anthropic Messages) use the cost OpenRouter
+  billed, including the upstream inference cost on BYOK.
+- **Retries.** A status code inside a request id or byte count no longer makes
+  an error retryable; a proxy-relayed Codex "stream disconnected before
+  completion" does.
+- **Anthropic.** A system update is held past an assistant reply that is
+  dropped, so it never lands before a user message (Claude rejected those);
+  managed-effort models send a fixed `low` top-level effort, which effort caps
+  accept.
+- **Smaller.** pi-messages carries the backend's `responseModel`; device-code
+  login events carry pi's browser and clipboard hints; on macOS a shell's
+  process group is stopped before it is killed, so `a; b` cannot start `b`
+  during cancellation; the env daemon reports pi-env 1.4.0.
 
 ### v1.3.27
 Upstream sync `5806068c2 → d2e7d8b7c` (pi 1.3.0). 338 changes on the union
