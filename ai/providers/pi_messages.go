@@ -71,6 +71,10 @@ type piMessagesEvent struct {
 	Usage    *ai.Usage
 	// ResponseID is the backend's response id.
 	ResponseID string
+	// ResponseModel is the physical model the backend ran, e.g. behind a virtual
+	// model such as Radius's "cheap" (upstream 14c811841). A pointer for the same
+	// reason as ProviderThinkingLevel: pi copies it only when present.
+	ResponseModel *string
 	// ProviderThinkingLevel is the effort the upstream provider actually ran the
 	// turn at, forwarded so the next request can replay it. A pointer because pi
 	// only copies it when the field is present: an absent one leaves the
@@ -102,6 +106,9 @@ func piMessagesEventOf(o rawObject) piMessagesEvent {
 	}
 	ev.Usage = piMessagesUsage(o["usage"])
 	ev.ResponseID, _ = rawString(o["responseId"])
+	if model, ok := rawString(o["responseModel"]); ok {
+		ev.ResponseModel = &model
+	}
 	if level, ok := rawString(o["providerThinkingLevel"]); ok {
 		ev.ProviderThinkingLevel = &level
 	}
@@ -533,6 +540,9 @@ func (c *piMessagesConverter) convert(ev piMessagesEvent) (ai.AssistantMessageEv
 			c.partial.Usage = *ev.Usage
 		}
 		c.partial.ResponseID = ev.ResponseID
+		if ev.ResponseModel != nil {
+			c.partial.ResponseModel = *ev.ResponseModel
+		}
 		if ev.ProviderThinkingLevel != nil {
 			c.partial.ProviderThinkingLevel = *ev.ProviderThinkingLevel
 		}
@@ -545,6 +555,9 @@ func (c *piMessagesConverter) convert(ev piMessagesEvent) (ai.AssistantMessageEv
 		}
 		c.partial.ErrorMessage = ev.ErrorMessage
 		c.partial.ResponseID = ev.ResponseID
+		if ev.ResponseModel != nil {
+			c.partial.ResponseModel = *ev.ResponseModel
+		}
 		if ev.ProviderThinkingLevel != nil {
 			c.partial.ProviderThinkingLevel = *ev.ProviderThinkingLevel
 		}

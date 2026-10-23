@@ -863,8 +863,9 @@ type AssistantMessage struct {
 	Api      Api         `json:"api"`
 	Provider ProviderId  `json:"provider"`
 	Model    string      `json:"model"`
-	// ResponseModel is the concrete model the provider reported when it differs
-	// from the requested Model, which stays the requested id.
+	// ResponseModel is the concrete model reported by the provider, when it
+	// reports one. It may equal the requested Model, which stays the requested
+	// id (upstream 14c811841).
 	ResponseModel string `json:"responseModel,omitempty"`
 	// ResponseID is the provider's own response/message identifier, when its API
 	// exposes one.

@@ -72,7 +72,7 @@ func TestPiMessagesStreamsTextAndToolCalls(t *testing.T) {
 			`{"type":"toolcall_delta","contentIndex":1,"delta":"{\"path\":"}`,
 			`{"type":"toolcall_delta","contentIndex":1,"delta":"\"a.tx"}`,
 			`{"type":"toolcall_end","contentIndex":1,"toolCall":{"type":"toolCall","id":"call_1","name":"read","arguments":{"path":"a.txt"}}}`,
-			`{"type":"done","reason":"toolUse","usage":`+piMessagesUsageJSON+`,"responseId":"resp_1"}`,
+			`{"type":"done","reason":"toolUse","usage":`+piMessagesUsageJSON+`,"responseId":"resp_1","responseModel":"claude-opus-5-5"}`,
 		))
 	}))
 	defer server.Close()
@@ -117,6 +117,10 @@ func TestPiMessagesStreamsTextAndToolCalls(t *testing.T) {
 	}
 	if final.Model != "auto" || final.Provider != "radius" {
 		t.Errorf("model/provider = %q/%q", final.Model, final.Provider)
+	}
+	// The physical model behind the virtual "auto" (upstream 14c811841).
+	if final.ResponseModel != "claude-opus-5-5" {
+		t.Errorf("responseModel = %q, want claude-opus-5-5", final.ResponseModel)
 	}
 	if len(final.Content) != 2 {
 		t.Fatalf("content len = %d, want 2", len(final.Content))
@@ -254,7 +258,7 @@ func TestPiMessagesServerSentError(t *testing.T) {
 		w.Header().Set("content-type", "text/event-stream")
 		io.WriteString(w, piMessagesSSE(
 			`{"type":"start"}`,
-			`{"type":"error","reason":"error","usage":`+piMessagesUsageJSON+`,"errorMessage":"Upstream failed"}`,
+			`{"type":"error","reason":"error","usage":`+piMessagesUsageJSON+`,"errorMessage":"Upstream failed","responseModel":"claude-opus-5-5"}`,
 		))
 	}))
 	defer server.Close()
@@ -273,6 +277,44 @@ func TestPiMessagesServerSentError(t *testing.T) {
 	}
 	if final.Usage != piMessagesWantUsage() {
 		t.Errorf("usage = %+v, want %+v", final.Usage, piMessagesWantUsage())
+	}
+	if final.ResponseModel != "claude-opus-5-5" {
+		t.Errorf("responseModel = %q, want claude-opus-5-5", final.ResponseModel)
+	}
+}
+
+// A terminal event's responseModel is copied onto the message whenever it is
+// present, even when it equals the requested model (upstream 14c811841), and an
+// absent one leaves the message's own standing, as providerThinkingLevel's does.
+func TestPiMessagesResponseModel(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		terminal string
+		existing string
+		want     string
+	}{
+		{"done carries it", `{"type":"done","reason":"stop","usage":` + piMessagesUsageJSON + `,"responseModel":"claude-opus-5-5"}`, "", "claude-opus-5-5"},
+		{"error carries it", `{"type":"error","reason":"error","usage":` + piMessagesUsageJSON + `,"errorMessage":"boom","responseModel":"gpt-6"}`, "", "gpt-6"},
+		{"equal to the requested model is kept", `{"type":"done","reason":"stop","usage":` + piMessagesUsageJSON + `,"responseModel":"auto"}`, "", "auto"},
+		{"present replaces an existing one", `{"type":"done","reason":"stop","usage":` + piMessagesUsageJSON + `,"responseModel":"claude-opus-5-5"}`, "older", "claude-opus-5-5"},
+		{"absent on done leaves it standing", `{"type":"done","reason":"stop","usage":` + piMessagesUsageJSON + `}`, "older", "older"},
+		{"absent on error leaves it standing", `{"type":"error","reason":"error","usage":` + piMessagesUsageJSON + `,"errorMessage":"boom"}`, "older", "older"},
+		{"absent leaves it unset", `{"type":"done","reason":"stop","usage":` + piMessagesUsageJSON + `}`, "", ""},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			c := newPiMessagesConverter(piMessagesTestModel("http://unused"))
+			c.partial.ResponseModel = tc.existing
+			ev, _, err := decodePiMessagesEvent(tc.terminal)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := c.convert(ev); err != nil {
+				t.Fatal(err)
+			}
+			if c.partial.ResponseModel != tc.want {
+				t.Fatalf("responseModel = %q, want %q", c.partial.ResponseModel, tc.want)
+			}
+		})
 	}
 }
 
