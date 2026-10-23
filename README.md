@@ -60,18 +60,27 @@ resumes a specific file). Project context files (`AGENTS.md`/`CLAUDE.md` — an
 the directory tree) and Agent Skills (`.pi/skills/*/SKILL.md`) are folded into the system
 prompt exactly as upstream pi does.
 
-The model catalog (999 models across 35 providers) is embedded from pi's generated
-catalog. API keys are resolved from the same environment variables pi uses
+The model catalog (1,599 chat models across 42 providers) is embedded from pi's
+generated catalog. API keys are resolved from the same environment variables pi uses
 (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, …).
 
-### Provider attribution
+### Client identity and provider attribution
 
-Matching upstream pi, requests to OpenRouter, NVIDIA, Cloudflare, Vercel AI
-Gateway, and OpenCode carry attribution headers by default (`HTTP-Referer:
-https://pi.dev`, `X-OpenRouter-Title: pi`, `x-opencode-session`, etc.). Set
-`PI_TELEMETRY=0` to disable them, or override any of them per-request via
-`SessionOptions.Headers` / `model.Headers` (both take precedence). Other
-providers (Anthropic, OpenAI, Google) are unaffected.
+Matching upstream pi, every request identifies its client with a `User-Agent`,
+`pi/<version> (<platform>; go/<version>; <arch>)` by default. Requests from the
+agent loop, and from a `coding.Session` while install telemetry is on, are also
+attributed to pi on the providers that take attribution headers: OpenRouter
+(`HTTP-Referer`, `X-OpenRouter-Title`, `X-OpenRouter-Categories`), NVIDIA
+(`X-BILLING-INVOKE-ORIGIN`) and OpenCode (`x-opencode-client`). Set
+`PI_TELEMETRY=0` to turn attribution off for a session. A bare `ai` request sends
+none unless its identity asks for it.
+
+`ai.ClientIdentity` chooses both, on `ProviderRequestOptions.Identity`,
+`ai.CreateModelsOptions.Identity` or `agent.AgentOptions.Identity`: a
+`User-Agent` mode (`ai.UserAgentShort`, `ai.UserAgentCustom(...)`) and an
+attribution (`&ai.PiAttribution`, your own `ai.ClientAttribution`, or
+`ai.NoAttribution`). Model and per-request headers still override it. Requests
+to OpenCode carry `x-opencode-session` from the session id.
 
 ## Using the library
 

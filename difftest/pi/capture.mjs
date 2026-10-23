@@ -59,7 +59,7 @@ async function adapterContext(scenario) {
  * A scenario that sets `catalogModel: "<provider>/<id>"` claims its `model` is a
  * verbatim copy of that entry in the published catalog. Hold it to that against
  * the build under test. A regen can move fields the scenario's request never
- * reads, and then the stale copy still passes: baseten-catalog-kimi missed the
+ * reads, and then the stale copy still passes: baseten-catalog-kimi (now -glm) missed the
  * 0.87.0 regen's inputLimits that way, through two regens.
  */
 async function checkCatalogCopy(scenario) {
