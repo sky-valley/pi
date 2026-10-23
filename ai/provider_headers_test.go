@@ -115,7 +115,7 @@ func TestApplyAuthPreservesDeletionMarkers(t *testing.T) {
 		Headers: ProviderHeaders{"x-api-key": nil, "X-Model": HeaderValue("")}}
 
 	_, opts, err := models.(*modelsImpl).applyAuth(context.Background(), model,
-		&ProviderRequestOptions{Headers: ProviderHeaders{"X-Consumer": nil}}, ModelsRequestTransforms{})
+		&ProviderRequestOptions{Headers: ProviderHeaders{"X-Consumer": nil}}, "", ModelsRequestTransforms{})
 	if err != nil {
 		t.Fatalf("applyAuth: %v", err)
 	}

@@ -285,6 +285,11 @@ func filterToolCalls(m *ai.AssistantMessage) []ai.ToolCall {
 	return out
 }
 
+// DefaultAgentIdentity is the request identity of agent loops: pi-ai's
+// defaults with provider attribution to pi (pi DEFAULT_AGENT_IDENTITY,
+// upstream adc5fa9f8). AgentLoopConfig.Identity overrides it field by field.
+var DefaultAgentIdentity = ai.ClientIdentity{Attribution: &ai.PiAttribution}
+
 func streamAssistantResponse(ctx context.Context, agentCtx *AgentContext, config AgentLoopConfig, emit EventSink, streamFn StreamFn) *ai.AssistantMessage {
 	messages := agentCtx.Messages
 	if config.TransformContext != nil {
@@ -328,6 +333,7 @@ func streamAssistantResponse(ctx context.Context, agentCtx *AgentContext, config
 				TimeoutMs:       config.TimeoutMs,
 				HTTPClient:      config.HTTPClient,
 				Headers:         config.Headers,
+				Identity:        ai.MergeClientIdentity(&DefaultAgentIdentity, config.Identity),
 			},
 			OnProviderStreamEvent:     config.OnProviderStreamEvent,
 			Transport:                 config.Transport,

@@ -73,11 +73,14 @@ func BuiltinModels(options *CreateModelsOptions) MutableModels {
 // builtinProviderStreams is a built-in provider's implementation of one api:
 // the built-in one, which the Cloudflare providers wrap so their endpoint
 // placeholders resolve from the request's env (pi's provider factories hand
-// cloudflareStreams(api) to createProvider).
+// cloudflareStreams(api) to createProvider), and the OpenCode providers so
+// their requests carry OpenCode's session header (withOpenCodeSessionHeader).
 func builtinProviderStreams(providerID string, streams ProviderStreams) ProviderStreams {
 	switch providerID {
 	case "cloudflare-workers-ai", "cloudflare-ai-gateway":
 		return cloudflareStreams(streams)
+	case "opencode", "opencode-go":
+		return openCodeStreams(streams)
 	}
 	return streams
 }

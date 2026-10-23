@@ -1460,6 +1460,12 @@ type ProviderRequestOptions struct {
 	// caller values overriding provider defaults. A nil value suppresses a
 	// provider/API default header of the same name (see ProviderHeaders).
 	Headers ProviderHeaders
+	// Identity is how the request identifies the calling app: the User-Agent
+	// and provider attribution headers (pi `identity?`, upstream adc5fa9f8).
+	// Nil, and every unset field, takes pi-ai's defaults: a detailed
+	// User-Agent and no attribution. Adapters apply it below model, provider
+	// and request headers.
+	Identity *ClientIdentity
 	// TimeoutMs bounds the wait for a response's headers on anthropic-messages,
 	// openai-completions and openai-responses, as pi's timeoutMs does through
 	// their SDKs' timeout option; zero means the SDKs' default, 10 minutes.

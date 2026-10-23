@@ -685,6 +685,9 @@ type CreateModelsOptions struct {
 	Credentials CredentialStore
 	ModelsStore ModelsStore
 	AuthContext AuthContext
+	// Identity is the default identity of every request; a request's own
+	// Identity overrides it field by field (upstream adc5fa9f8).
+	Identity *ClientIdentity
 }
 
 type modelsImpl struct {
@@ -694,6 +697,7 @@ type modelsImpl struct {
 	credentials CredentialStore
 	modelsStore ModelsStore
 	authContext AuthContext
+	identity    *ClientIdentity
 
 	// refreshMu guards the per-provider refresh generation counters and the
 	// cancel funcs of the refreshes currently in flight (pi's
@@ -712,7 +716,9 @@ func CreateModels(options *CreateModelsOptions) MutableModels {
 	var creds CredentialStore = NewInMemoryCredentialStore()
 	var store ModelsStore = NewInMemoryModelsStore()
 	var ac AuthContext = DefaultProviderAuthContext()
+	var identity *ClientIdentity
 	if options != nil {
+		identity = options.Identity
 		if options.Credentials != nil {
 			creds = options.Credentials
 		}
@@ -728,6 +734,7 @@ func CreateModels(options *CreateModelsOptions) MutableModels {
 		credentials:   creds,
 		modelsStore:   store,
 		authContext:   ac,
+		identity:      identity,
 		refreshGens:   map[string]uint64{},
 		refreshCancel: map[string]*providerRefresh{},
 		publishQueue:  newKeyedLock(),
@@ -1473,10 +1480,17 @@ func (m *modelsImpl) Logout(ctx context.Context, providerID string) error {
 // case-insensitively, env merges per key, and the Models-only header
 // transform runs last. An unconfigured provider is an error (ff28097a; the
 // pre-facade runtime passed the request through untouched).
+//
+// sessionID is the request's session id, "" for the requests that carry none
+// (pi's `"sessionId" in options`): a request to OpenCode takes it as the
+// x-opencode-session header beneath every other source (upstream 04a93bad8),
+// so custom providers pointing at OpenCode route too. The request's identity
+// is merged over the collection's.
 func (m *modelsImpl) applyAuth(
 	ctx context.Context,
 	model *Model,
 	opts *ProviderRequestOptions,
+	sessionID string,
 	transforms ModelsRequestTransforms,
 ) (*Model, *ProviderRequestOptions, error) {
 	var overrides *AuthResolutionOverrides
@@ -1499,7 +1513,17 @@ func (m *modelsImpl) applyAuth(
 	if ro.APIKey == "" { // options?.apiKey ?? auth.apiKey
 		ro.APIKey = auth.APIKey
 	}
-	headers := mergeHeaders(auth.Headers, ro.Headers)
+	requestModel := model
+	if auth.BaseURL != "" {
+		clone := *model
+		clone.BaseURL = auth.BaseURL
+		requestModel = &clone
+	}
+	var sessionHeaders ProviderHeaders
+	for name, value := range GetOpenCodeSessionHeaders(requestModel.IdentityTarget(), sessionID) {
+		sessionHeaders = ProviderHeaders{name: HeaderValue(value)}
+	}
+	headers := mergeHeaders(mergeHeaders(sessionHeaders, auth.Headers), ro.Headers)
 	if transforms.TransformHeaders != nil {
 		if headers == nil {
 			headers = ProviderHeaders{} // pi: transformHeaders(headers ?? {})
@@ -1511,13 +1535,7 @@ func (m *modelsImpl) applyAuth(
 	}
 	ro.Headers = headers
 	ro.Env = mergeStringMap(resolution.Env, ro.Env) // explicit env override
-
-	requestModel := model
-	if auth.BaseURL != "" {
-		clone := *model
-		clone.BaseURL = auth.BaseURL
-		requestModel = &clone
-	}
+	ro.Identity = MergeClientIdentity(m.identity, ro.Identity)
 	return requestModel, &ro, nil
 }
 
@@ -1542,11 +1560,13 @@ func (m *modelsImpl) Stream(ctx context.Context, model *Model, req Context, opts
 	}
 	var base *ProviderRequestOptions
 	var transforms ModelsRequestTransforms
+	var sessionID string
 	if opts != nil {
 		base = &opts.ProviderRequestOptions
 		transforms = opts.ModelsRequestTransforms
+		sessionID = opts.SessionID
 	}
-	requestModel, requestOptions, err := m.applyAuth(ctx, model, base, transforms)
+	requestModel, requestOptions, err := m.applyAuth(ctx, model, base, sessionID, transforms)
 	if err != nil {
 		return setup.fail(err)
 	}
@@ -1579,11 +1599,13 @@ func (m *modelsImpl) StreamSimple(ctx context.Context, model *Model, req Context
 	}
 	var base *ProviderRequestOptions
 	var transforms ModelsRequestTransforms
+	var sessionID string
 	if opts != nil {
 		base = &opts.SimpleStreamOptions.ProviderRequestOptions
 		transforms = opts.ModelsRequestTransforms
+		sessionID = opts.SessionID
 	}
-	requestModel, requestOptions, err := m.applyAuth(ctx, model, base, transforms)
+	requestModel, requestOptions, err := m.applyAuth(ctx, model, base, sessionID, transforms)
 	if err != nil {
 		return setup.fail(err)
 	}
@@ -1619,7 +1641,7 @@ func (m *modelsImpl) StreamDeferred(ctx context.Context, model *Model, handle De
 		base = &opts.ProviderRequestOptions
 		transforms = opts.ModelsRequestTransforms
 	}
-	requestModel, requestOptions, err := m.applyAuth(ctx, model, base, transforms)
+	requestModel, requestOptions, err := m.applyAuth(ctx, model, base, "", transforms)
 	if err != nil {
 		return setup.fail(err)
 	}
@@ -1654,7 +1676,7 @@ func (m *modelsImpl) CancelDeferred(ctx context.Context, model *Model, handle De
 		base = &opts.DeferredCancelOptions
 		transforms = opts.ModelsRequestTransforms
 	}
-	requestModel, requestOptions, err := m.applyAuth(ctx, model, base, transforms)
+	requestModel, requestOptions, err := m.applyAuth(ctx, model, base, "", transforms)
 	if err != nil {
 		return err
 	}

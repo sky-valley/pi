@@ -154,7 +154,14 @@ func sessionStreamFn(models ai.Models, next agent.StreamFn) agent.StreamFn {
 		if err := ai.AssertChatModel(model); err != nil {
 			return ai.ErrorStream(model, err)
 		}
-		return next(ctx, model, req, opts)
+		// pi's buildRequestOptions sets the session's identity on every
+		// request, replacing the agent loop's default (upstream adc5fa9f8).
+		request := ai.SimpleStreamOptions{}
+		if opts != nil {
+			request = *opts
+		}
+		request.Identity = clientIdentity()
+		return next(ctx, model, req, &request)
 	}
 }
 

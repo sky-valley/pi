@@ -231,10 +231,10 @@ func TestAnthropicBetaHeaderIsTrimmedLikeFetch(t *testing.T) {
 
 // A record entry spelled differently from an adapter literal is joined onto it
 // (see applyAsRecord), and the value it contributes is normalized first, so an
-// LF in it no longer fails the request. An empty contribution leaves only the
-// separator: genai's wire ends the joined value at the comma, and pi-messages'
-// ends it with a space that its HTTP/1.1 receiver strips as whitespace outside
-// the field value — a trailing space HTTP/2 does not allow.
+// LF in it no longer fails the request. google is the one adapter left with
+// literals outside its record (genai's Content-Type); pi-messages' fixed
+// headers joined the record in upstream adc5fa9f8 (see
+// TestPiMessagesRecordFoldsFixedHeaders).
 func TestJoinedHeaderValueIsTrimmedLikeFetch(t *testing.T) {
 	adapters := map[string]wireAdapter{}
 	for _, adapter := range wireAdapters() {
@@ -248,10 +248,6 @@ func TestJoinedHeaderValueIsTrimmedLikeFetch(t *testing.T) {
 		want    string
 		edges   bool
 	}{
-		{"LF in the joined value", "pi-messages", ai.ProviderHeaders{"Authorization": strPtr("x\n")}, "authorization", "Bearer test-key, x", false},
-		{"empty joined value", "pi-messages", ai.ProviderHeaders{"Authorization": strPtr("")}, "authorization", "Bearer test-key,", true},
-		{"whitespace-only joined value", "pi-messages", ai.ProviderHeaders{"Authorization": strPtr("  ")}, "authorization", "Bearer test-key,", true},
-		{"spaces round the joined value", "pi-messages", ai.ProviderHeaders{"Content-Type": strPtr(" text/plain ")}, "content-type", "application/json, text/plain", true},
 		{"LF in the joined value", "google-generative-ai", ai.ProviderHeaders{"content-type": strPtr(" text/plain\n")}, "content-type", "application/json, text/plain", false},
 	} {
 		adapter := adapters[tc.adapter]
@@ -431,10 +427,10 @@ func TestHeaderConversionFailsInPisOrder(t *testing.T) {
 // Headers still holds it. The openai and anthropic SDKs build their auth header
 // from their own options and append it before `defaultHeaders`, so a key they
 // cannot convert fails the request whatever the headers say (sdkHeaders.auth).
-// pi-messages' key is a literal of the object its record is spread over: an
-// override spelled exactly like it replaces it unconverted, and a marker, which
-// is not part of the record, leaves it standing. genai appends its key only
-// when the record carries none.
+// pi-messages' key is an entry of its record (upstream adc5fa9f8): an
+// override replaces it unconverted, and a marker deletes it, so the request
+// goes out with no authorization at all. genai appends its key only when the
+// record carries none.
 func TestAPIKeyOverrideDecidesWhetherTheKeyIsConverted(t *testing.T) {
 	key := "k" + string(rune(cjk))
 	override := ai.ProviderHeaders{"authorization": strPtr("ok"), "x-api-key": strPtr("ok"), "x-goog-api-key": strPtr("ok")}
@@ -458,6 +454,15 @@ func TestAPIKeyOverrideDecidesWhetherTheKeyIsConverted(t *testing.T) {
 			h, final := runWire(t, adapter, ai.StreamOptions{ProviderRequestOptions: ai.ProviderRequestOptions{
 				APIKey: key, Headers: marker,
 			}})
+			if adapter.name == "pi-messages" {
+				if final.StopReason == ai.StopError && h == nil {
+					t.Fatalf("stream failed before sending: %s", final.ErrorMessage)
+				}
+				if values, ok := h[http.CanonicalHeaderKey(adapter.auth)]; ok {
+					t.Fatalf("%s = %q, want it deleted by the marker", adapter.auth, values)
+				}
+				return
+			}
 			wantNotSent(t, h, final, keyErr)
 		})
 	}
@@ -465,7 +470,8 @@ func TestAPIKeyOverrideDecidesWhetherTheKeyIsConverted(t *testing.T) {
 
 // A record entry joined onto a literal is converted on its own, before the
 // join: its index counts from its own first character, and its Latin-1 bytes
-// follow the literal's.
+// follow the literal's. pi-messages' entry replaces its fixed header now
+// (upstream adc5fa9f8), so its bytes stand alone.
 func TestJoinedHeaderValueIsAByteStringLikeFetch(t *testing.T) {
 	adapters := map[string]wireAdapter{}
 	for _, adapter := range wireAdapters() {
@@ -477,7 +483,7 @@ func TestJoinedHeaderValueIsAByteStringLikeFetch(t *testing.T) {
 		header        string
 		wire, err     string
 	}{
-		{"latin-1", "pi-messages", ai.ProviderHeaders{"Authorization": strPtr(string(rune(0xe9)))}, "authorization", "Bearer test-key, \xe9", ""},
+		{"latin-1", "pi-messages", ai.ProviderHeaders{"Authorization": strPtr(string(rune(0xe9)))}, "authorization", "\xe9", ""},
 		{"above U+00FF", "pi-messages", ai.ProviderHeaders{"Authorization": strPtr(" " + string(rune(cjk)))}, "authorization", "", byteStringError(1, cjk)},
 		{"latin-1", "google-generative-ai", ai.ProviderHeaders{"content-type": strPtr(string(rune(0xe9)))}, "content-type", "application/json, \xe9", ""},
 		{"above U+00FF", "google-generative-ai", ai.ProviderHeaders{"content-type": strPtr(string(rune(cjk)))}, "content-type", "", byteStringError(0, cjk)},

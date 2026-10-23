@@ -442,9 +442,7 @@ func StreamGoogle(ctx context.Context, model *ai.Model, req ai.TranscriptContext
 			// below; genai's User-Agent and x-goog-api-client defaults are not
 			// sent at all (docs/UPSTREAM.md D10/D12).
 			o := &headerObject{}
-			o.merge(piUserAgentHeaders())
-			o.mergeStrings(getSessionAttributionHeaders(model, opts.SessionID))
-			o.mergeStrings(getDefaultAttributionHeaders(model))
+			setIdentityHeaders(o, model, opts.Identity)
 			o.merge(model.Headers)
 			o.merge(opts.Headers)
 			if err := o.applyAsRecord(r.Header, recordEntry{"Content-Type", "application/json"}); err != nil {

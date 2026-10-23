@@ -368,19 +368,14 @@ func StreamOpenAIResponses(ctx context.Context, model *ai.Model, req ai.Transcri
 			fail(err)
 			return
 		}
-		// pi createClient (openai-responses.ts, upstream 87af49dec)
-		// builds ONE header object and hands it to the SDK as
-		// `defaultHeaders`; headerObject is that object, slots and all.
-		// It opens with pi's runtime user agent —
-		// `{"User-Agent": getPiUserAgent(), ...model.headers}` — so it is a
-		// default every later source outranks, xai included.
+		// pi createClient (openai-responses.ts) builds ONE header object
+		// and hands it to the SDK as `defaultHeaders`; headerObject is that
+		// object, slots and all. It opens with the request identity's headers
+		// — `{...getIdentityHeaders(model, identity), ...model.headers}`
+		// (upstream adc5fa9f8) — so the User-Agent and attribution are
+		// defaults every later source outranks, xai included.
 		o := &headerObject{}
-		o.merge(piUserAgentHeaders())
-		// pi mergeProviderAttributionHeaders (sdk.ts) puts the attribution
-		// bundle at the bottom of the precedence stack: emit session +
-		// default attribution first so model.headers and options.headers
-		// override them.
-		applyAttributionDefaults(o.set, model, opts.SessionID)
+		setIdentityHeaders(o, model, opts.Identity)
 		// pi createClient header precedence (openai-responses.ts:189-219):
 		// model.headers, copilot dynamic headers, session cache headers,
 		// then options.headers merged last so they can override defaults.
@@ -403,8 +398,8 @@ func StreamOpenAIResponses(ctx context.Context, model *ai.Model, req ai.Transcri
 			}
 		}
 		// pi options.headers (consumer) are spread last and win over
-		// everything above, including model.headers and the attribution
-		// defaults — a deletion marker here suppresses any of them.
+		// everything above, including model.headers and the identity's
+		// headers — a deletion marker here suppresses any of them.
 		o.merge(opts.Headers)
 
 		// The client is built here, in pi's createClient, before the params and

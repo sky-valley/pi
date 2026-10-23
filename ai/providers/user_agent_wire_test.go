@@ -10,14 +10,16 @@ import (
 	"github.com/sky-valley/pi/ai"
 )
 
-// --- pi 87af49dec: pi's runtime user agent is a DEFAULT, not an override ---
+// --- the identity's User-Agent is a DEFAULT, not an override ---
 //
-// Upstream used to FORCE this string over every other header source for two
-// providers (kimi-coding on anthropic-messages, 9d2ec7ffa; xai on both openai
-// adapters, 70e878d4c). 87af49dec deletes that forcing and instead spreads
-// `{"User-Agent": getPiUserAgent()}` FIRST into each adapter's header merge, so
-// the precedence reverses: every later source wins, and four adapters that sent
-// no user agent at all now send one by default.
+// Upstream used to FORCE pi's user agent over every other header source for
+// two providers (kimi-coding on anthropic-messages, 9d2ec7ffa; xai on both
+// openai adapters, 70e878d4c). 87af49dec spread it FIRST into each adapter's
+// header merge instead, and adc5fa9f8 replaced the fixed string with the
+// request identity's (ai.FormatUserAgent; pi/<version> (<platform>; <runtime>;
+// <arch>) by default), still first: every later source wins. These pin the
+// slot and spelling mechanics around it; TestIdentityHeadersMatchPi pins the
+// values against pi's own adapters.
 //
 // Request headers are outside the bodies-only differential harness, so this
 // surface is pinned here on the wire instead.
@@ -103,7 +105,7 @@ func anthropicUAOptions(opts ai.ProviderRequestOptions) *AnthropicOptions {
 func TestPiUserAgentIsTheDefaultOnEveryAdapter(t *testing.T) {
 	t.Run("anthropic api key", func(t *testing.T) {
 		h := captureAnthropicHeaders(t, anthropicUAModel(), anthropicUAOptions(ai.ProviderRequestOptions{APIKey: "k"}))
-		wantUserAgent(t, h, piUserAgent())
+		wantUserAgent(t, h, ai.FormatUserAgent(nil))
 	})
 	// The ANTHROPIC_AUTH_TOKEN bearer branch (upstream 24e5cc04) sits ahead of
 	// the other three and merges the same client headers.
@@ -114,7 +116,7 @@ func TestPiUserAgentIsTheDefaultOnEveryAdapter(t *testing.T) {
 		if got := h.Get("authorization"); got != "Bearer my-auth-token" {
 			t.Fatalf("authorization = %q, want the bearer branch", got)
 		}
-		wantUserAgent(t, h, piUserAgent())
+		wantUserAgent(t, h, ai.FormatUserAgent(nil))
 	})
 	// The copilot branch, on a model that carries no catalog user agent of its
 	// own (the shipped ones do — see TestModelHeadersOverridePiUserAgent).
@@ -125,13 +127,13 @@ func TestPiUserAgentIsTheDefaultOnEveryAdapter(t *testing.T) {
 		if got := h.Get("authorization"); got != "Bearer gh-token" {
 			t.Fatalf("authorization = %q, want the copilot branch", got)
 		}
-		wantUserAgent(t, h, piUserAgent())
+		wantUserAgent(t, h, ai.FormatUserAgent(nil))
 	})
 	t.Run("openai-completions", func(t *testing.T) {
 		h := captureOpenAIHeaders(t, openAITestModel(), ai.StreamOptions{
 			ProviderRequestOptions: ai.ProviderRequestOptions{APIKey: "k"},
 		})
-		wantUserAgent(t, h, piUserAgent())
+		wantUserAgent(t, h, ai.FormatUserAgent(nil))
 	})
 	t.Run("openai-responses", func(t *testing.T) {
 		model := &ai.Model{ID: "gpt-5", Api: ai.APIOpenAIResponses, Provider: "openai",
@@ -139,7 +141,7 @@ func TestPiUserAgentIsTheDefaultOnEveryAdapter(t *testing.T) {
 		h := captureOpenAIResponsesHeaders(t, model, ai.StreamOptions{
 			ProviderRequestOptions: ai.ProviderRequestOptions{APIKey: "k"},
 		})
-		wantUserAgent(t, h, piUserAgent())
+		wantUserAgent(t, h, ai.FormatUserAgent(nil))
 	})
 	t.Run("google", func(t *testing.T) {
 		model := &ai.Model{ID: "gemini-2.5-flash", Api: ai.APIGoogleGenerativeAI, Provider: "google",
@@ -147,7 +149,7 @@ func TestPiUserAgentIsTheDefaultOnEveryAdapter(t *testing.T) {
 		h := captureGoogleHeaders(t, model, ai.StreamOptions{
 			ProviderRequestOptions: ai.ProviderRequestOptions{APIKey: "g-key"},
 		})
-		wantUserAgent(t, h, piUserAgent())
+		wantUserAgent(t, h, ai.FormatUserAgent(nil))
 	})
 	// xai is the interesting one on the openai adapters: it used to force pi's
 	// agent last; now it merely gets the same default as everyone else.
@@ -157,7 +159,7 @@ func TestPiUserAgentIsTheDefaultOnEveryAdapter(t *testing.T) {
 		h := captureOpenAIHeaders(t, model, ai.StreamOptions{
 			ProviderRequestOptions: ai.ProviderRequestOptions{APIKey: "xai-test-token"},
 		})
-		wantUserAgent(t, h, piUserAgent())
+		wantUserAgent(t, h, ai.FormatUserAgent(nil))
 	})
 	t.Run("xai responses", func(t *testing.T) {
 		model := &ai.Model{ID: "grok-4.5", Api: ai.APIOpenAIResponses, Provider: "xai",
@@ -165,7 +167,7 @@ func TestPiUserAgentIsTheDefaultOnEveryAdapter(t *testing.T) {
 		h := captureOpenAIResponsesHeaders(t, model, ai.StreamOptions{
 			ProviderRequestOptions: ai.ProviderRequestOptions{APIKey: "xai-test-token"},
 		})
-		wantUserAgent(t, h, piUserAgent())
+		wantUserAgent(t, h, ai.FormatUserAgent(nil))
 	})
 }
 
@@ -258,12 +260,12 @@ func TestOptionsHeadersOverridePiUserAgentAndModelHeaders(t *testing.T) {
 	// real client with the object mergeClientHeaders builds at 87af49dec:
 	// {"User-Agent": custom-agent} → wire `user-agent: claude-cli/<v>`,
 	// {"user-agent": custom-agent} → wire `user-agent: custom-agent`.
-	t.Run("anthropic oauth identity keeps the User-Agent slot", func(t *testing.T) {
+	t.Run("anthropic oauth identity loses to the seed spelling too", func(t *testing.T) {
 		h := captureAnthropicHeaders(t, anthropicUAModel(), anthropicUAOptions(ai.ProviderRequestOptions{
 			APIKey:  "sk-ant-oat-token",
 			Headers: ai.ProviderHeaders{"User-Agent": strPtr("custom-client")},
 		}))
-		wantUserAgent(t, h, "claude-cli/"+claudeCodeVersion)
+		wantUserAgent(t, h, "custom-client")
 	})
 	t.Run("anthropic oauth identity loses to another spelling", func(t *testing.T) {
 		h := captureAnthropicHeaders(t, anthropicUAModel(), anthropicUAOptions(ai.ProviderRequestOptions{
@@ -341,7 +343,7 @@ func TestUserAgentMarkerBeatsPiDefault(t *testing.T) {
 		}))
 		// net/http supplies a transport agent once ours is gone, exactly as
 		// fetch does for pi; what must not survive is pi's default.
-		if got := h.Get("User-Agent"); got == piUserAgent() {
+		if got := h.Get("User-Agent"); got == ai.FormatUserAgent(nil) {
 			t.Fatalf("a marker must suppress pi's default user agent, got %q", got)
 		}
 	})
@@ -349,12 +351,14 @@ func TestUserAgentMarkerBeatsPiDefault(t *testing.T) {
 	// the seeded "User-Agent" and the claude-cli identity sits at a later slot,
 	// so cancelling the default leaves the identity standing — probe against
 	// @anthropic-ai/sdk 0.91.1: {"User-Agent": null} → `claude-cli/<v>`.
-	t.Run("anthropic oauth marker on the seed slot only", func(t *testing.T) {
+	t.Run("anthropic oauth marker removes Claude Code's agent", func(t *testing.T) {
 		h := captureAnthropicHeaders(t, anthropicUAModel(), anthropicUAOptions(ai.ProviderRequestOptions{
 			APIKey:  "sk-ant-oat-token",
 			Headers: ai.ProviderHeaders{"User-Agent": nil},
 		}))
-		wantUserAgent(t, h, "claude-cli/"+claudeCodeVersion)
+		if got := h.Get("User-Agent"); got == "claude-cli/"+claudeCodeVersion || got == ai.FormatUserAgent(nil) {
+			t.Fatalf("a marker must suppress every source's user agent, got %q", got)
+		}
 	})
 	t.Run("openai-completions", func(t *testing.T) {
 		model := &ai.Model{ID: "grok-custom", Api: ai.APIOpenAICompletions, Provider: "xai",
@@ -365,7 +369,7 @@ func TestUserAgentMarkerBeatsPiDefault(t *testing.T) {
 				Headers: ai.ProviderHeaders{"User-Agent": nil},
 			},
 		})
-		if got := h.Get("User-Agent"); got == piUserAgent() {
+		if got := h.Get("User-Agent"); got == ai.FormatUserAgent(nil) {
 			t.Fatalf("a marker must suppress pi's default user agent, got %q", got)
 		}
 	})
@@ -378,7 +382,7 @@ func TestUserAgentMarkerBeatsPiDefault(t *testing.T) {
 				Headers: ai.ProviderHeaders{"User-Agent": nil},
 			},
 		})
-		if got := h.Get("User-Agent"); got == piUserAgent() {
+		if got := h.Get("User-Agent"); got == ai.FormatUserAgent(nil) {
 			t.Fatalf("a marker must suppress pi's default user agent, got %q", got)
 		}
 	})
@@ -393,7 +397,7 @@ func TestUserAgentMarkerBeatsPiDefault(t *testing.T) {
 				Headers: ai.ProviderHeaders{"User-Agent": nil},
 			},
 		})
-		if got := h.Get("User-Agent"); got == piUserAgent() {
+		if got := h.Get("User-Agent"); got == ai.FormatUserAgent(nil) {
 			t.Fatalf("a marker on the same name must drop pi's default, got %q", got)
 		}
 	})
@@ -414,7 +418,7 @@ func TestUserAgentMarkerBeatsPiDefault(t *testing.T) {
 				Headers: ai.ProviderHeaders{"user-agent": nil},
 			},
 		})
-		if got := h.Get("User-Agent"); got == piUserAgent() {
+		if got := h.Get("User-Agent"); got == ai.FormatUserAgent(nil) {
 			t.Fatalf("a case-variant marker must drop pi's default, got %q", got)
 		}
 	})
@@ -439,20 +443,7 @@ func TestGoogleCaseVariantMarkerDeletesEarlierSource(t *testing.T) {
 	if values, present := h["X-Trace"]; present {
 		t.Fatalf("X-Trace = %q, want it absent: the later marker deletes the model's spelling", values)
 	}
-	wantUserAgent(t, h, piUserAgent())
-}
-
-// Cloudflare attribution is a separate surface and still outranks the default:
-// pi's host folds it into options.headers, which are spread after the seeded
-// agent, so `pi-coding-agent` reaches the wire rather than pi's runtime agent.
-func TestCloudflareAttributionUserAgentBeatsPiDefault(t *testing.T) {
-	t.Setenv("PI_TELEMETRY", "1")
-	model := &ai.Model{ID: "gemini-2.5-flash", Api: ai.APIGoogleGenerativeAI,
-		Provider: "cloudflare-workers-ai", Input: []string{"text"}, MaxTokens: 4096}
-	h := captureGoogleHeaders(t, model, ai.StreamOptions{
-		ProviderRequestOptions: ai.ProviderRequestOptions{APIKey: "g-key"},
-	})
-	wantUserAgent(t, h, "pi-coding-agent")
+	wantUserAgent(t, h, ai.FormatUserAgent(nil))
 }
 
 // The record path must not depend on Go map iteration order either. Two
@@ -461,7 +452,7 @@ func TestCloudflareAttributionUserAgentBeatsPiDefault(t *testing.T) {
 // "User-Agent", so it takes the last slot and the fold keeps it alone.
 func TestHeaderObjectRecordCaseCollisionIsDeterministic(t *testing.T) {
 	source := ai.ProviderHeaders{
-		"User-Agent": strPtr(piUserAgent()),
+		"User-Agent": strPtr(ai.FormatUserAgent(nil)),
 		"user-agent": strPtr("from-model"),
 		"X-Keep":     strPtr("keep"),
 		// A marker with no other spelling leaves nothing to write.

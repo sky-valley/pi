@@ -1,0 +1,4080 @@
+{
+	"sha": "9ffd27cfa",
+	"runtime": "node/v26.4.0",
+	"piAttribution": {
+		"name": "pi",
+		"url": "https://pi.dev",
+		"categories": [
+			"cli-agent"
+		]
+	},
+	"functions": {
+		"attribution": [
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "not-a-url-openrouter.ai"
+				},
+				"headers": {}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "not-a-url-openrouter.ai"
+				},
+				"identity": {
+					"attribution": {
+						"name": "pi",
+						"url": "https://pi.dev",
+						"categories": [
+							"cli-agent"
+						]
+					}
+				},
+				"headers": {
+					"HTTP-Referer": "https://pi.dev",
+					"X-OpenRouter-Title": "pi",
+					"X-OpenRouter-Categories": "cli-agent"
+				}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "not-a-url-openrouter.ai"
+				},
+				"identity": {
+					"attribution": {
+						"name": "",
+						"url": ""
+					}
+				},
+				"headers": {
+					"HTTP-Referer": "",
+					"X-OpenRouter-Title": ""
+				}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "not-a-url-openrouter.ai"
+				},
+				"identity": {
+					"attribution": {
+						"name": "a",
+						"url": "u",
+						"categories": [
+							""
+						]
+					}
+				},
+				"headers": {
+					"HTTP-Referer": "u",
+					"X-OpenRouter-Title": "a",
+					"X-OpenRouter-Categories": ""
+				}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "not a url opencode.ai"
+				},
+				"headers": {}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "not a url opencode.ai"
+				},
+				"identity": {
+					"attribution": {
+						"name": "pi",
+						"url": "https://pi.dev",
+						"categories": [
+							"cli-agent"
+						]
+					}
+				},
+				"headers": {}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "not a url opencode.ai"
+				},
+				"identity": {
+					"attribution": {
+						"name": "",
+						"url": ""
+					}
+				},
+				"headers": {}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "not a url opencode.ai"
+				},
+				"identity": {
+					"attribution": {
+						"name": "a",
+						"url": "u",
+						"categories": [
+							""
+						]
+					}
+				},
+				"headers": {}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "https://OPENCODE.AI/zen"
+				},
+				"headers": {}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "https://OPENCODE.AI/zen"
+				},
+				"identity": {
+					"attribution": {
+						"name": "pi",
+						"url": "https://pi.dev",
+						"categories": [
+							"cli-agent"
+						]
+					}
+				},
+				"headers": {
+					"x-opencode-client": "pi"
+				}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "https://OPENCODE.AI/zen"
+				},
+				"identity": {
+					"attribution": {
+						"name": "",
+						"url": ""
+					}
+				},
+				"headers": {
+					"x-opencode-client": ""
+				}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "https://OPENCODE.AI/zen"
+				},
+				"identity": {
+					"attribution": {
+						"name": "a",
+						"url": "u",
+						"categories": [
+							""
+						]
+					}
+				},
+				"headers": {
+					"x-opencode-client": "a"
+				}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "https://opencode.ai:8443/zen"
+				},
+				"headers": {}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "https://opencode.ai:8443/zen"
+				},
+				"identity": {
+					"attribution": {
+						"name": "pi",
+						"url": "https://pi.dev",
+						"categories": [
+							"cli-agent"
+						]
+					}
+				},
+				"headers": {
+					"x-opencode-client": "pi"
+				}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "https://opencode.ai:8443/zen"
+				},
+				"identity": {
+					"attribution": {
+						"name": "",
+						"url": ""
+					}
+				},
+				"headers": {
+					"x-opencode-client": ""
+				}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "https://opencode.ai:8443/zen"
+				},
+				"identity": {
+					"attribution": {
+						"name": "a",
+						"url": "u",
+						"categories": [
+							""
+						]
+					}
+				},
+				"headers": {
+					"x-opencode-client": "a"
+				}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "https://user@integrate.api.nvidia.com/v1"
+				},
+				"headers": {}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "https://user@integrate.api.nvidia.com/v1"
+				},
+				"identity": {
+					"attribution": {
+						"name": "pi",
+						"url": "https://pi.dev",
+						"categories": [
+							"cli-agent"
+						]
+					}
+				},
+				"headers": {
+					"X-BILLING-INVOKE-ORIGIN": "Pi"
+				}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "https://user@integrate.api.nvidia.com/v1"
+				},
+				"identity": {
+					"attribution": {
+						"name": "",
+						"url": ""
+					}
+				},
+				"headers": {
+					"X-BILLING-INVOKE-ORIGIN": ""
+				}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "https://user@integrate.api.nvidia.com/v1"
+				},
+				"identity": {
+					"attribution": {
+						"name": "a",
+						"url": "u",
+						"categories": [
+							""
+						]
+					}
+				},
+				"headers": {
+					"X-BILLING-INVOKE-ORIGIN": "A"
+				}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "HTTPS://INTEGRATE.API.NVIDIA.COM/v1"
+				},
+				"headers": {}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "HTTPS://INTEGRATE.API.NVIDIA.COM/v1"
+				},
+				"identity": {
+					"attribution": {
+						"name": "pi",
+						"url": "https://pi.dev",
+						"categories": [
+							"cli-agent"
+						]
+					}
+				},
+				"headers": {
+					"X-BILLING-INVOKE-ORIGIN": "Pi"
+				}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "HTTPS://INTEGRATE.API.NVIDIA.COM/v1"
+				},
+				"identity": {
+					"attribution": {
+						"name": "",
+						"url": ""
+					}
+				},
+				"headers": {
+					"X-BILLING-INVOKE-ORIGIN": ""
+				}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "HTTPS://INTEGRATE.API.NVIDIA.COM/v1"
+				},
+				"identity": {
+					"attribution": {
+						"name": "a",
+						"url": "u",
+						"categories": [
+							""
+						]
+					}
+				},
+				"headers": {
+					"X-BILLING-INVOKE-ORIGIN": "A"
+				}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "foo://OPENCODE.AI/x"
+				},
+				"headers": {}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "foo://OPENCODE.AI/x"
+				},
+				"identity": {
+					"attribution": {
+						"name": "pi",
+						"url": "https://pi.dev",
+						"categories": [
+							"cli-agent"
+						]
+					}
+				},
+				"headers": {}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "foo://OPENCODE.AI/x"
+				},
+				"identity": {
+					"attribution": {
+						"name": "",
+						"url": ""
+					}
+				},
+				"headers": {}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "foo://OPENCODE.AI/x"
+				},
+				"identity": {
+					"attribution": {
+						"name": "a",
+						"url": "u",
+						"categories": [
+							""
+						]
+					}
+				},
+				"headers": {}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "foo://opencode.ai/x"
+				},
+				"headers": {}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "foo://opencode.ai/x"
+				},
+				"identity": {
+					"attribution": {
+						"name": "pi",
+						"url": "https://pi.dev",
+						"categories": [
+							"cli-agent"
+						]
+					}
+				},
+				"headers": {
+					"x-opencode-client": "pi"
+				}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "foo://opencode.ai/x"
+				},
+				"identity": {
+					"attribution": {
+						"name": "",
+						"url": ""
+					}
+				},
+				"headers": {
+					"x-opencode-client": ""
+				}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "foo://opencode.ai/x"
+				},
+				"identity": {
+					"attribution": {
+						"name": "a",
+						"url": "u",
+						"categories": [
+							""
+						]
+					}
+				},
+				"headers": {
+					"x-opencode-client": "a"
+				}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "https://opencode.ai./zen"
+				},
+				"headers": {}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "https://opencode.ai./zen"
+				},
+				"identity": {
+					"attribution": {
+						"name": "pi",
+						"url": "https://pi.dev",
+						"categories": [
+							"cli-agent"
+						]
+					}
+				},
+				"headers": {}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "https://opencode.ai./zen"
+				},
+				"identity": {
+					"attribution": {
+						"name": "",
+						"url": ""
+					}
+				},
+				"headers": {}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "https://opencode.ai./zen"
+				},
+				"identity": {
+					"attribution": {
+						"name": "a",
+						"url": "u",
+						"categories": [
+							""
+						]
+					}
+				},
+				"headers": {}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "integrate.api.nvidia.com/v1"
+				},
+				"headers": {}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "integrate.api.nvidia.com/v1"
+				},
+				"identity": {
+					"attribution": {
+						"name": "pi",
+						"url": "https://pi.dev",
+						"categories": [
+							"cli-agent"
+						]
+					}
+				},
+				"headers": {}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "integrate.api.nvidia.com/v1"
+				},
+				"identity": {
+					"attribution": {
+						"name": "",
+						"url": ""
+					}
+				},
+				"headers": {}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "integrate.api.nvidia.com/v1"
+				},
+				"identity": {
+					"attribution": {
+						"name": "a",
+						"url": "u",
+						"categories": [
+							""
+						]
+					}
+				},
+				"headers": {}
+			},
+			{
+				"target": {
+					"provider": "opencode-go",
+					"baseUrl": ""
+				},
+				"headers": {}
+			},
+			{
+				"target": {
+					"provider": "opencode-go",
+					"baseUrl": ""
+				},
+				"identity": {
+					"attribution": {
+						"name": "pi",
+						"url": "https://pi.dev",
+						"categories": [
+							"cli-agent"
+						]
+					}
+				},
+				"headers": {
+					"x-opencode-client": "pi"
+				}
+			},
+			{
+				"target": {
+					"provider": "opencode-go",
+					"baseUrl": ""
+				},
+				"identity": {
+					"attribution": {
+						"name": "",
+						"url": ""
+					}
+				},
+				"headers": {
+					"x-opencode-client": ""
+				}
+			},
+			{
+				"target": {
+					"provider": "opencode-go",
+					"baseUrl": ""
+				},
+				"identity": {
+					"attribution": {
+						"name": "a",
+						"url": "u",
+						"categories": [
+							""
+						]
+					}
+				},
+				"headers": {
+					"x-opencode-client": "a"
+				}
+			},
+			{
+				"target": {
+					"provider": "",
+					"baseUrl": ""
+				},
+				"headers": {}
+			},
+			{
+				"target": {
+					"provider": "",
+					"baseUrl": ""
+				},
+				"identity": {
+					"attribution": {
+						"name": "pi",
+						"url": "https://pi.dev",
+						"categories": [
+							"cli-agent"
+						]
+					}
+				},
+				"headers": {}
+			},
+			{
+				"target": {
+					"provider": "",
+					"baseUrl": ""
+				},
+				"identity": {
+					"attribution": {
+						"name": "",
+						"url": ""
+					}
+				},
+				"headers": {}
+			},
+			{
+				"target": {
+					"provider": "",
+					"baseUrl": ""
+				},
+				"identity": {
+					"attribution": {
+						"name": "a",
+						"url": "u",
+						"categories": [
+							""
+						]
+					}
+				},
+				"headers": {}
+			}
+		],
+		"session": [
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "not-a-url-openrouter.ai"
+				},
+				"headers": null
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "not a url opencode.ai"
+				},
+				"headers": null
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "https://OPENCODE.AI/zen"
+				},
+				"headers": {
+					"x-opencode-session": "s"
+				}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "https://opencode.ai:8443/zen"
+				},
+				"headers": {
+					"x-opencode-session": "s"
+				}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "https://user@integrate.api.nvidia.com/v1"
+				},
+				"headers": null
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "HTTPS://INTEGRATE.API.NVIDIA.COM/v1"
+				},
+				"headers": null
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "foo://OPENCODE.AI/x"
+				},
+				"headers": null
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "foo://opencode.ai/x"
+				},
+				"headers": {
+					"x-opencode-session": "s"
+				}
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "https://opencode.ai./zen"
+				},
+				"headers": null
+			},
+			{
+				"target": {
+					"provider": "custom",
+					"baseUrl": "integrate.api.nvidia.com/v1"
+				},
+				"headers": null
+			},
+			{
+				"target": {
+					"provider": "opencode-go",
+					"baseUrl": ""
+				},
+				"headers": {
+					"x-opencode-session": "s"
+				}
+			},
+			{
+				"target": {
+					"provider": "",
+					"baseUrl": ""
+				},
+				"headers": null
+			}
+		],
+		"merge": [
+			{
+				"sources": [],
+				"merged": "undefined"
+			},
+			{
+				"sources": [
+					null,
+					null
+				],
+				"merged": "undefined"
+			},
+			{
+				"sources": [
+					{}
+				],
+				"merged": {}
+			},
+			{
+				"sources": [
+					{
+						"attribution": {
+							"name": "pi",
+							"url": "https://pi.dev",
+							"categories": [
+								"cli-agent"
+							]
+						},
+						"userAgent": "short"
+					},
+					{
+						"version": "1.0.0"
+					}
+				],
+				"merged": {
+					"userAgent": "short",
+					"attribution": {
+						"name": "pi",
+						"url": "https://pi.dev",
+						"categories": [
+							"cli-agent"
+						]
+					},
+					"version": "1.0.0"
+				}
+			},
+			{
+				"sources": [
+					{
+						"attribution": {
+							"name": "pi",
+							"url": "https://pi.dev",
+							"categories": [
+								"cli-agent"
+							]
+						}
+					},
+					{
+						"attribution": null
+					}
+				],
+				"merged": {
+					"attribution": null
+				}
+			},
+			{
+				"sources": [
+					{
+						"attribution": null
+					},
+					{
+						"attribution": {
+							"name": "pi",
+							"url": "https://pi.dev",
+							"categories": [
+								"cli-agent"
+							]
+						}
+					}
+				],
+				"merged": {
+					"attribution": {
+						"name": "pi",
+						"url": "https://pi.dev",
+						"categories": [
+							"cli-agent"
+						]
+					}
+				}
+			},
+			{
+				"sources": [
+					{
+						"userAgent": {
+							"custom": "a"
+						}
+					},
+					{
+						"userAgent": "detailed"
+					},
+					null
+				],
+				"merged": {
+					"userAgent": "detailed"
+				}
+			},
+			{
+				"sources": [
+					{
+						"version": "1.0.0"
+					},
+					{
+						"version": ""
+					}
+				],
+				"merged": {
+					"version": ""
+				}
+			}
+		],
+		"userAgent": [
+			{
+				"identity": {
+					"userAgent": {
+						"custom": ""
+					}
+				},
+				"value": ""
+			},
+			{
+				"identity": {
+					"version": ""
+				},
+				"value": "pi/ (darwin; node/v26.4.0; arm64)"
+			}
+		]
+	},
+	"rows": [
+		{
+			"name": "openai-completions: no identity",
+			"api": "openai-completions",
+			"apiKey": "key",
+			"provider": "plain",
+			"baseUrl": "https://api.example.test/v1",
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "openai-completions: empty identity",
+			"api": "openai-completions",
+			"apiKey": "key",
+			"provider": "plain",
+			"baseUrl": "https://api.example.test/v1",
+			"identity": {},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "openai-completions: short",
+			"api": "openai-completions",
+			"apiKey": "key",
+			"provider": "plain",
+			"baseUrl": "https://api.example.test/v1",
+			"identity": {
+				"userAgent": "short",
+				"version": "9.9.9"
+			},
+			"sent": {
+				"user-agent": "pi"
+			}
+		},
+		{
+			"name": "openai-completions: custom",
+			"api": "openai-completions",
+			"apiKey": "key",
+			"provider": "plain",
+			"baseUrl": "https://api.example.test/v1",
+			"identity": {
+				"userAgent": {
+					"custom": "acme/1.0"
+				}
+			},
+			"sent": {
+				"user-agent": "acme/1.0"
+			}
+		},
+		{
+			"name": "openai-completions: detailed version",
+			"api": "openai-completions",
+			"apiKey": "key",
+			"provider": "plain",
+			"baseUrl": "https://api.example.test/v1",
+			"identity": {
+				"userAgent": "detailed",
+				"version": "9.9.9"
+			},
+			"sent": {
+				"user-agent": "pi/9.9.9 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "openai-completions: no attribution by default",
+			"api": "openai-completions",
+			"apiKey": "key",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "openai-completions: pi on openrouter",
+			"api": "openai-completions",
+			"apiKey": "key",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"sent": {
+				"http-referer": "https://pi.dev",
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-openrouter-categories": "cli-agent",
+				"x-openrouter-title": "pi"
+			}
+		},
+		{
+			"name": "openai-completions: acme on openrouter, no categories",
+			"api": "openai-completions",
+			"apiKey": "key",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"identity": {
+				"attribution": {
+					"name": "acme",
+					"url": "https://acme.example"
+				}
+			},
+			"sent": {
+				"http-referer": "https://acme.example",
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-openrouter-title": "acme"
+			}
+		},
+		{
+			"name": "openai-completions: acme on openrouter, empty categories",
+			"api": "openai-completions",
+			"apiKey": "key",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"identity": {
+				"attribution": {
+					"name": "acme",
+					"url": "https://acme.example",
+					"categories": []
+				}
+			},
+			"sent": {
+				"http-referer": "https://acme.example",
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-openrouter-title": "acme"
+			}
+		},
+		{
+			"name": "openai-completions: acme on openrouter, two categories",
+			"api": "openai-completions",
+			"apiKey": "key",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"identity": {
+				"attribution": {
+					"name": "acme",
+					"url": "https://acme.example",
+					"categories": [
+						"cli-agent",
+						"cloud-agent"
+					]
+				}
+			},
+			"sent": {
+				"http-referer": "https://acme.example",
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-openrouter-categories": "cli-agent,cloud-agent",
+				"x-openrouter-title": "acme"
+			}
+		},
+		{
+			"name": "openai-completions: null attribution",
+			"api": "openai-completions",
+			"apiKey": "key",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"identity": {
+				"attribution": null
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "openai-completions: pi on nvidia",
+			"api": "openai-completions",
+			"apiKey": "key",
+			"provider": "nvidia",
+			"baseUrl": "https://integrate.api.nvidia.com/v1",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-billing-invoke-origin": "Pi"
+			}
+		},
+		{
+			"name": "openai-completions: nvidia capitalizes ß",
+			"api": "openai-completions",
+			"apiKey": "key",
+			"provider": "nvidia",
+			"baseUrl": "https://integrate.api.nvidia.com/v1",
+			"identity": {
+				"attribution": {
+					"name": "ßeta",
+					"url": "x"
+				}
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-billing-invoke-origin": "SSeta"
+			}
+		},
+		{
+			"name": "openai-completions: nvidia keeps a capital",
+			"api": "openai-completions",
+			"apiKey": "key",
+			"provider": "nvidia",
+			"baseUrl": "https://integrate.api.nvidia.com/v1",
+			"identity": {
+				"attribution": {
+					"name": "Über",
+					"url": "x"
+				}
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-billing-invoke-origin": "Über"
+			}
+		},
+		{
+			"name": "openai-completions: pi on opencode",
+			"api": "openai-completions",
+			"apiKey": "key",
+			"provider": "opencode",
+			"baseUrl": "https://opencode.ai/zen/v1",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-opencode-client": "pi"
+			}
+		},
+		{
+			"name": "openai-completions: pi on another provider",
+			"api": "openai-completions",
+			"apiKey": "key",
+			"provider": "plain",
+			"baseUrl": "https://api.example.test/v1",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "openai-completions: pi on cloudflare",
+			"api": "openai-completions",
+			"apiKey": "key",
+			"provider": "cloudflare-workers-ai",
+			"baseUrl": "https://api.example.test/v1",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "openai-completions: model User-Agent outranks the identity",
+			"api": "openai-completions",
+			"apiKey": "key",
+			"provider": "plain",
+			"baseUrl": "https://api.example.test/v1",
+			"modelHeaders": {
+				"User-Agent": "model-agent/1.0"
+			},
+			"identity": {
+				"userAgent": {
+					"custom": "acme"
+				}
+			},
+			"sent": {
+				"user-agent": "model-agent/1.0"
+			}
+		},
+		{
+			"name": "openai-completions: model attribution header outranks the identity",
+			"api": "openai-completions",
+			"apiKey": "key",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"modelHeaders": {
+				"X-OpenRouter-Title": "model-title"
+			},
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"sent": {
+				"http-referer": "https://pi.dev",
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-openrouter-categories": "cli-agent",
+				"x-openrouter-title": "model-title"
+			}
+		},
+		{
+			"name": "openai-completions: request marker removes the User-Agent",
+			"api": "openai-completions",
+			"apiKey": "key",
+			"provider": "plain",
+			"baseUrl": "https://api.example.test/v1",
+			"headers": {
+				"user-agent": null
+			},
+			"sent": {}
+		},
+		{
+			"name": "openai-completions: request marker removes an attribution header",
+			"api": "openai-completions",
+			"apiKey": "key",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				},
+				"userAgent": "short"
+			},
+			"headers": {
+				"HTTP-Referer": null
+			},
+			"sent": {
+				"user-agent": "pi",
+				"x-openrouter-categories": "cli-agent",
+				"x-openrouter-title": "pi"
+			}
+		},
+		{
+			"name": "openai-completions: request header outranks the identity",
+			"api": "openai-completions",
+			"apiKey": "key",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"headers": {
+				"X-OpenRouter-Title": "request-title",
+				"User-Agent": "request-agent"
+			},
+			"sent": {
+				"http-referer": "https://pi.dev",
+				"user-agent": "request-agent",
+				"x-openrouter-categories": "cli-agent",
+				"x-openrouter-title": "request-title"
+			}
+		},
+		{
+			"name": "openai-responses: no identity",
+			"api": "openai-responses",
+			"apiKey": "key",
+			"provider": "plain",
+			"baseUrl": "https://api.example.test/v1",
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "openai-responses: empty identity",
+			"api": "openai-responses",
+			"apiKey": "key",
+			"provider": "plain",
+			"baseUrl": "https://api.example.test/v1",
+			"identity": {},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "openai-responses: short",
+			"api": "openai-responses",
+			"apiKey": "key",
+			"provider": "plain",
+			"baseUrl": "https://api.example.test/v1",
+			"identity": {
+				"userAgent": "short",
+				"version": "9.9.9"
+			},
+			"sent": {
+				"user-agent": "pi"
+			}
+		},
+		{
+			"name": "openai-responses: custom",
+			"api": "openai-responses",
+			"apiKey": "key",
+			"provider": "plain",
+			"baseUrl": "https://api.example.test/v1",
+			"identity": {
+				"userAgent": {
+					"custom": "acme/1.0"
+				}
+			},
+			"sent": {
+				"user-agent": "acme/1.0"
+			}
+		},
+		{
+			"name": "openai-responses: detailed version",
+			"api": "openai-responses",
+			"apiKey": "key",
+			"provider": "plain",
+			"baseUrl": "https://api.example.test/v1",
+			"identity": {
+				"userAgent": "detailed",
+				"version": "9.9.9"
+			},
+			"sent": {
+				"user-agent": "pi/9.9.9 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "openai-responses: no attribution by default",
+			"api": "openai-responses",
+			"apiKey": "key",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "openai-responses: pi on openrouter",
+			"api": "openai-responses",
+			"apiKey": "key",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"sent": {
+				"http-referer": "https://pi.dev",
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-openrouter-categories": "cli-agent",
+				"x-openrouter-title": "pi"
+			}
+		},
+		{
+			"name": "openai-responses: acme on openrouter, no categories",
+			"api": "openai-responses",
+			"apiKey": "key",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"identity": {
+				"attribution": {
+					"name": "acme",
+					"url": "https://acme.example"
+				}
+			},
+			"sent": {
+				"http-referer": "https://acme.example",
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-openrouter-title": "acme"
+			}
+		},
+		{
+			"name": "openai-responses: acme on openrouter, empty categories",
+			"api": "openai-responses",
+			"apiKey": "key",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"identity": {
+				"attribution": {
+					"name": "acme",
+					"url": "https://acme.example",
+					"categories": []
+				}
+			},
+			"sent": {
+				"http-referer": "https://acme.example",
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-openrouter-title": "acme"
+			}
+		},
+		{
+			"name": "openai-responses: acme on openrouter, two categories",
+			"api": "openai-responses",
+			"apiKey": "key",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"identity": {
+				"attribution": {
+					"name": "acme",
+					"url": "https://acme.example",
+					"categories": [
+						"cli-agent",
+						"cloud-agent"
+					]
+				}
+			},
+			"sent": {
+				"http-referer": "https://acme.example",
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-openrouter-categories": "cli-agent,cloud-agent",
+				"x-openrouter-title": "acme"
+			}
+		},
+		{
+			"name": "openai-responses: null attribution",
+			"api": "openai-responses",
+			"apiKey": "key",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"identity": {
+				"attribution": null
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "openai-responses: pi on nvidia",
+			"api": "openai-responses",
+			"apiKey": "key",
+			"provider": "nvidia",
+			"baseUrl": "https://integrate.api.nvidia.com/v1",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-billing-invoke-origin": "Pi"
+			}
+		},
+		{
+			"name": "openai-responses: nvidia capitalizes ß",
+			"api": "openai-responses",
+			"apiKey": "key",
+			"provider": "nvidia",
+			"baseUrl": "https://integrate.api.nvidia.com/v1",
+			"identity": {
+				"attribution": {
+					"name": "ßeta",
+					"url": "x"
+				}
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-billing-invoke-origin": "SSeta"
+			}
+		},
+		{
+			"name": "openai-responses: nvidia keeps a capital",
+			"api": "openai-responses",
+			"apiKey": "key",
+			"provider": "nvidia",
+			"baseUrl": "https://integrate.api.nvidia.com/v1",
+			"identity": {
+				"attribution": {
+					"name": "Über",
+					"url": "x"
+				}
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-billing-invoke-origin": "Über"
+			}
+		},
+		{
+			"name": "openai-responses: pi on opencode",
+			"api": "openai-responses",
+			"apiKey": "key",
+			"provider": "opencode",
+			"baseUrl": "https://opencode.ai/zen/v1",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-opencode-client": "pi"
+			}
+		},
+		{
+			"name": "openai-responses: pi on another provider",
+			"api": "openai-responses",
+			"apiKey": "key",
+			"provider": "plain",
+			"baseUrl": "https://api.example.test/v1",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "openai-responses: pi on cloudflare",
+			"api": "openai-responses",
+			"apiKey": "key",
+			"provider": "cloudflare-workers-ai",
+			"baseUrl": "https://api.example.test/v1",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "openai-responses: model User-Agent outranks the identity",
+			"api": "openai-responses",
+			"apiKey": "key",
+			"provider": "plain",
+			"baseUrl": "https://api.example.test/v1",
+			"modelHeaders": {
+				"User-Agent": "model-agent/1.0"
+			},
+			"identity": {
+				"userAgent": {
+					"custom": "acme"
+				}
+			},
+			"sent": {
+				"user-agent": "model-agent/1.0"
+			}
+		},
+		{
+			"name": "openai-responses: model attribution header outranks the identity",
+			"api": "openai-responses",
+			"apiKey": "key",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"modelHeaders": {
+				"X-OpenRouter-Title": "model-title"
+			},
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"sent": {
+				"http-referer": "https://pi.dev",
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-openrouter-categories": "cli-agent",
+				"x-openrouter-title": "model-title"
+			}
+		},
+		{
+			"name": "openai-responses: request marker removes the User-Agent",
+			"api": "openai-responses",
+			"apiKey": "key",
+			"provider": "plain",
+			"baseUrl": "https://api.example.test/v1",
+			"headers": {
+				"user-agent": null
+			},
+			"sent": {}
+		},
+		{
+			"name": "openai-responses: request marker removes an attribution header",
+			"api": "openai-responses",
+			"apiKey": "key",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				},
+				"userAgent": "short"
+			},
+			"headers": {
+				"HTTP-Referer": null
+			},
+			"sent": {
+				"user-agent": "pi",
+				"x-openrouter-categories": "cli-agent",
+				"x-openrouter-title": "pi"
+			}
+		},
+		{
+			"name": "openai-responses: request header outranks the identity",
+			"api": "openai-responses",
+			"apiKey": "key",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"headers": {
+				"X-OpenRouter-Title": "request-title",
+				"User-Agent": "request-agent"
+			},
+			"sent": {
+				"http-referer": "https://pi.dev",
+				"user-agent": "request-agent",
+				"x-openrouter-categories": "cli-agent",
+				"x-openrouter-title": "request-title"
+			}
+		},
+		{
+			"name": "anthropic-messages: no identity",
+			"api": "anthropic-messages",
+			"apiKey": "sk-ant-api-test",
+			"provider": "plain",
+			"baseUrl": "https://api.example.test/v1",
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "anthropic-messages: empty identity",
+			"api": "anthropic-messages",
+			"apiKey": "sk-ant-api-test",
+			"provider": "plain",
+			"baseUrl": "https://api.example.test/v1",
+			"identity": {},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "anthropic-messages: short",
+			"api": "anthropic-messages",
+			"apiKey": "sk-ant-api-test",
+			"provider": "plain",
+			"baseUrl": "https://api.example.test/v1",
+			"identity": {
+				"userAgent": "short",
+				"version": "9.9.9"
+			},
+			"sent": {
+				"user-agent": "pi"
+			}
+		},
+		{
+			"name": "anthropic-messages: custom",
+			"api": "anthropic-messages",
+			"apiKey": "sk-ant-api-test",
+			"provider": "plain",
+			"baseUrl": "https://api.example.test/v1",
+			"identity": {
+				"userAgent": {
+					"custom": "acme/1.0"
+				}
+			},
+			"sent": {
+				"user-agent": "acme/1.0"
+			}
+		},
+		{
+			"name": "anthropic-messages: detailed version",
+			"api": "anthropic-messages",
+			"apiKey": "sk-ant-api-test",
+			"provider": "plain",
+			"baseUrl": "https://api.example.test/v1",
+			"identity": {
+				"userAgent": "detailed",
+				"version": "9.9.9"
+			},
+			"sent": {
+				"user-agent": "pi/9.9.9 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "anthropic-messages: no attribution by default",
+			"api": "anthropic-messages",
+			"apiKey": "sk-ant-api-test",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "anthropic-messages: pi on openrouter",
+			"api": "anthropic-messages",
+			"apiKey": "sk-ant-api-test",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"sent": {
+				"http-referer": "https://pi.dev",
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-openrouter-categories": "cli-agent",
+				"x-openrouter-title": "pi"
+			}
+		},
+		{
+			"name": "anthropic-messages: acme on openrouter, no categories",
+			"api": "anthropic-messages",
+			"apiKey": "sk-ant-api-test",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"identity": {
+				"attribution": {
+					"name": "acme",
+					"url": "https://acme.example"
+				}
+			},
+			"sent": {
+				"http-referer": "https://acme.example",
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-openrouter-title": "acme"
+			}
+		},
+		{
+			"name": "anthropic-messages: acme on openrouter, empty categories",
+			"api": "anthropic-messages",
+			"apiKey": "sk-ant-api-test",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"identity": {
+				"attribution": {
+					"name": "acme",
+					"url": "https://acme.example",
+					"categories": []
+				}
+			},
+			"sent": {
+				"http-referer": "https://acme.example",
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-openrouter-title": "acme"
+			}
+		},
+		{
+			"name": "anthropic-messages: acme on openrouter, two categories",
+			"api": "anthropic-messages",
+			"apiKey": "sk-ant-api-test",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"identity": {
+				"attribution": {
+					"name": "acme",
+					"url": "https://acme.example",
+					"categories": [
+						"cli-agent",
+						"cloud-agent"
+					]
+				}
+			},
+			"sent": {
+				"http-referer": "https://acme.example",
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-openrouter-categories": "cli-agent,cloud-agent",
+				"x-openrouter-title": "acme"
+			}
+		},
+		{
+			"name": "anthropic-messages: null attribution",
+			"api": "anthropic-messages",
+			"apiKey": "sk-ant-api-test",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"identity": {
+				"attribution": null
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "anthropic-messages: pi on nvidia",
+			"api": "anthropic-messages",
+			"apiKey": "sk-ant-api-test",
+			"provider": "nvidia",
+			"baseUrl": "https://integrate.api.nvidia.com/v1",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-billing-invoke-origin": "Pi"
+			}
+		},
+		{
+			"name": "anthropic-messages: nvidia capitalizes ß",
+			"api": "anthropic-messages",
+			"apiKey": "sk-ant-api-test",
+			"provider": "nvidia",
+			"baseUrl": "https://integrate.api.nvidia.com/v1",
+			"identity": {
+				"attribution": {
+					"name": "ßeta",
+					"url": "x"
+				}
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-billing-invoke-origin": "SSeta"
+			}
+		},
+		{
+			"name": "anthropic-messages: nvidia keeps a capital",
+			"api": "anthropic-messages",
+			"apiKey": "sk-ant-api-test",
+			"provider": "nvidia",
+			"baseUrl": "https://integrate.api.nvidia.com/v1",
+			"identity": {
+				"attribution": {
+					"name": "Über",
+					"url": "x"
+				}
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-billing-invoke-origin": "Über"
+			}
+		},
+		{
+			"name": "anthropic-messages: pi on opencode",
+			"api": "anthropic-messages",
+			"apiKey": "sk-ant-api-test",
+			"provider": "opencode",
+			"baseUrl": "https://opencode.ai/zen/v1",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-opencode-client": "pi"
+			}
+		},
+		{
+			"name": "anthropic-messages: pi on another provider",
+			"api": "anthropic-messages",
+			"apiKey": "sk-ant-api-test",
+			"provider": "plain",
+			"baseUrl": "https://api.example.test/v1",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "anthropic-messages: pi on cloudflare",
+			"api": "anthropic-messages",
+			"apiKey": "sk-ant-api-test",
+			"provider": "cloudflare-workers-ai",
+			"baseUrl": "https://api.example.test/v1",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "anthropic-messages: model User-Agent outranks the identity",
+			"api": "anthropic-messages",
+			"apiKey": "sk-ant-api-test",
+			"provider": "plain",
+			"baseUrl": "https://api.example.test/v1",
+			"modelHeaders": {
+				"User-Agent": "model-agent/1.0"
+			},
+			"identity": {
+				"userAgent": {
+					"custom": "acme"
+				}
+			},
+			"sent": {
+				"user-agent": "model-agent/1.0"
+			}
+		},
+		{
+			"name": "anthropic-messages: model attribution header outranks the identity",
+			"api": "anthropic-messages",
+			"apiKey": "sk-ant-api-test",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"modelHeaders": {
+				"X-OpenRouter-Title": "model-title"
+			},
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"sent": {
+				"http-referer": "https://pi.dev",
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-openrouter-categories": "cli-agent",
+				"x-openrouter-title": "model-title"
+			}
+		},
+		{
+			"name": "anthropic-messages: request marker removes the User-Agent",
+			"api": "anthropic-messages",
+			"apiKey": "sk-ant-api-test",
+			"provider": "plain",
+			"baseUrl": "https://api.example.test/v1",
+			"headers": {
+				"user-agent": null
+			},
+			"sent": {}
+		},
+		{
+			"name": "anthropic-messages: request marker removes an attribution header",
+			"api": "anthropic-messages",
+			"apiKey": "sk-ant-api-test",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				},
+				"userAgent": "short"
+			},
+			"headers": {
+				"HTTP-Referer": null
+			},
+			"sent": {
+				"user-agent": "pi",
+				"x-openrouter-categories": "cli-agent",
+				"x-openrouter-title": "pi"
+			}
+		},
+		{
+			"name": "anthropic-messages: request header outranks the identity",
+			"api": "anthropic-messages",
+			"apiKey": "sk-ant-api-test",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"headers": {
+				"X-OpenRouter-Title": "request-title",
+				"User-Agent": "request-agent"
+			},
+			"sent": {
+				"http-referer": "https://pi.dev",
+				"user-agent": "request-agent",
+				"x-openrouter-categories": "cli-agent",
+				"x-openrouter-title": "request-title"
+			}
+		},
+		{
+			"name": "pi-messages: no identity",
+			"api": "pi-messages",
+			"apiKey": "key",
+			"provider": "plain",
+			"baseUrl": "https://api.example.test/v1",
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "pi-messages: empty identity",
+			"api": "pi-messages",
+			"apiKey": "key",
+			"provider": "plain",
+			"baseUrl": "https://api.example.test/v1",
+			"identity": {},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "pi-messages: short",
+			"api": "pi-messages",
+			"apiKey": "key",
+			"provider": "plain",
+			"baseUrl": "https://api.example.test/v1",
+			"identity": {
+				"userAgent": "short",
+				"version": "9.9.9"
+			},
+			"sent": {
+				"user-agent": "pi"
+			}
+		},
+		{
+			"name": "pi-messages: custom",
+			"api": "pi-messages",
+			"apiKey": "key",
+			"provider": "plain",
+			"baseUrl": "https://api.example.test/v1",
+			"identity": {
+				"userAgent": {
+					"custom": "acme/1.0"
+				}
+			},
+			"sent": {
+				"user-agent": "acme/1.0"
+			}
+		},
+		{
+			"name": "pi-messages: detailed version",
+			"api": "pi-messages",
+			"apiKey": "key",
+			"provider": "plain",
+			"baseUrl": "https://api.example.test/v1",
+			"identity": {
+				"userAgent": "detailed",
+				"version": "9.9.9"
+			},
+			"sent": {
+				"user-agent": "pi/9.9.9 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "pi-messages: no attribution by default",
+			"api": "pi-messages",
+			"apiKey": "key",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "pi-messages: pi on openrouter",
+			"api": "pi-messages",
+			"apiKey": "key",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"sent": {
+				"http-referer": "https://pi.dev",
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-openrouter-categories": "cli-agent",
+				"x-openrouter-title": "pi"
+			}
+		},
+		{
+			"name": "pi-messages: acme on openrouter, no categories",
+			"api": "pi-messages",
+			"apiKey": "key",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"identity": {
+				"attribution": {
+					"name": "acme",
+					"url": "https://acme.example"
+				}
+			},
+			"sent": {
+				"http-referer": "https://acme.example",
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-openrouter-title": "acme"
+			}
+		},
+		{
+			"name": "pi-messages: acme on openrouter, empty categories",
+			"api": "pi-messages",
+			"apiKey": "key",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"identity": {
+				"attribution": {
+					"name": "acme",
+					"url": "https://acme.example",
+					"categories": []
+				}
+			},
+			"sent": {
+				"http-referer": "https://acme.example",
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-openrouter-title": "acme"
+			}
+		},
+		{
+			"name": "pi-messages: acme on openrouter, two categories",
+			"api": "pi-messages",
+			"apiKey": "key",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"identity": {
+				"attribution": {
+					"name": "acme",
+					"url": "https://acme.example",
+					"categories": [
+						"cli-agent",
+						"cloud-agent"
+					]
+				}
+			},
+			"sent": {
+				"http-referer": "https://acme.example",
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-openrouter-categories": "cli-agent,cloud-agent",
+				"x-openrouter-title": "acme"
+			}
+		},
+		{
+			"name": "pi-messages: null attribution",
+			"api": "pi-messages",
+			"apiKey": "key",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"identity": {
+				"attribution": null
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "pi-messages: pi on nvidia",
+			"api": "pi-messages",
+			"apiKey": "key",
+			"provider": "nvidia",
+			"baseUrl": "https://integrate.api.nvidia.com/v1",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-billing-invoke-origin": "Pi"
+			}
+		},
+		{
+			"name": "pi-messages: nvidia capitalizes ß",
+			"api": "pi-messages",
+			"apiKey": "key",
+			"provider": "nvidia",
+			"baseUrl": "https://integrate.api.nvidia.com/v1",
+			"identity": {
+				"attribution": {
+					"name": "ßeta",
+					"url": "x"
+				}
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-billing-invoke-origin": "SSeta"
+			}
+		},
+		{
+			"name": "pi-messages: nvidia keeps a capital",
+			"api": "pi-messages",
+			"apiKey": "key",
+			"provider": "nvidia",
+			"baseUrl": "https://integrate.api.nvidia.com/v1",
+			"identity": {
+				"attribution": {
+					"name": "Über",
+					"url": "x"
+				}
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-billing-invoke-origin": "Über"
+			}
+		},
+		{
+			"name": "pi-messages: pi on opencode",
+			"api": "pi-messages",
+			"apiKey": "key",
+			"provider": "opencode",
+			"baseUrl": "https://opencode.ai/zen/v1",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-opencode-client": "pi"
+			}
+		},
+		{
+			"name": "pi-messages: pi on another provider",
+			"api": "pi-messages",
+			"apiKey": "key",
+			"provider": "plain",
+			"baseUrl": "https://api.example.test/v1",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "pi-messages: pi on cloudflare",
+			"api": "pi-messages",
+			"apiKey": "key",
+			"provider": "cloudflare-workers-ai",
+			"baseUrl": "https://api.example.test/v1",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "pi-messages: model User-Agent outranks the identity",
+			"api": "pi-messages",
+			"apiKey": "key",
+			"provider": "plain",
+			"baseUrl": "https://api.example.test/v1",
+			"modelHeaders": {
+				"User-Agent": "model-agent/1.0"
+			},
+			"identity": {
+				"userAgent": {
+					"custom": "acme"
+				}
+			},
+			"sent": {
+				"user-agent": "acme"
+			}
+		},
+		{
+			"name": "pi-messages: model attribution header outranks the identity",
+			"api": "pi-messages",
+			"apiKey": "key",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"modelHeaders": {
+				"X-OpenRouter-Title": "model-title"
+			},
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"sent": {
+				"http-referer": "https://pi.dev",
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-openrouter-categories": "cli-agent",
+				"x-openrouter-title": "pi"
+			}
+		},
+		{
+			"name": "pi-messages: request marker removes the User-Agent",
+			"api": "pi-messages",
+			"apiKey": "key",
+			"provider": "plain",
+			"baseUrl": "https://api.example.test/v1",
+			"headers": {
+				"user-agent": null
+			},
+			"sent": {}
+		},
+		{
+			"name": "pi-messages: request marker removes an attribution header",
+			"api": "pi-messages",
+			"apiKey": "key",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				},
+				"userAgent": "short"
+			},
+			"headers": {
+				"HTTP-Referer": null
+			},
+			"sent": {
+				"user-agent": "pi",
+				"x-openrouter-categories": "cli-agent",
+				"x-openrouter-title": "pi"
+			}
+		},
+		{
+			"name": "pi-messages: request header outranks the identity",
+			"api": "pi-messages",
+			"apiKey": "key",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"headers": {
+				"X-OpenRouter-Title": "request-title",
+				"User-Agent": "request-agent"
+			},
+			"sent": {
+				"http-referer": "https://pi.dev",
+				"user-agent": "request-agent",
+				"x-openrouter-categories": "cli-agent",
+				"x-openrouter-title": "request-title"
+			}
+		},
+		{
+			"name": "google-generative-ai: no identity",
+			"api": "google-generative-ai",
+			"apiKey": "key",
+			"provider": "plain",
+			"baseUrl": "http://127.0.0.1:9",
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "google-generative-ai: empty identity",
+			"api": "google-generative-ai",
+			"apiKey": "key",
+			"provider": "plain",
+			"baseUrl": "http://127.0.0.1:9",
+			"identity": {},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "google-generative-ai: short",
+			"api": "google-generative-ai",
+			"apiKey": "key",
+			"provider": "plain",
+			"baseUrl": "http://127.0.0.1:9",
+			"identity": {
+				"userAgent": "short",
+				"version": "9.9.9"
+			},
+			"sent": {
+				"user-agent": "pi"
+			}
+		},
+		{
+			"name": "google-generative-ai: custom",
+			"api": "google-generative-ai",
+			"apiKey": "key",
+			"provider": "plain",
+			"baseUrl": "http://127.0.0.1:9",
+			"identity": {
+				"userAgent": {
+					"custom": "acme/1.0"
+				}
+			},
+			"sent": {
+				"user-agent": "acme/1.0"
+			}
+		},
+		{
+			"name": "google-generative-ai: detailed version",
+			"api": "google-generative-ai",
+			"apiKey": "key",
+			"provider": "plain",
+			"baseUrl": "http://127.0.0.1:9",
+			"identity": {
+				"userAgent": "detailed",
+				"version": "9.9.9"
+			},
+			"sent": {
+				"user-agent": "pi/9.9.9 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "google-generative-ai: no attribution by default",
+			"api": "google-generative-ai",
+			"apiKey": "key",
+			"provider": "openrouter",
+			"baseUrl": "http://127.0.0.1:9",
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "google-generative-ai: pi on openrouter",
+			"api": "google-generative-ai",
+			"apiKey": "key",
+			"provider": "openrouter",
+			"baseUrl": "http://127.0.0.1:9",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"sent": {
+				"http-referer": "https://pi.dev",
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-openrouter-categories": "cli-agent",
+				"x-openrouter-title": "pi"
+			}
+		},
+		{
+			"name": "google-generative-ai: acme on openrouter, no categories",
+			"api": "google-generative-ai",
+			"apiKey": "key",
+			"provider": "openrouter",
+			"baseUrl": "http://127.0.0.1:9",
+			"identity": {
+				"attribution": {
+					"name": "acme",
+					"url": "https://acme.example"
+				}
+			},
+			"sent": {
+				"http-referer": "https://acme.example",
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-openrouter-title": "acme"
+			}
+		},
+		{
+			"name": "google-generative-ai: acme on openrouter, empty categories",
+			"api": "google-generative-ai",
+			"apiKey": "key",
+			"provider": "openrouter",
+			"baseUrl": "http://127.0.0.1:9",
+			"identity": {
+				"attribution": {
+					"name": "acme",
+					"url": "https://acme.example",
+					"categories": []
+				}
+			},
+			"sent": {
+				"http-referer": "https://acme.example",
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-openrouter-title": "acme"
+			}
+		},
+		{
+			"name": "google-generative-ai: acme on openrouter, two categories",
+			"api": "google-generative-ai",
+			"apiKey": "key",
+			"provider": "openrouter",
+			"baseUrl": "http://127.0.0.1:9",
+			"identity": {
+				"attribution": {
+					"name": "acme",
+					"url": "https://acme.example",
+					"categories": [
+						"cli-agent",
+						"cloud-agent"
+					]
+				}
+			},
+			"sent": {
+				"http-referer": "https://acme.example",
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-openrouter-categories": "cli-agent,cloud-agent",
+				"x-openrouter-title": "acme"
+			}
+		},
+		{
+			"name": "google-generative-ai: null attribution",
+			"api": "google-generative-ai",
+			"apiKey": "key",
+			"provider": "openrouter",
+			"baseUrl": "http://127.0.0.1:9",
+			"identity": {
+				"attribution": null
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "google-generative-ai: pi on nvidia",
+			"api": "google-generative-ai",
+			"apiKey": "key",
+			"provider": "nvidia",
+			"baseUrl": "http://127.0.0.1:9",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-billing-invoke-origin": "Pi"
+			}
+		},
+		{
+			"name": "google-generative-ai: nvidia capitalizes ß",
+			"api": "google-generative-ai",
+			"apiKey": "key",
+			"provider": "nvidia",
+			"baseUrl": "http://127.0.0.1:9",
+			"identity": {
+				"attribution": {
+					"name": "ßeta",
+					"url": "x"
+				}
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-billing-invoke-origin": "SSeta"
+			}
+		},
+		{
+			"name": "google-generative-ai: nvidia keeps a capital",
+			"api": "google-generative-ai",
+			"apiKey": "key",
+			"provider": "nvidia",
+			"baseUrl": "http://127.0.0.1:9",
+			"identity": {
+				"attribution": {
+					"name": "Über",
+					"url": "x"
+				}
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-billing-invoke-origin": "Über"
+			}
+		},
+		{
+			"name": "google-generative-ai: pi on opencode",
+			"api": "google-generative-ai",
+			"apiKey": "key",
+			"provider": "opencode",
+			"baseUrl": "http://127.0.0.1:9",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-opencode-client": "pi"
+			}
+		},
+		{
+			"name": "google-generative-ai: pi on another provider",
+			"api": "google-generative-ai",
+			"apiKey": "key",
+			"provider": "plain",
+			"baseUrl": "http://127.0.0.1:9",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "google-generative-ai: pi on cloudflare",
+			"api": "google-generative-ai",
+			"apiKey": "key",
+			"provider": "cloudflare-workers-ai",
+			"baseUrl": "http://127.0.0.1:9",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "google-generative-ai: model User-Agent outranks the identity",
+			"api": "google-generative-ai",
+			"apiKey": "key",
+			"provider": "plain",
+			"baseUrl": "http://127.0.0.1:9",
+			"modelHeaders": {
+				"User-Agent": "model-agent/1.0"
+			},
+			"identity": {
+				"userAgent": {
+					"custom": "acme"
+				}
+			},
+			"sent": {
+				"user-agent": "model-agent/1.0"
+			}
+		},
+		{
+			"name": "google-generative-ai: model attribution header outranks the identity",
+			"api": "google-generative-ai",
+			"apiKey": "key",
+			"provider": "openrouter",
+			"baseUrl": "http://127.0.0.1:9",
+			"modelHeaders": {
+				"X-OpenRouter-Title": "model-title"
+			},
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"sent": {
+				"http-referer": "https://pi.dev",
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-openrouter-categories": "cli-agent",
+				"x-openrouter-title": "model-title"
+			}
+		},
+		{
+			"name": "google-generative-ai: request marker removes the User-Agent",
+			"api": "google-generative-ai",
+			"apiKey": "key",
+			"provider": "plain",
+			"baseUrl": "http://127.0.0.1:9",
+			"headers": {
+				"user-agent": null
+			},
+			"sent": {
+				"user-agent": "google-genai-sdk/2.21.0 gl-node/v26.4.0"
+			}
+		},
+		{
+			"name": "google-generative-ai: request marker removes an attribution header",
+			"api": "google-generative-ai",
+			"apiKey": "key",
+			"provider": "openrouter",
+			"baseUrl": "http://127.0.0.1:9",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				},
+				"userAgent": "short"
+			},
+			"headers": {
+				"HTTP-Referer": null
+			},
+			"sent": {
+				"user-agent": "pi",
+				"x-openrouter-categories": "cli-agent",
+				"x-openrouter-title": "pi"
+			}
+		},
+		{
+			"name": "google-generative-ai: request header outranks the identity",
+			"api": "google-generative-ai",
+			"apiKey": "key",
+			"provider": "openrouter",
+			"baseUrl": "http://127.0.0.1:9",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"headers": {
+				"X-OpenRouter-Title": "request-title",
+				"User-Agent": "request-agent"
+			},
+			"sent": {
+				"http-referer": "https://pi.dev",
+				"user-agent": "request-agent",
+				"x-openrouter-categories": "cli-agent",
+				"x-openrouter-title": "request-title"
+			}
+		},
+		{
+			"name": "custom provider on openrouter's host",
+			"api": "openai-completions",
+			"provider": "my-router",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"apiKey": "key",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"sent": {
+				"http-referer": "https://pi.dev",
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-openrouter-categories": "cli-agent",
+				"x-openrouter-title": "pi"
+			}
+		},
+		{
+			"name": "custom provider on nvidia's host",
+			"api": "openai-completions",
+			"provider": "custom-nim",
+			"baseUrl": "https://integrate.api.nvidia.com/v1",
+			"apiKey": "key",
+			"identity": {
+				"attribution": {
+					"name": "acme",
+					"url": "https://acme.example"
+				}
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-billing-invoke-origin": "Acme"
+			}
+		},
+		{
+			"name": "custom provider on opencode's host",
+			"api": "openai-completions",
+			"provider": "custom",
+			"baseUrl": "https://opencode.ai/zen/v1",
+			"apiKey": "key",
+			"identity": {
+				"attribution": {
+					"name": "acme",
+					"url": "https://acme.example"
+				}
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-opencode-client": "acme"
+			}
+		},
+		{
+			"name": "a subdomain is not nvidia's host",
+			"api": "openai-completions",
+			"provider": "custom",
+			"baseUrl": "https://x.integrate.api.nvidia.com/v1",
+			"apiKey": "key",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "vercel gateway is not attributed",
+			"api": "openai-completions",
+			"provider": "vercel-ai-gateway",
+			"baseUrl": "https://ai-gateway.vercel.sh/v1",
+			"apiKey": "key",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "anthropic OAuth sends Claude Code's identity, not the client's",
+			"api": "anthropic-messages",
+			"provider": "anthropic",
+			"baseUrl": "https://api.example.test/v1",
+			"apiKey": "sk-ant-oat-test",
+			"identity": {
+				"userAgent": {
+					"custom": "acme"
+				},
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"sent": {
+				"user-agent": "claude-cli/2.1.280",
+				"x-app": "cli"
+			}
+		},
+		{
+			"name": "anthropic OAuth on openrouter is not attributed",
+			"api": "anthropic-messages",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"apiKey": "sk-ant-oat-test",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"sent": {
+				"user-agent": "claude-cli/2.1.280",
+				"x-app": "cli"
+			}
+		},
+		{
+			"name": "anthropic copilot keeps the identity",
+			"api": "anthropic-messages",
+			"provider": "github-copilot",
+			"baseUrl": "https://api.example.test/v1",
+			"apiKey": "sk-ant-oat-test",
+			"identity": {
+				"userAgent": "short"
+			},
+			"sent": {
+				"user-agent": "pi"
+			}
+		},
+		{
+			"name": "copilot model User-Agent outranks the identity",
+			"api": "openai-completions",
+			"provider": "github-copilot",
+			"baseUrl": "https://api.example.test/v1",
+			"apiKey": "key",
+			"modelHeaders": {
+				"User-Agent": "GitHubCopilotChat/0.35.0"
+			},
+			"identity": {
+				"userAgent": {
+					"custom": "acme"
+				}
+			},
+			"sent": {
+				"user-agent": "GitHubCopilotChat/0.35.0"
+			}
+		},
+		{
+			"name": "anthropic OAuth: request User-Agent value",
+			"api": "anthropic-messages",
+			"provider": "anthropic",
+			"baseUrl": "https://api.example.test/v1",
+			"apiKey": "sk-ant-oat-test",
+			"headers": {
+				"User-Agent": "custom-client"
+			},
+			"sent": {
+				"user-agent": "custom-client",
+				"x-app": "cli"
+			}
+		},
+		{
+			"name": "anthropic OAuth: request user-agent value",
+			"api": "anthropic-messages",
+			"provider": "anthropic",
+			"baseUrl": "https://api.example.test/v1",
+			"apiKey": "sk-ant-oat-test",
+			"headers": {
+				"user-agent": "custom-client"
+			},
+			"sent": {
+				"user-agent": "custom-client",
+				"x-app": "cli"
+			}
+		},
+		{
+			"name": "anthropic OAuth: request USER-AGENT value",
+			"api": "anthropic-messages",
+			"provider": "anthropic",
+			"baseUrl": "https://api.example.test/v1",
+			"apiKey": "sk-ant-oat-test",
+			"headers": {
+				"USER-AGENT": "custom-client"
+			},
+			"sent": {
+				"user-agent": "custom-client",
+				"x-app": "cli"
+			}
+		},
+		{
+			"name": "anthropic OAuth: request User-Agent marker",
+			"api": "anthropic-messages",
+			"provider": "anthropic",
+			"baseUrl": "https://api.example.test/v1",
+			"apiKey": "sk-ant-oat-test",
+			"headers": {
+				"User-Agent": null
+			},
+			"sent": {
+				"x-app": "cli"
+			}
+		},
+		{
+			"name": "anthropic OAuth: request user-agent marker",
+			"api": "anthropic-messages",
+			"provider": "anthropic",
+			"baseUrl": "https://api.example.test/v1",
+			"apiKey": "sk-ant-oat-test",
+			"headers": {
+				"user-agent": null
+			},
+			"sent": {
+				"x-app": "cli"
+			}
+		},
+		{
+			"name": "anthropic api key: ANTHROPIC_CUSTOM_HEADERS user-agent: env",
+			"api": "anthropic-messages",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"apiKey": "sk-ant-api-test",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"env": {
+				"ANTHROPIC_CUSTOM_HEADERS": "user-agent: env"
+			},
+			"sent": {
+				"http-referer": "https://pi.dev",
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-openrouter-categories": "cli-agent",
+				"x-openrouter-title": "pi"
+			}
+		},
+		{
+			"name": "anthropic api key: ANTHROPIC_CUSTOM_HEADERS User-Agent: env",
+			"api": "anthropic-messages",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"apiKey": "sk-ant-api-test",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"env": {
+				"ANTHROPIC_CUSTOM_HEADERS": "User-Agent: env"
+			},
+			"sent": {
+				"http-referer": "https://pi.dev",
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-openrouter-categories": "cli-agent",
+				"x-openrouter-title": "pi"
+			}
+		},
+		{
+			"name": "anthropic OAuth: ANTHROPIC_CUSTOM_HEADERS user-agent: env",
+			"api": "anthropic-messages",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"apiKey": "sk-ant-oat-test",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"env": {
+				"ANTHROPIC_CUSTOM_HEADERS": "user-agent: env"
+			},
+			"sent": {
+				"user-agent": "claude-cli/2.1.280",
+				"x-app": "cli"
+			}
+		},
+		{
+			"name": "anthropic OAuth: ANTHROPIC_CUSTOM_HEADERS User-Agent: env",
+			"api": "anthropic-messages",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"apiKey": "sk-ant-oat-test",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"env": {
+				"ANTHROPIC_CUSTOM_HEADERS": "User-Agent: env"
+			},
+			"sent": {
+				"user-agent": "claude-cli/2.1.280",
+				"x-app": "cli"
+			}
+		},
+		{
+			"name": "anthropic api key: ANTHROPIC_CUSTOM_HEADERS HTTP-Referer: env",
+			"api": "anthropic-messages",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"apiKey": "sk-ant-api-test",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"env": {
+				"ANTHROPIC_CUSTOM_HEADERS": "HTTP-Referer: env"
+			},
+			"sent": {
+				"http-referer": "https://pi.dev",
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-openrouter-categories": "cli-agent",
+				"x-openrouter-title": "pi"
+			}
+		},
+		{
+			"name": "pi-messages request marker removes accept",
+			"api": "pi-messages",
+			"provider": "plain",
+			"baseUrl": "https://api.example.test/v1",
+			"apiKey": "key",
+			"headers": {
+				"accept": null
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "adapter: opencode session is not the adapter's",
+			"api": "openai-completions",
+			"provider": "opencode",
+			"baseUrl": "https://opencode.ai/zen/v1",
+			"apiKey": "key",
+			"sessionId": "session-1",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-opencode-client": "pi"
+			}
+		},
+		{
+			"name": "openai-completions models: default identity",
+			"api": "openai-completions",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"apiKey": "key",
+			"via": "models",
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "openai-completions models: Models identity",
+			"api": "openai-completions",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"apiKey": "key",
+			"via": "models",
+			"modelsIdentity": {
+				"attribution": {
+					"name": "models",
+					"url": "https://acme.example"
+				},
+				"userAgent": "short"
+			},
+			"sent": {
+				"http-referer": "https://acme.example",
+				"user-agent": "pi",
+				"x-openrouter-title": "models"
+			}
+		},
+		{
+			"name": "openai-completions models: wrapper over Models",
+			"api": "openai-completions",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"apiKey": "key",
+			"via": "models",
+			"modelsIdentity": {
+				"attribution": {
+					"name": "models",
+					"url": "https://acme.example"
+				},
+				"userAgent": "short"
+			},
+			"wrapperIdentity": {
+				"attribution": {
+					"name": "wrapper",
+					"url": "https://acme.example"
+				}
+			},
+			"sent": {
+				"http-referer": "https://acme.example",
+				"user-agent": "pi",
+				"x-openrouter-title": "wrapper"
+			}
+		},
+		{
+			"name": "openai-completions models: request over wrapper",
+			"api": "openai-completions",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"apiKey": "key",
+			"via": "models",
+			"modelsIdentity": {
+				"userAgent": "short"
+			},
+			"wrapperIdentity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"identity": {
+				"attribution": null,
+				"version": "2.0.0"
+			},
+			"sent": {
+				"user-agent": "pi"
+			}
+		},
+		{
+			"name": "openai-completions models: request version over Models",
+			"api": "openai-completions",
+			"provider": "plain",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"apiKey": "key",
+			"via": "models",
+			"modelsIdentity": {
+				"version": "1.0.0"
+			},
+			"identity": {
+				"userAgent": "detailed",
+				"version": "2.0.0"
+			},
+			"sent": {
+				"user-agent": "pi/2.0.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "openai-completions models: opencode session",
+			"api": "openai-completions",
+			"provider": "custom-opencode",
+			"baseUrl": "https://opencode.ai/zen/v1",
+			"apiKey": "key",
+			"via": "models",
+			"sessionId": "session-1",
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-opencode-session": "session-1"
+			}
+		},
+		{
+			"name": "openai-completions models: opencode session by provider name",
+			"api": "openai-completions",
+			"provider": "opencode",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"apiKey": "key",
+			"via": "models",
+			"sessionId": "session-1",
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-opencode-session": "session-1"
+			}
+		},
+		{
+			"name": "openai-completions models: model header outranks the session",
+			"api": "openai-completions",
+			"provider": "opencode",
+			"baseUrl": "https://opencode.ai/zen/v1",
+			"apiKey": "key",
+			"via": "models",
+			"sessionId": "session-1",
+			"modelHeaders": {
+				"X-OpenCode-Session": "model"
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-opencode-session": "model"
+			}
+		},
+		{
+			"name": "openai-completions models: request header outranks the session",
+			"api": "openai-completions",
+			"provider": "opencode",
+			"baseUrl": "https://opencode.ai/zen/v1",
+			"apiKey": "key",
+			"via": "models",
+			"sessionId": "session-1",
+			"headers": {
+				"X-OpenCode-Session": "request"
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-opencode-session": "request"
+			}
+		},
+		{
+			"name": "openai-completions models: request marker removes the session",
+			"api": "openai-completions",
+			"provider": "opencode",
+			"baseUrl": "https://opencode.ai/zen/v1",
+			"apiKey": "key",
+			"via": "models",
+			"sessionId": "session-1",
+			"headers": {
+				"x-opencode-session": null
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "openai-completions models: no session on another host",
+			"api": "openai-completions",
+			"provider": "plain",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"apiKey": "key",
+			"via": "models",
+			"sessionId": "session-1",
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "openai-completions models: opencode attribution with session",
+			"api": "openai-completions",
+			"provider": "opencode",
+			"baseUrl": "https://opencode.ai/zen/v1",
+			"apiKey": "key",
+			"via": "models",
+			"sessionId": "session-1",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-opencode-client": "pi",
+				"x-opencode-session": "session-1"
+			}
+		},
+		{
+			"name": "anthropic-messages models: default identity",
+			"api": "anthropic-messages",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"apiKey": "sk-ant-api-test",
+			"via": "models",
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "anthropic-messages models: Models identity",
+			"api": "anthropic-messages",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"apiKey": "sk-ant-api-test",
+			"via": "models",
+			"modelsIdentity": {
+				"attribution": {
+					"name": "models",
+					"url": "https://acme.example"
+				},
+				"userAgent": "short"
+			},
+			"sent": {
+				"http-referer": "https://acme.example",
+				"user-agent": "pi",
+				"x-openrouter-title": "models"
+			}
+		},
+		{
+			"name": "anthropic-messages models: wrapper over Models",
+			"api": "anthropic-messages",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"apiKey": "sk-ant-api-test",
+			"via": "models",
+			"modelsIdentity": {
+				"attribution": {
+					"name": "models",
+					"url": "https://acme.example"
+				},
+				"userAgent": "short"
+			},
+			"wrapperIdentity": {
+				"attribution": {
+					"name": "wrapper",
+					"url": "https://acme.example"
+				}
+			},
+			"sent": {
+				"http-referer": "https://acme.example",
+				"user-agent": "pi",
+				"x-openrouter-title": "wrapper"
+			}
+		},
+		{
+			"name": "anthropic-messages models: request over wrapper",
+			"api": "anthropic-messages",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"apiKey": "sk-ant-api-test",
+			"via": "models",
+			"modelsIdentity": {
+				"userAgent": "short"
+			},
+			"wrapperIdentity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"identity": {
+				"attribution": null,
+				"version": "2.0.0"
+			},
+			"sent": {
+				"user-agent": "pi"
+			}
+		},
+		{
+			"name": "anthropic-messages models: request version over Models",
+			"api": "anthropic-messages",
+			"provider": "plain",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"apiKey": "sk-ant-api-test",
+			"via": "models",
+			"modelsIdentity": {
+				"version": "1.0.0"
+			},
+			"identity": {
+				"userAgent": "detailed",
+				"version": "2.0.0"
+			},
+			"sent": {
+				"user-agent": "pi/2.0.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "anthropic-messages models: opencode session",
+			"api": "anthropic-messages",
+			"provider": "custom-opencode",
+			"baseUrl": "https://opencode.ai/zen/v1",
+			"apiKey": "sk-ant-api-test",
+			"via": "models",
+			"sessionId": "session-1",
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-opencode-session": "session-1"
+			}
+		},
+		{
+			"name": "anthropic-messages models: opencode session by provider name",
+			"api": "anthropic-messages",
+			"provider": "opencode",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"apiKey": "sk-ant-api-test",
+			"via": "models",
+			"sessionId": "session-1",
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-opencode-session": "session-1"
+			}
+		},
+		{
+			"name": "anthropic-messages models: model header outranks the session",
+			"api": "anthropic-messages",
+			"provider": "opencode",
+			"baseUrl": "https://opencode.ai/zen/v1",
+			"apiKey": "sk-ant-api-test",
+			"via": "models",
+			"sessionId": "session-1",
+			"modelHeaders": {
+				"X-OpenCode-Session": "model"
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-opencode-session": "model"
+			}
+		},
+		{
+			"name": "anthropic-messages models: request header outranks the session",
+			"api": "anthropic-messages",
+			"provider": "opencode",
+			"baseUrl": "https://opencode.ai/zen/v1",
+			"apiKey": "sk-ant-api-test",
+			"via": "models",
+			"sessionId": "session-1",
+			"headers": {
+				"X-OpenCode-Session": "request"
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-opencode-session": "request"
+			}
+		},
+		{
+			"name": "anthropic-messages models: request marker removes the session",
+			"api": "anthropic-messages",
+			"provider": "opencode",
+			"baseUrl": "https://opencode.ai/zen/v1",
+			"apiKey": "sk-ant-api-test",
+			"via": "models",
+			"sessionId": "session-1",
+			"headers": {
+				"x-opencode-session": null
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "anthropic-messages models: no session on another host",
+			"api": "anthropic-messages",
+			"provider": "plain",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"apiKey": "sk-ant-api-test",
+			"via": "models",
+			"sessionId": "session-1",
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "anthropic-messages models: opencode attribution with session",
+			"api": "anthropic-messages",
+			"provider": "opencode",
+			"baseUrl": "https://opencode.ai/zen/v1",
+			"apiKey": "sk-ant-api-test",
+			"via": "models",
+			"sessionId": "session-1",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-opencode-client": "pi",
+				"x-opencode-session": "session-1"
+			}
+		},
+		{
+			"name": "google-generative-ai models: default identity",
+			"api": "google-generative-ai",
+			"provider": "openrouter",
+			"baseUrl": "http://127.0.0.1:9",
+			"apiKey": "key",
+			"via": "models",
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "google-generative-ai models: Models identity",
+			"api": "google-generative-ai",
+			"provider": "openrouter",
+			"baseUrl": "http://127.0.0.1:9",
+			"apiKey": "key",
+			"via": "models",
+			"modelsIdentity": {
+				"attribution": {
+					"name": "models",
+					"url": "https://acme.example"
+				},
+				"userAgent": "short"
+			},
+			"sent": {
+				"http-referer": "https://acme.example",
+				"user-agent": "pi",
+				"x-openrouter-title": "models"
+			}
+		},
+		{
+			"name": "google-generative-ai models: wrapper over Models",
+			"api": "google-generative-ai",
+			"provider": "openrouter",
+			"baseUrl": "http://127.0.0.1:9",
+			"apiKey": "key",
+			"via": "models",
+			"modelsIdentity": {
+				"attribution": {
+					"name": "models",
+					"url": "https://acme.example"
+				},
+				"userAgent": "short"
+			},
+			"wrapperIdentity": {
+				"attribution": {
+					"name": "wrapper",
+					"url": "https://acme.example"
+				}
+			},
+			"sent": {
+				"http-referer": "https://acme.example",
+				"user-agent": "pi",
+				"x-openrouter-title": "wrapper"
+			}
+		},
+		{
+			"name": "google-generative-ai models: request over wrapper",
+			"api": "google-generative-ai",
+			"provider": "openrouter",
+			"baseUrl": "http://127.0.0.1:9",
+			"apiKey": "key",
+			"via": "models",
+			"modelsIdentity": {
+				"userAgent": "short"
+			},
+			"wrapperIdentity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"identity": {
+				"attribution": null,
+				"version": "2.0.0"
+			},
+			"sent": {
+				"user-agent": "pi"
+			}
+		},
+		{
+			"name": "google-generative-ai models: request version over Models",
+			"api": "google-generative-ai",
+			"provider": "plain",
+			"baseUrl": "http://127.0.0.1:9",
+			"apiKey": "key",
+			"via": "models",
+			"modelsIdentity": {
+				"version": "1.0.0"
+			},
+			"identity": {
+				"userAgent": "detailed",
+				"version": "2.0.0"
+			},
+			"sent": {
+				"user-agent": "pi/2.0.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "google-generative-ai models: opencode session",
+			"api": "google-generative-ai",
+			"provider": "custom-opencode",
+			"baseUrl": "http://127.0.0.1:9",
+			"apiKey": "key",
+			"via": "models",
+			"sessionId": "session-1",
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "google-generative-ai models: opencode session by provider name",
+			"api": "google-generative-ai",
+			"provider": "opencode",
+			"baseUrl": "http://127.0.0.1:9",
+			"apiKey": "key",
+			"via": "models",
+			"sessionId": "session-1",
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-opencode-session": "session-1"
+			}
+		},
+		{
+			"name": "google-generative-ai models: model header outranks the session",
+			"api": "google-generative-ai",
+			"provider": "opencode",
+			"baseUrl": "http://127.0.0.1:9",
+			"apiKey": "key",
+			"via": "models",
+			"sessionId": "session-1",
+			"modelHeaders": {
+				"X-OpenCode-Session": "model"
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-opencode-session": "model"
+			}
+		},
+		{
+			"name": "google-generative-ai models: request header outranks the session",
+			"api": "google-generative-ai",
+			"provider": "opencode",
+			"baseUrl": "http://127.0.0.1:9",
+			"apiKey": "key",
+			"via": "models",
+			"sessionId": "session-1",
+			"headers": {
+				"X-OpenCode-Session": "request"
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-opencode-session": "request"
+			}
+		},
+		{
+			"name": "google-generative-ai models: request marker removes the session",
+			"api": "google-generative-ai",
+			"provider": "opencode",
+			"baseUrl": "http://127.0.0.1:9",
+			"apiKey": "key",
+			"via": "models",
+			"sessionId": "session-1",
+			"headers": {
+				"x-opencode-session": null
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "google-generative-ai models: no session on another host",
+			"api": "google-generative-ai",
+			"provider": "plain",
+			"baseUrl": "http://127.0.0.1:9",
+			"apiKey": "key",
+			"via": "models",
+			"sessionId": "session-1",
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "google-generative-ai models: opencode attribution with session",
+			"api": "google-generative-ai",
+			"provider": "opencode",
+			"baseUrl": "http://127.0.0.1:9",
+			"apiKey": "key",
+			"via": "models",
+			"sessionId": "session-1",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-opencode-client": "pi",
+				"x-opencode-session": "session-1"
+			}
+		},
+		{
+			"name": "pi-messages models: default identity",
+			"api": "pi-messages",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"apiKey": "key",
+			"via": "models",
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "pi-messages models: Models identity",
+			"api": "pi-messages",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"apiKey": "key",
+			"via": "models",
+			"modelsIdentity": {
+				"attribution": {
+					"name": "models",
+					"url": "https://acme.example"
+				},
+				"userAgent": "short"
+			},
+			"sent": {
+				"http-referer": "https://acme.example",
+				"user-agent": "pi",
+				"x-openrouter-title": "models"
+			}
+		},
+		{
+			"name": "pi-messages models: wrapper over Models",
+			"api": "pi-messages",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"apiKey": "key",
+			"via": "models",
+			"modelsIdentity": {
+				"attribution": {
+					"name": "models",
+					"url": "https://acme.example"
+				},
+				"userAgent": "short"
+			},
+			"wrapperIdentity": {
+				"attribution": {
+					"name": "wrapper",
+					"url": "https://acme.example"
+				}
+			},
+			"sent": {
+				"http-referer": "https://acme.example",
+				"user-agent": "pi",
+				"x-openrouter-title": "wrapper"
+			}
+		},
+		{
+			"name": "pi-messages models: request over wrapper",
+			"api": "pi-messages",
+			"provider": "openrouter",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"apiKey": "key",
+			"via": "models",
+			"modelsIdentity": {
+				"userAgent": "short"
+			},
+			"wrapperIdentity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"identity": {
+				"attribution": null,
+				"version": "2.0.0"
+			},
+			"sent": {
+				"user-agent": "pi"
+			}
+		},
+		{
+			"name": "pi-messages models: request version over Models",
+			"api": "pi-messages",
+			"provider": "plain",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"apiKey": "key",
+			"via": "models",
+			"modelsIdentity": {
+				"version": "1.0.0"
+			},
+			"identity": {
+				"userAgent": "detailed",
+				"version": "2.0.0"
+			},
+			"sent": {
+				"user-agent": "pi/2.0.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "pi-messages models: opencode session",
+			"api": "pi-messages",
+			"provider": "custom-opencode",
+			"baseUrl": "https://opencode.ai/zen/v1",
+			"apiKey": "key",
+			"via": "models",
+			"sessionId": "session-1",
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-opencode-session": "session-1"
+			}
+		},
+		{
+			"name": "pi-messages models: opencode session by provider name",
+			"api": "pi-messages",
+			"provider": "opencode",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"apiKey": "key",
+			"via": "models",
+			"sessionId": "session-1",
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-opencode-session": "session-1"
+			}
+		},
+		{
+			"name": "pi-messages models: model header outranks the session",
+			"api": "pi-messages",
+			"provider": "opencode",
+			"baseUrl": "https://opencode.ai/zen/v1",
+			"apiKey": "key",
+			"via": "models",
+			"sessionId": "session-1",
+			"modelHeaders": {
+				"X-OpenCode-Session": "model"
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-opencode-session": "model"
+			}
+		},
+		{
+			"name": "pi-messages models: request header outranks the session",
+			"api": "pi-messages",
+			"provider": "opencode",
+			"baseUrl": "https://opencode.ai/zen/v1",
+			"apiKey": "key",
+			"via": "models",
+			"sessionId": "session-1",
+			"headers": {
+				"X-OpenCode-Session": "request"
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-opencode-session": "request"
+			}
+		},
+		{
+			"name": "pi-messages models: request marker removes the session",
+			"api": "pi-messages",
+			"provider": "opencode",
+			"baseUrl": "https://opencode.ai/zen/v1",
+			"apiKey": "key",
+			"via": "models",
+			"sessionId": "session-1",
+			"headers": {
+				"x-opencode-session": null
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "pi-messages models: no session on another host",
+			"api": "pi-messages",
+			"provider": "plain",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"apiKey": "key",
+			"via": "models",
+			"sessionId": "session-1",
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)"
+			}
+		},
+		{
+			"name": "pi-messages models: opencode attribution with session",
+			"api": "pi-messages",
+			"provider": "opencode",
+			"baseUrl": "https://opencode.ai/zen/v1",
+			"apiKey": "key",
+			"via": "models",
+			"sessionId": "session-1",
+			"identity": {
+				"attribution": {
+					"name": "pi",
+					"url": "https://pi.dev",
+					"categories": [
+						"cli-agent"
+					]
+				}
+			},
+			"sent": {
+				"user-agent": "pi/1.4.0 (darwin; node/v26.4.0; arm64)",
+				"x-opencode-client": "pi",
+				"x-opencode-session": "session-1"
+			}
+		}
+	]
+}

@@ -95,6 +95,11 @@ type AgentOptions struct {
 	MaxRetryDelayMs *int
 	MaxRetries      int
 	TimeoutMs       int
+	// Identity is how requests identify the app to providers, merged field by
+	// field over DefaultAgentIdentity (attribution to pi). Pass
+	// &ai.ClientIdentity{Attribution: ai.NoAttribution} to send no
+	// attribution headers (upstream adc5fa9f8).
+	Identity *ai.ClientIdentity
 	// WebSocketConnectTimeoutMs and HTTPClient are forwarded to the stream
 	// options (pi AgentLoopConfig extends SimpleStreamOptions).
 	WebSocketConnectTimeoutMs int
@@ -150,12 +155,15 @@ type Agent struct {
 	TimeoutMs                 int
 	WebSocketConnectTimeoutMs int
 	HTTPClient                ai.HTTPDoer
-	Temperature               *float64
-	MaxTokens                 *int
-	CacheRetention            ai.CacheRetention
-	Headers                   ai.ProviderHeaders
-	Metadata                  map[string]any
-	ToolExecution             ToolExecutionMode
+	// Identity is the request identity forwarded to the stream function, over
+	// DefaultAgentIdentity.
+	Identity       *ai.ClientIdentity
+	Temperature    *float64
+	MaxTokens      *int
+	CacheRetention ai.CacheRetention
+	Headers        ai.ProviderHeaders
+	Metadata       map[string]any
+	ToolExecution  ToolExecutionMode
 
 	active *activeRun
 }
@@ -211,6 +219,7 @@ func NewAgent(opts AgentOptions) *Agent {
 		TimeoutMs:                 opts.TimeoutMs,
 		WebSocketConnectTimeoutMs: opts.WebSocketConnectTimeoutMs,
 		HTTPClient:                opts.HTTPClient,
+		Identity:                  opts.Identity,
 		Temperature:               opts.Temperature,
 		MaxTokens:                 opts.MaxTokens,
 		CacheRetention:            opts.CacheRetention,
@@ -524,6 +533,7 @@ func (a *Agent) loopConfig(skipInitialSteeringPoll bool) AgentLoopConfig {
 		TimeoutMs:                 a.TimeoutMs,
 		WebSocketConnectTimeoutMs: a.WebSocketConnectTimeoutMs,
 		HTTPClient:                a.HTTPClient,
+		Identity:                  a.Identity,
 		Temperature:               a.Temperature,
 		MaxTokens:                 a.MaxTokens,
 		CacheRetention:            a.CacheRetention,

@@ -2228,3 +2228,49 @@ func TestAgentForwardsPrepareRequest(t *testing.T) {
 		t.Fatalf("request model = %q, want the replacement %q", sentModel, replacementModel.ID)
 	}
 }
+
+// upstream agent.test.ts "attributes requests to pi by default and merges a
+// configured identity over it" (adc5fa9f8, 04a93bad8).
+func TestAgentIdentityDefaultsToPiAttribution(t *testing.T) {
+	var received []*ai.ClientIdentity
+	a := NewAgent(AgentOptions{
+		InitialState: &AgentState{Model: testModel},
+		StreamFn: func(ctx context.Context, model *ai.Model, req ai.TranscriptContext, opts *ai.SimpleStreamOptions) *ai.AssistantMessageEventStream {
+			received = append(received, opts.Identity)
+			return replyWith(textMessage("ok"))
+		},
+	})
+	if err := a.Prompt(context.Background(), "hello"); err != nil {
+		t.Fatal(err)
+	}
+	acme := &ai.ClientAttribution{Name: "acme", URL: "https://acme.example"}
+	a.Identity = &ai.ClientIdentity{UserAgent: ai.UserAgentShort, Attribution: acme}
+	if err := a.Prompt(context.Background(), "hello again"); err != nil {
+		t.Fatal(err)
+	}
+	a.Identity = &ai.ClientIdentity{UserAgent: ai.UserAgentShort}
+	if err := a.Prompt(context.Background(), "and again"); err != nil {
+		t.Fatal(err)
+	}
+	want := []ai.ClientIdentity{
+		{Attribution: &ai.PiAttribution},
+		{Attribution: acme, UserAgent: ai.UserAgentShort},
+		{Attribution: &ai.PiAttribution, UserAgent: ai.UserAgentShort},
+	}
+	if len(received) != len(want) {
+		t.Fatalf("received %d requests, want %d", len(received), len(want))
+	}
+	for i, got := range received {
+		if got == nil || got.Attribution != want[i].Attribution || got.UserAgent != want[i].UserAgent || got.Version != "" {
+			t.Errorf("request %d identity = %+v, want %+v", i, got, want[i])
+		}
+	}
+	// NoAttribution turns pi's attribution off.
+	a.Identity = &ai.ClientIdentity{Attribution: ai.NoAttribution}
+	if err := a.Prompt(context.Background(), "once more"); err != nil {
+		t.Fatal(err)
+	}
+	if got := received[len(received)-1]; got.Attribution != ai.NoAttribution {
+		t.Errorf("identity with NoAttribution = %+v", got)
+	}
+}

@@ -2198,41 +2198,37 @@ func convertContentBlocks(content ai.ContentList) any {
 // anthropic-beta. pi builds the client once per stream, and its constructor
 // reads ANTHROPIC_CUSTOM_HEADERS then.
 func anthropicClientHeaders(model *ai.Model, opts *AnthropicOptions, oauth bool, apiKey, authToken string, messages []ai.Message) sdkHeaders {
-	// pi builds ONE header object per request (mergeClientHeaders,
-	// anthropic-messages.ts at upstream 87af49dec) and hands it to the SDK as
-	// `defaultHeaders`; headerObject is that object, slots and all, so a case
-	// collision resolves by insertion slot rather than by which Set ran last.
-	// It holds pi's own accept and anthropic-dangerous-direct-browser-access;
-	// the SDK sends both again, with anthropic-version, in its own bundle
-	// below the object, the api key or bearer in its auth bundle, and
-	// content-type in its body bundle above the object.
+	// pi builds ONE header object per request (mergeHeaders in createClient)
+	// and hands it to the SDK as `defaultHeaders`; headerObject is that
+	// object, slots and all, so a case collision resolves by insertion slot
+	// rather than by which Set ran last. It holds pi's own accept and
+	// anthropic-dangerous-direct-browser-access; the SDK sends both again,
+	// with anthropic-version, in its own bundle below the object, the api key
+	// or bearer in its auth bundle, and content-type in its body bundle above
+	// the object.
 	//
-	// The merge is seeded with pi's runtime user agent FIRST, so every later
-	// source outranks it: the attribution bundle, model.Headers (the catalog's
-	// GitHubCopilotChat agent on github-copilot models) and the consumer's
-	// opts.Headers — and a deletion marker in any of them suppresses it. The
-	// OAuth branch below is the one place where the SPELLING matters: it holds
-	// its claude-cli identity under the lowercase name, at a later slot, so a
-	// later source spelled "User-Agent" updates slot 0 and still loses to it.
+	// The github-copilot and api-key branches open the object with the
+	// request identity's headers (upstream adc5fa9f8): the User-Agent and
+	// provider attribution, so model.Headers (the catalog's GitHubCopilotChat
+	// agent on github-copilot models) and the consumer's opts.Headers outrank
+	// them, and a deletion marker in either suppresses them. The OAuth branch
+	// sends no client identity at all: Claude Code's identity headers stand in
+	// for it, its user agent under the lowercase name.
 	//
 	// The SDK's constructor spreads ANTHROPIC_CUSTOM_HEADERS under the object
 	// it is given — `{...parsed, ...defaultHeaders}` — so the variable's
 	// headers take the first slots, and a source spelled exactly like one of
 	// them takes that slot: "user-agent: x" there puts the OAuth identity in
-	// slot 0, where pi's runtime agent, in a later slot, beats it.
+	// slot 0.
 	o := &headerObject{}
 	if parsed, ok := sdkCustomHeaders("ANTHROPIC_CUSTOM_HEADERS"); ok {
 		o = parsed
 	}
-	o.merge(piUserAgentHeaders())
+	if !oauth {
+		setIdentityHeaders(o, model, opts.Identity)
+	}
 	o.set("accept", "application/json")
 	o.set("anthropic-dangerous-direct-browser-access", "true")
-
-	// pi mergeProviderAttributionHeaders (sdk.ts) puts the attribution bundle at
-	// the bottom of the precedence stack: emit session + default attribution
-	// first so the provider auth headers, model.Headers, and opts.Headers all
-	// override them.
-	applyAttributionDefaults(o.set, model, opts.SessionID)
 
 	compat := getAnthropicCompat(model)
 
@@ -2297,7 +2293,7 @@ func anthropicClientHeaders(model *ai.Model, opts *AnthropicOptions, oauth bool,
 		o.mergeStrings(buildCopilotDynamicHeaders(messages, hasCopilotVisionInput(messages)))
 	}
 	// pi options.headers (consumer) are spread last and win over everything
-	// above, including model.Headers and the attribution defaults — a deletion
+	// above, including model.Headers and the identity's headers — a deletion
 	// marker here suppresses any of them.
 	o.merge(opts.Headers)
 

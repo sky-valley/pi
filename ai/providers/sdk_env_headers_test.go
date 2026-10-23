@@ -146,7 +146,7 @@ func TestOpenAIClientFoldsCustomHeadersEnv(t *testing.T) {
 	rows := []sdkEnvRow{
 		{name: "lines", env: custom("X-Custom: one\nX-Other : two \nnocolon\nX-Over:env\r"), headers: ai.ProviderHeaders{"X-Over": strPtr("opt")},
 			want: map[string]string{"x-custom": "one", "x-other": "two", "x-over": "opt", "nocolon": ""}},
-		{name: "pi's object wins", env: custom("User-Agent: env"), want: map[string]string{"user-agent": piUserAgent()}},
+		{name: "pi's object wins", env: custom("User-Agent: env"), want: map[string]string{"user-agent": ai.FormatUserAgent(nil)}},
 		{name: "later line wins", env: custom("X-A: 1\nx-a: 2\nX-A: 3"), want: map[string]string{"x-a": "2"}},
 		{name: "marker", env: custom("X-A: v"), headers: ai.ProviderHeaders{"x-a": nil}, want: map[string]string{"x-a": ""}},
 		{name: "replaces the auth header", env: custom("Authorization: env"), want: map[string]string{"authorization": "env"}},
@@ -189,13 +189,15 @@ func TestOpenAIClientFoldsCustomHeadersEnv(t *testing.T) {
 // object, `{...parsed, ...defaultHeaders}`: the variable's headers take the
 // first slots of the one plain object, which the SDK converts at request time.
 // So a source spelled exactly like one of them takes its slot — the OAuth
-// branch's "user-agent" identity lands in slot 0 under "user-agent: x", and
-// pi's "User-Agent" in a later slot beats it.
+// branch's "user-agent" identity lands in slot 0 under "user-agent: x" — and
+// the object's last slot for a name wins: on the OAuth branch, which sends no
+// client identity since upstream adc5fa9f8, that is Claude Code's agent
+// either way.
 func TestAnthropicClientSpreadsCustomHeadersEnv(t *testing.T) {
 	custom := func(v string) map[string]string { return map[string]string{"ANTHROPIC_CUSTOM_HEADERS": v} }
 	for _, row := range []sdkEnvRow{
 		{name: "lines", env: custom("X-Custom: a1\nUser-Agent: env\nnocolon"),
-			want: map[string]string{"x-custom": "a1", "user-agent": piUserAgent(), "nocolon": ""}},
+			want: map[string]string{"x-custom": "a1", "user-agent": ai.FormatUserAgent(nil), "nocolon": ""}},
 		{name: "replaces the auth header", env: custom("x-api-key: env"), want: map[string]string{"x-api-key": "env"}},
 		{name: "marker across spellings", env: custom("X-A: v"), headers: ai.ProviderHeaders{"x-a": nil}, want: map[string]string{"x-a": ""}},
 		{name: "marker in its slot", env: custom("X-A: v"), headers: ai.ProviderHeaders{"X-A": nil}, want: map[string]string{"x-a": ""}},
@@ -203,7 +205,8 @@ func TestAnthropicClientSpreadsCustomHeadersEnv(t *testing.T) {
 		{name: "trimmed as JS trims", env: custom("X-A:" + nbsp + "v" + nbsp), want: map[string]string{"x-a": "v"}},
 		{name: "BOM trimmed", env: custom("X-A: v" + bom), want: map[string]string{"x-a": "v"}},
 		{name: "NEL kept", env: custom("X-A: v" + nel), want: map[string]string{"x-a": "v\x85"}},
-		{name: "OAuth identity in slot 0", env: custom("user-agent: env"), key: "sk-ant-oat-x", want: map[string]string{"user-agent": piUserAgent()}},
+		{name: "OAuth identity in slot 0", env: custom("user-agent: env"), key: "sk-ant-oat-x",
+			want: map[string]string{"user-agent": "claude-cli/" + claudeCodeVersion}},
 		{name: "OAuth identity in its own slot", env: custom("User-Agent: env"), key: "sk-ant-oat-x",
 			want: map[string]string{"user-agent": "claude-cli/" + claudeCodeVersion}},
 		{name: "refused value at request time", env: custom("X-A: " + string(rune(cjk))), err: byteStringError(0, cjk), payloads: 1},

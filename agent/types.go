@@ -331,14 +331,17 @@ type AgentLoopConfig struct {
 	TimeoutMs                 int
 	WebSocketConnectTimeoutMs int
 	HTTPClient                ai.HTTPDoer
-	Temperature               *float64
-	MaxTokens                 *int
-	CacheRetention            ai.CacheRetention
-	Headers                   ai.ProviderHeaders
-	Metadata                  map[string]any
-	APIKey                    string
-	OnPayload                 func(payload any, model *ai.Model) (any, error)
-	OnResponse                func(resp ai.ProviderResponse, model *ai.Model) error
+	// Identity overrides DefaultAgentIdentity field by field for every request
+	// the loop makes (pi AgentLoopConfig.identity).
+	Identity       *ai.ClientIdentity
+	Temperature    *float64
+	MaxTokens      *int
+	CacheRetention ai.CacheRetention
+	Headers        ai.ProviderHeaders
+	Metadata       map[string]any
+	APIKey         string
+	OnPayload      func(payload any, model *ai.Model) (any, error)
+	OnResponse     func(resp ai.ProviderResponse, model *ai.Model) error
 	// OnProviderStreamEvent is forwarded to the stream options as
 	// ai.StreamOptions.OnProviderStreamEvent.
 	OnProviderStreamEvent func(data any, model *ai.Model) error
