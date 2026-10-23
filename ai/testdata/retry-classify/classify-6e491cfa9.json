@@ -1,12 +1,12 @@
 {
-	"sha": "cedefc532",
+	"sha": "6e491cfa9",
 	"patterns": {
 		"NON_RETRYABLE_PROVIDER_LIMIT_ERROR_PATTERN": {
 			"source": "GoUsageLimitError|FreeUsageLimitError|Monthly usage limit reached|available balance|insufficient_quota|out of budget|quota exceeded|billing|subscription_sharing_usage_limit_exceeded|subscription_sharing_workplace_individual_usage_limit_exceeded",
 			"flags": "i"
 		},
 		"RETRYABLE_PROVIDER_ERROR_PATTERN": {
-			"source": "overloaded|server_busy|servers are currently busy|currently experiencing high demand|model is at capacity|rate.?limit|too many requests|429|500|502|503|504|520|524|service.?(?:is.?)?(?:temporarily.?)?unavailable|server.?error|internal.?error|provider.?returned.?(?:an.?)?error|exceeded request buffer limit while retrying upstream|unable to forward upstream|upstream.?request.?failed|upstream_stream_read_error|stream was interrupted|http\\/?2 stream failed|network.?error|connection.?error|connection.?refused|connection.?lost|other side closed|fetch failed|request to \\S+ failed, reason:|getaddrinfo|ENOTFOUND|EAI_AGAIN|upstream.?connect|reset before headers|socket hang up|socket connection was closed|timed? out|timeout|terminated|websocket.?closed|websocket.?error|ended without|stream ended before message_stop|stream ended before a terminal response event|http2 request did not get a response|pending stream has been canceled|retry delay|you can retry your request|try your request again|please retry your request|ResourceExhausted|subscription_sharing_usage_unavailable|subscription_sharing_user_unavailable",
+			"source": "overloaded|server_busy|servers are currently busy|currently experiencing high demand|model is at capacity|rate.?limit|too many requests|(?<![a-z0-9])(?:429|500|502|503|504|520|524)(?![a-z0-9])|service.?(?:is.?)?(?:temporarily.?)?unavailable|server.?error|internal.?error|provider.?returned.?(?:an.?)?error|exceeded request buffer limit while retrying upstream|unable to forward upstream|upstream.?request.?failed|upstream_stream_read_error|stream was interrupted|http\\/?2 stream failed|network.?error|connection.?error|connection.?refused|connection.?lost|other side closed|fetch failed|request to \\S+ failed, reason:|getaddrinfo|ENOTFOUND|EAI_AGAIN|upstream.?connect|reset before headers|socket hang up|socket connection was closed|timed? out|timeout|terminated|websocket.?closed|websocket.?error|ended without|stream ended before message_stop|stream ended before a terminal response event|http2 request did not get a response|stream disconnected before completion|pending stream has been canceled|retry delay|you can retry your request|try your request again|please retry your request|ResourceExhausted|subscription_sharing_usage_unavailable|subscription_sharing_user_unavailable",
 			"flags": "i"
 		}
 	},
@@ -297,6 +297,30 @@
 			"retryable": true
 		},
 		{
+			"covers": "pi: status code inside a request id (#11057)",
+			"stopReason": "error",
+			"errorMessage": "401 {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011CU503xyz\"}",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "pi: status code inside a longer number (#11057)",
+			"stopReason": "error",
+			"errorMessage": "400 image exceeds 5 MB maximum: 5316784 bytes > 5242880 bytes",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "pi: Codex CLI disconnect relayed by a proxy (#11057)",
+			"stopReason": "error",
+			"errorMessage": "stream disconnected before completion: stream closed before response.completed",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
 			"covers": "guard: stop",
 			"stopReason": "stop",
 			"errorMessage": "overloaded",
@@ -398,7 +422,7 @@
 			"retryable": true
 		},
 		{
-			"covers": "429",
+			"covers": "(?<![a-z0-9])(?:429|500|502|503|504|520|524)(?![a-z0-9])",
 			"stopReason": "error",
 			"errorMessage": "HTTP 429",
 			"limitPattern": false,
@@ -406,7 +430,7 @@
 			"retryable": true
 		},
 		{
-			"covers": "500",
+			"covers": "(?<![a-z0-9])(?:429|500|502|503|504|520|524)(?![a-z0-9])",
 			"stopReason": "error",
 			"errorMessage": "status 500",
 			"limitPattern": false,
@@ -414,7 +438,7 @@
 			"retryable": true
 		},
 		{
-			"covers": "502",
+			"covers": "(?<![a-z0-9])(?:429|500|502|503|504|520|524)(?![a-z0-9])",
 			"stopReason": "error",
 			"errorMessage": "status 502",
 			"limitPattern": false,
@@ -422,7 +446,7 @@
 			"retryable": true
 		},
 		{
-			"covers": "503",
+			"covers": "(?<![a-z0-9])(?:429|500|502|503|504|520|524)(?![a-z0-9])",
 			"stopReason": "error",
 			"errorMessage": "status 503",
 			"limitPattern": false,
@@ -430,7 +454,7 @@
 			"retryable": true
 		},
 		{
-			"covers": "504",
+			"covers": "(?<![a-z0-9])(?:429|500|502|503|504|520|524)(?![a-z0-9])",
 			"stopReason": "error",
 			"errorMessage": "status 504",
 			"limitPattern": false,
@@ -438,7 +462,7 @@
 			"retryable": true
 		},
 		{
-			"covers": "520",
+			"covers": "(?<![a-z0-9])(?:429|500|502|503|504|520|524)(?![a-z0-9])",
 			"stopReason": "error",
 			"errorMessage": "status 520",
 			"limitPattern": false,
@@ -446,7 +470,7 @@
 			"retryable": true
 		},
 		{
-			"covers": "524",
+			"covers": "(?<![a-z0-9])(?:429|500|502|503|504|520|524)(?![a-z0-9])",
 			"stopReason": "error",
 			"errorMessage": "status 524",
 			"limitPattern": false,
@@ -766,6 +790,14 @@
 			"retryable": true
 		},
 		{
+			"covers": "stream disconnected before completion",
+			"stopReason": "error",
+			"errorMessage": "Stream Disconnected Before Completion",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
 			"covers": "pending stream has been canceled",
 			"stopReason": "error",
 			"errorMessage": "PENDING STREAM HAS BEEN CANCELED",
@@ -1026,8 +1058,8 @@
 			"stopReason": "error",
 			"errorMessage": "status 5200",
 			"limitPattern": false,
-			"retryablePattern": true,
-			"retryable": true
+			"retryablePattern": false,
+			"retryable": false
 		},
 		{
 			"covers": "near-miss",
@@ -1257,6 +1289,182 @@
 			"covers": "near-miss",
 			"stopReason": "error",
 			"errorMessage": "line1\n520 status code (no body)",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "status: whole text",
+			"stopReason": "error",
+			"errorMessage": "503",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "status: at the start",
+			"stopReason": "error",
+			"errorMessage": "429 Too",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "status: at the end",
+			"stopReason": "error",
+			"errorMessage": "got 504",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "status: punctuation",
+			"stopReason": "error",
+			"errorMessage": "(500)",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "status: underscore is not [a-z0-9]",
+			"stopReason": "error",
+			"errorMessage": "http_502_bad",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "status: newline",
+			"stopReason": "error",
+			"errorMessage": "x\n520\n",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "status: letter before",
+			"stopReason": "error",
+			"errorMessage": "x429",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "status: letter after",
+			"stopReason": "error",
+			"errorMessage": "429x",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "status: upper-case letter before",
+			"stopReason": "error",
+			"errorMessage": "X429",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "status: upper-case letter after",
+			"stopReason": "error",
+			"errorMessage": "503Z",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "status: digit before",
+			"stopReason": "error",
+			"errorMessage": "1500",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "status: digit after",
+			"stopReason": "error",
+			"errorMessage": "5024",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "status: two codes, the second bounded",
+			"stopReason": "error",
+			"errorMessage": "4290 503",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "status: a code inside a code",
+			"stopReason": "error",
+			"errorMessage": "50429",
+			"limitPattern": false,
+			"retryablePattern": false,
+			"retryable": false
+		},
+		{
+			"covers": "status: non-ASCII letter before",
+			"stopReason": "error",
+			"errorMessage": "é429",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "status: non-ASCII letter after",
+			"stopReason": "error",
+			"errorMessage": "429é",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "status: U+212A before is not k",
+			"stopReason": "error",
+			"errorMessage": "K503",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "status: U+017F after is not s",
+			"stopReason": "error",
+			"errorMessage": "524ſ",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "status: U+0131 before is not i",
+			"stopReason": "error",
+			"errorMessage": "ı500",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "status: astral before",
+			"stopReason": "error",
+			"errorMessage": "😀502",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "status: astral after",
+			"stopReason": "error",
+			"errorMessage": "502😀",
+			"limitPattern": false,
+			"retryablePattern": true,
+			"retryable": true
+		},
+		{
+			"covers": "status: full-width digit before",
+			"stopReason": "error",
+			"errorMessage": "１429",
 			"limitPattern": false,
 			"retryablePattern": true,
 			"retryable": true

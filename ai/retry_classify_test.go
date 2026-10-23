@@ -8,7 +8,7 @@ import (
 
 // retryClassifyCaptureFile is written by testdata/retry-classify/capture.mts,
 // which runs upstream's own packages/ai/src/utils/retry.ts under node.
-const retryClassifyCaptureFile = "testdata/retry-classify/classify-cedefc532.json"
+const retryClassifyCaptureFile = "testdata/retry-classify/classify-6e491cfa9.json"
 
 type capturedPattern struct {
 	Source string `json:"source"`
@@ -255,5 +255,32 @@ func TestIsRetryableAssistantError(t *testing.T) {
 				t.Errorf("IsRetryableAssistantError(%q) = %v, want %v", tc.msg.ErrorMessage, got, tc.want)
 			}
 		})
+	}
+}
+
+// TestTranslateProviderErrorPatternRefusesUnportedSyntax keeps the translator
+// from guessing: every construct whose JavaScript semantics it has not been
+// taught must stop the package from initializing, not compile into RE2 with
+// different answers.
+func TestTranslateProviderErrorPatternRefusesUnportedSyntax(t *testing.T) {
+	for _, pattern := range []string{
+		"a|b",              // a top-level "|" would split the alternative
+		"(?<![^a-z])429",   // negated lookaround class
+		"(?<![a-z\\d])429", // an escape inside the class
+		"(?<!x)429",        // a lookaround of a literal, not a class
+		"(?=[a-z])429",     // positive lookahead
+		"429(?![a-z]",      // unterminated lookaround
+		"(?<name>429)",     // a named group
+		"[a-z]429",         // a bare class
+		"429)",             // unbalanced
+	} {
+		func() {
+			defer func() {
+				if recover() == nil {
+					t.Errorf("translateProviderErrorPattern(%q) did not panic", pattern)
+				}
+			}()
+			translateProviderErrorPattern(pattern)
+		}()
 	}
 }

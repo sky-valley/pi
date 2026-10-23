@@ -3,19 +3,18 @@
 // in package ai.
 //
 //   node --experimental-strip-types capture.mts <extraction> <out.json> <sha>
-//   e.g. ... capture.mts <dir> classify-cedefc532.json cedefc532
+//   e.g. ... capture.mts <dir> classify-6e491cfa9.json 6e491cfa9
 //
 // <extraction> holds packages/ai at <sha> (`git archive <sha> packages/ai` from
 // the upstream clone) and a node_modules resolving pi-ai's dependencies (the npm
 // build's). It is a src capture, checked against the build when a release
-// ships the source it read (the BUILD wins): classify-cedefc532.json was
-// captured from src at cedefc532 with the 1.3.0 build's node_modules and
-// pi-telemetry shimmed to its src at the same sha (src ai imports exports the
-// 1.3.0 telemetry build lacks). v1.3.0 (71023aec1) ships every alternative but
-// the five 0fbdbd3f8 and 698a2d23b added after it and the limit alternative
-// cedefc532 added: its dist/utils/retry.js builds the limit pattern with this
-// source less that one and the retryable one with this source less those five,
-// both "i".
+// ships the source it read (the BUILD wins): classify-6e491cfa9.json was
+// captured from src at 6e491cfa9 with the 1.4.0 build's node_modules, and
+// v1.4.0 (4a080252f) ships that retry.ts unchanged: its dist/utils/retry.js
+// builds both patterns with these sources, both "i", and its
+// isRetryableAssistantError answers every row the same. Control: the previous
+// script at the old pin 82432219a, with the same node_modules, reproduced
+// classify-cedefc532.json byte for byte but its sha.
 //
 // Every row records three answers: isRetryableAssistantError on the message
 // retry.test.ts would build (fauxAssistantMessage), and RegExp.prototype.test of
@@ -83,6 +82,9 @@ const chatGPTWorkspaceLimitMessage =
 const azurePeakLoadError =
 	"The system is currently experiencing high demand and cannot process your request. Your request exceeds the maximum usage size allowed during peak load. For improved capacity reliability, consider switching to Provisioned Throughput.";
 
+// The status-code alternative (6e491cfa9): a code must not sit inside a longer word or number.
+const STATUS = "(?<![a-z0-9])(?:429|500|502|503|504|520|524)(?![a-z0-9])";
+
 const rows: Row[] = [
 	// retry.test.ts "provider retry classification" and retryAssistantCall literals.
 	error("pi: OpenAI explicit retry guidance", openAIExplicitRetryMessage),
@@ -125,6 +127,17 @@ const rows: Row[] = [
 	error("pi: server busy (#10543)", "server_busy"),
 	error("pi: server busy (#10543)", "servers are currently busy"),
 	error("pi: upstream provider returned an error (#10842)", "The upstream provider returned an error"),
+	// retry.test.ts regression for #11057 (6e491cfa9): status codes inside ids or longer numbers.
+	error(
+		"pi: status code inside a request id (#11057)",
+		'401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CU503xyz"}',
+	),
+	error("pi: status code inside a longer number (#11057)", "400 image exceeds 5 MB maximum: 5316784 bytes > 5242880 bytes"),
+	// CHANGELOG wording of 29057ece3, which added no test (#11057).
+	error(
+		"pi: Codex CLI disconnect relayed by a proxy (#11057)",
+		"stream disconnected before completion: stream closed before response.completed",
+	),
 
 	// isRetryableAssistantError's guard: only stopReason "error" with error text.
 	{ covers: "guard: stop", stopReason: "stop", errorMessage: "overloaded" },
@@ -142,13 +155,13 @@ const rows: Row[] = [
 	error("model is at capacity", "Model Is At Capacity"),
 	error("rate.?limit", "rate_limit_error"),
 	error("too many requests", "Too Many Requests"),
-	error("429", "HTTP 429"),
-	error("500", "status 500"),
-	error("502", "status 502"),
-	error("503", "status 503"),
-	error("504", "status 504"),
-	error("520", "status 520"),
-	error("524", "status 524"),
+	error(STATUS, "HTTP 429"),
+	error(STATUS, "status 500"),
+	error(STATUS, "status 502"),
+	error(STATUS, "status 503"),
+	error(STATUS, "status 504"),
+	error(STATUS, "status 520"),
+	error(STATUS, "status 524"),
 	error("service.?(?:is.?)?(?:temporarily.?)?unavailable", "Service Unavailable"),
 	error("service.?(?:is.?)?(?:temporarily.?)?unavailable", "service is unavailable"),
 	error("service.?(?:is.?)?(?:temporarily.?)?unavailable", "Service-Temporarily-Unavailable"),
@@ -188,6 +201,7 @@ const rows: Row[] = [
 	error("ended without", "stream ended without message_stop"),
 	error("stream ended before message_stop", "Anthropic stream ended before message_stop"),
 	error("http2 request did not get a response", "http2 request did not get a response"),
+	error("stream disconnected before completion", "Stream Disconnected Before Completion"),
 	error("pending stream has been canceled", "PENDING STREAM HAS BEEN CANCELED"),
 	error("retry delay", "Retry delay 120000ms exceeds maxRetryDelayMs"),
 	error("you can retry your request", "the model is busy; you can retry your request"),
@@ -260,6 +274,31 @@ const rows: Row[] = [
 	error("near-miss", "ETIMEDOUT"),
 	error("near-miss", "line1\n520 status code (no body)"),
 
+	// The status-code boundaries: one UTF-16 code unit on each side that is not
+	// [a-z0-9] under "i" (ASCII letters only), or the start or end of the text.
+	error("status: whole text", "503"),
+	error("status: at the start", "429 Too"),
+	error("status: at the end", "got 504"),
+	error("status: punctuation", "(500)"),
+	error("status: underscore is not [a-z0-9]", "http_502_bad"),
+	error("status: newline", "x\n520\n"),
+	error("status: letter before", "x429"),
+	error("status: letter after", "429x"),
+	error("status: upper-case letter before", "X429"),
+	error("status: upper-case letter after", "503Z"),
+	error("status: digit before", "1500"),
+	error("status: digit after", "5024"),
+	error("status: two codes, the second bounded", "4290 503"),
+	error("status: a code inside a code", "50429"),
+	error("status: non-ASCII letter before", "\u00e9429"),
+	error("status: non-ASCII letter after", "429\u00e9"),
+	error("status: U+212A before is not k", "\u212A503"),
+	error("status: U+017F after is not s", "524\u017F"),
+	error("status: U+0131 before is not i", "\u0131500"),
+	error("status: astral before", "\u{1F600}502"),
+	error("status: astral after", "502\u{1F600}"),
+	error("status: full-width digit before", "\uFF11429"),
+
 	// "." is one UTF-16 code unit other than a line terminator.
 	error("dot", "rate-limit"),
 	error("dot", "ratelimit"),
@@ -322,12 +361,35 @@ const rows: Row[] = [
 	error("fold: U+017F is not s before \\S", "Reque\u017Ft to https://x failed, reason:"),
 ];
 
+// The top-level alternatives of a pattern source: "|" inside a group or a class
+// belongs to that alternative (the status-code alternative holds one).
+function splitAlternatives(source: string): string[] {
+	const alternatives: string[] = [];
+	let depth = 0;
+	let inClass = false;
+	let start = 0;
+	for (let i = 0; i < source.length; i++) {
+		const c = source[i];
+		if (c === "\\") i++;
+		else if (inClass) inClass = c !== "]";
+		else if (c === "[") inClass = true;
+		else if (c === "(") depth++;
+		else if (c === ")") depth--;
+		else if (c === "|" && depth === 0) {
+			alternatives.push(source.slice(start, i));
+			start = i + 1;
+		}
+	}
+	alternatives.push(source.slice(start));
+	return alternatives;
+}
+
 // Every alternative must decide at least one row on its own: for a retryable
 // alternative, a row it alone matches that no limit alternative vetoes; for a
 // limit alternative, a row it alone matches that a retryable alternative would
 // otherwise retry.
 function checkCoverage(pattern: RegExp, other: RegExp, wantOther: boolean) {
-	const alternatives = pattern.source.split("|");
+	const alternatives = splitAlternatives(pattern.source);
 	for (const alternative of alternatives) {
 		const decides = rows.some((row) => {
 			if (row.stopReason !== "error" || !row.errorMessage) return false;
