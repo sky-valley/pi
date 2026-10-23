@@ -660,7 +660,7 @@
     {
       "label": "hello",
       "kind": 2,
-      "json": "{\"arch\":\"aarch64\",\"cwd\":\"*\",\"driveCwds\":{},\"features\":[\"listFiles\"],\"home\":\"\",\"os\":\"macos\",\"pid\":0,\"protocol\":1,\"separator\":\"/\",\"tmpdir\":\"/second\",\"version\":\"1.3.0\"}"
+      "json": "{\"arch\":\"aarch64\",\"cwd\":\"*\",\"driveCwds\":{},\"features\":[\"listFiles\"],\"home\":\"\",\"os\":\"macos\",\"pid\":0,\"protocol\":1,\"separator\":\"/\",\"tmpdir\":\"/second\",\"version\":\"1.4.0\"}"
     },
     {
       "label": "exit",
@@ -799,7 +799,7 @@
     {
       "label": "hello",
       "kind": 2,
-      "json": "{\"arch\":\"aarch64\",\"cwd\":\"*\",\"driveCwds\":{},\"features\":[\"listFiles\"],\"home\":\"*\",\"os\":\"macos\",\"pid\":0,\"protocol\":1,\"separator\":\"/\",\"tmpdir\":\"*\",\"version\":\"1.3.0\"}"
+      "json": "{\"arch\":\"aarch64\",\"cwd\":\"*\",\"driveCwds\":{},\"features\":[\"listFiles\"],\"home\":\"*\",\"os\":\"macos\",\"pid\":0,\"protocol\":1,\"separator\":\"/\",\"tmpdir\":\"*\",\"version\":\"1.4.0\"}"
     },
     {
       "label": "unknown op",

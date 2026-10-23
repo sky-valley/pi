@@ -29,7 +29,7 @@ import (
 //
 //	go test ./daemon -run TestOracle -oracle=/path/to/rust/pi-env
 //
-// (the Rust daemon of @earendil-works/pi-env 1.3.0, from its npm bin/ or a
+// (the Rust daemon of @earendil-works/pi-env 1.4.0, from its npm bin/ or a
 // cargo build of upstream packages/env/daemon).
 
 var (

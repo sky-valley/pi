@@ -22,7 +22,7 @@ const (
 	protocolVersion = 1
 	// Version is the npm package version of @earendil-works/pi-env this
 	// daemon matches; hello reports it.
-	Version = "1.3.0"
+	Version = "1.4.0"
 	// pingInterval and silenceLimit: each side pings every 5 s; the daemon
 	// stops everything and exits after 30 s without receiving a byte.
 	pingInterval = 5 * time.Second
