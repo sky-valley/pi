@@ -180,15 +180,22 @@ type AuthInfoLink struct {
 
 // AuthEvent carries login progress information to the UI.
 type AuthEvent struct {
-	Type             AuthEventType
-	URL              string
-	Instructions     string
-	UserCode         string
-	VerificationURI  string
-	IntervalSeconds  int
-	ExpiresInSeconds int
-	Message          string
-	Links            []AuthInfoLink // info only
+	Type            AuthEventType
+	URL             string
+	Instructions    string
+	UserCode        string
+	VerificationURI string
+	// OpenBrowserOnConfirm and CopyCodeOnConfirm (device_code only) are pi's
+	// `openBrowserOnConfirm?` and `copyCodeOnConfirm?` (upstream 7151099d0):
+	// whether a client offers to open VerificationURI, best-effort, and to copy
+	// UserCode over the clipboard once the user confirms. Unset means true, and
+	// clients may ignore them.
+	OpenBrowserOnConfirm OptBool
+	CopyCodeOnConfirm    OptBool
+	IntervalSeconds      int
+	ExpiresInSeconds     int
+	Message              string
+	Links                []AuthInfoLink // info only
 }
 
 // AuthInteraction serves both api-key and OAuth login flows (pi
