@@ -11,11 +11,11 @@ import (
 )
 
 // anthropicThinkingOffCaptureFile is what testdata/anthropic-thinking-off/
-// capture.mjs recorded from pi-ai 1.3.0. src at dc939913f records it but for
-// the other-provider row, which 911309429 moves; at dc939913f^ the "off
-// supported" row and the claude-opus-5 and claude-haiku-5-5 rows with reasoning
-// unset move.
-const anthropicThinkingOffCaptureFile = "testdata/anthropic-thinking-off/thinking-off-1.3.0.json"
+// capture.mjs recorded from src at e3bc05e87, with the pi-ai 1.4.0 build's
+// catalog data. At e3bc05e87^ it records the 1.4.0 build's file exactly (which
+// is 1.3.0's), and e3bc05e87 moves only the managed-effort output_config, from
+// "high" to "low" in all 26 rows that send one.
+const anthropicThinkingOffCaptureFile = "testdata/anthropic-thinking-off/thinking-off-e3bc05e87.json"
 
 // On a managed-effort model, "off" — thinkingEnabled false on a reasoning model
 // whose thinkingLevelMap does not mark off unsupported — sends {type:

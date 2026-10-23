@@ -19,11 +19,12 @@ import (
 // anthropic cases of packages/ai/test/transcript-tool-changes.test.ts at
 // b271b0a52 (the fifth, "folds … without native support", is
 // TestFoldsAnthropicUpdatesInto…); the full request bodies are pi's, captured
-// under node at dc939913f by testdata/transcript/capture-anthropic-native.mts
-// (at b271b0a52^ it reproduces the 9e05370b2 capture; at dc939913f^ the
-// b271b0a52 one, and dc939913f moves only nativeEffort, now "off").
+// under node at e3bc05e87 by testdata/transcript/capture-anthropic-native.mts
+// (the previous script at the old pin 82432219a reproduces the dc939913f
+// capture; at 3bc6eebac^ the new script differs only in the bodies 3bc6eebac's
+// held update and e3bc05e87's effort "low" move).
 
-const anthropicNativeCaptureFile = "testdata/transcript/anthropic-native-dc939913f.json"
+const anthropicNativeCaptureFile = "testdata/transcript/anthropic-native-e3bc05e87.json"
 
 const wantToolChangesBeta = "inline-tools-2026-09-15"
 
@@ -431,8 +432,8 @@ func anthropicAPIKeyClaudeCodeNamesContext() ai.Context {
 }
 
 // anthropicNativeEmptyAssistantContext is the capture's emptyAssistantContext:
-// the held update is flushed on reaching an assistant message that converts to
-// no blocks, so it precedes the next user message.
+// the held update is held past an assistant message that converts to no blocks
+// (upstream 3bc6eebac, #11091), so with no later assistant it lands at the end.
 func anthropicNativeEmptyAssistantContext() ai.Context {
 	leading := ai.NewSystemText("base prompt", 0)
 	leading.ToolsAdded = []ai.Tool{transcriptTool("base_tool")}
@@ -449,6 +450,35 @@ func anthropicNativeEmptyAssistantContext() ai.Context {
 		},
 		ai.NewUserText("second", 4),
 	}}
+}
+
+// anthropicHeldPastDroppedReplyContext is the capture's heldPastDroppedReply,
+// transcript-tool-changes.test.ts's #11091 context: another model's empty
+// reply converts to no blocks, so the update is held past it. With
+// beforeAssistant it is the capture's heldPastDroppedReplyBeforeAssistant: a
+// later assistant message that is sent takes the update directly before it.
+func anthropicHeldPastDroppedReplyContext(beforeAssistant bool) ai.Context {
+	reply := func(text, provider string, api ai.Api, model string, timestamp int64) ai.AssistantMessage {
+		return ai.AssistantMessage{
+			Content: ai.ContentList{ai.TextContent{Text: text}},
+			Api:     api, Provider: provider, Model: model,
+			StopReason: ai.StopStop, Timestamp: timestamp,
+		}
+	}
+	messages := []ai.Message{
+		ai.NewSystemText("base prompt", 0),
+		ai.NewUserText("hi", 1),
+		ai.NewSystemText("updated guidance", 2),
+		reply("", "openai-codex", ai.APIOpenAICodexResponses, "gpt-x", 3),
+		ai.NewUserText("again", 4),
+	}
+	if beforeAssistant {
+		messages = append(messages,
+			reply("answer", "anthropic", ai.APIAnthropicMessages, "claude-opus-5", 3),
+			ai.NewUserText("third", 5),
+		)
+	}
+	return ai.Context{Messages: messages}
 }
 
 // anthropicUserStringSurrogatesContext is the capture's userStringSurrogates,
@@ -513,6 +543,9 @@ func TestAnthropicNativeRequestBodies(t *testing.T) {
 		{"nativeApiKeyClaudeCodeNames", native, anthropicAPIKeyClaudeCodeNamesContext(), "test-key", ""},
 		{"nativeNoToolCacheControl", noToolCacheControl, full, "test-key", ""},
 		{"nativeEmptyAssistant", native, anthropicNativeEmptyAssistantContext(), "test-key", ""},
+		{"nativeHeldPastDroppedReply", native, anthropicHeldPastDroppedReplyContext(false), "test-key", ""},
+		{"nativeHeldPastDroppedReplyBeforeAssistant", native, anthropicHeldPastDroppedReplyContext(true), "test-key", ""},
+		{"nativeEffortHeldPastDroppedReply", effort, anthropicHeldPastDroppedReplyContext(false), "test-key", ai.ThinkingMedium},
 		{"userStringSurrogates", plain, anthropicUserStringSurrogatesContext(), "test-key", ""},
 		{"nativeConfiguredBetaHeader", configuredBetas, full, "test-key", ""},
 	}

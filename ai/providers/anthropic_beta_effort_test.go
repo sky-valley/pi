@@ -382,7 +382,7 @@ func anthropicMidConvoModel() *ai.Model {
 }
 
 // A managed-effort model always sends adaptive thinking with drop_block
-// binding, a literal `output_config.effort:"high"`, both new betas, and NEVER a
+// binding, a literal `output_config.effort:"low"`, both new betas, and NEVER a
 // temperature — regardless of what thinking options the caller passed.
 func TestAnthropicMidConvoEffortRequestShape(t *testing.T) {
 	opts := apiKeyOptions("test-key")
@@ -402,10 +402,13 @@ func TestAnthropicMidConvoEffortRequestShape(t *testing.T) {
 	if !reflect.DeepEqual(body["thinking"], wantThinking) {
 		t.Fatalf("thinking = %#v, want %#v", body["thinking"], wantThinking)
 	}
-	// Literal "high", NOT options.effort: the per-turn effort rides in the
-	// trailing system message instead (upstream 64eeb82a4 buildParams).
-	if !reflect.DeepEqual(body["output_config"], map[string]any{"effort": "high"}) {
-		t.Fatalf("output_config = %#v, want {effort: high}", body["output_config"])
+	// Literal "low", NOT options.effort: the per-turn effort rides in the
+	// trailing system message instead (upstream 64eeb82a4 buildParams). The
+	// top-level effort is part of the cached prompt so it stays fixed, and it is
+	// "low" because an organization's effort cap rejects any level above it
+	// (upstream e3bc05e87, #10063).
+	if !reflect.DeepEqual(body["output_config"], map[string]any{"effort": "low"}) {
+		t.Fatalf("output_config = %#v, want {effort: low}", body["output_config"])
 	}
 	if _, present := body["temperature"]; present {
 		t.Fatalf("temperature must be suppressed on managed-effort models, got %#v", body["temperature"])

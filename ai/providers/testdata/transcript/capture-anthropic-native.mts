@@ -3,13 +3,13 @@
 // TestAnthropicNative*RequestBody in this package.
 //
 //   node --experimental-strip-types capture-anthropic-native.mts <extraction> <out.json> <sha>
-//   e.g. ... capture-anthropic-native.mts <dir> anthropic-native-9e05370b2.json 9e05370b2
+//   e.g. ... capture-anthropic-native.mts <dir> anthropic-native-e3bc05e87.json e3bc05e87
 //
 // <extraction> holds packages/ai at <sha> (`git archive <sha> packages/ai` from
 // the upstream clone) and a node_modules resolving pi-ai's dependencies (the npm
-// build's). The npm build 0.85.1 predates upstream 9e05370b2, so these are src
-// captures: re-verify them against the first build that ships it (the BUILD
-// wins).
+// build's). anthropic-native-e3bc05e87.json is a src capture: the 1.4.0 build
+// predates 3bc6eebac (the held update) and e3bc05e87 (effort "low"), so
+// re-verify it against the first build that ships them (the BUILD wins).
 //
 // The models, `context` and the two fallback contexts are
 // packages/ai/test/transcript-tool-changes.test.ts's; every other context is an
@@ -256,9 +256,10 @@ const apiKeyClaudeCodeNamesContext = {
 	],
 };
 
-// A held update is flushed on reaching an assistant message even when that
-// message converts to no blocks (whitespace-only text), so it lands before the
-// next user message rather than at the end.
+// Since 3bc6eebac a held update is held past an assistant message that converts
+// to no blocks (whitespace-only text): flushing it there put it before the next
+// user message, which Claude rejects (#11091). With no later assistant it lands
+// at the end.
 const emptyAssistantContext = {
 	messages: [
 		{ role: "system", content: "base prompt", toolsAdded: [baseTool], timestamp: 0 },
@@ -275,6 +276,36 @@ const emptyAssistantContext = {
 			timestamp: 3,
 		},
 		{ role: "user", content: "second", timestamp: 4 },
+	],
+};
+
+// transcript-tool-changes.test.ts's #11091 contexts (3bc6eebac): another
+// model's empty reply is dropped, so the held update goes at the end, or
+// directly before the next assistant message that is sent.
+const droppedReply = (text: string, provider: string, api: string, model: string, timestamp: number) => ({
+	role: "assistant",
+	content: [{ type: "text", text }],
+	api,
+	provider,
+	model,
+	usage,
+	stopReason: "stop",
+	timestamp,
+});
+const heldPastDroppedReply = {
+	messages: [
+		{ role: "system", content: "base prompt", timestamp: 0 },
+		{ role: "user", content: "hi", timestamp: 1 },
+		{ role: "system", content: "updated guidance", timestamp: 2 },
+		droppedReply("", "openai-codex", "openai-codex-responses", "gpt-x", 3),
+		{ role: "user", content: "again", timestamp: 4 },
+	],
+};
+const heldPastDroppedReplyBeforeAssistant = {
+	messages: [
+		...heldPastDroppedReply.messages,
+		droppedReply("answer", "anthropic", "anthropic-messages", "claude-opus-5", 3),
+		{ role: "user", content: "third", timestamp: 5 },
 	],
 };
 
@@ -338,6 +369,11 @@ const out = {
 		context,
 	),
 	nativeEmptyAssistant: await capturePayload(nativeModel, emptyAssistantContext),
+	nativeHeldPastDroppedReply: await capturePayload(nativeModel, heldPastDroppedReply),
+	nativeHeldPastDroppedReplyBeforeAssistant: await capturePayload(nativeModel, heldPastDroppedReplyBeforeAssistant),
+	// The managed-effort update with a dropped reply in the history: the trailing
+	// effort message still closes the transcript after the held update.
+	nativeEffortHeldPastDroppedReply: await capturePayload(effortModel, heldPastDroppedReply, "test-key", "medium"),
 	userStringSurrogates: await capturePayload(plainModel, userStringSurrogates),
 	// A configured anthropic-beta header replaces the computed beta list, so the
 	// inline-tools beta is not added, while the native blocks are still sent.

@@ -1678,7 +1678,7 @@ func buildAnthropicParams(model *ai.Model, req ai.TranscriptContext, oauth bool,
 	// Anthropic rejects block_binding with disabled thinking. Otherwise a
 	// managed-effort model is adaptive, with block_binding so a prefix
 	// mismatch drops the offending block instead of surfacing as a persistent
-	// 400, and its output_config effort is the literal "high" — the per-turn
+	// 400, and its output_config effort is the literal "low" — the per-turn
 	// effort rides in the trailing system message
 	// insertAnthropicThinkingLevelMessages appended, not here (upstream
 	// 4e69b0c28).
@@ -1697,7 +1697,11 @@ func buildAnthropicParams(model *ai.Model, req ai.TranscriptContext, oauth bool,
 			"display":       display,
 			"block_binding": map[string]any{"prefix_mismatch_behavior": "drop_block"},
 		}
-		params["output_config"] = map[string]any{"effort": "high"}
+		// Effort markers set the level for every reply. The top-level effort is
+		// part of the cached prompt, so it stays fixed. It is "low" because
+		// organizations can cap effort and reject requests containing any level
+		// above the cap (upstream e3bc05e87, #10063).
+		params["output_config"] = map[string]any{"effort": "low"}
 	} else if model.Reasoning && thinkingOn {
 		display := opts.ThinkingDisplay
 		if display == "" {
@@ -1925,11 +1929,14 @@ func convertAnthropicMessages(transformed []ai.Message, oauth bool, cc *cacheCon
 	// a map it is guaranteed to leave empty and discard.
 	var assistantLevels map[int]string
 	// Later system messages are held back and emitted directly before the next
-	// assistant message (or at the end of the transcript). Anthropic requires
-	// tool_result blocks to immediately follow their tool_use, so a system
-	// message between them is rejected; this also mirrors where the
-	// managed-effort system messages are inserted. As a result an update placed
-	// before a user message in the transcript lands after it on the wire.
+	// assistant message that is sent (or at the end of the transcript).
+	// Assistant messages that convert to no blocks are dropped, so holding past
+	// them keeps an update from landing before a user message (#11091).
+	// Anthropic requires tool_result blocks to immediately follow their
+	// tool_use, so a system message between them is rejected; this also mirrors
+	// where the managed-effort system messages are inserted. As a result an
+	// update placed before a user message in the transcript lands after it on
+	// the wire.
 	var pendingSystemMessages []map[string]any
 	flushPendingSystemMessages := func() {
 		params = append(params, pendingSystemMessages...)
@@ -1990,11 +1997,11 @@ func convertAnthropicMessages(transformed []ai.Message, oauth bool, cc *cacheCon
 			}
 			params = append(params, map[string]any{"role": "user", "content": blocks})
 		} else if am, ok := asAssistantMsg(m); ok {
-			flushPendingSystemMessages()
 			blocks := convertAssistantBlocks(am, oauth, allowEmptySig)
 			if len(blocks) == 0 {
 				continue
 			}
+			flushPendingSystemMessages()
 			messageIndex := len(params)
 			params = append(params, map[string]any{"role": "assistant", "content": blocks})
 			// Only a turn this very transport produced may have its effort

@@ -8,7 +8,13 @@
 // behind TestAnthropicThinkingOffMatchesPi.
 //
 //   node capture.mjs <pi-ai package dir | src extraction> <out.json>
-//   e.g. node capture.mjs .../npm-1.3.0/node_modules/@earendil-works/pi-ai thinking-off-1.3.0.json
+//   e.g. node capture.mjs .../npm-1.4.0/node_modules/@earendil-works/pi-ai thinking-off-1.4.0.json
+//
+// A src extraction (`git archive <sha> packages/ai` plus a node_modules) lacks
+// the generated catalog data, which upstream does not commit: copy a build's
+// dist/providers/data/*.json and .manifest.json into
+// packages/ai/src/providers/data first. thinking-off-e3bc05e87.json is src at
+// e3bc05e87 with the 1.4.0 build's data.
 //
 // `stream` rows replay upstream's anthropic-mid-conversation-effort.test.ts:
 // its managedModel and assistants, the adapter's stream with thinkingEnabled
