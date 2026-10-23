@@ -103,3 +103,52 @@ func TestCalculateCostMatchesPi(t *testing.T) {
 		}
 	}
 }
+
+// upstream models-runtime.test.ts "marks catalog-derived totals as not
+// provider-reported" (7c22a93d0): a total CalculateCost computes is the
+// catalog estimate, whatever the usage carried before.
+func TestCalculateCostMarksTheTotalAsCatalogDerived(t *testing.T) {
+	for _, before := range []OptBool{OptBoolUnset, OptBoolFalse, OptBoolTrue} {
+		usage := Usage{Input: 1_000_000, TotalTokens: 1_000_000,
+			Cost: CostBreakdown{Total: 9, TotalFromProvider: before}}
+		CalculateCost(&Model{Cost: ModelCost{Input: 2}}, &usage)
+		if usage.Cost.TotalFromProvider != OptBoolFalse || usage.Cost.Total != 2 {
+			t.Fatalf("from %v: cost = %+v, want total 2, totalFromProvider false", before, usage.Cost)
+		}
+	}
+}
+
+// totalFromProvider is pi's optional boolean: absent from the JSON until set,
+// then written as itself, and read back the same way.
+func TestCostTotalFromProviderJSON(t *testing.T) {
+	for _, tc := range []struct {
+		value OptBool
+		json  string
+	}{
+		{OptBoolUnset, `{"input":0,"output":0,"cacheRead":0,"cacheWrite":0,"total":1}`},
+		{OptBoolFalse, `{"input":0,"output":0,"cacheRead":0,"cacheWrite":0,"total":1,"totalFromProvider":false}`},
+		{OptBoolTrue, `{"input":0,"output":0,"cacheRead":0,"cacheWrite":0,"total":1,"totalFromProvider":true}`},
+	} {
+		got, err := json.Marshal(CostBreakdown{Total: 1, TotalFromProvider: tc.value})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if string(got) != tc.json {
+			t.Errorf("marshal %v = %s, want %s", tc.value, got, tc.json)
+		}
+		var back CostBreakdown
+		if err := json.Unmarshal([]byte(tc.json), &back); err != nil {
+			t.Fatal(err)
+		}
+		if back.TotalFromProvider != tc.value {
+			t.Errorf("unmarshal %s = %v, want %v", tc.json, back.TotalFromProvider, tc.value)
+		}
+	}
+	var back CostBreakdown
+	if err := json.Unmarshal([]byte(`{"total":1,"totalFromProvider":null}`), &back); err != nil || back.TotalFromProvider != OptBoolUnset {
+		t.Errorf("null reads as %v (%v), want unset", back.TotalFromProvider, err)
+	}
+	if err := json.Unmarshal([]byte(`{"total":1,"totalFromProvider":"yes"}`), &back); err == nil {
+		t.Errorf("a string totalFromProvider decoded without error")
+	}
+}

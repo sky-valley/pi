@@ -141,6 +141,14 @@ func piMessagesUsage(raw json.RawMessage) *ai.Usage {
 			*dst = f
 		}
 	}
+	// pi assigns the backend's usage whole, so a backend running pi-ai passes
+	// its totalFromProvider through (upstream 7c22a93d0).
+	switch jsonValueKind(cost["totalFromProvider"]) {
+	case 't':
+		u.Cost.TotalFromProvider = ai.OptBoolTrue
+	case 'f':
+		u.Cost.TotalFromProvider = ai.OptBoolFalse
+	}
 	return &u
 }
 

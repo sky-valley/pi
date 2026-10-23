@@ -1,0 +1,564 @@
+{
+	"sha": "cae8d69e5",
+	"apply": [
+		{
+			"covers": "pi: non-BYOK uses the reported cost",
+			"reported": "{\"cost\":0,\"is_byok\":false,\"cost_details\":{\"upstream_inference_cost\":0,\"upstream_inference_prompt_cost\":0,\"upstream_inference_completions_cost\":0}}",
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 0,
+				"totalFromProvider": true
+			}
+		},
+		{
+			"covers": "pi: BYOK adds the upstream inference cost",
+			"reported": "{\"cost\":0.1,\"is_byok\":true,\"cost_details\":{\"upstream_inference_cost\":0.9,\"upstream_inference_prompt_cost\":0.6,\"upstream_inference_completions_cost\":0.3}}",
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 1,
+				"totalFromProvider": true
+			}
+		},
+		{
+			"covers": "pi: BYOK sums the components when the total is null",
+			"reported": "{\"cost\":0.1,\"is_byok\":true,\"cost_details\":{\"upstream_inference_cost\":null,\"upstream_inference_prompt_cost\":0.6,\"upstream_inference_completions_cost\":0.3}}",
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 0.9999999999999999,
+				"totalFromProvider": true
+			}
+		},
+		{
+			"covers": "pi: incomplete accounting keeps the catalog total",
+			"reported": "{\"cost\":null,\"is_byok\":false,\"cost_details\":null}",
+			"totalFromProvider": false,
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 1,
+				"totalFromProvider": false
+			}
+		},
+		{
+			"covers": "pi: incomplete accounting keeps the catalog total",
+			"reported": "{\"cost\":0.1,\"is_byok\":true,\"cost_details\":null}",
+			"totalFromProvider": false,
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 1,
+				"totalFromProvider": false
+			}
+		},
+		{
+			"covers": "pi: anthropic stream non-BYOK",
+			"reported": "{\"cost\":0.004,\"is_byok\":false,\"cost_details\":{\"upstream_inference_cost\":0.003}}",
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 0.004,
+				"totalFromProvider": true
+			}
+		},
+		{
+			"covers": "pi: completions stream BYOK",
+			"reported": "{\"cost\":0.0002,\"is_byok\":true,\"cost_details\":{\"upstream_inference_cost\":0.003}}",
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 0.0032,
+				"totalFromProvider": true
+			}
+		},
+		{
+			"covers": "cost: absent",
+			"reported": "{\"is_byok\":false}",
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 1
+			}
+		},
+		{
+			"covers": "cost: string",
+			"reported": "{\"cost\":\"0.1\",\"is_byok\":false}",
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 1
+			}
+		},
+		{
+			"covers": "cost: boolean",
+			"reported": "{\"cost\":true,\"is_byok\":false}",
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 1
+			}
+		},
+		{
+			"covers": "cost: negative",
+			"reported": "{\"cost\":-0.1,\"is_byok\":false}",
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 1
+			}
+		},
+		{
+			"covers": "cost: large",
+			"reported": "{\"cost\":1e+308,\"is_byok\":false}",
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 1e+308,
+				"totalFromProvider": true
+			}
+		},
+		{
+			"covers": "cost: object",
+			"reported": "{\"cost\":{},\"is_byok\":false}",
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 1
+			}
+		},
+		{
+			"covers": "cost: invalid replaces nothing that was set",
+			"reported": "{\"cost\":-1,\"is_byok\":false}",
+			"totalFromProvider": true,
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 1,
+				"totalFromProvider": true
+			}
+		},
+		{
+			"covers": "is_byok: absent",
+			"reported": "{\"cost\":0.1}",
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 1
+			}
+		},
+		{
+			"covers": "is_byok: null",
+			"reported": "{\"cost\":0.1,\"is_byok\":null}",
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 1
+			}
+		},
+		{
+			"covers": "is_byok: 0",
+			"reported": "{\"cost\":0.1,\"is_byok\":0}",
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 1
+			}
+		},
+		{
+			"covers": "is_byok: 1",
+			"reported": "{\"cost\":0.1,\"is_byok\":1,\"cost_details\":{\"upstream_inference_cost\":0.9,\"upstream_inference_prompt_cost\":0.6,\"upstream_inference_completions_cost\":0.3}}",
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 1
+			}
+		},
+		{
+			"covers": "is_byok: string false",
+			"reported": "{\"cost\":0.1,\"is_byok\":\"false\"}",
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 1
+			}
+		},
+		{
+			"covers": "is_byok: string true",
+			"reported": "{\"cost\":0.1,\"is_byok\":\"true\",\"cost_details\":{\"upstream_inference_cost\":0.9,\"upstream_inference_prompt_cost\":0.6,\"upstream_inference_completions_cost\":0.3}}",
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 1
+			}
+		},
+		{
+			"covers": "non-BYOK ignores cost_details",
+			"reported": "{\"cost\":0.1,\"is_byok\":false,\"cost_details\":{\"upstream_inference_cost\":-5,\"upstream_inference_prompt_cost\":\"x\",\"upstream_inference_completions_cost\":null}}",
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 0.1,
+				"totalFromProvider": true
+			}
+		},
+		{
+			"covers": "non-BYOK replaces a provider total",
+			"reported": "{\"cost\":0.2,\"is_byok\":false}",
+			"totalFromProvider": true,
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 0.2,
+				"totalFromProvider": true
+			}
+		},
+		{
+			"covers": "non-BYOK replaces a catalog flag",
+			"reported": "{\"cost\":0.2,\"is_byok\":false}",
+			"totalFromProvider": false,
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 0.2,
+				"totalFromProvider": true
+			}
+		},
+		{
+			"covers": "details: absent",
+			"reported": "{\"cost\":0.1,\"is_byok\":true}",
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 1
+			}
+		},
+		{
+			"covers": "details: empty object",
+			"reported": "{\"cost\":0.1,\"is_byok\":true,\"cost_details\":{}}",
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 1
+			}
+		},
+		{
+			"covers": "details: array",
+			"reported": "{\"cost\":0.1,\"is_byok\":true,\"cost_details\":[0.9]}",
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 1
+			}
+		},
+		{
+			"covers": "details: string",
+			"reported": "{\"cost\":0.1,\"is_byok\":true,\"cost_details\":\"0.9\"}",
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 1
+			}
+		},
+		{
+			"covers": "details: number",
+			"reported": "{\"cost\":0.1,\"is_byok\":true,\"cost_details\":0.9}",
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 1
+			}
+		},
+		{
+			"covers": "details: zero",
+			"reported": "{\"cost\":0.1,\"is_byok\":true,\"cost_details\":0}",
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 1
+			}
+		},
+		{
+			"covers": "details: true",
+			"reported": "{\"cost\":0.1,\"is_byok\":true,\"cost_details\":true}",
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 1
+			}
+		},
+		{
+			"covers": "upstream: zero",
+			"reported": "{\"cost\":0.1,\"is_byok\":true,\"cost_details\":{\"upstream_inference_cost\":0,\"upstream_inference_prompt_cost\":0.6,\"upstream_inference_completions_cost\":0.3}}",
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 0.1,
+				"totalFromProvider": true
+			}
+		},
+		{
+			"covers": "upstream: absent",
+			"reported": "{\"cost\":0.1,\"is_byok\":true,\"cost_details\":{\"upstream_inference_prompt_cost\":0.6,\"upstream_inference_completions_cost\":0.3}}",
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 1
+			}
+		},
+		{
+			"covers": "upstream: negative",
+			"reported": "{\"cost\":0.1,\"is_byok\":true,\"cost_details\":{\"upstream_inference_cost\":-0.9,\"upstream_inference_prompt_cost\":0.6,\"upstream_inference_completions_cost\":0.3}}",
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 1
+			}
+		},
+		{
+			"covers": "upstream: string",
+			"reported": "{\"cost\":0.1,\"is_byok\":true,\"cost_details\":{\"upstream_inference_cost\":\"0.9\",\"upstream_inference_prompt_cost\":0.6,\"upstream_inference_completions_cost\":0.3}}",
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 1
+			}
+		},
+		{
+			"covers": "upstream: object",
+			"reported": "{\"cost\":0.1,\"is_byok\":true,\"cost_details\":{\"upstream_inference_cost\":{},\"upstream_inference_prompt_cost\":0.6,\"upstream_inference_completions_cost\":0.3}}",
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 1
+			}
+		},
+		{
+			"covers": "upstream: null, a part absent",
+			"reported": "{\"cost\":0.1,\"is_byok\":true,\"cost_details\":{\"upstream_inference_cost\":null,\"upstream_inference_prompt_cost\":0.6}}",
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 1
+			}
+		},
+		{
+			"covers": "upstream: null, a part null",
+			"reported": "{\"cost\":0.1,\"is_byok\":true,\"cost_details\":{\"upstream_inference_cost\":null,\"upstream_inference_prompt_cost\":null,\"upstream_inference_completions_cost\":0.3}}",
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 1
+			}
+		},
+		{
+			"covers": "upstream: null, a part negative",
+			"reported": "{\"cost\":0.1,\"is_byok\":true,\"cost_details\":{\"upstream_inference_cost\":null,\"upstream_inference_prompt_cost\":0.6,\"upstream_inference_completions_cost\":-0.3}}",
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 1
+			}
+		},
+		{
+			"covers": "upstream: null, a part string",
+			"reported": "{\"cost\":0.1,\"is_byok\":true,\"cost_details\":{\"upstream_inference_cost\":null,\"upstream_inference_prompt_cost\":\"0.6\",\"upstream_inference_completions_cost\":0.3}}",
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 1
+			}
+		},
+		{
+			"covers": "upstream: null, parts zero",
+			"reported": "{\"cost\":0.1,\"is_byok\":true,\"cost_details\":{\"upstream_inference_cost\":null,\"upstream_inference_prompt_cost\":0,\"upstream_inference_completions_cost\":0}}",
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 0.1,
+				"totalFromProvider": true
+			}
+		},
+		{
+			"covers": "upstream: null, float sum",
+			"reported": "{\"cost\":0.1,\"is_byok\":true,\"cost_details\":{\"upstream_inference_cost\":null,\"upstream_inference_prompt_cost\":0.1,\"upstream_inference_completions_cost\":0.2}}",
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 0.4,
+				"totalFromProvider": true
+			}
+		},
+		{
+			"covers": "upstream: float sum with cost",
+			"reported": "{\"cost\":0.1,\"is_byok\":true,\"cost_details\":{\"upstream_inference_cost\":0.2,\"upstream_inference_prompt_cost\":0.6,\"upstream_inference_completions_cost\":0.3}}",
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 0.30000000000000004,
+				"totalFromProvider": true
+			}
+		},
+		{
+			"covers": "upstream: server_tool_cost is already in cost",
+			"reported": "{\"cost\":0.1,\"is_byok\":true,\"cost_details\":{\"upstream_inference_cost\":0.9,\"upstream_inference_prompt_cost\":0.6,\"upstream_inference_completions_cost\":0.3,\"server_tool_cost\":5}}",
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 1,
+				"totalFromProvider": true
+			}
+		},
+		{
+			"covers": "reported: null",
+			"reported": "null",
+			"threw": "TypeError: Cannot read properties of null (reading 'cost')"
+		},
+		{
+			"covers": "reported: array",
+			"reported": "[0.1]",
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 1
+			}
+		},
+		{
+			"covers": "reported: number",
+			"reported": "0.1",
+			"cost": {
+				"input": 0.25,
+				"output": 0.75,
+				"cacheRead": 0,
+				"cacheWrite": 0,
+				"total": 1
+			}
+		}
+	],
+	"isOpenRouterModel": [
+		{
+			"provider": "openrouter",
+			"baseUrl": "https://example.com",
+			"openRouter": true
+		},
+		{
+			"provider": "openrouter-work",
+			"baseUrl": "https://openrouter.ai/api/v1",
+			"openRouter": true
+		},
+		{
+			"provider": "custom",
+			"baseUrl": "https://example.com/v1",
+			"openRouter": false
+		},
+		{
+			"provider": "custom",
+			"baseUrl": "https://proxy.example/openrouter.ai/v1",
+			"openRouter": true
+		},
+		{
+			"provider": "custom",
+			"baseUrl": "https://OpenRouter.ai/api/v1",
+			"openRouter": false
+		},
+		{
+			"provider": "OpenRouter",
+			"baseUrl": "https://example.com",
+			"openRouter": false
+		},
+		{
+			"provider": "openrouter-images",
+			"baseUrl": "",
+			"openRouter": false
+		}
+	]
+}

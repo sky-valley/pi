@@ -471,13 +471,67 @@ func (cl *ContentList) UnmarshalJSON(data []byte) error {
 // Usage
 // ---------------------------------------------------------------------------
 
-// CostBreakdown holds the per-bucket dollar cost of a request.
+// CostBreakdown holds the per-bucket dollar cost of a request. The four
+// buckets are catalog-derived; Total is the best available total (upstream
+// cae8d69e5): the provider's billed cost when it reports one, otherwise the
+// catalog estimate.
 type CostBreakdown struct {
 	Input      float64 `json:"input"`
 	Output     float64 `json:"output"`
 	CacheRead  float64 `json:"cacheRead"`
 	CacheWrite float64 `json:"cacheWrite"`
 	Total      float64 `json:"total"`
+	// TotalFromProvider is true when Total is the billed cost the provider
+	// reported, false when it is a catalog estimate; unset also means false
+	// (pi `totalFromProvider?`, upstream 7c22a93d0). CalculateCost sets it
+	// false, so every cost it computes carries the key, while a cost nothing
+	// computed (a zero literal) does not.
+	TotalFromProvider OptBool `json:"totalFromProvider,omitzero"`
+}
+
+// OptBool is an optional JavaScript boolean property: unset, false or true.
+// Its zero value is unset, which omitzero leaves out of the JSON. It is a
+// value rather than a *bool so a struct holding it, such as Usage, still
+// compares by value with ==.
+type OptBool uint8
+
+const (
+	OptBoolUnset OptBool = iota
+	OptBoolFalse
+	OptBoolTrue
+)
+
+// OptBoolOf is the set OptBool holding v.
+func OptBoolOf(v bool) OptBool {
+	if v {
+		return OptBoolTrue
+	}
+	return OptBoolFalse
+}
+
+// True is `=== true`: unset and false are both false.
+func (b OptBool) True() bool { return b == OptBoolTrue }
+
+// MarshalJSON writes true or false; omitzero keeps an unset OptBool out.
+func (b OptBool) MarshalJSON() ([]byte, error) {
+	if b == OptBoolUnset {
+		return []byte("null"), nil
+	}
+	return json.Marshal(b == OptBoolTrue)
+}
+
+// UnmarshalJSON reads true or false; null leaves it unset.
+func (b *OptBool) UnmarshalJSON(data []byte) error {
+	if string(bytes.TrimSpace(data)) == "null" {
+		*b = OptBoolUnset
+		return nil
+	}
+	var v bool
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	*b = OptBoolOf(v)
+	return nil
 }
 
 // Usage holds token counts and cost for a request.

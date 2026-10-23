@@ -1108,6 +1108,14 @@ func StreamAnthropic(ctx context.Context, model *ai.Model, req ai.TranscriptCont
 				}
 				output.Usage.TotalTokens = output.Usage.Input + output.Usage.Output + output.Usage.CacheRead + output.Usage.CacheWrite
 				ai.CalculateCost(usageModel, &output.Usage)
+				// OpenRouter adds billing fields to streamed message_delta usage at
+				// runtime, although its OpenAPI schema and the Anthropic SDK do not
+				// type those fields (upstream cae8d69e5).
+				if isOpenRouterModel(model) && rawTruthy(ev["usage"]) {
+					if reported, err := ai.DecodeOrderedValue(ev["usage"]); err == nil {
+						applyOpenRouterReportedCost(&output.Usage, reported)
+					}
+				}
 			case "message_stop":
 				sawStop = true
 			}

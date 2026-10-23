@@ -13,7 +13,7 @@ import (
 // cacheWrite1hCaptureFile is written by
 // testdata/cache-write-1h/capture-cache-write-1h.mts, which streams pi's
 // anthropic-messages adapter from source at the named sha.
-const cacheWrite1hCaptureFile = "testdata/cache-write-1h/cache-write-1h-8676a0dcd.json"
+const cacheWrite1hCaptureFile = "testdata/cache-write-1h/cache-write-1h-cae8d69e5.json"
 
 // TestAnthropic1hCacheWriteMatchesPi replays each captured stream at the
 // captured rates and requires pi's usage exactly — token counts, cacheWrite1h

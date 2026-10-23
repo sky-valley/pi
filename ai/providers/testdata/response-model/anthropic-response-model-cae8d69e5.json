@@ -1,5 +1,5 @@
 {
-	"sha": "911309429",
+	"sha": "cae8d69e5",
 	"model": {
 		"id": "claude-opus-5",
 		"name": "Claude Opus 5",
@@ -73,7 +73,8 @@
 					"output": 0.0005,
 					"cacheRead": 0,
 					"cacheWrite": 0,
-					"total": 0.001
+					"total": 0.001,
+					"totalFromProvider": false
 				},
 				"cacheWrite1h": 0
 			},
@@ -113,7 +114,8 @@
 						"output": 0.0005,
 						"cacheRead": 0,
 						"cacheWrite": 0,
-						"total": 0.001
+						"total": 0.001,
+						"totalFromProvider": false
 					},
 					"cacheWrite1h": 0
 				},
@@ -148,7 +150,8 @@
 						"output": 0.0005,
 						"cacheRead": 0,
 						"cacheWrite": 0,
-						"total": 0.001
+						"total": 0.001,
+						"totalFromProvider": false
 					},
 					"cacheWrite1h": 0
 				},
@@ -183,7 +186,8 @@
 				"output": 0.0001,
 				"cacheRead": 0,
 				"cacheWrite": 0,
-				"total": 0.0004
+				"total": 0.0004,
+				"totalFromProvider": false
 			},
 			"cacheWrite1h": 0
 		},
@@ -215,7 +219,8 @@
 				"output": 0.0005,
 				"cacheRead": 0,
 				"cacheWrite": 0,
-				"total": 0.001
+				"total": 0.001,
+				"totalFromProvider": false
 			},
 			"cacheWrite1h": 0
 		},
@@ -246,7 +251,8 @@
 				"output": 0.0005,
 				"cacheRead": 0,
 				"cacheWrite": 0,
-				"total": 0.001
+				"total": 0.001,
+				"totalFromProvider": false
 			},
 			"cacheWrite1h": 0
 		},
@@ -277,7 +283,8 @@
 				"output": 0.0005,
 				"cacheRead": 0,
 				"cacheWrite": 0,
-				"total": 0.001
+				"total": 0.001,
+				"totalFromProvider": false
 			},
 			"cacheWrite1h": 0
 		},
@@ -309,7 +316,8 @@
 				"output": 0.0001,
 				"cacheRead": 0,
 				"cacheWrite": 0,
-				"total": 0.0004
+				"total": 0.0004,
+				"totalFromProvider": false
 			},
 			"cacheWrite1h": 0
 		},
@@ -341,7 +349,8 @@
 				"output": 0.0005,
 				"cacheRead": 0,
 				"cacheWrite": 0,
-				"total": 0.001
+				"total": 0.001,
+				"totalFromProvider": false
 			},
 			"cacheWrite1h": 0
 		},
@@ -400,7 +409,8 @@
 					"output": 0.0005,
 					"cacheRead": 0,
 					"cacheWrite": 0,
-					"total": 0.001
+					"total": 0.001,
+					"totalFromProvider": false
 				},
 				"cacheWrite1h": 0
 			},
@@ -452,7 +462,8 @@
 					"output": 0,
 					"cacheRead": 0,
 					"cacheWrite": 0,
-					"total": 0.0005
+					"total": 0.0005,
+					"totalFromProvider": false
 				},
 				"cacheWrite1h": 0
 			},
@@ -509,7 +520,8 @@
 					"output": 0.0005,
 					"cacheRead": 0,
 					"cacheWrite": 0,
-					"total": 0.001
+					"total": 0.001,
+					"totalFromProvider": false
 				},
 				"cacheWrite1h": 0
 			},

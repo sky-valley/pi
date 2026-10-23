@@ -1649,6 +1649,11 @@ func parseChunkUsage(raw any, model *ai.Model) (ai.Usage, error) {
 		TotalTokens: jsTokenCount(total),
 	}
 	ai.CalculateCost(model, &usage)
+	// OpenRouter adds billing fields to streamed usage at runtime, although the
+	// OpenAI SDK does not type those fields (upstream cae8d69e5).
+	if isOpenRouterModel(model) {
+		applyOpenRouterReportedCost(&usage, raw)
+	}
 	return usage, nil
 }
 

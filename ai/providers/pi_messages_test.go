@@ -619,3 +619,25 @@ func TestPiMessagesToolCallKeepsArgumentsErrorLikePi(t *testing.T) {
 		})
 	}
 }
+
+// pi assigns a terminal event's usage whole, so the billed-total flag a
+// backend running pi-ai computed passes through (upstream 7c22a93d0): a
+// boolean as itself, anything else as absent.
+func TestPiMessagesUsageCarriesTotalFromProvider(t *testing.T) {
+	for _, tc := range []struct {
+		flag string
+		want ai.OptBool
+	}{
+		{`,"totalFromProvider":true`, ai.OptBoolTrue},
+		{`,"totalFromProvider":false`, ai.OptBoolFalse},
+		{``, ai.OptBoolUnset},
+		{`,"totalFromProvider":null`, ai.OptBoolUnset},
+		{`,"totalFromProvider":1`, ai.OptBoolUnset},
+	} {
+		raw := `{"input":1,"output":2,"cacheRead":0,"cacheWrite":0,"totalTokens":3,"cost":{"input":0.1,"output":0.2,"cacheRead":0,"cacheWrite":0,"total":0.5` + tc.flag + `}}`
+		u := piMessagesUsage(json.RawMessage(raw))
+		if u == nil || u.Cost.TotalFromProvider != tc.want || u.Cost.Total != 0.5 {
+			t.Errorf("usage %s: cost = %+v, want totalFromProvider %v", raw, u, tc.want)
+		}
+	}
+}

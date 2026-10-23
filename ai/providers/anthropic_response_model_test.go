@@ -26,11 +26,14 @@ import (
 // added to packages/ai/test/anthropic-sse-parsing.test.ts; the remaining cases
 // are this port's edges. Every expected message is pi's, captured under node by
 // testdata/response-model/capture-anthropic-response-model.mts, last at
-// f284a2460 (the response timing, 36a686ee8) with the 1.3.0 build's
-// node_modules and catalog data. Re-captured at every regen: each time the
-// behavioural entries came back identical and only the catalog model moved.
+// cae8d69e5 with the 1.4.0 build's node_modules and catalog data, where
+// every cost calculateCost computed gains totalFromProvider: false
+// (7c22a93d0) and nothing else moved; the same script at the old pin
+// 82432219a reproduced the previous capture exactly. Re-captured at every
+// regen: each time the behavioural entries came back identical and only the
+// catalog model moved.
 
-const anthropicResponseModelCaptureFile = "testdata/response-model/anthropic-response-model-911309429.json"
+const anthropicResponseModelCaptureFile = "testdata/response-model/anthropic-response-model-cae8d69e5.json"
 
 // anthropicResponseModelCapture decodes one captured entry into plain JSON
 // values.
