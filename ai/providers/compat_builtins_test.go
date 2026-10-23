@@ -189,7 +189,7 @@ type unportedApisCapture struct {
 
 func loadUnportedApisCapture(t *testing.T) unportedApisCapture {
 	t.Helper()
-	data, err := os.ReadFile("testdata/unported-apis/unported-apis-1.3.0.json")
+	data, err := os.ReadFile("testdata/unported-apis/unported-apis-1.4.0.json")
 	if err != nil {
 		t.Fatal(err)
 	}

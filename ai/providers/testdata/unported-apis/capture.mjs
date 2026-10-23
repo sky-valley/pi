@@ -3,7 +3,7 @@
 // TestUnportedApisFailAsPisDispatch.
 //
 //   node capture.mjs <pi npm dir> <out.json>
-//   e.g. node capture.mjs .../npm-1.3.0 unported-apis-1.3.0.json
+//   e.g. node capture.mjs .../npm-1.4.0 unported-apis-1.4.0.json
 //
 // pi implements all ten built-in apis (compat.ts BUILTIN_APIS) and registers
 // them when compat loads, so neither text below is reachable there for a

@@ -2,7 +2,7 @@
 // TestAPIKeyEnvVarsMatchPi in package ai.
 //
 //   node capture.mjs <pi npm dir> <out.json>
-//   e.g. node capture.mjs ~/.cache/pi-npm/1.3.0 env-keys-1.3.0.json
+//   e.g. node capture.mjs ~/.cache/pi-npm/1.3.0 env-keys-1.4.0.json
 //
 // getApiKeyEnvVars is module-private, so the table is read through the
 // exported findEnvKeys with an env that has every variable set: it then

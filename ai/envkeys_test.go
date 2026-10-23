@@ -245,7 +245,7 @@ func TestTypesafeEnvKey(t *testing.T) {
 // list the same variables in the same order, and none for a provider pi has
 // none for. A provider the capture lacks means the catalog moved: re-capture.
 func TestAPIKeyEnvVarsMatchPi(t *testing.T) {
-	const file = "testdata/envkeys/env-keys-1.3.0.json"
+	const file = "testdata/envkeys/env-keys-1.4.0.json"
 	data, err := os.ReadFile(file)
 	if err != nil {
 		t.Fatalf("read %s: %v (regenerate it with testdata/envkeys/capture.mjs)", file, err)

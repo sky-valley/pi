@@ -38,7 +38,7 @@ var builtinAuthDebt = map[string]string{
 // carries pi's display name, and its login asks pi's prompts
 // (testdata/builtin-auth, capture.mjs against npm 1.3.0).
 func TestBuiltinAPIKeyAuthNamesMatchPi(t *testing.T) {
-	data, err := os.ReadFile("testdata/builtin-auth/builtin-auth-1.3.0.json")
+	data, err := os.ReadFile("testdata/builtin-auth/builtin-auth-1.4.0.json")
 	if err != nil {
 		t.Fatal(err)
 	}
