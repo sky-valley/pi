@@ -2,6 +2,7 @@ package providers
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/sky-valley/pi/ai"
@@ -91,5 +92,17 @@ func TestGoogleToolsKeepConstInLegacyParameters(t *testing.T) {
 	got, _ := json.Marshal(decl["parameters"])
 	if want := `{"properties":{"v":{"const":"a","type":"string"}},"type":"object"}`; string(got) != want {
 		t.Fatalf("parameters = %s, want %s", got, want)
+	}
+}
+
+// A schema that cannot be encoded is an error naming the tool, on both paths,
+// never a request that silently sends {} as the tool's parameters.
+func TestGoogleToolsRefuseAnUnencodableSchema(t *testing.T) {
+	schema := &ai.Schema{Type: "object", Extra: map[string]any{"x-bad": func() {}}}
+	for _, useParameters := range []bool{false, true} {
+		_, err := googleTools([]ai.Tool{{Name: "broken", Description: "d", Parameters: schema}}, useParameters, false)
+		if err == nil || !strings.Contains(err.Error(), `tool "broken"`) {
+			t.Fatalf("useParameters=%v: err = %v, want an error naming the tool", useParameters, err)
+		}
 	}
 }

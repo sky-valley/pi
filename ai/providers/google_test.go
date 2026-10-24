@@ -368,7 +368,11 @@ func TestGoogleSanitizeForOpenApiStripsMetaKeys(t *testing.T) {
 		"$defs":       map[string]any{"X": map[string]any{"type": "string"}},
 		"definitions": map[string]any{"Y": map[string]any{"type": "number"}},
 	}
-	sanitized := sanitizeForOpenApi(schemaToGeneric(schema))
+	generic, err := schemaToGeneric(schema)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sanitized := sanitizeForOpenApi(generic)
 	params, ok := sanitized.(map[string]any)
 	if !ok {
 		t.Fatalf("expected sanitized object: %#v", sanitized)

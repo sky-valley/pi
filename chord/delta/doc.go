@@ -150,8 +150,8 @@
 // The saving is smaller than pi's. pi measures 20,000 changes of 40
 // characters, up to 800 KB, at 2.4 s with the compare and 1 ms without, because
 // a V8 string append is a rope. A Go string is flat, so each change copies the
-// whole new string either way, and AppendText saves only the compare: about a
-// sixth of that same stream's time here.
+// whole new string either way, and AppendText saves only the compare; how much
+// of a stream's time that is depends on the machine.
 //
 // # Revisions
 //

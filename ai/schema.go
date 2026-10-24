@@ -373,7 +373,7 @@ func (s *Schema) UnmarshalJSON(data []byte) error {
 			if err := json.Unmarshal(raw, &it); err == nil {
 				s.Items = &it
 			} else {
-				keep(key, raw) // tuple form, "items": [schema, ...]
+				keep(key, raw) // not one schema: the tuple form [schema, ...], or a boolean
 			}
 		case "enum":
 			_ = json.Unmarshal(raw, &s.Enum)

@@ -761,20 +761,20 @@ func (d *Draft) AppendText(key string, text string) error {
 	if text == "" {
 		return nil
 	}
-	// The op and the new value keep the text: a copy, so that neither keeps a
-	// larger string the caller cut it from alive ("" + text would be text).
-	owned := strings.Clone(text)
+	// The op and the new value keep the text as a copy, so that neither keeps a
+	// larger string the caller cut it from alive. Concatenation copies, except
+	// that "" + text is text itself: own it then.
 	appended, recorded := n.appends[key]
 	if !recorded && !n.hasWrite(key) {
 		appended, recorded = "", true
 	}
-	n.setWrite(key, current+owned)
+	n.setWrite(key, ownedConcat(current, text))
 	n.markDirty()
 	if recorded {
 		if n.appends == nil {
 			n.appends = map[string]string{}
 		}
-		n.appends[key] = appended + owned
+		n.appends[key] = ownedConcat(appended, text)
 	}
 	return nil
 }
@@ -798,7 +798,7 @@ func (d *Draft) Delete(key any) error {
 	if !n.objectHas(k) {
 		return nil
 	}
-	delete(n.appends, k)
+	delete(n.appends, k) // appends stays a subset of writes
 	n.writes.delete(k)
 	n.readded.delete(k)
 	n.setDeletion(k)
@@ -1553,4 +1553,12 @@ func isJSWhitespace(r rune) bool {
 		return true
 	}
 	return unicode.Is(unicode.Zs, r)
+}
+
+// ownedConcat is prefix + text as a string that shares no bytes with text.
+func ownedConcat(prefix, text string) string {
+	if prefix == "" {
+		return strings.Clone(text)
+	}
+	return prefix + text
 }

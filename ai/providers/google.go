@@ -1122,16 +1122,16 @@ func sanitizeForOpenApi(schema any) any {
 
 // schemaToGeneric marshals a Schema to its JSON-Schema map form so it can be
 // sanitized key-by-key like pi (which operates on plain objects).
-func schemaToGeneric(s *ai.Schema) any {
+func schemaToGeneric(s *ai.Schema) (any, error) {
 	raw, err := json.Marshal(s)
 	if err != nil {
-		return map[string]any{}
+		return nil, err
 	}
 	var out any
 	if err := json.Unmarshal(raw, &out); err != nil {
-		return map[string]any{}
+		return nil, err
 	}
-	return out
+	return out, nil
 }
 
 // jsonSchemaNameMaps are the schema keywords whose values map names to
@@ -1151,17 +1151,13 @@ var jsonSchemaSubschemas = map[string]bool{
 }
 
 // schemaToOrdered is a Schema in its JSON form with key order kept: an
-// ai.OrderedObject, or the empty object if it cannot be encoded.
-func schemaToOrdered(s *ai.Schema) any {
+// ai.OrderedObject.
+func schemaToOrdered(s *ai.Schema) (any, error) {
 	raw, err := json.Marshal(s)
 	if err != nil {
-		return ai.OrderedObject{}
+		return nil, err
 	}
-	v, err := ai.DecodeOrderedValue(raw)
-	if err != nil {
-		return ai.OrderedObject{}
-	}
-	return v
+	return ai.DecodeOrderedValue(raw)
 }
 
 // rewriteConstAsEnum rewrites string and number `const` values to one-value
@@ -1236,10 +1232,18 @@ func googleTools(tools []ai.Tool, useParameters, supportsStrictMode bool) ([]any
 		decl := map[string]any{"name": t.Name, "description": t.Description}
 		if useParameters {
 			if parameters != nil {
-				decl["parameters"] = sanitizeForOpenApi(schemaToGeneric(parameters))
+				generic, err := schemaToGeneric(parameters)
+				if err != nil {
+					return nil, fmt.Errorf("tool %q: encode its parameters schema (every value in it must be JSON): %w", t.Name, err)
+				}
+				decl["parameters"] = sanitizeForOpenApi(generic)
 			}
 		} else if parameters != nil {
-			decl["parametersJsonSchema"] = rewriteConstAsEnum(schemaToOrdered(parameters), false)
+			ordered, err := schemaToOrdered(parameters)
+			if err != nil {
+				return nil, fmt.Errorf("tool %q: encode its parameters schema (every value in it must be JSON): %w", t.Name, err)
+			}
+			decl["parametersJsonSchema"] = rewriteConstAsEnum(ordered, false)
 		}
 		decls = append(decls, decl)
 	}
