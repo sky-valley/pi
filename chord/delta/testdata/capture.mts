@@ -33,6 +33,9 @@
 //   - "differential": random scripts over a richer document and every draft
 //     operation, generated here against pi's live draft and recorded whole, so
 //     Go replays exactly what pi ran.
+//   - "pending": scripts of pushes, takes and size reads against PendingOps
+//     (from d8d99950a on), every take and size recorded; pending_golden_test.go
+//     replays them. Its section below says what the corpus is.
 //
 // Canonical JSON. Values and ops are written the way Go's encoding/json writes
 // them (object keys in byte order, U+2028/U+2029 escaped, -0 as "-0"), so the
@@ -1850,6 +1853,353 @@ const differential: unknown[] = [];
 	}
 }
 
-const out = { sha, diffs, scenarios, generated, fuzz, differential };
+// ─── PendingOps (d8d99950a) ──────────────────────────────────────────────────
+//
+// "pending": scripts of pushes, takes and size reads against one PendingOps,
+// every take and size recorded. A push is a batch of decoded ops, or
+// {"gen": "distinctSets", "count", "from"} for the cap's large batches (the
+// Go test builds the same); a pushEach is {"gen", "count"} pushes of
+// generated one-commit batches (pendingBatches). A take records {"replace": true}, or its ops (a
+// hash when large) and, when it hands over a pushed batch by identity, the
+// index of that push step as "same". The corpus: delta-pending.test.ts's
+// adversarial sequences and cap cases (one op per batch where the test does
+// that), and random sequences of pi's own tracker and diffRevisions batches
+// in the shapes of its fuzz tests, taken at random points. Its texts leave out
+// the test's lone surrogate halves, which a Go string cannot hold.
+
+const { PendingOps } = delta;
+const pending: unknown[] = [];
+
+type PendingStep = { push?: unknown; pushEach?: { gen: string; count: number }; take?: true; size?: true };
+
+function distinctSets(count: number, from: number): Op[] {
+	return Array.from({ length: count }, (_, index): Op => ["s", ["k", from + index], index]);
+}
+
+// pushEach's batches, one push each: "x" appends {"a", ["text"], "x"}; "tokens"
+// appends a token and sets a counter to the batch's index.
+function pendingBatches(spec: { gen: string; count: number }): Op[][] {
+	return Array.from({ length: spec.count }, (_, index): Op[] =>
+		spec.gen === "x"
+			? [["a", ["text"], "x"]]
+			: [
+					["a", ["entries", 0, "text"], "tok "],
+					["s", ["meta", "tokens"], index],
+				],
+	);
+}
+
+function pendingCase(name: string, steps: PendingStep[]): void {
+	const queue = new PendingOps();
+	const pushed = new Map<unknown, number>();
+	const results: unknown[] = [];
+	for (const [index, step] of steps.entries()) {
+		if (step.pushEach !== undefined) {
+			for (const batch of pendingBatches(step.pushEach)) queue.push(batch);
+			results.push({});
+		} else if (step.push !== undefined) {
+			const spec = step.push as { gen?: string; count: number; from: number };
+			const batch = spec.gen === "distinctSets" ? distinctSets(spec.count, spec.from) : (step.push as Op[]);
+			pushed.set(batch, index);
+			queue.push(batch);
+			results.push({});
+		} else if (step.size) {
+			results.push({ size: queue.size });
+		} else {
+			const taken = queue.take();
+			if (taken.kind === "replace") results.push({ replace: true });
+			else results.push({ ...trackerBatch(taken.ops), same: pushed.get(taken.ops) });
+		}
+	}
+	pending.push({ name, steps: RAW(canon(steps)), results });
+}
+
+const oneByOne = (ops: Op[]): PendingStep[] => [...ops.map((op) => ({ push: [op] })), { size: true }, { take: true }];
+const O = (text: string): Op[] => JSON.parse(text) as Op[];
+
+pendingCase("a leaf set in an array element, a splice before it, the same path set again", oneByOne(O(`[["s",["arr",2,"x"],1],["p",["arr"],0,0,[{"x":9}]],["s",["arr",2,"x"],2]]`)));
+pendingCase("appends in an array element, a splice before it, the same path again", oneByOne(O(`[["a",["arr",0,"x"],"1"],["p",["arr"],0,0,[{"x":"new"}]],["a",["arr",0,"x"],"2"]]`)));
+pendingCase("t then a", oneByOne(O(`[["t",["s"],2],["a",["s"],"!"]]`)));
+pendingCase("appends around a trim", oneByOne(O(`[["a",["s"],"AB"],["t",["s"],3],["a",["s"],"C"]]`)));
+pendingCase("an object s at a parent, then leaf sets below it", oneByOne(O(`[["s",["o","a"],2],["s",["o"],{"a":5,"b":6}],["s",["o","a"],7]]`)));
+pendingCase("an object s, an append and a set below it", oneByOne(O(`[["s",["x"],{"s":"b"}],["a",["x","s"],"c"],["s",["x","s"],"d"]]`)));
+pendingCase("an ancestor primitive s between leaf ops below it", oneByOne(O(`[["a",["o","a"],"1"],["s",["o","b"],"q"],["s",["o"],"flat"],["a",["o"],"!"]]`)));
+pendingCase("an ancestor null then string s", oneByOne(O(`[["s",["a","b"],1],["s",["a"],null],["s",["a"],"x"]]`)));
+pendingCase("deletes shift what a path names", oneByOne(O(`[["s",["arr","2"],"C"],["d",["arr","0"]],["s",["arr","1"],"Z"]]`)));
+pendingCase("moves shift what a path names", oneByOne(O(`[["s",["arr",0],10],["m",["arr"],[2,1,0]],["s",["arr",0],20]]`)));
+pendingCase("splices shift what a path names", oneByOne(O(`[["s",["arr",0,"x"],1],["p",["arr"],1,0,[{"x":0}]],["s",["arr",0,"x"],2],["s",["arr",1,"x"],3]]`)));
+pendingCase("a.b and a/b never collide", oneByOne(O(`[["a",["a","b"],"1"],["s",["a.b"],"y"],["a",["a","b"],"2"]]`)));
+pendingCase("1 on an object and on an array never collide", oneByOne(O(`[["s",["o","1"],"b"],["s",["arr",1],"z"],["s",["o","1"],"c"],["s",["arr",1],"w"]]`)));
+pendingCase("a key and the index it spells", oneByOne(O(`[["s",["o","1"],"b"],["s",["o",1],"z"],["s",["o","1"],"c"]]`)));
+pendingCase("an array set at the end appends, and a later set of that index folds into it", oneByOne(O(`[["s",["arr",1],2],["s",["arr",0],9],["s",["arr",1],3]]`)));
+pendingCase("r drops everything before it", oneByOne(O(`[["s",["a"],2],["r",{"b":"x"}],["a",["b"],"y"]]`)));
+pendingCase("joins appends and folds appends into a string set", oneByOne(O(`[["s",["s"],"ab"],["a",["s"],"c"],["s",["t"],1],["a",["s"],"d"]]`)));
+pendingCase("joins whole characters", oneByOne(O(`[["a",["s"],"😀"],["s",["n"],1],["a",["s"],"é"],["a",["s"],"\\u2028"]]`)));
+pendingCase("interleaved leaves, a structural op, then the same leaves again", oneByOne(O(`[["a",["a"],"1"],["a",["b"],"1"],["a",["a"],"2"],["p",["list"],1,0,[1]],["a",["b"],"2"],["a",["a"],"3"]]`)));
+pendingCase("a non-string primitive set takes no append", oneByOne(O(`[["s",["s"],2],["a",["s"],"y"],["a",["s"],"z"]]`)));
+pendingCase("a set replaces joined appends; appends join after it", oneByOne(O(`[["a",["s"],"a"],["a",["s"],"b"],["s",["s"],"x"],["s",["n"],1],["a",["s"],"y"],["a",["s"],"z"]]`)));
+pendingCase("a delete and a truncate clear the index", oneByOne(O(`[["a",["s"],"a"],["d",["x"]],["a",["s"],"b"],["t",["u"],1],["a",["s"],"c"],["s",["o"],[1]],["a",["s"],"d"]]`)));
+pendingCase("r inside a batch", [
+	{ push: O(`[["s",["n"],1],["a",["s"],"a"]]`) },
+	{ push: O(`[["a",["s"],"b"],["r",{"s":"","l":0}],["s",["l"],1],["a",["s"],"c"]]`) },
+	{ size: true },
+	{ take: true },
+]);
+pendingCase("empty batches, one batch by identity, two batches folded", [
+	{ size: true },
+	{ push: [] },
+	{ size: true },
+	{ take: true },
+	{ push: O(`[["a",["s"],"1"]]`) },
+	{ take: true },
+	{ push: O(`[["a",["text"],"a"],["s",["n"],1]]`) },
+	{ size: true },
+	{ push: O(`[["a",["text"],"b"],["s",["n"],2],["p",["list"],0,0,[1]]]`) },
+	{ size: true },
+	{ take: true },
+	{ size: true },
+]);
+pendingCase("keeps the cap and replaces past it", [
+	{ push: [] },
+	{ push: { gen: "distinctSets", count: 10_000, from: 0 } },
+	{ size: true },
+	{ take: true },
+	{ push: { gen: "distinctSets", count: 5_000, from: 0 } },
+	{ push: { gen: "distinctSets", count: 5_000, from: 5_000 } },
+	{ size: true },
+	{ take: true },
+	{ push: { gen: "distinctSets", count: 5_000, from: 0 } },
+	{ push: { gen: "distinctSets", count: 5_001, from: 5_000 } },
+	{ size: true },
+	{ take: true },
+	{ size: true },
+]);
+pendingCase("counts ops after folding", [
+	{ pushEach: { gen: "x", count: 30_000 } },
+	{ size: true },
+	{ take: true },
+]);
+pendingCase("accumulates nothing once replaced, until taken or a batch starting with r", [
+	{ push: { gen: "distinctSets", count: 1, from: 0 } },
+	{ push: { gen: "distinctSets", count: 10_001, from: 0 } },
+	{ push: { gen: "distinctSets", count: 3, from: 0 } },
+	{ size: true },
+	{ take: true },
+	{ take: true },
+	{ push: { gen: "distinctSets", count: 1, from: 0 } },
+	{ push: { gen: "distinctSets", count: 10_001, from: 0 } },
+	{ push: O(`[["r",{"k":[0]}]]`) },
+	{ take: true },
+	{ push: { gen: "distinctSets", count: 1, from: 0 } },
+	{ push: O(`[["r",{"k":[0]}]]`) },
+	{ push: O(`[["s",["n"],1]]`) },
+	{ take: true },
+]);
+pendingCase("hands one batch over as received, whatever its size", [
+	{ push: { gen: "distinctSets", count: 10_001, from: 0 } },
+	{ size: true },
+	{ take: true },
+	{ push: { gen: "distinctSets", count: 10_001, from: 0 } },
+	{ push: O(`[["s",["n"],1]]`) },
+	{ size: true },
+	{ take: true },
+]);
+pendingCase("keeps one op per leaf path however many commits write it", [
+	{ pushEach: { gen: "tokens", count: 50_000 } },
+	{ size: true },
+	{ take: true },
+]);
+
+// Random sequences, in the shapes of delta-pending.test.ts's fuzz tests.
+function pendingRandom(seed: number) {
+	let state = seed >>> 0;
+	const next = (): number => {
+		state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
+		return state / 4294967296;
+	};
+	const int = (max: number): number => Math.floor(next() * max);
+	const pick = <T>(items: readonly T[]): T => items[int(items.length)]!;
+	const texts = ["a", "bc", " tok", "é", "😀", "\u2028", "日本語", '"q"', "\\", "", "x".repeat(30)];
+	const keys = ["a", "b", "0", "1", "01", "a.b", "x y", "text", "list"];
+	const text = (): string => pick(texts);
+	const primitive = (): Json => pick([() => int(100), text, () => next() < 0.5, () => null])();
+	const value = (depth = 0): Json => {
+		const roll = next();
+		if (depth > 2 || roll < 0.4) return primitive();
+		if (roll < 0.7) return Array.from({ length: int(4) }, () => value(depth + 1));
+		const object: Record<string, Json> = {};
+		for (let count = int(4); count >= 0; count--) object[pick(keys)] = value(depth + 1);
+		return object;
+	};
+	const root = (): Record<string, Json> => {
+		const object: Record<string, Json> = {};
+		for (let count = int(4) + 1; count >= 0; count--) object[pick(keys)] = value();
+		return object;
+	};
+	return { next, int, pick, text, primitive, value, root };
+}
+type PendingRandom = ReturnType<typeof pendingRandom>;
+
+function draftSlots(node: any, out: Array<[any, string | number]> = []): Array<[any, string | number]> {
+	if (node === null || typeof node !== "object") return out;
+	const keys: Array<string | number> = Array.isArray(node) ? node.map((_: unknown, i: number) => i) : Object.keys(node);
+	for (const key of keys) {
+		out.push([node, key]);
+		draftSlots(node[key], out);
+	}
+	return out;
+}
+
+const byJson = (a: unknown, b: unknown): number => {
+	const x = canon(a);
+	const y = canon(b);
+	return x < y ? -1 : x > y ? 1 : 0;
+};
+
+function pendingMutateAnywhere(draft: any, rnd: PendingRandom, viaAppendText: boolean): void {
+	const all = draftSlots(draft);
+	if (all.length === 0) {
+		draft[rnd.pick(["a", "b"])] = rnd.value();
+		return;
+	}
+	const [parent, key] = rnd.pick(all);
+	const current = parent[key];
+	const roll = rnd.next();
+	if (typeof current === "string") {
+		if (roll < 0.3 && !Array.isArray(parent)) {
+			if (viaAppendText) appendText(parent, key, rnd.text());
+			else parent[key] = current + rnd.text();
+		} else if (roll < 0.6) parent[key] = current + rnd.text();
+		// By code point, unlike the test's slice: no lone surrogate.
+		else if (roll < 0.8) parent[key] = Array.from(current).slice(rnd.int(3)).join("");
+		else parent[key] = rnd.primitive();
+	} else if (Array.isArray(current)) {
+		if (roll < 0.3) current.push(rnd.value());
+		else if (roll < 0.5) current.splice(rnd.int(current.length + 1), rnd.int(2), ...(rnd.next() < 0.5 ? [rnd.value()] : []));
+		else if (roll < 0.65 && current.length > 0) current[rnd.int(current.length)] = rnd.value();
+		else if (roll < 0.75 && current.length > 1) current.reverse();
+		else if (roll < 0.85 && current.length > 1) current.sort(byJson);
+		else if (roll < 0.95) parent[key] = rnd.value();
+		else current.length = 0;
+	} else if (current !== null && typeof current === "object") {
+		const keys = Object.keys(current);
+		if (roll < 0.4) current[rnd.pick(["a", "b", "1", "x y"])] = rnd.value();
+		else if (roll < 0.6 && keys.length > 0) delete current[rnd.pick(keys)];
+		else parent[key] = rnd.value();
+	} else {
+		parent[key] = rnd.next() < 0.7 ? rnd.primitive() : rnd.value();
+	}
+}
+
+function pendingMutateList(draft: any, rnd: PendingRandom): void {
+	const list = draft.list;
+	if (!Array.isArray(list)) {
+		draft.list = [
+			{ x: "", n: 0 },
+			{ x: "", n: 0 },
+			{ x: "", n: 0 },
+		];
+		return;
+	}
+	const roll = rnd.next();
+	if (roll < 0.45 && list.length > 0) {
+		const element = list[rnd.int(list.length)];
+		if (element !== null && typeof element === "object" && !Array.isArray(element)) {
+			if (rnd.next() < 0.3) appendText(element, "x", rnd.text());
+			else if (rnd.next() < 0.5) element.x = `${element.x}${rnd.text()}`;
+			else element.n = rnd.int(9);
+		} else list[rnd.int(list.length)] = { x: "", n: 0 };
+	} else if (roll < 0.6) list.splice(rnd.int(list.length + 1), rnd.int(2), ...(rnd.next() < 0.6 ? [{ x: rnd.text(), n: 0 }] : []));
+	else if (roll < 0.7) list.push({ x: "", n: 0 });
+	else if (roll < 0.8 && list.length > 1) list.reverse();
+	else if (roll < 0.9 && list.length > 0) list[rnd.int(list.length)] = rnd.primitive();
+	else if (list.length > 0) list.splice(rnd.int(list.length), 1);
+}
+
+function pendingMutateRootArray(draft: any[], rnd: PendingRandom): void {
+	switch (rnd.int(7)) {
+		case 0:
+			draft.push(rnd.value());
+			break;
+		case 1:
+			draft.splice(rnd.int(draft.length + 1), rnd.int(4), rnd.value());
+			break;
+		case 2:
+			draft.reverse();
+			break;
+		case 3:
+			draft.sort(byJson);
+			break;
+		case 4:
+			if (draft.length > 0) draft[rnd.int(draft.length)] = rnd.value();
+			break;
+		case 5:
+			draft.shift();
+			break;
+		default:
+			draft.splice(rnd.int(draft.length + 1), rnd.int(4));
+	}
+}
+
+// One sequence's batches, each pushed, with takes and size reads at random
+// points and a take at the end.
+function pendingSequence(name: string, batches: Op[][], rnd: PendingRandom): void {
+	const steps: PendingStep[] = [];
+	for (const [index, ops] of batches.entries()) {
+		steps.push({ push: ops });
+		if (rnd.next() < 0.05) steps.push({ size: true });
+		if (rnd.next() < 0.1 || index === batches.length - 1) steps.push({ take: true });
+	}
+	pendingCase(name, steps);
+}
+
+function trackedBatches(initial: Json, commits: number, rnd: PendingRandom, mutate: (draft: any) => void, replace: () => Json): Op[][] {
+	const tracker = track(structuredClone(initial));
+	const out: Op[][] = [];
+	for (let index = 0; index < commits; index++) {
+		let prepared: any;
+		if (rnd.next() < 0.03) prepared = tracker.prepareReplace(replace());
+		else {
+			const change = tracker.beginChange();
+			for (let edits = 1 + rnd.int(4); edits > 0; edits--) mutate(change.state);
+			prepared = change.prepare();
+		}
+		tracker.adopt(prepared);
+		out.push(prepared.ops as Op[]);
+	}
+	return out;
+}
+
+{
+	const rnd = pendingRandom(11);
+	for (let run = 0; run < 30; run++) {
+		const batches = trackedBatches(rnd.root(), 1 + rnd.int(30), rnd, (draft) => pendingMutateAnywhere(draft, rnd, true), rnd.root);
+		pendingSequence(`tracker edits anywhere ${run}`, batches, rnd);
+	}
+	for (let run = 0; run < 20; run++) {
+		const initial = { list: [{ x: "a", n: 0 }, { x: "b", n: 1 }] };
+		const batches = trackedBatches(initial, 5 + rnd.int(40), rnd, (draft) => pendingMutateList(draft, rnd), () => ({ list: [] }));
+		pendingSequence(`list elements ${run}`, batches, rnd);
+	}
+	for (let run = 0; run < 10; run++) {
+		const values = (): Json => Array.from({ length: rnd.int(6) }, () => rnd.value());
+		const batches = trackedBatches(values(), 40, rnd, (draft) => pendingMutateRootArray(draft, rnd), values);
+		pendingSequence(`root array ${run}`, batches, rnd);
+	}
+	for (let run = 0; run < 15; run++) {
+		let value = rnd.value();
+		const batches: Op[][] = [];
+		for (let index = 0; index < 30; index++) {
+			const edited: Record<string, Json> = { value: structuredClone(value) };
+			for (let edits = 1 + rnd.int(3); edits > 0; edits--) pendingMutateAnywhere(edited, rnd, false);
+			const next = rnd.next() < 0.2 ? rnd.value() : edited.value!;
+			batches.push(diffRevisions(value, next) as Op[]);
+			value = next;
+		}
+		pendingSequence(`diffRevisions ${run}`, batches, rnd);
+	}
+}
+
+const out = { sha, diffs, scenarios, generated, fuzz, differential, pending };
 fs.writeFileSync(outFile, `${write(out)}\n`);
 console.log(`wrote ${outFile}: ${diffs.length} diffs, ${scenarios.length} scenarios, ${generated.length} generated, ${fuzz.length} fuzz seeds, ${differential.length} differential scripts`);

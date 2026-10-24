@@ -188,6 +188,27 @@
 // or safe to retain. Call ApplyImmutable per batch when every revision is
 // published or kept.
 //
+// # Slow consumers
+//
+// A PendingOps holds the batches one consumer has not taken yet — a watch
+// listener still running, a link whose window is full — and folds them while
+// they wait, so what it hands over replays to the same value with fewer ops:
+//
+//	pending.Push(prepared.Ops())  // for each adopted batch, while the consumer is busy
+//	taken := pending.Take()       // when it is ready again
+//	ops := taken.Ops
+//	if taken.Replace {
+//		ops = []Op{Replace{Value: tracker.Value()}}
+//	}
+//
+// A leaf op (an append, or a set of a scalar) folds into the last pending leaf
+// op on its path; any other op ends folding into the ops before it, as it may
+// change what a path names, and a Replace drops them. Past MaxPendingOps
+// pending ops after folding, only Replace stays. One batch is handed over as
+// received, and received batches are never modified, so one batch can feed
+// several consumers. It folds the ops of a tracker, DiffRevisions and
+// AppendText; it does not validate or normalize hand-written ops.
+//
 // # JSON in Go
 //
 // A value is the tree encoding/json produces: nil, bool, float64, string,
