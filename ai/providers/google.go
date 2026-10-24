@@ -1134,6 +1134,87 @@ func schemaToGeneric(s *ai.Schema) any {
 	return out
 }
 
+// jsonSchemaNameMaps are the schema keywords whose values map names to
+// subschemas, so their keys are not schema keywords (pi JSON_SCHEMA_NAME_MAPS).
+var jsonSchemaNameMaps = map[string]bool{
+	"properties": true, "patternProperties": true, "$defs": true,
+	"definitions": true, "dependentSchemas": true, "dependencies": true,
+}
+
+// jsonSchemaSubschemas are the keywords holding a subschema or an array of
+// subschemas, not literal data (pi JSON_SCHEMA_SUBSCHEMAS).
+var jsonSchemaSubschemas = map[string]bool{
+	"additionalProperties": true, "unevaluatedProperties": true, "propertyNames": true,
+	"items": true, "prefixItems": true, "additionalItems": true, "unevaluatedItems": true,
+	"contains": true, "allOf": true, "anyOf": true, "oneOf": true, "not": true,
+	"if": true, "then": true, "else": true, "contentSchema": true,
+}
+
+// schemaToOrdered is a Schema in its JSON form with key order kept: an
+// ai.OrderedObject, or the empty object if it cannot be encoded.
+func schemaToOrdered(s *ai.Schema) any {
+	raw, err := json.Marshal(s)
+	if err != nil {
+		return ai.OrderedObject{}
+	}
+	v, err := ai.DecodeOrderedValue(raw)
+	if err != nil {
+		return ai.OrderedObject{}
+	}
+	return v
+}
+
+// rewriteConstAsEnum rewrites string and number `const` values to one-value
+// `enum`s, since Gemini ignores `const` in parametersJsonSchema but honors
+// `enum`. It descends only into subschemas, so literal data (default,
+// examples, enum, const, x-*) and the names under properties-like keywords
+// are kept. The result is a copy; schema is not modified. (pi
+// rewriteConstAsEnum, google-shared.ts.)
+func rewriteConstAsEnum(schema any, isNameMap bool) any {
+	switch v := schema.(type) {
+	case []any:
+		out := make([]any, len(v))
+		for i, item := range v {
+			out[i] = rewriteConstAsEnum(item, false)
+		}
+		return out
+	case ai.OrderedObject:
+		out := make(ai.OrderedObject, 0, len(v)+1)
+		for _, f := range v {
+			switch {
+			case isNameMap || jsonSchemaSubschemas[f.Key]:
+				f.Value = rewriteConstAsEnum(f.Value, false)
+			case jsonSchemaNameMaps[f.Key]:
+				f.Value = rewriteConstAsEnum(f.Value, true)
+			}
+			out = append(out, f)
+		}
+		if isNameMap {
+			return out
+		}
+		constAt, hasEnum := -1, false
+		for i, f := range out {
+			switch f.Key {
+			case "const":
+				constAt = i
+			case "enum":
+				hasEnum = true // pi tests result.enum === undefined; JSON has no undefined
+			}
+		}
+		if constAt >= 0 && !hasEnum {
+			switch value := out[constAt].Value.(type) {
+			case string, float64:
+				// delete result.const; result.enum = [value]: enum is added last.
+				out = append(out[:constAt], out[constAt+1:]...)
+				out = append(out, ai.OrderedField{Key: "enum", Value: []any{value}})
+			}
+		}
+		return out
+	default:
+		return schema
+	}
+}
+
 // googleTools converts tools to Gemini functionDeclarations. When useParameters is
 // true it emits the legacy OpenAPI `parameters` field (sanitized of meta-keys),
 // otherwise the full-JSON-Schema `parametersJsonSchema`; either way the schema
@@ -1158,7 +1239,7 @@ func googleTools(tools []ai.Tool, useParameters, supportsStrictMode bool) ([]any
 				decl["parameters"] = sanitizeForOpenApi(schemaToGeneric(parameters))
 			}
 		} else if parameters != nil {
-			decl["parametersJsonSchema"] = parameters
+			decl["parametersJsonSchema"] = rewriteConstAsEnum(schemaToOrdered(parameters), false)
 		}
 		decls = append(decls, decl)
 	}
