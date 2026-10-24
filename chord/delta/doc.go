@@ -126,6 +126,33 @@
 // index, deleting an element and writing a named property are refused;
 // growing the length inserts nulls, and shrinking it removes elements.
 //
+// # Growing strings
+//
+// A draft sees only the finished new string, never the chunk, so
+//
+//	state.Set("text", current+chunk)
+//
+// publishes ["a", ["text"], chunk] by checking, in Prepare, that the new
+// string extends the old one: a read of the whole string per change. A
+// writer that knows what it appended hands Delta the chunk instead:
+//
+//	state.AppendText("text", chunk)  // records ["a", path, chunk], no compare
+//
+// AppendText takes the parent draft and the member's key, and refuses a member
+// that is not a string. Several appends to one key in one change become one
+// op; a Set or Delete of the key in that change falls back to the compare, as
+// does an append after a Set. The text is copied, so neither the op nor the new
+// value keeps a larger string alive. Use it wherever a string grows by appends
+// across many changes — streamed answers, tool output, logs; a one-off
+// assignment is fine with Set. DiffRevisions compares two revisions it did not
+// write, so a derive producing a growing string pays the compare per delivery.
+//
+// The saving is smaller than pi's. pi measures 20,000 changes of 40
+// characters, up to 800 KB, at 2.4 s with the compare and 1 ms without, because
+// a V8 string append is a rope. A Go string is flat, so each change copies the
+// whole new string either way, and AppendText saves only the compare: about a
+// sixth of that same stream's time here.
+//
 // # Revisions
 //
 // Every committed revision — Tracker.Value, and the Base and Value of each
