@@ -66,8 +66,8 @@ func TestPiMessagesStreamsTextAndToolCalls(t *testing.T) {
 			`{"type":"text_delta","contentIndex":0,"delta":"lo"}`,
 			`{"type":"text_end","contentIndex":0,"content":"Hello"}`,
 			`{"type":"toolcall_start","contentIndex":1,"id":"call_1","toolName":"read"}`,
-			// A truncated delta stream: parseStreamingJSON would complete this to
-			// {"path":"a.tx"}, so the terminal toolcall_end must overwrite it with
+			// A truncated delta stream: the partial arguments read
+			// {"path":"a.tx"}, so the terminal toolcall_end must overwrite them with
 			// the authoritative {"path":"a.txt"} (pi's Object.assign).
 			`{"type":"toolcall_delta","contentIndex":1,"delta":"{\"path\":"}`,
 			`{"type":"toolcall_delta","contentIndex":1,"delta":"\"a.tx"}`,

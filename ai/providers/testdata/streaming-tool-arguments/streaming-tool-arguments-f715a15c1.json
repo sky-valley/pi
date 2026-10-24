@@ -1,0 +1,3663 @@
+{
+	"source": "pi f715a15c1 packages/ai/src (src capture), node v26.4.0",
+	"rows": [
+		{
+			"api": "anthropic-messages",
+			"name": "text0",
+			"body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_1\",\"model\":\"claude-test\",\"usage\":{\"input_tokens\":1,\"output_tokens\":1}}}\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_1\",\"name\":\"write\",\"input\":{}}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"code\\\":\\\"x  \"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"  \"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"y\\\"}\"}}\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\"},\"usage\":{\"output_tokens\":10}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"code\":\"x  ",
+					"arguments": "{\"code\":\"x  \"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "  ",
+					"arguments": "{\"code\":\"x    \"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "y\"}",
+					"arguments": "{\"code\":\"x    y\"}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"code\":\"x    y\"}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"toolu_1\",\"name\":\"write\",\"arguments\":{\"code\":\"x    y\"}}]"
+		},
+		{
+			"api": "anthropic-messages",
+			"name": "text1",
+			"body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_1\",\"model\":\"claude-test\",\"usage\":{\"input_tokens\":1,\"output_tokens\":1}}}\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_1\",\"name\":\"write\",\"input\":{}}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"cmd\\\":\\\"a\\tb\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\" \\\\d\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"c\\\"}\"}}\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\"},\"usage\":{\"output_tokens\":10}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"cmd\":\"a\tb",
+					"arguments": "{\"cmd\":\"a\\tb\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": " \\d",
+					"arguments": "{\"cmd\":\"a\\tb \\\\d\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "c\"}",
+					"arguments": "{\"cmd\":\"a\\tb \\\\dc\"}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"cmd\":\"a\\tb \\\\dc\"}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"toolu_1\",\"name\":\"write\",\"arguments\":{\"cmd\":\"a\\tb \\\\dc\"}}]"
+		},
+		{
+			"api": "anthropic-messages",
+			"name": "text2",
+			"body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_1\",\"model\":\"claude-test\",\"usage\":{\"input_tokens\":1,\"output_tokens\":1}}}\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_1\",\"name\":\"write\",\"input\":{}}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"a\\\":NaN\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\",\\\"b\\\":1}\"}}\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\"},\"usage\":{\"output_tokens\":10}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"a\":NaN",
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": ",\"b\":1}",
+					"arguments": "{\"b\":1}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"toolu_1\",\"name\":\"write\",\"arguments\":{},\"argumentsError\":\"Unexpected token 'N', \\\"{\\\"a\\\":NaN,\\\"b\\\":1}\\\" is not valid JSON\\n\\nReceived arguments:\\n{\\\"a\\\":NaN,\\\"b\\\":1}\"}]"
+		},
+		{
+			"api": "anthropic-messages",
+			"name": "text3",
+			"body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_1\",\"model\":\"claude-test\",\"usage\":{\"input_tokens\":1,\"output_tokens\":1}}}\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_1\",\"name\":\"write\",\"input\":{}}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"path\\\":\\\"a.txt\\\",\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\\\"content\\\":\\\"hi\\\"}\"}}\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\"},\"usage\":{\"output_tokens\":10}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"path\":\"a.txt\",",
+					"arguments": "{\"path\":\"a.txt\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "\"content\":\"hi\"}",
+					"arguments": "{\"path\":\"a.txt\",\"content\":\"hi\"}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"path\":\"a.txt\",\"content\":\"hi\"}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"toolu_1\",\"name\":\"write\",\"arguments\":{\"path\":\"a.txt\",\"content\":\"hi\"}}]"
+		},
+		{
+			"api": "anthropic-messages",
+			"name": "text4",
+			"body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_1\",\"model\":\"claude-test\",\"usage\":{\"input_tokens\":1,\"output_tokens\":1}}}\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_1\",\"name\":\"write\",\"input\":{}}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"s\\\":\\\"\\\\u00\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"e9\\\"}\"}}\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\"},\"usage\":{\"output_tokens\":10}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"s\":\"\\u00",
+					"arguments": "{\"s\":\"\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "e9\"}",
+					"arguments": "{\"s\":\"é\"}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"s\":\"é\"}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"toolu_1\",\"name\":\"write\",\"arguments\":{\"s\":\"é\"}}]"
+		},
+		{
+			"api": "anthropic-messages",
+			"name": "text5",
+			"body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_1\",\"model\":\"claude-test\",\"usage\":{\"input_tokens\":1,\"output_tokens\":1}}}\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_1\",\"name\":\"write\",\"input\":{}}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"[1,\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"2]\"}}\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\"},\"usage\":{\"output_tokens\":10}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "[1,",
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "2]",
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"toolu_1\",\"name\":\"write\",\"arguments\":{},\"argumentsError\":\"Tool arguments must be a JSON object\\n\\nReceived arguments:\\n[1,2]\"}]"
+		},
+		{
+			"api": "anthropic-messages",
+			"name": "text6",
+			"body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_1\",\"model\":\"claude-test\",\"usage\":{\"input_tokens\":1,\"output_tokens\":1}}}\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_1\",\"name\":\"write\",\"input\":{}}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"s\\\":\\\"\\\\ud83d\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\\\\ude00\\\"}\"}}\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\"},\"usage\":{\"output_tokens\":10}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"s\":\"\\ud83d",
+					"arguments": "{\"s\":\"\\ud83d\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "\\ude00\"}",
+					"arguments": "{\"s\":\"😀\"}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"s\":\"😀\"}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"toolu_1\",\"name\":\"write\",\"arguments\":{\"s\":\"😀\"}}]"
+		},
+		{
+			"api": "anthropic-messages",
+			"name": "text7",
+			"body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_1\",\"model\":\"claude-test\",\"usage\":{\"input_tokens\":1,\"output_tokens\":1}}}\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_1\",\"name\":\"write\",\"input\":{}}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"  \"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"a\\\":1}\"}}\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\"},\"usage\":{\"output_tokens\":10}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "  ",
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"a\":1}",
+					"arguments": "{\"a\":1}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"a\":1}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"toolu_1\",\"name\":\"write\",\"arguments\":{\"a\":1}}]"
+		},
+		{
+			"api": "anthropic-messages",
+			"name": "text8",
+			"body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_1\",\"model\":\"claude-test\",\"usage\":{\"input_tokens\":1,\"output_tokens\":1}}}\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_1\",\"name\":\"write\",\"input\":{}}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"n\\\":12\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"3,\\\"m\\\":tr\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"ue}\"}}\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\"},\"usage\":{\"output_tokens\":10}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"n\":12",
+					"arguments": "{\"n\":12}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "3,\"m\":tr",
+					"arguments": "{\"n\":123,\"m\":true}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "ue}",
+					"arguments": "{\"n\":123,\"m\":true}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"n\":123,\"m\":true}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"toolu_1\",\"name\":\"write\",\"arguments\":{\"n\":123,\"m\":true}}]"
+		},
+		{
+			"api": "anthropic-messages",
+			"name": "text9",
+			"body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_1\",\"model\":\"claude-test\",\"usage\":{\"input_tokens\":1,\"output_tokens\":1}}}\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_1\",\"name\":\"write\",\"input\":{}}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"a\\\":{\\\"b\\\":[1,{\\\"c\\\":\\\"d\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\\\"}]}}\"}}\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\"},\"usage\":{\"output_tokens\":10}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"a\":{\"b\":[1,{\"c\":\"d",
+					"arguments": "{\"a\":{\"b\":[1,{\"c\":\"d\"}]}}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "\"}]}}",
+					"arguments": "{\"a\":{\"b\":[1,{\"c\":\"d\"}]}}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"a\":{\"b\":[1,{\"c\":\"d\"}]}}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"toolu_1\",\"name\":\"write\",\"arguments\":{\"a\":{\"b\":[1,{\"c\":\"d\"}]}}}]"
+		},
+		{
+			"api": "anthropic-messages",
+			"name": "text10",
+			"body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_1\",\"model\":\"claude-test\",\"usage\":{\"input_tokens\":1,\"output_tokens\":1}}}\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_1\",\"name\":\"write\",\"input\":{}}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"t\\\":\\\"tab\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\\t\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\\\"}\"}}\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\"},\"usage\":{\"output_tokens\":10}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"t\":\"tab",
+					"arguments": "{\"t\":\"tab\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "\t",
+					"arguments": "{\"t\":\"tab\\t\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "\"}",
+					"arguments": "{\"t\":\"tab\\t\"}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"t\":\"tab\\t\"}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"toolu_1\",\"name\":\"write\",\"arguments\":{\"t\":\"tab\\t\"}}]"
+		},
+		{
+			"api": "anthropic-messages",
+			"name": "start input",
+			"body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_1\",\"model\":\"claude-test\",\"usage\":{\"input_tokens\":1,\"output_tokens\":1}}}\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_1\",\"name\":\"write\",\"input\":{\"x\":1}}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\" \"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"y\\\":2}\"}}\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\"},\"usage\":{\"output_tokens\":10}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{\"x\":1}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": " ",
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"y\":2}",
+					"arguments": "{\"y\":2}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"y\":2}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"toolu_1\",\"name\":\"write\",\"arguments\":{\"y\":2}}]"
+		},
+		{
+			"api": "anthropic-messages",
+			"name": "index reused",
+			"body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_1\",\"model\":\"claude-test\",\"usage\":{\"input_tokens\":1,\"output_tokens\":1}}}\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_1\",\"name\":\"write\",\"input\":{}}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"a\\\":1\"}}\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_2\",\"name\":\"write\",\"input\":{}}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"b\\\":2}\"}}\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"}\"}}\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\"},\"usage\":{\"output_tokens\":10}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"a\":1",
+					"arguments": "{\"a\":1}"
+				},
+				{
+					"type": "toolcall_start",
+					"contentIndex": 1,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 1,
+					"delta": "{\"b\":2}",
+					"arguments": "{\"b\":2}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 1,
+					"arguments": "{\"b\":2}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"toolu_1\",\"name\":\"write\",\"arguments\":{\"a\":1}},{\"type\":\"toolCall\",\"id\":\"toolu_2\",\"name\":\"write\",\"arguments\":{\"b\":2}}]"
+		},
+		{
+			"api": "anthropic-messages",
+			"name": "no index",
+			"body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_1\",\"model\":\"claude-test\",\"usage\":{\"input_tokens\":1,\"output_tokens\":1}}}\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_1\",\"name\":\"write\",\"input\":{}}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"a\\\":1}\"}}\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"z\\\":1}\"}}\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\"}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\"},\"usage\":{\"output_tokens\":10}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"a\":1}",
+					"arguments": "{\"a\":1}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"a\":1}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"toolu_1\",\"name\":\"write\",\"arguments\":{\"a\":1}}]"
+		},
+		{
+			"api": "anthropic-messages",
+			"name": "after stop",
+			"body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_1\",\"model\":\"claude-test\",\"usage\":{\"input_tokens\":1,\"output_tokens\":1}}}\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_1\",\"name\":\"write\",\"input\":{}}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"a\\\":1}\"}}\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"b\\\":2}\"}}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\"},\"usage\":{\"output_tokens\":10}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"a\":1}",
+					"arguments": "{\"a\":1}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"a\":1}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"toolu_1\",\"name\":\"write\",\"arguments\":{\"a\":1}}]"
+		},
+		{
+			"api": "anthropic-messages",
+			"name": "null delta",
+			"body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_1\",\"model\":\"claude-test\",\"usage\":{\"input_tokens\":1,\"output_tokens\":1}}}\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_1\",\"name\":\"write\",\"input\":{}}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"a\\\":\\\"x\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":null}}\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\"},\"usage\":{\"output_tokens\":10}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"a\":\"x",
+					"arguments": "{\"a\":\"x\"}"
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": "Cannot read properties of null (reading 'length')",
+			"content": "[{\"type\":\"toolCall\",\"id\":\"toolu_1\",\"name\":\"write\",\"arguments\":{\"a\":\"x\"}}]"
+		},
+		{
+			"api": "anthropic-messages",
+			"name": "missing delta",
+			"body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_1\",\"model\":\"claude-test\",\"usage\":{\"input_tokens\":1,\"output_tokens\":1}}}\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_1\",\"name\":\"write\",\"input\":{}}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\"}}\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\"},\"usage\":{\"output_tokens\":10}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": "Cannot read properties of undefined (reading 'length')",
+			"content": "[{\"type\":\"toolCall\",\"id\":\"toolu_1\",\"name\":\"write\",\"arguments\":{}}]"
+		},
+		{
+			"api": "openai-completions",
+			"name": "text0",
+			"body": "data: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"write\",\"arguments\":\"\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"{\\\"code\\\":\\\"x  \"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"  \"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"y\\\"}\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"tool_calls\"}],\"usage\":{\"prompt_tokens\":1,\"completion_tokens\":1,\"total_tokens\":2}}\n\ndata: [DONE]\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "",
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"code\":\"x  ",
+					"arguments": "{\"code\":\"x  \"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "  ",
+					"arguments": "{\"code\":\"x    \"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "y\"}",
+					"arguments": "{\"code\":\"x    y\"}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"code\":\"x    y\"}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{\"code\":\"x    y\"}}]"
+		},
+		{
+			"api": "openai-completions",
+			"name": "text1",
+			"body": "data: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"write\",\"arguments\":\"\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"{\\\"cmd\\\":\\\"a\\tb\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\" \\\\d\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"c\\\"}\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"tool_calls\"}],\"usage\":{\"prompt_tokens\":1,\"completion_tokens\":1,\"total_tokens\":2}}\n\ndata: [DONE]\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "",
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"cmd\":\"a\tb",
+					"arguments": "{\"cmd\":\"a\\tb\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": " \\d",
+					"arguments": "{\"cmd\":\"a\\tb \\\\d\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "c\"}",
+					"arguments": "{\"cmd\":\"a\\tb \\\\dc\"}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"cmd\":\"a\\tb \\\\dc\"}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{\"cmd\":\"a\\tb \\\\dc\"}}]"
+		},
+		{
+			"api": "openai-completions",
+			"name": "text2",
+			"body": "data: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"write\",\"arguments\":\"\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"{\\\"a\\\":NaN\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\",\\\"b\\\":1}\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"tool_calls\"}],\"usage\":{\"prompt_tokens\":1,\"completion_tokens\":1,\"total_tokens\":2}}\n\ndata: [DONE]\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "",
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"a\":NaN",
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": ",\"b\":1}",
+					"arguments": "{\"b\":1}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{},\"argumentsError\":\"Unexpected token 'N', \\\"{\\\"a\\\":NaN,\\\"b\\\":1}\\\" is not valid JSON\\n\\nReceived arguments:\\n{\\\"a\\\":NaN,\\\"b\\\":1}\"}]"
+		},
+		{
+			"api": "openai-completions",
+			"name": "text3",
+			"body": "data: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"write\",\"arguments\":\"\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"{\\\"path\\\":\\\"a.txt\\\",\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"\\\"content\\\":\\\"hi\\\"}\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"tool_calls\"}],\"usage\":{\"prompt_tokens\":1,\"completion_tokens\":1,\"total_tokens\":2}}\n\ndata: [DONE]\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "",
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"path\":\"a.txt\",",
+					"arguments": "{\"path\":\"a.txt\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "\"content\":\"hi\"}",
+					"arguments": "{\"path\":\"a.txt\",\"content\":\"hi\"}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"path\":\"a.txt\",\"content\":\"hi\"}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{\"path\":\"a.txt\",\"content\":\"hi\"}}]"
+		},
+		{
+			"api": "openai-completions",
+			"name": "text4",
+			"body": "data: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"write\",\"arguments\":\"\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"{\\\"s\\\":\\\"\\\\u00\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"e9\\\"}\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"tool_calls\"}],\"usage\":{\"prompt_tokens\":1,\"completion_tokens\":1,\"total_tokens\":2}}\n\ndata: [DONE]\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "",
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"s\":\"\\u00",
+					"arguments": "{\"s\":\"\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "e9\"}",
+					"arguments": "{\"s\":\"é\"}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"s\":\"é\"}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{\"s\":\"é\"}}]"
+		},
+		{
+			"api": "openai-completions",
+			"name": "text5",
+			"body": "data: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"write\",\"arguments\":\"\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"[1,\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"2]\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"tool_calls\"}],\"usage\":{\"prompt_tokens\":1,\"completion_tokens\":1,\"total_tokens\":2}}\n\ndata: [DONE]\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "",
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "[1,",
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "2]",
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{},\"argumentsError\":\"Tool arguments must be a JSON object\\n\\nReceived arguments:\\n[1,2]\"}]"
+		},
+		{
+			"api": "openai-completions",
+			"name": "text6",
+			"body": "data: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"write\",\"arguments\":\"\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"{\\\"s\\\":\\\"\\\\ud83d\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"\\\\ude00\\\"}\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"tool_calls\"}],\"usage\":{\"prompt_tokens\":1,\"completion_tokens\":1,\"total_tokens\":2}}\n\ndata: [DONE]\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "",
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"s\":\"\\ud83d",
+					"arguments": "{\"s\":\"\\ud83d\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "\\ude00\"}",
+					"arguments": "{\"s\":\"😀\"}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"s\":\"😀\"}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{\"s\":\"😀\"}}]"
+		},
+		{
+			"api": "openai-completions",
+			"name": "text7",
+			"body": "data: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"write\",\"arguments\":\"\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"  \"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"{\\\"a\\\":1}\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"tool_calls\"}],\"usage\":{\"prompt_tokens\":1,\"completion_tokens\":1,\"total_tokens\":2}}\n\ndata: [DONE]\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "",
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "  ",
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"a\":1}",
+					"arguments": "{\"a\":1}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"a\":1}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{\"a\":1}}]"
+		},
+		{
+			"api": "openai-completions",
+			"name": "text8",
+			"body": "data: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"write\",\"arguments\":\"\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"{\\\"n\\\":12\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"3,\\\"m\\\":tr\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"ue}\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"tool_calls\"}],\"usage\":{\"prompt_tokens\":1,\"completion_tokens\":1,\"total_tokens\":2}}\n\ndata: [DONE]\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "",
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"n\":12",
+					"arguments": "{\"n\":12}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "3,\"m\":tr",
+					"arguments": "{\"n\":123,\"m\":true}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "ue}",
+					"arguments": "{\"n\":123,\"m\":true}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"n\":123,\"m\":true}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{\"n\":123,\"m\":true}}]"
+		},
+		{
+			"api": "openai-completions",
+			"name": "text9",
+			"body": "data: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"write\",\"arguments\":\"\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"{\\\"a\\\":{\\\"b\\\":[1,{\\\"c\\\":\\\"d\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"\\\"}]}}\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"tool_calls\"}],\"usage\":{\"prompt_tokens\":1,\"completion_tokens\":1,\"total_tokens\":2}}\n\ndata: [DONE]\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "",
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"a\":{\"b\":[1,{\"c\":\"d",
+					"arguments": "{\"a\":{\"b\":[1,{\"c\":\"d\"}]}}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "\"}]}}",
+					"arguments": "{\"a\":{\"b\":[1,{\"c\":\"d\"}]}}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"a\":{\"b\":[1,{\"c\":\"d\"}]}}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{\"a\":{\"b\":[1,{\"c\":\"d\"}]}}}]"
+		},
+		{
+			"api": "openai-completions",
+			"name": "text10",
+			"body": "data: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"write\",\"arguments\":\"\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"{\\\"t\\\":\\\"tab\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"\\t\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"\\\"}\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"tool_calls\"}],\"usage\":{\"prompt_tokens\":1,\"completion_tokens\":1,\"total_tokens\":2}}\n\ndata: [DONE]\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "",
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"t\":\"tab",
+					"arguments": "{\"t\":\"tab\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "\t",
+					"arguments": "{\"t\":\"tab\\t\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "\"}",
+					"arguments": "{\"t\":\"tab\\t\"}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"t\":\"tab\\t\"}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{\"t\":\"tab\\t\"}}]"
+		},
+		{
+			"api": "openai-completions",
+			"name": "custom",
+			"body": "data: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"call_c\",\"type\":\"custom\",\"custom\":{\"name\":\"g\",\"input\":\"ab\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"custom\":{\"input\":\"c\\\"d\\n\\\\\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"custom\":{\"input\":\"\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"tool_calls\"}],\"usage\":{\"prompt_tokens\":1,\"completion_tokens\":1,\"total_tokens\":2}}\n\ndata: [DONE]\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{\"input\":\"\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"input\":\"ab",
+					"arguments": "{\"input\":\"ab\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "c\\\"d\\n\\\\",
+					"arguments": "{\"input\":\"abc\\\"d\\n\\\\\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "",
+					"arguments": "{\"input\":\"abc\\\"d\\n\\\\\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "\"}",
+					"arguments": "{\"input\":\"abc\\\"d\\n\\\\\"}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"input\":\"abc\\\"d\\n\\\\\"}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_c\",\"name\":\"g\",\"arguments\":{\"input\":\"abc\\\"d\\n\\\\\"}}]"
+		},
+		{
+			"api": "openai-completions",
+			"name": "turns custom",
+			"body": "data: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"call_c\",\"type\":\"function\",\"function\":{\"name\":\"g\",\"arguments\":\"{\\\"a\\\":\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"custom\":{\"input\":\"zz\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"1}\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"tool_calls\"}],\"usage\":{\"prompt_tokens\":1,\"completion_tokens\":1,\"total_tokens\":2}}\n\ndata: [DONE]\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"a\":",
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"input\":\"zz",
+					"arguments": "{\"input\":\"zz\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "",
+					"arguments": "{\"input\":\"zz\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "\"}",
+					"arguments": "{\"input\":\"zz\"}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"input\":\"zz\"}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_c\",\"name\":\"g\",\"arguments\":{\"input\":\"zz\"}}]"
+		},
+		{
+			"api": "openai-completions",
+			"name": "both kinds",
+			"body": "data: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"call_c\",\"type\":\"custom\",\"custom\":{\"name\":\"g\",\"input\":\"a\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"{\\\"x\\\":1}\"},\"custom\":{\"input\":\"b\"}}]}}]}\n\ndata: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"test\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"tool_calls\"}],\"usage\":{\"prompt_tokens\":1,\"completion_tokens\":1,\"total_tokens\":2}}\n\ndata: [DONE]\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{\"input\":\"\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"input\":\"a",
+					"arguments": "{\"input\":\"a\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "b",
+					"arguments": "{\"input\":\"ab\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "\"}",
+					"arguments": "{\"input\":\"ab\"}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"input\":\"ab\"}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_c\",\"name\":\"g\",\"arguments\":{\"input\":\"ab\"}}]"
+		},
+		{
+			"api": "openai-responses",
+			"name": "text0",
+			"events": [
+				{
+					"type": "response.output_item.added",
+					"output_index": 0,
+					"sequence_number": 0,
+					"item": {
+						"type": "function_call",
+						"id": "fc_1",
+						"call_id": "call_1",
+						"name": "write",
+						"arguments": "",
+						"status": "in_progress"
+					}
+				},
+				{
+					"type": "response.function_call_arguments.delta",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"delta": "{\"code\":\"x  "
+				},
+				{
+					"type": "response.function_call_arguments.delta",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"delta": "  "
+				},
+				{
+					"type": "response.function_call_arguments.delta",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"delta": "y\"}"
+				},
+				{
+					"type": "response.function_call_arguments.done",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"arguments": "{\"code\":\"x    y\"}"
+				},
+				{
+					"type": "response.output_item.done",
+					"output_index": 0,
+					"sequence_number": 0,
+					"item": {
+						"type": "function_call",
+						"id": "fc_1",
+						"call_id": "call_1",
+						"name": "write",
+						"arguments": "{\"code\":\"x    y\"}",
+						"status": "completed"
+					}
+				},
+				{
+					"type": "response.completed",
+					"sequence_number": 0,
+					"response": {
+						"id": "resp_1",
+						"status": "completed",
+						"output": [],
+						"usage": {
+							"input_tokens": 1,
+							"output_tokens": 1,
+							"total_tokens": 2
+						}
+					}
+				}
+			],
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"code\":\"x  ",
+					"arguments": "{\"code\":\"x  \"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "  ",
+					"arguments": "{\"code\":\"x    \"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "y\"}",
+					"arguments": "{\"code\":\"x    y\"}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"code\":\"x    y\"}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1|fc_1\",\"name\":\"write\",\"arguments\":{\"code\":\"x    y\"}}]"
+		},
+		{
+			"api": "openai-responses",
+			"name": "text1",
+			"events": [
+				{
+					"type": "response.output_item.added",
+					"output_index": 0,
+					"sequence_number": 0,
+					"item": {
+						"type": "function_call",
+						"id": "fc_1",
+						"call_id": "call_1",
+						"name": "write",
+						"arguments": "",
+						"status": "in_progress"
+					}
+				},
+				{
+					"type": "response.function_call_arguments.delta",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"delta": "{\"cmd\":\"a\tb"
+				},
+				{
+					"type": "response.function_call_arguments.delta",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"delta": " \\d"
+				},
+				{
+					"type": "response.function_call_arguments.delta",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"delta": "c\"}"
+				},
+				{
+					"type": "response.function_call_arguments.done",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"arguments": "{\"cmd\":\"a\tb \\dc\"}"
+				},
+				{
+					"type": "response.output_item.done",
+					"output_index": 0,
+					"sequence_number": 0,
+					"item": {
+						"type": "function_call",
+						"id": "fc_1",
+						"call_id": "call_1",
+						"name": "write",
+						"arguments": "{\"cmd\":\"a\tb \\dc\"}",
+						"status": "completed"
+					}
+				},
+				{
+					"type": "response.completed",
+					"sequence_number": 0,
+					"response": {
+						"id": "resp_1",
+						"status": "completed",
+						"output": [],
+						"usage": {
+							"input_tokens": 1,
+							"output_tokens": 1,
+							"total_tokens": 2
+						}
+					}
+				}
+			],
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"cmd\":\"a\tb",
+					"arguments": "{\"cmd\":\"a\\tb\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": " \\d",
+					"arguments": "{\"cmd\":\"a\\tb \\\\d\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "c\"}",
+					"arguments": "{\"cmd\":\"a\\tb \\\\dc\"}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"cmd\":\"a\\tb \\\\dc\"}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1|fc_1\",\"name\":\"write\",\"arguments\":{\"cmd\":\"a\\tb \\\\dc\"}}]"
+		},
+		{
+			"api": "openai-responses",
+			"name": "text2",
+			"events": [
+				{
+					"type": "response.output_item.added",
+					"output_index": 0,
+					"sequence_number": 0,
+					"item": {
+						"type": "function_call",
+						"id": "fc_1",
+						"call_id": "call_1",
+						"name": "write",
+						"arguments": "",
+						"status": "in_progress"
+					}
+				},
+				{
+					"type": "response.function_call_arguments.delta",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"delta": "{\"a\":NaN"
+				},
+				{
+					"type": "response.function_call_arguments.delta",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"delta": ",\"b\":1}"
+				},
+				{
+					"type": "response.function_call_arguments.done",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"arguments": "{\"a\":NaN,\"b\":1}"
+				},
+				{
+					"type": "response.output_item.done",
+					"output_index": 0,
+					"sequence_number": 0,
+					"item": {
+						"type": "function_call",
+						"id": "fc_1",
+						"call_id": "call_1",
+						"name": "write",
+						"arguments": "{\"a\":NaN,\"b\":1}",
+						"status": "completed"
+					}
+				},
+				{
+					"type": "response.completed",
+					"sequence_number": 0,
+					"response": {
+						"id": "resp_1",
+						"status": "completed",
+						"output": [],
+						"usage": {
+							"input_tokens": 1,
+							"output_tokens": 1,
+							"total_tokens": 2
+						}
+					}
+				}
+			],
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"a\":NaN",
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": ",\"b\":1}",
+					"arguments": "{\"b\":1}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1|fc_1\",\"name\":\"write\",\"arguments\":{},\"argumentsError\":\"Unexpected token 'N', \\\"{\\\"a\\\":NaN,\\\"b\\\":1}\\\" is not valid JSON\\n\\nReceived arguments:\\n{\\\"a\\\":NaN,\\\"b\\\":1}\"}]"
+		},
+		{
+			"api": "openai-responses",
+			"name": "text3",
+			"events": [
+				{
+					"type": "response.output_item.added",
+					"output_index": 0,
+					"sequence_number": 0,
+					"item": {
+						"type": "function_call",
+						"id": "fc_1",
+						"call_id": "call_1",
+						"name": "write",
+						"arguments": "",
+						"status": "in_progress"
+					}
+				},
+				{
+					"type": "response.function_call_arguments.delta",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"delta": "{\"path\":\"a.txt\","
+				},
+				{
+					"type": "response.function_call_arguments.delta",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"delta": "\"content\":\"hi\"}"
+				},
+				{
+					"type": "response.function_call_arguments.done",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"arguments": "{\"path\":\"a.txt\",\"content\":\"hi\"}"
+				},
+				{
+					"type": "response.output_item.done",
+					"output_index": 0,
+					"sequence_number": 0,
+					"item": {
+						"type": "function_call",
+						"id": "fc_1",
+						"call_id": "call_1",
+						"name": "write",
+						"arguments": "{\"path\":\"a.txt\",\"content\":\"hi\"}",
+						"status": "completed"
+					}
+				},
+				{
+					"type": "response.completed",
+					"sequence_number": 0,
+					"response": {
+						"id": "resp_1",
+						"status": "completed",
+						"output": [],
+						"usage": {
+							"input_tokens": 1,
+							"output_tokens": 1,
+							"total_tokens": 2
+						}
+					}
+				}
+			],
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"path\":\"a.txt\",",
+					"arguments": "{\"path\":\"a.txt\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "\"content\":\"hi\"}",
+					"arguments": "{\"path\":\"a.txt\",\"content\":\"hi\"}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"path\":\"a.txt\",\"content\":\"hi\"}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1|fc_1\",\"name\":\"write\",\"arguments\":{\"path\":\"a.txt\",\"content\":\"hi\"}}]"
+		},
+		{
+			"api": "openai-responses",
+			"name": "text4",
+			"events": [
+				{
+					"type": "response.output_item.added",
+					"output_index": 0,
+					"sequence_number": 0,
+					"item": {
+						"type": "function_call",
+						"id": "fc_1",
+						"call_id": "call_1",
+						"name": "write",
+						"arguments": "",
+						"status": "in_progress"
+					}
+				},
+				{
+					"type": "response.function_call_arguments.delta",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"delta": "{\"s\":\"\\u00"
+				},
+				{
+					"type": "response.function_call_arguments.delta",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"delta": "e9\"}"
+				},
+				{
+					"type": "response.function_call_arguments.done",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"arguments": "{\"s\":\"\\u00e9\"}"
+				},
+				{
+					"type": "response.output_item.done",
+					"output_index": 0,
+					"sequence_number": 0,
+					"item": {
+						"type": "function_call",
+						"id": "fc_1",
+						"call_id": "call_1",
+						"name": "write",
+						"arguments": "{\"s\":\"\\u00e9\"}",
+						"status": "completed"
+					}
+				},
+				{
+					"type": "response.completed",
+					"sequence_number": 0,
+					"response": {
+						"id": "resp_1",
+						"status": "completed",
+						"output": [],
+						"usage": {
+							"input_tokens": 1,
+							"output_tokens": 1,
+							"total_tokens": 2
+						}
+					}
+				}
+			],
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"s\":\"\\u00",
+					"arguments": "{\"s\":\"\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "e9\"}",
+					"arguments": "{\"s\":\"é\"}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"s\":\"é\"}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1|fc_1\",\"name\":\"write\",\"arguments\":{\"s\":\"é\"}}]"
+		},
+		{
+			"api": "openai-responses",
+			"name": "text5",
+			"events": [
+				{
+					"type": "response.output_item.added",
+					"output_index": 0,
+					"sequence_number": 0,
+					"item": {
+						"type": "function_call",
+						"id": "fc_1",
+						"call_id": "call_1",
+						"name": "write",
+						"arguments": "",
+						"status": "in_progress"
+					}
+				},
+				{
+					"type": "response.function_call_arguments.delta",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"delta": "[1,"
+				},
+				{
+					"type": "response.function_call_arguments.delta",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"delta": "2]"
+				},
+				{
+					"type": "response.function_call_arguments.done",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"arguments": "[1,2]"
+				},
+				{
+					"type": "response.output_item.done",
+					"output_index": 0,
+					"sequence_number": 0,
+					"item": {
+						"type": "function_call",
+						"id": "fc_1",
+						"call_id": "call_1",
+						"name": "write",
+						"arguments": "[1,2]",
+						"status": "completed"
+					}
+				},
+				{
+					"type": "response.completed",
+					"sequence_number": 0,
+					"response": {
+						"id": "resp_1",
+						"status": "completed",
+						"output": [],
+						"usage": {
+							"input_tokens": 1,
+							"output_tokens": 1,
+							"total_tokens": 2
+						}
+					}
+				}
+			],
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "[1,",
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "2]",
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1|fc_1\",\"name\":\"write\",\"arguments\":{},\"argumentsError\":\"Tool arguments must be a JSON object\\n\\nReceived arguments:\\n[1,2]\"}]"
+		},
+		{
+			"api": "openai-responses",
+			"name": "text6",
+			"events": [
+				{
+					"type": "response.output_item.added",
+					"output_index": 0,
+					"sequence_number": 0,
+					"item": {
+						"type": "function_call",
+						"id": "fc_1",
+						"call_id": "call_1",
+						"name": "write",
+						"arguments": "",
+						"status": "in_progress"
+					}
+				},
+				{
+					"type": "response.function_call_arguments.delta",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"delta": "{\"s\":\"\\ud83d"
+				},
+				{
+					"type": "response.function_call_arguments.delta",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"delta": "\\ude00\"}"
+				},
+				{
+					"type": "response.function_call_arguments.done",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"arguments": "{\"s\":\"\\ud83d\\ude00\"}"
+				},
+				{
+					"type": "response.output_item.done",
+					"output_index": 0,
+					"sequence_number": 0,
+					"item": {
+						"type": "function_call",
+						"id": "fc_1",
+						"call_id": "call_1",
+						"name": "write",
+						"arguments": "{\"s\":\"\\ud83d\\ude00\"}",
+						"status": "completed"
+					}
+				},
+				{
+					"type": "response.completed",
+					"sequence_number": 0,
+					"response": {
+						"id": "resp_1",
+						"status": "completed",
+						"output": [],
+						"usage": {
+							"input_tokens": 1,
+							"output_tokens": 1,
+							"total_tokens": 2
+						}
+					}
+				}
+			],
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"s\":\"\\ud83d",
+					"arguments": "{\"s\":\"\\ud83d\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "\\ude00\"}",
+					"arguments": "{\"s\":\"😀\"}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"s\":\"😀\"}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1|fc_1\",\"name\":\"write\",\"arguments\":{\"s\":\"😀\"}}]"
+		},
+		{
+			"api": "openai-responses",
+			"name": "text7",
+			"events": [
+				{
+					"type": "response.output_item.added",
+					"output_index": 0,
+					"sequence_number": 0,
+					"item": {
+						"type": "function_call",
+						"id": "fc_1",
+						"call_id": "call_1",
+						"name": "write",
+						"arguments": "",
+						"status": "in_progress"
+					}
+				},
+				{
+					"type": "response.function_call_arguments.delta",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"delta": "  "
+				},
+				{
+					"type": "response.function_call_arguments.delta",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"delta": "{\"a\":1}"
+				},
+				{
+					"type": "response.function_call_arguments.done",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"arguments": "  {\"a\":1}"
+				},
+				{
+					"type": "response.output_item.done",
+					"output_index": 0,
+					"sequence_number": 0,
+					"item": {
+						"type": "function_call",
+						"id": "fc_1",
+						"call_id": "call_1",
+						"name": "write",
+						"arguments": "  {\"a\":1}",
+						"status": "completed"
+					}
+				},
+				{
+					"type": "response.completed",
+					"sequence_number": 0,
+					"response": {
+						"id": "resp_1",
+						"status": "completed",
+						"output": [],
+						"usage": {
+							"input_tokens": 1,
+							"output_tokens": 1,
+							"total_tokens": 2
+						}
+					}
+				}
+			],
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "  ",
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"a\":1}",
+					"arguments": "{\"a\":1}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"a\":1}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1|fc_1\",\"name\":\"write\",\"arguments\":{\"a\":1}}]"
+		},
+		{
+			"api": "openai-responses",
+			"name": "text8",
+			"events": [
+				{
+					"type": "response.output_item.added",
+					"output_index": 0,
+					"sequence_number": 0,
+					"item": {
+						"type": "function_call",
+						"id": "fc_1",
+						"call_id": "call_1",
+						"name": "write",
+						"arguments": "",
+						"status": "in_progress"
+					}
+				},
+				{
+					"type": "response.function_call_arguments.delta",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"delta": "{\"n\":12"
+				},
+				{
+					"type": "response.function_call_arguments.delta",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"delta": "3,\"m\":tr"
+				},
+				{
+					"type": "response.function_call_arguments.delta",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"delta": "ue}"
+				},
+				{
+					"type": "response.function_call_arguments.done",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"arguments": "{\"n\":123,\"m\":true}"
+				},
+				{
+					"type": "response.output_item.done",
+					"output_index": 0,
+					"sequence_number": 0,
+					"item": {
+						"type": "function_call",
+						"id": "fc_1",
+						"call_id": "call_1",
+						"name": "write",
+						"arguments": "{\"n\":123,\"m\":true}",
+						"status": "completed"
+					}
+				},
+				{
+					"type": "response.completed",
+					"sequence_number": 0,
+					"response": {
+						"id": "resp_1",
+						"status": "completed",
+						"output": [],
+						"usage": {
+							"input_tokens": 1,
+							"output_tokens": 1,
+							"total_tokens": 2
+						}
+					}
+				}
+			],
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"n\":12",
+					"arguments": "{\"n\":12}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "3,\"m\":tr",
+					"arguments": "{\"n\":123,\"m\":true}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "ue}",
+					"arguments": "{\"n\":123,\"m\":true}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"n\":123,\"m\":true}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1|fc_1\",\"name\":\"write\",\"arguments\":{\"n\":123,\"m\":true}}]"
+		},
+		{
+			"api": "openai-responses",
+			"name": "text9",
+			"events": [
+				{
+					"type": "response.output_item.added",
+					"output_index": 0,
+					"sequence_number": 0,
+					"item": {
+						"type": "function_call",
+						"id": "fc_1",
+						"call_id": "call_1",
+						"name": "write",
+						"arguments": "",
+						"status": "in_progress"
+					}
+				},
+				{
+					"type": "response.function_call_arguments.delta",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"delta": "{\"a\":{\"b\":[1,{\"c\":\"d"
+				},
+				{
+					"type": "response.function_call_arguments.delta",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"delta": "\"}]}}"
+				},
+				{
+					"type": "response.function_call_arguments.done",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"arguments": "{\"a\":{\"b\":[1,{\"c\":\"d\"}]}}"
+				},
+				{
+					"type": "response.output_item.done",
+					"output_index": 0,
+					"sequence_number": 0,
+					"item": {
+						"type": "function_call",
+						"id": "fc_1",
+						"call_id": "call_1",
+						"name": "write",
+						"arguments": "{\"a\":{\"b\":[1,{\"c\":\"d\"}]}}",
+						"status": "completed"
+					}
+				},
+				{
+					"type": "response.completed",
+					"sequence_number": 0,
+					"response": {
+						"id": "resp_1",
+						"status": "completed",
+						"output": [],
+						"usage": {
+							"input_tokens": 1,
+							"output_tokens": 1,
+							"total_tokens": 2
+						}
+					}
+				}
+			],
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"a\":{\"b\":[1,{\"c\":\"d",
+					"arguments": "{\"a\":{\"b\":[1,{\"c\":\"d\"}]}}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "\"}]}}",
+					"arguments": "{\"a\":{\"b\":[1,{\"c\":\"d\"}]}}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"a\":{\"b\":[1,{\"c\":\"d\"}]}}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1|fc_1\",\"name\":\"write\",\"arguments\":{\"a\":{\"b\":[1,{\"c\":\"d\"}]}}}]"
+		},
+		{
+			"api": "openai-responses",
+			"name": "text10",
+			"events": [
+				{
+					"type": "response.output_item.added",
+					"output_index": 0,
+					"sequence_number": 0,
+					"item": {
+						"type": "function_call",
+						"id": "fc_1",
+						"call_id": "call_1",
+						"name": "write",
+						"arguments": "",
+						"status": "in_progress"
+					}
+				},
+				{
+					"type": "response.function_call_arguments.delta",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"delta": "{\"t\":\"tab"
+				},
+				{
+					"type": "response.function_call_arguments.delta",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"delta": "\t"
+				},
+				{
+					"type": "response.function_call_arguments.delta",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"delta": "\"}"
+				},
+				{
+					"type": "response.function_call_arguments.done",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"arguments": "{\"t\":\"tab\t\"}"
+				},
+				{
+					"type": "response.output_item.done",
+					"output_index": 0,
+					"sequence_number": 0,
+					"item": {
+						"type": "function_call",
+						"id": "fc_1",
+						"call_id": "call_1",
+						"name": "write",
+						"arguments": "{\"t\":\"tab\t\"}",
+						"status": "completed"
+					}
+				},
+				{
+					"type": "response.completed",
+					"sequence_number": 0,
+					"response": {
+						"id": "resp_1",
+						"status": "completed",
+						"output": [],
+						"usage": {
+							"input_tokens": 1,
+							"output_tokens": 1,
+							"total_tokens": 2
+						}
+					}
+				}
+			],
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"t\":\"tab",
+					"arguments": "{\"t\":\"tab\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "\t",
+					"arguments": "{\"t\":\"tab\\t\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "\"}",
+					"arguments": "{\"t\":\"tab\\t\"}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"t\":\"tab\\t\"}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1|fc_1\",\"name\":\"write\",\"arguments\":{\"t\":\"tab\\t\"}}]"
+		},
+		{
+			"api": "openai-responses",
+			"name": "initial arguments",
+			"events": [
+				{
+					"type": "response.output_item.added",
+					"output_index": 0,
+					"sequence_number": 0,
+					"item": {
+						"type": "function_call",
+						"id": "fc_1",
+						"call_id": "call_1",
+						"name": "write",
+						"arguments": "{\"a\":",
+						"status": "in_progress"
+					}
+				},
+				{
+					"type": "response.function_call_arguments.delta",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"delta": "1"
+				},
+				{
+					"type": "response.function_call_arguments.delta",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"delta": "}"
+				},
+				{
+					"type": "response.function_call_arguments.done",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"arguments": "{\"a\":1}"
+				},
+				{
+					"type": "response.output_item.done",
+					"output_index": 0,
+					"sequence_number": 0,
+					"item": {
+						"type": "function_call",
+						"id": "fc_1",
+						"call_id": "call_1",
+						"name": "write",
+						"arguments": "{\"a\":1}",
+						"status": "in_progress"
+					}
+				},
+				{
+					"type": "response.completed",
+					"sequence_number": 0,
+					"response": {
+						"id": "resp_1",
+						"status": "completed",
+						"output": [],
+						"usage": {
+							"input_tokens": 1,
+							"output_tokens": 1,
+							"total_tokens": 2
+						}
+					}
+				}
+			],
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "1",
+					"arguments": "{\"a\":1}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "}",
+					"arguments": "{\"a\":1}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"a\":1}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1|fc_1\",\"name\":\"write\",\"arguments\":{\"a\":1}}]"
+		},
+		{
+			"api": "openai-responses",
+			"name": "done continues",
+			"events": [
+				{
+					"type": "response.output_item.added",
+					"output_index": 0,
+					"sequence_number": 0,
+					"item": {
+						"type": "function_call",
+						"id": "fc_1",
+						"call_id": "call_1",
+						"name": "write",
+						"arguments": "",
+						"status": "in_progress"
+					}
+				},
+				{
+					"type": "response.function_call_arguments.delta",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"delta": "{\"a\":\"x"
+				},
+				{
+					"type": "response.function_call_arguments.done",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"arguments": "{\"a\":\"xyz\"}"
+				},
+				{
+					"type": "response.output_item.done",
+					"output_index": 0,
+					"sequence_number": 0,
+					"item": {
+						"type": "function_call",
+						"id": "fc_1",
+						"call_id": "call_1",
+						"name": "write",
+						"arguments": "",
+						"status": "in_progress"
+					}
+				},
+				{
+					"type": "response.completed",
+					"sequence_number": 0,
+					"response": {
+						"id": "resp_1",
+						"status": "completed",
+						"output": [],
+						"usage": {
+							"input_tokens": 1,
+							"output_tokens": 1,
+							"total_tokens": 2
+						}
+					}
+				}
+			],
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"a\":\"x",
+					"arguments": "{\"a\":\"x\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "yz\"}",
+					"arguments": "{\"a\":\"xyz\"}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"a\":\"xyz\"}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1|fc_1\",\"name\":\"write\",\"arguments\":{\"a\":\"xyz\"}}]"
+		},
+		{
+			"api": "openai-responses",
+			"name": "done restarts",
+			"events": [
+				{
+					"type": "response.output_item.added",
+					"output_index": 0,
+					"sequence_number": 0,
+					"item": {
+						"type": "function_call",
+						"id": "fc_1",
+						"call_id": "call_1",
+						"name": "write",
+						"arguments": "",
+						"status": "in_progress"
+					}
+				},
+				{
+					"type": "response.function_call_arguments.delta",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"delta": "{\"a\":\"x"
+				},
+				{
+					"type": "response.function_call_arguments.done",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"arguments": "{\"b\":2}"
+				},
+				{
+					"type": "response.output_item.done",
+					"output_index": 0,
+					"sequence_number": 0,
+					"item": {
+						"type": "function_call",
+						"id": "fc_1",
+						"call_id": "call_1",
+						"name": "write",
+						"arguments": "{\"c\":3}",
+						"status": "in_progress"
+					}
+				},
+				{
+					"type": "response.completed",
+					"sequence_number": 0,
+					"response": {
+						"id": "resp_1",
+						"status": "completed",
+						"output": [],
+						"usage": {
+							"input_tokens": 1,
+							"output_tokens": 1,
+							"total_tokens": 2
+						}
+					}
+				}
+			],
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"a\":\"x",
+					"arguments": "{\"a\":\"x\"}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"c\":3}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1|fc_1\",\"name\":\"write\",\"arguments\":{\"c\":3}}]"
+		},
+		{
+			"api": "openai-responses",
+			"name": "item done wins",
+			"events": [
+				{
+					"type": "response.output_item.added",
+					"output_index": 0,
+					"sequence_number": 0,
+					"item": {
+						"type": "function_call",
+						"id": "fc_1",
+						"call_id": "call_1",
+						"name": "write",
+						"arguments": "",
+						"status": "in_progress"
+					}
+				},
+				{
+					"type": "response.function_call_arguments.delta",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"delta": "{\"a\":1}"
+				},
+				{
+					"type": "response.output_item.done",
+					"output_index": 0,
+					"sequence_number": 0,
+					"item": {
+						"type": "function_call",
+						"id": "fc_1",
+						"call_id": "call_1",
+						"name": "write",
+						"arguments": "{\"a\":",
+						"status": "in_progress"
+					}
+				},
+				{
+					"type": "response.completed",
+					"sequence_number": 0,
+					"response": {
+						"id": "resp_1",
+						"status": "completed",
+						"output": [],
+						"usage": {
+							"input_tokens": 1,
+							"output_tokens": 1,
+							"total_tokens": 2
+						}
+					}
+				}
+			],
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"a\":1}",
+					"arguments": "{\"a\":1}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1|fc_1\",\"name\":\"write\",\"arguments\":{},\"argumentsError\":\"Unexpected end of JSON input\\n\\nReceived arguments:\\n{\\\"a\\\":\"}]"
+		},
+		{
+			"api": "openai-responses",
+			"name": "custom initial",
+			"events": [
+				{
+					"type": "response.output_item.added",
+					"output_index": 0,
+					"sequence_number": 0,
+					"item": {
+						"type": "custom_tool_call",
+						"id": "ct_1",
+						"call_id": "call_c",
+						"name": "g",
+						"input": "ab"
+					}
+				},
+				{
+					"type": "response.custom_tool_call_input.delta",
+					"output_index": 0,
+					"item_id": "ct_1",
+					"sequence_number": 0,
+					"delta": "c"
+				},
+				{
+					"type": "response.custom_tool_call_input.done",
+					"output_index": 0,
+					"item_id": "ct_1",
+					"sequence_number": 0,
+					"input": "abc"
+				},
+				{
+					"type": "response.output_item.done",
+					"output_index": 0,
+					"sequence_number": 0,
+					"item": {
+						"type": "custom_tool_call",
+						"id": "ct_1",
+						"call_id": "call_c",
+						"name": "g",
+						"input": "abc"
+					}
+				},
+				{
+					"type": "response.completed",
+					"sequence_number": 0,
+					"response": {
+						"id": "resp_1",
+						"status": "completed",
+						"output": [],
+						"usage": {
+							"input_tokens": 1,
+							"output_tokens": 1,
+							"total_tokens": 2
+						}
+					}
+				}
+			],
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{\"input\":\"ab\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"input\":\"abc",
+					"arguments": "{\"input\":\"abc\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "\"}",
+					"arguments": "{\"input\":\"abc\"}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"input\":\"abc\"}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_c|ct_1\",\"name\":\"g\",\"arguments\":{\"input\":\"abc\"}}]"
+		},
+		{
+			"api": "openai-responses",
+			"name": "custom initial no delta",
+			"events": [
+				{
+					"type": "response.output_item.added",
+					"output_index": 0,
+					"sequence_number": 0,
+					"item": {
+						"type": "custom_tool_call",
+						"id": "ct_1",
+						"call_id": "call_c",
+						"name": "g",
+						"input": "ab"
+					}
+				},
+				{
+					"type": "response.custom_tool_call_input.done",
+					"output_index": 0,
+					"item_id": "ct_1",
+					"sequence_number": 0,
+					"input": "abc"
+				},
+				{
+					"type": "response.output_item.done",
+					"output_index": 0,
+					"sequence_number": 0,
+					"item": {
+						"type": "custom_tool_call",
+						"id": "ct_1",
+						"call_id": "call_c",
+						"name": "g"
+					}
+				},
+				{
+					"type": "response.completed",
+					"sequence_number": 0,
+					"response": {
+						"id": "resp_1",
+						"status": "completed",
+						"output": [],
+						"usage": {
+							"input_tokens": 1,
+							"output_tokens": 1,
+							"total_tokens": 2
+						}
+					}
+				}
+			],
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{\"input\":\"ab\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"input\":\"abc\"}",
+					"arguments": "{\"input\":\"abc\"}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"input\":\"abc\"}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_c|ct_1\",\"name\":\"g\",\"arguments\":{\"input\":\"abc\"}}]"
+		},
+		{
+			"api": "openai-responses",
+			"name": "custom",
+			"events": [
+				{
+					"type": "response.output_item.added",
+					"output_index": 0,
+					"sequence_number": 0,
+					"item": {
+						"type": "custom_tool_call",
+						"id": "ct_1",
+						"call_id": "call_c",
+						"name": "g"
+					}
+				},
+				{
+					"type": "response.custom_tool_call_input.delta",
+					"output_index": 0,
+					"item_id": "ct_1",
+					"sequence_number": 0,
+					"delta": "x\""
+				},
+				{
+					"type": "response.custom_tool_call_input.delta",
+					"output_index": 0,
+					"item_id": "ct_1",
+					"sequence_number": 0,
+					"delta": ""
+				},
+				{
+					"type": "response.output_item.done",
+					"output_index": 0,
+					"sequence_number": 0,
+					"item": {
+						"type": "custom_tool_call",
+						"id": "ct_1",
+						"call_id": "call_c",
+						"name": "g"
+					}
+				},
+				{
+					"type": "response.completed",
+					"sequence_number": 0,
+					"response": {
+						"id": "resp_1",
+						"status": "completed",
+						"output": [],
+						"usage": {
+							"input_tokens": 1,
+							"output_tokens": 1,
+							"total_tokens": 2
+						}
+					}
+				}
+			],
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{\"input\":\"\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"input\":\"x\\\"",
+					"arguments": "{\"input\":\"x\\\"\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "\"}",
+					"arguments": "{\"input\":\"x\\\"\"}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"input\":\"x\\\"\"}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_c|ct_1\",\"name\":\"g\",\"arguments\":{\"input\":\"x\\\"\"}}]"
+		},
+		{
+			"api": "openai-responses",
+			"name": "custom changed",
+			"events": [
+				{
+					"type": "response.output_item.added",
+					"output_index": 0,
+					"sequence_number": 0,
+					"item": {
+						"type": "custom_tool_call",
+						"id": "ct_1",
+						"call_id": "call_c",
+						"name": "g",
+						"input": ""
+					}
+				},
+				{
+					"type": "response.custom_tool_call_input.delta",
+					"output_index": 0,
+					"item_id": "ct_1",
+					"sequence_number": 0,
+					"delta": "ab"
+				},
+				{
+					"type": "response.custom_tool_call_input.done",
+					"output_index": 0,
+					"item_id": "ct_1",
+					"sequence_number": 0,
+					"input": "xy"
+				},
+				{
+					"type": "response.completed",
+					"sequence_number": 0,
+					"response": {
+						"id": "resp_1",
+						"status": "completed",
+						"output": [],
+						"usage": {
+							"input_tokens": 1,
+							"output_tokens": 1,
+							"total_tokens": 2
+						}
+					}
+				}
+			],
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{\"input\":\"\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"input\":\"ab",
+					"arguments": "{\"input\":\"ab\"}"
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": "grammar tool input for property \"input\" changed non-monotonically",
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_c|ct_1\",\"name\":\"g\",\"arguments\":{\"input\":\"ab\"}}]"
+		},
+		{
+			"api": "openai-responses",
+			"name": "custom after close",
+			"events": [
+				{
+					"type": "response.output_item.added",
+					"output_index": 0,
+					"sequence_number": 0,
+					"item": {
+						"type": "custom_tool_call",
+						"id": "ct_1",
+						"call_id": "call_c",
+						"name": "g",
+						"input": ""
+					}
+				},
+				{
+					"type": "response.custom_tool_call_input.delta",
+					"output_index": 0,
+					"item_id": "ct_1",
+					"sequence_number": 0,
+					"delta": "ab"
+				},
+				{
+					"type": "response.custom_tool_call_input.done",
+					"output_index": 0,
+					"item_id": "ct_1",
+					"sequence_number": 0,
+					"input": "ab"
+				},
+				{
+					"type": "response.custom_tool_call_input.delta",
+					"output_index": 0,
+					"item_id": "ct_1",
+					"sequence_number": 0,
+					"delta": "c"
+				},
+				{
+					"type": "response.completed",
+					"sequence_number": 0,
+					"response": {
+						"id": "resp_1",
+						"status": "completed",
+						"output": [],
+						"usage": {
+							"input_tokens": 1,
+							"output_tokens": 1,
+							"total_tokens": 2
+						}
+					}
+				}
+			],
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{\"input\":\"\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"input\":\"ab",
+					"arguments": "{\"input\":\"ab\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "\"}",
+					"arguments": "{\"input\":\"ab\"}"
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": "grammar tool input for property \"input\" changed after it was closed",
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_c|ct_1\",\"name\":\"g\",\"arguments\":{\"input\":\"ab\"}}]"
+		},
+		{
+			"api": "openai-responses",
+			"name": "unfinished",
+			"events": [
+				{
+					"type": "response.output_item.added",
+					"output_index": 0,
+					"sequence_number": 0,
+					"item": {
+						"type": "function_call",
+						"id": "fc_1",
+						"call_id": "call_1",
+						"name": "write",
+						"arguments": "",
+						"status": "in_progress"
+					}
+				},
+				{
+					"type": "response.function_call_arguments.delta",
+					"output_index": 0,
+					"item_id": "fc_1",
+					"sequence_number": 0,
+					"delta": "{\"a\":1}"
+				},
+				{
+					"type": "response.completed",
+					"sequence_number": 0,
+					"response": {
+						"id": "resp_1",
+						"status": "completed",
+						"output": [],
+						"usage": {
+							"input_tokens": 1,
+							"output_tokens": 1,
+							"total_tokens": 2
+						}
+					}
+				}
+			],
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"a\":1}",
+					"arguments": "{\"a\":1}"
+				}
+			],
+			"stopReason": "error",
+			"errorMessage": "OpenAI Responses stream completed with an unfinished tool call: write (call_1|fc_1)",
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1|fc_1\",\"name\":\"write\",\"arguments\":{\"a\":1}}]"
+		},
+		{
+			"api": "pi-messages",
+			"name": "text0",
+			"body": "data: {\"type\":\"start\"}\n\ndata: {\"type\":\"toolcall_start\",\"contentIndex\":0,\"id\":\"call_1\",\"toolName\":\"write\"}\n\ndata: {\"type\":\"toolcall_delta\",\"contentIndex\":0,\"delta\":\"{\\\"code\\\":\\\"x  \"}\n\ndata: {\"type\":\"toolcall_delta\",\"contentIndex\":0,\"delta\":\"  \"}\n\ndata: {\"type\":\"toolcall_delta\",\"contentIndex\":0,\"delta\":\"y\\\"}\"}\n\ndata: {\"type\":\"toolcall_end\",\"contentIndex\":0,\"toolCall\":{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{\"ok\":true}}}\n\ndata: {\"type\":\"done\",\"reason\":\"toolUse\",\"usage\":{\"input\":1,\"output\":1,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":2,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}}}\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"code\":\"x  ",
+					"arguments": "{\"code\":\"x  \"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "  ",
+					"arguments": "{\"code\":\"x    \"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "y\"}",
+					"arguments": "{\"code\":\"x    y\"}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"ok\":true}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{\"ok\":true}}]"
+		},
+		{
+			"api": "pi-messages",
+			"name": "text1",
+			"body": "data: {\"type\":\"start\"}\n\ndata: {\"type\":\"toolcall_start\",\"contentIndex\":0,\"id\":\"call_1\",\"toolName\":\"write\"}\n\ndata: {\"type\":\"toolcall_delta\",\"contentIndex\":0,\"delta\":\"{\\\"cmd\\\":\\\"a\\tb\"}\n\ndata: {\"type\":\"toolcall_delta\",\"contentIndex\":0,\"delta\":\" \\\\d\"}\n\ndata: {\"type\":\"toolcall_delta\",\"contentIndex\":0,\"delta\":\"c\\\"}\"}\n\ndata: {\"type\":\"toolcall_end\",\"contentIndex\":0,\"toolCall\":{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{\"ok\":true}}}\n\ndata: {\"type\":\"done\",\"reason\":\"toolUse\",\"usage\":{\"input\":1,\"output\":1,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":2,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}}}\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"cmd\":\"a\tb",
+					"arguments": "{\"cmd\":\"a\\tb\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": " \\d",
+					"arguments": "{\"cmd\":\"a\\tb \\\\d\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "c\"}",
+					"arguments": "{\"cmd\":\"a\\tb \\\\dc\"}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"ok\":true}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{\"ok\":true}}]"
+		},
+		{
+			"api": "pi-messages",
+			"name": "text2",
+			"body": "data: {\"type\":\"start\"}\n\ndata: {\"type\":\"toolcall_start\",\"contentIndex\":0,\"id\":\"call_1\",\"toolName\":\"write\"}\n\ndata: {\"type\":\"toolcall_delta\",\"contentIndex\":0,\"delta\":\"{\\\"a\\\":NaN\"}\n\ndata: {\"type\":\"toolcall_delta\",\"contentIndex\":0,\"delta\":\",\\\"b\\\":1}\"}\n\ndata: {\"type\":\"toolcall_end\",\"contentIndex\":0,\"toolCall\":{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{\"ok\":true}}}\n\ndata: {\"type\":\"done\",\"reason\":\"toolUse\",\"usage\":{\"input\":1,\"output\":1,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":2,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}}}\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"a\":NaN",
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": ",\"b\":1}",
+					"arguments": "{\"b\":1}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"ok\":true}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{\"ok\":true}}]"
+		},
+		{
+			"api": "pi-messages",
+			"name": "text3",
+			"body": "data: {\"type\":\"start\"}\n\ndata: {\"type\":\"toolcall_start\",\"contentIndex\":0,\"id\":\"call_1\",\"toolName\":\"write\"}\n\ndata: {\"type\":\"toolcall_delta\",\"contentIndex\":0,\"delta\":\"{\\\"path\\\":\\\"a.txt\\\",\"}\n\ndata: {\"type\":\"toolcall_delta\",\"contentIndex\":0,\"delta\":\"\\\"content\\\":\\\"hi\\\"}\"}\n\ndata: {\"type\":\"toolcall_end\",\"contentIndex\":0,\"toolCall\":{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{\"ok\":true}}}\n\ndata: {\"type\":\"done\",\"reason\":\"toolUse\",\"usage\":{\"input\":1,\"output\":1,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":2,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}}}\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"path\":\"a.txt\",",
+					"arguments": "{\"path\":\"a.txt\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "\"content\":\"hi\"}",
+					"arguments": "{\"path\":\"a.txt\",\"content\":\"hi\"}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"ok\":true}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{\"ok\":true}}]"
+		},
+		{
+			"api": "pi-messages",
+			"name": "text4",
+			"body": "data: {\"type\":\"start\"}\n\ndata: {\"type\":\"toolcall_start\",\"contentIndex\":0,\"id\":\"call_1\",\"toolName\":\"write\"}\n\ndata: {\"type\":\"toolcall_delta\",\"contentIndex\":0,\"delta\":\"{\\\"s\\\":\\\"\\\\u00\"}\n\ndata: {\"type\":\"toolcall_delta\",\"contentIndex\":0,\"delta\":\"e9\\\"}\"}\n\ndata: {\"type\":\"toolcall_end\",\"contentIndex\":0,\"toolCall\":{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{\"ok\":true}}}\n\ndata: {\"type\":\"done\",\"reason\":\"toolUse\",\"usage\":{\"input\":1,\"output\":1,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":2,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}}}\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"s\":\"\\u00",
+					"arguments": "{\"s\":\"\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "e9\"}",
+					"arguments": "{\"s\":\"é\"}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"ok\":true}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{\"ok\":true}}]"
+		},
+		{
+			"api": "pi-messages",
+			"name": "text5",
+			"body": "data: {\"type\":\"start\"}\n\ndata: {\"type\":\"toolcall_start\",\"contentIndex\":0,\"id\":\"call_1\",\"toolName\":\"write\"}\n\ndata: {\"type\":\"toolcall_delta\",\"contentIndex\":0,\"delta\":\"[1,\"}\n\ndata: {\"type\":\"toolcall_delta\",\"contentIndex\":0,\"delta\":\"2]\"}\n\ndata: {\"type\":\"toolcall_end\",\"contentIndex\":0,\"toolCall\":{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{\"ok\":true}}}\n\ndata: {\"type\":\"done\",\"reason\":\"toolUse\",\"usage\":{\"input\":1,\"output\":1,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":2,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}}}\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "[1,",
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "2]",
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"ok\":true}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{\"ok\":true}}]"
+		},
+		{
+			"api": "pi-messages",
+			"name": "text6",
+			"body": "data: {\"type\":\"start\"}\n\ndata: {\"type\":\"toolcall_start\",\"contentIndex\":0,\"id\":\"call_1\",\"toolName\":\"write\"}\n\ndata: {\"type\":\"toolcall_delta\",\"contentIndex\":0,\"delta\":\"{\\\"s\\\":\\\"\\\\ud83d\"}\n\ndata: {\"type\":\"toolcall_delta\",\"contentIndex\":0,\"delta\":\"\\\\ude00\\\"}\"}\n\ndata: {\"type\":\"toolcall_end\",\"contentIndex\":0,\"toolCall\":{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{\"ok\":true}}}\n\ndata: {\"type\":\"done\",\"reason\":\"toolUse\",\"usage\":{\"input\":1,\"output\":1,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":2,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}}}\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"s\":\"\\ud83d",
+					"arguments": "{\"s\":\"\\ud83d\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "\\ude00\"}",
+					"arguments": "{\"s\":\"😀\"}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"ok\":true}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{\"ok\":true}}]"
+		},
+		{
+			"api": "pi-messages",
+			"name": "text7",
+			"body": "data: {\"type\":\"start\"}\n\ndata: {\"type\":\"toolcall_start\",\"contentIndex\":0,\"id\":\"call_1\",\"toolName\":\"write\"}\n\ndata: {\"type\":\"toolcall_delta\",\"contentIndex\":0,\"delta\":\"  \"}\n\ndata: {\"type\":\"toolcall_delta\",\"contentIndex\":0,\"delta\":\"{\\\"a\\\":1}\"}\n\ndata: {\"type\":\"toolcall_end\",\"contentIndex\":0,\"toolCall\":{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{\"ok\":true}}}\n\ndata: {\"type\":\"done\",\"reason\":\"toolUse\",\"usage\":{\"input\":1,\"output\":1,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":2,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}}}\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "  ",
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"a\":1}",
+					"arguments": "{\"a\":1}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"ok\":true}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{\"ok\":true}}]"
+		},
+		{
+			"api": "pi-messages",
+			"name": "text8",
+			"body": "data: {\"type\":\"start\"}\n\ndata: {\"type\":\"toolcall_start\",\"contentIndex\":0,\"id\":\"call_1\",\"toolName\":\"write\"}\n\ndata: {\"type\":\"toolcall_delta\",\"contentIndex\":0,\"delta\":\"{\\\"n\\\":12\"}\n\ndata: {\"type\":\"toolcall_delta\",\"contentIndex\":0,\"delta\":\"3,\\\"m\\\":tr\"}\n\ndata: {\"type\":\"toolcall_delta\",\"contentIndex\":0,\"delta\":\"ue}\"}\n\ndata: {\"type\":\"toolcall_end\",\"contentIndex\":0,\"toolCall\":{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{\"ok\":true}}}\n\ndata: {\"type\":\"done\",\"reason\":\"toolUse\",\"usage\":{\"input\":1,\"output\":1,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":2,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}}}\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"n\":12",
+					"arguments": "{\"n\":12}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "3,\"m\":tr",
+					"arguments": "{\"n\":123,\"m\":true}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "ue}",
+					"arguments": "{\"n\":123,\"m\":true}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"ok\":true}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{\"ok\":true}}]"
+		},
+		{
+			"api": "pi-messages",
+			"name": "text9",
+			"body": "data: {\"type\":\"start\"}\n\ndata: {\"type\":\"toolcall_start\",\"contentIndex\":0,\"id\":\"call_1\",\"toolName\":\"write\"}\n\ndata: {\"type\":\"toolcall_delta\",\"contentIndex\":0,\"delta\":\"{\\\"a\\\":{\\\"b\\\":[1,{\\\"c\\\":\\\"d\"}\n\ndata: {\"type\":\"toolcall_delta\",\"contentIndex\":0,\"delta\":\"\\\"}]}}\"}\n\ndata: {\"type\":\"toolcall_end\",\"contentIndex\":0,\"toolCall\":{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{\"ok\":true}}}\n\ndata: {\"type\":\"done\",\"reason\":\"toolUse\",\"usage\":{\"input\":1,\"output\":1,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":2,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}}}\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"a\":{\"b\":[1,{\"c\":\"d",
+					"arguments": "{\"a\":{\"b\":[1,{\"c\":\"d\"}]}}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "\"}]}}",
+					"arguments": "{\"a\":{\"b\":[1,{\"c\":\"d\"}]}}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"ok\":true}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{\"ok\":true}}]"
+		},
+		{
+			"api": "pi-messages",
+			"name": "text10",
+			"body": "data: {\"type\":\"start\"}\n\ndata: {\"type\":\"toolcall_start\",\"contentIndex\":0,\"id\":\"call_1\",\"toolName\":\"write\"}\n\ndata: {\"type\":\"toolcall_delta\",\"contentIndex\":0,\"delta\":\"{\\\"t\\\":\\\"tab\"}\n\ndata: {\"type\":\"toolcall_delta\",\"contentIndex\":0,\"delta\":\"\\t\"}\n\ndata: {\"type\":\"toolcall_delta\",\"contentIndex\":0,\"delta\":\"\\\"}\"}\n\ndata: {\"type\":\"toolcall_end\",\"contentIndex\":0,\"toolCall\":{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{\"ok\":true}}}\n\ndata: {\"type\":\"done\",\"reason\":\"toolUse\",\"usage\":{\"input\":1,\"output\":1,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":2,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}}}\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"t\":\"tab",
+					"arguments": "{\"t\":\"tab\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "\t",
+					"arguments": "{\"t\":\"tab\\t\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "\"}",
+					"arguments": "{\"t\":\"tab\\t\"}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"ok\":true}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{\"ok\":true}}]"
+		},
+		{
+			"api": "pi-messages",
+			"name": "no start",
+			"body": "data: {\"type\":\"start\"}\n\ndata: {\"type\":\"toolcall_start\",\"contentIndex\":0,\"id\":\"call_1\",\"toolName\":\"write\"}\n\ndata: {\"type\":\"toolcall_delta\",\"contentIndex\":1,\"delta\":\"{\\\"a\\\":1}\"}\n\ndata: {\"type\":\"toolcall_delta\",\"contentIndex\":0,\"delta\":\"{\\\"b\\\":2\"}\n\ndata: {\"type\":\"toolcall_end\",\"contentIndex\":0,\"toolCall\":{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{\"b\":2}}}\n\ndata: {\"type\":\"done\",\"reason\":\"toolUse\",\"usage\":{\"input\":1,\"output\":1,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":2,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}}}\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 1,
+					"delta": "{\"a\":1}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"b\":2",
+					"arguments": "{\"b\":2}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"b\":2}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{\"b\":2}}]"
+		},
+		{
+			"api": "pi-messages",
+			"name": "after end",
+			"body": "data: {\"type\":\"start\"}\n\ndata: {\"type\":\"toolcall_start\",\"contentIndex\":0,\"id\":\"call_1\",\"toolName\":\"write\"}\n\ndata: {\"type\":\"toolcall_delta\",\"contentIndex\":0,\"delta\":\"{\\\"b\\\":2\"}\n\ndata: {\"type\":\"toolcall_end\",\"contentIndex\":0,\"toolCall\":{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{\"b\":2}}}\n\ndata: {\"type\":\"toolcall_delta\",\"contentIndex\":0,\"delta\":\"}\"}\n\ndata: {\"type\":\"done\",\"reason\":\"toolUse\",\"usage\":{\"input\":1,\"output\":1,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":2,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}}}\n\n",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"b\":2",
+					"arguments": "{\"b\":2}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"b\":2}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "}",
+					"arguments": "{\"b\":2}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{\"b\":2}}]"
+		},
+		{
+			"api": "faux",
+			"name": "write",
+			"arguments": "{\"path\":\"a.txt\",\"content\":\"hello world  \",\"n\":[1,2.5,-3e-7],\"ok\":true,\"none\":null}",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"pa",
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "th\":",
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "\"a.t",
+					"arguments": "{\"path\":\"a.t\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "xt\",",
+					"arguments": "{\"path\":\"a.txt\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "\"con",
+					"arguments": "{\"path\":\"a.txt\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "tent",
+					"arguments": "{\"path\":\"a.txt\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "\":\"h",
+					"arguments": "{\"path\":\"a.txt\",\"content\":\"h\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "ello",
+					"arguments": "{\"path\":\"a.txt\",\"content\":\"hello\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": " wor",
+					"arguments": "{\"path\":\"a.txt\",\"content\":\"hello wor\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "ld  ",
+					"arguments": "{\"path\":\"a.txt\",\"content\":\"hello world  \"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "\",\"n",
+					"arguments": "{\"path\":\"a.txt\",\"content\":\"hello world  \"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "\":[1",
+					"arguments": "{\"path\":\"a.txt\",\"content\":\"hello world  \",\"n\":[1]}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": ",2.5",
+					"arguments": "{\"path\":\"a.txt\",\"content\":\"hello world  \",\"n\":[1,2.5]}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": ",-3e",
+					"arguments": "{\"path\":\"a.txt\",\"content\":\"hello world  \",\"n\":[1,2.5,-3]}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "-7],",
+					"arguments": "{\"path\":\"a.txt\",\"content\":\"hello world  \",\"n\":[1,2.5,-3e-7]}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "\"ok\"",
+					"arguments": "{\"path\":\"a.txt\",\"content\":\"hello world  \",\"n\":[1,2.5,-3e-7]}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": ":tru",
+					"arguments": "{\"path\":\"a.txt\",\"content\":\"hello world  \",\"n\":[1,2.5,-3e-7],\"ok\":true}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "e,\"n",
+					"arguments": "{\"path\":\"a.txt\",\"content\":\"hello world  \",\"n\":[1,2.5,-3e-7],\"ok\":true}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "one\"",
+					"arguments": "{\"path\":\"a.txt\",\"content\":\"hello world  \",\"n\":[1,2.5,-3e-7],\"ok\":true}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": ":nul",
+					"arguments": "{\"path\":\"a.txt\",\"content\":\"hello world  \",\"n\":[1,2.5,-3e-7],\"ok\":true,\"none\":null}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "l}",
+					"arguments": "{\"path\":\"a.txt\",\"content\":\"hello world  \",\"n\":[1,2.5,-3e-7],\"ok\":true,\"none\":null}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"path\":\"a.txt\",\"content\":\"hello world  \",\"n\":[1,2.5,-3e-7],\"ok\":true,\"none\":null}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{\"path\":\"a.txt\",\"content\":\"hello world  \",\"n\":[1,2.5,-3e-7],\"ok\":true,\"none\":null}}]"
+		},
+		{
+			"api": "faux",
+			"name": "nested",
+			"arguments": "{\"1\":\"one\",\"2\":\"two\",\"a\":{\"b\":[{\"c\":\"d\\n\"}]}}",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{\"1\"",
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": ":\"on",
+					"arguments": "{\"1\":\"on\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "e\",\"",
+					"arguments": "{\"1\":\"one\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "2\":\"",
+					"arguments": "{\"1\":\"one\",\"2\":\"\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "two\"",
+					"arguments": "{\"1\":\"one\",\"2\":\"two\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": ",\"a\"",
+					"arguments": "{\"1\":\"one\",\"2\":\"two\"}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": ":{\"b",
+					"arguments": "{\"1\":\"one\",\"2\":\"two\",\"a\":{}}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "\":[{",
+					"arguments": "{\"1\":\"one\",\"2\":\"two\",\"a\":{\"b\":[{}]}}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "\"c\":",
+					"arguments": "{\"1\":\"one\",\"2\":\"two\",\"a\":{\"b\":[{}]}}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "\"d\\n",
+					"arguments": "{\"1\":\"one\",\"2\":\"two\",\"a\":{\"b\":[{\"c\":\"d\\n\"}]}}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "\"}]}",
+					"arguments": "{\"1\":\"one\",\"2\":\"two\",\"a\":{\"b\":[{\"c\":\"d\\n\"}]}}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "}",
+					"arguments": "{\"1\":\"one\",\"2\":\"two\",\"a\":{\"b\":[{\"c\":\"d\\n\"}]}}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{\"1\":\"one\",\"2\":\"two\",\"a\":{\"b\":[{\"c\":\"d\\n\"}]}}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{\"1\":\"one\",\"2\":\"two\",\"a\":{\"b\":[{\"c\":\"d\\n\"}]}}}]"
+		},
+		{
+			"api": "faux",
+			"name": "empty",
+			"arguments": "{}",
+			"toolEvents": [
+				{
+					"type": "toolcall_start",
+					"contentIndex": 0,
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_delta",
+					"contentIndex": 0,
+					"delta": "{}",
+					"arguments": "{}"
+				},
+				{
+					"type": "toolcall_end",
+					"contentIndex": 0,
+					"arguments": "{}"
+				}
+			],
+			"stopReason": "toolUse",
+			"errorMessage": null,
+			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{}}]"
+		}
+	]
+}

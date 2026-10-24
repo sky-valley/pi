@@ -3,6 +3,7 @@ package ai
 import (
 	"fmt"
 	"reflect"
+	"strings"
 	"sync"
 	"time"
 	"unicode/utf8"
@@ -371,9 +372,12 @@ func (o *requestObserver) onResult(message *AssistantMessage) {
 		}
 		o.span.SetAttributes(end)
 		if message.StopReason == StopError {
+			// The excerpt owns its bytes (pi's ownedSlice, upstream f715a15c1):
+			// a substring would keep a megabyte error message alive as long as
+			// the span holds its first 500 characters.
 			o.span.SetStatus(telemetry.SpanStatus{
 				Code:  telemetry.StatusError,
-				Error: &telemetry.SpanError{Name: "provider_error", Message: truncateUTF16Units(message.ErrorMessage, 500)},
+				Error: &telemetry.SpanError{Name: "provider_error", Message: strings.Clone(truncateUTF16Units(message.ErrorMessage, 500))},
 			})
 		}
 		duration := o.attributes()

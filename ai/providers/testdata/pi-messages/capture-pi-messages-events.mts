@@ -303,8 +303,10 @@ const cases: Case[] = [
 			framed(done),
 	},
 	{ name: "textEndWithoutBlockFails", sse: framed(start) + frame('{"type":"text_end","contentIndex":3,"content":"x"}') + framed(done) },
+	// A delta for a call that never started has no arguments stream and
+	// changes nothing (upstream f715a15c1).
 	{
-		name: "toolcallDeltaWithoutBlockFails",
+		name: "toolcallDeltaWithoutBlockIsIgnored",
 		sse: framed(start) + frame('{"type":"toolcall_delta","contentIndex":0,"delta":"{}"}') + framed(done),
 	},
 	{

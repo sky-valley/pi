@@ -313,11 +313,11 @@ const cases: Case[] = [
 			ev("content_block_delta", "null"),
 		),
 	},
-	// content_block_stop deletes the block's index, so a later event with no
-	// index (undefined === undefined) finds that block: its partialJson, also
-	// deleted, is appended to as "undefined", which parses to no arguments.
+	// content_block_stop deletes the block's stream state (openBlocks, upstream
+	// f715a15c1), so a later event with no index finds no block: the call keeps
+	// the arguments it finished with.
 	{
-		name: "deletedIndexMatchesAnEventWithoutOne",
+		name: "stoppedBlockMatchesNoEventWithoutAnIndex",
 		sse: frames(
 			messageStart,
 			ev("content_block_start", '{"type":"content_block_start","index":0,"content_block":{"type":"tool_use","id":"t1","name":"read"}}'),

@@ -227,7 +227,7 @@ type grammarSampling struct {
 // alongside it on every call.
 type grammarInputBuffer struct {
 	property string
-	input    string
+	input    strings.Builder
 	started  bool
 	closed   bool
 }
@@ -236,39 +236,76 @@ func newGrammarInputBuffer(property string) *grammarInputBuffer {
 	return &grammarInputBuffer{property: property}
 }
 
-// append advances the buffer to nextInput, which must extend the input seen so
-// far, and returns the JSON delta to emit. ok is false when there is nothing to
-// emit (pi returns undefined). final closes the synthesized JSON object.
-func (b *grammarInputBuffer) append(nextInput string, final bool) (delta string, ok bool, err error) {
+// Input is the raw input streamed so far.
+func (b *grammarInputBuffer) Input() string { return b.input.String() }
+
+// appendDelta is pi's appendGrammarToolInputJsonDelta: it appends inputDelta
+// to the input and returns the matching piece of the JSON arguments text, ok
+// false for an empty delta (pi's undefined). It costs time linear in the
+// delta, never in the input so far.
+func (b *grammarInputBuffer) appendDelta(inputDelta string) (delta string, ok bool, err error) {
 	if b.closed {
-		if final && nextInput == b.input {
+		return "", false, fmt.Errorf("grammar tool input for property %s changed after it was closed", quoteRaw(b.property))
+	}
+	if inputDelta == "" {
+		return "", false, nil
+	}
+	b.input.WriteString(inputDelta)
+	return b.jsonStart() + jsEscape(inputDelta), true, nil
+}
+
+// close is pi's closeGrammarToolInputJson: it closes the input and returns
+// the rest of its JSON arguments text. finalInput is the complete input when
+// the provider sends one (hasFinal); it must continue the input streamed so
+// far. Closing again with the same input, or with none, returns ok false.
+func (b *grammarInputBuffer) close(finalInput string, hasFinal bool) (delta string, ok bool, err error) {
+	if b.closed {
+		if !hasFinal || finalInput == b.input.String() {
 			return "", false, nil
 		}
 		return "", false, fmt.Errorf("grammar tool input for property %s changed after it was closed", quoteRaw(b.property))
 	}
-	if !strings.HasPrefix(nextInput, b.input) {
+	input := b.input.String()
+	if hasFinal && !strings.HasPrefix(finalInput, input) {
 		return "", false, fmt.Errorf("grammar tool input for property %s changed non-monotonically", quoteRaw(b.property))
 	}
+	rest := ""
+	if hasFinal {
+		rest = finalInput[len(input):]
+		b.input.WriteString(rest)
+	}
+	b.closed = true
+	return b.jsonStart() + jsEscape(rest) + `"}`, true, nil
+}
 
-	inputDelta := nextInput[len(b.input):]
-	if !final && inputDelta == "" {
-		return "", false, nil
+// closeGrammarInput is close with the final input as an event holds it, a
+// JSON value or undefined: a string is the final input and undefined none,
+// while any other value throws V8's TypeError where pi calls startsWith on it
+// — unless the buffer is closed already, which it is not equal to.
+func closeGrammarInput(b *grammarInputBuffer, input any) (delta string, ok bool, err error) {
+	switch v := input.(type) {
+	case string:
+		return b.close(v, true)
+	case jsUndefinedValue:
+		return b.close("", false)
 	}
+	switch {
+	case b.closed:
+		return "", false, fmt.Errorf("grammar tool input for property %s changed after it was closed", quoteRaw(b.property))
+	case input == nil:
+		return "", false, errors.New("Cannot read properties of null (reading 'startsWith')")
+	default:
+		return "", false, errors.New("finalInput.startsWith is not a function")
+	}
+}
 
-	var sb strings.Builder
-	if !b.started {
-		sb.WriteByte('{')
-		sb.WriteString(jsQuote(b.property))
-		sb.WriteString(`:"`)
-		b.started = true
+// jsonStart is the opening of the JSON arguments text, once.
+func (b *grammarInputBuffer) jsonStart() string {
+	if b.started {
+		return ""
 	}
-	sb.WriteString(jsEscape(inputDelta))
-	b.input = nextInput
-	if final {
-		sb.WriteString(`"}`)
-		b.closed = true
-	}
-	return sb.String(), true, nil
+	b.started = true
+	return "{" + jsQuote(b.property) + `:"`
 }
 
 // grammarToolInput extracts the raw grammar input from a replayed tool call's

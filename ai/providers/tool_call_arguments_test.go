@@ -58,7 +58,7 @@ func TestParseToolCallArgumentsLikePi(t *testing.T) {
 			return // half a surrogate pair, which a Go string cannot hold
 		}
 		compared++
-		args, ordered, argsErr := parseToolCallArguments(input)
+		args, ordered, argsErr := ai.ParseToolCallArguments(input)
 		got := "{}"
 		if ordered != nil {
 			if got, err = jstext.Stringify(ordered); err != nil {
@@ -95,7 +95,7 @@ func TestParseToolCallArgumentsLikePi(t *testing.T) {
 		t.Fatal("the capture records no complete argumentsError texts; rerun capture.mjs")
 	}
 	for _, f := range capture.Full {
-		if _, _, got := parseToolCallArguments(f.Input); got != f.ArgumentsError {
+		if _, _, got := ai.ParseToolCallArguments(f.Input); got != f.ArgumentsError {
 			t.Errorf("parseToolCallArguments(%q).argumentsError = %q, pi %q", f.Input, got, f.ArgumentsError)
 		}
 	}

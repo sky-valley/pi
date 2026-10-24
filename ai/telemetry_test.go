@@ -12,6 +12,7 @@ import (
 	"sync"
 	"testing"
 	"time"
+	"unsafe"
 
 	"github.com/sky-valley/pi/telemetry"
 )
@@ -601,6 +602,33 @@ func TestModelsTelemetryBoundsPollErrorMessage(t *testing.T) {
 		if status.Code != telemetry.StatusError || status.Error == nil || status.Error.Name != "provider_error" || status.Error.Message != tc.want {
 			t.Errorf("status = %+v (error %+v), want provider_error %q", status, status.Error, tc.want)
 		}
+	}
+}
+
+// TestModelsTelemetryErrorExcerptOwnsItsBytes mirrors pi "keeps a bounded
+// error message that does not hold the provider's whole message alive"
+// (upstream f715a15c1): the 500-character excerpt is a string of its own, not
+// a substring sharing — and so keeping alive — the 4 MB message's bytes.
+func TestModelsTelemetryErrorExcerptOwnsItsBytes(t *testing.T) {
+	errorMessage := strings.Repeat("x", 4_000_000) + "tail"
+	result := telemetryTestMessage(StopError, errorMessage)
+	m := telemetryModels(telemetryBlockEvents(result), result)
+	recorder := telemetry.NewInMemoryContext()
+	_ = recorder.StartSpan(telemetry.SpanOptions{Name: "caller"}, func(span telemetry.Span) error {
+		m.FetchDeferred(context.Background(), telemetryTestModel, telemetryTestHandle, &ModelsDeferredFetchOptions{
+			DeferredFetchOptions: DeferredFetchOptions{ProviderRequestOptions: ProviderRequestOptions{Telemetry: span}},
+		})
+		return nil
+	})
+	waitSettled(t, recorder)
+	status := recorder.Spans()[1].Status
+	if status.Error == nil || status.Error.Message != strings.Repeat("x", 500) {
+		t.Fatalf("status = %+v, want provider_error with the first 500 characters", status)
+	}
+	start := uintptr(unsafe.Pointer(unsafe.StringData(errorMessage)))
+	at := uintptr(unsafe.Pointer(unsafe.StringData(status.Error.Message)))
+	if at >= start && at < start+uintptr(len(errorMessage)) {
+		t.Errorf("the excerpt shares the error message's bytes, keeping all %d alive", len(errorMessage))
 	}
 }
 

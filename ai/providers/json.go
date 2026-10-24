@@ -16,70 +16,6 @@ import (
 	"github.com/sky-valley/pi/internal/jstext"
 )
 
-// validJSONEscapes are the escape characters repairJSON keeps as they are. A
-// `\u` is kept only when four hex digits follow; otherwise its backslash is
-// doubled like any other invalid escape's.
-var validJSONEscapes = map[byte]bool{
-	'"': true, '\\': true, '/': true, 'b': true, 'f': true,
-	'n': true, 'r': true, 't': true,
-}
-
-func isHexDigit(b byte) bool {
-	return (b >= '0' && b <= '9') || (b >= 'a' && b <= 'f') || (b >= 'A' && b <= 'F')
-}
-
-// repairJSON escapes raw control characters inside strings and doubles
-// backslashes before invalid escape characters (port of repairJson).
-func repairJSON(s string) string {
-	var b strings.Builder
-	inString := false
-	for i := 0; i < len(s); i++ {
-		ch := s[i]
-		if !inString {
-			b.WriteByte(ch)
-			if ch == '"' {
-				inString = true
-			}
-			continue
-		}
-		if ch == '"' {
-			b.WriteByte(ch)
-			inString = false
-			continue
-		}
-		if ch == '\\' {
-			if i+1 >= len(s) {
-				b.WriteString("\\\\")
-				continue
-			}
-			next := s[i+1]
-			if next == 'u' && i+6 <= len(s) {
-				hex := s[i+2 : i+6]
-				if len(hex) == 4 && isHexDigit(hex[0]) && isHexDigit(hex[1]) && isHexDigit(hex[2]) && isHexDigit(hex[3]) {
-					b.WriteString("\\u")
-					b.WriteString(hex)
-					i += 5
-					continue
-				}
-			}
-			if validJSONEscapes[next] {
-				b.WriteByte('\\')
-				b.WriteByte(next)
-				i++
-				continue
-			}
-			b.WriteString("\\\\")
-			continue
-		}
-		if ch <= 0x1f {
-			b.WriteString(escapeControlChar(ch))
-		} else {
-			b.WriteByte(ch)
-		}
-	}
-	return b.String()
-}
-
 func escapeControlChar(ch byte) string {
 	switch ch {
 	case '\b':
@@ -342,12 +278,13 @@ func orEmptyArguments(tc ai.ToolCall) any {
 	return map[string]any{}
 }
 
-// parseJSONWithRepair parses JSON, retrying once with repairs on failure.
+// parseJSONWithRepair parses JSON, retrying once with repairs (ai.RepairJSON)
+// on failure.
 func parseJSONWithRepair(s string, out any) error {
 	if err := json.Unmarshal([]byte(s), out); err == nil {
 		return nil
 	}
-	repaired := repairJSON(s)
+	repaired := ai.RepairJSON(s)
 	if repaired != s {
 		return json.Unmarshal([]byte(repaired), out)
 	}
@@ -368,113 +305,31 @@ func jsonValueKind[T ~string | ~[]byte](text T) byte {
 	return 0
 }
 
-// parseStreamingJSON is pi's parseStreamingJson, which reads a tool call's
-// arguments out of the text streamed so far: JSON.parse of the text, then of
-// its repair (repairJSON) when that differs, then partial-json's parse of the
-// text and then of its repair, `?? {}`, and {} when all four throw. The second
-// return is the object in the order pi's JS object lists its keys; the map
-// holds the same members.
-//
-// Two differences are the map's. pi keeps a value that is not an object —
-// `12`, `"x"`, `[1]`, `null` from JSON.parse — as the arguments; the port has
-// {} for it. And a number that is not finite (a JSON number past float64's
-// range, or partial-json's NaN and Infinity) is held as nil: JSON.stringify
-// writes pi's value as null, so the arguments persist and replay as pi's do,
-// and the map never holds a number encoding/json cannot write.
-func parseStreamingJSON(partial string) (map[string]any, ai.OrderedObject) {
-	if jstext.Trim(partial) == "" {
-		return map[string]any{}, nil
+// appendToolCallArguments is pi's `args.append(delta)` for a delta as an event
+// holds it, a JSON value or undefined, and returns the call's partial
+// arguments. A string is the delta. pi reads the length of any other value,
+// which for undefined and null throws V8's TypeError. Any other value appends
+// its String() to the text the call finishes with, as pi's `+=` does; pi's
+// parser reads nothing of it (a number, boolean or object has no length),
+// where the port's reads that text too, so only such a delta's partial
+// arguments can differ from pi's, never the finished call's.
+func appendToolCallArguments(args *ai.ToolCallArgumentsStream, delta json.RawMessage) (map[string]any, ai.OrderedObject, error) {
+	if text, ok := rawString(delta); ok {
+		partial, order := args.Append(text)
+		return partial, order, nil
 	}
-	value, err := ai.DecodeOrderedValue([]byte(partial))
+	switch {
+	case delta == nil:
+		return nil, nil, errors.New("Cannot read properties of undefined (reading 'length')")
+	case jsonValueKind(delta) == 'n':
+		return nil, nil, errors.New("Cannot read properties of null (reading 'length')")
+	}
+	text, err := rawToString(delta)
 	if err != nil {
-		if repaired := repairJSON(partial); repaired != partial {
-			value, err = ai.DecodeOrderedValue([]byte(repaired))
-		}
+		return nil, nil, err
 	}
-	if err != nil {
-		value, err = partialJSONParse(partial)
-		if err != nil {
-			value, err = partialJSONParse(repairJSON(partial))
-		}
-		if err != nil {
-			return map[string]any{}, nil
-		}
-	}
-	// pi's `result ?? {}` gives {} for a null partial-json result, as the
-	// port does for any value that is not an object.
-	obj, isObject := value.(ai.OrderedObject)
-	if !isObject {
-		return map[string]any{}, nil
-	}
-	nullNonFinite(obj)
-	return obj.Plain(), obj
-}
-
-// parseToolCallArguments is pi's parseToolCallArguments: the arguments of a
-// FINISHED tool call, read from the model's complete arguments text. Unlike
-// parseStreamingJSON it never keeps a partially parsed prefix: the text is
-// JSON.parse'd, then its repair (repairJSON) when that differs, and kept only
-// when it is an object. Otherwise the arguments are {} and the third return —
-// the call's ArgumentsError — is JSON.parse's SyntaxError message (of the
-// repaired text when the repair changed it, as parseJsonWithRepair throws), or
-// "Tool arguments must be a JSON object", followed by the text the model sent.
-// A text that is blank by JS trim is {} with no error.
-func parseToolCallArguments(text string) (map[string]any, ai.OrderedObject, string) {
-	if jstext.Trim(text) == "" {
-		return map[string]any{}, nil, ""
-	}
-	value, err := parseJSONValueWithRepair(text)
-	if err == nil {
-		if obj, isObject := value.(ai.OrderedObject); isObject {
-			nullNonFinite(obj)
-			return obj.Plain(), obj, ""
-		}
-		err = errors.New("Tool arguments must be a JSON object")
-	}
-	return map[string]any{}, nil, err.Error() + "\n\nReceived arguments:\n" + text
-}
-
-// parseJSONValueWithRepair is pi's parseJsonWithRepair for any JSON value:
-// JSON.parse of text, else of its repair when the repair changed it. The error
-// is the SyntaxError JSON.parse throws for the last text it read.
-func parseJSONValueWithRepair(text string) (any, error) {
-	value, err := ai.DecodeOrderedValue([]byte(text))
-	if err == nil {
-		return value, nil
-	}
-	parsed := text
-	if repaired := repairJSON(text); repaired != text {
-		if value, err = ai.DecodeOrderedValue([]byte(repaired)); err == nil {
-			return value, nil
-		}
-		parsed = repaired
-	}
-	if syntaxErr := jstext.JSONSyntaxError(parsed); syntaxErr != nil {
-		return nil, syntaxErr
-	}
-	// JSON.parse accepts what the decoder refused: a port bug, not the model's.
-	return nil, fmt.Errorf("%v (JSON.parse accepts this text; report it as a port bug)", err)
-}
-
-// nullNonFinite replaces every number in v that is not finite with nil, in
-// place, at any depth, and returns v. The trees it is given are freshly
-// parsed and so shared with nothing.
-func nullNonFinite(v any) any {
-	switch t := v.(type) {
-	case float64:
-		if math.IsInf(t, 0) || math.IsNaN(t) {
-			return nil
-		}
-	case []any:
-		for i := range t {
-			t[i] = nullNonFinite(t[i])
-		}
-	case ai.OrderedObject:
-		for i := range t {
-			t[i].Value = nullNonFinite(t[i].Value)
-		}
-	}
-	return v
+	partial, order := args.Append(text)
+	return partial, order, nil
 }
 
 // sanitizeSurrogates removes unpaired UTF-16 surrogate code units (port of

@@ -319,35 +319,18 @@ func streamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Transc
 		// property, so the property is present — holding the empty string — from
 		// the toolcall_start event onwards rather than materializing with the
 		// first appendGrammarInput.
+		//
+		// A call's stream state is pi's ToolCallState (upstream f715a15c1), kept
+		// on the builder, never on the content block: the JSON arguments stream
+		// of a function call, or the grammar input buffer of a custom call.
 		startGrammarBuffer := func(b *blockBuilder) {
 			property, ok := grammarProps[b.toolName]
 			if !ok {
 				property = "input"
 			}
 			b.grammar = newGrammarInputBuffer(property)
-			b.args = map[string]any{property: ""}
-			b.partialJSON.Reset()
-		}
-		// grammarInput is the raw input accumulated on a custom tool call so far.
-		grammarInput := func(b *blockBuilder) string {
-			if b.grammar == nil {
-				return ""
-			}
-			s, _ := b.args[b.grammar.property].(string)
-			return s
-		}
-		// appendGrammarInput advances a custom tool call to nextInput and returns
-		// the synthesized JSON delta (empty when there is nothing to emit).
-		appendGrammarInput := func(b *blockBuilder, nextInput string, final bool) (string, error) {
-			if b.grammar == nil {
-				return "", nil
-			}
-			delta, _, err := b.grammar.append(nextInput, final)
-			if err != nil {
-				return "", err
-			}
-			b.args = map[string]any{b.grammar.property: nextInput}
-			return delta, nil
+			b.arguments = nil
+			b.args, b.argsOrder = map[string]any{property: ""}, nil
 		}
 		// toolCallName is pi's `toolCall.function?.name ?? toolCall.custom?.name`,
 		// undefined when neither is set.
@@ -395,6 +378,8 @@ func streamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Transc
 				}
 				if isGrammarCall(toolCall) {
 					startGrammarBuffer(b)
+				} else {
+					b.arguments = &ai.ToolCallArgumentsStream{}
 				}
 				if hasIndex {
 					toolBuildersByIndex[streamIndex] = b
@@ -610,25 +595,28 @@ func streamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Transc
 
 					// pi pushes a toolcall_delta for EVERY delta entry, with an empty
 					// delta string when no arguments arrived (pi :358-369).
+					// Function arguments feed a function call's arguments stream,
+					// custom input a custom call's grammar buffer; a delta of the
+					// other kind is pushed empty.
 					delta := ""
-					if arguments := jsGet(jsGet(toolCall, "function"), "arguments"); jsTruthy(arguments) {
+					if arguments := jsGet(jsGet(toolCall, "function"), "arguments"); jsTruthy(arguments) && b.arguments != nil {
 						text, err := jsToString(arguments)
 						if err != nil {
 							return err
 						}
 						delta = text
-						b.partialJSON.WriteString(delta)
-						b.args, b.argsOrder = parseStreamingJSON(b.partialJSON.String())
-					} else if input := jsGet(jsGet(toolCall, "custom"), "input"); jsTruthy(input) {
+						b.args, b.argsOrder = b.arguments.Append(delta)
+					} else if input := jsGet(jsGet(toolCall, "custom"), "input"); jsTruthy(input) && b.grammar != nil {
 						text, err := jsToString(input)
 						if err != nil {
 							return err
 						}
-						jsonDelta, gerr := appendGrammarInput(b, grammarInput(b)+text, false)
+						jsonDelta, _, gerr := b.grammar.appendDelta(text)
 						if gerr != nil {
 							return gerr
 						}
 						delta = jsonDelta
+						b.args, b.argsOrder = map[string]any{b.grammar.property: b.grammar.Input()}, nil
 					}
 					materialize()
 					stream.Push(ai.AssistantMessageEvent{Type: ai.EventToolCallDelta, ContentIndex: indexOf(b), Delta: delta, Partial: output.Clone()})
@@ -663,17 +651,17 @@ func streamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Transc
 				stream.Push(ai.AssistantMessageEvent{Type: ai.EventThinkingEnd, ContentIndex: indexOf(b), Content: b.thinking.String(), Partial: output.Clone()})
 			case "toolCall":
 				if b.grammar != nil {
-					delta, gerr := appendGrammarInput(b, grammarInput(b), true)
+					delta, ok, gerr := b.grammar.close("", false)
 					if gerr != nil {
 						fail(gerr)
 						return
 					}
-					if delta != "" {
+					if ok {
 						materialize()
 						stream.Push(ai.AssistantMessageEvent{Type: ai.EventToolCallDelta, ContentIndex: indexOf(b), Delta: delta, Partial: output.Clone()})
 					}
 				} else {
-					b.args, b.argsOrder, b.argsErr = parseToolCallArguments(b.partialJSON.String())
+					b.args, b.argsOrder, b.argsErr = b.arguments.Finish()
 				}
 				materialize()
 				tc := b.toContent().(ai.ToolCall)

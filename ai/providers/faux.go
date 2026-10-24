@@ -551,11 +551,16 @@ func (r *FauxProviderRegistration) streamWithDeltas(ctx context.Context, stream 
 			partial.Content = append(partial.Content, ai.ToolCall{ID: b.ID, Name: b.Name, Arguments: map[string]any{}})
 			stream.Push(ai.AssistantMessageEvent{Type: ai.EventToolCallStart, ContentIndex: index, Partial: partial.Clone()})
 			argsJSON, _ := jstext.Stringify(b.OrderedArguments())
+			// Partial arguments come from the same parser real providers use,
+			// so consumers see them grow.
+			var toolArguments ai.ToolCallArgumentsStream
 			for _, chunk := range splitByTokenSize(argsJSON, r.minTokenSize, r.maxTokenSize) {
 				r.scheduleChunk(chunk)
 				if abortNow() {
 					return
 				}
+				args, order := toolArguments.Append(chunk)
+				partial.Content[index] = ai.ToolCall{ID: b.ID, Name: b.Name, Arguments: args, ArgumentsOrder: order}
 				stream.Push(ai.AssistantMessageEvent{Type: ai.EventToolCallDelta, ContentIndex: index, Delta: chunk, Partial: partial.Clone()})
 			}
 			partial.Content[index] = b

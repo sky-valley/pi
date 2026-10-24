@@ -338,11 +338,15 @@ func TestGrammarToolInput(t *testing.T) {
 	assertErrString(t, err, `Grammar tool call "gram" requires argument "query" to be a string.`)
 }
 
-// Sequences and expectations captured from pi's appendGrammarToolInputJsonDelta.
+// Sequences and expectations from pi's appendGrammarToolInputJsonDelta and
+// closeGrammarToolInputJson (upstream f715a15c1, which split the close off
+// and made the append take the delta).
 func TestGrammarInputBuffer(t *testing.T) {
 	type step struct {
-		next  string
-		final bool
+		// close closes with input (none when noFinal); otherwise input is a delta.
+		close   bool
+		noFinal bool
+		input   string
 		// want is the emitted delta; wantNone means pi returned undefined.
 		want     string
 		wantNone bool
@@ -354,43 +358,60 @@ func TestGrammarInputBuffer(t *testing.T) {
 		steps    []step
 	}{
 		{"streamed in three chunks", "query", []step{
-			{next: "SEL", want: `{"query":"SEL`},
-			{next: "SELECT ", want: "ECT "},
-			{next: "SELECT 1", final: true, want: `1"}`},
+			{input: "SEL", want: `{"query":"SEL`},
+			{input: "ECT ", want: "ECT "},
+			{close: true, input: "SELECT 1", want: `1"}`},
 		}},
 		{"escapes the delta and the property name", "in put", []step{
-			{next: `a"b`, want: `{"in put":"a\"b`},
-			{next: `a"b\c`, want: `\\c`},
-			{next: `a"b\c`, final: true, want: `"}`},
+			{input: `a"b`, want: `{"in put":"a\"b`},
+			{input: `\c`, want: `\\c`},
+			{close: true, input: `a"b\c`, want: `"}`},
 		}},
 		{"empty input closes immediately", "q", []step{
-			{next: "", final: true, want: `{"q":""}`},
+			{close: true, input: "", want: `{"q":""}`},
 		}},
-		{"empty non-final delta emits nothing; re-close is a no-op", "q", []step{
-			{next: "x", want: `{"q":"x`},
-			{next: "x", wantNone: true},
-			{next: "x", final: true, want: `"}`},
-			{next: "x", final: true, wantNone: true},
+		{"close with no final input closes with the streamed input", "q", []step{
+			{input: "ab", want: `{"q":"ab`},
+			{close: true, noFinal: true, want: `"}`},
+			{close: true, noFinal: true, wantNone: true},
+			{close: true, input: "ab", wantNone: true},
 		}},
-		{"non-monotonic input", "q", []step{
-			{next: "ab", want: `{"q":"ab`},
-			{next: "a", wantErr: `grammar tool input for property "q" changed non-monotonically`},
+		{"empty delta emits nothing; re-close is a no-op", "q", []step{
+			{input: "x", want: `{"q":"x`},
+			{input: "", wantNone: true},
+			{close: true, input: "x", want: `"}`},
+			{close: true, input: "x", wantNone: true},
 		}},
-		{"change after close", "q", []step{
-			{next: "a", final: true, want: `{"q":"a"}`},
-			// Only a repeated CLOSE with the same input is tolerated.
-			{next: "a", wantErr: `grammar tool input for property "q" changed after it was closed`},
-			{next: "a", final: true, wantNone: true},
-			{next: "b", final: true, wantErr: `grammar tool input for property "q" changed after it was closed`},
+		// upstream: rejects a final grammar input that does not continue the
+		// streamed input.
+		{"non-monotonic final input", "payload", []step{
+			{input: "abc", want: `{"payload":"abc`},
+			{close: true, input: "abd", wantErr: `grammar tool input for property "payload" changed non-monotonically`},
+		}},
+		// upstream: keeps grammar input JSON deltas append-only.
+		{"change after close", "payload", []step{
+			{input: `a"`, want: `{"payload":"a\"`},
+			{close: true, input: "a\"\nb", want: `\nb"}`},
+			{close: true, input: "a\"\nb", wantNone: true},
+			{close: true, input: "changed", wantErr: `grammar tool input for property "payload" changed after it was closed`},
+			{input: "x", wantErr: `grammar tool input for property "payload" changed after it was closed`},
+			{input: "", wantErr: `grammar tool input for property "payload" changed after it was closed`},
 		}},
 		{"HTML-significant characters are not escaped", "<p>&", []step{
-			{next: "<x>& ", final: true, want: `{"<p>&":"<x>& "}`},
+			{close: true, input: "<x>& ", want: `{"<p>&":"<x>& "}`},
 		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			buf := newGrammarInputBuffer(tc.property)
 			for i, s := range tc.steps {
-				delta, ok, err := buf.append(s.next, s.final)
+				var delta string
+				var ok bool
+				var err error
+				if s.close {
+					delta, ok, err = buf.close(s.input, !s.noFinal)
+				} else {
+					delta, ok, err = buf.appendDelta(s.input)
+				}
 				assertErrString(t, err, s.wantErr)
 				if err != nil {
 					continue

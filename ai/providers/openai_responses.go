@@ -532,26 +532,20 @@ func StreamOpenAIResponses(ctx context.Context, model *ai.Model, req ai.Transcri
 			}
 			return nil
 		}
-		// grammarInput is the raw input accumulated on a custom tool call so far.
-		grammarInput := func(b *blockBuilder) string {
-			if b.grammar == nil {
-				return ""
-			}
-			s, _ := b.args[b.grammar.property].(string)
-			return s
-		}
-		// appendGrammarInput advances a custom tool call to nextInput and pushes
-		// the synthesized JSON delta, if any.
-		appendGrammarInput := func(slot *responsesOutputSlot, nextInput string, final bool) error {
-			b := slot.block
-			if b.grammar == nil {
-				return nil
-			}
-			delta, ok, err := b.grammar.append(nextInput, final)
+		// sendGrammarInput is pi's sendCustomInput: the call's arguments become
+		// the input streamed so far, and the JSON delta (ok false: pi's
+		// undefined) is pushed after the JSON text of the item's initial input,
+		// which waits for the first delta (unsentGrammarJSON).
+		sendGrammarInput := func(slot *responsesOutputSlot, delta string, ok bool, err error) error {
 			if err != nil {
 				return err
 			}
-			b.args = map[string]any{b.grammar.property: nextInput}
+			b := slot.block
+			b.args, b.argsOrder = map[string]any{b.grammar.property: b.grammar.Input()}, nil
+			if b.unsentGrammarJSON != "" {
+				delta, ok = b.unsentGrammarJSON+delta, true
+				b.unsentGrammarJSON = ""
+			}
 			materialize()
 			if ok {
 				stream.Push(ai.AssistantMessageEvent{Type: ai.EventToolCallDelta, ContentIndex: slot.contentIndex, Delta: delta, Partial: output.Clone()})
@@ -583,11 +577,15 @@ func StreamOpenAIResponses(ctx context.Context, model *ai.Model, req ai.Transcri
 				b = &blockBuilder{kind: "text"}
 				startEvent = ai.EventTextStart
 			case "function_call":
+				// pi: `arguments: item.arguments ? args.append(item.arguments) : {}`.
 				b = &blockBuilder{
 					kind: "toolCall", toolID: item.CallID + "|" + item.ID, toolName: item.Name,
 					toolNamespace: item.Namespace, args: map[string]any{},
+					arguments: &ai.ToolCallArgumentsStream{},
 				}
-				b.partialJSON.WriteString(item.Arguments)
+				if item.Arguments != "" {
+					b.args, b.argsOrder = b.arguments.Append(item.Arguments)
+				}
 				startEvent = ai.EventToolCallStart
 			case "custom_tool_call":
 				// The "input" fallback should never be taken; it only gives a
@@ -599,9 +597,9 @@ func StreamOpenAIResponses(ctx context.Context, model *ai.Model, req ai.Transcri
 				// The input the item already carries is present on the block the
 				// start event announces (pi 8b5899dce, reverting 5c6655e76's
 				// replay-as-a-delta). pi writes `item.input || ""`, so the property
-				// is there even for an item that carries no input at all. Only the
-				// JSON delta buffer stays empty: the first delta synthesized after
-				// this opens the object and carries the initial input with it.
+				// is there even for an item that carries no input at all. Its JSON
+				// text waits for the first delta, which carries it (pi's
+				// customInput `unsent`).
 				input := ""
 				if item.Input != nil {
 					input = *item.Input
@@ -611,6 +609,8 @@ func StreamOpenAIResponses(ctx context.Context, model *ai.Model, req ai.Transcri
 					toolNamespace: item.Namespace,
 					args:          map[string]any{property: input}, grammar: newGrammarInputBuffer(property),
 				}
+				// appendDelta fails only on a closed buffer, which a new one is not.
+				b.unsentGrammarJSON, _, _ = b.grammar.appendDelta(input)
 				startEvent = ai.EventToolCallStart
 			default:
 				return nil
@@ -832,43 +832,40 @@ func StreamOpenAIResponses(ctx context.Context, model *ai.Model, req ai.Transcri
 				stream.Push(ai.AssistantMessageEvent{Type: ai.EventTextDelta, ContentIndex: slot.contentIndex, Delta: ev.Delta, Partial: output.Clone()})
 			case "response.function_call_arguments.delta":
 				slot := getSlot(ev.slotKey(), "toolCall")
-				if slot == nil || slot.block.grammar != nil {
+				if slot == nil || slot.block.arguments == nil {
 					return nil
 				}
-				slot.block.partialJSON.WriteString(ev.Delta)
-				slot.block.args, slot.block.argsOrder = parseStreamingJSON(slot.block.partialJSON.String())
+				slot.block.args, slot.block.argsOrder = slot.block.arguments.Append(ev.Delta)
 				materialize()
 				stream.Push(ai.AssistantMessageEvent{Type: ai.EventToolCallDelta, ContentIndex: slot.contentIndex, Delta: ev.Delta, Partial: output.Clone()})
 			case "response.function_call_arguments.done":
 				slot := getSlot(ev.slotKey(), "toolCall")
-				if slot == nil || slot.block.grammar != nil {
+				if slot == nil || slot.block.arguments == nil {
 					return nil
 				}
-				previous := slot.block.partialJSON.String()
-				slot.block.partialJSON.Reset()
-				slot.block.partialJSON.WriteString(ev.Arguments)
-				slot.block.args, slot.block.argsOrder = parseStreamingJSON(ev.Arguments)
+				// The complete arguments: the missing piece when they continue
+				// the deltas, pushed so a provider that only sends .done still
+				// yields them; otherwise the arguments start over.
+				delta, _, args, order := slot.block.arguments.Replace(ev.Arguments)
+				slot.block.args, slot.block.argsOrder = args, order
 				materialize()
-				// Emit the trailing delta so a provider that only sends
-				// .done (no incremental deltas) still yields full args.
-				if strings.HasPrefix(ev.Arguments, previous) {
-					delta := ev.Arguments[len(previous):]
-					if delta != "" {
-						stream.Push(ai.AssistantMessageEvent{Type: ai.EventToolCallDelta, ContentIndex: slot.contentIndex, Delta: delta, Partial: output.Clone()})
-					}
+				if delta != "" {
+					stream.Push(ai.AssistantMessageEvent{Type: ai.EventToolCallDelta, ContentIndex: slot.contentIndex, Delta: delta, Partial: output.Clone()})
 				}
 			case "response.custom_tool_call_input.delta":
 				slot := getSlot(ev.slotKey(), "toolCall")
 				if slot == nil || slot.block.grammar == nil {
 					return nil
 				}
-				return appendGrammarInput(slot, grammarInput(slot.block)+ev.Delta, false)
+				delta, ok, err := slot.block.grammar.appendDelta(ev.Delta)
+				return sendGrammarInput(slot, delta, ok, err)
 			case "response.custom_tool_call_input.done":
 				slot := getSlot(ev.slotKey(), "toolCall")
 				if slot == nil || slot.block.grammar == nil {
 					return nil
 				}
-				return appendGrammarInput(slot, ev.Input, true)
+				delta, ok, err := closeGrammarInput(slot.block.grammar, jsGet(ev.JS, "input"))
+				return sendGrammarInput(slot, delta, ok, err)
 			case "response.output_item.done":
 				if ev.Item == nil {
 					return nil
@@ -923,14 +920,13 @@ func StreamOpenAIResponses(ctx context.Context, model *ai.Model, req ai.Transcri
 					materialize()
 					stream.Push(ai.AssistantMessageEvent{Type: ai.EventTextEnd, ContentIndex: slot.contentIndex, Content: slot.block.text.String(), Partial: output.Clone()})
 					delete(outputSlots, ev.slotKey())
-				case ev.Item.Type == "function_call" && slot != nil && slot.block.kind == "toolCall" && slot.block.grammar == nil:
-					// pi: parseToolCallArguments(item.arguments || partialJson) —
-					// the done event's item.arguments wins over the scratch buffer.
-					argsJSON := ev.Item.Arguments
-					if argsJSON == "" {
-						argsJSON = slot.block.partialJSON.String()
+				case ev.Item.Type == "function_call" && slot != nil && slot.block.kind == "toolCall" && slot.block.arguments != nil:
+					// The done event's item.arguments, when it has any, win over the
+					// streamed text.
+					if ev.Item.Arguments != "" {
+						slot.block.arguments.Replace(ev.Item.Arguments)
 					}
-					slot.block.args, slot.block.argsOrder, slot.block.argsErr = parseToolCallArguments(argsJSON)
+					slot.block.args, slot.block.argsOrder, slot.block.argsErr = slot.block.arguments.Finish()
 					// Guarded so an absent namespace on the done item cannot clobber
 					// the one captured at output_item.added.
 					if ev.Item.Namespace != "" {
@@ -942,15 +938,16 @@ func StreamOpenAIResponses(ctx context.Context, model *ai.Model, req ai.Transcri
 					stream.Push(ai.AssistantMessageEvent{Type: ai.EventToolCallEnd, ContentIndex: slot.contentIndex, ToolCall: &tc, Partial: output.Clone()})
 					delete(outputSlots, ev.slotKey())
 				case ev.Item.Type == "custom_tool_call" && slot != nil && slot.block.grammar != nil:
-					// pi: item.input ?? the input accumulated so far.
-					finalInput := grammarInput(slot.block)
-					if ev.Item.Input != nil {
+					// pi: closeCustomInput(block, input, item.input) — an absent
+					// input closes with the input streamed so far.
+					finalInput, hasFinal := "", ev.Item.Input != nil
+					if hasFinal {
 						finalInput = *ev.Item.Input
 					}
-					if gerr := appendGrammarInput(slot, finalInput, true); gerr != nil {
+					delta, ok, err := slot.block.grammar.close(finalInput, hasFinal)
+					if gerr := sendGrammarInput(slot, delta, ok, err); gerr != nil {
 						return gerr
 					}
-					slot.block.grammar = nil
 					// Guarded so an absent namespace on the done item cannot clobber
 					// the one captured at output_item.added.
 					if ev.Item.Namespace != "" {
@@ -1856,13 +1853,11 @@ type responsesContentPart struct {
 type responsesEvent struct {
 	// Type is the event's `type` when it is a string, read by exact key as
 	// JS reads event.type; "" matches no handler.
-	Type      string `json:"-"`
-	Delta     string `json:"delta"`
-	Arguments string `json:"arguments"`
-	// Input carries response.custom_tool_call_input.done's final raw input.
-	Input string                `json:"input"`
-	Part  *responsesContentPart `json:"part"`
-	Item  *responsesItem        `json:"item"`
+	Type      string                `json:"-"`
+	Delta     string                `json:"delta"`
+	Arguments string                `json:"arguments"`
+	Part      *responsesContentPart `json:"part"`
+	Item      *responsesItem        `json:"item"`
 	// JS is the event as JSON.parse made it (ai.DecodeOrderedValue's
 	// shapes). The handlers for the events that end the stream —
 	// response.created's id, response.completed/incomplete/failed and error —

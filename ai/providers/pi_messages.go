@@ -323,8 +323,9 @@ type piMessagesConverter struct {
 	named map[string]ai.Content
 	// holes counts the unset slots in the content (see start).
 	holes int
-	// toolJSON is pi's toolJson Map of each tool call's streamed arguments.
-	toolJSON map[piMessagesMapKey]string
+	// toolArguments is pi's toolArguments Map: the arguments stream of each
+	// tool call that started and has not ended (upstream f715a15c1).
+	toolArguments map[piMessagesMapKey]*ai.ToolCallArgumentsStream
 	// events counts the converted events, which gives an object or array key
 	// the identity of the event that carried it.
 	events int
@@ -342,8 +343,8 @@ func newPiMessagesConverter(model *ai.Model) *piMessagesConverter {
 			StopReason: ai.StopPending,
 			Timestamp:  nowMillis(),
 		},
-		named:    map[string]ai.Content{},
-		toolJSON: map[piMessagesMapKey]string{},
+		named:         map[string]ai.Content{},
+		toolArguments: map[piMessagesMapKey]*ai.ToolCallArgumentsStream{},
 	}
 }
 
@@ -430,7 +431,7 @@ func (r piMessagesBlockRef) pushedIndex() int {
 	return -1
 }
 
-// piMessagesMapKey is a key of pi's toolJson Map, which compares keys by
+// piMessagesMapKey is a key of pi's toolArguments Map, which compares keys by
 // SameValueZero: a primitive by its value (0 and -0 alike, "0" apart from 0),
 // and an object or array — a fresh value in every parsed event — by identity,
 // so it matches no other event's.
@@ -655,29 +656,31 @@ func (c *piMessagesConverter) convert(ev piMessagesEvent) (ai.AssistantMessageEv
 		if err := c.start(r, ai.ToolCall{ID: ev.ID, Name: ev.ToolName, Arguments: map[string]any{}}); err != nil {
 			return ai.AssistantMessageEvent{}, err
 		}
-		c.toolJSON[c.mapKey(ev.contentIndex)] = ""
+		c.toolArguments[c.mapKey(ev.contentIndex)] = &ai.ToolCallArgumentsStream{}
 		return ai.AssistantMessageEvent{Type: ai.EventToolCallStart, ContentIndex: r.pushedIndex(), Partial: c.partial.Clone()}, nil
 	case "toolcall_delta":
-		// pi: the buffer `${toolJson.get(i) ?? ""}${event.delta}` is built and
-		// stored before `partial.content[i].arguments` is set from it.
-		piece, err := rawToString(ev.delta)
-		if err != nil {
-			return ai.AssistantMessageEvent{}, err
-		}
-		key := c.mapKey(ev.contentIndex)
-		j := c.toolJSON[key] + piece
-		c.toolJSON[key] = j
+		// pi: a delta for a call with no arguments stream (never started, or
+		// ended) changes nothing; otherwise the stream reads the delta before
+		// `partial.content[i].arguments` is set from it.
+		// The property key is only read for the assignment, so a key with no
+		// string form fails only a call that has a stream.
 		r, err := c.ref(ev.contentIndex)
-		if err != nil {
-			return ai.AssistantMessageEvent{}, err
-		}
-		block := c.get(r)
-		if block == nil {
-			return ai.AssistantMessageEvent{}, setOnUndefined("arguments")
-		}
-		if tc, ok := block.(ai.ToolCall); ok {
-			tc.Arguments, tc.ArgumentsOrder = parseStreamingJSON(j)
-			c.set(r, tc)
+		if args := c.toolArguments[c.mapKey(ev.contentIndex)]; args != nil {
+			if err != nil {
+				return ai.AssistantMessageEvent{}, err
+			}
+			partial, order, err := appendToolCallArguments(args, ev.delta)
+			if err != nil {
+				return ai.AssistantMessageEvent{}, err
+			}
+			block := c.get(r)
+			if block == nil {
+				return ai.AssistantMessageEvent{}, setOnUndefined("arguments")
+			}
+			if tc, ok := block.(ai.ToolCall); ok {
+				tc.Arguments, tc.ArgumentsOrder = partial, order
+				c.set(r, tc)
+			}
 		}
 		return ai.AssistantMessageEvent{Type: ai.EventToolCallDelta, ContentIndex: r.pushedIndex(), Delta: ev.Delta, Partial: c.partial.Clone()}, nil
 	case "toolcall_end":
@@ -691,7 +694,7 @@ func (c *piMessagesConverter) convert(ev piMessagesEvent) (ai.AssistantMessageEv
 		}
 		block = assignPiMessagesToolCall(block, ev.toolCall)
 		c.set(r, block)
-		delete(c.toolJSON, c.mapKey(ev.contentIndex))
+		delete(c.toolArguments, c.mapKey(ev.contentIndex))
 		var tc *ai.ToolCall
 		if v, ok := block.(ai.ToolCall); ok {
 			tc = &v

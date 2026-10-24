@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"reflect"
 	"slices"
 	"strings"
 	"testing"
@@ -73,10 +72,6 @@ type jstrimCapture struct {
 		} `json:"result"`
 		Error string `json:"error"`
 	} `json:"grammar"`
-	StreamingJSON []struct {
-		Input  string          `json:"input"`
-		Result json.RawMessage `json:"result"`
-	} `json:"streamingJson"`
 	RetryAfter []struct {
 		Bytes   []int    `json:"bytes"`
 		Seconds *float64 `json:"seconds"`
@@ -381,24 +376,6 @@ func TestJSTrimGrammarVariantSelection(t *testing.T) {
 					want.Result.Format, want.Result.Definition, want.Result.InputProperty)
 			}
 		})
-	}
-}
-
-func TestJSTrimParseStreamingJSON(t *testing.T) {
-	for _, tc := range loadJSTrimCapture(t).StreamingJSON {
-		got, _ := parseStreamingJSON(tc.Input)
-		raw, err := json.Marshal(got)
-		if err != nil {
-			t.Fatal(err)
-		}
-		var gotValue, wantValue any
-		_ = json.Unmarshal(raw, &gotValue)
-		if err := json.Unmarshal(tc.Result, &wantValue); err != nil {
-			t.Fatal(err)
-		}
-		if !reflect.DeepEqual(gotValue, wantValue) {
-			t.Errorf("parseStreamingJSON(%+q) = %s, pi = %s", tc.Input, raw, tc.Result)
-		}
 	}
 }
 
