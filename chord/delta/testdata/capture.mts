@@ -54,6 +54,7 @@
 //   shared {at}               whether prepared.value holds prepared.base's container at "at"
 //   keys {at}                 Object.keys of the draft at "at"
 //   set {at, key, value}      append {at, key, text}  delete {at, key}      get {at, key}
+//   appendText {at, key, text}                        appendText(draft, key, text), from da412b039 on
 //   push {at, items}          unshift {at, items}     pop {at, as?}         shift {at, as?}
 //   splice {at, start, deleteCount, items}            reverse {at}          setLength {at, length}
 //   sort {at, by, desc?, bump?, write?, unshiftOnce?} fill {at, value, start, end}
@@ -79,7 +80,7 @@ if (!extraction || !outFile || !sha) {
 	process.exit(2);
 }
 const delta = await import(pathToFileURL(path.join(extraction, "packages/chord/src/delta/index.ts")).href);
-const { track, diffRevisions, applyImmutable } = delta;
+const { track, diffRevisions, applyImmutable, appendText } = delta;
 
 type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 type Op = readonly unknown[];
@@ -779,6 +780,9 @@ class Runner {
 			case "append":
 				this.nav(step)[step.key as string] += step.text as string;
 				return {};
+			case "appendText":
+				appendText(this.nav(step), step.key as string, step.text as string);
+				return {};
 			case "delete":
 				delete this.nav(step)[step.key as string];
 				return {};
@@ -1399,6 +1403,103 @@ scenario("a deeply equal assignment keeps the committed container", { main: J(`{
 	{"do":"shared","at":["p"]},
 	{"do":"shared","at":[]}
 ]`));
+
+// delta-append-text.test.ts (da412b039), and what the overlay's record of
+// appends meets elsewhere in a change: a readded key, a no-op write, a
+// reserved key, a permutation.
+const appendDoc = `{"title":"t","content":[{"type":"text","text":"hello","tags":["a"]}],"meta":{"note":"n"}}`;
+scenario("appendText records an append op", { main: J(appendDoc) }, S(`[
+	{"do":"begin"},
+	{"do":"appendText","at":["content",0],"key":"text","text":" world"},
+	{"do":"prepare"},
+	{"do":"adopt"},
+	{"do":"begin"},
+	{"do":"appendText","at":[],"key":"title","text":"!"},
+	{"do":"prepare"},
+	{"do":"adopt"},
+	{"do":"begin"},
+	{"do":"appendText","at":["meta"],"key":"note","text":"ote"},
+	{"do":"prepare"},
+	{"do":"adopt"},
+	{"do":"value"}
+]`));
+scenario("appendText joins appends to one key", { main: J(appendDoc) }, S(`[
+	{"do":"begin"},
+	{"do":"appendText","at":["content",0],"key":"text","text":" a"},
+	{"do":"set","at":[],"key":"title","value":"new"},
+	{"do":"appendText","at":["content",0],"key":"text","text":" b"},
+	{"do":"appendText","at":["content",0],"key":"text","text":""},
+	{"do":"appendText","at":["content",0],"key":"text","text":" c"},
+	{"do":"get","at":["content",0],"key":"text"},
+	{"do":"prepare"}
+]`));
+scenario("appendText falls back when the key is also written", { main: J(appendDoc) }, S(`[
+	{"do":"begin"},
+	{"do":"appendText","at":["content",0],"key":"text","text":" x"},
+	{"do":"append","at":["content",0],"key":"text","text":" y"},
+	{"do":"prepare"},
+	{"do":"adopt"},
+	{"do":"begin"},
+	{"do":"appendText","at":["content",0],"key":"text","text":" z"},
+	{"do":"set","at":["content",0],"key":"text","value":"replaced"},
+	{"do":"prepare"},
+	{"do":"adopt"},
+	{"do":"begin"},
+	{"do":"set","at":[],"key":"title","value":"assigned"},
+	{"do":"appendText","at":[],"key":"title","text":" then appended"},
+	{"do":"prepare"},
+	{"do":"adopt"},
+	{"do":"begin"},
+	{"do":"appendText","at":["meta"],"key":"note","text":"x"},
+	{"do":"delete","at":["meta"],"key":"note"},
+	{"do":"prepare"},
+	{"do":"adopt"},
+	{"do":"begin"},
+	{"do":"appendText","at":[],"key":"title","text":" a"},
+	{"do":"set","at":[],"key":"title","value":"assigned then appended b"},
+	{"do":"appendText","at":[],"key":"title","text":" c"},
+	{"do":"prepare"},
+	{"do":"adopt"},
+	{"do":"begin"},
+	{"do":"delete","at":[],"key":"title"},
+	{"do":"set","at":[],"key":"title","value":"re"},
+	{"do":"appendText","at":[],"key":"title","text":"added"},
+	{"do":"prepare"},
+	{"do":"adopt"},
+	{"do":"value"}
+]`));
+scenario("appendText inside a placed block", { main: J(appendDoc) }, S(`[
+	{"do":"begin"},
+	{"do":"push","at":["content"],"items":[{"type":"text","text":"new","tags":[]}]},
+	{"do":"appendText","at":["content",1],"key":"text","text":" block"},
+	{"do":"set","at":["content"],"key":0,"value":{"type":"text","text":"other","tags":[]}},
+	{"do":"appendText","at":["content",0],"key":"text","text":" one"},
+	{"do":"prepare"},
+	{"do":"adopt"},
+	{"do":"value"}
+]`));
+scenario("appendText refusals", { main: J(appendDoc) }, S(`[
+	{"do":"begin"},
+	{"do":"appendText","at":[],"key":"content","text":"x"},
+	{"do":"appendText","at":[],"key":"missing","text":"x"},
+	{"do":"appendText","at":["content"],"key":"0","text":"x"},
+	{"do":"appendText","at":["content",0],"key":"signature","text":"x"},
+	{"do":"appendText","at":["content",0],"key":"tags","text":"x"},
+	{"do":"appendText","at":[],"key":"a\\"b<é>","text":"x"},
+	{"do":"appendText","at":[],"key":"missing","text":""},
+	{"do":"appendText","at":["content",0],"key":"type","text":"x"},
+	{"do":"hold","at":["content",0],"as":"block"},
+	{"do":"prepare"},
+	{"do":"appendText","from":"block","at":[],"key":"text","text":"x"},
+	{"do":"begin","c":"aborted"},
+	{"do":"hold","c":"aborted","at":[],"as":"state"},
+	{"do":"abort","c":"aborted"},
+	{"do":"appendText","from":"state","at":[],"key":"title","text":"x"}
+]`));
+scenario("appendText moves with its entry", { main: J(`{"v":[{"t":"a"},{"t":"b"}]}`) }, arrays(`{"do":"appendText","at":["v",0],"key":"t","text":"1"},{"do":"reverse","at":["v"]},{"do":"appendText","at":["v",0],"key":"t","text":"2"},{"do":"unshift","at":["v"],"items":[{"t":"c"}]}`));
+scenario("appendText below and at a reserved key", { main: J(`{"x":{"__proto__":{"t":"a"},"k":"b"},"y":{"constructor":"c"}}`) }, arrays(`{"do":"appendText","at":["x","__proto__"],"key":"t","text":"1"},{"do":"appendText","at":["x"],"key":"k","text":"2"},{"do":"appendText","at":["y"],"key":"constructor","text":"3"}`));
+scenario("appendText then a no-op write keeps the append", { main: J(`{"t":"a","n":1}`) }, arrays(`{"do":"appendText","at":[],"key":"t","text":"b"},{"do":"set","at":[],"key":"t","value":"ab"},{"do":"appendText","at":[],"key":"t","text":"c"},{"do":"set","at":[],"key":"n","value":2}`));
+scenario("appendText astral and to an empty string", { main: J(`{"e":"","s":"😀"}`) }, arrays(`{"do":"appendText","at":[],"key":"e","text":"😁"},{"do":"appendText","at":[],"key":"s","text":"x😂"}`));
 
 // ─── Generated tracker cases ─────────────────────────────────────────────────
 

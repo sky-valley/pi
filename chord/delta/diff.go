@@ -146,7 +146,8 @@ func (d *differ) value(before, after any, path Path) {
 // (a rolling window); a set otherwise. Counts are UTF-16 code units, the unit
 // a "t" carries. An append's text is a copy of its own (upstream's
 // ownedSlice, f715a15c1): a substring would pin all of after for as long as
-// the op lives.
+// the op lives. Comparing two revisions reads both strings: a writer that
+// knows what it appended records it with Draft.AppendText instead.
 func (d *differ) string(before, after string, path Path) {
 	if before == after {
 		return

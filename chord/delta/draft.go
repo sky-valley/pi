@@ -60,6 +60,10 @@ type node struct {
 	writes  orderedMap[string, any]
 	deletes orderedMap[string, struct{}]
 	readded orderedMap[string, struct{}]
+	// appends holds the members whose only changes in the change are
+	// AppendText calls, with the text appended so far: Prepare publishes each
+	// as one append op without comparing the old and new strings.
+	appends map[string]string
 
 	array *arrayOverlay
 
@@ -715,12 +719,63 @@ func (d *Draft) Set(key any, value any) error {
 	if !wasDeleted && present && !isContainer(stored) && same(current, stored) {
 		return nil
 	}
+	delete(n.appends, k)
 	n.setWrite(k, stored)
 	if _, own := n.object()[k]; wasDeleted && own {
 		n.readded.set(k, struct{}{})
 	}
 	n.deletes.delete(k)
 	n.markDirty()
+	return nil
+}
+
+// AppendText is upstream's appendText: it appends text to the string member
+// key, recorded as one append op — several appends to one key in a change
+// join into one — that Prepare publishes as it is, without comparing the old
+// string with the new. Setting the member to current+text publishes the same
+// op, found by checking that the new string extends the old, which reads all
+// of it; a Set or Delete of the key in the same change falls back to that
+// check. Empty text changes nothing.
+//
+// Upstream's appendText is O(len(text)) because a V8 string append builds a
+// rope. A Go string is flat, so the new value is a copy of the whole string
+// here as it is for Set: what AppendText saves in Go is the comparison, not
+// the copy. Upstream's StringKeys<T>, which limits the key at compile time to
+// members typed exactly string, has no Go counterpart: a member that is not a
+// string — absent, a container, an array draft's element — is refused at run
+// time, with upstream's text.
+func (d *Draft) AppendText(key string, text string) error {
+	n, err := d.live()
+	if err != nil {
+		return err
+	}
+	current, ok := "", false
+	if !n.isArray() && n.objectHas(key) {
+		v, _ := n.objectValue(key)
+		current, ok = v.(string)
+	}
+	if !ok {
+		quoted, _ := marshalJSON(key)
+		return fmt.Errorf("delta: appendText() needs a string at %s (AppendText extends a string member of an object draft; Set the member to a string first)", quoted)
+	}
+	if text == "" {
+		return nil
+	}
+	// The op and the new value keep the text: a copy, so that neither keeps a
+	// larger string the caller cut it from alive ("" + text would be text).
+	owned := strings.Clone(text)
+	appended, recorded := n.appends[key]
+	if !recorded && !n.hasWrite(key) {
+		appended, recorded = "", true
+	}
+	n.setWrite(key, current+owned)
+	n.markDirty()
+	if recorded {
+		if n.appends == nil {
+			n.appends = map[string]string{}
+		}
+		n.appends[key] = appended + owned
+	}
 	return nil
 }
 
@@ -743,6 +798,7 @@ func (d *Draft) Delete(key any) error {
 	if !n.objectHas(k) {
 		return nil
 	}
+	delete(n.appends, k)
 	n.writes.delete(k)
 	n.readded.delete(k)
 	n.setDeletion(k)

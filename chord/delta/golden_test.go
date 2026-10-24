@@ -635,6 +635,8 @@ func (r *runner) exec(step map[string]any) (o outcome) {
 		d := r.draft(step, key)
 		current, _ := d.Get(key)
 		return outcome{err: d.Set(key, jsConcat(current, step["text"].(string)))}
+	case "appendText":
+		return outcome{err: r.draft(step, key).AppendText(key.(string), step["text"].(string))}
 	case "delete":
 		return outcome{err: r.draft(step, key).Delete(key)}
 	case "push", "unshift":

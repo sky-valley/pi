@@ -1,5 +1,5 @@
 {
-	"sha": "f715a15c1",
+	"sha": "da412b039",
 	"diffs": [
 		{"name":"sets and deletes","before":{"keep":1,"change":1,"remove":true},"after":{"keep":1,"change":2,"add":3},"ops":[["s",["add"],3],["s",["change"],2],["d",["remove"]]],"raw":[["s",["change"],2],["s",["add"],3],["d",["remove"]]]},
 		{"name":"string append","before":{"text":"hello"},"after":{"text":"hello world"},"ops":[["a",["text"]," world"]]},
@@ -1088,7 +1088,130 @@
 			"trackers": {"main":{"n":1,"o":{"a":[1,2]},"p":{"q":{}}}},
 			"steps": [{"do":"begin"},{"at":["o"],"do":"set","key":"a","value":[1,2]},{"at":["p","q"],"do":"get","key":"x"},{"at":[],"do":"set","key":"n","value":2},{"do":"prepare"},{"at":["o","a"],"do":"shared"},{"at":["o"],"do":"shared"},{"at":["p"],"do":"shared"},{"at":[],"do":"shared"}],
 			"results": [{},{},{"missing":true},{},{"ops":[["s",["n"],2]],"noop":false,"value":{"n":2,"o":{"a":[1,2]},"p":{"q":{}}}},{"value":true},{"value":true},{"value":true},{"value":false}]
-		}
+		},
+		{
+			"name": "appendText records an append op",
+			"trackers": {"main":{"title":"t","content":[{"type":"text","text":"hello","tags":["a"]}],"meta":{"note":"n"}}},
+			"steps": [{"do":"begin"},{"at":["content",0],"do":"appendText","key":"text","text":" world"},{"do":"prepare"},{"do":"adopt"},{"do":"begin"},{"at":[],"do":"appendText","key":"title","text":"!"},{"do":"prepare"},{"do":"adopt"},{"do":"begin"},{"at":["meta"],"do":"appendText","key":"note","text":"ote"},{"do":"prepare"},{"do":"adopt"},{"do":"value"}],
+			"results": [
+				{},
+				{},
+				{"ops":[["a",["content",0,"text"]," world"]],"noop":false,"value":{"content":[{"tags":["a"],"text":"hello world","type":"text"}],"meta":{"note":"n"},"title":"t"}},
+				{},
+				{},
+				{},
+				{"ops":[["a",["title"],"!"]],"noop":false,"value":{"content":[{"tags":["a"],"text":"hello world","type":"text"}],"meta":{"note":"n"},"title":"t!"}},
+				{},
+				{},
+				{},
+				{"ops":[["a",["meta","note"],"ote"]],"noop":false,"value":{"content":[{"tags":["a"],"text":"hello world","type":"text"}],"meta":{"note":"note"},"title":"t!"}},
+				{},
+				{"value":{"content":[{"tags":["a"],"text":"hello world","type":"text"}],"meta":{"note":"note"},"title":"t!"}}
+			]
+		},
+		{
+			"name": "appendText joins appends to one key",
+			"trackers": {"main":{"title":"t","content":[{"type":"text","text":"hello","tags":["a"]}],"meta":{"note":"n"}}},
+			"steps": [{"do":"begin"},{"at":["content",0],"do":"appendText","key":"text","text":" a"},{"at":[],"do":"set","key":"title","value":"new"},{"at":["content",0],"do":"appendText","key":"text","text":" b"},{"at":["content",0],"do":"appendText","key":"text","text":""},{"at":["content",0],"do":"appendText","key":"text","text":" c"},{"at":["content",0],"do":"get","key":"text"},{"do":"prepare"}],
+			"results": [{},{},{},{},{},{},{"value":"hello a b c"},{"ops":[["s",["title"],"new"],["a",["content",0,"text"]," a b c"]],"noop":false,"value":{"content":[{"tags":["a"],"text":"hello a b c","type":"text"}],"meta":{"note":"n"},"title":"new"}}]
+		},
+		{
+			"name": "appendText falls back when the key is also written",
+			"trackers": {"main":{"title":"t","content":[{"type":"text","text":"hello","tags":["a"]}],"meta":{"note":"n"}}},
+			"steps": [{"do":"begin"},{"at":["content",0],"do":"appendText","key":"text","text":" x"},{"at":["content",0],"do":"append","key":"text","text":" y"},{"do":"prepare"},{"do":"adopt"},{"do":"begin"},{"at":["content",0],"do":"appendText","key":"text","text":" z"},{"at":["content",0],"do":"set","key":"text","value":"replaced"},{"do":"prepare"},{"do":"adopt"},{"do":"begin"},{"at":[],"do":"set","key":"title","value":"assigned"},{"at":[],"do":"appendText","key":"title","text":" then appended"},{"do":"prepare"},{"do":"adopt"},{"do":"begin"},{"at":["meta"],"do":"appendText","key":"note","text":"x"},{"at":["meta"],"do":"delete","key":"note"},{"do":"prepare"},{"do":"adopt"},{"do":"begin"},{"at":[],"do":"appendText","key":"title","text":" a"},{"at":[],"do":"set","key":"title","value":"assigned then appended b"},{"at":[],"do":"appendText","key":"title","text":" c"},{"do":"prepare"},{"do":"adopt"},{"do":"begin"},{"at":[],"do":"delete","key":"title"},{"at":[],"do":"set","key":"title","value":"re"},{"at":[],"do":"appendText","key":"title","text":"added"},{"do":"prepare"},{"do":"adopt"},{"do":"value"}],
+			"results": [
+				{},
+				{},
+				{},
+				{"ops":[["a",["content",0,"text"]," x y"]],"noop":false,"value":{"content":[{"tags":["a"],"text":"hello x y","type":"text"}],"meta":{"note":"n"},"title":"t"}},
+				{},
+				{},
+				{},
+				{},
+				{"ops":[["s",["content",0,"text"],"replaced"]],"noop":false,"value":{"content":[{"tags":["a"],"text":"replaced","type":"text"}],"meta":{"note":"n"},"title":"t"}},
+				{},
+				{},
+				{},
+				{},
+				{"ops":[["s",["title"],"assigned then appended"]],"noop":false,"value":{"content":[{"tags":["a"],"text":"replaced","type":"text"}],"meta":{"note":"n"},"title":"assigned then appended"}},
+				{},
+				{},
+				{},
+				{},
+				{"ops":[["d",["meta","note"]]],"noop":false,"value":{"content":[{"tags":["a"],"text":"replaced","type":"text"}],"meta":{},"title":"assigned then appended"}},
+				{},
+				{},
+				{},
+				{},
+				{},
+				{"ops":[["a",["title"]," b c"]],"noop":false,"value":{"content":[{"tags":["a"],"text":"replaced","type":"text"}],"meta":{},"title":"assigned then appended b c"}},
+				{},
+				{},
+				{},
+				{},
+				{},
+				{"ops":[["d",["title"]],["s",["title"],"readded"]],"noop":false,"value":{"content":[{"tags":["a"],"text":"replaced","type":"text"}],"meta":{},"title":"readded"}},
+				{},
+				{"value":{"content":[{"tags":["a"],"text":"replaced","type":"text"}],"meta":{},"title":"readded"}}
+			]
+		},
+		{
+			"name": "appendText inside a placed block",
+			"trackers": {"main":{"title":"t","content":[{"type":"text","text":"hello","tags":["a"]}],"meta":{"note":"n"}}},
+			"steps": [{"do":"begin"},{"at":["content"],"do":"push","items":[{"tags":[],"text":"new","type":"text"}]},{"at":["content",1],"do":"appendText","key":"text","text":" block"},{"at":["content"],"do":"set","key":0,"value":{"tags":[],"text":"other","type":"text"}},{"at":["content",0],"do":"appendText","key":"text","text":" one"},{"do":"prepare"},{"do":"adopt"},{"do":"value"}],
+			"results": [
+				{},
+				{"value":2},
+				{},
+				{},
+				{},
+				{"ops":[["p",["content"],1,0,[{"tags":[],"text":"new block","type":"text"}]],["s",["content",0],{"tags":[],"text":"other one","type":"text"}]],"noop":false,"value":{"content":[{"tags":[],"text":"other one","type":"text"},{"tags":[],"text":"new block","type":"text"}],"meta":{"note":"n"},"title":"t"}},
+				{},
+				{"value":{"content":[{"tags":[],"text":"other one","type":"text"},{"tags":[],"text":"new block","type":"text"}],"meta":{"note":"n"},"title":"t"}}
+			]
+		},
+		{
+			"name": "appendText refusals",
+			"trackers": {"main":{"title":"t","content":[{"type":"text","text":"hello","tags":["a"]}],"meta":{"note":"n"}}},
+			"steps": [{"do":"begin"},{"at":[],"do":"appendText","key":"content","text":"x"},{"at":[],"do":"appendText","key":"missing","text":"x"},{"at":["content"],"do":"appendText","key":"0","text":"x"},{"at":["content",0],"do":"appendText","key":"signature","text":"x"},{"at":["content",0],"do":"appendText","key":"tags","text":"x"},{"at":[],"do":"appendText","key":"a\"b<é>","text":"x"},{"at":[],"do":"appendText","key":"missing","text":""},{"at":["content",0],"do":"appendText","key":"type","text":"x"},{"as":"block","at":["content",0],"do":"hold"},{"do":"prepare"},{"at":[],"do":"appendText","from":"block","key":"text","text":"x"},{"c":"aborted","do":"begin"},{"as":"state","at":[],"c":"aborted","do":"hold"},{"c":"aborted","do":"abort"},{"at":[],"do":"appendText","from":"state","key":"title","text":"x"}],
+			"results": [
+				{},
+				{"error":"appendText() needs a string at \"content\""},
+				{"error":"appendText() needs a string at \"missing\""},
+				{"error":"appendText() needs a string at \"0\""},
+				{"error":"appendText() needs a string at \"signature\""},
+				{"error":"appendText() needs a string at \"tags\""},
+				{"error":"appendText() needs a string at \"a\\\"b<é>\""},
+				{"error":"appendText() needs a string at \"missing\""},
+				{},
+				{},
+				{"ops":[["a",["content",0,"type"],"x"]],"noop":false,"value":{"content":[{"tags":["a"],"text":"hello","type":"textx"}],"meta":{"note":"n"},"title":"t"}},
+				{"error":"Cannot use a settled overlay"},
+				{},
+				{},
+				{},
+				{"error":"Cannot use a settled overlay"}
+			]
+		},
+		{
+			"name": "appendText moves with its entry",
+			"trackers": {"main":{"v":[{"t":"a"},{"t":"b"}]}},
+			"steps": [{"do":"begin"},{"at":["v",0],"do":"appendText","key":"t","text":"1"},{"at":["v"],"do":"reverse"},{"at":["v",0],"do":"appendText","key":"t","text":"2"},{"at":["v"],"do":"unshift","items":[{"t":"c"}]},{"do":"prepare"}],
+			"results": [{},{},{},{},{"value":3},{"ops":[["m",["v"],[1,0]],["p",["v"],0,0,[{"t":"c"}]],["a",["v",2,"t"],"1"],["a",["v",1,"t"],"2"]],"noop":false,"value":{"v":[{"t":"c"},{"t":"b2"},{"t":"a1"}]}}]
+		},
+		{
+			"name": "appendText below and at a reserved key",
+			"trackers": {"main":{"x":{"__proto__":{"t":"a"},"k":"b"},"y":{"constructor":"c"}}},
+			"steps": [{"do":"begin"},{"at":["x","__proto__"],"do":"appendText","key":"t","text":"1"},{"at":["x"],"do":"appendText","key":"k","text":"2"},{"at":["y"],"do":"appendText","key":"constructor","text":"3"},{"do":"prepare"}],
+			"results": [{},{},{},{},{"ops":[["s",["x"],{"__proto__":{"t":"a1"},"k":"b2"}],["s",["y"],{"constructor":"c3"}]],"noop":false,"value":{"x":{"__proto__":{"t":"a1"},"k":"b2"},"y":{"constructor":"c3"}}}]
+		},
+		{
+			"name": "appendText then a no-op write keeps the append",
+			"trackers": {"main":{"t":"a","n":1}},
+			"steps": [{"do":"begin"},{"at":[],"do":"appendText","key":"t","text":"b"},{"at":[],"do":"set","key":"t","value":"ab"},{"at":[],"do":"appendText","key":"t","text":"c"},{"at":[],"do":"set","key":"n","value":2},{"do":"prepare"}],
+			"results": [{},{},{},{},{},{"ops":[["a",["t"],"bc"],["s",["n"],2]],"noop":false,"value":{"n":2,"t":"abc"}}]
+		},
+		{"name":"appendText astral and to an empty string","trackers":{"main":{"e":"","s":"😀"}},"steps":[{"do":"begin"},{"at":[],"do":"appendText","key":"e","text":"😁"},{"at":[],"do":"appendText","key":"s","text":"x😂"},{"do":"prepare"}],"results":[{},{},{},{"ops":[["a",["e"],"😁"],["a",["s"],"x😂"]],"noop":false,"value":{"e":"😁","s":"😀x😂"}}]}
 	],
 	"generated": [
 		{"name":"prepareReplace-rows-10000","opsHash":"ed955c87a9a9c2bd0f917f3c0b6723589ef6182e66fb82cf57500de9a78828c5","opsBytes":387796,"opsHead":"[[\"r\",{\"rows\":[{\"stable\":{\"value\":0},\"value\":0},{\"stable\":{\"value\":1},\"value\":1},{\"stable\":{\"value\":2},\"value\":2},{\"stab","valueHash":"8cd9cf8f1655af451b895152db7e0f757b4653435296dab742a370f3ed905548"},

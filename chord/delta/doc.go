@@ -109,6 +109,7 @@
 //	draft.reverse()                  d.Reverse()
 //	draft.fill(v, start, end)        d.Fill(v, start, end)
 //	draft.copyWithin(t, start, end)  d.CopyWithin(t, start, end)
+//	appendText(draft, key, text)     d.AppendText(key, text)
 //
 // A draft belongs to a container, not a position: reading a member twice
 // yields the same *Draft, and a held draft follows its entry through sorting,

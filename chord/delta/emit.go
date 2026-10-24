@@ -174,6 +174,10 @@ func (n *node) emitObjectOperations(path Path, ops []Op) (_ []Op, normalized boo
 		if len(ops) > maxDeltaOperations {
 			return ops, normalized
 		}
+		if appended, ok := n.appends[key]; ok {
+			ops = append(ops, Append{Path: child(path, Key(key)), Text: appended})
+			continue
+		}
 		before, hasBefore := base[key]
 		if n.readded.has(key) {
 			before, hasBefore = nil, false
@@ -429,9 +433,10 @@ func (n *node) cloneStored(s slot, value any, placement bool) any {
 // front-truncation and an append, for a string that extends or rolls the one
 // before (counts in UTF-16 code units, the unit a "t" carries); a set
 // otherwise. hasBefore is false where upstream's before is undefined. emitted
-// reports whether an op was published. An append's text is a copy of its own
-// (upstream's ownedSlice): a substring would keep the whole of after alive in
-// a delta chain or a watch backlog.
+// reports whether an op was published. Its prefix check reads all of before:
+// a member written only by Draft.AppendText skips it. An append's text is a
+// copy of its own (upstream's ownedSlice): a substring would keep the whole of
+// after alive in a delta chain or a watch backlog.
 func emitChangedValue(ops []Op, path Path, before any, hasBefore bool, after any) (_ []Op, emitted bool) {
 	if hasBefore {
 		if !isContainer(after) && same(before, after) {
