@@ -179,13 +179,17 @@ func TestFauxProviderCacheCountsToFirstDifference(t *testing.T) {
 	}
 
 	// Prompt texts: "user:hello world" (16 characters), then 16 + 2 + "user:next" (9) = 27.
-	complete("hello world")
-	if got := complete("hello world", "next"); got.Input != 3 || got.CacheRead != 4 || got.CacheWrite != 3 {
-		t.Fatalf("extended usage = %+v, want input 3, cacheRead 4, cacheWrite 3", got)
+	// Every prompt token is read from or written to the simulated cache, so
+	// input is 0 throughout (upstream f3fa8bd92: a cache write is not input).
+	if got := complete("hello world"); got.Input != 0 || got.CacheRead != 0 || got.CacheWrite != 4 {
+		t.Fatalf("first usage = %+v, want input 0, cacheRead 0, cacheWrite 4", got)
+	}
+	if got := complete("hello world", "next"); got.Input != 0 || got.CacheRead != 4 || got.CacheWrite != 3 {
+		t.Fatalf("extended usage = %+v, want input 0, cacheRead 4, cacheWrite 3", got)
 	}
 	// The first message now differs after "user:hello w" (12 characters): "user:hello wide" + 2 + 9 = 26.
-	if got := complete("hello wide", "next"); got.Input != 4 || got.CacheRead != 3 || got.CacheWrite != 4 {
-		t.Fatalf("edited usage = %+v, want input 4, cacheRead 3, cacheWrite 4", got)
+	if got := complete("hello wide", "next"); got.Input != 0 || got.CacheRead != 3 || got.CacheWrite != 4 {
+		t.Fatalf("edited usage = %+v, want input 0, cacheRead 3, cacheWrite 4", got)
 	}
 }
 

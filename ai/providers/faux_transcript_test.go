@@ -81,16 +81,16 @@ func TestFauxUsageCountsUTF16CodeUnits(t *testing.T) {
 	})
 
 	first := ai.Context{SystemPrompt: "Réponds brièvement 😀.", Messages: []ai.Message{ai.NewUserText("héllo wörld", 1)}}
-	if usage := fauxUsageFor(t, reg, first, "s"); usage.Input != 12 || usage.Output != 1 || usage.CacheRead != 0 || usage.CacheWrite != 12 || usage.TotalTokens != 25 {
-		t.Fatalf("first usage = %+v, want {Input:12 Output:1 CacheRead:0 CacheWrite:12 TotalTokens:25}", usage)
+	if usage := fauxUsageFor(t, reg, first, "s"); usage.Input != 0 || usage.Output != 1 || usage.CacheRead != 0 || usage.CacheWrite != 12 || usage.TotalTokens != 13 {
+		t.Fatalf("first usage = %+v, want {Input:0 Output:1 CacheRead:0 CacheWrite:12 TotalTokens:13}", usage)
 	}
 	second := ai.Context{SystemPrompt: "Réponds brièvement 😀.", Messages: []ai.Message{
 		ai.NewUserText("héllo wörld", 1),
 		ai.AssistantMessage{Content: ai.ContentList{ai.TextContent{Text: "ok"}}, Api: "x", Provider: "x", Model: "x", StopReason: ai.StopStop, Timestamp: 2},
 		ai.NewUserText("ça va? 🎉🎉", 3),
 	}}
-	if usage := fauxUsageFor(t, reg, second, "s"); usage.Input != 8 || usage.Output != 3 || usage.CacheRead != 12 || usage.CacheWrite != 8 || usage.TotalTokens != 31 {
-		t.Fatalf("second usage = %+v, want {Input:8 Output:3 CacheRead:12 CacheWrite:8 TotalTokens:31}", usage)
+	if usage := fauxUsageFor(t, reg, second, "s"); usage.Input != 0 || usage.Output != 3 || usage.CacheRead != 12 || usage.CacheWrite != 8 || usage.TotalTokens != 23 {
+		t.Fatalf("second usage = %+v, want {Input:0 Output:3 CacheRead:12 CacheWrite:8 TotalTokens:23}", usage)
 	}
 }
 
