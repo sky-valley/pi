@@ -429,7 +429,9 @@ func (n *node) cloneStored(s slot, value any, placement bool) any {
 // front-truncation and an append, for a string that extends or rolls the one
 // before (counts in UTF-16 code units, the unit a "t" carries); a set
 // otherwise. hasBefore is false where upstream's before is undefined. emitted
-// reports whether an op was published.
+// reports whether an op was published. An append's text is a copy of its own
+// (upstream's ownedSlice): a substring would keep the whole of after alive in
+// a delta chain or a watch backlog.
 func emitChangedValue(ops []Op, path Path, before any, hasBefore bool, after any) (_ []Op, emitted bool) {
 	if hasBefore {
 		if !isContainer(after) && same(before, after) {
@@ -443,12 +445,12 @@ func emitChangedValue(ops []Op, path Path, before any, hasBefore bool, after any
 				// A byte prefix is a code-unit prefix: before is a whole string, so
 				// it ends on a rune boundary.
 				if len(a) > len(b) && strings.HasPrefix(a, b) {
-					return append(ops, Append{Path: path, Text: a[len(b):]}), true
+					return append(ops, Append{Path: path, Text: strings.Clone(a[len(b):])}), true
 				}
 				if shared := Overlap(b, a, overlapScan); shared > 0 {
 					ops = append(ops, Truncate{Path: path, Count: utf16Len(b) - shared})
 					if rest := a[unitsOffset(a, shared):]; rest != "" {
-						ops = append(ops, Append{Path: path, Text: rest})
+						ops = append(ops, Append{Path: path, Text: strings.Clone(rest)})
 					}
 					return ops, true
 				}

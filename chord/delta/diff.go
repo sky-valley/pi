@@ -144,7 +144,9 @@ func (d *differ) value(before, after any, path Path) {
 // string is upstream's emitString: an append when after extends before; a
 // front-truncation plus an append when a suffix of before is a prefix of after
 // (a rolling window); a set otherwise. Counts are UTF-16 code units, the unit
-// a "t" carries.
+// a "t" carries. An append's text is a copy of its own (upstream's
+// ownedSlice, f715a15c1): a substring would pin all of after for as long as
+// the op lives.
 func (d *differ) string(before, after string, path Path) {
 	if before == after {
 		return
@@ -152,7 +154,7 @@ func (d *differ) string(before, after string, path Path) {
 	// A byte prefix is a code-unit prefix: before is a whole string, so it
 	// ends on a rune boundary.
 	if len(after) > len(before) && strings.HasPrefix(after, before) {
-		d.emit(Append{Path: path, Text: after[len(before):]})
+		d.emit(Append{Path: path, Text: strings.Clone(after[len(before):])})
 		return
 	}
 	shared := Overlap(before, after, defaultOverlapScan)
@@ -162,7 +164,7 @@ func (d *differ) string(before, after string, path Path) {
 	}
 	d.emit(Truncate{Path: path, Count: utf16Len(before) - shared})
 	if rest := after[unitsOffset(after, shared):]; rest != "" {
-		d.emit(Append{Path: path, Text: rest})
+		d.emit(Append{Path: path, Text: strings.Clone(rest)})
 	}
 }
 
