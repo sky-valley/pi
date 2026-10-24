@@ -16,23 +16,6 @@ import (
 	"github.com/sky-valley/pi/internal/jstext"
 )
 
-func escapeControlChar(ch byte) string {
-	switch ch {
-	case '\b':
-		return "\\b"
-	case '\f':
-		return "\\f"
-	case '\n':
-		return "\\n"
-	case '\r':
-		return "\\r"
-	case '\t':
-		return "\\t"
-	default:
-		return fmt.Sprintf("\\u%04x", ch)
-	}
-}
-
 // jsEscape renders s the way `JSON.stringify(s).slice(1, -1)` does in
 // JavaScript: only `"`, `\` and control characters are escaped, and unpaired
 // UTF-16 surrogates become \udXXX (ES2019 well-formed stringify). Go's
@@ -48,11 +31,11 @@ func jsEscape(s string) string {
 	var b strings.Builder
 	b.Grow(len(s))
 	for i := 0; i < len(s); {
-		if hi, isSurrogate := decodeWTF8Surrogate(s[i:]); isSurrogate {
+		if hi, isSurrogate := jstext.WTF8Surrogate(s[i:]); isSurrogate {
 			// A well-formed pair is a single astral character in JS and is
 			// emitted literally; a lone surrogate is escaped.
 			if hi <= 0xDBFF {
-				if lo, ok := decodeWTF8Surrogate(s[i+3:]); ok && lo >= 0xDC00 {
+				if lo, ok := jstext.WTF8Surrogate(s[i+3:]); ok && lo >= 0xDC00 {
 					b.WriteRune(utf16.DecodeRune(hi, lo))
 					i += 6
 					continue
@@ -68,7 +51,7 @@ func jsEscape(s string) string {
 		case ch == '\\':
 			b.WriteString(`\\`)
 		case ch <= 0x1f:
-			b.WriteString(escapeControlChar(ch))
+			b.WriteString(jstext.EscapeControlChar(ch))
 		default:
 			b.WriteByte(ch)
 		}
@@ -345,14 +328,14 @@ func sanitizeSurrogates(s string) string {
 	var b strings.Builder
 	b.Grow(len(s))
 	for i := 0; i < len(s); {
-		hi, ok := decodeWTF8Surrogate(s[i:])
+		hi, ok := jstext.WTF8Surrogate(s[i:])
 		if !ok {
 			b.WriteByte(s[i])
 			i++
 			continue
 		}
 		if hi <= 0xDBFF { // high surrogate: pair it with a following low surrogate
-			if lo, ok2 := decodeWTF8Surrogate(s[i+3:]); ok2 && lo >= 0xDC00 {
+			if lo, ok2 := jstext.WTF8Surrogate(s[i+3:]); ok2 && lo >= 0xDC00 {
 				// Properly paired surrogates form a valid astral character in
 				// JS and are preserved.
 				b.WriteRune(utf16.DecodeRune(hi, lo))
@@ -364,15 +347,6 @@ func sanitizeSurrogates(s string) string {
 		i += 3
 	}
 	return b.String()
-}
-
-// decodeWTF8Surrogate decodes a UTF-16 surrogate code unit encoded as a WTF-8
-// byte triple at the start of s.
-func decodeWTF8Surrogate(s string) (rune, bool) {
-	if len(s) >= 3 && s[0] == 0xED && s[1] >= 0xA0 && s[1] <= 0xBF && s[2] >= 0x80 && s[2] <= 0xBF {
-		return 0xD000 | rune(s[1]&0x3F)<<6 | rune(s[2]&0x3F), true
-	}
-	return 0, false
 }
 
 func containsWTF8Surrogate(s string) bool {

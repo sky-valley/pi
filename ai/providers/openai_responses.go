@@ -235,19 +235,6 @@ func shortHash(str string) string {
 	return base36(h2) + base36(h1)
 }
 
-// utf16Length is JS String.prototype.length (UTF-16 code units).
-func utf16Length(s string) int {
-	n := 0
-	for _, r := range s {
-		if r > 0xFFFF {
-			n += 2
-		} else {
-			n++
-		}
-	}
-	return n
-}
-
 func imul(a, b uint32) uint32 { return a * b }
 
 func base36(n uint32) string {
@@ -1421,7 +1408,7 @@ func responsesInput(model *ai.Model, req ai.TranscriptContext, updateEffort stri
 					msgID := id
 					if msgID == "" {
 						msgID = fallback
-					} else if utf16Length(msgID) > 64 {
+					} else if jstext.UTF16Length(msgID) > 64 {
 						msgID = "msg_" + shortHash(msgID)
 					}
 					msgItem := map[string]any{

@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+
+	"github.com/sky-valley/pi/internal/jstext"
 )
 
 // OrderedField is one key/value pair of an OrderedObject.
@@ -30,11 +32,9 @@ func (o OrderedObject) MarshalJSON() ([]byte, error) {
 		if i > 0 {
 			buf.WriteByte(',')
 		}
-		key, err := json.Marshal(f.Key)
-		if err != nil {
+		if err := writeJSONString(&buf, f.Key); err != nil {
 			return nil, err
 		}
-		buf.Write(key)
 		buf.WriteByte(':')
 		if err := marshalOrderedValue(&buf, f.Value); err != nil {
 			return nil, err
@@ -49,6 +49,8 @@ func (o OrderedObject) MarshalJSON() ([]byte, error) {
 // it is not finite, and 0 for negative zero, which json.Marshal writes -0.
 func marshalOrderedValue(buf *bytes.Buffer, v any) error {
 	switch t := v.(type) {
+	case string:
+		return writeJSONString(buf, t)
 	case float64:
 		if math.IsInf(t, 0) || math.IsNaN(t) {
 			buf.WriteString("null")
@@ -79,6 +81,53 @@ func marshalOrderedValue(buf *bytes.Buffer, v any) error {
 		return err
 	}
 	buf.Write(b)
+	return nil
+}
+
+// writeJSONString writes s as json.Marshal does, except for half a surrogate
+// pair, held as its WTF-8 triple (a tool call's arguments keep one as
+// JSON.parse does): JSON.stringify writes it as a backslash-u escape of the
+// code unit, where json.Marshal would write each of its three bytes as
+// U+FFFD.
+func writeJSONString(buf *bytes.Buffer, s string) error {
+	start := 0
+	quoted := false
+	for i := 0; i < len(s); {
+		unit, ok := jstext.WTF8Surrogate(s[i:])
+		if !ok {
+			i++
+			continue
+		}
+		if !quoted {
+			buf.WriteByte('"')
+			quoted = true
+		}
+		if err := writeJSONStringBody(buf, s[start:i]); err != nil {
+			return err
+		}
+		fmt.Fprintf(buf, `%cu%04x`, '\\', unit)
+		i += 3
+		start = i
+	}
+	if !quoted {
+		b, err := json.Marshal(s)
+		buf.Write(b)
+		return err
+	}
+	if err := writeJSONStringBody(buf, s[start:]); err != nil {
+		return err
+	}
+	buf.WriteByte('"')
+	return nil
+}
+
+// writeJSONStringBody writes s as json.Marshal does, less the quotes.
+func writeJSONStringBody(buf *bytes.Buffer, s string) error {
+	b, err := json.Marshal(s)
+	if err != nil {
+		return err
+	}
+	buf.Write(b[1 : len(b)-1])
 	return nil
 }
 

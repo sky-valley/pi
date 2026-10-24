@@ -194,7 +194,7 @@ func systemChars(m *ai.SystemMessage) int {
 	chars := contentChars(m.Content)
 	for _, section := range m.Sections.Entries() {
 		if section.Value != nil {
-			chars += utf16Len(*section.Value)
+			chars += jstext.UTF16Length(*section.Value)
 		}
 	}
 	if m.ToolsAdded != nil {
@@ -208,11 +208,11 @@ func assistantChars(a *ai.AssistantMessage) int {
 	for _, c := range a.Content {
 		switch b := c.(type) {
 		case ai.TextContent:
-			chars += utf16Len(b.Text)
+			chars += jstext.UTF16Length(b.Text)
 		case ai.ThinkingContent:
-			chars += utf16Len(b.Thinking)
+			chars += jstext.UTF16Length(b.Thinking)
 		case ai.ToolCall:
-			chars += utf16Len(b.Name) + jsonStringifyLength(b.Arguments)
+			chars += jstext.UTF16Length(b.Name) + jsonStringifyLength(b.Arguments)
 		}
 	}
 	return chars
@@ -223,7 +223,7 @@ func contentChars(content ai.ContentList) int {
 	for _, c := range content {
 		switch b := c.(type) {
 		case ai.TextContent:
-			chars += utf16Len(b.Text)
+			chars += jstext.UTF16Length(b.Text)
 		case ai.ImageContent:
 			chars += estimatedImageChars // fixed estimate for an inline image
 		}
@@ -238,7 +238,7 @@ func jsonStringifyLength(v any) int {
 	if err != nil {
 		return 0
 	}
-	return utf16Len(s)
+	return jstext.UTF16Length(s)
 }
 
 // EstimateContextTokens sums estimated tokens across messages (pure heuristic).
@@ -1138,7 +1138,7 @@ func textOf(content ai.ContentList) string {
 // Unlike JS slice, a surrogate pair on the boundary is dropped whole rather than
 // split, so the output is always valid UTF-8.
 func truncateForSummary(text string, maxChars int) string {
-	length := utf16Len(text)
+	length := jstext.UTF16Length(text)
 	if length <= maxChars {
 		return text
 	}

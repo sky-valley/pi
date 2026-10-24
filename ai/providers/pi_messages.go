@@ -218,7 +218,7 @@ func parsePiMessagesErrorBody(body string) ai.OrderedObject {
 // rather than split into a lone surrogate (a benign adaptation of JS slicing).
 func truncateDiagnosticString(value string) string {
 	const maxLength = 8192
-	if utf16Length(value) <= maxLength {
+	if jstext.UTF16Length(value) <= maxLength {
 		return value
 	}
 	units := 0

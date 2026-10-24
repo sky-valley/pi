@@ -25,7 +25,22 @@ const maxOrderedDepth = 10000
 // byte that is not UTF-8, and a \u escape that is half a surrogate pair, are
 // each U+FFFD.
 func parseOrdered(data []byte) (any, error) {
-	p := orderedParser{data: data}
+	return parseOrderedWith(orderedParser{data: data})
+}
+
+// parseOrderedKeepingSurrogates is parseOrdered, except that half a
+// surrogate pair — a \uD83D escape whose other half is not the next escape,
+// or a WTF-8 surrogate triple in the text — is kept as its WTF-8 triple, as
+// JSON.parse keeps the code unit, and a high half followed by a low one, in
+// any mix of escapes and triples, is the character they make. It is what a
+// tool call's finished arguments are read with, so they hold what the
+// streamed partial arguments held (StreamingJSONParser keeps the code unit
+// too).
+func parseOrderedKeepingSurrogates(data []byte) (any, error) {
+	return parseOrderedWith(orderedParser{data: data, keepSurrogates: true})
+}
+
+func parseOrderedWith(p orderedParser) (any, error) {
 	p.skipSpace()
 	v, err := p.value(0)
 	if err != nil {
@@ -41,6 +56,22 @@ func parseOrdered(data []byte) (any, error) {
 type orderedParser struct {
 	data []byte
 	pos  int
+	// keepSurrogates keeps half a surrogate pair as WTF-8
+	// (parseOrderedKeepingSurrogates).
+	keepSurrogates bool
+}
+
+// stringOf is the string of a literal's decoded bytes: as is when they are
+// UTF-8; otherwise each invalid byte is U+FFFD, as encoding/json reads it,
+// except that keepSurrogates keeps WTF-8 surrogate triples, joining a pair.
+func (p *orderedParser) stringOf(b []byte) string {
+	if utf8.Valid(b) {
+		return string(b)
+	}
+	if p.keepSurrogates {
+		return jstext.ToWellFormedWTF8(b)
+	}
+	return string([]rune(string(b)))
 }
 
 // errOrderedEnd is the error for a text that ends before its value does.
@@ -235,10 +266,10 @@ func (p *orderedParser) string() (string, error) {
 		case c == '"':
 			s := p.data[start:p.pos]
 			p.pos++
-			if !ascii && !utf8.Valid(s) {
-				return string([]rune(string(s))), nil // each invalid byte is U+FFFD
+			if ascii {
+				return string(s), nil
 			}
-			return string(s), nil
+			return p.stringOf(s), nil
 		case c == '\\':
 			return p.escapedString(start)
 		case c < 0x20:
@@ -261,10 +292,7 @@ func (p *orderedParser) escapedString(start int) (string, error) {
 		switch {
 		case c == '"':
 			p.pos++
-			if !utf8.Valid(out) {
-				return string([]rune(string(out))), nil
-			}
-			return string(out), nil
+			return p.stringOf(out), nil
 		case c < 0x20:
 			return "", p.fail("bad control character in string literal")
 		case c != '\\':
@@ -302,6 +330,12 @@ func (p *orderedParser) escapedString(start int) (string, error) {
 						p.pos += 6
 						continue
 					}
+				}
+				if p.keepSurrogates {
+					// The triple joins a triple or escape of the other half
+					// when stringOf reads the literal.
+					out = append(out, jstext.CodeUnit(r)...)
+					continue
 				}
 				r = unicode.ReplacementChar
 			}

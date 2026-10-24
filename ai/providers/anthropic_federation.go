@@ -314,7 +314,7 @@ func anthropicFederationExchange(baseURL string, f anthropicFederation, httpClie
 	}
 	// The token endpoint enforces a 16 KiB assertion limit (a length in UTF-16
 	// code units, as JavaScript measures it).
-	if n := utf16Len(jwt); n > 16*1024 {
+	if n := jstext.UTF16Length(jwt); n > 16*1024 {
 		return anthropicAccessToken{}, fmt.Errorf("Identity token is %d KiB, exceeds the 16 KiB assertion limit", (n+1023)/1024)
 	}
 
@@ -567,13 +567,4 @@ func isSafeErrorKey(k string) bool {
 		}
 	}
 	return false
-}
-
-// utf16Len is a string's JavaScript length.
-func utf16Len(s string) int {
-	n := 0
-	for _, r := range s {
-		n += utf16.RuneLen(r)
-	}
-	return n
 }

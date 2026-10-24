@@ -581,7 +581,7 @@ func loadSkillFromFile(filePath string) (*Skill, []SkillDiagnostic) {
 // String.length — UTF-16 code units — not bytes.
 func validateName(name string) []string {
 	var errs []string
-	if n := utf16Len(name); n > maxSkillNameLength {
+	if n := jstext.UTF16Length(name); n > maxSkillNameLength {
 		errs = append(errs, fmt.Sprintf("name exceeds %d characters (%d)", maxSkillNameLength, n))
 	}
 	if !isValidSkillName(name) {
@@ -613,7 +613,7 @@ func validateDescription(desc string) []string {
 	var errs []string
 	if jstext.Trim(desc) == "" {
 		errs = append(errs, "description is required")
-	} else if n := utf16Len(desc); n > maxSkillDescriptionLength {
+	} else if n := jstext.UTF16Length(desc); n > maxSkillDescriptionLength {
 		// JS String.length (UTF-16 code units), like pi.
 		errs = append(errs, fmt.Sprintf("description exceeds %d characters (%d)", maxSkillDescriptionLength, n))
 	}

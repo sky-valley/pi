@@ -637,7 +637,7 @@ func (r *FauxProviderRegistration) withUsageEstimate(message *ai.AssistantMessag
 // estimateTokens is pi's `Math.ceil(text.length / 4)`, over the JS length in
 // UTF-16 code units.
 func estimateTokens(text string) int {
-	return estimateCodeUnitTokens(utf16Length(text))
+	return estimateCodeUnitTokens(jstext.UTF16Length(text))
 }
 
 func estimateCodeUnitTokens(codeUnits int) int {
@@ -680,7 +680,7 @@ func joinedLength(messages []string, count int) int {
 		length = (count - 1) * 2
 	}
 	for _, message := range messages[:count] {
-		length += utf16Length(message)
+		length += jstext.UTF16Length(message)
 	}
 	return length
 }

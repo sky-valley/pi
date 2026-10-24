@@ -6,6 +6,8 @@ package coding
 import (
 	"fmt"
 	"strings"
+
+	"github.com/sky-valley/pi/internal/jstext"
 )
 
 const (
@@ -172,7 +174,7 @@ func TruncateLine(line string, maxChars int) (string, bool) {
 	if maxChars == 0 {
 		maxChars = GrepMaxLineLength
 	}
-	if utf16Len(line) <= maxChars {
+	if jstext.UTF16Length(line) <= maxChars {
 		return line, false
 	}
 	var b strings.Builder

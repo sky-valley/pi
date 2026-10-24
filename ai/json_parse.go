@@ -65,29 +65,12 @@ func RepairJSON(s string) string {
 			continue
 		}
 		if ch <= 0x1f {
-			b.WriteString(escapeControlChar(ch))
+			b.WriteString(jstext.EscapeControlChar(ch))
 		} else {
 			b.WriteByte(ch)
 		}
 	}
 	return b.String()
-}
-
-func escapeControlChar(ch byte) string {
-	switch ch {
-	case '\b':
-		return "\\b"
-	case '\f':
-		return "\\f"
-	case '\n':
-		return "\\n"
-	case '\r':
-		return "\\r"
-	case '\t':
-		return "\\t"
-	default:
-		return fmt.Sprintf("\\u%04x", ch)
-	}
 }
 
 // ParseToolCallArguments is pi's parseToolCallArguments: the arguments of a
@@ -101,7 +84,9 @@ func escapeControlChar(ch byte) string {
 // text that is blank by JS trim is {} with no error. The second return is the
 // object in the order pi's JS object lists its keys (ToolCall.ArgumentsOrder);
 // a number that is not finite (past float64's range) is held as nil, as
-// JSON.stringify writes pi's value.
+// JSON.stringify writes pi's value, and half a surrogate pair is kept as its
+// WTF-8 triple, as JSON.parse keeps the code unit (see
+// parseOrderedKeepingSurrogates; OrderedObject writes it back as JS does).
 func ParseToolCallArguments(text string) (map[string]any, OrderedObject, string) {
 	if jstext.Trim(text) == "" {
 		return map[string]any{}, nil, ""
@@ -121,13 +106,13 @@ func ParseToolCallArguments(text string) (map[string]any, OrderedObject, string)
 // JSON.parse of text, else of its repair when the repair changed it. The error
 // is the SyntaxError JSON.parse throws for the last text it read.
 func parseJSONValueWithRepair(text string) (any, error) {
-	value, err := DecodeOrderedValue([]byte(text))
+	value, err := parseOrderedKeepingSurrogates([]byte(text))
 	if err == nil {
 		return value, nil
 	}
 	parsed := text
 	if repaired := RepairJSON(text); repaired != text {
-		if value, err = DecodeOrderedValue([]byte(repaired)); err == nil {
+		if value, err = parseOrderedKeepingSurrogates([]byte(repaired)); err == nil {
 			return value, nil
 		}
 		parsed = repaired

@@ -320,7 +320,7 @@ func (p Win32Path) ToNamespacedPath(path string) string {
 	}
 	resolvedPath := p.Resolve(path)
 	// Node measures in UTF-16 code units, not bytes: "\ü" is two.
-	if utf16Len(resolvedPath) <= 2 {
+	if jstext.UTF16Length(resolvedPath) <= 2 {
 		return path
 	}
 	if resolvedPath[0] == '\\' {
@@ -333,19 +333,6 @@ func (p Win32Path) ToNamespacedPath(path string) string {
 		return `\\?\` + resolvedPath
 	}
 	return resolvedPath
-}
-
-// utf16Len is JavaScript's String length: UTF-16 code units.
-func utf16Len(s string) int {
-	n := 0
-	for _, r := range s {
-		if r >= 0x10000 {
-			n += 2
-		} else {
-			n++
-		}
-	}
-	return n
 }
 
 // Basename is path.win32.basename without a suffix.

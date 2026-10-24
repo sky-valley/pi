@@ -56,12 +56,12 @@ package ai
 // string concatenation joins them.
 
 import (
+	"cmp"
+	"math"
 	"regexp"
 	"slices"
 	"strings"
 	"sync/atomic"
-	"unicode/utf16"
-	"unicode/utf8"
 
 	"github.com/sky-valley/pi/internal/jstext"
 )
@@ -112,17 +112,31 @@ var rootSlot = &jsonSlot{kind: slotRoot}
 // same only when they are the same value.
 var containerIDs atomic.Uint64
 
-// jsonNode is a value in both forms the port hands out: ord, in
+// jsonNode is a value in the forms the port hands out: ord, in
 // DecodeOrderedValue's shapes (an object is an OrderedObject), and plain, in
 // encoding/json's (an object is a map[string]any), so a tool call gets its
 // Arguments and ArgumentsOrder without converting a whole tree per snapshot.
+// A number past float64's range is ±Inf in ord, as Snapshot shows pi's value,
+// and nil in plain and in tool — the ordered form a tool call holds, which
+// the port writes as JSON.stringify writes Infinity. tool is set only on a
+// value that holds such a number (nonFinite); elsewhere it is ord, so the
+// two share every container that holds none.
 // A container's id tells snapshots apart as JS object identity does; a
 // scalar has none. open is the frame of a container that is still open,
 // whose snapshots are copies.
 type jsonNode struct {
-	ord, plain any
-	id         uint64
-	open       *jsonFrame
+	ord, plain, tool any
+	nonFinite        bool
+	id               uint64
+	open             *jsonFrame
+}
+
+// toolOrd is the ordered form a tool call holds.
+func (n jsonNode) toolOrd() any {
+	if n.nonFinite {
+		return n.tool
+	}
+	return n.ord
 }
 
 type jsonPhase uint8
@@ -139,12 +153,14 @@ const (
 type jsonFrame struct {
 	isArray bool
 	elems   []jsonNode
-	// An object's members: the keys that are array indices, ascending, then
-	// the others in creation order, as a JS object lists its own keys.
-	indexKeys []string
-	nameKeys  []string
-	members   map[string]jsonNode
-	slot      *jsonSlot
+	// An object's members: the keys that are array indices, listed ascending
+	// (sorted when a copy needs them, after indexUnsorted), then the others in
+	// creation order, as a JS object lists its own keys.
+	indexKeys     []indexKey
+	indexUnsorted bool
+	nameKeys      []string
+	members       map[string]jsonNode
+	slot          *jsonSlot
 	// path is where the container sits, when its changes are reported
 	// (hasPath).
 	path    JSONPath
@@ -160,6 +176,12 @@ type jsonFrame struct {
 	phase  jsonPhase
 }
 
+// indexKey is a member key that is an array index, and its value.
+type indexKey struct {
+	n   uint32
+	key string
+}
+
 // openString is an unterminated string.
 type openString struct {
 	isKey bool
@@ -173,8 +195,14 @@ type openString struct {
 	path    JSONPath
 	hasPath bool
 	// change is the index of the change this string extends while it is the
-	// newest change of the piece; -1 for none.
-	change int
+	// newest change of the piece; -1 for none. Its text is text from
+	// changeStart, after changePrefix (half a surrogate pair whose other half
+	// the text already held), and is copied into the change once the change
+	// stops growing (flushChange), so a piece with many escapes costs time
+	// linear in its length.
+	change       int
+	changeStart  int
+	changePrefix string
 }
 
 // Changes are reported at most this deep, so a path costs O(1) to build.
@@ -202,7 +230,9 @@ var (
 
 // StreamingJSONParser is pi's StreamingJsonParser: an incremental, tolerant
 // JSON parser; the comment at the top of streaming_json.go gives its rules
-// and costs. The zero value is ready to use.
+// and costs. The zero value is ready to use. A parser is not safe for
+// concurrent use. The values Snapshot and Append return share their closed
+// containers and strings with later snapshots: they are read-only.
 type StreamingJSONParser struct {
 	root    jsonNode
 	hasRoot bool
@@ -222,14 +252,15 @@ type StreamingJSONParser struct {
 	hasSnap  bool
 	// changes are the changes of the piece being read.
 	changes []JSONChange
-	// nonFinite is whether a number past float64's range was ever read.
-	nonFinite bool
+	// growing is the open string whose change, the newest, is not filled in
+	// yet; nil for none.
+	growing *openString
 }
 
 // Append reads the next piece of text and returns the changes it made, in
 // order. It costs time linear in the length of text.
 func (p *StreamingJSONParser) Append(text string) []JSONChange {
-	p.credit += creditPerAppend + creditPerCharacter*utf16Length(text)
+	p.credit += creditPerAppend + creditPerCharacter*jstext.CodeUnitLength(text)
 	p.changes = nil
 	if p.str != nil {
 		p.str.change = -1
@@ -245,6 +276,7 @@ func (p *StreamingJSONParser) Append(text string) []JSONChange {
 			index++
 		}
 	}
+	p.flushChange()
 	return p.changes
 }
 
@@ -400,6 +432,7 @@ func (p *StreamingJSONParser) startString() {
 	p.place(slot, scalarNode(""))
 	if hasPath {
 		p.str.change = p.report(JSONChange{Kind: JSONChangeSet, Path: path, Value: ""})
+		p.growing = p.str
 	}
 }
 
@@ -426,8 +459,25 @@ func (p *StreamingJSONParser) reportedPath(slot *jsonSlot) (JSONPath, bool) {
 
 // report records a change of the piece and returns its index.
 func (p *StreamingJSONParser) report(change JSONChange) int {
+	p.flushChange()
 	p.changes = append(p.changes, change)
 	return len(p.changes) - 1
+}
+
+// flushChange fills in the text of the growing string's change, which stops
+// growing now.
+func (p *StreamingJSONParser) flushChange() {
+	open := p.growing
+	if open == nil {
+		return
+	}
+	p.growing = nil
+	text := open.changePrefix + builderText(open.text)[open.changeStart:]
+	if change := &p.changes[open.change]; change.Kind == JSONChangeSet {
+		change.Value = text
+	} else {
+		change.Text = text
+	}
 }
 
 // simpleJSONEscapes decodes the one-character escapes.
@@ -464,7 +514,7 @@ func (p *StreamingJSONParser) continueEscape(open *openString, c byte) bool {
 			unit = unit<<4 | rune(hexValue(h))
 		}
 		open.escape = ""
-		p.appendString(open, codeUnitString(unit))
+		p.appendString(open, jstext.CodeUnit(unit))
 		return true
 	}
 	// `\u` without four hex digits: keep it as text and read the character
@@ -476,6 +526,8 @@ func (p *StreamingJSONParser) continueEscape(open *openString, c byte) bool {
 }
 
 func (p *StreamingJSONParser) appendString(open *openString, text string) {
+	before := builderText(open.text)
+	_, joined := jstext.JoinsSurrogates(before, text)
 	open.text = appendUTF16(open.text, text)
 	if open.isKey {
 		return
@@ -484,18 +536,19 @@ func (p *StreamingJSONParser) appendString(open *openString, text string) {
 	if !open.hasPath {
 		return
 	}
-	// Extend this string's newest change while nothing came after it;
-	// otherwise report an append.
+	// Extend this string's newest change while nothing came after it: its text
+	// is already in open.text. Otherwise report an append, whose text starts
+	// here — with the low half of a pair whose high half came in an earlier
+	// change, which the text now holds joined.
 	if open.change >= 0 && open.change == len(p.changes)-1 {
-		change := &p.changes[open.change]
-		if change.Kind == JSONChangeSet {
-			change.Value = concatUTF16(change.Value.(string), text)
-		} else {
-			change.Text = concatUTF16(change.Text, text)
-		}
 		return
 	}
-	open.change = p.report(JSONChange{Kind: JSONChangeAppend, Path: open.path, Text: text})
+	open.change = p.report(JSONChange{Kind: JSONChangeAppend, Path: open.path})
+	open.changeStart, open.changePrefix = len(before), ""
+	if joined {
+		open.changeStart, open.changePrefix = len(before)+1, text[:3]
+	}
+	p.growing = open
 }
 
 func (p *StreamingJSONParser) endString(open *openString) {
@@ -658,21 +711,25 @@ func (p *StreamingJSONParser) replace(slot *jsonSlot, value jsonNode) {
 
 // addKey records a new member key in the order a JS object lists it.
 func (f *jsonFrame) addKey(key string) {
-	if index, ok := jstext.ArrayIndexKey(key); ok {
-		at, _ := slices.BinarySearchFunc(f.indexKeys, index, func(k string, target uint32) int {
-			n, _ := jstext.ArrayIndexKey(k)
-			switch {
-			case n < target:
-				return -1
-			case n > target:
-				return 1
-			}
-			return 0
-		})
-		f.indexKeys = slices.Insert(f.indexKeys, at, key)
+	if n, ok := jstext.ArrayIndexKey(key); ok {
+		if len(f.indexKeys) > 0 && f.indexKeys[len(f.indexKeys)-1].n > n {
+			f.indexUnsorted = true
+		}
+		f.indexKeys = append(f.indexKeys, indexKey{n: n, key: key})
 		return
 	}
 	f.nameKeys = append(f.nameKeys, key)
+}
+
+// sortedIndexKeys is the index keys, ascending. Sorting when a copy needs
+// them, not on every insertion, keeps keys that arrive in descending order
+// from costing a shift of every key read so far.
+func (f *jsonFrame) sortedIndexKeys() []indexKey {
+	if f.indexUnsorted {
+		slices.SortFunc(f.indexKeys, func(a, b indexKey) int { return cmp.Compare(a.n, b.n) })
+		f.indexUnsorted = false
+	}
+	return f.indexKeys
 }
 
 // copyOpenPath makes a fresh snapshot: copies of the open containers,
@@ -720,25 +777,44 @@ func (p *StreamingJSONParser) copyFrame(frame *jsonFrame, overrides []slotValue)
 		for _, o := range overrides {
 			n = max(n, o.slot.index+1)
 		}
+		elem := func(i int) jsonNode {
+			for _, o := range overrides {
+				if o.slot.index == i {
+					return o.value
+				}
+			}
+			return frame.elems[i]
+		}
 		ord, plain := make([]any, n), make([]any, n)
-		for i, e := range frame.elems {
+		nonFinite := false
+		for i := range n {
+			e := elem(i)
 			ord[i], plain[i] = e.ord, e.plain
+			nonFinite = nonFinite || e.nonFinite
 		}
-		for _, o := range overrides {
-			ord[o.slot.index], plain[o.slot.index] = o.value.ord, o.value.plain
+		node := jsonNode{ord: ord, plain: plain, id: id, nonFinite: nonFinite}
+		if nonFinite {
+			tool := make([]any, n)
+			for i := range n {
+				tool[i] = elem(i).toolOrd()
+			}
+			node.tool = tool
 		}
-		return jsonNode{ord: ord, plain: plain, id: id}
+		return node
 	}
-	indexKeys, nameKeys := frame.indexKeys, frame.nameKeys
+	indexKeys, nameKeys := frame.sortedIndexKeys(), frame.nameKeys
 	for _, o := range overrides {
 		if _, exists := frame.members[o.slot.key]; exists {
 			continue
 		}
 		// A new key: the pending scalar's member, which the working container
 		// does not hold yet.
-		tmp := jsonFrame{indexKeys: slices.Clone(indexKeys), nameKeys: slices.Clone(nameKeys)}
-		tmp.addKey(o.slot.key)
-		indexKeys, nameKeys = tmp.indexKeys, tmp.nameKeys
+		if n, ok := jstext.ArrayIndexKey(o.slot.key); ok {
+			at, _ := slices.BinarySearchFunc(indexKeys, n, func(k indexKey, target uint32) int { return cmp.Compare(k.n, target) })
+			indexKeys = slices.Insert(slices.Clip(indexKeys), at, indexKey{n: n, key: o.slot.key})
+		} else {
+			nameKeys = append(slices.Clip(nameKeys), o.slot.key)
+		}
 	}
 	value := func(key string) jsonNode {
 		for _, o := range overrides {
@@ -748,19 +824,41 @@ func (p *StreamingJSONParser) copyFrame(frame *jsonFrame, overrides []slotValue)
 		}
 		return frame.members[key]
 	}
-	ord := make(OrderedObject, 0, len(indexKeys)+len(nameKeys))
-	plain := make(map[string]any, len(indexKeys)+len(nameKeys))
-	for _, keys := range [2][]string{indexKeys, nameKeys} {
-		for _, key := range keys {
-			v := value(key)
-			ord = append(ord, OrderedField{Key: key, Value: v.ord})
-			plain[key] = v.plain
-		}
+	size := len(indexKeys) + len(nameKeys)
+	ord := make(OrderedObject, 0, size)
+	plain := make(map[string]any, size)
+	nonFinite := false
+	add := func(key string) {
+		v := value(key)
+		ord = append(ord, OrderedField{Key: key, Value: v.ord})
+		plain[key] = v.plain
+		nonFinite = nonFinite || v.nonFinite
 	}
-	return jsonNode{ord: ord, plain: plain, id: id}
+	for _, k := range indexKeys {
+		add(k.key)
+	}
+	for _, key := range nameKeys {
+		add(key)
+	}
+	node := jsonNode{ord: ord, plain: plain, id: id, nonFinite: nonFinite}
+	if nonFinite {
+		tool := make(OrderedObject, size)
+		for i, f := range ord {
+			tool[i] = OrderedField{Key: f.Key, Value: value(f.Key).toolOrd()}
+		}
+		node.tool = tool
+	}
+	return node
 }
 
-func scalarNode(v any) jsonNode { return jsonNode{ord: v, plain: v} }
+// scalarNode is a number, string, boolean or null: a number past float64's
+// range as ±Inf in ord and nil in the tool-facing forms.
+func scalarNode(v any) jsonNode {
+	if f, ok := v.(float64); ok && math.IsInf(f, 0) {
+		return jsonNode{ord: f, nonFinite: true}
+	}
+	return jsonNode{ord: v, plain: v}
+}
 
 // sameSnapshot is `a === b` for two snapshots: a container is itself only,
 // a scalar any equal scalar, and no value (undefined) only itself.
@@ -827,59 +925,11 @@ func (p *StreamingJSONParser) pendingScalarValue(token string) (any, bool) {
 // number is Number(token) for a token that is a JSON number: the nearest
 // float64, ±Inf past its range.
 func (p *StreamingJSONParser) number(token string) float64 {
-	f := jstext.StringToNumber(token)
-	if f > maxFloat64 || f < -maxFloat64 {
-		p.nonFinite = true
-	}
-	return f
+	return jstext.StringToNumber(token)
 }
 
-const maxFloat64 = 1.7976931348623157e308
-
-// codeUnitString is String.fromCharCode(unit): a lone surrogate as its WTF-8
-// byte triple, any other code unit as UTF-8.
-func codeUnitString(unit rune) string {
-	if utf16.IsSurrogate(unit) {
-		return string([]byte{0xED, byte(0xA0 | (unit>>6)&0x1F), byte(0x80 | unit&0x3F)})
-	}
-	return string(unit)
-}
-
-// wtf8Surrogate decodes a surrogate code unit held as a WTF-8 byte triple.
-func wtf8Surrogate(s string) (rune, bool) {
-	if len(s) >= 3 && s[0] == 0xED && s[1] >= 0xA0 && s[1] <= 0xBF && s[2] >= 0x80 && s[2] <= 0xBF {
-		return 0xD000 | rune(s[1]&0x3F)<<6 | rune(s[2]&0x3F), true
-	}
-	return 0, false
-}
-
-// joinedSurrogates reports whether a ends with a high surrogate and b starts
-// with a low one, both as WTF-8, and returns the character they make.
-func joinedSurrogates(a, b string) (rune, bool) {
-	if len(a) < 3 {
-		return 0, false
-	}
-	hi, ok := wtf8Surrogate(a[len(a)-3:])
-	if !ok || hi > 0xDBFF {
-		return 0, false
-	}
-	lo, ok := wtf8Surrogate(b)
-	if !ok || lo < 0xDC00 {
-		return 0, false
-	}
-	return utf16.DecodeRune(hi, lo), true
-}
-
-// concatUTF16 is JS `a + b`: when a ends with half a surrogate pair and b
-// starts with the other half, the two make one character.
-func concatUTF16(a, b string) string {
-	if r, ok := joinedSurrogates(a, b); ok {
-		return a[:len(a)-3] + string(r) + b[3:]
-	}
-	return a + b
-}
-
-// appendUTF16 appends text to b as concatUTF16 joins it and returns the
+// appendUTF16 appends text to b as JS `+` joins it (jstext.ConcatCodeUnits)
+// and returns the
 // builder that holds the result. Joining rewrites the end of the text, which
 // a strings.Builder cannot do in place, so it starts a new one: the old one's
 // strings stay as they were handed out. A nil b is an empty text.
@@ -888,7 +938,7 @@ func appendUTF16(b *strings.Builder, text string) *strings.Builder {
 		b = &strings.Builder{}
 	}
 	s := b.String()
-	if r, ok := joinedSurrogates(s, text); ok {
+	if r, ok := jstext.JoinsSurrogates(s, text); ok {
 		fresh := &strings.Builder{}
 		fresh.Grow(len(s) + len(text) + 1)
 		fresh.WriteString(s[:len(s)-3])
@@ -900,40 +950,14 @@ func appendUTF16(b *strings.Builder, text string) *strings.Builder {
 	return b
 }
 
-// utf16Length is the JS length of s: UTF-16 code units, a WTF-8 surrogate
-// triple counting one.
-func utf16Length(s string) int {
-	n := 0
-	for i := 0; i < len(s); {
-		c := s[i]
-		if c < utf8.RuneSelf {
-			n++
-			i++
-			continue
-		}
-		r, size := utf8.DecodeRuneInString(s[i:])
-		switch {
-		case r == utf8.RuneError && size == 1:
-			if _, ok := wtf8Surrogate(s[i:]); ok {
-				size = 3
-			}
-			n++
-		case r > 0xFFFF:
-			n += 2
-		default:
-			n++
-		}
-		i += size
-	}
-	return n
-}
-
 // ToolCallArgumentsStream is pi's ToolCallArgumentsStream: the arguments of
 // one streaming tool call — the raw text, for the one full parse when the
 // call ends, and a StreamingJSONParser for the partial arguments in between.
 // Providers keep one per call in their own stream state, never on the
 // content block, so the raw text never reaches partial messages or
-// transcripts. The zero value is ready to use.
+// transcripts. The zero value is ready to use. A stream is not safe for
+// concurrent use, and the arguments it returns share their closed members
+// with later partial arguments: they are read-only.
 type ToolCallArgumentsStream struct {
 	text    *strings.Builder
 	parser  *StreamingJSONParser
@@ -1009,37 +1033,12 @@ func (s *ToolCallArgumentsStream) partial() (map[string]any, OrderedObject) {
 	s.snap, s.hasSnap = snapshot, ok
 	// Tool arguments are an object; any other partial value shows as no
 	// arguments yet.
-	order, isObject := snapshot.ord.(OrderedObject)
-	if !ok || !isObject {
+	if _, isObject := snapshot.ord.(OrderedObject); !ok || !isObject {
 		s.args, s.order = map[string]any{}, nil
 		return s.args, s.order
 	}
-	s.args, s.order = snapshot.plain.(map[string]any), order
-	if s.parser.nonFinite {
-		// JSON.stringify writes a number past float64's range as null, and the
-		// port holds it so (ParseToolCallArguments does too); the snapshot
-		// itself is shared, so the nulls go on a copy.
-		s.order = nullNonFinite(cloneOrdered(order)).(OrderedObject)
-		s.args = s.order.Plain()
-	}
+	// A number past float64's range is null in both forms, as JSON.stringify
+	// writes pi's Infinity (ParseToolCallArguments holds it so too).
+	s.args, s.order = snapshot.plain.(map[string]any), snapshot.toolOrd().(OrderedObject)
 	return s.args, s.order
-}
-
-// cloneOrdered deep-copies the containers of v.
-func cloneOrdered(v any) any {
-	switch t := v.(type) {
-	case OrderedObject:
-		out := make(OrderedObject, len(t))
-		for i, f := range t {
-			out[i] = OrderedField{Key: f.Key, Value: cloneOrdered(f.Value)}
-		}
-		return out
-	case []any:
-		out := make([]any, len(t))
-		for i, e := range t {
-			out[i] = cloneOrdered(e)
-		}
-		return out
-	}
-	return v
 }

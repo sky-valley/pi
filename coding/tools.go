@@ -118,20 +118,6 @@ func macAMPMVariant(p string) string {
 	return macAMPMRe.ReplaceAllString(p, narrowNoBreakSpace+"$1.")
 }
 
-// utf16Len returns the number of UTF-16 code units in s, matching JS String
-// `.length` (astral characters count as 2). Used where pi reports `.length`.
-func utf16Len(s string) int {
-	n := 0
-	for _, r := range s {
-		if r > 0xFFFF {
-			n += 2
-		} else {
-			n++
-		}
-	}
-	return n
-}
-
 // textResult is a tool result that is just text. Details is left nil: pi spells
 // "no details" as `details: undefined` (write.ts:88, ls.ts:135, find.ts:137,
 // grep.ts:258), which JSON.stringify drops from the session entry. An empty map

@@ -86,7 +86,7 @@ func wtf8(units []uint16) string {
 			i++
 			continue
 		}
-		b.WriteString(codeUnitString(u))
+		b.WriteString(jstext.CodeUnit(u))
 	}
 	return b.String()
 }
@@ -164,7 +164,7 @@ func writeJS(b *strings.Builder, v any) {
 func writeJSString(b *strings.Builder, s string) {
 	b.WriteByte('"')
 	for i := 0; i < len(s); {
-		if u, ok := wtf8Surrogate(s[i:]); ok {
+		if u, ok := jstext.WTF8Surrogate(s[i:]); ok {
 			fmt.Fprintf(b, `\u%04x`, u)
 			i += 3
 			continue
@@ -257,7 +257,7 @@ func TestStreamingJSONParserLikePi(t *testing.T) {
 			if row.Mode == "size" {
 				size := -1
 				if ok {
-					size = utf16Length(text)
+					size = jstext.CodeUnitLength(text)
 				}
 				if size != *want.Size {
 					t.Errorf("%s piece %d: snapshot length %d, pi %d", row.Name, i, size, *want.Size)
@@ -312,6 +312,28 @@ func argumentsJSON(t *testing.T, args map[string]any, order OrderedObject) strin
 	return "{}"
 }
 
+// A finished call keeps half a surrogate pair, as JSON.parse keeps the code
+// unit (and as the streamed partials do), and writes it back as
+// JSON.stringify does; an escaped pair, or an escape and a triple, join.
+func TestParseToolCallArgumentsKeepsHalfASurrogatePair(t *testing.T) {
+	bs := "\\"
+	text := `{"s":"` + bs + `ud83dx","p":"` + bs + `ud83d` + bs + `ude00","m":"` + bs + `ud83d` + jstext.CodeUnit(0xde00) + `"}`
+	_, order, argsErr := ParseToolCallArguments(text)
+	if argsErr != "" {
+		t.Fatal(argsErr)
+	}
+	if s, _ := order.Get("s"); s != jstext.CodeUnit(0xd83d)+"x" {
+		t.Errorf("s = %+q, want the high surrogate's WTF-8 then x", s)
+	}
+	out, err := order.MarshalJSON()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := `{"s":"` + bs + `ud83dx","p":"😀","m":"😀"}`; string(out) != want {
+		t.Errorf("MarshalJSON = %s, want %s", out, want)
+	}
+}
+
 // loneSurrogateEscape matches the escape JSON.stringify writes for half a
 // surrogate pair.
 var loneSurrogateEscape = regexp.MustCompile(`\\ud[89a-f][0-9a-f]{2}`)
@@ -324,6 +346,14 @@ func samePointer(a, b map[string]any) bool {
 // each capture row's appends, replaces and finishes.
 func TestToolCallArgumentsStreamLikePi(t *testing.T) {
 	c := loadStreamingJSONCapture(t)
+	// loneFinishes counts the finishes whose arguments keep half a surrogate
+	// pair, as JSON.parse does, so the rows that pin it cannot go missing.
+	loneFinishes := 0
+	defer func() {
+		if loneFinishes == 0 {
+			t.Errorf("no finish row keeps half a surrogate pair; the capture lost its rows")
+		}
+	}()
 	for _, row := range c.Args {
 		type op struct{ op, text string }
 		var ops []op
@@ -396,11 +426,7 @@ func TestToolCallArgumentsStreamLikePi(t *testing.T) {
 				}
 				got += "}"
 				if loneSurrogateEscape.MatchString(wantText) {
-					// The finished arguments are DecodeOrderedValue's, which reads
-					// half a surrogate pair as U+FFFD (see parseOrdered), where
-					// JSON.parse keeps the code unit: a divergence of the port's
-					// JSON decoding, not of this stream.
-					continue
+					loneFinishes++
 				}
 				if got != wantText {
 					t.Errorf("%s op %d: finish\n got %s\n  pi %s", row.Name, i, got, wantText)
