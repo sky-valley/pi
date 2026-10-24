@@ -1,5 +1,5 @@
 {
-	"pi-coding-agent": "1.4.0",
+	"sha": "38ff99177",
 	"defaultModelPerProvider": {
 		"amazon-bedrock": "us.anthropic.claude-opus-4-6-v1",
 		"ant-ling": "Ring-2.6-1T",
