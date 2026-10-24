@@ -79,10 +79,10 @@ func TestStreamedToolCallArgumentsLikePi(t *testing.T) {
 			Events     []json.RawMessage `json:"events"`
 			Arguments  string            `json:"arguments"`
 			ToolEvents []struct {
-				Type         string  `json:"type"`
-				ContentIndex int     `json:"contentIndex"`
-				Delta        *string `json:"delta"`
-				Arguments    *string `json:"arguments"`
+				Type         string          `json:"type"`
+				ContentIndex int             `json:"contentIndex"`
+				Delta        json.RawMessage `json:"delta"`
+				Arguments    *string         `json:"arguments"`
 			} `json:"toolEvents"`
 			StopReason   string  `json:"stopReason"`
 			ErrorMessage *string `json:"errorMessage"`
@@ -95,6 +95,14 @@ func TestStreamedToolCallArgumentsLikePi(t *testing.T) {
 	if len(capture.Rows) < 60 {
 		t.Fatalf("%s holds %d rows; rerun capture.mts", streamingToolArgumentsCaptureFile, len(capture.Rows))
 	}
+	// nonStringDeltas are the rows whose pi delta is not a string (see below).
+	var nonStringDeltas []string
+	defer func() {
+		want := "anthropic-messages/number delta,openai-completions/number arguments,openai-responses/delta number,pi-messages/number delta"
+		if got := strings.Join(nonStringDeltas, ","); got != want {
+			t.Errorf("rows with a delta that is not a string: %s, want %s", got, want)
+		}
+	}()
 	for _, row := range capture.Rows {
 		t.Run(row.API+"/"+row.Name, func(t *testing.T) {
 			body := row.Body
@@ -171,7 +179,19 @@ func TestStreamedToolCallArgumentsLikePi(t *testing.T) {
 				}
 				wantDelta, wantArgs := "", ""
 				if want.Delta != nil {
-					wantDelta = *want.Delta
+					// Read as JSON.parse reads it: half a surrogate pair is kept.
+					v, err := ai.DecodeOrderedValueKeepingSurrogates(want.Delta)
+					if err != nil {
+						t.Fatal(err)
+					}
+					if text, isString := v.(string); isString {
+						wantDelta = text
+					} else {
+						// KNOWN: pi pushes a delta that is not a string as itself;
+						// the port's Delta is a string and carries String(delta).
+						nonStringDeltas = append(nonStringDeltas, row.API+"/"+row.Name)
+						wantDelta, _ = jsToString(v)
+					}
 				}
 				if want.Arguments != nil {
 					wantArgs = *want.Arguments

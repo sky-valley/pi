@@ -526,7 +526,7 @@ func (r *FauxProviderRegistration) streamWithDeltas(ctx context.Context, stream 
 				if abortNow() {
 					return
 				}
-				acc += chunk
+				acc = jstext.ConcatCodeUnits(acc, chunk)
 				partial.Content[index] = ai.ThinkingContent{Thinking: acc}
 				stream.Push(ai.AssistantMessageEvent{Type: ai.EventThinkingDelta, ContentIndex: index, Delta: chunk, Partial: partial.Clone()})
 			}
@@ -541,7 +541,7 @@ func (r *FauxProviderRegistration) streamWithDeltas(ctx context.Context, stream 
 				if abortNow() {
 					return
 				}
-				acc += chunk
+				acc = jstext.ConcatCodeUnits(acc, chunk)
 				partial.Content[index] = ai.TextContent{Text: acc}
 				stream.Push(ai.AssistantMessageEvent{Type: ai.EventTextDelta, ContentIndex: index, Delta: chunk, Partial: partial.Clone()})
 			}
@@ -650,20 +650,22 @@ func randomID(prefix string) string {
 
 func nowMillis() int64 { return time.Now().UnixNano() / int64(time.Millisecond) }
 
+// splitByTokenSize is pi's splitStringByTokenSize: chunks of tokenSize*4
+// UTF-16 code units, so a chunk can end between the halves of a surrogate
+// pair, each half then held as WTF-8 (consumers join them again with
+// jstext.ConcatCodeUnits, as JS `+=` does).
 func splitByTokenSize(text string, minT, maxT int) []string {
 	var chunks []string
+	units := jstext.CodeUnits(text)
 	i := 0
-	for i < len(text) {
+	for i < len(units) {
 		tokenSize := minT + rand.Intn(maxT-minT+1)
 		charSize := tokenSize * 4
 		if charSize < 1 {
 			charSize = 1
 		}
-		end := i + charSize
-		if end > len(text) {
-			end = len(text)
-		}
-		chunks = append(chunks, text[i:end])
+		end := min(i+charSize, len(units))
+		chunks = append(chunks, jstext.FromCodeUnits(units[i:end]))
 		i = end
 	}
 	if len(chunks) == 0 {

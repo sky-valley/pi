@@ -664,15 +664,26 @@ func (c *piMessagesConverter) convert(ev piMessagesEvent) (ai.AssistantMessageEv
 		// `partial.content[i].arguments` is set from it.
 		// The property key is only read for the assignment, so a key with no
 		// string form fails only a call that has a stream.
+		// The delta is read keeping half a surrogate pair, so a pair cut
+		// between two deltas joins again in the arguments, as in pi.
 		r, err := c.ref(ev.contentIndex)
+		pushed := ev.Delta
+		value, verr := jsValueKeepingSurrogates(ev.delta)
+		if text, isString := value.(string); isString && verr == nil {
+			pushed = text
+		}
 		if args := c.toolArguments[c.mapKey(ev.contentIndex)]; args != nil {
 			if err != nil {
 				return ai.AssistantMessageEvent{}, err
 			}
-			partial, order, err := appendToolCallArguments(args, ev.delta)
+			if verr != nil {
+				return ai.AssistantMessageEvent{}, verr
+			}
+			partial, order, delta, err := appendToolCallArguments(args, value)
 			if err != nil {
 				return ai.AssistantMessageEvent{}, err
 			}
+			pushed = delta
 			block := c.get(r)
 			if block == nil {
 				return ai.AssistantMessageEvent{}, setOnUndefined("arguments")
@@ -682,7 +693,7 @@ func (c *piMessagesConverter) convert(ev piMessagesEvent) (ai.AssistantMessageEv
 				c.set(r, tc)
 			}
 		}
-		return ai.AssistantMessageEvent{Type: ai.EventToolCallDelta, ContentIndex: r.pushedIndex(), Delta: ev.Delta, Partial: c.partial.Clone()}, nil
+		return ai.AssistantMessageEvent{Type: ai.EventToolCallDelta, ContentIndex: r.pushedIndex(), Delta: pushed, Partial: c.partial.Clone()}, nil
 	case "toolcall_end":
 		r, err := c.ref(ev.contentIndex)
 		if err != nil {

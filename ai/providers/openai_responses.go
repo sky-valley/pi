@@ -822,9 +822,13 @@ func StreamOpenAIResponses(ctx context.Context, model *ai.Model, req ai.Transcri
 				if slot == nil || slot.block.arguments == nil {
 					return nil
 				}
-				slot.block.args, slot.block.argsOrder = slot.block.arguments.Append(ev.Delta)
+				args, order, delta, err := appendToolCallArguments(slot.block.arguments, jsGet(ev.keepingSurrogates(), "delta"))
+				if err != nil {
+					return err
+				}
+				slot.block.args, slot.block.argsOrder = args, order
 				materialize()
-				stream.Push(ai.AssistantMessageEvent{Type: ai.EventToolCallDelta, ContentIndex: slot.contentIndex, Delta: ev.Delta, Partial: output.Clone()})
+				stream.Push(ai.AssistantMessageEvent{Type: ai.EventToolCallDelta, ContentIndex: slot.contentIndex, Delta: delta, Partial: output.Clone()})
 			case "response.function_call_arguments.done":
 				slot := getSlot(ev.slotKey(), "toolCall")
 				if slot == nil || slot.block.arguments == nil {
@@ -833,7 +837,11 @@ func StreamOpenAIResponses(ctx context.Context, model *ai.Model, req ai.Transcri
 				// The complete arguments: the missing piece when they continue
 				// the deltas, pushed so a provider that only sends .done still
 				// yields them; otherwise the arguments start over.
-				delta, _, args, order := slot.block.arguments.Replace(ev.Arguments)
+				text, err := startsWithReceiver(jsGet(ev.keepingSurrogates(), "arguments"))
+				if err != nil {
+					return err
+				}
+				delta, _, args, order := slot.block.arguments.Replace(text)
 				slot.block.args, slot.block.argsOrder = args, order
 				materialize()
 				if delta != "" {
@@ -844,14 +852,14 @@ func StreamOpenAIResponses(ctx context.Context, model *ai.Model, req ai.Transcri
 				if slot == nil || slot.block.grammar == nil {
 					return nil
 				}
-				delta, ok, err := slot.block.grammar.appendDelta(ev.Delta)
+				delta, ok, err := slot.block.grammar.appendValue(jsGet(ev.keepingSurrogates(), "delta"))
 				return sendGrammarInput(slot, delta, ok, err)
 			case "response.custom_tool_call_input.done":
 				slot := getSlot(ev.slotKey(), "toolCall")
 				if slot == nil || slot.block.grammar == nil {
 					return nil
 				}
-				delta, ok, err := closeGrammarInput(slot.block.grammar, jsGet(ev.JS, "input"))
+				delta, ok, err := closeGrammarInput(slot.block.grammar, jsGet(ev.keepingSurrogates(), "input"))
 				return sendGrammarInput(slot, delta, ok, err)
 			case "response.output_item.done":
 				if ev.Item == nil {
@@ -910,8 +918,8 @@ func StreamOpenAIResponses(ctx context.Context, model *ai.Model, req ai.Transcri
 				case ev.Item.Type == "function_call" && slot != nil && slot.block.kind == "toolCall" && slot.block.arguments != nil:
 					// The done event's item.arguments, when it has any, win over the
 					// streamed text.
-					if ev.Item.Arguments != "" {
-						slot.block.arguments.Replace(ev.Item.Arguments)
+					if arguments, _ := jsGet(jsGet(ev.keepingSurrogates(), "item"), "arguments").(string); arguments != "" {
+						slot.block.arguments.Replace(arguments)
 					}
 					slot.block.args, slot.block.argsOrder, slot.block.argsErr = slot.block.arguments.Finish()
 					// Guarded so an absent namespace on the done item cannot clobber
@@ -926,12 +934,9 @@ func StreamOpenAIResponses(ctx context.Context, model *ai.Model, req ai.Transcri
 					delete(outputSlots, ev.slotKey())
 				case ev.Item.Type == "custom_tool_call" && slot != nil && slot.block.grammar != nil:
 					// pi: closeCustomInput(block, input, item.input) — an absent
-					// input closes with the input streamed so far.
-					finalInput, hasFinal := "", ev.Item.Input != nil
-					if hasFinal {
-						finalInput = *ev.Item.Input
-					}
-					delta, ok, err := slot.block.grammar.close(finalInput, hasFinal)
+					// input closes with the input streamed so far, a null one
+					// throws.
+					delta, ok, err := closeGrammarInput(slot.block.grammar, jsGet(jsGet(ev.keepingSurrogates(), "item"), "input"))
 					if gerr := sendGrammarInput(slot, delta, ok, err); gerr != nil {
 						return gerr
 					}
@@ -1854,6 +1859,34 @@ type responsesEvent struct {
 	// (case-insensitive keys, and a mistyped member drops the event); only
 	// the other events use them.
 	JS any `json:"-"`
+	// keepingSurrogates is the event as JSON.parse made it with half a
+	// surrogate pair kept (openaiStreamItem.keepingSurrogates), which the
+	// tool-call argument events read their delta, arguments and input from.
+	keepFn func() any
+}
+
+// keepingSurrogates is the event read keeping half a surrogate pair, or JS
+// when it was built without one.
+func (ev responsesEvent) keepingSurrogates() any {
+	if ev.keepFn == nil {
+		return ev.JS
+	}
+	return ev.keepFn()
+}
+
+// startsWithReceiver is the text pi's ToolCallArgumentsStream.replace calls
+// startsWith on: a string, while undefined and null throw V8's TypeError
+// reading it, and any other value has no such method.
+func startsWithReceiver(text any) (string, error) {
+	switch v := text.(type) {
+	case string:
+		return v, nil
+	case jsUndefinedValue:
+		return "", errors.New("Cannot read properties of undefined (reading 'startsWith')")
+	case nil:
+		return "", errors.New("Cannot read properties of null (reading 'startsWith')")
+	}
+	return "", errors.New("text.startsWith is not a function")
 }
 
 // slotKey is event.output_index as pi's outputSlots Map reads it, by
@@ -1956,7 +1989,14 @@ func iterateOpenAISSE2(body io.Reader, ctx context.Context, onEvent func(any) er
 		case "response.created", "response.completed", "response.incomplete", "response.failed", "error":
 			return handle(ev) // these read ev.JS alone
 		}
+		ev.keepFn = item.keepingSurrogates
 		if json.Unmarshal(item.text, &ev) != nil {
+			// The tool-call argument events read their delta, arguments and
+			// input as JSON.parse made them, whatever their type.
+			switch ev.Type {
+			case "response.function_call_arguments.delta", "response.function_call_arguments.done", "response.custom_tool_call_input.delta", "response.custom_tool_call_input.done":
+				return handle(responsesEvent{Type: ev.Type, JS: item.value, keepFn: item.keepingSurrogates})
+			}
 			return nil
 		}
 		return handle(ev)

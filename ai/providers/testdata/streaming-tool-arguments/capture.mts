@@ -23,7 +23,11 @@
 // Bodies: argument texts whose partial values changed with the parser
 // (trailing whitespace in an open string, a raw control character, an invalid
 // escape, a split \u escape or surrogate pair, NaN) and the stream-state edges
-// each adapter's loop changed with it.
+// each adapter's loop changed with it; deltas that are not strings (a number
+// is pushed as itself, which the port's string Delta cannot hold); a
+// surrogate pair whose halves arrive in two deltas, each escaped in the SSE
+// body as JSON.stringify writes half a pair; and faux chunks cut by UTF-16
+// code unit, through an astral character.
 import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -65,8 +69,12 @@ AssistantMessageEventStream.prototype.push = function (event: any) {
 	return push.call(this, event);
 };
 
-// Backslashes are written as B so this file carries no escape a tool could rewrite.
+// Backslashes are written as B, and surrogates as code units, so this file
+// carries no escape a tool could rewrite.
 const B = "\\";
+const HIGH = String.fromCharCode(0xd83d);
+const LOW = String.fromCharCode(0xde00);
+const SMILE = HIGH + LOW;
 const baseModel = {
 	reasoning: false,
 	input: ["text"],
@@ -143,6 +151,8 @@ anthropicBodies.push(
 	// partial_json that is not a string.
 	["null delta", anthropicStart + toolUse(0, "toolu_1") + jsonDelta(0, '{"a":"x') + jsonDelta(0, null) + stop(0) + anthropicEnd],
 	["missing delta", anthropicStart + toolUse(0, "toolu_1") + jsonDelta(0, undefined) + stop(0) + anthropicEnd],
+	["number delta", anthropicStart + toolUse(0, "toolu_1") + jsonDelta(0, '{"a":') + jsonDelta(0, 5) + jsonDelta(0, "}") + stop(0) + anthropicEnd],
+	["half pairs", anthropicStart + toolUse(0, "toolu_1") + jsonDelta(0, `{"s":"x${HIGH}`) + jsonDelta(0, `${LOW}y"}`) + stop(0) + anthropicEnd],
 );
 for (const [name, body] of anthropicBodies) {
 	const result = await consume(streamAnthropic(anthropicModel, context, { apiKey: "sk-ant-test", fetch: fetchOf(body) }));
@@ -167,6 +177,11 @@ completionsBodies.push(
 	["turns custom", call({ id: "call_c", type: "function", function: { name: "g", arguments: '{"a":' } }) + call({ custom: { input: "zz" } }) + call({ function: { arguments: "1}" } }) + completionsEnd],
 	// Function arguments on a custom call, in the same chunk as custom input.
 	["both kinds", call({ id: "call_c", type: "custom", custom: { name: "g", input: "a" } }) + call({ function: { arguments: '{"x":1}' }, custom: { input: "b" } }) + completionsEnd],
+	// Values that are not strings: function arguments, and custom input, whose
+	// JSON text JSON.stringify(input).slice(1, -1) makes.
+	["number arguments", call({ id: "call_1", type: "function", function: { name: "write", arguments: '{"a":' } }) + call({ function: { arguments: 5 } }) + call({ function: { arguments: "}" } }) + completionsEnd],
+	["number custom input", call({ id: "call_c", type: "custom", custom: { name: "g", input: "ab" } }) + call({ custom: { input: 5 } }) + call({ custom: { input: 123 } }) + call({ custom: { input: true } }) + call({ custom: { input: "c" } }) + completionsEnd],
+	["half pairs", call({ id: "call_1", type: "function", function: { name: "write", arguments: `{"s":"x${HIGH}` } }) + call({ function: { arguments: `${LOW}y"}` } }) + completionsEnd],
 );
 for (const [name, body] of completionsBodies) {
 	const result = await consume(streamCompletions(completionsModel, context, { apiKey: "sk-test", fetch: fetchOf(body) }));
@@ -177,12 +192,12 @@ for (const [name, body] of completionsBodies) {
 const responsesModel = { ...baseModel, id: "gpt-test", name: "g", api: "openai-responses", provider: "openai", baseUrl: "https://api.openai.com/v1" };
 const fnItem = (args: string) => ({ type: "function_call", id: "fc_1", call_id: "call_1", name: "write", arguments: args, status: "in_progress" });
 const added = (item: object) => ({ type: "response.output_item.added", output_index: 0, sequence_number: 0, item });
-const argsDelta = (delta: string) => ({ type: "response.function_call_arguments.delta", output_index: 0, item_id: "fc_1", sequence_number: 0, delta });
-const argsDone = (args: string) => ({ type: "response.function_call_arguments.done", output_index: 0, item_id: "fc_1", sequence_number: 0, arguments: args });
+const argsDelta = (delta: unknown) => ({ type: "response.function_call_arguments.delta", output_index: 0, item_id: "fc_1", sequence_number: 0, delta });
+const argsDone = (args: unknown) => ({ type: "response.function_call_arguments.done", output_index: 0, item_id: "fc_1", sequence_number: 0, arguments: args });
 const itemDone = (item: object) => ({ type: "response.output_item.done", output_index: 0, sequence_number: 0, item });
 const completed = { type: "response.completed", sequence_number: 0, response: { id: "resp_1", status: "completed", output: [], usage: { input_tokens: 1, output_tokens: 1, total_tokens: 2 } } };
 const customItem = (input: string | undefined) => ({ type: "custom_tool_call", id: "ct_1", call_id: "call_c", name: "g", ...(input === undefined ? {} : { input }) });
-const customDelta = (delta: string) => ({ type: "response.custom_tool_call_input.delta", output_index: 0, item_id: "ct_1", sequence_number: 0, delta });
+const customDelta = (delta: unknown) => ({ type: "response.custom_tool_call_input.delta", output_index: 0, item_id: "ct_1", sequence_number: 0, delta });
 const customDone = (input: string) => ({ type: "response.custom_tool_call_input.done", output_index: 0, item_id: "ct_1", sequence_number: 0, input });
 const responsesRows: [string, object[]][] = texts.map((pieces, i) => [
 	`text${i}`,
@@ -199,6 +214,23 @@ responsesRows.push(
 	["custom changed", [added(customItem("")), customDelta("ab"), customDone("xy"), completed]],
 	["custom after close", [added(customItem("")), customDelta("ab"), customDone("ab"), customDelta("c"), completed]],
 	["unfinished", [added(fnItem("")), argsDelta('{"a":1}'), { ...completed, response: { ...completed.response, output: [] } }]],
+	// Deltas and arguments that are not strings.
+	["delta absent", [added(fnItem("")), argsDelta('{"a":1'), { type: "response.function_call_arguments.delta", output_index: 0, item_id: "fc_1", sequence_number: 0 }, itemDone(fnItem("")), completed]],
+	["delta null", [added(fnItem("")), argsDelta('{"a":1'), argsDelta(null), itemDone(fnItem("")), completed]],
+	["delta number", [added(fnItem("")), argsDelta('{"a":'), argsDelta(5), argsDelta("}"), itemDone(fnItem("")), completed]],
+	["done arguments absent", [added(fnItem("")), argsDelta('{"a":1}'), { type: "response.function_call_arguments.done", output_index: 0, item_id: "fc_1", sequence_number: 0 }, itemDone(fnItem("")), completed]],
+	["done arguments null", [added(fnItem("")), argsDelta('{"a":1}'), argsDone(null), itemDone(fnItem("")), completed]],
+	["done arguments number", [added(fnItem("")), argsDelta('{"a":1}'), argsDone(5), itemDone(fnItem("")), completed]],
+	["custom delta absent", [added(customItem("")), customDelta("ab"), { type: "response.custom_tool_call_input.delta", output_index: 0, item_id: "ct_1", sequence_number: 0 }, itemDone(customItem(undefined)), completed]],
+	["custom delta null", [added(customItem("")), customDelta("ab"), customDelta(null), itemDone(customItem(undefined)), completed]],
+	["custom delta number", [added(customItem("")), customDelta("ab"), customDelta(5), customDelta(123), customDelta("c"), itemDone(customItem(undefined)), completed]],
+	["custom delta null after close", [added(customItem("")), customDelta("ab"), customDone("ab"), customDelta(null), completed]],
+	["custom item input null", [added(customItem("")), customDelta("ab"), itemDone({ ...customItem(undefined), input: null }), completed]],
+	["custom item input null after close", [added(customItem("")), customDelta("ab"), customDone("ab"), itemDone({ ...customItem(undefined), input: null }), completed]],
+	// Halves of a pair in two deltas, then the complete arguments: they
+	// continue the deltas by UTF-16 code unit.
+	["half pairs", [added(fnItem("")), argsDelta(`{"s":"x${HIGH}`), argsDelta(`${LOW}y"}`), argsDone(`{"s":"x${SMILE}y"}`), itemDone(fnItem(`{"s":"x${SMILE}y"}`)), completed]],
+	["done completes a pair", [added(fnItem("")), argsDelta(`{"s":"x${HIGH}`), argsDone(`{"s":"x${SMILE}y"}`), itemDone(fnItem("")), completed]],
 );
 for (const [name, events] of responsesRows) {
 	const output = {
@@ -245,6 +277,8 @@ piBodies.push(
 	["no start", sse({ type: "start" }) + sse({ type: "toolcall_start", contentIndex: 0, id: "call_1", toolName: "write" }) + sse({ type: "toolcall_delta", contentIndex: 1, delta: '{"a":1}' }) + sse({ type: "toolcall_delta", contentIndex: 0, delta: '{"b":2' }) + piEnd({ b: 2 }) + piDone],
 	// A delta after the call ended.
 	["after end", sse({ type: "start" }) + sse({ type: "toolcall_start", contentIndex: 0, id: "call_1", toolName: "write" }) + sse({ type: "toolcall_delta", contentIndex: 0, delta: '{"b":2' }) + piEnd({ b: 2 }) + sse({ type: "toolcall_delta", contentIndex: 0, delta: "}" }) + piDone],
+	["number delta", sse({ type: "start" }) + sse({ type: "toolcall_start", contentIndex: 0, id: "call_1", toolName: "write" }) + sse({ type: "toolcall_delta", contentIndex: 0, delta: '{"a":' }) + sse({ type: "toolcall_delta", contentIndex: 0, delta: 5 }) + piEnd({ a: 5 }) + piDone],
+	["half pairs", sse({ type: "start" }) + sse({ type: "toolcall_start", contentIndex: 0, id: "call_1", toolName: "write" }) + sse({ type: "toolcall_delta", contentIndex: 0, delta: `{"s":"x${HIGH}` }) + sse({ type: "toolcall_delta", contentIndex: 0, delta: `${LOW}y"}` }) + piEnd({ s: "z" }) + piDone],
 );
 for (const [name, body] of piBodies) {
 	const result = await consume(streamPiMessages(piModel, context, { apiKey: "test", fetch: fetchOf(body) }));
@@ -256,6 +290,8 @@ for (const [name, args] of [
 	["write", { path: "a.txt", content: "hello world  ", n: [1, 2.5, -3e-7], ok: true, none: null }],
 	["nested", { a: { b: [{ c: "d\n" }] }, "2": "two", "1": "one" }],
 	["empty", {}],
+	// Chunks are cut by UTF-16 code unit, here through the astral character.
+	["astral", { a: `é${SMILE}中x` }],
 ] as const) {
 	const faux = fauxProvider({ tokenSize: { min: 1, max: 1 } });
 	faux.setResponses([fauxAssistantMessage([fauxToolCall("write", args as never, { id: "call_1" })], { stopReason: "toolUse" })]);

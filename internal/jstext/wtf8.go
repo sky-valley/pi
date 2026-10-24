@@ -2,6 +2,7 @@ package jstext
 
 import (
 	"fmt"
+	"strings"
 	"unicode/utf16"
 	"unicode/utf8"
 )
@@ -155,4 +156,67 @@ func EscapeControlChar(ch byte) string {
 	default:
 		return fmt.Sprintf(`\u%04x`, ch)
 	}
+}
+
+// CodeUnits is the UTF-16 code units of a string that may hold WTF-8
+// surrogate triples; any other byte that is not UTF-8 is the U+FFFD it
+// decodes to.
+func CodeUnits(s string) []uint16 {
+	units := make([]uint16, 0, len(s))
+	for i := 0; i < len(s); {
+		if unit, ok := WTF8Surrogate(s[i:]); ok {
+			units = append(units, uint16(unit))
+			i += 3
+			continue
+		}
+		r, size := utf8.DecodeRuneInString(s[i:])
+		units = utf16.AppendRune(units, r)
+		i += size
+	}
+	return units
+}
+
+// FromCodeUnits is the string of UTF-16 code units: a pair as its
+// character, half a pair as its WTF-8 triple (CodeUnit).
+func FromCodeUnits(units []uint16) string {
+	var b strings.Builder
+	for i := 0; i < len(units); i++ {
+		u := rune(units[i])
+		if utf16.IsSurrogate(u) && u <= 0xDBFF && i+1 < len(units) {
+			if lo := rune(units[i+1]); lo >= 0xDC00 && lo <= 0xDFFF {
+				b.WriteRune(utf16.DecodeRune(u, lo))
+				i++
+				continue
+			}
+		}
+		b.WriteString(CodeUnit(u))
+	}
+	return b.String()
+}
+
+// CutCodeUnitPrefix is JS `s.startsWith(prefix) ? s.slice(prefix.length)`,
+// by UTF-16 code unit, for strings that may hold WTF-8 surrogate triples: a
+// prefix ending with the high half of a pair is a prefix of s holding the
+// whole pair, and the rest then starts with the low half (as WTF-8).
+func CutCodeUnitPrefix(s, prefix string) (rest string, ok bool) {
+	if strings.HasPrefix(s, prefix) {
+		return s[len(prefix):], true
+	}
+	if len(prefix) < 3 {
+		return "", false
+	}
+	hi, isHigh := WTF8Surrogate(prefix[len(prefix)-3:])
+	head := prefix[:len(prefix)-3]
+	if !isHigh || hi > 0xDBFF || !strings.HasPrefix(s, head) {
+		return "", false
+	}
+	r, size := utf8.DecodeRuneInString(s[len(head):])
+	if r <= 0xFFFF {
+		return "", false
+	}
+	pairHi, lo := utf16.EncodeRune(r)
+	if pairHi != hi {
+		return "", false
+	}
+	return CodeUnit(lo) + s[len(head)+size:], true
 }

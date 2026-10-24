@@ -421,7 +421,7 @@ func streamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Transc
 		// parsed value, by exact key, each of whatever type it holds, with pi's
 		// own guards (typeof, Array.isArray, truthiness) and JS's coercions where
 		// pi concatenates or computes.
-		err = iterateOpenAISSE(respBody, ctx, onEvent, func(chunk any) error {
+		err = iterateOpenAISSE(respBody, ctx, onEvent, func(chunk any, keepingSurrogates func() any) error {
 			// OpenAI documents ChatCompletionChunk.id as the unique chat completion
 			// identifier shared by every chunk in a streamed completion.
 			// pi: `output.responseId ||= chunk.id`.
@@ -566,8 +566,9 @@ func streamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Transc
 
 			// pi: `for (const toolCall of choice.delta.tool_calls)` when it is
 			// truthy. A string iterates its characters; anything else that is
-			// not an array throws.
-			if toolCalls := jsGet(d, "tool_calls"); jsTruthy(toolCalls) {
+			// not an array throws. The calls are read keeping half a surrogate
+			// pair, which their argument deltas join again.
+			if toolCalls := jsGet(jsGet(openAIFirstChoice(keepingSurrogates()), "delta"), "tool_calls"); jsTruthy(toolCalls) {
 				var entries []any
 				switch v := toolCalls.(type) {
 				case []any:
@@ -600,18 +601,12 @@ func streamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Transc
 					// other kind is pushed empty.
 					delta := ""
 					if arguments := jsGet(jsGet(toolCall, "function"), "arguments"); jsTruthy(arguments) && b.arguments != nil {
-						text, err := jsToString(arguments)
+						b.args, b.argsOrder, delta, err = appendToolCallArguments(b.arguments, arguments)
 						if err != nil {
 							return err
 						}
-						delta = text
-						b.args, b.argsOrder = b.arguments.Append(delta)
 					} else if input := jsGet(jsGet(toolCall, "custom"), "input"); jsTruthy(input) && b.grammar != nil {
-						text, err := jsToString(input)
-						if err != nil {
-							return err
-						}
-						jsonDelta, _, gerr := b.grammar.appendDelta(text)
+						jsonDelta, _, gerr := b.grammar.appendValue(input)
 						if gerr != nil {
 							return gerr
 						}
@@ -1734,7 +1729,10 @@ func mapOpenAIFinishReasonValue(reason any) (ai.StopReason, string, error) {
 // item is — and then to handle, unless pi's `!chunk || typeof chunk !==
 // "object"` skips it: null and every scalar. An array is an object to typeof,
 // so it reaches handle, which reads no member off it.
-func iterateOpenAISSE(body io.Reader, ctx context.Context, onEvent func(any) error, handle func(chunk any) error) error {
+//
+// handle also gets the item read keeping half a surrogate pair
+// (openaiStreamItem.keepingSurrogates), for the tool-call deltas.
+func iterateOpenAISSE(body io.Reader, ctx context.Context, onEvent func(any) error, handle func(chunk any, keepingSurrogates func() any) error) error {
 	return iterateOpenAIStream(body, ctx, func(item openaiStreamItem) error {
 		if onEvent != nil {
 			if err := onEvent(item.value); err != nil {
@@ -1743,7 +1741,7 @@ func iterateOpenAISSE(body io.Reader, ctx context.Context, onEvent func(any) err
 		}
 		switch item.value.(type) {
 		case ai.OrderedObject, []any:
-			return handle(item.value)
+			return handle(item.value, item.keepingSurrogates)
 		}
 		return nil
 	})

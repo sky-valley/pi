@@ -218,3 +218,13 @@ func DecodeOrderedObject(data []byte) (map[string]any, OrderedObject, error) {
 func DecodeOrderedValue(data []byte) (any, error) {
 	return parseOrdered(data)
 }
+
+// DecodeOrderedValueKeepingSurrogates is DecodeOrderedValue, except that half
+// a surrogate pair — an escape whose other half does not follow, or a WTF-8
+// surrogate triple — is kept as its WTF-8 triple, as JSON.parse keeps the
+// code unit, rather than read as U+FFFD. Adapters read streamed tool-call
+// argument deltas with it, so a pair cut between two deltas joins again in
+// the arguments (ToolCallArgumentsStream), as it does in pi.
+func DecodeOrderedValueKeepingSurrogates(data []byte) (any, error) {
+	return parseOrderedKeepingSurrogates(data)
+}

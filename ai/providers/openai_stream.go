@@ -339,6 +339,21 @@ type openaiStreamItem struct {
 	text []byte
 }
 
+// keepingSurrogates is the item as JSON.parse makes it with half a surrogate
+// pair kept (ai.DecodeOrderedValueKeepingSurrogates) — what an adapter reads
+// a tool call's argument deltas from, so a pair cut between two deltas joins
+// again in the arguments, as in pi. It is value itself when the text escapes
+// no surrogate, the common case, which costs no second decode.
+func (item openaiStreamItem) keepingSurrogates() any {
+	if !bytes.Contains(item.text, []byte(`\ud`)) && !bytes.Contains(item.text, []byte(`\uD`)) {
+		return item.value
+	}
+	if value, err := ai.DecodeOrderedValueKeepingSurrogates(item.text); err == nil {
+		return value
+	}
+	return item.value
+}
+
 // iterateOpenAIStream is the SDK's Stream.fromSSEResponse iterator over
 // readOpenAISSE: it hands yield each item the SDK yields, decoded once.
 //

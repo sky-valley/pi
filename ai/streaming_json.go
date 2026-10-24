@@ -255,6 +255,10 @@ type StreamingJSONParser struct {
 	// growing is the open string whose change, the newest, is not filled in
 	// yet; nil for none.
 	growing *openString
+	// creditNaN is pi's copy credit after a piece with no length (see
+	// ToolCallArgumentsStream.AppendNonString): NaN, which no cost exceeds, so
+	// snapshots never lag again.
+	creditNaN bool
 }
 
 // Append reads the next piece of text and returns the changes it made, in
@@ -298,7 +302,7 @@ func (p *StreamingJSONParser) snapshot() (jsonNode, bool) {
 	if hasPending {
 		cost++
 	}
-	if cost > p.credit {
+	if cost > p.credit && !p.creditNaN {
 		return p.snap, p.hasSnap
 	}
 	p.credit -= cost
@@ -992,13 +996,28 @@ func (s *ToolCallArgumentsStream) Append(delta string) (map[string]any, OrderedO
 	return s.partial()
 }
 
+// AppendNonString is pi's append of a delta that is not a string (a number,
+// boolean or object an event held), given as the String() pi's `+=` makes of
+// it: the text grows by it, but pi's parser reads nothing of a value with no
+// length, and its copy credit becomes NaN, so snapshots never lag from here
+// on. It returns the partial arguments, which the delta does not change.
+func (s *ToolCallArgumentsStream) AppendNonString(text string) (map[string]any, OrderedObject) {
+	s.text = appendUTF16(s.text, text)
+	if s.parser == nil {
+		s.parser = &StreamingJSONParser{}
+	}
+	s.parser.changes = nil
+	s.parser.creditNaN = true
+	return s.partial()
+}
+
 // Replace takes the provider's complete argument text. When it continues the
 // text so far, it returns the missing piece as delta (hasDelta true);
 // otherwise it starts over with text. Either way it returns the partial
 // arguments of text.
 func (s *ToolCallArgumentsStream) Replace(text string) (delta string, hasDelta bool, args map[string]any, order OrderedObject) {
-	if current := s.Text(); strings.HasPrefix(text, current) {
-		delta = text[len(current):]
+	if rest, ok := jstext.CutCodeUnitPrefix(text, s.Text()); ok {
+		delta = rest
 		if delta == "" {
 			args, order = s.partial()
 		} else {

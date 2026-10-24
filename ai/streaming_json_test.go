@@ -42,6 +42,9 @@ type streamingJSONCapture struct {
 		Ops  []struct {
 			Op   string          `json:"op"`
 			Text json.RawMessage `json:"text"`
+			// Value is an appendValue op's delta, a JSON value that is not a
+			// string.
+			Value json.RawMessage `json:"value"`
 		} `json:"ops"`
 		Results []json.RawMessage `json:"results"`
 	} `json:"args"`
@@ -338,6 +341,25 @@ func TestParseToolCallArgumentsKeepsHalfASurrogatePair(t *testing.T) {
 // surrogate pair.
 var loneSurrogateEscape = regexp.MustCompile(`\\ud[89a-f][0-9a-f]{2}`)
 
+// jsValueString is String(value) of a JSON number, boolean or object.
+func jsValueString(t *testing.T, raw json.RawMessage) string {
+	t.Helper()
+	v, err := DecodeOrderedValue(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	switch v := v.(type) {
+	case float64:
+		return jstext.NumberToString(v)
+	case bool:
+		return fmt.Sprint(v)
+	case OrderedObject:
+		return "[object Object]"
+	}
+	t.Fatalf("appendValue %s: not a number, boolean or object", raw)
+	return ""
+}
+
 func samePointer(a, b map[string]any) bool {
 	return a != nil && b != nil && reflect.ValueOf(a).UnsafePointer() == reflect.ValueOf(b).UnsafePointer()
 }
@@ -372,6 +394,9 @@ func TestToolCallArgumentsStreamLikePi(t *testing.T) {
 				if o.Text != nil {
 					text = wtf8(codeUnits(t, o.Text))
 				}
+				if o.Op == "appendValue" {
+					text = jsValueString(t, o.Value)
+				}
 				ops = append(ops, op{o.Op, text})
 			}
 		}
@@ -383,8 +408,9 @@ func TestToolCallArgumentsStreamLikePi(t *testing.T) {
 		for i, o := range ops {
 			want := row.Results[i]
 			switch o.op {
-			case "append", "replace":
+			case "append", "appendValue", "replace":
 				var w struct {
+					Size      *int    `json:"size"`
 					Arguments string  `json:"arguments"`
 					Same      bool    `json:"same"`
 					Delta     *string `json:"delta"`
@@ -397,6 +423,8 @@ func TestToolCallArgumentsStreamLikePi(t *testing.T) {
 				var order OrderedObject
 				if o.op == "append" {
 					args, order = s.Append(o.text)
+				} else if o.op == "appendValue" {
+					args, order = s.AppendNonString(o.text)
 				} else {
 					delta, hasDelta, a, ord := s.Replace(o.text)
 					args, order = a, ord
@@ -407,7 +435,11 @@ func TestToolCallArgumentsStreamLikePi(t *testing.T) {
 						t.Errorf("%s op %d: text %q, pi %q", row.Name, i, s.Text(), w.Text)
 					}
 				}
-				if got := argumentsJSON(t, args, order); got != w.Arguments {
+				if got := argumentsJSON(t, args, order); w.Size != nil {
+					if jstext.CodeUnitLength(got) != *w.Size {
+						t.Errorf("%s op %d %+q: arguments length %d, pi %d", row.Name, i, o.text, jstext.CodeUnitLength(got), *w.Size)
+					}
+				} else if got != w.Arguments {
 					t.Errorf("%s op %d %+q: arguments\n got %s\n  pi %s", row.Name, i, o.text, got, w.Arguments)
 				}
 				if same := samePointer(args, prev); same != w.Same {

@@ -424,22 +424,30 @@ for (const [name, base64] of Object.entries(suite.files)) {
 }
 
 // ToolCallArgumentsStream.
-type ArgsOp = { op: "append" | "replace" | "finish"; text?: string | number[] };
+// An "appendValue" op appends `value`, a JSON value that is not a string, as
+// an adapter hands pi's append a delta an event held. A row with `sizes`
+// records each append's arguments as their JSON length.
+type ArgsOp = { op: "append" | "appendValue" | "replace" | "finish"; text?: string | number[]; value?: unknown };
 const argsRows: ({ name: string; results: unknown[] } & ({ ops: ArgsOp[] } | { doc: number }))[] = [];
 let control = 0;
 let controlSteps = 0;
 
 // A row for document `doc` appends it one code unit at a time and finishes.
-function runArgs(name: string, input: { op: "append" | "replace" | "finish"; text?: string }[] | number, checkControl = false): void {
+function runArgs(
+	name: string,
+	input: { op: "append" | "appendValue" | "replace" | "finish"; text?: string; value?: unknown }[] | number,
+	checkControl = false,
+	sizes = false,
+): void {
 	const doc = typeof input === "number" ? input : undefined;
 	const ops = typeof input === "number" ? [...chunks(corpus[input]!, 1).map((text) => ({ op: "append" as const, text })), { op: "finish" as const }] : input;
 	const args = new ToolCallArgumentsStream();
 	let previous: unknown = undefined;
 	const results: unknown[] = [];
-	for (const { op, text } of ops) {
-		if (op === "append") {
-			const value = args.append(text!);
-			results.push({ arguments: JSON.stringify(value), same: value === previous });
+	for (const { op, text, value: appended } of ops as { op: string; text?: string; value?: unknown }[]) {
+		if (op === "append" || op === "appendValue") {
+			const value = args.append((op === "append" ? text : appended) as string);
+			results.push(sizes ? { size: JSON.stringify(value).length, same: value === previous } : { arguments: JSON.stringify(value), same: value === previous });
 			if (checkControl) {
 				controlSteps++;
 				if (JSON.stringify(value) !== JSON.stringify(parseStreamingJson(args.text))) control++;
@@ -453,7 +461,10 @@ function runArgs(name: string, input: { op: "append" | "replace" | "finish"; tex
 			results.push(JSON.stringify(args.finish()));
 		}
 	}
-	const source = doc !== undefined ? { doc } : { ops: ops.map((o) => (o.text === undefined ? { op: o.op } : { op: o.op, text: piece(o.text) })) };
+	const source =
+		doc !== undefined
+			? { doc }
+			: { ops: (ops as { op: string; text?: string; value?: unknown }[]).map((o) => (o.op === "appendValue" ? { op: o.op, value: o.value } : o.text === undefined ? { op: o.op } : { op: o.op, text: piece(o.text) })) };
 	argsRows.push({ name, ...source, results });
 }
 
@@ -496,6 +507,29 @@ runArgs("split pair", [
 	{ op: "append", text: "}" },
 	{ op: "finish" },
 ]);
+// A delta that is not a string: the text grows by its String(), the parser
+// reads nothing of it, and the copy credit becomes NaN, so the preview of a
+// large open array stops lagging (the row without the value lags).
+{
+	const head = '{"a":[';
+	const tail = `${"1,".repeat(900)}1]}`.split("");
+	const ops = (value: unknown[]) => [
+		{ op: "append" as const, text: head },
+		...value.map((v) => ({ op: "appendValue" as const, value: v })),
+		...tail.map((text) => ({ op: "append" as const, text })),
+		{ op: "finish" as const },
+	];
+	runArgs("value disables lag", ops([5]), false, true);
+	runArgs("lag without value", ops([]), false, true);
+	runArgs("values", [
+		{ op: "append", text: '{"a":"x' },
+		{ op: "appendValue", value: 5 },
+		{ op: "appendValue", value: true },
+		{ op: "appendValue", value: { b: 1 } },
+		{ op: "append", text: '"}' },
+		{ op: "finish" },
+	]);
+}
 runArgs("infinity", [{ op: "append", text: '{"a":1e400,"b":[-1e999' }, { op: "append", text: "]}" }, { op: "finish" }]);
 if (control === 0) {
 	console.error("control: parseStreamingJson agrees with ToolCallArgumentsStream on every step; the corpus pins nothing");

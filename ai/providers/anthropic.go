@@ -1056,7 +1056,13 @@ func StreamAnthropic(ctx context.Context, model *ai.Model, req ai.TranscriptCont
 					if open.arguments == nil {
 						return nil
 					}
-					if b.args, b.argsOrder, err = appendToolCallArguments(open.arguments, delta[member]); err != nil {
+					// Read keeping half a surrogate pair, so a pair cut between two
+					// deltas joins again in the arguments, as in pi.
+					value, err := jsValueKeepingSurrogates(delta[member])
+					if err != nil {
+						return err
+					}
+					if b.args, b.argsOrder, pushed, err = appendToolCallArguments(open.arguments, value); err != nil {
 						return err
 					}
 					materialize()

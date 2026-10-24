@@ -289,30 +289,44 @@ func jsonValueKind[T ~string | ~[]byte](text T) byte {
 }
 
 // appendToolCallArguments is pi's `args.append(delta)` for a delta as an event
-// holds it, a JSON value or undefined, and returns the call's partial
-// arguments. A string is the delta. pi reads the length of any other value,
-// which for undefined and null throws V8's TypeError. Any other value appends
-// its String() to the text the call finishes with, as pi's `+=` does; pi's
-// parser reads nothing of it (a number, boolean or object has no length),
-// where the port's reads that text too, so only such a delta's partial
-// arguments can differ from pi's, never the finished call's.
-func appendToolCallArguments(args *ai.ToolCallArgumentsStream, delta json.RawMessage) (map[string]any, ai.OrderedObject, error) {
-	if text, ok := rawString(delta); ok {
-		partial, order := args.Append(text)
-		return partial, order, nil
+// holds it — a JSON value in DecodeOrderedValue's shapes, or jsUndefined — and
+// returns the call's partial arguments and the delta as the port's string
+// Delta carries it. A string is the delta. pi reads the length of any other
+// value, which for undefined and null throws V8's TypeError. A number,
+// boolean or object has no length: pi's `+=` appends its String() to the text
+// the call finishes with, its parser reads nothing of it, and its copy credit
+// becomes NaN (ToolCallArgumentsStream.AppendNonString); pi pushes the value
+// itself as the event's delta, which the port's string field holds as that
+// String(). An array has a length, and pi's parser reads its elements as if
+// they were the text's characters; the port appends its String() unread too.
+func appendToolCallArguments(args *ai.ToolCallArgumentsStream, delta any) (map[string]any, ai.OrderedObject, string, error) {
+	switch v := delta.(type) {
+	case string:
+		partial, order := args.Append(v)
+		return partial, order, v, nil
+	case jsUndefinedValue:
+		return nil, nil, "", errors.New("Cannot read properties of undefined (reading 'length')")
+	case nil:
+		return nil, nil, "", errors.New("Cannot read properties of null (reading 'length')")
 	}
-	switch {
-	case delta == nil:
-		return nil, nil, errors.New("Cannot read properties of undefined (reading 'length')")
-	case jsonValueKind(delta) == 'n':
-		return nil, nil, errors.New("Cannot read properties of null (reading 'length')")
-	}
-	text, err := rawToString(delta)
+	text, err := jsToString(delta)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, "", err
 	}
-	partial, order := args.Append(text)
-	return partial, order, nil
+	partial, order := args.AppendNonString(text)
+	return partial, order, text, nil
+}
+
+// jsValueKeepingSurrogates is the JS value of an event member's raw JSON:
+// jsUndefined for an absent member, otherwise the value JSON.parse makes,
+// half a surrogate pair kept (ai.DecodeOrderedValueKeepingSurrogates), as a
+// tool call's argument deltas are read so that a pair cut between two of them
+// joins again.
+func jsValueKeepingSurrogates(raw json.RawMessage) (any, error) {
+	if raw == nil {
+		return jsUndefined, nil
+	}
+	return ai.DecodeOrderedValueKeepingSurrogates(raw)
 }
 
 // sanitizeSurrogates removes unpaired UTF-16 surrogate code units (port of
