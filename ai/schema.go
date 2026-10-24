@@ -376,7 +376,10 @@ func (s *Schema) UnmarshalJSON(data []byte) error {
 				keep(key, raw) // not one schema: the tuple form [schema, ...], or a boolean
 			}
 		case "enum":
-			_ = json.Unmarshal(raw, &s.Enum)
+			if json.Unmarshal(raw, &s.Enum) != nil || len(s.Enum) == 0 {
+				s.Enum = nil
+				keep(key, raw) // [], null or not an array: still present, as in pi
+			}
 		case "default":
 			_ = json.Unmarshal(raw, &s.Default)
 		case "additionalProperties":

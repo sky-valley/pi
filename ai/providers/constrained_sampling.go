@@ -49,8 +49,9 @@ func isStructuredSchema(schema *ai.Schema) bool {
 	if schema == nil {
 		return false
 	}
+	_, otherItems := schema.Extra["items"] // items that is not one schema
 	return schema.Type == "object" || schema.Type == "array" ||
-		schema.Properties != nil || schema.Items != nil
+		schema.Properties != nil || schema.Items != nil || otherItems
 }
 
 // schemaAllowsNull reports whether a schema accepts null (port of
@@ -137,11 +138,17 @@ func makeJSONSchemaNodeStrict(schema *ai.Schema, isUnsupportedKeyword unsupporte
 	}
 
 	if schema.Items != nil {
-		// pi rejects tuple-form items ("tuple schemas are unsupported"), which
-		// ai.Schema cannot represent; Items is always a single schema.
 		if err := makeJSONSchemaNodeStrict(schema.Items, isUnsupportedKeyword); err != nil {
 			return err
 		}
+	} else if items, ok := schema.Extra["items"]; ok {
+		// ai.Schema keeps an items value that is not one schema in Extra. pi
+		// refuses the tuple form, and recursing into anything else that is
+		// not an object hits its boolean-schema refusal.
+		if _, tuple := items.([]any); tuple {
+			return &unsupportedStrictJSONSchemaError{"tuple schemas are unsupported"}
+		}
+		return &unsupportedStrictJSONSchemaError{"boolean schemas are unsupported"}
 	}
 
 	// pi compares the serialized type, so a nullable object (["object","null"])
