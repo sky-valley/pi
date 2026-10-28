@@ -19,9 +19,9 @@ import (
 
 // streamingToolArgumentsCaptureFile is what testdata/streaming-tool-arguments/
 // capture.mts recorded from pi's anthropic-messages, openai-completions,
-// openai-responses, pi-messages and faux adapters at f715a15c1: the partial
+// openai-responses, pi-messages and faux adapters at 89c921d8b: the partial
 // arguments on every toolcall event and the message each stream ends with.
-const streamingToolArgumentsCaptureFile = "testdata/streaming-tool-arguments/streaming-tool-arguments-f715a15c1.json"
+const streamingToolArgumentsCaptureFile = "testdata/streaming-tool-arguments/streaming-tool-arguments-89c921d8b.json"
 
 // jsArgumentsText is JSON.stringify of a value in DecodeOrderedValue's or
 // encoding/json's shapes, lone surrogates (WTF-8) escaped as JS writes them.

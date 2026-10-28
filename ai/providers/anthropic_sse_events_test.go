@@ -5,12 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"math"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"reflect"
-	"strconv"
 	"strings"
 	"testing"
 
@@ -230,58 +228,15 @@ func splitAnthropicParseFailure(msg string) (head, cause, tail string, ok bool) 
 }
 
 // jsonStringify renders a value an observer received as JSON.stringify renders
-// the value JSON.parse made: an ai.OrderedObject's members in the order it
-// holds them, strings escaped as JavaScript escapes them (jsQuote: no HTML
-// escaping, at any depth), and numbers in JavaScript's form, a non-finite one
-// as null. It walks the value itself rather than going through encoding/json,
-// whose float and string encoders differ from JSON.stringify's on each count.
+// the value JSON.parse made (stringifyOrderedValue).
 func jsonStringify(t *testing.T, v any) string {
 	t.Helper()
-	var b strings.Builder
-	writeJSONStringify(t, &b, v)
-	return b.String()
-}
-
-func writeJSONStringify(t *testing.T, b *strings.Builder, v any) {
-	t.Helper()
-	switch x := v.(type) {
-	case ai.OrderedObject:
-		b.WriteByte('{')
-		for i, f := range x {
-			if i > 0 {
-				b.WriteByte(',')
-			}
-			b.WriteString(jsQuote(f.Key))
-			b.WriteByte(':')
-			writeJSONStringify(t, b, f.Value)
-		}
-		b.WriteByte('}')
-	case []any:
-		b.WriteByte('[')
-		for i, e := range x {
-			if i > 0 {
-				b.WriteByte(',')
-			}
-			writeJSONStringify(t, b, e)
-		}
-		b.WriteByte(']')
-	case string:
-		b.WriteString(jsQuote(x))
-	case float64:
-		if math.IsInf(x, 0) || math.IsNaN(x) {
-			b.WriteString("null")
-		} else {
-			b.WriteString(jsNumber(strconv.FormatFloat(x, 'g', -1, 64)))
-		}
-	case bool:
-		b.WriteString(strconv.FormatBool(x))
-	case nil:
-		b.WriteString("null")
-	default:
+	s, ok := stringifyOrderedValue(v)
+	if !ok {
 		// Errorf, not Fatalf: the observer runs on the stream's goroutine.
-		t.Errorf("observer received %T, which JSON.parse never produces", v)
-		b.WriteString("<unrenderable>")
+		t.Errorf("observer received %#v, which holds a type JSON.parse never produces", v)
 	}
+	return s
 }
 
 // providerStreamObserver records what OnProviderStreamEvent receives, and on

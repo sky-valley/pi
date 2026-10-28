@@ -273,7 +273,8 @@ const piBodies: [string, string][] = texts.map((pieces, i) => [
 	sse({ type: "start" }) + sse({ type: "toolcall_start", contentIndex: 0, id: "call_1", toolName: "write" }) + pieces.map((delta) => sse({ type: "toolcall_delta", contentIndex: 0, delta })).join("") + piEnd({ ok: true }) + piDone,
 ]);
 piBodies.push(
-	// A delta for a call that never started.
+	// A delta for a call that never started, at an index with no block: the
+	// converter's contentIndex check fails the stream (upstream 89c921d8b).
 	["no start", sse({ type: "start" }) + sse({ type: "toolcall_start", contentIndex: 0, id: "call_1", toolName: "write" }) + sse({ type: "toolcall_delta", contentIndex: 1, delta: '{"a":1}' }) + sse({ type: "toolcall_delta", contentIndex: 0, delta: '{"b":2' }) + piEnd({ b: 2 }) + piDone],
 	// A delta after the call ended.
 	["after end", sse({ type: "start" }) + sse({ type: "toolcall_start", contentIndex: 0, id: "call_1", toolName: "write" }) + sse({ type: "toolcall_delta", contentIndex: 0, delta: '{"b":2' }) + piEnd({ b: 2 }) + sse({ type: "toolcall_delta", contentIndex: 0, delta: "}" }) + piDone],

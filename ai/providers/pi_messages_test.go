@@ -329,6 +329,38 @@ func TestPiMessagesMissingAPIKey(t *testing.T) {
 	}
 }
 
+// TestPiMessagesRejectsContentIndexesThatAreNotTheNextOrAnExistingBlock
+// transliterates upstream's 'rejects content indexes that are not the next or
+// an existing block' (89c921d8b): a far start, a "__proto__" start or end, and
+// a delta before any block each fail the stream with the converter's error,
+// and the message holds at most the one block started before. upstream's
+// Array.prototype pollution check has no Go counterpart. The error text is
+// pinned exactly; pi's for each case is in the events capture.
+func TestPiMessagesRejectsContentIndexesThatAreNotTheNextOrAnExistingBlock(t *testing.T) {
+	for _, tc := range []struct {
+		events []string
+		want   string
+	}{
+		{[]string{`{"type":"text_start","contentIndex":4294967000}`}, "Invalid contentIndex 4294967000 in pi-messages text_start event"},
+		{[]string{`{"type":"text_start","contentIndex":"__proto__"}`}, `Invalid contentIndex "__proto__" in pi-messages text_start event`},
+		{
+			[]string{`{"type":"text_start","contentIndex":0}`, `{"type":"toolcall_end","contentIndex":"__proto__","toolCall":{"polluted":true}}`},
+			`Invalid contentIndex "__proto__" in pi-messages toolcall_end event`,
+		},
+		{[]string{`{"type":"text_delta","contentIndex":0,"delta":"x"}`}, "Invalid contentIndex 0 in pi-messages text_delta event"},
+	} {
+		frames := append([]string{`{"type":"start"}`}, tc.events...)
+		frames = append(frames, `{"type":"done","reason":"stop","usage":`+piMessagesUsageJSON+`}`)
+		_, _, message := streamPiMessagesEvents(t, t.Context(), piMessagesSSE(frames...), ai.StreamOptions{})
+		if message.StopReason != ai.StopError || message.ErrorMessage != tc.want {
+			t.Errorf("%v: stopReason = %s, errorMessage = %q; want error %q", tc.events, message.StopReason, message.ErrorMessage, tc.want)
+		}
+		if len(message.Content) > 1 {
+			t.Errorf("%v: content has %d blocks, want at most 1", tc.events, len(message.Content))
+		}
+	}
+}
+
 func TestPiMessagesNoTerminalEvent(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("content-type", "text/event-stream")

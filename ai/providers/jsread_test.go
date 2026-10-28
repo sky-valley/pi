@@ -2,7 +2,6 @@ package providers
 
 import (
 	"encoding/json"
-	"strconv"
 	"testing"
 )
 
@@ -71,50 +70,8 @@ func TestRawStrictEqualMatchesNode(t *testing.T) {
 	}
 }
 
-// TestRawPropertyKeyAndCount pins the property key a value names and the
-// array slot it addresses, and which counts an int holds. Each key and slot
-// is node's: `const a = []; a[JSON.parse(in)] = 1`, then Object.keys(a) and
-// whether a.length grew.
-func TestRawPropertyKeyAndCount(t *testing.T) {
-	for _, tc := range []struct {
-		in     json.RawMessage
-		key    string
-		slot   int
-		isSlot bool
-	}{
-		{rawJSON(`0`), "0", 0, true},
-		{rawJSON(`-0`), "0", 0, true},
-		{rawJSON(`2.0`), "2", 2, true},
-		{rawJSON(`1e1`), "10", 10, true},
-		{rawJSON(`"1"`), "1", 1, true},
-		{rawJSON(`[1]`), "1", 1, true},
-		{rawJSON(`[[2]]`), "2", 2, true},
-		{rawJSON(`4294967295`), "4294967295", 0, false},
-		{rawJSON(`1.5`), "1.5", 0, false},
-		{rawJSON(`-1`), "-1", 0, false},
-		{rawJSON(`"01"`), "01", 0, false},
-		{rawJSON(`"1.0"`), "1.0", 0, false},
-		{rawJSON(`[]`), "", 0, false},
-		{rawJSON(`null`), "null", 0, false},
-		{rawJSON(`true`), "true", 0, false},
-		{rawJSON(`{}`), "[object Object]", 0, false},
-		{rawJSON(`1e21`), "1e+21", 0, false},
-		{rawJSON(`1e400`), "Infinity", 0, false},
-		{nil, "undefined", 0, false},
-	} {
-		key, slot, isSlot, err := rawPropertyKey(tc.in)
-		if err != nil || key != tc.key || slot != tc.slot || isSlot != tc.isSlot {
-			t.Errorf("rawPropertyKey(%s) = (%q, %d, %v, %v), want (%q, %d, %v)", tc.in, key, slot, isSlot, err, tc.key, tc.slot, tc.isSlot)
-		}
-	}
-	// ToPropertyKey throws V8's TypeError for a value with no string form.
-	if _, _, _, err := rawPropertyKey(rawJSON(`{"toString":1}`)); err == nil || err.Error() != "Cannot convert object to primitive value" {
-		t.Errorf("rawPropertyKey({\"toString\":1}) error = %v, want V8's TypeError", err)
-	}
-	// The largest array index, 2^32-2, is a slot only where an int holds it.
-	if _, slot, isSlot, _ := rawPropertyKey(rawJSON(`4294967294`)); isSlot != (strconv.IntSize == 64) || (isSlot && uint64(slot) != 4294967294) {
-		t.Errorf("rawPropertyKey(4294967294) = (%d, %v) on a %d-bit int", slot, isSlot, strconv.IntSize)
-	}
+// TestRawCount pins which counts an int holds.
+func TestRawCount(t *testing.T) {
 	for _, tc := range []struct {
 		in    json.RawMessage
 		count int

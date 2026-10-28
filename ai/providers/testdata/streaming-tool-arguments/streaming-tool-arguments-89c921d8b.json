@@ -1,5 +1,5 @@
 {
-	"source": "pi f715a15c1 packages/ai/src (src capture), node v26.4.0",
+	"source": "pi 89c921d8b packages/ai/src (src capture), node v26.4.0",
 	"rows": [
 		{
 			"api": "anthropic-messages",
@@ -4679,27 +4679,11 @@
 					"type": "toolcall_start",
 					"contentIndex": 0,
 					"arguments": "{}"
-				},
-				{
-					"type": "toolcall_delta",
-					"contentIndex": 1,
-					"delta": "{\"a\":1}"
-				},
-				{
-					"type": "toolcall_delta",
-					"contentIndex": 0,
-					"delta": "{\"b\":2",
-					"arguments": "{\"b\":2}"
-				},
-				{
-					"type": "toolcall_end",
-					"contentIndex": 0,
-					"arguments": "{\"b\":2}"
 				}
 			],
-			"stopReason": "toolUse",
-			"errorMessage": null,
-			"content": "[{\"type\":\"toolCall\",\"id\":\"call_1\",\"name\":\"write\",\"arguments\":{\"b\":2}}]"
+			"stopReason": "error",
+			"errorMessage": "Invalid contentIndex 1 in pi-messages toolcall_delta event",
+			"content": "[]"
 		},
 		{
 			"api": "pi-messages",

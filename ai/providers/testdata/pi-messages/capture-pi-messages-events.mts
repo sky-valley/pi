@@ -117,12 +117,21 @@ const cases: Case[] = [
 			"event: ping\n\n" +
 			framed(textStart, textDelta, textEnd, done),
 	},
-	// A truthy value that is not an object is observed, then converted into an
-	// event with no type (pi returns `{...event, partial}`).
+	// A truthy array is observed, then converted into an event with no type
+	// (pi returns `{...event, partial}`): `"contentIndex" in [1]` is false.
 	{
-		name: "truthyNonObjectsAreObservedAndPushed",
-		sse: framed(start) + frame("5") + frame('"x"') + frame("true") + frame("[1]") + framed(textStart, textDelta, textEnd, done),
+		name: "truthyArrayIsObservedAndPushed",
+		sse: framed(start) + frame("[1]") + framed(textStart, textDelta, textEnd, done),
 	},
+	// Any other truthy value that is not an object is observed, then fails the
+	// stream: the converter's `"contentIndex" in event` throws V8's TypeError
+	// for a primitive, which names it as String() writes it (upstream
+	// 89c921d8b).
+	{ name: "truthyNumberFrameFails", sse: framed(start) + frame("5") + framed(textStart, textDelta, textEnd, done) },
+	{ name: "truthyBigNumberFrameFails", sse: framed(start) + frame("1e21") + framed(done) },
+	{ name: "truthyInfinityFrameFails", sse: framed(start) + frame("-1e400") + framed(done) },
+	{ name: "truthyStringFrameFails", sse: framed(start) + frame('"x \\"y\\" \\u00e9"') + framed(done) },
+	{ name: "truthyTrueFrameFails", sse: framed(start) + frame("true") + framed(done) },
 	// Only a frame's FIRST data line is read, trimmed as String.prototype.trim.
 	{
 		name: "firstDataLineOnly",
@@ -155,17 +164,18 @@ const cases: Case[] = [
 			framed(textEnd, done),
 	},
 	// JSON.parse reads a number past float64's range as +-Infinity (observed
-	// as JSON.stringify's null), which is truthy, and one below the smallest
-	// subnormal as 0, which is not: the frame is skipped.
+	// as JSON.stringify's null), and one below the smallest subnormal as 0,
+	// which is falsy: the frame is skipped. A bare Infinity is truthy, so it is
+	// observed and then fails the stream as any truthy primitive does.
 	{
 		name: "overflowNumbersAreObserved",
 		sse:
 			framed(start) +
-			frame("1e400") +
-			frame("-1e400") +
 			frame("1e-400") +
 			frame('{"type":"gateway_note","x":1e400}') +
-			framed(textStart, textDelta, textEnd, done),
+			framed(textStart, textDelta, textEnd) +
+			frame("1e400") +
+			framed(done),
 	},
 	// observed is JSON.stringify text: <, >, &, U+2028 and U+2029 are written as
 	// themselves, however deep in the event they sit.
@@ -174,8 +184,8 @@ const cases: Case[] = [
 		sse: framed(start, textStart, { ...textDelta, delta: markup }, { ...textEnd, content: markup }, done),
 	},
 	// A member of an unexpected JSON type never drops the event: pi reads each
-	// property as whatever it holds. An unknown type with a string contentIndex
-	// and an object with no type are observed and pushed; a delta that is not a
+	// property as whatever it holds. An unknown type and an object with no type
+	// are observed and pushed; a delta that is not a
 	// string is appended as String() writes it (5 as "5", none as "undefined",
 	// null as "null", [1,[2,null]] as "1,2,"); counts written 10.0 and 5e0 are
 	// the numbers 10 and 5; and a rewrite's members, whatever they hold, are the
@@ -184,7 +194,7 @@ const cases: Case[] = [
 		name: "mistypedMembersStillConvert",
 		sse:
 			framed(start) +
-			frame('{"type":"gateway_note","contentIndex":"x"}') +
+			frame('{"type":"gateway_note","id":5}') +
 			frame('{"note":1}') +
 			framed(textStart) +
 			frame('{"type":"text_delta","contentIndex":0,"delta":5}') +
@@ -197,11 +207,12 @@ const cases: Case[] = [
 					'"rewrite":{"policyId":"p","policyVersion":"2","changed":true,"extra":[1]}}',
 			),
 	},
-	// A property is read by its exact name: "Type" and "DELTA" are not the
-	// event's type and delta, so the frame converts as an event with no type.
+	// A property is read by its exact name: "Type", "ContentIndex" and "DELTA"
+	// are not the event's type, contentIndex and delta, so the frame converts
+	// as an event with no type.
 	{
 		name: "memberNamesMatchExactly",
-		sse: framed(start, textStart) + frame('{"Type":"text_delta","contentIndex":0,"DELTA":"x"}') + framed(textDelta, done),
+		sse: framed(start, textStart) + frame('{"Type":"text_delta","ContentIndex":0,"DELTA":"x"}') + framed(textDelta, done),
 	},
 	// A delta with no string form (an object with its own toString member)
 	// makes pi's `+=` throw V8's TypeError, which fails the stream.
@@ -209,41 +220,143 @@ const cases: Case[] = [
 		name: "deltaWithNoStringFormFails",
 		sse: framed(start, textStart) + frame('{"type":"text_delta","contentIndex":0,"delta":{"toString":1}}') + framed(textEnd, done),
 	},
-	// contentIndex is a property key of the content array: any value whose
-	// String() is a canonical array index addresses that slot ("1", [1] and
-	// 1.0 all address slot 1, -0 slot 0), and any other ("01", 1.5, -1, an
-	// absent one as "undefined") names an ordinary property, which is not
-	// content: the message never holds it, and it never clobbers a slot.
+	// A contentIndex the event carries must be an integer number from 0 to the
+	// last block — to the next block for a *_start — or the stream fails
+	// (upstream 89c921d8b). Any number spelling that denotes such an integer
+	// is one (-0 is 0, 1.0 and 1e0 are 1), and a start at an existing block
+	// replaces it.
 	{
-		name: "contentIndexIsAPropertyKey",
+		name: "contentIndexNumberSpellings",
 		sse:
 			framed(start, textStart) +
 			frame('{"type":"text_delta","contentIndex":-0,"delta":"a"}') +
-			frame('{"type":"text_start","contentIndex":"1"}') +
-			frame('{"type":"text_delta","contentIndex":[1],"delta":"b"}') +
-			frame('{"type":"text_delta","contentIndex":1.0,"delta":"c"}') +
-			frame('{"type":"text_start"}') +
-			frame('{"type":"text_delta","delta":"x"}') +
-			frame('{"type":"text_start","contentIndex":"01"}') +
-			frame('{"type":"text_delta","contentIndex":"01","delta":"y"}') +
-			frame('{"type":"thinking_start","contentIndex":1.5}') +
-			frame('{"type":"thinking_delta","contentIndex":1.5,"delta":"z"}') +
-			frame('{"type":"thinking_end","contentIndex":1.5,"content":"z"}') +
-			frame('{"type":"toolcall_start","contentIndex":-1,"id":"t1","toolName":"read"}') +
-			frame('{"type":"toolcall_delta","contentIndex":-1,"delta":"{}"}') +
-			frame('{"type":"toolcall_end","contentIndex":-1}') +
+			frame('{"type":"thinking_start","contentIndex":1.0}') +
+			frame('{"type":"thinking_delta","contentIndex":1e0,"delta":"b"}') +
+			frame('{"type":"text_start","contentIndex":0.0}') +
+			frame('{"type":"text_delta","contentIndex":0,"delta":"c"}') +
+			frame('{"type":"text_end","contentIndex":0E0,"content":"c"}') +
 			framed(done),
 	},
-	// The partial tool JSON is kept in a Map keyed by the contentIndex VALUE
-	// (SameValueZero), so "0" and 0 address one block but two buffers.
+	// An event without a contentIndex is not checked: its index is undefined,
+	// which names the content array's ordinary property "undefined" — not
+	// content, so the message never holds the block.
+	{
+		name: "absentContentIndexNamesAProperty",
+		sse:
+			framed(start, textStart) +
+			frame('{"type":"text_start"}') +
+			frame('{"type":"text_delta","delta":"x"}') +
+			frame('{"type":"text_end","content":"x"}') +
+			frame('{"type":"toolcall_start","id":"t1","toolName":"read"}') +
+			frame('{"type":"toolcall_delta","delta":"{}"}') +
+			frame('{"type":"toolcall_end"}') +
+			framed(textDelta, done),
+	},
+	// Without a block there, an absent index reads a property of undefined,
+	// and V8's TypeError fails the stream: a delta reads the block's text or
+	// thinking, and an end is Object.assign onto it.
+	{ name: "absentIndexTextDeltaFails", sse: framed(start) + frame('{"type":"text_delta","delta":"x"}') + framed(done) },
+	{ name: "absentIndexThinkingDeltaFails", sse: framed(start) + frame('{"type":"thinking_delta","delta":"x"}') + framed(done) },
+	{ name: "absentIndexTextEndFails", sse: framed(start) + frame('{"type":"text_end","content":"x"}') + framed(done) },
+	// The error names the index as JSON.stringify writes it, and the event's
+	// type. upstream's suite: a far start, a "__proto__" start and end, and a
+	// delta before any block.
+	{ name: "farStartIndexFails", sse: framed(start) + frame('{"type":"text_start","contentIndex":4294967000}') + framed(done) },
+	{ name: "protoStartIndexFails", sse: framed(start) + frame('{"type":"text_start","contentIndex":"__proto__"}') + framed(done) },
+	{
+		name: "protoToolcallEndIndexFails",
+		sse:
+			framed(start, textStart) +
+			frame('{"type":"toolcall_end","contentIndex":"__proto__","toolCall":{"polluted":true}}') +
+			framed(done),
+	},
+	{ name: "textDeltaWithoutBlockFails", sse: framed(start) + frame('{"type":"text_delta","contentIndex":0,"delta":"x"}') + framed(done) },
+	// A start may add only the next block, and every other event needs one.
+	{ name: "startPastTheNextBlockFails", sse: framed(start) + frame('{"type":"text_start","contentIndex":1}') + framed(done) },
+	{ name: "textEndWithoutBlockFails", sse: framed(start) + frame('{"type":"text_end","contentIndex":3,"content":"x"}') + framed(done) },
+	{
+		name: "toolcallEndWithoutBlockFails",
+		sse:
+			framed(start) +
+			frame('{"type":"toolcall_end","contentIndex":0,"toolCall":{"type":"toolCall","id":"t1","name":"read","arguments":{}}}') +
+			framed(done),
+	},
+	// The check runs before the delta looks for an arguments stream, so a
+	// toolcall_delta for a block that was never started fails, while one for
+	// a call that has ended — no stream, but a block — still changes nothing
+	// (upstream f715a15c1).
+	{
+		name: "toolcallDeltaWithoutBlockFails",
+		sse: framed(start) + frame('{"type":"toolcall_delta","contentIndex":0,"delta":"{}"}') + framed(done),
+	},
+	{
+		name: "toolcallDeltaAfterTheEndIsIgnored",
+		sse:
+			framed(start) +
+			frame('{"type":"toolcall_start","contentIndex":0,"id":"t1","toolName":"read"}') +
+			frame('{"type":"toolcall_end","contentIndex":0}') +
+			frame('{"type":"toolcall_delta","contentIndex":0,"delta":"{\\"a\\":1}"}') +
+			framed(done),
+	},
+	// JSON.stringify of the wire value: a string quoted and escaped, a number
+	// as JavaScript writes it (1.5, -1, 1e3 as 1000, 1E2 as 100, 1.0 as 1, -0
+	// as 0, 1e21 as 1e+21, past float64's range as null), and an object or
+	// array as JSON.parse built it (index keys first, a repeated key once,
+	// with its last value).
+	...(
+		[
+			["String", '"1"'],
+			["Fraction", "1.5"],
+			["Negative", "-1"],
+			["Exponent", "1e3"],
+			["UpperExponent", "1E2"],
+			["WholeFraction", "1.0"],
+			["NegativeZero", "-0"],
+			["Huge", "1e21"],
+			["Overflow", "1e400"],
+			["Null", "null"],
+			["True", "true"],
+			["Array", '[1,"a",[null]]'],
+			["Object", '{"b":1,"1":2,"__proto__":3,"b":4}'],
+			["EscapedString", '"a\\"b\\\\c\\u0001\\n\\u2028<&>\\u00e9\\ud83d\\ude00"'],
+			["LoneSurrogate", '"\\ud800x"'],
+		] as const
+	).map(([kind, index]) => ({
+		name: `indexRendering${kind}`,
+		sse: framed(start) + frame(`{"type":"text_delta","contentIndex":${index},"delta":"x"}`) + framed(done),
+	})),
+	// Every event carrying a contentIndex is checked — an unknown type, a
+	// terminal event — against the next block when its type ends in "_start".
+	{
+		name: "unknownTypeIndexIsChecked",
+		sse: framed(start, textStart) + frame('{"type":"gateway_note","contentIndex":1}') + framed(done),
+	},
+	{
+		name: "unknownStartTypeMayNameTheNextBlock",
+		sse: framed(start, textStart) + frame('{"type":"gateway_start","contentIndex":1}') + framed(textDelta, textEnd, done),
+	},
+	{ name: "doneIndexIsChecked", sse: framed(start, textStart, textDelta) + frame(JSON.stringify({ ...done, contentIndex: 1 })) },
+	{ name: "doneWithAnExistingIndexIsDone", sse: framed(start, textStart, textDelta) + frame(JSON.stringify({ ...done, contentIndex: 0 })) },
+	{
+		name: "errorIndexIsChecked",
+		sse: framed(start) + frame(JSON.stringify({ type: "error", reason: "error", usage, errorMessage: "backend failed", contentIndex: 0 })),
+	},
+	// The check reads `event.type.endsWith`, which throws V8's TypeError for
+	// an event with a contentIndex and no string type.
+	{ name: "indexWithoutTypeFails", sse: framed(start) + frame('{"contentIndex":0}') + framed(done) },
+	{ name: "indexWithNullTypeFails", sse: framed(start) + frame('{"type":null,"contentIndex":0}') + framed(done) },
+	{ name: "indexWithNumberTypeFails", sse: framed(start) + frame('{"type":5,"contentIndex":0}') + framed(done) },
+	{ name: "indexWithArrayTypeFails", sse: framed(start) + frame('{"type":["text_start"],"contentIndex":0}') + framed(done) },
+	// The partial tool JSON is kept in a Map keyed by the contentIndex number
+	// (SameValueZero), so 0, -0 and 0.0 share one buffer.
 	{
 		name: "toolJsonIsKeyedByTheIndexValue",
 		sse:
 			framed(start) +
 			frame('{"type":"toolcall_start","contentIndex":0,"id":"t1","toolName":"read"}') +
-			frame('{"type":"toolcall_delta","contentIndex":"0","delta":"{\\"a\\":1"}') +
-			frame('{"type":"toolcall_delta","contentIndex":0,"delta":"{\\"b\\":2"}') +
-			frame('{"type":"toolcall_delta","contentIndex":-0,"delta":",\\"c\\":3}"}') +
+			frame('{"type":"toolcall_delta","contentIndex":0,"delta":"{\\"a\\":1"}') +
+			frame('{"type":"toolcall_delta","contentIndex":-0,"delta":",\\"b\\":2"}') +
+			frame('{"type":"toolcall_delta","contentIndex":0.0,"delta":"}"}') +
 			framed(done),
 	},
 	// toolcall_end is Object.assign: the end event's toolCall members replace
@@ -276,44 +389,6 @@ const cases: Case[] = [
 			frame('{"type":"thinking_start","contentIndex":1}') +
 			frame('{"type":"thinking_end","contentIndex":1,"content":"t","contentSignature":"s2","redacted":true}') +
 			frame('{"type":"thinking_end","contentIndex":1,"content":"u"}') +
-			framed(done),
-	},
-	// A block started past the end of the content array leaves a hole before
-	// it, which the finished message holds as it is: JSON.stringify writes it
-	// null.
-	{
-		name: "holeBeforeABlockIsKept",
-		sse:
-			framed(start) +
-			frame('{"type":"text_start","contentIndex":1}') +
-			frame('{"type":"text_delta","contentIndex":1,"delta":"a"}') +
-			framed(done),
-	},
-	// An event for a block that was never started reads a property of
-	// undefined, and V8's TypeError fails the stream: a delta reads the
-	// block's text or thinking, a toolcall_delta sets its arguments, and an end
-	// is Object.assign onto it. A hole in the array is undefined too.
-	{ name: "textDeltaWithoutBlockFails", sse: framed(start) + frame('{"type":"text_delta","contentIndex":0,"delta":"x"}') + framed(done) },
-	{
-		name: "thinkingDeltaIntoAHoleFails",
-		sse:
-			framed(start) +
-			frame('{"type":"text_start","contentIndex":2}') +
-			frame('{"type":"thinking_delta","contentIndex":1,"delta":"x"}') +
-			framed(done),
-	},
-	{ name: "textEndWithoutBlockFails", sse: framed(start) + frame('{"type":"text_end","contentIndex":3,"content":"x"}') + framed(done) },
-	// A delta for a call that never started has no arguments stream and
-	// changes nothing (upstream f715a15c1).
-	{
-		name: "toolcallDeltaWithoutBlockIsIgnored",
-		sse: framed(start) + frame('{"type":"toolcall_delta","contentIndex":0,"delta":"{}"}') + framed(done),
-	},
-	{
-		name: "toolcallEndWithoutBlockFails",
-		sse:
-			framed(start) +
-			frame('{"type":"toolcall_end","contentIndex":0,"toolCall":{"type":"toolCall","id":"t1","name":"read","arguments":{}}}') +
 			framed(done),
 	},
 	// The rewrite diagnostic's details are `{ ...rewrite }`: the spread lists
@@ -377,7 +452,7 @@ const cases: Case[] = [
 	{ name: "leadingBOMIsDropped", sse: BOM + framed(...wireEvents) },
 	// ...while one anywhere else is text: here it leads a frame's line, which is
 	// then no `data:` line, so the frame is passed over and the delta after it
-	// finds no block.
+	// names a block that was never started.
 	{ name: "bomAfterTheStartIsText", sse: framed(start) + BOM + framed(textStart, textDelta, textEnd, done) },
 	// Invalid UTF-8 becomes one U+FFFD per maximal subpart: a truncated
 	// sequence is one, an encoded surrogate, an overlong form and a stray byte

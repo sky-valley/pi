@@ -63,6 +63,62 @@ func jsEscape(s string) string {
 // jsQuote renders s the way `JSON.stringify(s)` does, quotes included.
 func jsQuote(s string) string { return `"` + jsEscape(s) + `"` }
 
+// stringifyOrderedValue is JSON.stringify of a value in
+// ai.DecodeOrderedValue's shapes, the value JSON.parse built: an object's
+// members in its own-property order, strings as jsQuote writes them (a lone
+// surrogate the decode kept as escaped), numbers as JavaScript writes them and
+// a non-finite one as null. ok is false for a value of any other type, which
+// JSON.parse never builds.
+func stringifyOrderedValue(v any) (string, bool) {
+	var b strings.Builder
+	ok := writeOrderedValue(&b, v)
+	return b.String(), ok
+}
+
+func writeOrderedValue(b *strings.Builder, v any) bool {
+	switch x := v.(type) {
+	case ai.OrderedObject:
+		b.WriteByte('{')
+		for i, f := range x {
+			if i > 0 {
+				b.WriteByte(',')
+			}
+			b.WriteString(jsQuote(f.Key))
+			b.WriteByte(':')
+			if !writeOrderedValue(b, f.Value) {
+				return false
+			}
+		}
+		b.WriteByte('}')
+	case []any:
+		b.WriteByte('[')
+		for i, e := range x {
+			if i > 0 {
+				b.WriteByte(',')
+			}
+			if !writeOrderedValue(b, e) {
+				return false
+			}
+		}
+		b.WriteByte(']')
+	case string:
+		b.WriteString(jsQuote(x))
+	case float64:
+		if math.IsInf(x, 0) || math.IsNaN(x) {
+			b.WriteString("null")
+		} else {
+			b.WriteString(jsNumber(strconv.FormatFloat(x, 'g', -1, 64)))
+		}
+	case bool:
+		b.WriteString(strconv.FormatBool(x))
+	case nil:
+		b.WriteString("null")
+	default:
+		return false
+	}
+	return true
+}
+
 // jsStringify renders a JSON document the way JavaScript's
 // `JSON.stringify(JSON.parse(raw))` does. Go's encoding/json cannot be used:
 // marshalling a decoded map sorts its keys, whereas JS reproduces the parsed
