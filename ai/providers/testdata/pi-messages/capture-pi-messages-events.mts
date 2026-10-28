@@ -273,6 +273,12 @@ const cases: Case[] = [
 	{ name: "textDeltaWithoutBlockFails", sse: framed(start) + frame('{"type":"text_delta","contentIndex":0,"delta":"x"}') + framed(done) },
 	// A start may add only the next block, and every other event needs one.
 	{ name: "startPastTheNextBlockFails", sse: framed(start) + frame('{"type":"text_start","contentIndex":1}') + framed(done) },
+	// A fraction is no integer, even one whose block (0) exists: the index
+	// must pass Number.isInteger.
+	{
+		name: "fractionalStartIndexFails",
+		sse: framed(start, textStart, textEnd) + frame('{"type":"thinking_start","contentIndex":0.5}') + framed(done),
+	},
 	{ name: "textEndWithoutBlockFails", sse: framed(start) + frame('{"type":"text_end","contentIndex":3,"content":"x"}') + framed(done) },
 	{
 		name: "toolcallEndWithoutBlockFails",
