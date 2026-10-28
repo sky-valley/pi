@@ -1945,7 +1945,9 @@ func grepToolOps(cwd string, custom *GrepOperations) agent.AgentTool {
 				// length cap (rg has none).
 				content := strings.ReplaceAll(string(data), "\r\n", "\n")
 				lines := strings.Split(content, "\n")
-				for i, line := range lines {
+				// rg (no --crlf) matches each line as the file holds it, a CRLF
+				// line's \r included; both splits break at the same \n.
+				for i, line := range strings.Split(string(data), "\n") {
 					if matchCount >= limit {
 						matchLimitReached = true
 						return false

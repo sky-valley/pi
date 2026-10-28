@@ -140,6 +140,23 @@ func TestGrepLoneCRKeepsLineNumbers(t *testing.T) {
 	}
 }
 
+// rg matches each line as the file holds it, a CRLF line's \r included (no
+// --crlf): "foo$" misses "foo\r\n" and "o\r" hits it. Only pi's display
+// lines drop the CR.
+func TestGrepMatchesCRLFLinesAsRipgrep(t *testing.T) {
+	dir := t.TempDir()
+	file := filepath.Join(dir, "crlf.txt")
+	os.WriteFile(file, []byte("foo\r\nbar\n"), 0o644)
+	r, _ := run(t, grepTool(dir), map[string]any{"pattern": "foo$", "path": file})
+	if text := resultText(r); text != "No matches found" {
+		t.Fatalf(`"foo$" = %q, rg no match`, text)
+	}
+	r, _ = run(t, grepTool(dir), map[string]any{"pattern": `o\r`, "path": file})
+	if text := resultText(r); text != "crlf.txt:1: foo" {
+		t.Fatalf(`"o\r" = %q, rg %q`, text, "crlf.txt:1: foo")
+	}
+}
+
 func TestGrepNoMatchesString(t *testing.T) {
 	dir := t.TempDir()
 	os.WriteFile(filepath.Join(dir, "a.txt"), []byte("nothing\n"), 0o644)
