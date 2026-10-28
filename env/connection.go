@@ -544,9 +544,25 @@ func (c *Connection) startSession() (RemoteInfo, *session, error) {
 		} else if decodeErr := json.Unmarshal(reply.JSON, &info); decodeErr != nil {
 			err = lost("Unexpected hello from pi-env: " + decodeErr.Error())
 		} else {
+			if beforeReady != nil {
+				beforeReady(s)
+			}
 			s.startMu.Lock()
 			s.ready, s.stderr = true, nil
 			s.startMu.Unlock()
+			// The daemon may have exited between its hello reply and the line
+			// above, when the exit goroutine still read ready false and left
+			// the teardown to close (pi has no such window: the continuation
+			// that sets ready runs before Node's exit event). Either that
+			// goroutine sees ready, or its close(exited) precedes the lock
+			// above and this sees it. A hello written after the daemon's exit
+			// (only a process it started could) also fails the session here,
+			// where pi would keep it until the silence limit.
+			select {
+			case <-s.exited:
+				c.teardown(s, lost("pi-env connection lost"))
+			default:
+			}
 			return info, s, nil
 		}
 	}
@@ -554,6 +570,10 @@ func (c *Connection) startSession() (RemoteInfo, *session, error) {
 	c.teardown(s, err)
 	return RemoteInfo{}, nil, err
 }
+
+// beforeReady is a test hook run just before a started session is marked
+// ready; nil outside tests.
+var beforeReady func(*session)
 
 // startFailure is the error a failed start ends with: a RemoteError gets the
 // end of the daemon's stderr (withStderr), keeping its other fields.

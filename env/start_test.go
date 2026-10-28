@@ -32,7 +32,7 @@ const scriptedDaemonArg = "pi-env-scripted-daemon"
 //   - split <acknowledged> <base64> <at>: writes the bytes before at, waits
 //     for the file acknowledged (3 s at most, then exits 99), writes the rest
 //     and exits 7.
-//   - fake <result|error>: speaks the sync line and framing; the hello gets
+//   - fake <result|error|exit>: speaks the sync line and framing; the hello gets
 //     a result, or the error {code: EINVAL, message: "hello refused", path:
 //     "/daemon", extra: 1}; the next request makes it exit while a process it
 //     started keeps stdout and stderr open for 3 s (upstream's fakeDaemon()).
@@ -113,6 +113,14 @@ func runFakeDaemon(helloReply string, args []string) int {
 				reply.JSON = []byte(`{"code":"EINVAL","message":"hello refused","path":"/daemon","extra":1}`)
 			}
 			_ = frame.Write(os.Stdout, reply)
+			if helloReply == "exit" {
+				// Exit right after the hello, leaving a process that holds
+				// stdout and stderr open.
+				child := exec.Command(os.Args[0], scriptedDaemonArg, "sleep", "3000")
+				child.Stdout, child.Stderr = os.Stdout, os.Stderr
+				_ = child.Start()
+				return 0
+			}
 			continue
 		}
 		child := exec.Command(os.Args[0], scriptedDaemonArg, "sleep", "3000")
@@ -335,5 +343,28 @@ func TestReadyDaemonFailsRequestsAsSoonAsItExits(t *testing.T) {
 	// must not wait for them.
 	if elapsed := time.Since(started); elapsed >= 2*time.Second {
 		t.Fatalf("failed after %v", elapsed)
+	}
+}
+
+// TestDaemonExitingRightAfterItsHelloFailsRequestsAtOnce pins a window pi
+// does not have: the daemon exits after sending its hello reply but before the
+// start marks the session ready. In Node the continuation that sets ready runs
+// before the exit event; here the exit goroutine can read ready first and skip
+// its teardown, leaving a ready session with a dead daemon whose requests
+// would wait for the silence limit (a process it started holds the pipes, so
+// close comes 3 s later).
+func TestDaemonExitingRightAfterItsHelloFailsRequestsAtOnce(t *testing.T) {
+	beforeReady = func(s *session) { <-s.exited }
+	t.Cleanup(func() { beforeReady = nil })
+	connection := scripted(t, nil, "fake", "exit")
+	_, err := connection.Info(background())
+	mustDo(t, err)
+	started := time.Now()
+	_, err = connection.Request(background(), "lstat", map[string]any{"path": "/"}, nil)
+	if err == nil || err.Error() != "pi-env connection lost" {
+		t.Fatalf("request after the daemon exited: %v, want pi-env connection lost", err)
+	}
+	if elapsed := time.Since(started); elapsed >= 2*time.Second {
+		t.Fatalf("the request failed after %v, not at once", elapsed)
 	}
 }
