@@ -1122,7 +1122,7 @@ scenario("scalar roots", { main: J(`1`), none: J(`null`), obj: J(`{"a":1}`) }, S
 // From a92283056 on, a change of a scalar or null revision opens, prepares
 // untouched as a no-op, aborts, and is staled like any other. Its draft is not
 // used here: pi's draft of a scalar has no members, and writes to it are
-// accidents of its Proxy (ledger Divergences).
+// accidents of its Proxy (ledger D112).
 scenario("scalar root changes", { main: J(`1`), none: J(`null`) }, S(`[
 	{"do":"begin","c":"a"},
 	{"do":"prepare","c":"a","p":"a"},
