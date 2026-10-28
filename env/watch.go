@@ -27,19 +27,33 @@ type WatchExclude struct {
 	Names  []string
 }
 
-// WatchChange is what changed (Durable's WatchChange); exactly one field is
-// set:
-//   - Paths: something at or below each path may have changed (a directory
-//     path covers its whole subtree). Calls may be spurious; a change is never
-//     missed while the watcher is healthy.
-//   - Overflow: coverage was uncertain for a while (lost events, reconnect);
-//     rescan everything that is watched.
-//   - Err: the watcher stopped; no calls follow.
-type WatchChange struct {
-	Paths    []string
-	Overflow bool
-	Err      *FileError
+// FileChange is what changed (Durable's FileChange), tagged by Kind:
+//   - FileChangePaths: something at or below each of Paths may have changed
+//     (a directory path covers its whole subtree). Calls may be spurious; a
+//     change is never missed while the watcher is healthy.
+//   - FileChangeOverflow: coverage was uncertain for a while (lost events,
+//     reconnect); rescan everything that is watched.
+//   - FileChangeFailed: the watcher stopped with Err, for example because the
+//     watched tree grew past the environment's limit; no calls follow.
+type FileChange struct {
+	Kind FileChangeKind
+	// Paths is set for FileChangePaths.
+	Paths []string
+	// Err is set for FileChangeFailed.
+	Err *FileError
 }
+
+// FileChangeKind is the discriminator of a FileChange.
+type FileChangeKind string
+
+const (
+	FileChangePaths    FileChangeKind = "paths"
+	FileChangeOverflow FileChangeKind = "overflow"
+	FileChangeFailed   FileChangeKind = "failed"
+)
+
+// overflow is the one FileChangeOverflow change; it carries nothing else.
+var overflow = FileChange{Kind: FileChangeOverflow}
 
 // RemoteWatchOptions say how the daemon watches, like NodeExecutionEnv's
 // NodeWatchOptions.
@@ -63,34 +77,34 @@ const (
 // RemoteWatcher is a watcher running in the daemon (Durable's
 // NodeFileWatcher next to the files). When the connection is lost, it is
 // opened again once the connection can be started again, and reports
-// Overflow: changes in between were not seen.
+// an overflow: changes in between were not seen.
 type RemoteWatcher struct {
 	connection *Connection
 	targets    []WatchTarget
-	onChange   func(WatchChange)
+	onChange   func(FileChange)
 	options    RemoteWatchOptions
 
 	// changes delivers to onChange one at a time, off the goroutines that
 	// receive the changes, so a callback can neither stall the watch request
-	// nor deadlock calling Close.
-	changes serial[WatchChange]
+	// nor deadlock calling Stop.
+	changes serial[FileChange]
 
 	mu      sync.Mutex
 	mode    string
-	closed  bool
+	stopped bool
 	cancel  context.CancelFunc
 	request chan struct{}
 	wake    chan struct{}
 }
 
-// errWatcherClosed is what start reports once the watcher is closed.
-var errWatcherClosed = errors.New("the watcher is closed")
+// errWatcherStopped is what start reports once the watcher is stopped.
+var errWatcherStopped = errors.New("the watcher is stopped")
 
 // OpenRemoteWatcher watches targets (resolved paths); it fails like
 // NodeFileWatcher.open if coverage cannot be established. onChange receives
 // one change at a time, in order, on a goroutine of the watcher's own (as
-// upstream's callbacks run on one thread); it may call Close.
-func OpenRemoteWatcher(connection *Connection, targets []WatchTarget, onChange func(WatchChange), options RemoteWatchOptions) (*RemoteWatcher, error) {
+// upstream's callbacks run on one thread); it may call Stop.
+func OpenRemoteWatcher(connection *Connection, targets []WatchTarget, onChange func(FileChange), options RemoteWatchOptions) (*RemoteWatcher, error) {
 	w := &RemoteWatcher{connection: connection, targets: targets, onChange: onChange, options: options, mode: "native", wake: make(chan struct{})}
 	w.changes.fn = w.call
 	if err := w.start(false); err != nil {
@@ -108,52 +122,51 @@ func (w *RemoteWatcher) Mode() string {
 	return w.mode
 }
 
-// Close stops watching and waits for the daemon's watch to end; no onChange
+// Stop stops watching and waits for the daemon's watch to end; no onChange
 // call starts after it returns. Called from onChange, it does not wait for
-// that call, as upstream's close() inside the callback returns at once. It is
+// that call, as upstream's stop() inside the callback returns at once. It is
 // idempotent.
-func (w *RemoteWatcher) Close() error {
+func (w *RemoteWatcher) Stop() {
 	w.mu.Lock()
 	w.changes.clear()
-	if w.closed {
+	if w.stopped {
 		w.mu.Unlock()
-		return nil
+		return
 	}
-	w.closed = true
+	w.stopped = true
 	close(w.wake)
 	cancel, request := w.cancel, w.request
 	w.mu.Unlock()
 	cancel()
 	<-request
-	return nil
 }
 
-func (w *RemoteWatcher) isClosed() bool {
+func (w *RemoteWatcher) isStopped() bool {
 	w.mu.Lock()
 	defer w.mu.Unlock()
-	return w.closed
+	return w.stopped
 }
 
-// post queues change for onChange, unless the watcher is closed.
-func (w *RemoteWatcher) post(change WatchChange) {
+// post queues change for onChange, unless the watcher is stopped.
+func (w *RemoteWatcher) post(change FileChange) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
-	if !w.closed {
+	if !w.stopped {
 		w.changes.push(change)
 	}
 }
 
-// stop ends watching with err, onChange's last change.
-func (w *RemoteWatcher) stop(err *FileError) {
+// fail ends watching with err, onChange's last change.
+func (w *RemoteWatcher) fail(err *FileError) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
-	if !w.closed {
-		w.changes.push(WatchChange{Err: err})
-		w.closed = true
+	if !w.stopped {
+		w.changes.push(FileChange{Kind: FileChangeFailed, Err: err})
+		w.stopped = true
 	}
 }
 
-func (w *RemoteWatcher) call(change WatchChange) {
+func (w *RemoteWatcher) call(change FileChange) {
 	// A panicking callback must not stop watching.
 	defer func() { _ = recover() }()
 	w.onChange(change)
@@ -171,7 +184,7 @@ type excludeJSON struct {
 }
 
 // start opens the daemon's watcher; it returns once the watcher reports
-// coverage. A reopened watcher reports Overflow first: changes while it was
+// coverage. A reopened watcher reports an overflow first: changes while it was
 // disconnected were not seen.
 func (w *RemoteWatcher) start(reopened bool) error {
 	targets := make([]watchTargetJSON, len(w.targets))
@@ -195,13 +208,13 @@ func (w *RemoteWatcher) start(reopened bool) error {
 	isReady := false
 	finished := make(chan error, 1)
 	request := make(chan struct{})
-	// Registered with the closed check, so a Close either sees this request
+	// Registered with the stopped check, so a Stop either sees this request
 	// or keeps it from starting.
 	w.mu.Lock()
-	if w.closed {
+	if w.stopped {
 		w.mu.Unlock()
 		cancel()
-		return errWatcherClosed
+		return errWatcherStopped
 	}
 	w.cancel, w.request = cancel, request
 	w.mu.Unlock()
@@ -233,7 +246,7 @@ func (w *RemoteWatcher) start(reopened bool) error {
 					if !isReady {
 						isReady = true
 						if reopened {
-							w.post(WatchChange{Overflow: true})
+							w.post(overflow)
 						}
 						close(ready)
 					}
@@ -244,16 +257,16 @@ func (w *RemoteWatcher) start(reopened bool) error {
 						w.mu.Unlock()
 					}
 					if e.Overflow {
-						w.post(WatchChange{Overflow: true})
+						w.post(overflow)
 					} else {
-						w.post(WatchChange{Paths: e.Paths})
+						w.post(FileChange{Kind: FileChangePaths, Paths: e.Paths})
 					}
 				case "error":
 					code := FileInvalid
 					if e.Code == "permission_denied" {
 						code = FilePermissionDenied
 					}
-					w.stop(&FileError{Code: code, Message: jsValueString(e.Message)})
+					w.fail(&FileError{Code: code, Message: jsValueString(e.Message)})
 				}
 			},
 		})
@@ -264,14 +277,14 @@ func (w *RemoteWatcher) start(reopened bool) error {
 			finished <- err
 			return
 		}
-		if err == nil || w.isClosed() {
+		if err == nil || w.isStopped() {
 			return
 		}
 		if IsConnectionLost(err) {
 			go w.reconnect()
 			return
 		}
-		w.stop(toFileError(err, ""))
+		w.fail(toFileError(err, ""))
 	}()
 
 	select {
@@ -291,13 +304,13 @@ func (w *RemoteWatcher) reconnect() {
 			timer.Stop()
 		}
 		err := w.start(true)
-		if err == nil || w.isClosed() {
+		if err == nil || w.isStopped() {
 			return
 		}
 		if IsConnectionLost(err) {
 			continue
 		}
-		w.stop(toFileError(err, ""))
+		w.fail(toFileError(err, ""))
 		return
 	}
 }

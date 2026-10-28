@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -230,14 +231,14 @@ func TestFileErrorsMatchTheStandardErrors(t *testing.T) {
 func TestWatcherReopensAfterALostConnectionAndReportsOverflow(t *testing.T) {
 	env, connection := environment(t)
 	var mu sync.Mutex
-	var changes []WatchChange
-	watcher, err := env.Watch(background(), []WatchTarget{{Path: "AGENTS.md"}}, func(change WatchChange) {
+	var changes []FileChange
+	watcher, err := env.Watch(background(), []WatchTarget{{Path: "AGENTS.md"}}, func(change FileChange) {
 		mu.Lock()
 		changes = append(changes, change)
 		mu.Unlock()
 	})
 	mustDo(t, err)
-	defer watcher.Close()
+	defer watcher.Stop()
 	info, err := connection.Info(background())
 	mustDo(t, err)
 	killPID(t, info.PID)
@@ -245,7 +246,7 @@ func TestWatcherReopensAfterALostConnectionAndReportsOverflow(t *testing.T) {
 		mu.Lock()
 		defer mu.Unlock()
 		for _, change := range changes {
-			if change.Overflow {
+			if change.Kind == FileChangeOverflow {
 				return true
 			}
 		}
@@ -270,34 +271,84 @@ func TestWatcherReopensAfterALostConnectionAndReportsOverflow(t *testing.T) {
 	})
 }
 
-// TestWatcherClosesFromItsOwnCallback: upstream's close() called inside
-// onChange returns at once (its promise settles later); Go's Close must not
+// TestWatcherTagsChanges: every change carries its kind (upstream
+// 5f312dac4): a paths change only paths, a failure only its error, after
+// which no call follows.
+func TestWatcherTagsChanges(t *testing.T) {
+	connection := newConnection(t)
+	env := NewRemoteExecutionEnv(RemoteExecutionEnvOptions{
+		Connection: connection, ID: "pi-env:test", Cwd: tempDir(t, "pi-env-remote-"),
+		Watch: RemoteWatchOptions{MaxDirectories: 2},
+	})
+	mustDo(t, env.CreateDir(background(), "tree", nil))
+	var mu sync.Mutex
+	var changes []FileChange
+	watcher, err := env.Watch(background(), []WatchTarget{{Path: "tree", Recursive: true}}, func(change FileChange) {
+		mu.Lock()
+		changes = append(changes, change)
+		mu.Unlock()
+	})
+	mustDo(t, err)
+	defer watcher.Stop()
+	snapshot := func() []FileChange {
+		mu.Lock()
+		defer mu.Unlock()
+		return append([]FileChange(nil), changes...)
+	}
+	file, _ := env.AbsolutePath(background(), "tree/a.md")
+	mustDo(t, env.WriteFile(background(), "tree/a.md", []byte("x")))
+	waitFor(t, 5*time.Second, "a paths change", func() bool { return len(snapshot()) > 0 })
+	first := snapshot()[0]
+	if first.Kind != FileChangePaths || first.Err != nil || !slices.Contains(first.Paths, file) {
+		t.Fatalf("first change %+v, want kind %q reporting %s", first, FileChangePaths, file)
+	}
+	// Past the two directories the watcher may cover, the rescan fails.
+	mustDo(t, env.CreateDir(background(), "tree/one/two/three", nil))
+	waitFor(t, 5*time.Second, "a failed change", func() bool {
+		all := snapshot()
+		return all[len(all)-1].Err != nil
+	})
+	all := snapshot()
+	last := all[len(all)-1]
+	want := FileChange{Kind: FileChangeFailed, Err: &FileError{Code: FileInvalid, Message: "Watched paths exceed 2 directories"}}
+	if !reflect.DeepEqual(last, want) {
+		t.Fatalf("last change %+v (error %+v), want %+v (error %+v)", last, last.Err, want, want.Err)
+	}
+	mustDo(t, env.WriteFile(background(), "tree/a.md", []byte("y")))
+	time.Sleep(500 * time.Millisecond)
+	if after := snapshot(); len(after) != len(all) {
+		t.Fatalf("changes after the failure: %+v", after[len(all):])
+	}
+}
+
+// TestWatcherStopsFromItsOwnCallback:upstream's stop() called inside
+// onChange returns at once (its promise settles later); Go's Stop must not
 // wait for the callback that calls it, and no call follows.
-func TestWatcherClosesFromItsOwnCallback(t *testing.T) {
+func TestWatcherStopsFromItsOwnCallback(t *testing.T) {
 	env, _ := environment(t)
 	var watcher *RemoteWatcher
 	opened := make(chan struct{})
-	closed := make(chan error, 1)
+	stopped := make(chan struct{})
 	var calls atomic.Int32
-	watcher, err := env.Watch(background(), []WatchTarget{{Path: "AGENTS.md"}}, func(change WatchChange) {
+	watcher, err := env.Watch(background(), []WatchTarget{{Path: "AGENTS.md"}}, func(change FileChange) {
 		<-opened
 		if calls.Add(1) == 1 {
-			closed <- watcher.Close()
+			watcher.Stop()
+			close(stopped)
 		}
 	})
 	mustDo(t, err)
 	close(opened)
 	mustDo(t, env.WriteFile(background(), "AGENTS.md", []byte("x")))
 	select {
-	case err := <-closed:
-		mustDo(t, err)
+	case <-stopped:
 	case <-time.After(10 * time.Second):
-		t.Fatal("Close called from onChange did not return")
+		t.Fatal("Stop called from onChange did not return")
 	}
 	mustDo(t, env.WriteFile(background(), "AGENTS.md", []byte("y")))
 	time.Sleep(500 * time.Millisecond)
 	if n := calls.Load(); n != 1 {
-		t.Fatalf("%d onChange calls, want 1: the watcher reported changes after it was closed", n)
+		t.Fatalf("%d onChange calls, want 1: the watcher reported changes after it was stopped", n)
 	}
 }
 
@@ -312,12 +363,12 @@ func TestWatcherCallsOnChangeOneAtATimeAcrossAReconnect(t *testing.T) {
 	})
 	var active, most atomic.Int32
 	var overflowed, changedAfter atomic.Bool
-	watcher, err := env.Watch(background(), []WatchTarget{{Path: "AGENTS.md"}}, func(change WatchChange) {
+	watcher, err := env.Watch(background(), []WatchTarget{{Path: "AGENTS.md"}}, func(change FileChange) {
 		n := active.Add(1)
 		defer active.Add(-1)
 		for m := most.Load(); n > m && !most.CompareAndSwap(m, n); m = most.Load() {
 		}
-		if change.Overflow {
+		if change.Kind == FileChangeOverflow {
 			overflowed.Store(true)
 			time.Sleep(time.Second)
 		} else if overflowed.Load() {
@@ -325,7 +376,7 @@ func TestWatcherCallsOnChangeOneAtATimeAcrossAReconnect(t *testing.T) {
 		}
 	})
 	mustDo(t, err)
-	defer watcher.Close()
+	defer watcher.Stop()
 	info, err := connection.Info(background())
 	mustDo(t, err)
 	killPID(t, info.PID)

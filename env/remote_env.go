@@ -1225,7 +1225,7 @@ func randomUUID() string {
 // Watch reports changes to files and directories. When it returns, coverage
 // is established: a host that watches before it loads cannot miss a change
 // made during the load.
-func (e *RemoteExecutionEnv) Watch(ctx context.Context, targets []WatchTarget, onChange func(WatchChange)) (*RemoteWatcher, error) {
+func (e *RemoteExecutionEnv) Watch(ctx context.Context, targets []WatchTarget, onChange func(FileChange)) (*RemoteWatcher, error) {
 	if failure := abortResult(ctx, ""); failure != nil {
 		return nil, failure
 	}
@@ -1246,7 +1246,7 @@ func (e *RemoteExecutionEnv) Watch(ctx context.Context, targets []WatchTarget, o
 		return nil, toFileError(err, "")
 	}
 	if failure := abortResult(ctx, ""); failure != nil {
-		watcher.Close()
+		watcher.Stop()
 		return nil, failure
 	}
 	return watcher, nil

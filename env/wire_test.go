@@ -116,9 +116,9 @@ func TestSendsUpstreamsFrames(t *testing.T) {
 	watcher, err := shellEnv.Watch(ctx, []WatchTarget{
 		{Path: "w", Recursive: true, Exclude: WatchExclude{Hidden: true, Names: []string{"n"}}},
 		{Path: "b.txt"},
-	}, func(WatchChange) {})
+	}, func(FileChange) {})
 	mustDo(t, err)
-	watcher.Close()
+	watcher.Stop()
 	abortCtx, abort := context.WithCancel(ctx)
 	time.AfterFunc(100*time.Millisecond, abort)
 	_, _ = env.RunProgram(abortCtx, []string{"sleep", "5"}, nil)

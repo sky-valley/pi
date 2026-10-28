@@ -74,7 +74,7 @@ func TestConformance(t *testing.T) {
 		{"watch skips excluded entries and reports a rename out of them", conformWatchExcluded},
 		{"watch keeps recursive coverage where a non-recursive target overlaps", conformWatchOverlap},
 		{"watch follows a directory replaced at the same path", conformWatchReplacedDirectory},
-		{"watch stops reporting once closed", conformWatchClosed},
+		{"watch stops reporting once stopped", conformWatchStopped},
 		{"argv exec passes arguments to the program without shell parsing", conformArgv},
 		{"exec reports the stream of every chunk in both forms", conformStreams},
 		{"argv exec honors cwd and exit codes", conformCwdAndExitCodes},
@@ -328,13 +328,13 @@ type watchSession struct {
 	t       *testing.T
 	env     *RemoteExecutionEnv
 	mu      sync.Mutex
-	changes []WatchChange
+	changes []FileChange
 }
 
-func (w *watchSession) all() []WatchChange {
+func (w *watchSession) all() []FileChange {
 	w.mu.Lock()
 	defer w.mu.Unlock()
-	return append([]WatchChange(nil), w.changes...)
+	return append([]FileChange(nil), w.changes...)
 }
 
 func (w *watchSession) absolute(path string) string {
@@ -344,9 +344,12 @@ func (w *watchSession) absolute(path string) string {
 }
 
 // covers: an overflow, or a reported path at or above path.
-func covers(change WatchChange, path string) bool {
-	if change.Overflow {
+func covers(change FileChange, path string) bool {
+	if change.Kind == FileChangeOverflow {
 		return true
+	}
+	if change.Kind != FileChangePaths {
+		return false
 	}
 	for _, reported := range change.Paths {
 		if path == reported || strings.HasPrefix(path, reported+"/") || strings.HasPrefix(path, reported+"\\") {
@@ -380,13 +383,13 @@ func (w *watchSession) expectChange(path string, change func()) {
 
 func watching(t *testing.T, env *RemoteExecutionEnv, targets []WatchTarget, run func(w *watchSession)) {
 	w := &watchSession{t: t, env: env}
-	watcher, err := env.Watch(background(), targets, func(change WatchChange) {
+	watcher, err := env.Watch(background(), targets, func(change FileChange) {
 		w.mu.Lock()
 		w.changes = append(w.changes, change)
 		w.mu.Unlock()
 	})
 	mustDo(t, err)
-	defer watcher.Close()
+	defer watcher.Stop()
 	run(w)
 }
 
@@ -445,6 +448,9 @@ func conformWatchExcluded(t *testing.T, env *RemoteExecutionEnv) {
 		})
 		hidden := []string{w.absolute("skills/node_modules"), w.absolute("skills/.SKILL.md.tmp")}
 		for _, change := range w.all() {
+			if change.Kind != FileChangePaths {
+				continue
+			}
 			for _, path := range change.Paths {
 				for _, excluded := range hidden {
 					if path == excluded || strings.HasPrefix(path, excluded) {
@@ -475,10 +481,10 @@ func conformWatchReplacedDirectory(t *testing.T, env *RemoteExecutionEnv) {
 	})
 }
 
-func conformWatchClosed(t *testing.T, env *RemoteExecutionEnv) {
+func conformWatchStopped(t *testing.T, env *RemoteExecutionEnv) {
 	var mu sync.Mutex
-	var changes []WatchChange
-	watcher, err := env.Watch(background(), []WatchTarget{{Path: "file.txt"}}, func(change WatchChange) {
+	var changes []FileChange
+	watcher, err := env.Watch(background(), []WatchTarget{{Path: "file.txt"}}, func(change FileChange) {
 		mu.Lock()
 		changes = append(changes, change)
 		mu.Unlock()
@@ -487,14 +493,14 @@ func conformWatchClosed(t *testing.T, env *RemoteExecutionEnv) {
 	if mode := watcher.Mode(); mode != "native" && mode != "polling" {
 		t.Fatalf("mode %q", mode)
 	}
-	watcher.Close()
-	watcher.Close()
+	watcher.Stop()
+	watcher.Stop()
 	write(t, env, "file.txt", "x")
 	time.Sleep(300 * time.Millisecond)
 	mu.Lock()
 	defer mu.Unlock()
 	if len(changes) != 0 {
-		t.Fatalf("changes after close: %+v", changes)
+		t.Fatalf("changes after stop: %+v", changes)
 	}
 }
 
