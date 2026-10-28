@@ -3,10 +3,14 @@
 // makes (arguments and stdin, recorded by fakessh.sh) and where it ends; and
 // sshArguments for the targets of scenarios.json.
 //
-// Copy this file into a checkout of upstream's packages/env at d2e7d8b7c
-// (with node_modules) and run, from there,
+// Copy this file into upstream's packages/env at 479d6e5e2 and run, from
+// there,
 //
-//	node capture.mts <path of testdata/ssh> > <path of testdata/ssh>/oracle.json
+//	node --conditions=source capture.mts <path of testdata/ssh> > <path of testdata/ssh>/oracle.json
+//
+// (a source extraction as testdata/connection/capture.mts describes). Against
+// 479d6e5e2^1's connection.ts it gives the capture of d2e7d8b7c byte for
+// byte; 479d6e5e2 adds the daemon's stderr to the start that fails.
 import { createHash } from "node:crypto";
 import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";

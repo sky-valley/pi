@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"maps"
 	"os"
 	"os/exec"
 	"runtime"
@@ -233,9 +234,24 @@ type session struct {
 	live     bool
 	lastSeen atomic.Int64
 	stop     chan struct{}
-	// exited is closed once the process has exited, after exitCode is set.
+	// exited is closed once the process has exited, after exitCode is set:
+	// node's exit event.
 	exited   chan struct{}
 	exitCode string
+	// closed is closed once the process has exited and its stdout and stderr
+	// are closed, as node's close event waits for all of them; a process the
+	// daemon started may hold the pipes open longer.
+	closed chan struct{}
+	// streams counts the readers of stdout and stderr until their pipe is
+	// closed.
+	streams sync.WaitGroup
+
+	// startMu guards ready and stderr.
+	startMu sync.Mutex
+	ready   bool
+	// stderr is the end of what the daemon wrote to stderr until it was
+	// ready, for an error if it does not get there.
+	stderr stderrTail
 }
 
 // Info connects if needed and returns what the daemon reported about its
@@ -430,7 +446,7 @@ func (c *Connection) startSession() (RemoteInfo, *session, error) {
 	}
 	// The parent's ends of stdout and stderr are its own: Wait returns when
 	// the process exits, even if a child of it still holds them, as Node's
-	// exit event does.
+	// exit event does; their readers end when the last holder closes them.
 	stdoutRead, stdoutWrite, err := os.Pipe()
 	if err != nil {
 		return RemoteInfo{}, nil, spawnError(err, command[0])
@@ -462,6 +478,7 @@ func (c *Connection) startSession() (RemoteInfo, *session, error) {
 		live:    true,
 		stop:    make(chan struct{}),
 		exited:  make(chan struct{}),
+		closed:  make(chan struct{}),
 	}
 	s.lastSeen.Store(time.Now().UnixNano())
 	closed := c.closed
@@ -470,8 +487,21 @@ func (c *Connection) startSession() (RemoteInfo, *session, error) {
 	}
 	c.mu.Unlock()
 
-	go c.readFrames(s, stdoutRead)
-	go c.readLog(stderrRead)
+	// Node's exit and close events: the process has exited (Wait returns),
+	// and it has exited and both its stdout and stderr reached their end
+	// (the readers return). A daemon that exits before it is ready fails the
+	// start at close, so the start's error has all the stderr it wrote; a
+	// ready session fails as soon as the daemon exits, even while a process
+	// it started keeps a pipe open.
+	s.streams.Add(2)
+	go func() {
+		defer s.streams.Done()
+		c.readFrames(s, stdoutRead)
+	}()
+	go func() {
+		defer s.streams.Done()
+		c.readLog(s, stderrRead)
+	}()
 	go func() {
 		state, _ := cmd.Process.Wait()
 		s.exitCode = "null"
@@ -479,6 +509,17 @@ func (c *Connection) startSession() (RemoteInfo, *session, error) {
 			s.exitCode = strconv.Itoa(state.ExitCode())
 		}
 		close(s.exited)
+		s.startMu.Lock()
+		ready := s.ready
+		s.startMu.Unlock()
+		if ready {
+			c.teardown(s, lost("pi-env connection lost"))
+		}
+	}()
+	go func() {
+		<-s.exited
+		s.streams.Wait()
+		close(s.closed)
 		c.teardown(s, lost("pi-env connection lost"))
 	}()
 	go c.ping(s)
@@ -503,16 +544,39 @@ func (c *Connection) startSession() (RemoteInfo, *session, error) {
 		} else if decodeErr := json.Unmarshal(reply.JSON, &info); decodeErr != nil {
 			err = lost("Unexpected hello from pi-env: " + decodeErr.Error())
 		} else {
+			s.startMu.Lock()
+			s.ready, s.stderr = true, nil
+			s.startMu.Unlock()
 			return info, s, nil
 		}
 	}
+	err = s.startFailure(err)
 	c.teardown(s, err)
 	return RemoteInfo{}, nil, err
 }
 
+// startFailure is the error a failed start ends with: a RemoteError gets the
+// end of the daemon's stderr (withStderr), keeping its other fields.
+func (s *session) startFailure(err error) error {
+	remote, ok := err.(*RemoteError)
+	if !ok {
+		return err
+	}
+	s.startMu.Lock()
+	tail := s.stderr.String()
+	s.startMu.Unlock()
+	fields := maps.Clone(remote.Fields)
+	if fields == nil {
+		fields = map[string]any{}
+	}
+	fields["message"] = withStderr(remote.Message, tail)
+	return newRemoteError(fields)
+}
+
 // awaitHello waits for the hello's answer or the start timeout. A daemon
 // that exits first fails the hello through the teardown that follows its
-// exit; the exit is then the reason given.
+// close (exit, then the end of stdout and stderr); the exit is then the
+// reason given.
 func (c *Connection) awaitHello(s *session, hello *call) (Reply, error) {
 	type answer struct {
 		reply Reply
@@ -529,8 +593,8 @@ func (c *Connection) awaitHello(s *session, hello *call) (Reply, error) {
 	case a := <-answered:
 		if a.err != nil {
 			select {
-			case <-s.exited:
-				// exited is closed before the teardown that failed the hello.
+			case <-s.closed:
+				// closed is closed before the teardown that failed the hello.
 				return Reply{}, lost("pi-env exited with code " + s.exitCode + " before it was ready")
 			default:
 			}
@@ -669,18 +733,35 @@ func (c *Connection) log(text string) {
 	}
 }
 
-func (c *Connection) readLog(stderr io.ReadCloser) {
+// readLog passes the daemon's stderr to OnLog, decoded as a stream (a
+// character split between reads comes whole), and keeps its end until the
+// session is ready.
+func (c *Connection) readLog(s *session, stderr io.ReadCloser) {
 	defer stderr.Close()
+	var decoder stderrDecoder
 	buf := make([]byte, 64*1024)
 	for {
 		n, err := stderr.Read(buf)
 		if n > 0 {
-			c.log(jstext.DecodeUTF8(buf[:n]))
+			c.logStderr(s, decoder.decode(buf[:n]))
 		}
 		if err != nil {
+			c.logStderr(s, decoder.end())
 			return
 		}
 	}
+}
+
+func (c *Connection) logStderr(s *session, text string) {
+	if text == "" {
+		return
+	}
+	s.startMu.Lock()
+	if !s.ready {
+		s.stderr.add(text)
+	}
+	s.startMu.Unlock()
+	c.log(text)
 }
 
 // seenReader notes when data last arrived.

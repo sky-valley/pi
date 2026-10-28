@@ -6,12 +6,19 @@
 // requests fail when the connection is lost: a request larger than a frame,
 // and a daemon that stops reading and pinging (this one takes 35 s).
 //
-// Copy this file into a checkout of upstream's packages/env at d2e7d8b7c (with
-// node_modules) and run, from there,
+// Copy this file into upstream's packages/env at 479d6e5e2 and run, from
+// there,
 //
-//	node capture.mts <path of testdata/connection> <pi-env daemon> > <path of testdata/connection>/starts.json
+//	node --conditions=source capture.mts <path of testdata/connection> <pi-env daemon> > <path of testdata/connection>/starts.json
 //
-// with the daemon of @earendil-works/pi-env 1.3.0 (bin/pi-env-<platform>-<arch>/pi-env).
+// with the daemon of @earendil-works/pi-env 1.4.0
+// (bin/pi-env-<platform>-<arch>/pi-env). A `git archive 479d6e5e2 packages`
+// extraction runs from source without a build or an install: link
+// node_modules/@earendil-works/{chord,pi-durable,pi-telemetry,pi-ai,
+// pi-codemode,pi-agent-core} to their packages/*, whose "source" export
+// condition names src/*.ts. Against 479d6e5e2^1's connection.ts it gives the
+// capture of d2e7d8b7c byte for byte; 479d6e5e2 adds the daemon's stderr to
+// the "exit" start's message.
 import { join } from "node:path";
 import { BACKGROUND_CONTEXT, withAbortSignal } from "@earendil-works/chord/context";
 import { Connection, type ConnectionOptions, isConnectionLost, RemoteError } from "./src/connection.ts";

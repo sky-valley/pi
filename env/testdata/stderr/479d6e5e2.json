@@ -1,0 +1,1226 @@
+{"node":"v26.4.0","message":"pi-env exited with code 1 before it was ready","tailChars":2000,"tailLines":20,
+	"cases": [
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"ssh: Permission denied (publickey).\n","strip":"ssh: Permission denied (publickey).\n","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nssh: Permission denied (publickey)."},
+		{"input":" \n\u0007\u001b[0m\n","strip":" \n\u0007\n","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"\u001b[31mred\u001b[0m\r\nbell\u0007 del\tc1: end\nÜberprüfung fehlgeschlagen ✗\n\n","strip":"red\r\nbell\u0007 del\tc1: end\nÜberprüfung fehlgeschlagen ✗\n\n","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nred\nbell del\tc1: end\nÜberprüfung fehlgeschlagen ✗"},
+		{"input":"\u001b]8;;http://example.com\u0007link\u001b]8;;\u0007\n","strip":"link\n","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nlink"},
+		{"input":"\u001b]0;title\u001b\\after\n","strip":"after\n","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nafter"},
+		{"input":"31mred0m\n","strip":"red\n","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nred"},
+		{"input":"\u001b[?25l\u001b[2J\u001b[H\u001b(B\u001b#8\n","strip":"\n","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"\u001b[1234m\u001b[12345m","strip":"m","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nm"},
+		{"input":"\u001b[1;1234m\u001b[1;12345m","strip":"m","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nm"},
+		{"input":"\u001b[1;;12m\u001b[;5H","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"A%","strip":"A%","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nA%"},
+		{"input":"line&g\u001fP0\u001b\\>;0\nfn","strip":"line&g\u001fP0\u001b\\>;0\nfn","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nline&gP0\\>;0\nfn"},
+		{"input":"0","strip":"0","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n0"},
+		{"input":"\r\n\u001b[","strip":"\r\n\u001b[","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n["},
+		{"input":"-=J4\f\f9  pvb","strip":"-=J4\f\f9  pvb","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n-=J49  pvb"},
+		{"input":"]\n\u001b;QH~/u\u001fU\u001b]0[\u0007/v","strip":"]\n\u001b;QH~/u\u001fU[\u0007/v","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n]\n;QH~/uU[/v"},
+		{"input":"\n\u001f< U\u001bu;;%#\u001fJ#K~b 4","strip":"\n\u001f< U;;%#\u001fJ#K~b 4","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n< U;;%#J#K~b 4"},
+		{"input":"​\u001b%","strip":"​\u001b%","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n​%"},
+		{"input":"\u000bsg\u000bb\r<word12　 acBU\u001bAS","strip":"\u000bsg\u000bb\r<word12　 acBUS","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nsgb\n<word12　 acBUS"},
+		{"input":"@01;3112\u001b(Q\t","strip":"@01;3112\u001b(Q\t","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n@01;3112(Q"},
+		{"input":"\u0007n[:)yAé_.﻿1212345 \\0;title>","strip":"\u0007n[:)yAé_.﻿1212345 \\0;title>","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nn[:)yAé_.﻿1212345 \\0;title>"},
+		{"input":"\u001b(\u0001✗\u000b12rJ4.12345é;","strip":"\u001b(\u0001✗\u000b12rJ4.12345é;","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n(✗12rJ4.12345é;"},
+		{"input":"word0;title\to&﻿c 1;31\u001bP","strip":"word0;title\to&﻿c 1;31","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nword0;title\to&﻿c 1;31"},
+		{"input":"\u000b~1;31","strip":"\u000b~1;31","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n~1;31"},
+		{"input":"l?z[123_﻿","strip":"l?z_﻿","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nl?z_"},
+		{"input":"wa","strip":"wa","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nwa"},
+		{"input":"?_-z;;zJ\n4@?12345J<word_4","strip":"?_-z;;zJ\n4@?12345J<word_4","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n?_-z;;zJ\n4@?12345J<word_4"},
+		{"input":"f RSH\u001b\\q 0;title\u000bu123123Uy","strip":"f RSH\u001b\\q 0;title\u000bu123123Uy","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nf RSH\\q 0;titleu123123Uy"},
+		{"input":" séZ~1234xu%Q@\u001b[","strip":" séZ~1234xu%Q@\u001b[","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n séZ~1234xu%Q@["},
+		{"input":"a\u0007 12345\u001b\r\n😀:\u001b]\u0000","strip":"a\u0007 12345\u001b\r\n😀:\u001b]\u0000","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\na 12345\n😀:]"},
+		{"input":"4.","strip":"4.","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n4."},
+		{"input":"1238;;http://x/12z1;;;:","strip":"1238;;http://x/12z1;;;:","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1238;;http://x/12z1;;;:"},
+		{"input":"#&4  99\\oline9=__JZb","strip":"#&4  99\\oline9=__JZb","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n#&4  99\\oline9=__JZb"},
+		{"input":";Bb2bm","strip":";Bb2bm","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n;Bb2bm"},
+		{"input":"\u001b[mcline )\u0007","strip":"cline )\u0007","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ncline )"},
+		{"input":"\nz&Bré#S]uq \u001b(h;;","strip":"\nz&Bré#S]uq ;;","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nz&Bré#S]uq ;;"},
+		{"input":"﻿﻿[[m2h✗","strip":"﻿﻿[[m2h✗","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n﻿﻿[[m2h✗"},
+		{"input":"\u001f","strip":"\u001f","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"\t?/%? \u001bA[?:12345z123 Q","strip":"\t?/%? [?:12345z123 Q","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\t?/%? [?:12345z123 Q"},
+		{"input":"m#8;;http://x/l\u0007 2vbu]\n\t/#😀\n ","strip":"m#8;;http://x/l\u0007 2vbu]\n\t/#😀\n ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nm#8;;http://x/l 2vbu]\n\t/#😀"},
+		{"input":"rz","strip":"rz","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nrz"},
+		{"input":"\nTy12345SK\u001b \u000b1","strip":"\nTy12345SK\u001b \u000b1","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nTy12345SK 1"},
+		{"input":"\r\n12\u001bR\f\u001b\u0007w","strip":"\r\n12\fw","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n12w"},
+		{"input":"\\[\rAza\u001b] 1;3112345\fc\u001b[#\u001b% ","strip":"\\[\rAza\u001b] 1;3112345\fc\u001b[#\u001b% ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\\[\nAza] 1;3112345c[#%"},
+		{"input":"0ZB\u001b(w9A1;31S\t\u001b]9\u0001g0;title","strip":"0ZB\u001b(w9A1;31S\t\u0001g0;title","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n0ZB(w9A1;31S\tg0;title"},
+		{"input":"\u001b[u　\u001b\\x","strip":"\u001b[u　\u001b\\x","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n[u　\\x"},
+		{"input":"\u001fzZ#9.&v12345n\r\n","strip":"\u001fzZ#9.&v12345n\r\n","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nzZ#9.&v12345n"},
+		{"input":"m​Pf:\u001b(r 12345\u0000#@","strip":"m​Pf: 12345\u0000#@","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nm​Pf: 12345#@"},
+		{"input":"g>a@4﻿ \u0007\u000b9#;\u001b\\","strip":"g>a@4﻿ \u0007\u000b9#;\u001b\\","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ng>a@4﻿ 9#;\\"},
+		{"input":"0)","strip":"0)","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n0)"},
+		{"input":"a　q​\r\n]\f0T\r\n;;0;titleo✗;qn","strip":"a　q​\r\n]\f0T\r\nitleo✗;qn","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\na　q​\n]0T\nitleo✗;qn"},
+		{"input":"éa1;31\n-:;;","strip":"éa1;31\n-:;;","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\néa1;31\n-:;;"},
+		{"input":"1;31\u0007cc0roB%]","strip":"1;31\u0007cc0ro%]","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1;31cc0ro%]"},
+		{"input":"]0;title2✗ 123\u001f","strip":"]0;title2✗ 123\u001f","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n]0;title2✗ 123"},
+		{"input":"y@o=\u001b\\S~_ U😀cy","strip":"y@o=\u001b\\S~_ U😀cy","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ny@o=\\S~_ U😀cy"},
+		{"input":"n9\u001b[TnKc>>","strip":"n9nKc>>","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nn9nKc>>"},
+		{"input":"cH \n\u001b\\✗12","strip":"cH \n\u001b\\✗12","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ncH\n\\✗12"},
+		{"input":"\u000112✗p\u001b;\np123123451234😀Kx%","strip":"\u000112✗p\u001b;\np123😀Kx%","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n12✗p;\np123😀Kx%"},
+		{"input":"\u0007QsB\u0001​","strip":"\u0007QsB\u0001​","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nQsB​"},
+		{"input":"0B　Kq.\u000b121239","strip":"0B　Kq.\u000b121239","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n0B　Kq.121239"},
+		{"input":"hf\\😀​JQr1;3112\ng\t12345","strip":"hf\\😀​JQ1;3112\ng\t12345","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nhf\\😀​JQ1;3112\ng\t12345"},
+		{"input":"0;title&✗[w=%✗A?Pq123l[ ​","strip":"0;title&✗[w=%✗A?Pq123l[ ​","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n0;title&✗[w=%✗A?Pq123l[ ​"},
+		{"input":" S&\n1","strip":" S&\n1","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n S&\n1"},
+		{"input":"A1;31﻿lineline_word","strip":"A1;31﻿lineline_word","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nA1;31﻿lineline_word"},
+		{"input":"<1o-4\u001b[wQ\f\u001b","strip":"<1o-4\u001b[wQ\f\u001b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n<1o-4[wQ"},
+		{"input":" x/s\r\n\u001f","strip":" x/s\r\n\u001f","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n x/s"},
+		{"input":"\u001b[2T ;s0s_a","strip":" ;s0s_a","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n ;s0s_a"},
+		{"input":"pb&v1;31[\u001b]<\u0007%QS12😀ts","strip":"pb&v1;31[\u0007%QS12😀ts","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\npb&v1;31[%QS12😀ts"},
+		{"input":"p&?\u0000word\u001fx12😀\u001b1T✗ ","strip":"p&?\u0000word\u001fx12😀\u001b✗ ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\np&?wordx12😀✗"},
+		{"input":"-_ v Kt- nz","strip":"-_ v Kt- nz","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n-_ v Kt- nz"},
+		{"input":"t<﻿lineSB_\u001b8;;http://x/","strip":"t<﻿lineSB_ttp://x/","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nt<﻿lineSB_ttp://x/"},
+		{"input":"l\u001b\\Bz1234Q\u0001Bf","strip":"l\u001b\\Bz1234Q\u0001Bf","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nl\\Bz1234QBf"},
+		{"input":"\t1234512;\r\n&\u0001:\u001b]b\nw\ra  o","strip":"\t1234512;\r\n&\u0001:\u001b]b\nw\ra  o","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\t1234512;\n&:]b\nw\na  o"},
+		{"input":"P@\r\n ~","strip":"P@\r\n ~","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nP@\n ~"},
+		{"input":"\\\u000b\u0000\u0000)/\u0001#8;;http://x/-uhlineQn9","strip":"\\\u000b\u0000\u0000)/\u0001#8;;http://x/-uhlineQn9","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\\)/#8;;http://x/-uhlineQn9"},
+		{"input":"(\n.\u000b\u001b(m[ob%-😀&]\nJ12345=","strip":"(\n.\u000b[ob%-😀&]\nJ12345=","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n(\n.[ob%-😀&]\nJ12345="},
+		{"input":"✗sm1;31\tZ\u001f\u000112345t\u001b]a1 \\1R","strip":"✗sm1;31\tZ\u001f\u000112345t\u001b]a1 \\1R","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n✗sm1;31\tZ12345t]a1 \\1R"},
+		{"input":"Bé12v","strip":"Bé12v","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nBé12v"},
+		{"input":"P_K.UwordB﻿12","strip":"P_K.UwordB﻿12","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nP_K.UwordB﻿12"},
+		{"input":"TPé﻿","strip":"TPé﻿","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nTPé"},
+		{"input":"]\u001b\\\f\u001b]12345gTa","strip":"]\u001b\\\f\u001b]12345gTa","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n]\\]12345gTa"},
+		{"input":"Kv@/b1234 ~😀\nZ","strip":"Kv@/b1234 ~😀\n","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nKv@/b1234 ~😀"},
+		{"input":"K >wg-%1;31o)\u001b\\1234 ","strip":"K >wg-%1;31o)\u001b\\1234 ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nK >wg-%1;31o)\\1234"},
+		{"input":"vtA&lr?lr","strip":"vtA&lr?lr","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nvtA&lr?lr"},
+		{"input":"Zu1;31x0​\u001b\\\u0007/f4","strip":"Zu1;31x0​\u001b\\\u0007/f4","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nZu1;31x0​\\/f4"},
+		{"input":" g%Ta;;)\r\nBQmc;Rn","strip":" g%Ta;;)\r\nBQmc;Rn","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n g%Ta;;)\nBQmc;Rn"},
+		{"input":" ","strip":" ","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"123 S_12345u1;31. \u001b(\\\u001b9","strip":"123 S_12345u1;31. \u001b(\\","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n123 S_12345u1;31. (\\"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"\r\nt\u0000v[","strip":"\r\nt\u0000v[","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ntv["},
+		{"input":"f<T\u0007","strip":"f<T\u0007","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nf<T"},
+		{"input":"ZQ0;title)Jq<[ q","strip":"Q0;title)Jq<[ q","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nQ0;title)Jq<[ q"},
+		{"input":")2/hbm&Q\u001b];;\u001b[bKz","strip":")2/hbm&Q\u001b];;\u001b[bKz","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n)2/hbm&Q];;[bKz"},
+		{"input":"2","strip":"2","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n2"},
+		{"input":"%\u001b[ ","strip":"%\u001b[ ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n%["},
+		{"input":"\u00071231 to<z1234wordr]","strip":"\u00071231 to<z1234wordr]","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1231 to<z1234wordr]"},
+		{"input":"p:","strip":"p:","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\np:"},
+		{"input":"=;;~​P0","strip":"=;;~​P0","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n=;;~​P0"},
+		{"input":"m< /ufs48;;http://x/s","strip":"m< /ufs48;;http://x/s","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nm< /ufs48;;http://x/s"},
+		{"input":"zmw 12345","strip":"zmw 12345","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nzmw 12345"},
+		{"input":"B \\\u0007","strip":"B \\\u0007","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nB \\"},
+		{"input":"xvzword\u0000","strip":"xvzword\u0000","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nxvzword"},
+		{"input":"P4\f12345f~1;31f%;;;","strip":"P4\f12345f~1;31f%;;;","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nP412345f~1;31f%;;;"},
+		{"input":"  QQ 1%J;;Hc","strip":"  QQ 1%J;;Hc","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n  QQ 1%J;;Hc"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"_PbB-\u001b([Rv sR&✗&s","strip":"_PbB-v sR&✗&s","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n_PbB-v sR&✗&s"},
+		{"input":"\t","strip":"\t","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"\u001b\\1;31%bmmo ;2Tn(\u001f","strip":"\u001b\\1;31%bmmo ;2Tn(\u001f","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\\1;31%bmmo ;2Tn("},
+		{"input":"\n\u0007g\r\nBc\u001b[é1\f\u0007(@","strip":"\n\u0007g\r\nBc\u001b[é1\f\u0007(@","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ng\nBc[é1(@"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"?>\tr123#","strip":"?>\tr123#","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n?>\tr123#"},
+		{"input":"l\u001b n1;31\r mh:p]qc","strip":"l\u001b n1;31\r mh:p]qc","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nl n1;31\n mh:p]qc"},
+		{"input":"gn(123\u001b/Q12 \n","strip":"gn(123\u001b/Q12 \n","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ngn(123/Q12"},
+		{"input":"n\t>t1;31\u001b\\\u001bw; ","strip":"n\t>t1;31\u001b\\\u001bw; ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nn\t>t1;31\\w;"},
+		{"input":"﻿ho\u001b[\u001bx1c  l@\u001b 12Q\n","strip":"﻿ho\u001b[\u001bx1c  l@\u001b 12Q\n","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n﻿ho[x1c  l@ 12Q"},
+		{"input":"H12345 \\\u0001<zQ_8;;http://x/😀","strip":"H12345 \\\u0001<zQ_8;;http://x/😀","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nH12345 \\<zQ_8;;http://x/😀"},
+		{"input":"\u001blé&9Pz;=y~","strip":"é&9Pz;=y~","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\né&9Pz;=y~"},
+		{"input":"#pm=f","strip":"#pm=f","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n#pm=f"},
+		{"input":"q\u000b]\n\u0000éasy﻿","strip":"q\u000b]\n\u0000éasy﻿","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nq]\néasy"},
+		{"input":"n\u001b(rmU\nc","strip":"nmU\nc","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nnmU\nc"},
+		{"input":"J?😀z\fS　; ﻿\tHQ0","strip":"J?😀z\fS　; ﻿\tHQ0","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nJ?😀zS　; ﻿\tHQ0"},
+		{"input":"bf#;;","strip":"bf#;;","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nbf#;;"},
+		{"input":"word1212348;;http://x/\u0001","strip":"word1212348;;http://x/\u0001","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nword1212348;;http://x/"},
+		{"input":"Rv\r\u001b　","strip":"Rv\r\u001b　","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nRv"},
+		{"input":"]m-ZH﻿","strip":"]m-ZH﻿","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n]m-ZH"},
+		{"input":"\u001b[\r\fl]0","strip":"\u001b[\r\fl]0","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n[\nl]0"},
+		{"input":";\f=0;title\u0007 >","strip":";\f=0;title\u0007 >","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n;=0;title >"},
+		{"input":")\u001f/&","strip":")\u001f/&","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n)/&"},
+		{"input":"\u000b\r\n","strip":"\u000b\r\n","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"4P\n1234\u0000[g_f\u001b[12345","strip":"4P\n1234\u0000[g_f","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n4P\n1234[g_f"},
+		{"input":"\u001b\t<\u001f(\u001b\\\u001b(\u000bé;😀2hUé[.T","strip":"\u001b\t<\u001f(\u001b\\\u001b(\u000bé;😀2hUé[.T","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\t<(\\(é;😀2hUé[.T"},
+		{"input":"yl#<y\\\u00070;title","strip":"yl#<y\\\u00070;title","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nyl#<y\\0;title"},
+		{"input":"z[g@y\u000b/K\nZ\u001bA\u0007　q\u000bvu","strip":"z[g@y\u000b/K\nZ　q\u000bvu","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nz[g@y/K\nZ　qvu"},
+		{"input":"\u001b]9Q123-\u001b]r\u001b\f​","strip":"Q123-\u001b\f​","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nQ123-​"},
+		{"input":"q✗b-28;;http://x/\u0000\f​012345ax; ;","strip":"q✗b-28;;http://x/\u0000\f​012345ax; ;","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nq✗b-28;;http://x/​012345ax; ;"},
+		{"input":"f.nyBRq","strip":"f.nyBRq","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nf.nyBRq"},
+		{"input":"rnfw\u001b\\\u001b \u00011hline8;;http://x/J.\u001b\\;","strip":"rnfw\u001b\\\u001b \u00011;","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nrnfw\\ 1;"},
+		{"input":" 　\f<-Z2​\u001b:linehH (;","strip":" 　\f<-Z2​\u001b:linehH (;","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n 　<-Z2​:linehH (;"},
+		{"input":"12345;\u0001\u001b[bp 0)\u001b\u000b[(","strip":"12345;\u0001\u001b[bp 0)\u001b\u000b[(","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n12345;[bp 0)[("},
+		{"input":"c@h11\u001b>\n912xp#12345_4","strip":"c@h11\n912xp#12345_4","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nc@h11\n912xp#12345_4"},
+		{"input":"0_B\u001b😀\u001b[?\u000b;12345;2\u001b\nv1234","strip":"0_B\u001b😀\u001b[?\u000b;12345;2\u001b\nv1234","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n0_B😀[?;12345;2\nv1234"},
+		{"input":"a[1  _fA✗J​0é","strip":"a[1  _fA✗J​0é","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\na[1  _fA✗J​0é"},
+		{"input":";;\u001b[-PU 1;311;31#P","strip":";;\u001b[-PU 1;311;31","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n;;[-PU 1;311;31"},
+		{"input":"2\u001b/","strip":"2\u001b/","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n2/"},
+		{"input":" ? sS \u001fy[\f1234\n2u1234 y\u001b\\","strip":" ? sS \u001fy[\f1234\n2u1234 y\u001b\\","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n ? sS y[1234\n2u1234 y\\"},
+		{"input":"lS0Q4x%<\u001b<[\r","strip":"S0Q4x%<[\r","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nS0Q4x%<["},
+		{"input":"12345\u0007​rmsKx😀)cg\u001b]H%","strip":"12345\u0007​rmsKx😀)cg%","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n12345​rmsKx😀)cg%"},
+		{"input":"\\1;31S-J\u001b z@é<\u000b12345g","strip":"\\1;31S-J\u001b z@é<\u000b12345g","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\\1;31S-J z@é<12345g"},
+		{"input":"r﻿ \tzé Zb-\u001b[﻿;;\u001b(","strip":"r﻿ \tzé Zb-\u001b[﻿;;\u001b(","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nr﻿ \tzé Zb-[﻿;;("},
+		{"input":"p@✗#=TvH\fl_sm\t;123","strip":"p@✗#=TvH\fl_sm\t;123","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\np@✗#=TvHl_sm\t;123"},
+		{"input":"\u001b[h0;title\u0001✗o=S","strip":"0;title\u0001✗o=S","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n0;title✗o=S"},
+		{"input":"Q1;31s#ézax","strip":"Q1;31s#ézax","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nQ1;31s#ézax"},
+		{"input":"Rx/2word\r%%","strip":"Rx/2word\r%%","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nRx/2word\n%%"},
+		{"input":"\u001b[BQp\u001b\\]","strip":"]","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n]"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"\r\néA~/B","strip":"\r\néA~/B","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\néA~/B"},
+		{"input":"B\r\n","strip":"B\r\n","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nB"},
+		{"input":"s Jab00\\=","strip":"s Jab00\\=","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ns Jab00\\="},
+		{"input":" %y 0;title]\\K\u0001#P","strip":" %y 0;title]\\K\u0001#P","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n %y 0;title]\\K#P"},
+		{"input":"[h\r<s\na&1\u001b​　","strip":"[h\r<s\na&1\u001b​　","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n[h\n<s\na&1​"},
+		{"input":"2zé\u001b[H0;title[1234512]f \u0007K<b","strip":"2zé0;title[1234512]f \u0007K<b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n2zé0;title[1234512]f K<b"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"?1;31s﻿line~1","strip":"?1;31s﻿line~1","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n?1;31s﻿line~1"},
+		{"input":"tQ\\Qr :mf?\u001b\\","strip":"tQ\\Qr :mf?\u001b\\","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ntQ\\Qr :mf?\\"},
+		{"input":"2 2bgpz\u001b: [;;f[\u001b0","strip":"2 2bgpz\u001b: [;;f[\u001b0","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n2 2bgpz: [;;f[0"},
+		{"input":"KSg-\u001b(12345\u001b[ J;T12345wo_","strip":"KSg-\u001b[ J;T12345wo_","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nKSg-[ J;T12345wo_"},
+		{"input":"\u001br\u001bc\u0000a \r","strip":"\u001b\u0000a \r","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\na"},
+		{"input":"mR\u000b\u0001ny12Zb","strip":"mR\u000b\u0001ny12Zb","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nmRny12Zb"},
+		{"input":" q\u0007[r","strip":" q\u0007[r","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n q[r"},
+		{"input":"< y","strip":"< y","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n< y"},
+		{"input":"x","strip":"x","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nx"},
+		{"input":"f12344q \u001b😀K@12345Us\r\n.✗","strip":"f12344q \u001b😀K@12345Us\r\n.✗","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nf12344q 😀K@12345Us\n.✗"},
+		{"input":"K","strip":"K","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nK"},
+		{"input":"\u001bt T\u001b\\PyJ<T\\1;31","strip":" T\u001b\\PyJ<T\\1;31","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n T\\PyJ<T\\1;31"},
+		{"input":" _bmSéz✗z\n　\t\u001b([U>","strip":" _bmSéz✗z\n　\t\u001b([U>","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n _bmSéz✗z\n　\t([U>"},
+		{"input":"Z","strip":"Z","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nZ"},
+		{"input":"1;318;;http://x/ c\n?　h=0;title\u001f&Sh","strip":"1;318;;http://x/ c\n?　h=0;title\u001f&Sh","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1;318;;http://x/ c\n?　h=0;title&Sh"},
+		{"input":">\ft-✗m\u001b120h😀]","strip":">\ft-✗m😀]","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n>t-✗m😀]"},
+		{"input":"#t\u001b[v2<ta lP✗%  ✗ \u0007","strip":"#t\u001b[v2<ta lP✗%  ✗ \u0007","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n#t[v2<ta lP✗%  ✗"},
+		{"input":"T(p/lA\tw;-\fm; ","strip":"T(p/lA\tw;-\fm; ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nT(p/lA\tw;-m;"},
+		{"input":"[1\f✗v\u0001","strip":"[1\f✗v\u0001","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n[1✗v"},
+		{"input":"@Qf9\n8;;http://x/\n)_lomRZ12345","strip":"@Qf9\n8;;http://x/\n)_lomRZ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n@Qf9\n8;;http://x/\n)_lomRZ"},
+		{"input":"T","strip":"T","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nT"},
+		{"input":"K\u001b]gt[\\tt","strip":"Kt[\\tt","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nKt[\\tt"},
+		{"input":"\u0001   .  29","strip":"\u0001   .  29","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n   .  29"},
+		{"input":"q)\u000b1;31?","strip":"q)\u000b1;31?","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nq)1;31?"},
+		{"input":"Sw\r8;;http://x/b\u0001","strip":"Sw\r8;;http://x/b\u0001","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nSw\n8;;http://x/b"},
+		{"input":"\u001b;; ym.l","strip":"\u001b;; ym.l","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n;; ym.l"},
+		{"input":"m\u0001 ​;KuH","strip":"m\u0001 ​;KuH","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nm ​;KuH"},
+		{"input":"1239<>\u000b　[12R.\r\nx-; Z 　","strip":"1239<>\u000b　[12R.\r\nx-; Z 　","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1239<>　[12R.\nx-; Z"},
+		{"input":"J\u001b[\u001b] H0;title\t ","strip":"J\u001b[\u001b] H0;title\t ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nJ[] H0;title"},
+		{"input":"yh 1234","strip":"yh 1234","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nyh 1234"},
+		{"input":">","strip":">","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n>"},
+		{"input":"\u001b]<;(g\r\nH✗","strip":";(g\r\nH✗","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n;(g\nH✗"},
+		{"input":"-\u001bp\u0007\u0000\u00009\u001fB﻿=)​","strip":"-\u0000\u00009\u001fB﻿=)​","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n-9B﻿=)​"},
+		{"input":"\n\u001bg\u000bH[","strip":"\n\u000bH[","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nH["},
+		{"input":";x2 \u001f>Z8;;http://x/\u001b\\[　?\r;\u001b(\n\n","strip":";x2 \u001f>Z8;;http://x/\u001b\\[　?\r;\u001b(\n\n","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n;x2 >Z8;;http://x/\\[　?\n;("},
+		{"input":"\n\n#","strip":"\n\n#","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n#"},
+		{"input":"9T.H PmoK\n;;0;;\f\u001bR\u001b[","strip":"9T.H PmoK\n;;0;;\f\u001b[","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n9T.H PmoK\n;;0;;["},
+		{"input":" ","strip":" ","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":")\u001b\\word&@AA1234%\u0000\n","strip":")\u001b\\word&@AA1234%\u0000\n","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n)\\word&@AA1234%"},
+		{"input":"y.\u001b8;;http://x/x123450r #ah\u001b(v]","strip":"y.ttp://x/x123450r #ah\u001b(v]","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ny.ttp://x/x123450r #ah(v]"},
+		{"input":"g","strip":"g","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ng"},
+		{"input":"\u001bsu.\u000b1234","strip":"u.\u000b1234","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nu.1234"},
+		{"input":"H\u001bu","strip":"H","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nH"},
+		{"input":"]>\\\u001b>B Ut\nmu ","strip":"]>\\B Ut\nmu ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n]>\\B Ut\nmu"},
+		{"input":"T\nnB\u001b(:﻿Z\n\u0001xb","strip":"T\nnB\u001b(:﻿Z\n\u0001xb","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nT\nnB(:﻿Z\nxb"},
+		{"input":"H12345);;;;l-0;title","strip":"H12345);;;;-0;title","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nH12345);;;;-0;title"},
+		{"input":"123wU123  \t\u00019","strip":"123wU123  \t\u00019","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n123wU123  \t9"},
+		{"input":"1;31　u","strip":"1;31　u","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1;31　u"},
+		{"input":".)​:\u0007l r","strip":".)​:\u0007l r","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n.)​:l r"},
+		{"input":"\\","strip":"\\","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\\"},
+		{"input":"l \u001b?\ro\n\u0007;;line121;31bword2U0","strip":"l \u001b?\ro\n\u0007;;line121;31bword2U0","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nl ?\no\n;;line121;31bword2U0"},
+		{"input":"S\u0001\u001b]","strip":"S\u0001\u001b]","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nS]"},
+		{"input":":wordmsB=x\n","strip":":wordms=x\n","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n:wordms=x"},
+		{"input":"0;title","strip":"0;title","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n0;title"},
+		{"input":"bp(0;title123 p1234\n_12345-8;;http://x/v","strip":"bp(0;title123 p1234\n_12345-8;;http://x/v","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nbp(0;title123 p1234\n_12345-8;;http://x/v"},
+		{"input":"2\u000b123\\\r\n~\u001bmw\nU","strip":"2\u000b123\\\r\n~w\nU","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n2123\\\n~w\nU"},
+		{"input":"　y]212\u001b #mm","strip":"　y]\u001b #mm","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n　y] #mm"},
+		{"input":"uline_(\rKv-","strip":"uline_(\rKv-","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nuline_(\nKv-"},
+		{"input":"9T\u001b","strip":"9T\u001b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n9T"},
+		{"input":"\u001b\\- \u001b\r&.:;​@8;;http://x/_P\u001b\u0007","strip":"\u001b\\- \u001b\r&.:;​@8;;http://x/_P","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\\-\n&.:;​@8;;http://x/_P"},
+		{"input":"1;4\u001bHAl","strip":"1;4Al","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1;4Al"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"\t8;;http://x/S","strip":"\t8;;http://x/S","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\t8;;http://x/S"},
+		{"input":"JR[4","strip":"JR[4","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nJR[4"},
+		{"input":"123AP\ra ","strip":"123AP\ra ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n123AP\na"},
+		{"input":"A_ s@U/0;title","strip":"A_ s@U/0;title","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nA_ s@U/0;title"},
+		{"input":"@/😀tg;","strip":"@/😀tg;","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n@/😀tg;"},
+		{"input":"8;;http://x/(;;BQ@12\u001bU lineR","strip":"8;;http://x/(;;BQ@12\u001bU lineR","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n8;;http://x/(;;BQ@12U lineR"},
+		{"input":"A)t","strip":"A)t","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nA)t"},
+		{"input":"\u001b\\U😀\u001b1;31 Rline\u001b\\%;a","strip":"\u001b\\U😀 Rline\u001b\\%;a","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\\U😀 Rline\\%;a"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"m4;-U\u001b(]\u000b😀","strip":"m4;-U\u001b(]\u000b😀","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nm4;-U(]😀"},
+		{"input":"=%u​%;Z1;310z%1231234​m\u0000","strip":"=%u​%;Z1;310z%1231234​m\u0000","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n=%u​%;Z1;310z%1231234​m"},
+		{"input":"1234@f]#","strip":"1234@f]#","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1234@f]#"},
+		{"input":"\n\u001fRow😀K\u001b[wb﻿y12345z12345","strip":"\n\u001fRow😀K\u001b[wb﻿y12345z12345","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nRow😀K[wb﻿y12345z12345"},
+		{"input":"\u0000gé\tRline]b\u0000) ","strip":"\u0000gé\tRline]b\u0000) ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ngé\tRline]b)"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"12345ZB 1@ \u001b\u001b\\","strip":"12345ZB 1@ ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n12345ZB 1@"},
+		{"input":"0;titlest\fgw","strip":"0;titlest\fgw","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n0;titlestgw"},
+		{"input":"\u001b\\ [","strip":"\u001b\\ [","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\\ ["},
+		{"input":"12312\nqu 1;31é","strip":"12312\nqu 1;31é","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n12312\nqu 1;31é"},
+		{"input":"\u001bRS lword;my","strip":"S lword;my","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nS lword;my"},
+		{"input":"123.word\u001bqS#123\u001b​q\u001b#✗wordhB","strip":"123.wordS#123\u001b​q\u001b#✗wordhB","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n123.wordS#123​q#✗wordhB"},
+		{"input":"\nw\u001b]y;\u001b(BQ t12345;% < ","strip":"\nw;Q t12345;% < ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nw;Q t12345;% <"},
+		{"input":"\u000b","strip":"\u000b","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"<&S?-K\u001bwordh\u001b<\u001b[\u001b[line)c ","strip":"<&S?-K\u001bwordh\u001b[ine)c ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n<&S?-Kwordh[ine)c"},
+		{"input":"T","strip":"T","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nT"},
+		{"input":"8;;http://x/ 0​2mgyt#","strip":"8;;http://x/ 0​2mgyt#","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n8;;http://x/ 0​2mgyt#"},
+		{"input":"&\u001bZ1g","strip":"&1g","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n&1g"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"A4\u001b#","strip":"A4\u001b#","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nA4#"},
+		{"input":"m2-y\n> ]f?\u00079v8;;http://x/y?Z&\u001b","strip":"m2-y\n> ]f?\u00079v8;;http://x/y?Z&\u001b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nm2-y\n> ]f?9v8;;http://x/y?Z&"},
+		{"input":"oh]ycv;;line:_=o","strip":"oh]ycv;;line:_=o","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\noh]ycv;;line:_=o"},
+		{"input":"m 0QJ/KgnaZ1\u001f","strip":"m 0QJ/KnaZ1\u001f","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nm 0QJ/KnaZ1"},
+		{"input":": v 😀_Bw\r1234U)﻿\u001b","strip":": v 😀_Bw\r1234U)﻿\u001b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n: v 😀_Bw\n1234U)"},
+		{"input":">​p&n　0:","strip":">​p&n　0:","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n>​p&n　0:"},
+		{"input":"1234Q1234\u001b]r;;xbéz/v","strip":"1234Q1234;;xbéz/v","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1234Q1234;;xbéz/v"},
+		{"input":"fZ\u001b(\u001f:\u001b\\yo\u000b\\","strip":"fZ\u001b(\u001f:\u001b\\yo\u000b\\","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nfZ(:\\yo\\"},
+		{"input":"9﻿✗","strip":"9﻿✗","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n9﻿✗"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"r","strip":"r","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nr"},
+		{"input":"S\u000b<(;;: 2éQ","strip":"S\u000b<(;;: 2éQ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nS<(;;: 2éQ"},
+		{"input":"1234S a>]l[;</","strip":"1234S a>]l[;</","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1234S a>]l[;</"},
+		{"input":"%;;)Q✗;;\u001b","strip":"%;;)Q✗;;\u001b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n%;;)Q✗;;"},
+		{"input":"o😀r%@9A ~t9","strip":"o😀r%@9A ~t9","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\no😀r%@9A ~t9"},
+		{"input":"K\u0001😀[ ahr\u001fwordline\u001b(/","strip":"K\u0001😀[ ahr\u001fwordline\u001b(/","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nK😀[ ahrwordline(/"},
+		{"input":"zl\u001b[12345line9﻿\u001btl%\fxh","strip":"zlline9﻿l%\fxh","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nzlline9﻿l%xh"},
+		{"input":"1sB;;\u001b\\\f;J\f~✗? ;","strip":"1sB;;\u001b\\\f;J\f~✗? ;","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1sB;;\\;J~✗? ;"},
+		{"input":".\tz \u0000;﻿\u0007123450;title","strip":".\tz \u0000;﻿\u0007123450;title","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n.\tz ;﻿123450;title"},
+		{"input":"\fword line#😀﻿ \ns\u0000g_l","strip":"\fword line#😀﻿ \ns\u0000g_l","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nword line#😀\nsg_l"},
+		{"input":"0;title?%\u001b>Q?yQT\u001b]K2 Zr123;;","strip":"0;title?%Q?yQT2 Zr123;;","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n0;title?%Q?yQT2 Zr123;;"},
+		{"input":" 123 lg0","strip":" 123 lg0","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n 123 lg0"},
+		{"input":"linea1;31Tf1;31;>Z1;31😀8;;http://x/.\u0007","strip":"linea1;31Tf1;31;>Z1;31😀8;;http://x/.\u0007","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nlinea1;31Tf1;31;>Z1;31😀8;;http://x/."},
+		{"input":"h<%8;;http://x/9 \n\u0000-~","strip":"h<%8;;http://x/9 \n\u0000-~","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nh<%8;;http://x/9\n-~"},
+		{"input":"y​U\u001f12345r\f912345:é_b\ft)","strip":"y​U\u001f12345r\f912345:é_b\ft)","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ny​U12345r912345:é_bt)"},
+		{"input":"@s<Hzwc\u0001(x﻿;?(0;titleg","strip":"@s<Hzwc\u0001(x﻿;itleg","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n@s<Hzwc(x﻿;itleg"},
+		{"input":"Qu;\u001b\r]>on;","strip":"Qu;\u001b\r]>on;","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nQu;\n]>on;"},
+		{"input":"　","strip":"　","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"p​\u0001 ","strip":"p​\u0001 ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\np​"},
+		{"input":"/;\u001b[@K]U9\u001bx","strip":"/;\u001b[@K]U9\u001bx","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n/;[@K]U9x"},
+		{"input":"\n:]","strip":"\n:]","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n:]"},
+		{"input":"rZ s\r\n[\u001b\\P 8;;http://x/","strip":"rZ s\r\n[\u001b\\P 8;;http://x/","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nrZ s\n[\\P 8;;http://x/"},
+		{"input":"0Tc 12345%g;;u/g\\p","strip":"0Tc 12345%g;;u/g\\p","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n0Tc 12345%g;;u/g\\p"},
+		{"input":"é8;;http://x/ 😀b #c\u001b\\w😀line　","strip":"é8;;http://x/ 😀b #c\u001b\\w😀line　","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\né8;;http://x/ 😀b #c\\w😀line"},
+		{"input":"1;31😀 (#Z>\u001b\\a\\Z  H","strip":"1;31😀 (#Z>\u001b\\a\\Z  H","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1;31😀 (#Z>\\a\\Z  H"},
+		{"input":"yU\u001f\u0000✗\\scyy\u001b\\l\u001f;;B?123","strip":"yU\u001f\u0000✗\\scyy\u001b\\l\u001f;;B?123","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nyU✗\\scyy\\l;;B?123"},
+		{"input":"J\t","strip":"J\t","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nJ"},
+		{"input":"-\tr","strip":"-\tr","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n-\tr"},
+		{"input":";;h\u001b[f0;titleywws1\u0000","strip":";;h0;titleywws\u0000","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n;;h0;titleywws"},
+		{"input":"\u001bqlinet%0;titlen Z;a","strip":"linet%0;titlen Z;a","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nlinet%0;titlen Z;a"},
+		{"input":"　","strip":"　","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"J✗l<\u001b\\\u001b]xo w\r","strip":"J✗l<\u001b\\\u001b]xo w\r","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nJ✗l<\\]xo w"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"1Q(","strip":"1Q(","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1Q("},
+		{"input":"\r\n ","strip":"\r\n ","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"1234z\n\u001b]p 😀ZT ","strip":"1234z\n\u001b]p 😀ZT ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1234z\n]p 😀ZT"},
+		{"input":"😀v\u0007 \r%q;A\f","strip":"😀v\u0007 \r%q;A\f","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n😀v\n%q;A"},
+		{"input":"~r😀UT~\u0000;;[\u001b0 ","strip":"~r😀UT~\u0000;;[ ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n~r😀UT~;;["},
+		{"input":"v(0.U","strip":"v(0.U","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nv(0.U"},
+		{"input":"9\t&&ta\n","strip":"9\t&&ta\n","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n9\t&&ta"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":".x\t<(.z\u001b0\u001b[Z　;　.","strip":".x\t<(.z　;　.","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n.x\t<(.z　;　."},
+		{"input":"word\u0000\u001f H>&😀pT[B","strip":"word\u0000\u001f H>&😀pT[B","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nword H>&😀pT[B"},
+		{"input":"~","strip":"~","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n~"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"~4y&Zq","strip":"~4y&Zq","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n~4y&Zq"},
+		{"input":"?q123:0# 12345😀cA\f/\u001b(&é)","strip":"123:0# 12345😀cA\f/\u001b(&é)","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n123:0# 12345😀cA/(&é)"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"\fS12345","strip":"\fS12345","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nS12345"},
+		{"input":"\r-2@1﻿ ","strip":"\r-2@1﻿ ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n-2@1"},
+		{"input":" 2\u0001\u000b;v;y","strip":" 2\u0001\u000b;v;y","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n 2;v;y"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"\u001b[ BoZ","strip":"\u001b[ BoZ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n[ BoZ"},
+		{"input":"\u001b\tQ].﻿1s12345é12\u001bé\fH","strip":"\u001b\tQ].﻿1s12345é12\u001bé\fH","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\tQ].﻿1s12345é12éH"},
+		{"input":"AA﻿f\u001b(8;;http://x/\u001b\u001b(word\u001b😀.","strip":"AA﻿fttp://x/\u001b\u001b(word\u001b😀.","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nAA﻿fttp://x/(word😀."},
+		{"input":"2 \\01234 \u001b(\fb","strip":"2 \\01234 \u001b(\fb","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n2 \\01234 (b"},
+		{"input":"line;;0;titley@line","strip":"line;;0;titley@line","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nline;;0;titley@line"},
+		{"input":"12345\u001b(1;31~n.u/y9ulinelT  P0=","strip":"12345n.u/y9ulinelT  P0=","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n12345n.u/y9ulinelT  P0="},
+		{"input":"#A","strip":"#A","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n#A"},
+		{"input":"B\u001bq0q]z\t=B4😀✗\fUBx","strip":"B0q]z\t=B4😀✗\fUBx","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nB0q]z\t=B4😀✗UBx"},
+		{"input":"Z12345\t","strip":"Z12345\t","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nZ12345"},
+		{"input":"m?u#_/;opword","strip":"m?u#_/;opword","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nm?u#_/;opword"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"_B:Uz)8;;http://x/\r\nn","strip":"_B:Uz)8;;http://x/\r\nn","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n_B:Uz)8;;http://x/\nn"},
+		{"input":"H  og;n@\t&=aaa)","strip":"H  o;n@\t&=aaa)","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nH  o;n@\t&=aaa)"},
+		{"input":">\u000bB\n>gm.2g","strip":">\u000bB\n>gm.2g","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n>B\n>gm.2g"},
+		{"input":"\u001b\\","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"yo\u001b(mTh4l","strip":"yoTh4l","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nyoTh4l"},
+		{"input":"=t\t\fJQH;4;x","strip":"=t\t\fJQH;4;x","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n=t\tJQH;4;x"},
+		{"input":"p1#lu\f12_\n1232u","strip":"p1#lu\f12_\n1232u","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\np1#lu12_\n1232u"},
+		{"input":"\u0007J[p;;.yU.J","strip":"\u0007J[p;;.yU.J","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nJ[p;;.yU.J"},
+		{"input":"v% 8;;http://x/\u001fQB1234=1  &f","strip":"v% 8;;http://x/\u001fQB1234=1  &f","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nv% 8;;http://x/QB1234=1  &f"},
+		{"input":"\u001b\\\u001b(\u001b0;title/\u001b\u001f;","strip":"\u001b\\\u001b(itle/\u001b\u001f;","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\\(itle/;"},
+		{"input":"😀x12<=\u000bQéq123l%S✗c<","strip":"😀x12<=\u000bQéq123l%S✗c<","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n😀x12<=Qéq123l%S✗c<"},
+		{"input":"_oR0u_word1;31\u0000>x.​","strip":"_oR0u_word1;31\u0000>x.​","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n_oR0u_word1;31>x.​"},
+		{"input":"J/(\\] \u00011;31R\ttb~(123\u000bp","strip":"J/(\\] \u00011;31R\ttb~(123\u000bp","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nJ/(\\] 1;31R\ttb~(123p"},
+		{"input":"o 08;;http://x/\n4BlineZg\r\n\rlineBgword","strip":"o 08;;http://x/\n4BlineZg\r\n\rlineBgword","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\no 08;;http://x/\n4BlineZg\nlineBgword"},
+		{"input":" g","strip":" g","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n g"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"\u001fvR12345","strip":"\u001fv12345","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nv12345"},
+		{"input":"\rZ 12\u001b]oP\u001b]b(:Uz=;;","strip":"\rZ 12\u001b]oP\u001b]b(:Uz=;;","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nZ 12]oP]b(:Uz=;;"},
+		{"input":"Ks✗\u000b123\u001bA ","strip":"Ks✗\u000b123 ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nKs✗123"},
+		{"input":"]p>12345\u000b;;é<wqb_","strip":"]p>12345\u000b;;é<wqb_","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n]p>12345;;é<wqb_"},
+		{"input":"\u001b12[<mx\u001b(Q　\\Zm98;;http://x/12345~%;","strip":"[<mx\u001b(Q　\\Zm98;;http://x/12345~%;","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n[<mx(Q　\\Zm98;;http://x/12345~%;"},
+		{"input":"q 2word y\\ 2","strip":"q 2word y\\ 2","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nq 2word y\\ 2"},
+		{"input":"f","strip":"f","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nf"},
+		{"input":"g&n\t0;title0;titler","strip":"g&n\t0;title0;titler","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ng&n\t0;title0;titler"},
+		{"input":"line>Zp o\u001f","strip":"line>Zp o\u001f","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nline>Zp o"},
+		{"input":"T& \\T(012345;_H \u001b","strip":"T& \\T(012345;_H \u001b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nT& \\T(012345;_H"},
+		{"input":"✗<\u001by","strip":"✗<","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n✗<"},
+		{"input":"v([　\u001b]12@9","strip":"v([　@9","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nv([　@9"},
+		{"input":".\n \n@\u001b9h4  xt9","strip":".\n \n@4  xt9","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n.\n@4  xt9"},
+		{"input":"1\rv\r\n\u001b\\b✗\nh","strip":"1\rv\r\n\u001b\\b✗\nh","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1\nv\n\\b✗\nh"},
+		{"input":"0sA )8;;http://x/\u00011234\u000b\r>  pq","strip":"0sA )8;;http://x/\u00011234\u000b\r>  pq","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n0sA )8;;http://x/1234\n>  pq"},
+		{"input":"\u001b\\;_(word#\\&Bv:","strip":"\u001b\\;_(word#\\&Bv:","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\\;_(word#\\&Bv:"},
+		{"input":"%#9✗s<w123","strip":"%#9✗s<w123","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n%#9✗s<w123"},
+		{"input":"b_\nZT0;title12o\u001b[4b \\\nm","strip":"b_\nZT0;title12ob \\\nm","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nb_\nZT0;title12ob \\\nm"},
+		{"input":"\u001b1;31","strip":"\u001b1;31","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1;31"},
+		{"input":"]]o\u001b12>😀﻿ q","strip":"]]o😀﻿ q","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n]]o😀﻿ q"},
+		{"input":"vJ#s(\u001b\\0HS=","strip":"vJ#s(\u001b\\0HS=","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nvJ#s(\\0HS="},
+		{"input":"\u000bB@​T","strip":"\u000bB@​T","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nB@​T"},
+		{"input":"éPs\u001f","strip":"éPs\u001f","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\néPs"},
+		{"input":"#b　< nwordA[Q\r0​","strip":"#b　< nwordA[Q\r0​","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n#b　< nwordA[Q\n0​"},
+		{"input":"0;title\\﻿​\u000b","strip":"0;title\\﻿​\u000b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n0;title\\﻿​"},
+		{"input":"-90;titleBz(\f\r\nn(R\u001b\u001b[% 8;;http://x/","strip":"-90;titleBz(\f\r\nn(R\u001b\u001b[% 8;;http://x/","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n-90;titleBz(\nn(R[% 8;;http://x/"},
+		{"input":"b  m","strip":"b  m","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nb  m"},
+		{"input":"<yzU_rox/JTQ✗","strip":"<yzU_rox/JTQ✗","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n<yzU_rox/JTQ✗"},
+		{"input":";;(\u001b]ww​yline1;31\u001blineB0]","strip":";;(\u001b]ww​yline1;31ine0]","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n;;(]ww​yline1;31ine0]"},
+		{"input":"K\u001f\t","strip":"K\u001f\t","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nK"},
+		{"input":"\u001b(oc\u001bJt","strip":"\u001b(oct","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n(oct"},
+		{"input":"0;title~Uc﻿b4SqJ8;;http://x/","strip":"0;title~Uc﻿b4SqJ8;;http://x/","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n0;title~Uc﻿b4SqJ8;;http://x/"},
+		{"input":"[\u0007\\P　]?2z(\u0000 ","strip":"[\u0007\\P　]?2z(\u0000 ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n[\\P　]?2z("},
+		{"input":"é<\u000b ","strip":"é<\u000b ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\né<"},
+		{"input":"~","strip":"~","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n~"},
+		{"input":"\u000b✗HlinetféKa","strip":"\u000b✗HlinetféKa","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n✗HlinetféKa"},
+		{"input":"9&[f✗Z2z_1 　\u001b]Q123Zq","strip":"9&[f✗Z2z_1 　\u001b]Q123Zq","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n9&[f✗Z2z_1 　]Q123Zq"},
+		{"input":"word✗\u001b","strip":"word✗\u001b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nword✗"},
+		{"input":"😀\u001f✗_12oA 1231w\u0000","strip":"😀\u001f✗_12oA 1231w\u0000","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n😀✗_12oA 1231w"},
+		{"input":"Tén✗\u0000\u0007word1z \u001b\\m\u0001\\\nword_","strip":"Tén✗\u0000\u0007word1z \u001b\\m\u0001\\\nword_","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nTén✗word1z \\m\\\nword_"},
+		{"input":"uJ:~","strip":"uJ:~","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nuJ:~"},
+		{"input":"/ZP\f\t\u0007123;","strip":"/ZP\f\t\u0007123;","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n/ZP\t123;"},
+		{"input":"/1234l;p]StR\u0001;;　p﻿","strip":"/1234l;p]StR\u0001;;　p﻿","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n/1234l;p]StR;;　p"},
+		{"input":"-# o;_　\u001f\u000b/t4q","strip":"-# o;_　\u001f\u000b/t4q","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n-# o;_　/t4q"},
+		{"input":"h129y))","strip":"h129y))","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nh129y))"},
+		{"input":"\u0000\u001b✗~","strip":"\u0000\u001b✗~","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n✗~"},
+		{"input":"?\f✗","strip":"?\f✗","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n?✗"},
+		{"input":" \\>;;hS%","strip":" \\>;;hS%","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n \\>;;hS%"},
+		{"input":"20;title　\f8;;http://x/12341;3112Z1","strip":"20;title　\f8;;http://x/12341;3112Z1","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n20;title　8;;http://x/12341;3112Z1"},
+		{"input":"word(]gB2\u001b(>n.\u001b(v","strip":"word(]gB2n.\u001b(v","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nword(]gB2n.(v"},
+		{"input":"8;;http://x/word﻿>\u0007ZZ-line\f","strip":"8;;http://x/word﻿>\u0007Z-line\f","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n8;;http://x/word﻿>Z-line"},
+		{"input":"c ","strip":"c ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nc"},
+		{"input":"w\u001b(\u001b\n","strip":"w\u001b(\u001b\n","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nw("},
+		{"input":"8;;http://x/12 0\rP\u0007np>l\u001b.9@line\u001b[&","strip":"8;;http://x/12 0\rP\u0007np>l\u001b.9@line\u001b[&","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n8;;http://x/12 0\nPnp>l.9@line[&"},
+		{"input":"n=B \u001b1Zb-12","strip":"n=B b-12","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nn=B b-12"},
+		{"input":"✗","strip":"✗","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n✗"},
+		{"input":"%word:","strip":"%word:","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n%word:"},
+		{"input":"1#8;;http://x/@?y0;titleo#A","strip":"1#8;;http://x/@?y0;titleo#A","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1#8;;http://x/@?y0;titleo#A"},
+		{"input":"　fq/gKlstb\r\n\u001f","strip":"　fq/gKlstb\r\n\u001f","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n　fq/gKlstb"},
+		{"input":"H​\r; 0_H\r \n) Joépt","strip":"H​\r; 0_H\r \n) Joépt","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nH​\n; 0_H\n) Joépt"},
+		{"input":"< cx:8;;http://x/Qffv\\　","strip":"< cx:8;;http://x/Qffv\\　","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n< cx:8;;http://x/Qffv\\"},
+		{"input":"q","strip":"q","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nq"},
+		{"input":"q\u001bl\u000bh1;3112344\u001bo","strip":"q\u000bh1;3112344\u001bo","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nqh1;3112344o"},
+		{"input":"2l","strip":"2l","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n2l"},
+		{"input":"A123<\u00019_\r\n-\u001bQK1234\n\u001f\u001b(","strip":"A123<\u00019_\r\n-\u001bQK1234\n\u001f\u001b(","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nA123<9_\n-QK1234\n("},
+		{"input":"\u0001\u001b\tg\r\n\t;;z)AHt=\nw8;;http://x/c","strip":"\u0001\u001b\tg\r\n\t;;z)AHt=\nw8;;http://x/c","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\tg\n\t;;z)AHt=\nw8;;http://x/c"},
+		{"input":"é✗\u001b] \u001b[U\u001f;w>8;;http://x/%11234","strip":"é✗\u001b] \u001b[U\u001f;w>8;;http://x/%11234","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\né✗] [U;w>8;;http://x/%11234"},
+		{"input":"\nP\u001fH >R","strip":"\nP\u001fH >R","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nPH >R"},
+		{"input":"SQ12\u0001ult&?R0","strip":"SQ12\u0001ult&?R0","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nSQ12ult&?R0"},
+		{"input":"\u001b(ulinev","strip":"linev","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nlinev"},
+		{"input":"﻿\fZ\u001b\f\tB","strip":"﻿\fZ\u001b\f\tB","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n﻿Z\tB"},
+		{"input":" .A[\u001b","strip":" .A[\u001b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n .A["},
+		{"input":"f;;c\u0000\n","strip":"f;;c\u0000\n","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nf;;c"},
+		{"input":"　line✗","strip":"　line✗","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n　line✗"},
+		{"input":"\f","strip":"\f","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"\u001b\\R123451234  ","strip":"\u001b\\R123451234  ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\\R123451234"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"s;;uas\r","strip":"s;;uas\r","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ns;;uas"},
+		{"input":" ✗B >\r\u001b \u001f/Q2#","strip":" ✗B >\r\u001b \u001f/Q2#","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n ✗B >\n /Q2#"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":";;Sq\u001b\\%t\rH&\u001b2line[\u000012A\u001b(","strip":";;Sq\u001b\\%t\rH&ine[\u000012A\u001b(","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n;;Sq\\%t\nH&ine[12A("},
+		{"input":"t\\T​ \u000b","strip":"t\\T​ \u000b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nt\\T​"},
+		{"input":"😀v4\u001b[?12345f","strip":"😀v4\u001b[?12345f","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n😀v4[?12345f"},
+		{"input":".\u0001\u001f\u001b(\u001bzwordvtn:= \u000b​","strip":".\u0001\u001f\u001b(\u001bzwordvtn:= \u000b​","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n.(zwordvtn:= ​"},
+		{"input":"✗AR />😀✗\u001b/ ﻿","strip":"✗AR />😀✗\u001b/ ﻿","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n✗AR />😀✗/"},
+		{"input":"b✗@gu@\u001b(","strip":"b✗@gu@\u001b(","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nb✗@gu@("},
+		{"input":";;l )","strip":";;l )","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n;;l )"},
+		{"input":"S\u001b12345","strip":"S","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nS"},
+		{"input":"a\r\n]","strip":"a\r\n]","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\na\n]"},
+		{"input":"h✗c\u0001vo\f.","strip":"h✗c\u0001vo\f.","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nh✗cvo."},
+		{"input":"@\u0007\u001b[oz0Hv\u000b~4JR\fAl","strip":"@\u0007z0Hv\u000b~4JR\fAl","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n@z0Hv~4JRAl"},
+		{"input":"8;;http://x/\\\r4t","strip":"8;;http://x/\\\r4t","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n8;;http://x/\\\n4t"},
+		{"input":"\u001b\\\u001b12345\u0001v \u001b[vR 0","strip":"\u001b\\\u0001v \u001b[vR 0","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\\v [vR 0"},
+		{"input":"U\n","strip":"U\n","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nU"},
+		{"input":"%\u0001  p✗","strip":"%\u0001  p✗","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n%  p✗"},
+		{"input":"~;\u000090;titler﻿","strip":"~;\u000090;titler﻿","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n~;90;titler"},
+		{"input":"z;word_wordsP","strip":"z;word_wordsP","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nz;word_wordsP"},
+		{"input":"　m\u0001\n;)\u001b(\u001b(-/o)m","strip":"　m\u0001\n;)\u001b(\u001b(-/o)m","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n　m\n;)((-/o)m"},
+		{"input":"12n\u001b]\u000b\u000b\n","strip":"12n\u001b]\u000b\u000b\n","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n12n]"},
+		{"input":"\u0007?\u001b]\u001b\u001f\u001b\u000bq","strip":"\u0007?\u001b]\u001b\u001f\u001b\u000bq","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n?]q"},
+		{"input":" s✗~S=yZn]","strip":" s✗~S=yZn]","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n s✗~S=yZn]"},
+		{"input":"\u001b_ \u001b\u001b]@\u001b123","strip":"\u001b_ \u001b\u001b]@","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n_ ]@"},
+		{"input":"n\r\r4;;\u001b[","strip":"n\r\r4;;\u001b[","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nn\n4;;["},
+		{"input":"1234p]\u001fTRy\u001b\\","strip":"1234p]\u001fTRy\u001b\\","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1234p]TRy\\"},
+		{"input":"Jy8;;http://x/&)Q>S﻿8;;http://x/b)\u0001\u000bb0;title~A","strip":"Jyttp://x/&)Q>S﻿8;;http://x/b)\u0001\u000bb0;title~A","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nJyttp://x/&)Q>S﻿8;;http://x/b)b0;title~A"},
+		{"input":"\u001fs\n~a\\:　nUA(","strip":"\u001fs\n~a\\:　nUA(","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ns\n~a\\:　nUA("},
+		{"input":"gé​﻿","strip":"gé​﻿","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ngé​"},
+		{"input":"12​ vKmcb Zo1234S4\u000b0;title","strip":"12​ vKmcb Zo1234S4\u000b0;title","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n12​ vKmcb Zo1234S40;title"},
+		{"input":"1;31n/K2","strip":"1;31n/K2","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1;31n/K2"},
+		{"input":"[h;0R&　>\r\n\fl\u001b[","strip":"[h;0R&　>\r\n\fl\u001b[","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n[h;0R&　>\nl["},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"✗1234TZb✗B>word","strip":"✗1234TZb✗B>word","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n✗1234TZb✗B>word"},
+		{"input":"nz/A\u001f12345[12345\n﻿q&)4m","strip":"nz/A\u001f12345[12345\n﻿q&)4","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nnz/A12345[12345\n﻿q&)4"},
+		{"input":"12345\rA\\ ","strip":"12345\rA\\ ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n12345\nA\\"},
+		{"input":"r wu: 　_\u001b]","strip":"r wu: 　_\u001b]","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nr wu: 　_]"},
+		{"input":"12345\u001b]JTp;é \r&p.\u000b\r\n","strip":"12345Tp;é \r&p.\u000b\r\n","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n12345Tp;é\n&p."},
+		{"input":"#o\u001bé\u001b;;&=\tg;;","strip":"#o\u001bé\u001b;;&=\tg;;","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n#oé;;&=\tg;;"},
+		{"input":"\u001b(K","strip":"\u001b(K","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n(K"},
+		{"input":"aB\u001b]\u001bu","strip":"aB\u001b]","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\naB]"},
+		{"input":"h>1;31line","strip":"h>1;31line","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nh>1;31line"},
+		{"input":"_ ;;","strip":"_ ;;","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n_ ;;"},
+		{"input":"\u001b\\;a&c","strip":"\u001b\\;a&c","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\\;a&c"},
+		{"input":"\n　\u001f[;Ht","strip":"\n　\u001f[;Ht","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n　[;Ht"},
+		{"input":"o<qf;;\u001b((yz.✗9pline12304","strip":"o<qf;;yz.✗9pline12304","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\no<qf;;yz.✗9pline12304"},
+		{"input":"h]%R\r\n&.","strip":"h]%R\r\n&.","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nh]%R\n&."},
+		{"input":"_4q\\v\n","strip":"_4q\\v\n","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n_4q\\v"},
+		{"input":"_o\n\r\n]","strip":"_o\n\r\n]","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n_o\n]"},
+		{"input":"t\u001b]&)pxg","strip":"t\u001b]&)pxg","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nt]&)pxg"},
+		{"input":"wordt\n\u001b","strip":"wordt\n\u001b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nwordt"},
+		{"input":"nbZaR:rline;;​P\u000b","strip":"nbZaR:rline;;​P\u000b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nnbZaR:rline;;​P"},
+		{"input":"T✗fqAR\\4b\u001b[\u001b;\u001f;;;1234","strip":"T✗fqAR\\4b\u001b[\u001b;\u001f;;;1234","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nT✗fqAR\\4b[;;;;1234"},
+		{"input":";;uJline\u001bsr","strip":";;uJliner","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n;;uJliner"},
+		{"input":"\u001fmUK2Z;;:y9\u001bé _123","strip":"\u001fmUK2Z;;:y9\u001bé _123","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nmUK2Z;;:y9é _123"},
+		{"input":"9oéa S4&s&;;✗;vsP","strip":"9oéa S4&s&;;✗;vsP","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n9oéa S4&s&;;✗;vsP"},
+		{"input":"lpline","strip":"lpline","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nlpline"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"bT;✗ l TZ1;31f\nJZ/","strip":"bT;✗ l TZ1;31f\nJZ/","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nbT;✗ l TZ1;31f\nJZ/"},
+		{"input":"&s\u000bq[wr:\u0007c \u000b&nKrm","strip":"&s\u000bq[wr:\u0007c \u000b&nKrm","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n&sq[wr:c &nKrm"},
+		{"input":";zlQ;=1234;;Uy","strip":";zlQ;=1234;;Uy","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n;zlQ;=1234;;Uy"},
+		{"input":"　\u000b&1-S","strip":"　\u000b&1-S","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n　&1-S"},
+		{"input":"a","strip":"a","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\na"},
+		{"input":"?~\u0001✗v1234","strip":"?~\u0001✗v1234","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n?~✗v1234"},
+		{"input":"@\r","strip":"@\r","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n@"},
+		{"input":"1;31o ;n\u001b_\u001b(\u001b]@","strip":"1;31o ;n\u001b_\u001b(\u001b]@","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1;31o ;n_(]@"},
+		{"input":"uS\r\no012345-<word?","strip":"uS\r\no012345-<word?","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nuS\no012345-<word?"},
+		{"input":"\t(\u000b=\u001bsJ@😀a4;","strip":"\t(\u000b=J@😀a4;","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\t(=J@😀a4;"},
+		{"input":"\u001bword\u0007S\u0007v","strip":"S\u0007v","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nSv"},
+		{"input":">8;;http://x/1234a\u0001\u0007Q<]>","strip":">8;;http://x/1234a\u0001\u0007Q<]>","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n>8;;http://x/1234aQ<]>"},
+		{"input":" _=h98;;http://x/Z:8;;http://x/<1\u001f\rQZlineB","strip":" _=h98;;http://x/Z:8;;http://x/<1\u001f\rQZlineB","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n _=h98;;http://x/Z:8;;http://x/<1\nQZlineB"},
+		{"input":"1f0;title2& l\u001f\u001bm","strip":"1f0;title2& l\u001f","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1f0;title2& l"},
+		{"input":")\u001b 0\u001b.8;;http://x/12","strip":")\u001b 0\u001b.8;;http://x/12","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n) 0.8;;http://x/12"},
+		{"input":"xx<#4T✗ ✗_H?\u000bv%","strip":"xx<#4T✗ ✗_H?\u000bv%","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nxx<#4T✗ ✗_H?v%"},
+		{"input":".l&\\\u0000 　​p\\0/","strip":".l&\\\u0000 　​p\\/","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n.l&\\ 　​p\\/"},
+		{"input":"　%;;\fB123 Us12 \f123.","strip":"　%;;\fB123 U12 \f123.","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n　%;;B123 U12 123."},
+		{"input":" y;","strip":" y;","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n y;"},
+		{"input":"123\u001b:1obq < A\u001b","strip":"123\u001b:1obq < A\u001b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n123:1obq < A"},
+		{"input":"b1234v  \u001b]r;\n​12345\r\nb1;31_w","strip":"b1234v  ;\n​12345\r\nb1;31_w","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nb1234v  ;\n​12345\nb1;31_w"},
+		{"input":"1230;titlecUU","strip":"1230;titlecUU","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1230;titlecUU"},
+		{"input":"-9<\u0000& ln\nl","strip":"-9<\u0000& ln\nl","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n-9<& ln\nl"},
+		{"input":".\fK\u001f;K%Tvlineo","strip":".\fK\u001f;K%Tvlineo","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n.K;K%Tvlineo"},
+		{"input":"8;;http://x/??Blll;;KJg@J\u001b[\rT\f\u001f","strip":"8;;http://x/??Blll;;KJg@J\u001b[\rT\f\u001f","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n8;;http://x/??Blll;;KJg@J[\nT"},
+		{"input":"1234q;mqg\u0007P😀.\u001fword\r?","strip":"1234q;mqg\u0007P😀.\u001fword\r?","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1234q;mqgP😀.word\n?"},
+		{"input":"\u001b]\u001b\\0;title​ \u001b\\","strip":"0;title​ \u001b\\","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n0;title​ \\"},
+		{"input":"12;;? P\\  ","strip":"12;;? P\\  ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n12;;? P\\"},
+		{"input":"oBz\\;tH","strip":"oBz\\;tH","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\noBz\\;tH"},
+		{"input":"8;;http://x//&=0;title?zQw","strip":"8;;http://x//&=0;title?zQw","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n8;;http://x//&=0;title?zQw"},
+		{"input":"\f2tu\u001f\\0;titleh\tg","strip":"\f2t\u001f\\0;titleh\tg","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n2t\\0;titleh\tg"},
+		{"input":"?word \u001b(\u0001AK=","strip":"?word \u001b(\u0001AK=","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n?word (AK="},
+		{"input":"8;;http://x/lc","strip":"8;;http://x/lc","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n8;;http://x/lc"},
+		{"input":"@q-A12345) ","strip":"@q-A12345) ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n@q-A12345)"},
+		{"input":"Z%h;\u001b[12g;@H \u001fv 　c\\","strip":"Z%h;;@H \u001fv 　c\\","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nZ%h;;@H v 　c\\"},
+		{"input":"h 12?%-?-s0P✗  ✗","strip":"h 12?%-?-s0P✗  ✗","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nh 12?%-?-s0P✗  ✗"},
+		{"input":"JhQBqt\u001fK1238;;http://x/\u001bév\u0000","strip":"JhQBqt\u001fK1238;;http://x/\u001bév\u0000","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nJhQBqtK1238;;http://x/év"},
+		{"input":"0;title\r　f\r1234line\rKf\u000b\u001fKv;&","strip":"0;title\r　f\r1234line\rKf\u000b\u001fKv;&","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n0;title\n　f\n1234line\nKfKv;&"},
+		{"input":"\u001b]y(4/_","strip":"\u001b]y(4/_","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n]y(4/_"},
+		{"input":"﻿tww?#0;titleo　12Z]","strip":"﻿tww?#0;titleo　12Z]","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n﻿tww?#0;titleo　12Z]"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"Z@4= u\r\nr]gline= \f﻿","strip":"Z@4= u\r\nr]gline= \f﻿","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nZ@4= u\nr]gline="},
+		{"input":"%\u001béword﻿w\u000b;;4\u001b​✗A\u001f1234@","strip":"%\u001béword﻿w\u000b;;4\u001b​✗A\u001f1234@","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n%éword﻿w;;4​✗A1234@"},
+		{"input":" \u001b\\\u001b\\","strip":" \u001b\\\u001b\\","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n \\\\"},
+		{"input":"a]\u001b4K✗\u001b[;;S..\u001b]","strip":"a]✗..\u001b]","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\na]✗..]"},
+		{"input":"-\u0001KlqSJ;P[x[　12345","strip":"-\u0001KlqSJ;P[x[　12345","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n-KlqSJ;P[x[　12345"},
+		{"input":"1;31?té;9.)1;31\tU z@~.b)\u0007","strip":"1;31?té;9.)1;31\tU z@~.b)\u0007","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1;31?té;9.)1;31\tU z@~.b)"},
+		{"input":"-1234- u\u0001   1234qv123Z","strip":"-1234- u\u0001   1234qv123Z","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n-1234- u   1234qv123Z"},
+		{"input":"9 \u000b \n1234l","strip":"9 \u000b \n1234l","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n9\n1234l"},
+		{"input":"a😀a~l -Rz-a\t\frx12","strip":"a😀a~l -Rz-a\t\frx12","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\na😀a~l -Rz-a\trx12"},
+		{"input":"\u0000\\","strip":"\u0000\\","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\\"},
+		{"input":"~AZ14 ✗2﻿p&n\u001f","strip":"~AZ14 ✗2﻿p&n\u001f","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n~AZ14 ✗2﻿p&n"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"y0;;z0;titlenf\u00012word y\u001f2%\u0007\n@t","strip":"y0;;z0;titlenf\u00012word y\u001f2%\u0007\n@t","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ny0;;z0;titlenf2word y2%\n@t"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"1R\u0001","strip":"1R\u0001","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1R"},
+		{"input":"x　123﻿v. \u001b[u\u001b]0\n","strip":"x　123﻿v. \n","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nx　123﻿v."},
+		{"input":"Ag;;A\u001b P<\u001b%Q\n\u001bT","strip":"Ag;;A\u001b P<\u001b%Q\n","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nAg;;A P<%Q"},
+		{"input":"1%fU\u001b(　c","strip":"1%fU\u001b(　c","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1%fU(　c"},
+		{"input":"8;;http://x/f✗1\u001b﻿\u001b[ \u001b]4;K1r0s12c","strip":"8;;http://x/f✗1\u001b﻿\u001b[ 1r0s12c","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n8;;http://x/f✗1﻿[ 1r0s12c"},
+		{"input":"0;titlebtJJx~\t>Hvword%","strip":"0;titlebtJJx~\t>Hvword%","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n0;titlebtJJx~\t>Hvword%"},
+		{"input":")S✗","strip":")S✗","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n)S✗"},
+		{"input":"P\u001b\\\u001b][>\u001b(=~l? y%;yJ# ","strip":"P\u001b\\~l? y%;yJ# ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nP\\~l? y%;yJ#"},
+		{"input":"\u001b0;title1;31x\t\\%&>bv0?Z\u0001u","strip":"itle1;31x\t\\%&>bv0?Z\u0001u","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nitle1;31x\t\\%&>bv0?Zu"},
+		{"input":"\np\u001bword )​\u0001;~v\u0007lBfg","strip":"\np\u001bword )​\u0001;~v\u0007lBfg","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\npword )​;~vlBfg"},
+		{"input":"B\u001b[\u000b;;R;t\n>\u0001 s8;;http://x/_","strip":"B\u001b[\u000b;;R;t\n>\u0001 s8;;http://x/_","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nB[;;R;t\n> s8;;http://x/_"},
+		{"input":"\u001b[ ​\u001b\\","strip":"\u001b[ ​\u001b\\","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n[ ​\\"},
+		{"input":"😀12\r\n","strip":"😀12\r\n","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n😀12"},
+		{"input":"\\?;]　123","strip":"\\?;]　123","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\\?;]　123"},
+		{"input":"b1234éoy\u0001%&;?","strip":"b1234éoy\u0001%&;?","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nb1234éoy%&;?"},
+		{"input":"tn-\nx v","strip":"tn-\nx v","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ntn-\nx v"},
+		{"input":";1234\u001b\f","strip":";1234\u001b\f","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n;1234"},
+		{"input":"\r 9][vnn2U_#","strip":"\r 9][vnn2U_#","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n 9][vnn2U_#"},
+		{"input":"o\u0001y12v\u001b\r\u001b[ \u001f12\u001b :\u001b]B","strip":"o\u0001y12v\u001b\r\u001b[ \u001f12\u001b :","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\noy12v\n[ 12 :"},
+		{"input":"s　\r\n\u00070;title\u0001\u0007\u001f (1h1234t\u001b# \u0001n","strip":"s　\r\n\u00070;title\u0001\u0007\u001f (1h1234t\u001b# \u0001n","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ns\n0;title (1h1234t# n"},
+		{"input":"b-/😀;;　g-;;4&B[","strip":"b-/😀;;　g-;;4&B[","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nb-/😀;;　g-;;4&B["},
+		{"input":"\r　\fSg[nw\n\u0007;/","strip":"\r　\fSg[nw\n\u0007;/","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n　Sg[nw\n;/"},
+		{"input":"\u001b\\q;&-v)2 1234","strip":"q;&-v)2 1234","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nq;&-v)2 1234"},
+		{"input":"Jword","strip":"Jword","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nJword"},
+		{"input":"\u001b\\q #\u0000word[12-8;;http://x/123;\u000b","strip":"\u001b\\q #\u0000word[12-8;;http://x/123;\u000b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\\q #word[12-8;;http://x/123;"},
+		{"input":"~;;","strip":"~;;","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n~;;"},
+		{"input":"&\u001f=#H/b","strip":"&\u001f=#H/b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n&=#H/b"},
+		{"input":"_TKt12","strip":"_TKt12","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n_TKt12"},
+		{"input":"(﻿\r\n@<R%Q K?;\u001b\u001b\\﻿0;title(Q","strip":"(﻿\r\n@<R%Q K?;﻿0;title(Q","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n(\n@<R%Q K?;﻿0;title(Q"},
+		{"input":"J","strip":"J","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nJ"},
+		{"input":"_\n​_","strip":"_\n​_","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n_\n​_"},
+		{"input":"@v2 \nv","strip":"@v2 \nv","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n@v2\nv"},
+		{"input":"fR","strip":"fR","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nfR"},
+		{"input":"\u001b(8;;http://x/uKf ;","strip":"ttp://x/uKf ;","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nttp://x/uKf ;"},
+		{"input":"n1234Zx123%s1;31","strip":"n1234Zx123%s1;31","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nn1234Zx123%s1;31"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"_m.l1234512]A\u001b&>12 \\\t","strip":"_m.l1234512]A\u001b&>12 \\\t","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n_m.l1234512]A&>12 \\"},
+		{"input":"=4]\u001b\\;;8;;http://x/\r\n \r\n\fc?line :pwword","strip":"=4]\u001b\\;;8;;http://x/\r\n \r\n\fc?line :pwword","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n=4]\\;;8;;http://x/\nc?line :pwword"},
+		{"input":"12J=/​123@QQ=Tv\u0001","strip":"12J=/​123@QQ=Tv\u0001","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n12J=/​123@QQ=Tv"},
+		{"input":"P n@\u000b\u001b]m\u001b(4=a","strip":"P n@\u000ba","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nP n@a"},
+		{"input":"_gh​\u001f123454At9xt\u0007","strip":"_gh​\u001f123454At9xt\u0007","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n_gh​123454At9xt"},
+		{"input":">tq\f qw\u001b\r​123","strip":">tq\f qw\r​123","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n>tq qw\n​123"},
+		{"input":"J\u000bH&\u001b(0sc9  f","strip":"J\u000b&sc9  f","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nJ&sc9  f"},
+		{"input":"l\tbh%H H","strip":"l\tbh%H H","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nl\tbh%H H"},
+		{"input":"hBtlc","strip":"hBtlc","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nhBtlc"},
+		{"input":"yyw/\u0001vq\r","strip":"yw/\u0001vq\r","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nyw/vq"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"fTy]\u001bK","strip":"fTy]","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nfTy]"},
+		{"input":"0;title12c1234 np\u001b\\wordT-.0S","strip":"0;title12c1234 np\u001b\\wordT-.0S","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n0;title12c1234 np\\wordT-.0S"},
+		{"input":"1;31n#J\u00072z\n?)l","strip":"1;31n#J\u00072z\n?)l","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1;31n#J2z\n?)l"},
+		{"input":"K\u0000v\u000balinefU\tc;;-UP\u001fp@<","strip":"K\u0000v\u000balinefU\tc;;-UP\u001fp@<","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nKvalinefU\tc;;-UPp@<"},
+		{"input":"\u001b\u001b\\;;<\u001bQ\u0000.\\2","strip":";;<\u001bQ\u0000.\\2","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n;;<Q.\\2"},
+		{"input":"g8;;http://x/\f=#\u001b/","strip":"g8;;http://x/\f=#\u001b/","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ng8;;http://x/=#/"},
+		{"input":"sUJ<cg 1;31R&?","strip":"sUJ<cg 1;31R&?","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nsUJ<cg 1;31R&?"},
+		{"input":"&😀b[s\u001b[?　q \u001b( ","strip":"&😀b[s\u001b[?　q \u001b( ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n&😀b[s[?　q ("},
+		{"input":": 2","strip":": 2","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n: 2"},
+		{"input":"\n1;31\u001b\\;.@","strip":"\n1;31\u001b\\;.@","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1;31\\;.@"},
+		{"input":";)r1234\r\n)\n 0&1234512345\u001b\\ wq","strip":";)r1234\r\n)\n 0&1234512345\u001b\\ wq","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n;)r1234\n)\n 0&1234512345\\ wq"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"\u001fs \u001b\\p\nJq\u001b%1u ​","strip":"\u001fs \u001b\\p\nJq\u001b%1u ​","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ns \\p\nJq%1u ​"},
+		{"input":" \u0001\u001b]\n&:\u001b","strip":" \u0001\u001b]\n&:\u001b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n ]\n&:"},
+		{"input":"\\Sxwff/yhline","strip":"\\Sxwff/yhline","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\\Sxwff/yhline"},
+		{"input":"12345t_✗H)%=lineTS#4","strip":"12345_✗H)%=lineTS#4","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n12345_✗H)%=lineTS#4"},
+		{"input":"Qz:","strip":"Qz:","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nQz:"},
+		{"input":"gZ2#2.mp&T\u001b[>😀g J","strip":"gZ2#2.mp&T😀g J","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ngZ2#2.mp&T😀g J"},
+		{"input":" ","strip":" ","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"t-\u0000 R","strip":"t-\u0000 R","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nt- R"},
+		{"input":"aU(﻿_s","strip":"aU(﻿_s","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\naU(﻿_s"},
+		{"input":"y\u001b[bc8;;http://x/A;Rh\nU\t_","strip":"y\u001b[bc8;;http://x/A;h\nU\t_","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ny[bc8;;http://x/A;h\nU\t_"},
+		{"input":"\u001b x<\u001b\\\r\nHword Z[<rb","strip":"\u001b x<\u001b\\\r\nHword Z[<rb","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n x<\\\nHword Z[<rb"},
+		{"input":"~ ;T\u001f[(\u001b[v\\123","strip":"~ ;T\u001f[(\u001b[v\\123","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n~ ;T[([v\\123"},
+		{"input":"s#\nZf​\u001b]\u001b[y","strip":"s#\nZf​\u001b]","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ns#\nZf​]"},
+		{"input":":z00;title\u0001.#\\ u\r","strip":":z00;title\u0001.#\\ u\r","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n:z00;title.#\\ u"},
+		{"input":".1　é\u001b ","strip":".1　é\u001b ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n.1　é"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"gline cT)\\ s\u001b=","strip":"gline cT)\\ s","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ngline cT)\\ s"},
+		{"input":"%","strip":"%","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n%"},
+		{"input":"bt\\\u001f1234o12 B0;title\\","strip":"bt\\\u001f1234o12 B0;title\\","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nbt\\1234o12 B0;title\\"},
+		{"input":"b/H\n P (\u001b12345A\\r\u001b\u0007","strip":"b/H\n P (\u001b12345A\\r","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nb/H\n P (12345A\\r"},
+		{"input":"wordr\n1234-\no\u001b(\fQ","strip":"wordr\n1234-\no\u001b(\fQ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nwordr\n1234-\no(Q"},
+		{"input":"\na \u001b]","strip":"\na \u001b]","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\na ]"},
+		{"input":"Sqag\u0001123458;;http://x/A","strip":"Sqag\u0001123458;;http://x/A","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nSqag123458;;http://x/A"},
+		{"input":";v\u00012>S)/","strip":";v\u00012>S)/","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n;v2>S)/"},
+		{"input":"\tAf)\rpo\u001b]Q","strip":"\tAf)\rpo\u001b]Q","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\tAf)\npo]Q"},
+		{"input":"　H 12342;;2\u0000\u000b;;m-<","strip":"　H 12342;;2\u0000\u000b;;m-<","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n　H 12342;;2;;m-<"},
+		{"input":" s　wordP:yh​\u001b\\","strip":" s　wordP:yh​\u001b\\","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n s　wordP:yh​\\"},
+		{"input":";~u>[l\nhQ　a[\u001f","strip":";~u>[l\nhQ　a[\u001f","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n;~u>[l\nhQ　a["},
+		{"input":"m<\u0000&)n","strip":"m<\u0000&)n","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nm<&)n"},
+		{"input":"l\u001b\\ ","strip":"l\u001b\\ ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nl\\"},
+		{"input":"gé_\fP\t1234~;\u001bSf\n ","strip":"gé_\fP\t1234~;f\n ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ngé_P\t1234~;f"},
+		{"input":"\u001b0\r1;31f_\u001b[","strip":"\r1;31f_\u001b[","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1;31f_["},
+		{"input":"_s\u0007K0;title[_","strip":"_s\u0007K0;title[_","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n_sK0;title[_"},
+		{"input":"\u001b(msline9f8;;http://x/\u001f\u001b​uars ","strip":"sline9f8;;http://x/\u001f\u001b​uars ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nsline9f8;;http://x/​uars"},
+		{"input":"0;title","strip":"0;title","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n0;title"},
+		{"input":"\r\r\f \f\u0007U\u0001linewordB","strip":"\r\r\f \f\u0007U\u0001linewordB","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n UlinewordB"},
+		{"input":"<v\u001b]​\u0001lineq","strip":"<v\u001b]​\u0001lineq","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n<v]​lineq"},
+		{"input":"4>HmR\u001b","strip":"4>mR\u001b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n4>mR"},
+		{"input":"(]\u001b]\u001b\\\n y[ \u0000r","strip":"(]\n y[ \u0000r","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n(]\n y[ r"},
+		{"input":"l","strip":"l","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nl"},
+		{"input":"~-;\r0;titleasTn?Z-B%é/123","strip":"~-;\r0;titleasTn?Z-B%é/123","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n~-;\n0;titleasTn?Z-B%é/123"},
+		{"input":"😀","strip":"😀","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n😀"},
+		{"input":"\\~<\n﻿q aS\nZ","strip":"\\~<\n﻿q aS\nZ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\\~<\n﻿q aS\nZ"},
+		{"input":"_>B~","strip":"_>B~","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n_>B~"},
+		{"input":"y[﻿123line","strip":"y[﻿123line","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ny[﻿123line"},
+		{"input":"B0BR)","strip":"B0BR)","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nB0BR)"},
+		{"input":" R##\u001f;;#😀\u001b\\wS\u001b[","strip":" R##\u001f;;#😀\u001b\\wS\u001b[","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n R##;;#😀\\wS["},
+		{"input":">Uwmrt","strip":">Uwmrt","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n>Uwmrt"},
+		{"input":"@.\u0007]v.\u0001\u001b","strip":"@.\u0007]v.\u0001\u001b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n@.]v."},
+		{"input":"\u0007l %g﻿:","strip":"\u0007l %g﻿:","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nl %g﻿:"},
+		{"input":" ","strip":" ","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"\u001b]\u001b[a 　g　>m\u0000?\nJ","strip":"\u001b]\u001b[a 　g　>m\u0000?\nJ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n][a 　g　>m?\nJ"},
+		{"input":"A1","strip":"A1","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nA1"},
+		{"input":"=\u001b123","strip":"=","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n="},
+		{"input":"f v2✗\u001f-m﻿;P","strip":"f v2✗\u001f-m﻿;P","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nf v2✗-m﻿;P"},
+		{"input":" q\u001b)\f\n S>\n_?\u0000/\n​_","strip":" q\u001b)\f\n S>\n_?\u0000/\n​_","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n q)\n S>\n_?/\n​_"},
+		{"input":"_-　  U\r\n]o\u001fU\t21]-zH","strip":"_-　  U\r\n]o\u001fU\t21]-zH","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n_-　  U\n]oU\t21]-zH"},
+		{"input":"#)x","strip":"#)x","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n#)x"},
+		{"input":"n\u001b]owt~\n\n","strip":"n\u001b]owt~\n\n","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nn]owt~"},
+		{"input":"JR @","strip":"JR @","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nJR @"},
+		{"input":"\r\nS&","strip":"\r\nS&","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nS&"},
+		{"input":"\\B","strip":"\\B","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\\B"},
+		{"input":" @éc]/ ​\u001b(　_=1234","strip":" @éc]/ ​\u001b(　_=1234","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n @éc]/ ​(　_=1234"},
+		{"input":"&S/2q]123f )123Ab@\u000bw","strip":"&S/2q]123f )123Ab@\u000bw","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n&S/2q]123f )123Ab@w"},
+		{"input":"@12345P12341\u001f[>(\r123450v[q","strip":"@12345P12341\u001f[>(\r123450v[q","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n@12345P12341[>(\n123450v[q"},
+		{"input":"​\u001b\\1line","strip":"​\u001b\\ine","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n​\\ine"},
+		{"input":"q v&0;title<0\u001b#q​@","strip":"q v&0;title<0​@","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nq v&0;title<0​@"},
+		{"input":"\r S\tR1231#Pgfv[\rZ\u0000U12345\u0007","strip":"\r S\tR1231#Pgfv[\rZ\u0000U12345\u0007","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n S\tR1231#Pgfv[\nZU12345"},
+		{"input":"cKq2","strip":"Kq2","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nKq2"},
+		{"input":"\u001bH B9zTZ\nz","strip":" B9zTZ\nz","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n B9zTZ\nz"},
+		{"input":" ","strip":" ","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":";;4 linelv\u001b(12345u\\\u001b[f)","strip":";;4 linelvu\\)","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n;;4 linelvu\\)"},
+		{"input":"=Tc\u000b\u001b;\r12","strip":"=Tc\u000b\u001b;\r12","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n=Tc;\n12"},
+		{"input":"8;;http://x/word😀​>?_\u000b 0;titlef ?g","strip":"8;;http://x/word😀​>?_\u000b 0;titlef ?g","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n8;;http://x/word😀​>?_ 0;titlef ?g"},
+		{"input":"0;title?9: 99]wy0;titleo\u000bo","strip":"0;title: 99]wy0;titleo\u000bo","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n0;title: 99]wy0;titleoo"},
+		{"input":"_@ 123 \u001b]B8;;http://x/2","strip":"_@ 123 8;;http://x/2","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n_@ 123 8;;http://x/2"},
+		{"input":"wgpog\u0001B\u0001","strip":"wgpog\u0001B\u0001","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nwgpogB"},
+		{"input":"9#0\u001b=\u0000UT","strip":"9#0\u0000UT","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n9#0UT"},
+		{"input":"l Az1;3112345R","strip":"l Az1;3112345","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nl Az1;3112345"},
+		{"input":"%([123.\tmp\u0007x\u001b[\t\u0001.a","strip":"%([123.\tmp\u0007x\u001b[\t\u0001.a","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n%([123.\tmpx[\t.a"},
+		{"input":"\rc~ RQword\u0007","strip":"\rc~ RQword\u0007","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nc~ RQword"},
+		{"input":"9T","strip":"9T","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n9T"},
+		{"input":"J\u001b[word\f:T","strip":"J\u001b[word\f:T","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nJ[word:T"},
+		{"input":"(?us\u0001aw1234word(T0;title]:​✗ \u000b","strip":"(?us\u0001aw1234word(T0;title]:​✗ \u000b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n(?usaw1234word(T0;title]:​✗"},
+		{"input":"H\u0007 xl\u001b[c\u001b\\)-H\u001b[_","strip":"H\u0007 xl)-H\u001b[_","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nH xl)-H[_"},
+		{"input":"12345　\f=~P~","strip":"12345　\f=~P~","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n12345　=~P~"},
+		{"input":"~nr=h　f","strip":"~nr=h　f","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n~nr=h　f"},
+		{"input":"\r[w\tU\t","strip":"\r[w\tU\t","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n[w\tU"},
+		{"input":"\r\n","strip":"\r\n","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":";\u001b]8;;http://x/(qword 0zH )r0;title\u000b\u0001A\u001bf","strip":";ttp://x/(qword 0zH )r0;title\u000b\u0001A","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n;ttp://x/(qword 0zH )r0;titleA"},
+		{"input":"✗　\f\n12A\nx(rword&>\u001bT1","strip":"✗　\f\n12A\nx(rword&>1","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n✗\n12A\nx(rword&>1"},
+		{"input":"   :12345/​ \\0\r0;titlehmZ","strip":"   :12345/​ \\0\r0;titlehmZ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n   :12345/​ \\0\n0;titlehmZ"},
+		{"input":"_#P<é\u001b[2@t\u001b✗&qRr　","strip":"_#P<é@t\u001b✗&qRr　","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n_#P<é@t✗&qRr"},
+		{"input":"\f&\n\u001b]?\u001bcP)\t\f1;31.[b[","strip":"\f&\n\u001b]?P)\t\f1;31.[b[","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n&\n]?P)\t1;31.[b["},
+		{"input":"s;","strip":"s;","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ns;"},
+		{"input":"\r\n/4　","strip":"\r\n/4　","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n/4"},
+		{"input":"T.　@\u001f​;;","strip":"T.　@\u001f​;;","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nT.　@​;;"},
+		{"input":"8;;http://x/%bu\t","strip":"8;;http://x/%bu\t","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n8;;http://x/%bu"},
+		{"input":"c;\u001b]pa\u001b","strip":"c;\u001b]pa\u001b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nc;]pa"},
+		{"input":"< .;PHword K","strip":"< .;PHword K","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n< .;PHword K"},
+		{"input":"word;;\n;\u0007","strip":"word;;\n;\u0007","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nword;;\n;"},
+		{"input":"~122un~1;311231;31gA\u001b]x","strip":"~122un~1;311231;31gA\u001b]x","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n~122un~1;311231;31gA]x"},
+		{"input":"o\nP\u0001lineB✗\u001b(gs9?% Rf;;s","strip":"o\nP\u0001lineB✗s9?% Rf;;s","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\no\nPlineB✗s9?% Rf;;s"},
+		{"input":"ry\t/\fK123x​>r2_z","strip":"ry\t/\fK123x​>r2_z","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nry\t/K123x​>r2_z"},
+		{"input":" 90;titleg?\r9line:f ","strip":" 90;titleg?\r9line:f ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n 90;titleg?\n9line:f"},
+		{"input":"\u001b]8;;http://x/R\u001b1234 ​)Z\u0007","strip":"ttp://x/R ​)Z\u0007","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nttp://x/R ​)Z"},
+		{"input":"\u00001[1;31é","strip":"\u00001[1;31é","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1[1;31é"},
+		{"input":"T40Z&1234﻿m\u000by8;;http://x/1","strip":"T40Z&1234﻿m\u000by8;;http://x/1","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nT40Z&1234﻿my8;;http://x/1"},
+		{"input":"\u0007 \u001bJo12l yzP😀 9\u001b✗​","strip":"\u0007 o12l yz😀 9\u001b✗​","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n o12l yz😀 9✗​"},
+		{"input":"1;319;&=\u0001　12&10;title\\\u001b\\\n0#123","strip":"1;319;&=\u0001　12&10;title\\\u001b\\\n0#123","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1;319;&=　12&10;title\\\\\n0#123"},
+		{"input":"x;\u0001","strip":"x;\u0001","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nx;"},
+		{"input":"U.\u000b","strip":"U.\u000b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nU."},
+		{"input":"123;　(","strip":"123;　(","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n123;　("},
+		{"input":"✗r\u001b\\t\u001bz","strip":"✗t\u001bz","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n✗tz"},
+		{"input":"1;31#TQ123﻿","strip":"1;31#TQ123﻿","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1;31#TQ123"},
+		{"input":"\u001b\\\u001b \u001b✗8;;http://x/\r\n]12l\u000b","strip":"\u001b\\\u001b \u001b✗8;;http://x/\r\n]12l\u000b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\\ ✗8;;http://x/\n]12l"},
+		{"input":"tRP@u\nnB\r\u0007\u001b\u001b\u001b]g(#","strip":"tRP@u\nnB\r\u0007\u001b\u001b\u001b]g(#","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ntRP@u\nnB\n]g(#"},
+		{"input":"%4;　f123]","strip":"%4;　f]","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n%4;　f]"},
+		{"input":"\u001b];QTa-H.\u0007am​ cword-","strip":"am​ cword-","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nam​ cword-"},
+		{"input":"c8;;http://x/T","strip":"c8;;http://x/T","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nc8;;http://x/T"},
+		{"input":"o%4]12/😀@0;title1231;31\u001b[<","strip":"o%4]12/😀@0;title1231;31","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\no%4]12/😀@0;title1231;31"},
+		{"input":"r;;1;31H1234=\u000b1;31;;#qZ","strip":"r;;1;31H1234=\u000b1;31;;#qZ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nr;;1;31H1234=1;31;;#qZ"},
+		{"input":": wBP","strip":": wBP","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n: wBP"},
+		{"input":"fRoK","strip":"fRoK","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nfRoK"},
+		{"input":"\n\u0001\u00070B\u001f\u001fvl\u001bb123\nP(R é","strip":"\n\u0001\u00070B\u001f\u001fvl\u001bb123\nP(R é","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n0Bvlb123\nP(R é"},
+		{"input":"R\t","strip":"R\t","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nR"},
+		{"input":"11\u001b\\R ","strip":"11\u001b\\R ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n11\\R"},
+		{"input":" b ","strip":" b ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n b"},
+		{"input":"-(] \u0000\u001b]1?﻿","strip":"-(] \u0000?﻿","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n-(] ?"},
+		{"input":"/4\u001fsg(\r\n-😀év[0;title\u001b\\é\t","strip":"/4\u001fsg(\r\n-😀év[0;title\u001b\\é\t","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n/4sg(\n-😀év[0;title\\é"},
+		{"input":"\u001b[z@:\u001b[rr\u0001\n \u0007yb%<t.]","strip":"\u001b[z@:r\u0001\n \u0007yb%<t.]","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n[z@:r\n yb%<t.]"},
+		{"input":"/%Z;\u0000\u001bw\u001b\u001fline123word","strip":"/%Z;\u0000\u001bw\u001b\u001fline123word","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n/%Z;wline123word"},
+		{"input":"P]\rv　ho2qrsf >~aZt","strip":"P]\rv　ho2qrsf >~aZt","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nP]\nv　ho2qrsf >~aZt"},
+		{"input":"1;31;\u001b98;;http://x/","strip":"1;31;ttp://x/","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1;31;ttp://x/"},
+		{"input":"4Z123\u001b]\u001b[t﻿z123rU#8;;http://x/#","strip":"4Z123\u001b]﻿z123rU#8;;http://x/#","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n4Z123]﻿z123rU#8;;http://x/#"},
+		{"input":"1;3141=: #P\r-TTr)","strip":"1;3141=: #P\r-TTr)","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1;3141=: #P\n-TTr)"},
+		{"input":"z\t[","strip":"z\t[","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nz\t["},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"u","strip":"u","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nu"},
+		{"input":".c\u0007T0;title\u001b[ ","strip":".c\u0007T0;title\u001b[ ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n.cT0;title["},
+		{"input":"; PH","strip":"; PH","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n; PH"},
+		{"input":"v","strip":"v","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nv"},
+		{"input":"\n:\u001bmb=Q","strip":"\n:b=Q","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n:b=Q"},
+		{"input":"123m\n<v_\u001b\\a\r\nn\nu=","strip":"123m\n<v_\u001b\\a\r\nn\nu=","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n123m\n<v_\\a\nn\nu="},
+		{"input":"f\u0001Az","strip":"f\u0001Az","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nfAz"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"😀T1231238;;http://x/\r line\u000b(.P123word","strip":"😀T1231238;;http://x/\r line\u000b(.P123word","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n😀T1231238;;http://x/\n line(.P123word"},
+		{"input":"\u001b\t　2123","strip":"\u001b\t　2123","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\t　2123"},
+		{"input":";\n\t fé\u001b[\u001by1;31h_2T\u001b","strip":";\n\t fé\u001b[1;31h_2T\u001b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n;\n\t fé[1;31h_2T"},
+		{"input":"ych\u001b]-T","strip":"ych\u001b]-T","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nych]-T"},
+		{"input":"Svlineline​B\n","strip":"Svlineline​B\n","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nSvlineline​B"},
+		{"input":"w)✗\u001b\\pP\u001bp　\t\u001b\u0000","strip":"w)✗\u001b\\pP\u001bp　\t\u001b\u0000","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nw)✗\\pPp"},
+		{"input":"\f\u000b.\u0000x \f0","strip":"\f\u000b.\u0000x \f0","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n.x 0"},
+		{"input":"﻿&%12 @123\u001b[b&él ","strip":"﻿&%12 @123\u001b[b&él ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n﻿&%12 @123[b&él"},
+		{"input":";Bé","strip":";Bé","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n;Bé"},
+		{"input":"U \u001b;~0;title)0;title\f\u001b12345 ?v1","strip":"U 0;title)0;title\f ?v1","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nU 0;title)0;title ?v1"},
+		{"input":"& h ;0H\\","strip":"& h ;0H\\","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n& h ;0H\\"},
+		{"input":" /SAa H✗[zv\\","strip":" /SAa H✗[zv\\","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n /SAa H✗[zv\\"},
+		{"input":"\u0007=line8;;http://x/__\u001b","strip":"\u0007=line8;;http://x/__\u001b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n=line8;;http://x/__"},
+		{"input":"r\\word4s1234RTs@AT\u001fbp","strip":"r\\word4s1234RTs@AT\u001fbp","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nr\\word4s1234RTs@ATbp"},
+		{"input":"Qy Z\u001b[\u001bxHg é","strip":"Qy Z\u001b[\u001bxHg é","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nQy Z[xHg é"},
+		{"input":"00😀Q　;\u001b","strip":"00😀Q　;\u001b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n00😀Q　;"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"A\u001b[:@yg✗\\\u001b ","strip":"A\u001b[:@y✗\\\u001b ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nA[:@y✗\\"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"b[;p?0;title.KA12","strip":"b[;p?0;title.KA12","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nb[;p?0;title.KA12"},
+		{"input":"0l9 v(y\u001b\u000bH #\u001b] ~l","strip":"0l9 v(\u001b\u000bH #\u001b] ~l","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n0l9 v(H #] ~l"},
+		{"input":"​c\nS😀tQ_uhl\u001b1234éwordb","strip":"​c\nS😀tQ_uléwordb","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n​c\nS😀tQ_uléwordb"},
+		{"input":"\u0000w\rp1;31","strip":"\u0000w\rp1;31","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nw\np1;31"},
+		{"input":"\u001bU✗~#;;&U","strip":"\u001bU✗~#;;&U","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nU✗~#;;&U"},
+		{"input":"2\n\u001bb","strip":"2\n\u001bb","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n2\nb"},
+		{"input":"S t1231nv","strip":"S t1231nv","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nS t1231nv"},
+		{"input":"\u001b\ry\n","strip":"\u001b\r\n","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"=&@Tr; 123r","strip":"=&@Tr; 123r","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n=&@Tr; 123r"},
+		{"input":"uH​0;title#123\\?\u001b[@m%Z\r﻿Pw.","strip":"uH​0;title#123\\?\u001b[@m%Z\r﻿Pw.","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nuH​0;title#123\\?[@m%Z\n﻿Pw."},
+		{"input":"o\n\u0001ya0 #]12345wordp[","strip":"o\n\u0001ya0 #]12345wordp[","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\no\nya0 #]12345wordp["},
+		{"input":" p\u0000\r\n\nl0;title","strip":" p\u0000\r\n\nl0;title","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n p\nl0;title"},
+		{"input":"Z　oy\nct<rf &1;\u001b 123","strip":"Z　oy\nct<rf &1;\u001b 123","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nZ　oy\nct<rf &1; 123"},
+		{"input":"(","strip":"(","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n("},
+		{"input":"<[gZ;\u0001H","strip":"<[gZ;\u0001H","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n<[gZ;H"},
+		{"input":" .[/qQQ\\✗K\u001b( \u001b(_w;\u001b✗\f","strip":" .[/qQQ\\✗K\u001b( \u001b(_w;\u001b✗\f","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n .[/qQQ\\✗K( (_w;✗"},
+		{"input":"\t&m\u001b]\u001f\u001b[u\u001b ","strip":"\t&m\u001b]\u001f\u001b ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\t&m]"},
+		{"input":")J　K>\u001brTSP　q%é","strip":")J　K>TSP　q%é","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n)J　K>TSP　q%é"},
+		{"input":"_\u001b\\1;31=12340;title\u001b[. \r\n<123aZ","strip":"_\u001b\\1;31=12340;title\u001b[. \r\n<123aZ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n_\\1;31=12340;title[.\n<123aZ"},
+		{"input":"\\\u001b[;m\u001bB12345=/ &\u001f19;K12345","strip":"\\12345=/ &\u001f19;K12345","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\\12345=/ &19;K12345"},
+		{"input":"Zp2😀","strip":"Zp2😀","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nZp2😀"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"\\JlBwordP.","strip":"\\JlBwordP.","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\\JlBwordP."},
+		{"input":"\nf","strip":"\nf","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nf"},
+		{"input":"\u0007\u001b\\ ","strip":"\u0007\u001b\\ ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\\"},
+		{"input":"R\fQ]JxK0;title\u0007U \u000712341234512349","strip":"R\fQ]JxK0;title\u0007U \u000712341234512349","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nRQ]JxK0;titleU 12341234512349"},
+		{"input":"H~","strip":"H~","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nH~"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"\u001féHwqz  \r\r l?9","strip":"\u001féHwqz  \r\r l?9","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\néHwqz\n l?9"},
+		{"input":"/\u001bm✗😀 123\u001b]line)​é JK\u001b","strip":"/✗😀 123ine)​é JK\u001b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n/✗😀 123ine)​é JK"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"\u001f;\u001b[123✗(\u001b[lK","strip":"\u001f;✗(K","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n;✗(K"},
+		{"input":"\u001b123.=\u00078;;http://x/\u001b\\#B&S;","strip":".=\u00078;;http://x/\u001b\\#B&S;","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n.=8;;http://x/\\#B&S;"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"tm~\u001b\\12s\r\n=wordmw0✗8;;http://x/\\","strip":"tm~\u001b\\12s\r\n=wordmw0✗8;;http://x/\\","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ntm~\\12s\n=wordmw0✗8;;http://x/\\"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"ARz","strip":"ARz","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nARz"},
+		{"input":"Kuv H\u000029","strip":"Kuv H\u000029","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nKuv H29"},
+		{"input":"\u0001words\u000bQ<\u0007Z​\n","strip":"\u0001words\u000bQ<\u0007Z​\n","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nwordsQ<Z​"},
+		{"input":" nK\u001b\\zo4\n?😀","strip":" zo4\n?😀","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n zo4\n?😀"},
+		{"input":"b","strip":"b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nb"},
+		{"input":"éA1;31","strip":"éA1;31","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\néA1;31"},
+		{"input":"H2r\u001b","strip":"H2r\u001b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nH2r"},
+		{"input":"2 ​h;;12345ww","strip":"2 ​h;;12345ww","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n2 ​h;;12345ww"},
+		{"input":"\n\r;>aé ;;[s","strip":"\n\r;>aé ;;[s","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n;>aé ;;[s"},
+		{"input":"SAs/.","strip":"SAs/.","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nSAs/."},
+		{"input":"@l﻿;;p]H\\u@1234;;","strip":"@l﻿;;p]H\\u@1234;;","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n@l﻿;;p]H\\u@1234;;"},
+		{"input":"cé<é;\u001b(Bwordvs12=/_\\\u000b\f\u001b]123","strip":"cé<é;wordvs12=/_\\\u000b\f","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ncé<é;wordvs12=/_\\"},
+		{"input":"P10✗","strip":"P10✗","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nP10✗"},
+		{"input":"\u0001é;;%l\u001f4\u001b[","strip":"\u0001é;;%l\u001f4\u001b[","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\né;;%l4["},
+		{"input":"B\u001f<;;?　rHQ","strip":"B\u001f<;;?　rHQ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nB<;;?　rHQ"},
+		{"input":"1;31Z","strip":"1;31Z","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1;31Z"},
+		{"input":"1@","strip":"1@","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1@"},
+		{"input":"#-\r\n\t#\u001b]J\u001b8;;http://x/v_ SlU<","strip":"#-\r\n\t#ttp://x/v_ SlU<","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n#-\n\t#ttp://x/v_ SlU<"},
+		{"input":"# ","strip":"# ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n#"},
+		{"input":"%? \u001b\\h?\u001b\\é\ny;S;;n9","strip":"%? \u001b\\h?\u001b\\é\ny;S;;n9","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n%? \\h?\\é\ny;S;;n9"},
+		{"input":"; >S\u000bv﻿.T\t4~\u001f","strip":"; >S\u000bv﻿.T\t4~\u001f","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n; >Sv﻿.T\t4~"},
+		{"input":"a","strip":"a","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\na"},
+		{"input":"\n　  p","strip":"\n　  p","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n　  p"},
+		{"input":"u(12b;12345>","strip":"u(12b;12345>","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nu(12b;12345>"},
+		{"input":" ","strip":" ","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"-_2R\n\r","strip":"-_2R\n\r","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n-_2R"},
+		{"input":"\r\n😀\f\u000b m8;;http://x/12Z\n0;titleZ2line","strip":"\r\n😀\f\u000b m8;;http://x/12Z\n0;titleZ2line","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n😀 m8;;http://x/12Z\n0;titleZ2line"},
+		{"input":"8;;http://x/​;K\u001bQ;n9-word9","strip":"8;;http://x/​;K\u001bQ;n9-word9","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n8;;http://x/​;KQ;n9-word9"},
+		{"input":"~","strip":"~","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n~"},
+		{"input":"  18;;http://x/x\u0000","strip":"  18;;http://x/x\u0000","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n  18;;http://x/x"},
+		{"input":"﻿U0;titles　9\r\n9","strip":"﻿U0;titles　9\r\n9","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n﻿U0;titles　9\n9"},
+		{"input":"(-\f%Sq","strip":"(-\f%Sq","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n(-%Sq"},
+		{"input":"nt\\\nB word","strip":"nt\\\nB word","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nnt\\\nB word"},
+		{"input":"\u001b\u0000)12ém\u0001　 g0;title h:H","strip":"\u001b\u0000)12ém\u0001　 g0;title h:H","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n)12ém　 g0;title h:H"},
+		{"input":"\u001b(Z","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":";\u001bHa#SvH@Q;;","strip":";a#SvH@Q;;","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n;a#SvH@Q;;"},
+		{"input":"\u0000?\u001bn 1","strip":"\u0000? 1","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n? 1"},
+		{"input":"123\u001f\n\n>.\u000112\\B h \n/　8;;http://x/","strip":"123\u001f\n\n>.\u000112\\B h \n/　8;;http://x/","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n123\n>.12\\B h\n/　8;;http://x/"},
+		{"input":"b qR/","strip":"b qR/","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nb qR/"},
+		{"input":"#1;31p\fP?word/4.[U　1234;;","strip":"#1;31p\fP?word/4.[U　1234;;","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n#1;31pP?word/4.[U　1234;;"},
+		{"input":"y\\ ZT;;S","strip":"y\\ ZT;;S","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ny\\ ZT;;S"},
+		{"input":"123]1\n\\ fb\u001bZ","strip":"123]1\n\\ fb","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n123]1\n\\ fb"},
+		{"input":"8;;http://x/_ S\u001b]　phword2\nSy;)","strip":"8;;http://x/_ S\u001b]　phword2\nSy;)","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n8;;http://x/_ S]　phword2\nSy;)"},
+		{"input":"v😀zs2Su","strip":"v😀zs2Su","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nv😀zs2Su"},
+		{"input":"uword﻿ \u001b]😀4J1;31","strip":"uword﻿ \u001b]😀4J1;31","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nuword﻿ ]😀4J1;31"},
+		{"input":"suJlT\u00018;;http://x/lfo","strip":"uJlT\u00018;;http://x/lfo","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nuJlT8;;http://x/lfo"},
+		{"input":"R);;　","strip":"R);;　","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nR);;"},
+		{"input":"z\t✗>\u001b]","strip":"z\t✗>\u001b]","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nz\t✗>]"},
+		{"input":"rr]\u001b.\r\nvb\u001f-S","strip":"rr]\u001b.\r\nvb\u001f-S","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nrr].\nvb-S"},
+		{"input":"H;;é ; 12\r\ncH","strip":"H;;é ; 12\r\ncH","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nH;;é ; 12\ncH"},
+		{"input":" 0;:\f >","strip":" 0;:\f >","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n 0;: >"},
+		{"input":"\u001b\\U ","strip":"\u001b\\U ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\\U"},
+		{"input":"\u001b\u0000r12345\u001b[&8;;http://x/\u001bhHhaRK0;title","strip":"\u001b\u0000r12345\u001b[&8;;http://x/HhaRK0;title","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nr12345[&8;;http://x/HhaRK0;title"},
+		{"input":"<123\u0000b=\u001bg-S","strip":"<123\u0000b=-S","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n<123b=-S"},
+		{"input":";g~\u001b\u000b\u000b\u001b","strip":";g~\u001b\u000b\u000b\u001b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n;g~"},
+		{"input":"c\u0001(oP;~\f12x0　H:1;31","strip":"c\u0001(oP;~\f12x0　H:1;31","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nc(oP;~12x0　H:1;31"},
+		{"input":"wAmP1234512345bP[vR~HTline","strip":"wAmP1234512345bP[vR~HTline","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nwAmP1234512345bP[vR~HTline"},
+		{"input":"0linex1　s<?m>0;title/4@;s","strip":"0linex1　s<?m>0;title/4@;s","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n0linex1　s<?m>0;title/4@;s"},
+		{"input":"s","strip":"s","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ns"},
+		{"input":"yJ 　ba0;title@","strip":"yJ 　ba0;title@","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nyJ 　ba0;title@"},
+		{"input":"123","strip":"123","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n123"},
+		{"input":"\u001b:　\tK1P10b","strip":"\u001b:　\tK1P10b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n:　\tK1P10b"},
+		{"input":"r\u000b\n123\u0001\u001b\\","strip":"r\u000b\n123\u0001\u001b\\","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nr\n123\\"},
+		{"input":"T\u001fy1;31x","strip":"T\u001fy1;31x","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nTy1;31x"},
+		{"input":" A1;31TT\u001b]\n\u001b K;1238;;http://x/>","strip":" A1;31TT\u001b]\n\u001b K;1238;;http://x/>","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n A1;31TT]\n K;1238;;http://x/>"},
+		{"input":"g　nr zm0 ​%w&?/\t","strip":"g　nr zm0 ​%w&?/\t","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ng　nr zm0 ​%w&?/"},
+		{"input":"　1234q","strip":"　1234q","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n　1234q"},
+		{"input":"yf\\aPfxZ \u001bh ​4é","strip":"yf\\aPfxZ  ​4é","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nyf\\aPfxZ  ​4é"},
+		{"input":"0;title","strip":"0;title","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n0;title"},
+		{"input":"90;title;wordxf","strip":"90;title;wordxf","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n90;title;wordxf"},
+		{"input":"​:t✗9-\u0001?U\u001b] ﻿;\u001b\\","strip":"​:t✗9-\u0001?U\u001b] ﻿;\u001b\\","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n​:t✗9-?U] ﻿;\\"},
+		{"input":"a;p\u001bS: 0;titleS[y","strip":"a;p: 0;titleS[y","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\na;p: 0;titleS[y"},
+		{"input":";;\u001b(%T\u001b✗pw%","strip":";;\u001b(%\u001b✗pw%","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n;;(%✗pw%"},
+		{"input":"c\\n\u001b\\\u001b[\tv1234#)9f","strip":"c\\n\u001b\\\u001b[\tv1234#)9f","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nc\\n\\[\tv1234#)9f"},
+		{"input":"t😀word vP_)<","strip":"t😀word vP_)<","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nt😀word vP_)<"},
+		{"input":"BR\u001b>/= n0;title/8;;http://x/a","strip":"BR\u001b>/= 0;title/8;;http://x/a","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nBR>/= 0;title/8;;http://x/a"},
+		{"input":"tqb=é\u0001b? Bbpé1;31q\r\n\nB","strip":"tqb=é\u0001b? Bbpé1;31q\r\n\nB","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ntqb=éb? Bbpé1;31q\nB"},
+		{"input":"SJo \u0007\r\n=p\u00071;31 y:😀;\n\f12345","strip":"SJo \u0007\r\n=p\u00071;31 y:😀;\n\f12345","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nSJo\n=p1;31 y:😀;\n12345"},
+		{"input":"ny","strip":"ny","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nny"},
+		{"input":"m0QB😀;;c\u0007Q","strip":"m0QB😀;;c\u0007Q","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nm0QB😀;;cQ"},
+		{"input":"-r)😀11tT 1;31\\[#","strip":"-r)😀11tT 1;31\\[#","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n-r)😀11tT 1;31\\[#"},
+		{"input":"éw\n","strip":"éw\n","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\néw"},
+		{"input":"B\u001b=1\nt(\u001b(hl<T","strip":"B1\nt(l<T","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nB1\nt(l<T"},
+		{"input":"K\u001b\\1Q \u001b\\\n:121234x\u000b1234 cA","strip":"K\u001b\\1Q \u001b\\\n:12x\u000b1234 cA","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nK\\1Q \\\n:12x1234 cA"},
+		{"input":";;😀😀\u00019;;\u001b]P","strip":";;😀😀\u00019;;","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n;;😀😀9;;"},
+		{"input":"\u001b[123","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"npl\r\nA1;31line<😀12345 n#%\u001b\\w\u001b(\\","strip":"npl\r\nA1;31line<😀12345 n#%\u001b\\w\u001b(\\","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nnpl\nA1;31line<😀12345 n#%\\w(\\"},
+		{"input":"cr😀qf@f\u001f-xmT","strip":"cr😀qf@f\u001f-xmT","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ncr😀qf@f-xmT"},
+		{"input":"(","strip":"(","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n("},
+		{"input":"[\u001b[ohwB","strip":"[\u001b[ohwB","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n[[ohwB"},
+		{"input":"\u001b(->\u001bz","strip":"\u001b(->\u001bz","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n(->z"},
+		{"input":"9.r\u001bK\u001f\u001b]nlineq\n\n-g1234Slg","strip":"9.r\u001flineq\n\n-g1234Slg","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n9.rlineq\n-g1234Slg"},
+		{"input":"line\n\r123>H @;✗😀","strip":"line\n\r123>H @;✗😀","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nline\n123>H @;✗😀"},
+		{"input":"t\\","strip":"t\\","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nt\\"},
+		{"input":"@uw　  \u0007B ccR123","strip":"@uw　  \u0007B ccR123","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n@uw　  B ccR123"},
+		{"input":"1230;titlelinet8;;http://x/zfr  yU","strip":"1230;titlelinet8;;http://x/zfr  yU","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1230;titlelinet8;;http://x/zfr  yU"},
+		{"input":"sn✗\né];A","strip":"sn✗\né];A","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nsn✗\né];A"},
+		{"input":"fo0;titlez0x","strip":"fo0;titlez0x","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nfo0;titlez0x"},
+		{"input":"h\nn😀12word12　S0\u001b[​0R-\u001b\\y ","strip":"h\nn😀12word12　S0\u001b[​0-\u001b\\y ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nh\nn😀12word12　S0[​0-\\y"},
+		{"input":"as.;;plinewJ","strip":"as.;;plinewJ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nas.;;plinewJ"},
+		{"input":"RB\u001b","strip":"RB\u001b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nRB"},
+		{"input":"\n[ wf ","strip":"\n[ wf ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n[ wf"},
+		{"input":"xZ\u001bb(mh﻿a2\u0000?Q\u001f@w","strip":"xZ\u001bb(mh﻿a2\u0000?Q\u001f@w","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nxZb(mh﻿a2?Q@w"},
+		{"input":"1234r123412345?qU\u001b]\u001b f;;;;;q","strip":"1234r123412345?qU\u001b]\u001b f;;;;;q","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1234r123412345?qU] f;;;;;q"},
+		{"input":"rmqZ\r8;;http://x/q2:;l[4-","strip":"rmqZ\r8;;http://x/q2:;l[4-","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nrmqZ\n8;;http://x/q2:;l[4-"},
+		{"input":";;\u001f0lT b4123\u0001😀\n\u000b/1234wordq","strip":";;\u001f0lT b4123\u0001😀\n\u000b/1234wordq","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n;;0lT b4123😀\n/1234wordq"},
+		{"input":"P/","strip":"P/","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nP/"},
+		{"input":"s\na","strip":"s\na","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ns\na"},
+		{"input":" :&\ry#bP2gJ","strip":" :&\ry#bP2gJ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n :&\ny#bP2gJ"},
+		{"input":"l\u001f9✗0;title\nS﻿=\u001b(linea01;31q","strip":"l\u001f9✗0;title\nS﻿=inea01;31q","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nl9✗0;title\nS﻿=inea01;31q"},
+		{"input":"[\u001bP#.lR\u001b\t1;31","strip":"[#.lR\u001b\t1;31","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n[#.lR\t1;31"},
+		{"input":"1✗Q; o\t T","strip":"✗Q; o\t T","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n✗Q; o\t T"},
+		{"input":"A","strip":"A","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nA"},
+		{"input":"\nl# ","strip":"\nl# ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nl#"},
+		{"input":"\u0000&H\u001bén","strip":"\u0000&H\u001bén","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n&Hén"},
+		{"input":"\u001b\\\nu1H&p)v.Pz\r\néh12345h","strip":"\u001b\\\nu1H&p)v.Pz\r\néh12345h","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\\\nu1H&p)v.Pz\néh12345h"},
+		{"input":"A;9<-A","strip":"A;9<-A","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nA;9<-A"},
+		{"input":"Uz) ;​a~s 2​","strip":"Uz) ;​a~s 2​","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nUz) ;​a~s 2​"},
+		{"input":"lineh:&o(m1;31:","strip":"line:&o(m1;31:","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nline:&o(m1;31:"},
+		{"input":"\u001f:B.1\\Hr1234[9\u001b\\\nr%U","strip":"\u001f:B.1\\Hr1234[9\u001b\\\nr%U","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n:B.1\\Hr1234[9\\\nr%U"},
+		{"input":"s\u001b[﻿zword0;title lines:P123H_\u001b\\0\u001b]","strip":"s\u001b[﻿zword0;title lines:P123H_\u001b\\0\u001b]","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ns[﻿zword0;title lines:P123H_\\0]"},
+		{"input":"\u0007😀x\t~v\r\n4\u001b😀-Kn\u001b R\u001b\u0000[","strip":"\u0007😀x\t~v\r\n4\u001b😀-Kn\u001b R\u001b\u0000[","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n😀x\t~v\n4😀-Kn R["},
+		{"input":"9;;1;31B24;;​\u0001\u001b\\q;\\#","strip":"9;;1;31B2;;​\u0001\u001b\\q;\\#","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n9;;1;31B2;;​\\q;\\#"},
+		{"input":"1234\r\n","strip":"1234\r\n","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1234"},
+		{"input":"12345w8;;http://x/\u001b)t\u000b B/Kn yTmr","strip":"12345w8;;http://x/\u000b B/Kn yTmr","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n12345w8;;http://x/ B/Kn yTmr"},
+		{"input":"P1;31;ao\u0001✗\u000byH","strip":"P1;31;ao\u0001✗\u000byH","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nP1;31;ao✗yH"},
+		{"input":";;#1;31:\tv?uA","strip":";;#1;31:\tv?uA","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n;;#1;31:\tv?uA"},
+		{"input":"s　\u001b(-(\u001b]#P\u001f/~;;yp\u000b#","strip":"s　\u001b(-(\u001f/~;;yp\u000b#","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ns　(-(/~;;yp#"},
+		{"input":"line\u0001","strip":"line\u0001","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nline"},
+		{"input":"\\g ]\u001b \n<U","strip":"\\g ]\u001b \n<U","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\\g ]\n<U"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"\u001b[()qP","strip":"P","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nP"},
+		{"input":"zf\u001b\\:- \u001bK✗ x","strip":"zf\u001b\\:- ✗ x","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nzf\\:- ✗ x"},
+		{"input":"2(﻿zn0;titlef]　l);f","strip":"2(﻿zn0;titlef]　l);f","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n2(﻿zn0;titlef]　l);f"},
+		{"input":"8;;http://x/f\u001b(✗12345H/","strip":"8;;http://x/f\u001b(✗12345H/","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n8;;http://x/f(✗12345H/"},
+		{"input":"n)wordword12BT1;31;rr b<","strip":"n)wordword12BTr b<","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nn)wordword12BTr b<"},
+		{"input":"2(% A123😀.g] aa~\n","strip":"2(% A123😀.g] aa~\n","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n2(% A123😀.g] aa~"},
+		{"input":"H<<-a8;;http://x/Q\u0007Zp","strip":"H<<-a8;;http://x/Q\u0007Zp","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nH<<-a8;;http://x/QZp"},
+		{"input":"9Z;1\t\\\u001b]word　yline1;31)=\u001b","strip":"9Z;1\t\\\u001b]word　yline1;31)=\u001b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n9Z;1\t\\]word　yline1;31)="},
+		{"input":"0;title1;31J\\A\f]","strip":"0;title1;31J\\A\f]","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n0;title1;31J\\A]"},
+		{"input":"﻿\u001b\\S\u001b(\\&;;g","strip":"﻿\u001b\\S\u001b(\\&;;g","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n﻿\\S(\\&;;g"},
+		{"input":"\n)wf","strip":"\n)wf","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n)wf"},
+		{"input":"﻿gwordz","strip":"﻿gwordz","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n﻿gwordz"},
+		{"input":"c\u000bT&line#;\u001b]gBrl\u000b ","strip":"c\u000bT&line#;Brl\u000b ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ncT&line#;Brl"},
+		{"input":"\u001bf0;titleZPRt-wf","strip":"0;titleZPRt-wf","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n0;titleZPRt-wf"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"tay2﻿✗PhRw1;31;","strip":"tay2﻿✗PhRw1;31;","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ntay2﻿✗PhRw1;31;"},
+		{"input":"RB4\u001b]@U\u000bB@/​","strip":"RB4\u001b]@U\u000bB@/​","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nRB4]@UB@/​"},
+		{"input":"J%.(@:Axm1234P12#r","strip":"J%.(@:Axm1234P12#r","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nJ%.(@:Axm1234P12#r"},
+		{"input":"y\t.b😀/lg lp<#\n","strip":"y\t.b😀/lg lp<#\n","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ny\t.b😀/lg lp<#"},
+		{"input":"b#c\u001b(;h\u000b#\u001b\\;(;8;;http://x/\u001b(","strip":"b#c\u000b#\u001b\\;(;8;;http://x/\u001b(","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nb#c#\\;(;8;;http://x/("},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"[4s\r\n\u001b;","strip":"[4s\r\n\u001b;","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n[4s\n;"},
+		{"input":"é1234hh\n\u001b]z\u000092","strip":"é1234hh\n\u001b]z\u000092","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\né1234hh\n]z92"},
+		{"input":"A1;31(u\u001b8;;http://x/_%\u001bQ22✗​fHT","strip":"A1;31(uttp://x/_%\u001bQ22✗​fHT","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nA1;31(uttp://x/_%Q22✗​fHT"},
+		{"input":"Q;;\n l B","strip":"Q;;\n l B","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nQ;;\n l B"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"H\u001b\\?vu✗@Z=z\f123","strip":"H\u001b\\?vu✗@Z=z\f123","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nH\\?vu✗@Z=z123"},
+		{"input":"f123K>\u001fp1;31line﻿12345m]\n ","strip":"f123K>\u001fp1;31line﻿12345m]\n ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nf123K>p1;31line﻿12345m]"},
+		{"input":"<x8;;http://x/&","strip":"<x8;;http://x/&","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n<x8;;http://x/&"},
+		{"input":"123]oZcT U~U123b","strip":"123]oZcT U~U123b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n123]oZcT U~U123b"},
+		{"input":" ","strip":" ","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"  ::A]Z","strip":"  ::A]Z","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n  ::A]Z"},
+		{"input":"\f﻿w?=Aword2;;\u000b\n","strip":"\f﻿w?=Aword2;;\u000b\n","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n﻿w?=Aword2;;"},
+		{"input":";;yo 0;titlew\u001b(1\u001b[","strip":";;yo 0;titlew\u001b[","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n;;yo 0;titlew["},
+		{"input":"t1;31/&　 rQH;12 ","strip":"t1;31/&　 rQH;12 ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nt1;31/&　 rQH;12"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"0;title\u001b\\>z \u001bQa=y","strip":"0;title\u001b\\>z \u001bQa=y","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n0;title\\>z Qa=y"},
+		{"input":"\u001bline\u001bB","strip":"ine","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nine"},
+		{"input":":\u001b]1;31-_&)1 v","strip":":-_&)1 v","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n:-_&)1 v"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"y\u001bg​btAm0","strip":"y​btAm0","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ny​btAm0"},
+		{"input":"QB\u001b(\u0000  _x\u000b","strip":"QB\u001b(\u0000  _x\u000b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nQB(  _x"},
+		{"input":"\\8;;http://x/mRS4  v","strip":"\\8;;http://x/mRS4  v","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\\8;;http://x/mRS4  v"},
+		{"input":"　12?z0;title#Q\u0007","strip":"　12?z0;title#Q\u0007","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n　12?z0;title#Q"},
+		{"input":"1line9\u001b((&éA%12t))","strip":"1line9\u001b((&éA%12t))","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1line9((&éA%12t))"},
+		{"input":" P[ctl;;r0;titleH\u0000J\u001b\\","strip":" P[cl;;r0;titleH\u0000J\u001b\\","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n P[cl;;r0;titleHJ\\"},
+		{"input":"p","strip":"p","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\np"},
+		{"input":"Q\\%AJ?word[Jrlineb✗","strip":"Q\\%AJ?word[Jrlineb✗","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nQ\\%AJ?word[Jrlineb✗"},
+		{"input":"-qq\u001b-b​Z","strip":"-qq\u001b-b​Z","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n-qq-b​Z"},
+		{"input":"\tQ 0~2q]<0;title","strip":"\tQ 0~2q]<0;title","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\tQ 0~2q]<0;title"},
+		{"input":"8;;http://x/2\f [\rPf","strip":"8;;http://x/2\f [\rPf","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n8;;http://x/2 [\nPf"},
+		{"input":"v\n[wB","strip":"v\n[wB","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nv\n[wB"},
+		{"input":"@\u001b(c 12345&=/","strip":"@ 12345&=/","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n@ 12345&=/"},
+		{"input":"R ​\r\n\u001b];n@1;310;titlePRh","strip":"R ​\r\n@1;310;titlePRh","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nR ​\n@1;310;titlePRh"},
+		{"input":"\\​\u0000=0T] mK\n;","strip":"\\​\u0000=0T] mK\n;","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\\​=0T] mK\n;"},
+		{"input":"\u001b(\f@","strip":"\u001b(\f@","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n(@"},
+		{"input":" ","strip":" ","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"😀x12wordQ\nQhw]J1;","strip":"😀x12wordQ\nQhw]J1;","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n😀x12wordQ\nQhw]J1;"},
+		{"input":"aword#Ab","strip":"aword#Ab","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\naword#Ab"},
+		{"input":"o　> c/B​v\np","strip":"o　> c/B​v\np","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\no　> c/B​v\np"},
+		{"input":"\u001b:\u001b-4","strip":"\u001b:\u001b-4","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n:-4"},
+		{"input":"lP\\\u001b\\123H~T; \r😀　 ﻿J","strip":"lP\\\u001b\\123H~T; \r😀　 ﻿J","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nlP\\\\123H~T;\n😀　 ﻿J"},
+		{"input":"4c\u001fnP","strip":"4c\u001fnP","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n4cnP"},
+		{"input":"[Tm","strip":"[Tm","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n[Tm"},
+		{"input":"rg0;title H1;31\u001b","strip":"rg0;title H1;31\u001b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nrg0;title H1;31"},
+		{"input":"T","strip":"T","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nT"},
+		{"input":"Z\u000b:0P_q\u001fUu?\u000b Tline","strip":"Z\u000b:0P_q\u001fUu?\u000b Tline","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nZ:0P_qUu? Tline"},
+		{"input":"\u001b:✗ \u000bQ12h_ U","strip":"\u001b:✗ \u000bQ12h_ U","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n:✗ Q12h_ U"},
+		{"input":";H","strip":";H","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n;H"},
+		{"input":"y\u0001@\u0007u1234#/\u000bwu","strip":"y\u0001@\u0007u1234#/\u000bwu","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ny@u1234#/wu"},
+		{"input":"\u001b\\/\f>t<1​#A","strip":"\u001b\\/\f>t<1​#A","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\\/>t<1​#A"},
+		{"input":"gyR 8;;http://x/word4\u001b]","strip":"gyR 8;;http://x/word4\u001b]","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ngyR 8;;http://x/word4]"},
+		{"input":"/\u001b(;;~B","strip":"/B","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n/B"},
+		{"input":"f ﻿_h;UwPword]\u001b( Qw","strip":"f ﻿_h;UwPword]\u001b( Qw","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nf ﻿_h;UwPword]( Qw"},
+		{"input":"\n","strip":"\n","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"é= ;\u001b[8;;http://x/%1:﻿QcpZ#","strip":"é= ;ttp://x/%1:﻿QcpZ#","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\né= ;ttp://x/%1:﻿QcpZ#"},
+		{"input":"\u001b\\\u001f\ntg  ","strip":"\u001b\\\u001f\ntg  ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\\\ntg"},
+		{"input":"f2K1;31 ﻿-.   ","strip":"f2K1;31 ﻿-.   ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nf2K1;31 ﻿-."},
+		{"input":";;A%zline12f< o;","strip":";;A%zline12f< o;","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n;;A%zline12f< o;"},
+		{"input":"﻿﻿","strip":"﻿﻿","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"😀twordJword\u0000\u001b\r​﻿\u001b%\u001b]:9\u001br","strip":"😀twordJword\u0000\u001b\r​﻿\u001b%\u001b]:9","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n😀twordJword\n​﻿%]:9"},
+		{"input":"1;31 fw<-ch2\f(","strip":"1;31 fw<-ch2\f(","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1;31 fw<-ch2("},
+		{"input":"\u0001\u001bB1;31v","strip":"\u00011;31v","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1;31v"},
+		{"input":"&~2\nvt)A;\u001b\\:_J;;S","strip":"&~2\nvt)A;\u001b\\:_J;;S","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n&~2\nvt)A;\\:_J;;S"},
+		{"input":"x0uPqK\u001b(@nfJ","strip":"x0uPK\u001b(@nfJ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nx0uPK(@nfJ"},
+		{"input":"Sf#>4Q;;\u0007✗AQ_1\u001b","strip":"Sf#>4Q;;\u0007✗AQ_1\u001b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nSf#>4Q;;✗AQ_1"},
+		{"input":"T h zop\u001b] \u001b1q ","strip":"T h zop\u001b]  ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nT h zop]"},
+		{"input":"\u0000","strip":"\u0000","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"%S8;;http://x/\u001bé\u001b;slines\u001b\\&","strip":"%S8;;http://x/\u001bé&","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n%S8;;http://x/é&"},
+		{"input":"1;31wordSBoH;;cggx\u001b\\#ZA\u001b[","strip":"1;31wordSBoH;;cggx\u001b\\#ZA\u001b[","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1;31wordSBoH;;cggx\\#ZA["},
+		{"input":";Z\n?\u0000 \né123\u001b\\S/qH","strip":"\n?\u0000 \né123\u001b\\S/qH","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n?\né123\\S/qH"},
+		{"input":"_😀﻿\n:\r　\u001b(wTw9ma","strip":"_😀﻿\n:\r　\u001b(wTw9ma","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n_😀\n:\n　(wTw9ma"},
+		{"input":"R_==","strip":"R_==","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nR_=="},
+		{"input":":﻿\u001bz0;title\u001b[😀c<c:","strip":":﻿\u001bz0;title\u001b[😀c<c:","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n:﻿z0;title[😀c<c:"},
+		{"input":"2\u0001~<T","strip":"2\u0001~<T","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n2~<T"},
+		{"input":"\f1(\u0007 ","strip":"\f1(\u0007 ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1("},
+		{"input":"<?#@)H a","strip":"<?#@ a","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n<?#@ a"},
+		{"input":"2\u001b\\12\rés","strip":"2\u001b\\12\rés","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n2\\12\nés"},
+		{"input":"\n\rJ\u001b\\\u001b\n~S91234\\\u001b:lineH\u001b]","strip":"\n\rJ\u001b\\\u001b\n~S91234\\\u001b:lineH\u001b]","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nJ\\\n~S91234\\:lineH]"},
+		{"input":"c","strip":"c","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nc"},
+		{"input":"8;;http://x/P\u0007/\u001b]wordJ","strip":"8;;http://x/P\u0007/wordJ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n8;;http://x/P/wordJ"},
+		{"input":"@  \u001b[\u001f2u\u001b(v#123","strip":"@  \u001b[\u001f2u\u001b(v#123","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n@  [2u(v#123"},
+		{"input":"Z4 \to.\u0000g\rP&zJ1234\tU\nQ ","strip":"Z4 \to.\u0000g\rP&zJ1234\tU\nQ ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nZ4 \to.g\nP&zJ1234\tU\nQ"},
+		{"input":" ","strip":" ","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"f\u001b\\0;titlev<8;;http://x/J","strip":"f\u001b\\0;titlev<8;;http://x/J","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nf\\0;titlev<8;;http://x/J"},
+		{"input":"\nA =Q\n~la ","strip":"\nA =Q\n~la ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nA =Q\n~la"},
+		{"input":"é\u001b[ ","strip":"é\u001b[ ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\né["},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":" \\_/S　0;titlen9é","strip":" \\_/S　0;titlen9é","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n \\_/S　0;titlen9é"},
+		{"input":"&h1umpo\\Rw\u001b(\u0007﻿%wordq","strip":"&h1umpo\\Rw﻿%wordq","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n&h1umpo\\Rw﻿%wordq"},
+		{"input":"line","strip":"line","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nline"},
+		{"input":";z=﻿","strip":";z=﻿","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n;z="},
+		{"input":"Aword<a:SsgS[8;;http://x/PP","strip":"Aword<a:SsgS[8;;http://x/PP","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nAword<a:SsgS[8;;http://x/PP"},
+		{"input":"_\u0000#\\z😀]<","strip":"_\u0000#\\z😀]<","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n_#\\z😀]<"},
+		{"input":"é","strip":"é","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\né"},
+		{"input":")","strip":")","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n)"},
+		{"input":"T4(line\n123 4aé\u0000","strip":"4(line\n123 4aé\u0000","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n4(line\n123 4aé"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"=v&wB 8;;http://x/?(B","strip":"=v&wB 8;;http://x/?(B","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n=v&wB 8;;http://x/?(B"},
+		{"input":"\n1","strip":"\n1","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1"},
+		{"input":"y﻿=w \u001b\u001b(​\u001b\nmline​","strip":"y﻿=w \u001b\u001b(​\u001b\nmline​","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ny﻿=w (​\nmline​"},
+		{"input":"\nA ","strip":"\nA ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nA"},
+		{"input":"éq　　ZutP","strip":"éq　　ZutP","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\néq　　ZutP"},
+		{"input":"8;;http://x/yS2b#s\f?l)S>","strip":"8;;http://x/yS2b#s\f?l)>","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n8;;http://x/yS2b#s?l)>"},
+		{"input":"Zt~r@😀<P","strip":"Zt~r@😀<P","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nZt~r@😀<P"},
+		{"input":"q#;;\u001b\\word \t=12345\r\n?(wé","strip":"q#;;\u001b\\word \t=12345\r\n?(wé","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nq#;;\\word \t=12345\n?(wé"},
+		{"input":"01\t 0;titleg123nTt& l","strip":"01\t 0;titleg123nTt& l","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n01\t 0;titleg123nTt& l"},
+		{"input":"o0\u001b\\u12345","strip":"o0\u001b\\u12345","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\no0\\u12345"},
+		{"input":"\u001bf-A\u001fh;Uw　?As0;title\u0001(Hgr","strip":"-A\u001fh;Uw　?As0;title\u0001(Hgr","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n-Ah;Uw　?As0;title(Hgr"},
+		{"input":";\u0001","strip":";\u0001","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n;"},
+		{"input":" US\t0;titlea﻿b9<=wordHQlinetJg","strip":" US\t0;titlea﻿b9<=wordHQlinetJg","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n US\t0;titlea﻿b9<=wordHQlinetJg"},
+		{"input":":;;\f\u001b(;","strip":":;;\f\u001b(;","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n:;;(;"},
+		{"input":"1234123]b2","strip":"1234123]b2","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1234123]b2"},
+		{"input":"zzR:?\u0001lQw1;31c[\r\nZword","strip":"zzR:?\u0001lQw1;31c[\r\nZword","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nzzR:?lQw1;31c[\nZword"},
+		{"input":"\t4\u001b(\u0001\u001b[r~1;31K[ \u001b","strip":"\t4\u001b(\u0001~1;31K[ \u001b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\t4(~1;31K["},
+		{"input":"\u001b]nH>é\\lineShé\u001b[","strip":"H>é\\lineShé\u001b[","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nH>é\\lineShé["},
+		{"input":"\fA;&]/\u001b]([\u0000Qw","strip":"\fA;&]/\u001b]([\u0000Qw","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nA;&]/]([Qw"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"\n 　\u001b\\","strip":"\n 　\u001b\\","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n 　\\"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"\t\u001b[\tuH#✗=%);wU@é é 　","strip":"\t\u001b[\tuH#✗=%);wU@é é 　","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\t[\tuH#✗=%);wU@é é"},
+		{"input":"QB","strip":"QB","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nQB"},
+		{"input":"=gyl18;;http://x/U \f402","strip":"=gyl18;;http://x/U \f402","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n=gyl18;;http://x/U 402"},
+		{"input":"]\r\n1;310\fH​\u001b;;uZU","strip":"]\r\n1;310\fH​ZU","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n]\n1;310H​ZU"},
+		{"input":"(\u0001 ~t- éline\r-]word =","strip":"(\u0001 ~t- éline\r-]word =","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n( ~t- éline\n-]word ="},
+		{"input":"y]Rq@\u001bh(osA123","strip":"y]Rq@(osA123","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ny]Rq@(osA123"},
+		{"input":"word\r","strip":"word\r","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nword"},
+		{"input":"-","strip":"-","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n-"},
+		{"input":"-;  S\u001b[/4a\u001bJ✗123","strip":"-;  S\u001b[/4a✗123","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n-;  S[/4a✗123"},
+		{"input":"\u001b(m","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"4😀\u000bzx✗Z:>\r\nébééy","strip":"4😀\u000bzx✗Z:>\r\nébééy","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n4😀zx✗Z:>\nébééy"},
+		{"input":" ~-4","strip":" ~-4","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n ~-4"},
+		{"input":"<\u001b]/123RbQ12345123H﻿\r","strip":"<\u001b]/123RbQ12345123H﻿\r","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n<]/123RbQ12345123H"},
+		{"input":"\u001bm\u001fa8;;http://x//B>;;x )\n","strip":"\u001fa8;;http://x//B>;;x )\n","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\na8;;http://x//B>;;x )"},
+		{"input":"u=éu\u001b(ao😀","strip":"u=éu\u001b(ao😀","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nu=éu(ao😀"},
+		{"input":"\ncxJf\u001b]line :Sw\u001b\f\u0007.","strip":"\ncxJfine :Sw\u001b\f\u0007.","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ncxJfine :Sw."},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"1","strip":"1","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1"},
+		{"input":"😀B b\u001b[","strip":"😀B b\u001b[","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n😀B b["},
+		{"input":"aUr1;;.\fo12345","strip":"aUr1;;.\fo12345","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\naUr1;;.o12345"},
+		{"input":"Jn0;title😀a✗\u001fS2","strip":"Jn0;title😀a✗\u001fS2","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nJn0;title😀a✗S2"},
+		{"input":"étq","strip":"étq","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nétq"},
+		{"input":"😀\n\u001bT","strip":"😀\n","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n😀"},
+		{"input":"q4\ra1;31\u0001o\t\u001boh])","strip":"q4\ra1;31\u0001o\t\u001boh])","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nq4\na1;31o\toh])"},
+		{"input":"12n\\QB\f8;;http://x/\u0000/]%Q;9","strip":"\\QB\f8;;http://x/\u0000/]%Q;9","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\\QB8;;http://x//]%Q;9"},
+		{"input":"%@u \u0000\u0007　\u00071;31","strip":"%@u \u0000\u0007　\u00071;31","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n%@u 　1;31"},
+		{"input":"w;;1234\u001f8;;http://x/]","strip":"w;;1234\u001f8;;http://x/]","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nw;;12348;;http://x/]"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"​h﻿​\u001b#\nT]u;b?","strip":"​h﻿​\u001b#\nT]u;b?","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n​h﻿​#\nT]u;b?"},
+		{"input":" S\n@\\xé\u001f","strip":" S\n@\\xé\u001f","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n S\n@\\xé"},
+		{"input":"ztx","strip":"ztx","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nztx"},
+		{"input":"-4","strip":"-4","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n-4"},
+		{"input":" BuSS\\hfp","strip":" BuSS\\hfp","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n BuSS\\hfp"},
+		{"input":"? q #wfp\u001f✗\f﻿b%","strip":"? q #wfp\u001f✗\f﻿b%","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n? q #wfp✗﻿b%"},
+		{"input":"t1;31r T\u001f.]shword\n:　\u001bP","strip":"t1;31r T\u001f.]shword\n:　","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nt1;31r T.]shword\n:"},
+		{"input":"H123)\u001b \f( word\u001b\\n","strip":"H123)\u001b \f( word\u001b\\n","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nH123) ( word\\n"},
+		{"input":"<9","strip":"<9","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n<9"},
+		{"input":">\u0007)","strip":">\u0007)","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n>)"},
+		{"input":"lineQ","strip":"lineQ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nlineQ"},
+		{"input":"4\u001b[/)9/Jt","strip":"4\u001b[/)9/Jt","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n4[/)9/Jt"},
+		{"input":"\u0001\u0001　T","strip":"\u0001\u0001　T","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n　T"},
+		{"input":"rQo&~line;;nlz﻿n​pm","strip":"rQo&~linelz﻿n​pm","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nrQo&~linelz﻿n​pm"},
+		{"input":"8;;http://x/TP%​","strip":"8;;http://x/TP%​","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n8;;http://x/TP%​"},
+		{"input":"_;;\u001b(12U","strip":"_;;U","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n_;;U"},
+		{"input":"✗\t\u0001","strip":"✗\t\u0001","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n✗"},
+		{"input":"\r\n😀%bé\\B K","strip":"\r\n😀%bé\\B K","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n😀%bé\\B K"},
+		{"input":"P","strip":"P","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nP"},
+		{"input":"R ?aq8;;http://x/l<)121","strip":"R ?aq8;;http://x/l<)121","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nR ?aq8;;http://x/l<)121"},
+		{"input":"/%)gZ_4 😀2","strip":"/%)gZ_4 😀2","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n/%)gZ_4 😀2"},
+		{"input":"vZgoow\u001b[2\u001f﻿\u0001;;\u001f\u0001","strip":"vZgoow\u001f﻿\u0001;;\u001f\u0001","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nvZgoow﻿;;"},
+		{"input":"0zHR u​1234","strip":"0zHR u​1234","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n0zHR u​1234"},
+		{"input":"\r.s1123","strip":"\r.s1123","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n.s1123"},
+		{"input":"ér","strip":"ér","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nér"},
+		{"input":"\u001b(~\u001bxH/B\t0;title ﻿lé\u0001m　<w","strip":"\u001bxH/B\t0;title ﻿lé\u0001m　<w","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nxH/B\t0;title ﻿lém　<w"},
+		{"input":"\u001b\\😀f ","strip":"\u001b\\😀f ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\\😀f"},
+		{"input":"\u001b","strip":"\u001b","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"\u000b\u0000o\r\n　","strip":"\u000b\u0000o\r\n　","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\no"},
+		{"input":"T</;;0mc\n12345p","strip":"T</;;0mc\n12345p","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nT</;;0mc\n12345p"},
+		{"input":"of(l　","strip":"of(l　","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nof(l"},
+		{"input":"\u001f\n\u001f","strip":"\u001f\n\u001f","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"\u001f)w;;12","strip":"\u001f)w;;12","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n)w;;12"},
+		{"input":"1234As\n12341;31  U1234 z✗✗\u001b[\u001b-","strip":"1234As\n12341;31  U1234 z✗✗\u001b[\u001b-","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1234As\n12341;31  U1234 z✗✗[-"},
+		{"input":"P \u001b\\\u001bword(~oS1\u0007g😀K=tK","strip":"P \u001b\\\u001bword(~oS1g😀K=tK","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nP \\word(~oS1g😀K=tK"},
+		{"input":"﻿","strip":"﻿","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":">\u001b])41\u001b\\)R/","strip":">)41\u001b\\)R/","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n>)41\\)R/"},
+		{"input":"1;31s\u001f","strip":"1;31s\u001f","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1;31s"},
+		{"input":"rRS","strip":"rRS","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nrRS"},
+		{"input":"v\r[","strip":"v\r[","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nv\n["},
+		{"input":"A2","strip":"A2","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nA2"},
+		{"input":"\r\u001b])r_K zg","strip":"\r_K zg","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n_K zg"},
+		{"input":"4BA8;;http://x/#>\u001fp 12","strip":"4BA8;;http://x/#>\u001fp 12","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n4BA8;;http://x/#>p 12"},
+		{"input":"n~S\u001b]s\\","strip":"n~S\\","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nn~S\\"},
+		{"input":"@A0​1234\n4_\u001b\u001b\\[wU\n:J\t","strip":"@A0​1234\n4_[wU\n:J\t","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n@A0​1234\n4_[wU\n:J"},
+		{"input":"\u0007\u0001s\r ","strip":"\u0007\u0001s\r ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ns"},
+		{"input":"Brg","strip":"Brg","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nBrg"},
+		{"input":"<\u001bH~\u001b(;]J\u001b[1234[\u001b)","strip":"<~[\u001b)","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n<~[)"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":")=line\n","strip":")=line\n","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n)=line"},
+		{"input":"Jw​","strip":"w​","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nw​"},
+		{"input":"ra=] A0;title[=","strip":"ra=] A0;title[=","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nra=] A0;title[="},
+		{"input":"12@=22\r#\u0000A\u001f12345\u0000","strip":"12@=22\r#\u0000A\u001f12345\u0000","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n12@=22\n#A12345"},
+		{"input":"(> @","strip":"(> @","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n(> @"},
+		{"input":"\u001ba1J9\r\r\nP　","strip":"\u001ba1J9\r\r\nP　","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\na1J9\nP"},
+		{"input":"　q😀 ✗9h8;;http://x/\u001b[w","strip":"　q😀 ✗9h8;;http://x/\u001b[w","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n　q😀 ✗9h8;;http://x/[w"},
+		{"input":"9ml\u001b\u00074J","strip":"9ml4J","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n9ml4J"},
+		{"input":"&ZP=q 12Qwordmqb","strip":"&ZP=q 12Qwordmqb","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n&ZP=q 12Qwordmqb"},
+		{"input":"9 \u001bZo\r\nr#)-0..A1234[","strip":"9 o\r\nr#)-0..A1234[","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n9 o\nr#)-0..A1234["},
+		{"input":".=​z12h\u0000toline#","strip":".=​z12h\u0000toline#","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n.=​z12htoline#"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":" BB","strip":" BB","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n BB"},
+		{"input":"😀\u001b(pb;;.x/A0TQs\n\nl","strip":"😀\u001b(pb;;.x/A0TQs\n\nl","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n😀(pb;;.x/A0TQs\nl"},
+		{"input":"0;title8;;http://x/H\u001b[n9&w\u001b[y@1;31\n\fT\rgc","strip":"0;title8;;http://x/H9&w@1;31\n\f\rgc","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n0;title8;;http://x/H9&w@1;31\ngc"},
+		{"input":"","strip":"","withStderr":"pi-env exited with code 1 before it was ready"},
+		{"input":"z 4word(\r\nla　&aJ","strip":"z 4word(\r\nla　&aJ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nz 4word(\nla　&aJ"},
+		{"input":"#r ","strip":"#r ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n#r"},
+		{"input":"HS49\u000bw\r(\r123P\u001b]%aword\u001b[","strip":"HS49\u000bw\r(\r123P\u001b]%aword\u001b[","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nHS49w\n(\n123P]%aword["},
+		{"input":"l\n\n\t\u0001\u001b","strip":"l\n\n\t\u0001\u001b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nl"},
+		{"input":";\u001f\u001b[9","strip":";\u001f","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n;"},
+		{"input":"\u000709y<8;;http://x/\u0007f\u001b(\t\r_1234","strip":"\u000709y<8;;http://x/\u0007f\u001b(\t\r_1234","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n09y<8;;http://x/f(\n_1234"},
+		{"input":"b✗S#] K1x","strip":"b✗S#] K1x","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nb✗S#] K1x"},
+		{"input":"cQo\u001bR✗R​\nxA 0;title","strip":"cQo✗R​\nxA 0;title","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ncQo✗R​\nxA 0;title"},
+		{"input":"t%\n1h>\u001b(line P(\\oz\r\n\nA","strip":"t%\n1h>ine P(\\oz\r\n\nA","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nt%\n1h>ine P(\\oz\nA"},
+		{"input":"l9a?","strip":"l9a?","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nl9a?"},
+		{"input":"H< ","strip":"H< ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nH<"},
+		{"input":"é &Kl[;2　12é　","strip":"é &Kl[;2　12é　","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\né &Kl[;2　12é"},
+		{"input":"1234%\t/​_y;;","strip":"1234%\t/​_y;;","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1234%\t/​_y;;"},
+		{"input":"]p-","strip":"]p-","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n]p-"},
+		{"input":"t0;title","strip":"t0;title","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nt0;title"},
+		{"input":"\u001b[_gU😀xo.","strip":"\u001b[_U😀xo.","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n[_U😀xo."},
+		{"input":"=U4@","strip":"=U4@","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n=U4@"},
+		{"input":"s%otn[21;31123\r✗\u001b2","strip":"s%otn[21;31123\r✗","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\ns%otn[21;31123\n✗"},
+		{"input":"R12345a123\r\np;=\u001bq\n0;title2Aw\u001b(8;;http://x/","strip":"R12345a123\r\np;=\n0;title2wttp://x/","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nR12345a123\np;=\n0;title2wttp://x/"},
+		{"input":"\fK\\0;title﻿=\r#H😀\u001b;;/","strip":"\fK\\0;title﻿=\r#H😀\u001b;;/","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nK\\0;title﻿=\n#H😀;;/"},
+		{"input":"pP\n\u001b[","strip":"pP\n\u001b[","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\npP\n["},
+		{"input":"\u0000\u001b -?　","strip":"\u0000\u001b -?　","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n -?"},
+		{"input":"\r~(\u0001-T0;titleb?","strip":"\r~(\u0001-T0;titleb?","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n~(-T0;titleb?"},
+		{"input":";;H/>;\u001b","strip":";;H/>;\u001b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n;;H/>;"},
+		{"input":"-4s 😀","strip":"-4s 😀","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n-4s 😀"},
+		{"input":"\u0001T-t19​éZ1;31?2b#y]\t😀","strip":"\u0001T-t19​éZ1;31?2b#y]\t😀","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nT-t19​éZ1;31?2b#y]\t😀"},
+		{"input":")","strip":")","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n)"},
+		{"input":"w\r\n\n﻿=\u0000A\u001b","strip":"w\r\n\n﻿=\u0000A\u001b","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nw\n﻿=A"},
+		{"input":"\u001b2#\t:A<\\o\u001b]\nT","strip":"#\t:A<\\o\u001b]\nT","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n#\t:A<\\o]\nT"},
+		{"input":"1","strip":"1","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n1"},
+		{"input":"\u001bpQ% &\u001b　 1234word \\m","strip":"\u001bpQ% &\u001b　 1234word \\m","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\npQ% &　 1234word \\m"},
+		{"input":"mé0Sh","strip":"mé0Sh","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nmé0Sh"},
+		{"input":"[v_line>1234@​_s0;titlezQ\u001b\\","strip":"[v_line>1234@​_s0;titlezQ\u001b\\","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n[v_line>1234@​_s0;titlezQ\\"},
+		{"input":";;😀J​-0;title\u001fline#:word#word:t","strip":";;😀J​-0;title\u001fline#:word#word:t","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n;;😀J​-0;titleline#:word#word:t"},
+		{"input":"fQ","strip":"fQ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nfQ"},
+		{"input":"b[\r\n\u001b1234J>s44q","strip":"b[\r\n>s44q","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nb[\n>s44q"},
+		{"input":"wTZ1/_　\rx_1234J lx:\u0007","strip":"wTZ1/_　\rx_1234J lx:\u0007","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nwTZ1/_\nx_1234J lx:"},
+		{"input":"\u001bz/Z\u0000\u001b]\u001b﻿y\u000012]Bb/　","strip":"\u001bz/Z\u0000\u001b]\u001b﻿y\u000012]Bb/　","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nz/Z]﻿y12]Bb/"},
+		{"input":"- Ataword9/>line\u001b(~12345","strip":"- Ataword9/>line12345","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n- Ataword9/>line12345"},
+		{"input":"\ffSt\u001b\\w1234\u0000\fxPP?\n\u00010;title","strip":"\ffSt\u001b\\w1234\u0000\fxPP?\n\u00010;title","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nfSt\\w1234xPP?\n0;title"},
+		{"input":"44Z?U(P","strip":"44Z?U(P","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n44Z?U(P"},
+		{"input":"~ryUo\u001b9\u0007 s 0","strip":"~ryUo  0","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n~ryUo  0"},
+		{"input":"Hr\r\n\u001b][<","strip":"Hr\r\n","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nHr"},
+		{"input":"n\nP HhQ","strip":"n\nP HhQ","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nn\nP HhQ"},
+		{"input":"sv\u000bv﻿:U\nw[#\u001b(a8;;http://x/;;p","strip":"sv\u000bv﻿:U\nw[#8;;http://x/;;p","withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nsvv﻿:U\nw[#8;;http://x/;;p"}
+	],
+	"long": [
+		{"runs":[["first\n",1],["x",5000],["\n",1]],"withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"},
+		{"runs":[["line\n",30]],"withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nline\nline\nline\nline\nline\nline\nline\nline\nline\nline\nline\nline\nline\nline\nline\nline\nline\nline\nline\nline"},
+		{"runs":[["😀",1500]],"withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀"},
+		{"runs":[["😀",1500],["b",1]],"withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\ude00😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀b"},
+		{"runs":[["😀",1500],["\n",1]],"withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n\ude00😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀"},
+		{"runs":[["a",1],["😀",1500]],"withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀"},
+		{"runs":[["\u001b[31m",100],["😀x",700],["\r\n",1]],"withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\n😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x😀x"},
+		{"runs":[["y",1999],["\u001b[0m",1]],"withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"},
+		{"runs":[["z\n",1000],["\u001b[",1],["1;2",400]],"withStderr":"pi-env exited with code 1 before it was ready\nremote stderr:\nz\nz\nz\nz\nz\nz\nz\nz\nz\nz\nz\nz\nz\nz\nz\nz\nz\nz\nz\nz"}
+	]
+}

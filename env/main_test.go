@@ -30,6 +30,9 @@ const oldDaemonArg = "pi-env-old-daemon"
 const listingDaemonArg = "pi-env-listing-daemon"
 
 func TestMain(m *testing.M) {
+	if len(os.Args) > 2 && os.Args[1] == scriptedDaemonArg {
+		os.Exit(runScriptedDaemon(os.Args[2:]))
+	}
 	if len(os.Args) > 1 && os.Args[1] == oldDaemonArg {
 		os.Exit(runOldDaemon(os.Args[2:]))
 	}

@@ -4,7 +4,7 @@
 			"name": "exit",
 			"outcome": {
 				"code": "unknown",
-				"message": "pi-env exited with code 7 before it was ready",
+				"message": "pi-env exited with code 7 before it was ready\nremote stderr:\nboom",
 				"lost": true
 			},
 			"logs": null

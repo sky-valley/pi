@@ -10,7 +10,7 @@
 					"home": "/home/me",
 					"warnings": []
 				},
-				"start": "pi-env exited with code 1 before it was ready"
+				"start": "pi-env exited with code 1 before it was ready\nremote stderr:\nlaunch refused"
 			},
 			"logs": [
 				"launch refused\n"
