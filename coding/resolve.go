@@ -318,24 +318,42 @@ func splitThinkingSuffix(text string) (base, thinkingLevel string, ok bool) {
 	return text[:colon], text[colon+1:], true
 }
 
-// splitProviderPrefix splits a provider/ prefix naming one of models'
-// providers off text, returning that provider's own spelling.
+// splitProviderPrefix is pi's splitProviderPrefix: it splits a provider/
+// prefix naming one of models' providers off text, returning that provider's
+// own spelling. Provider ids may contain "/" themselves (e.g. URL-derived
+// ids), so it matches known ids, longest first.
+//
+// Indexes are UTF-16 code units, as in JS. pi finds the slash in
+// text.toLowerCase() and cuts the model text from text at that index, so a
+// character whose lowercase is longer ("İ" lowers to "i" + U+0307) shifts
+// the cut; this does the same.
 func splitProviderPrefix(text string, models []*ai.Model) (provider, modelText string, ok bool) {
-	slash := strings.Index(text, "/")
-	if slash == -1 {
-		return "", "", false
-	}
-	prefix := jstext.ToLower(jstext.Trim(text[:slash]))
-	modelText = jstext.Trim(text[slash+1:])
-	if prefix == "" || modelText == "" {
-		return "", "", false
-	}
+	lowerText := jstext.CodeUnits(jstext.ToLower(text))
+	textUnits := jstext.CodeUnits(text)
+	bestLength := 0
 	for _, m := range models {
-		if jstext.ToLower(string(m.Provider)) == prefix {
-			return string(m.Provider), modelText, true
+		prefix := jstext.ToLower(jstext.Trim(string(m.Provider)))
+		length := jstext.CodeUnitLength(string(m.Provider))
+		if prefix == "" || (ok && bestLength >= length) {
+			continue
+		}
+		slash := -1
+		for i := jstext.CodeUnitLength(prefix); i < len(lowerText); i++ {
+			if lowerText[i] == '/' {
+				slash = i
+				break
+			}
+		}
+		if slash == -1 || jstext.Trim(jstext.FromCodeUnits(lowerText[:slash])) != prefix {
+			continue
+		}
+		// text.substring(slashIndex + 1) clamps an index past the end.
+		rest := jstext.Trim(jstext.FromCodeUnits(textUnits[min(slash+1, len(textUnits)):]))
+		if rest != "" {
+			provider, modelText, ok, bestLength = string(m.Provider), rest, true, length
 		}
 	}
-	return "", "", false
+	return provider, modelText, ok
 }
 
 // resolveModelReference is pi's resolveModelReference. usable only breaks

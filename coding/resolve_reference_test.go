@@ -209,3 +209,65 @@ func TestResolveCliModelFallbackDoesNotMutateTheCatalog(t *testing.T) {
 		t.Fatalf("fallback %+v (err %v) aliased or changed the template %+v", got.Model, err, template)
 	}
 }
+
+// A provider id may itself contain "/" (a URL-derived id): its references
+// resolve by the longest known provider id, not at the first slash. These are
+// model-resolver.test.ts's referenceCases from upstream 984cf6643, over its
+// reference catalog with the model that commit adds; the 1.3.0 capture
+// predates both.
+func TestResolveModelReferenceProviderIDWithSlash(t *testing.T) {
+	catalog := slices.Clone(loadModelResolverCapture(t).Catalogs["reference"])
+	catalog = append(catalog, &ai.Model{ID: "unsloth/qwen-gguf:BF16", Name: "unsloth/qwen-gguf:BF16", Provider: "llama=http://host:10800"})
+	for _, tc := range []struct{ name, text, model, thinkingLevel string }{
+		{"provider id containing a slash", "llama=http://host:10800/unsloth/qwen-gguf:BF16", "llama=http://host:10800/unsloth/qwen-gguf:BF16", ""},
+		{"provider id containing a slash, with thinking suffix", "llama=http://host:10800/unsloth/qwen-gguf:BF16:high", "llama=http://host:10800/unsloth/qwen-gguf:BF16", "high"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			request := modelReferenceRequest{text: tc.text, thinkingSuffix: thinkingSuffixStrict, fuzzy: true}
+			for _, models := range [][]*ai.Model{catalog, reversedModels(catalog)} {
+				got := resolveModelReference(request, models, func(string) bool { return false })
+				if got.status != referenceResolved {
+					t.Fatalf("status = %s, pi resolved (%+v)", got.status, got)
+				}
+				if ref := string(got.model.Provider) + "/" + got.model.ID; ref != tc.model || got.thinkingLevel != tc.thinkingLevel || got.warning != "" {
+					t.Fatalf("model %s thinking level %q warning %q, pi %s %q none", ref, got.thinkingLevel, got.warning, tc.model, tc.thinkingLevel)
+				}
+			}
+		})
+	}
+}
+
+// splitProviderPrefix is pi's, JS string semantics included: provider ids
+// match longest first, case and surrounding whitespace aside, and the model
+// text is cut from the original text at the UTF-16 index of the slash in its
+// toLowerCase, so a character that lowers to two code units ("İ" to "i̇")
+// shifts the cut. Rows are node's answers for upstream 984cf6643's function.
+func TestSplitProviderPrefixMatchesPi(t *testing.T) {
+	for _, tc := range []struct {
+		text                string
+		providers           []string
+		provider, modelText string // provider "" is pi's undefined
+	}{
+		{"llama=http://host:10800/unsloth/qwen-gguf:BF16", []string{"llama=http://host:10800", "llama=http:"}, "llama=http://host:10800", "unsloth/qwen-gguf:BF16"},
+		{"İ/model", []string{"i̇"}, "i̇", "odel"},
+		{"İİ/ab", []string{"i̇i̇"}, "", ""},
+		{"İ/", []string{"i̇"}, "", ""},
+		{" Open/x", []string{"open"}, "open", "x"},
+		{"a/b/c", []string{"a", "a/b"}, "a/b", "c"},
+		{"a/b/c", []string{"a/b", "a"}, "a/b", "c"},
+		{"a /b", []string{"A "}, "A ", "b"},
+		{"a/b", []string{"a", "A"}, "a", "b"},
+		{"😀a/b", []string{"😀a"}, "😀a", "b"},
+		{"a//b", []string{"a"}, "a", "/b"},
+		{"a/ ", []string{"a"}, "", ""},
+	} {
+		models := make([]*ai.Model, len(tc.providers))
+		for i, p := range tc.providers {
+			models[i] = &ai.Model{Provider: ai.ProviderId(p)}
+		}
+		provider, modelText, ok := splitProviderPrefix(tc.text, models)
+		if ok != (tc.provider != "") || provider != tc.provider || modelText != tc.modelText {
+			t.Errorf("splitProviderPrefix(%q, %q) = %q, %q, %v; pi %q, %q", tc.text, tc.providers, provider, modelText, ok, tc.provider, tc.modelText)
+		}
+	}
+}
