@@ -35,11 +35,13 @@ var (
 	errNotReady = errors.New("delta: Prepared change is not ready (prepare it with Change.Prepare or Tracker.PrepareReplace)")
 
 	// ErrScalarRevision is the refusal of every use of a change's draft when
-	// the revision it drafts is a scalar or null, with the text of the
-	// TypeError pi's overlay throws reading one. pi opens such a change (its
-	// root is not keyed in a WeakMap since a92283056), and prepares or aborts
-	// it untouched; its draft has no members, and pi's writes to it are
-	// accidents of its Proxy (ledger Divergences).
+	// the revision it drafts is a scalar or null. Its text is the TypeError
+	// pi's overlay throws reading the draft of a scalar; for a null root pi
+	// throws "Cannot convert undefined or null to object" (or, writing,
+	// "Cannot read properties of null"), and one sentinel covers both. pi
+	// opens such a change (its root is not keyed in a WeakMap since
+	// a92283056), and prepares or aborts it untouched; its draft has no
+	// members, and pi's writes to it are accidents of its Proxy (ledger D112).
 	ErrScalarRevision = errors.New("delta: Reflect.get called on non-object (this change drafts a scalar or null revision — a nil map or slice is null — which has no members to read or write; prepare or abort it untouched, and replace the revision whole with Tracker.PrepareReplace)")
 
 	// ErrZeroTracker is Go's own: a Tracker that Track did not make holds no
