@@ -3,8 +3,11 @@ package coding
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -155,6 +158,91 @@ func TestGrepMatchesCRLFLinesAsRipgrep(t *testing.T) {
 	if text := resultText(r); text != "crlf.txt:1: foo" {
 		t.Fatalf(`"o\r" = %q, rg %q`, text, "crlf.txt:1: foo")
 	}
+}
+
+// rg never sees a line after a file's final \n, nor any line in an empty
+// file: an empty-matching pattern hits none there. Rows measured with pi's
+// flags (rg --no-config --json --line-number --color=never --hidden -e P,
+// ripgrep 14.1.1); with rg on PATH each row is re-measured too.
+func TestGrepNoPhantomLineAfterFinalNewline(t *testing.T) {
+	rgPath, _ := exec.LookPath("rg")
+	for _, tc := range []struct {
+		name, content, pattern string
+		want                   []int
+	}{
+		{"blank-line", "a\n\nb\n", "^$", []int{2}},
+		{"blank-line", "a\n\nb\n", "x*", []int{1, 2, 3}},
+		{"crlf", "foo\r\nbar\r\n", "^$", nil},
+		{"crlf", "foo\r\nbar\r\n", "x*", []int{1, 2}},
+		{"empty", "", "^$", nil},
+		{"empty", "", "x*", nil},
+		{"lone-cr", "a\r\rb\n", "^$", nil},
+		{"lone-cr", "a\r\rb\n", "x*", []int{1}},
+		{"no-final-newline", "a\nb", "^$", nil},
+		{"no-final-newline", "a\nb", "x*", []int{1, 2}},
+	} {
+		dir := t.TempDir()
+		file := filepath.Join(dir, "a.txt")
+		os.WriteFile(file, []byte(tc.content), 0o644)
+		label := tc.name + " " + tc.pattern
+		if rgPath != "" {
+			if got := rgMatchLines(t, rgPath, tc.pattern, file); !slices.Equal(got, tc.want) {
+				t.Errorf("%s: rg matches lines %v, row says %v", label, got, tc.want)
+			}
+		}
+		r, _ := run(t, grepTool(dir), map[string]any{"pattern": tc.pattern, "path": file})
+		var got []int
+		for _, line := range strings.Split(resultText(r), "\n") {
+			var n int
+			if _, err := fmt.Sscanf(line, "a.txt:%d:", &n); err == nil {
+				got = append(got, n)
+			}
+		}
+		if !slices.Equal(got, tc.want) {
+			t.Errorf("%s: grep matches lines %v, rg %v (%q)", label, got, tc.want, resultText(r))
+		}
+	}
+
+	// A phantom match must not consume the limit either: rg's 3 matches stay
+	// under limit=4.
+	dir := t.TempDir()
+	os.WriteFile(filepath.Join(dir, "a.txt"), []byte("a\n\nb\n"), 0o644)
+	r, _ := run(t, grepTool(dir), map[string]any{"pattern": "x*", "limit": float64(4)})
+	if text := resultText(r); strings.Contains(text, "limit reached") {
+		t.Errorf("3 real matches tripped limit=4: %q", text)
+	}
+
+	// Context still clamps to pi's getFileLines length, which keeps the
+	// trailing empty element (grep.ts formatBlock at a92283056).
+	r, _ = run(t, grepTool(dir), map[string]any{"pattern": "b", "context": float64(2)})
+	want := "a.txt-1- a\na.txt-2- \na.txt:3: b\na.txt-4- "
+	if text := resultText(r); text != want {
+		t.Errorf("context=2 = %q, pi %q", text, want)
+	}
+}
+
+// rgMatchLines runs rg with pi's grep flags and returns the matched line numbers.
+func rgMatchLines(t *testing.T, rgPath, pattern, file string) []int {
+	t.Helper()
+	out, err := exec.Command(rgPath, "--no-config", "--json", "--line-number", "--color=never", "--hidden", "-e", pattern, "--", file).Output()
+	if err != nil {
+		if ee, ok := err.(*exec.ExitError); !ok || ee.ExitCode() != 1 {
+			t.Fatalf("rg %q: %v", pattern, err)
+		}
+	}
+	var lines []int
+	for _, raw := range bytes.Split(out, []byte("\n")) {
+		var ev struct {
+			Type string `json:"type"`
+			Data struct {
+				LineNumber int `json:"line_number"`
+			} `json:"data"`
+		}
+		if json.Unmarshal(raw, &ev) == nil && ev.Type == "match" {
+			lines = append(lines, ev.Data.LineNumber)
+		}
+	}
+	return lines
 }
 
 func TestGrepNoMatchesString(t *testing.T) {

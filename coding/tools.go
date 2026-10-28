@@ -1939,15 +1939,20 @@ func grepToolOps(cwd string, custom *GrepOperations) agent.AgentTool {
 						return true
 					}
 				}
-				// pi normalizes \r\n to \n before splitting (grep.ts
-				// getFileLines); a lone \r stays in its line, as in rg's line
-				// numbering. Reading the whole file also avoids any per-line
-				// length cap (rg has none).
-				content := strings.ReplaceAll(string(data), "\r\n", "\n")
-				lines := strings.Split(content, "\n")
-				// rg (no --crlf) matches each line as the file holds it, a CRLF
-				// line's \r included; both splits break at the same \n.
-				for i, line := range strings.Split(string(data), "\n") {
+				// One split at \n serves both sides. rg (no --crlf) matches each
+				// line as the file holds it, a CRLF line's \r included, and a
+				// lone \r stays in its line, as in rg's line numbering. pi's
+				// display lines (grep.ts getFileLines) are the same lines with
+				// \r stripped at print time. Reading the whole file also avoids
+				// any per-line length cap (rg has none).
+				lines := strings.Split(string(data), "\n")
+				searched := lines
+				if searched[len(searched)-1] == "" { // rg never sees a line after a final \n (or in an empty file)
+					searched = searched[:len(searched)-1]
+				}
+				// Context still clamps to len(lines): getFileLines keeps the
+				// trailing empty element, so pi can print it as context.
+				for i, line := range searched {
 					if matchCount >= limit {
 						matchLimitReached = true
 						return false
