@@ -1939,11 +1939,11 @@ func grepToolOps(cwd string, custom *GrepOperations) agent.AgentTool {
 						return true
 					}
 				}
-				// pi normalizes \r\n and bare \r to \n before splitting
-				// (grep.ts getFileLines). Reading the whole file also avoids any
-				// per-line length cap (rg has none).
+				// pi normalizes \r\n to \n before splitting (grep.ts
+				// getFileLines); a lone \r stays in its line, as in rg's line
+				// numbering. Reading the whole file also avoids any per-line
+				// length cap (rg has none).
 				content := strings.ReplaceAll(string(data), "\r\n", "\n")
-				content = strings.ReplaceAll(content, "\r", "\n")
 				lines := strings.Split(content, "\n")
 				for i, line := range lines {
 					if matchCount >= limit {
@@ -1965,7 +1965,8 @@ func grepToolOps(cwd string, custom *GrepOperations) agent.AgentTool {
 							end = len(lines) - 1
 						}
 						for j := start; j <= end; j++ {
-							text, was := TruncateLine(lines[j], 0)
+							// pi's formatBlock strips every \r from a printed line.
+							text, was := TruncateLine(strings.ReplaceAll(lines[j], "\r", ""), 0)
 							if was {
 								linesTruncated = true
 							}

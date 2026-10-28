@@ -120,6 +120,26 @@ func TestGrepMatchAndContextFormat(t *testing.T) {
 	}
 }
 
+// A lone CR is not a line break: line numbers stay rg's, and the CR is
+// dropped from the printed line (tools.test.ts, upstream fecc19e4e).
+func TestGrepLoneCRKeepsLineNumbers(t *testing.T) {
+	dir := t.TempDir()
+	file := filepath.Join(dir, "lone-cr.txt")
+	os.WriteFile(file, []byte("before\rprogress\nneedle\nafter"), 0o644)
+	r, _ := run(t, grepTool(dir), map[string]any{"pattern": "needle", "path": file, "context": float64(1)})
+	text := resultText(r)
+	for _, want := range []string{"lone-cr.txt-1- beforeprogress", "lone-cr.txt:2: needle", "lone-cr.txt-3- after"} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("missing %q in %q", want, text)
+		}
+	}
+	// pi strips every CR from a printed line, the match line's too.
+	r, _ = run(t, grepTool(dir), map[string]any{"pattern": "progress", "path": file})
+	if text := resultText(r); text != "lone-cr.txt:1: beforeprogress" {
+		t.Fatalf("match line = %q, pi %q", text, "lone-cr.txt:1: beforeprogress")
+	}
+}
+
 func TestGrepNoMatchesString(t *testing.T) {
 	dir := t.TempDir()
 	os.WriteFile(filepath.Join(dir, "a.txt"), []byte("nothing\n"), 0o644)
