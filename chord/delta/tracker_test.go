@@ -177,6 +177,145 @@ func TestTrackerLifecycleErrors(t *testing.T) {
 	}
 }
 
+// tracker.test.ts "delta tracker competing changes". Upstream counts the
+// WeakRefs a run constructs; here a weak pointer is made exactly when a
+// change is demoted into the owner's competitors, so the tests read those.
+
+// "tracks one change at a time without a WeakRef".
+func TestTrackerOneChangeAtATimeHasNoCompetitors(t *testing.T) {
+	tr := mustTrack(t, `{"value": 0, "child": {"rows": [0]}}`)
+	noCompetitors := func(when string) {
+		t.Helper()
+		if tr.owner.competitors != nil {
+			t.Fatalf("%s: %d competitors, want none", when, len(tr.owner.competitors))
+		}
+	}
+	for i := 1; i <= 100; i++ {
+		c := mustBegin(t, tr)
+		must(t, c.State().Set("value", i))
+		_, err := c.State().At("child").At("rows").Push(i)
+		must(t, err)
+		must(t, c.State().Set("child", map[string]any{"rows": []any{i}}))
+		noCompetitors("one open change")
+		must(t, tr.Adopt(mustPrepare(t, c)))
+		mustBegin(t, tr).Abort()
+		aborted := mustBegin(t, tr)
+		must(t, aborted.State().Set("value", -1))
+		mustPrepare(t, aborted).Abort()
+		p, err := tr.PrepareReplace(map[string]any{"value": float64(i), "child": map[string]any{"rows": []any{float64(i)}}})
+		must(t, err)
+		must(t, tr.Adopt(p))
+		noCompetitors("adopted")
+	}
+	wantJSON(t, tr.Value(), tree(t, `{"value": 100, "child": {"rows": [100]}}`))
+	if got := tr.Revision(); got != 200 {
+		t.Errorf("revision %d, want 200", got)
+	}
+}
+
+// "makes the older of two open drafts stale when the newer is adopted".
+func TestTrackerNewerOfTwoAdopted(t *testing.T) {
+	tr := mustTrack(t, `{"value": 0, "child": {"value": 0}}`)
+	older := mustBegin(t, tr)
+	held := older.State().At("child")
+	must(t, held.Set("value", 1))
+	newer := mustBegin(t, tr)
+	must(t, newer.State().Set("value", 2))
+	must(t, tr.Adopt(mustPrepare(t, newer)))
+	wantJSON(t, tr.Value(), tree(t, `{"value": 2, "child": {"value": 0}}`))
+	if err := mustPanic(t, func() { held.Get("value") }); !errors.Is(err, ErrDraftSettled) {
+		t.Errorf("read through the older change's draft: %v", err)
+	}
+	if err := mustPanic(t, func() { older.State().Get("value") }); !errors.Is(err, ErrDraftSettled) {
+		t.Errorf("read through the older change's state: %v", err)
+	}
+	if _, err := older.Prepare(); !errors.Is(err, ErrDraftSettled) {
+		t.Errorf("Prepare of the older change: %v", err)
+	}
+	older.Abort()
+}
+
+// "makes the newer of two open drafts stale when the older is adopted".
+func TestTrackerOlderOfTwoAdopted(t *testing.T) {
+	tr := mustTrack(t, `{"value": 0, "child": {"value": 0}}`)
+	older := mustBegin(t, tr)
+	must(t, older.State().Set("value", 1))
+	newer := mustBegin(t, tr)
+	held := newer.State().At("child")
+	must(t, held.Set("value", 2))
+	must(t, tr.Adopt(mustPrepare(t, older)))
+	wantJSON(t, tr.Value(), tree(t, `{"value": 1, "child": {"value": 0}}`))
+	if err := mustPanic(t, func() { held.Get("value") }); !errors.Is(err, ErrDraftSettled) {
+		t.Errorf("read through the newer change's draft: %v", err)
+	}
+	if _, err := newer.Prepare(); !errors.Is(err, ErrDraftSettled) {
+		t.Errorf("Prepare of the newer change: %v", err)
+	}
+	// The tracker moved on: the next change is tracked as the only one again.
+	next := mustBegin(t, tr)
+	if tr.owner.open != next.ctx || tr.owner.competitors != nil {
+		t.Error("the next change is not the tracker's only open change")
+	}
+	must(t, next.State().Set("value", 3))
+	must(t, tr.Adopt(mustPrepare(t, next)))
+	wantJSON(t, tr.Value(), tree(t, `{"value": 3, "child": {"value": 0}}`))
+}
+
+// "makes every other of three drafts stale, open or prepared, whichever is
+// adopted".
+func TestTrackerThreeDraftsOneAdopted(t *testing.T) {
+	for winner := range 3 {
+		tr := mustTrack(t, `{"value": 0, "rows": [{"value": 0}]}`)
+		changes := []*Change[any]{mustBegin(t, tr), mustBegin(t, tr), mustBegin(t, tr)}
+		held := make([]*Draft, 3)
+		for i, c := range changes {
+			held[i] = c.State().At("rows").At(0)
+			must(t, held[i].Set("value", i+1))
+		}
+		prepared := mustPrepare(t, changes[(winner+1)%3])
+		must(t, tr.Adopt(mustPrepare(t, changes[winner])))
+		wantJSON(t, tr.Value(), tree(t, fmt.Sprintf(`{"value": 0, "rows": [{"value": %d}]}`, winner+1)))
+		if err := tr.Adopt(prepared); !errors.Is(err, ErrStalePrepared) {
+			t.Errorf("winner %d: Adopt of the prepared competitor: %v", winner, err)
+		}
+		if err := mustPanic(t, func() { held[(winner+2)%3].Get("value") }); !errors.Is(err, ErrDraftSettled) {
+			t.Errorf("winner %d: read through the open competitor's draft: %v", winner, err)
+		}
+		if _, err := changes[(winner+2)%3].Prepare(); !errors.Is(err, ErrDraftSettled) {
+			t.Errorf("winner %d: Prepare of the open competitor: %v", winner, err)
+		}
+		wantJSON(t, prepared.Value(), tree(t, fmt.Sprintf(`{"value": 0, "rows": [{"value": %d}]}`, (winner+1)%3+1)))
+	}
+}
+
+// "keeps an abandoned draft a competitor of the next change, through one
+// WeakRef".
+func TestTrackerAbandonedDraftCompetes(t *testing.T) {
+	tr := mustTrack(t, `{"value": 0, "child": {"value": 0}}`)
+	abandoned := mustBegin(t, tr)
+	abandonedChild := abandoned.State().At("child")
+	must(t, abandonedChild.Set("value", 1))
+	next := mustBegin(t, tr)
+	if len(tr.owner.competitors) != 1 || abandoned.ctx.registryRef.Value() != abandoned.ctx || tr.owner.open != next.ctx {
+		t.Fatalf("the abandoned change was not demoted to the one competitor of the next")
+	}
+	must(t, next.State().Set("value", 2))
+	must(t, tr.Adopt(mustPrepare(t, next)))
+	after := mustBegin(t, tr)
+	must(t, after.State().Set("value", 3))
+	must(t, tr.Adopt(mustPrepare(t, after)))
+	if tr.owner.competitors != nil {
+		t.Errorf("%d competitors after the adoptions, want none", len(tr.owner.competitors))
+	}
+	wantJSON(t, tr.Value(), tree(t, `{"value": 3, "child": {"value": 0}}`))
+	if err := mustPanic(t, func() { abandonedChild.Get("value") }); !errors.Is(err, ErrDraftSettled) {
+		t.Errorf("read through the abandoned change's draft: %v", err)
+	}
+	if _, err := abandoned.Prepare(); !errors.Is(err, ErrDraftSettled) {
+		t.Errorf("Prepare of the abandoned change: %v", err)
+	}
+}
+
 // noPanic runs fn and fails the test, rather than crashing it, if fn panics.
 func noPanic(t *testing.T, what string, fn func() error) (err error) {
 	t.Helper()
@@ -480,15 +619,25 @@ func TestDraftPlacementRepresentation(t *testing.T) {
 	wantJSON(t, tr.Value(), tree(t, `{"xs": []}`))
 
 	// A scalar root is a revision, as in pi's runtime (golden "scalar
-	// roots"). It has no draft, and a replacement must be a container.
+	// roots"): a change of it opens, prepares untouched as a no-op, and
+	// aborts, but its draft has no members; a replacement may be anything.
 	for _, root := range []any{nil, 1.0, "x", true} {
 		tr := Track(root)
-		if _, err := tr.BeginChange(); !errors.Is(err, ErrScalarRevision) {
-			t.Errorf("BeginChange on %#v: %v, want ErrScalarRevision", root, err)
+		c, err := tr.BeginChange()
+		must(t, err)
+		if err := c.State().Set("a", 1); !errors.Is(err, ErrScalarRevision) {
+			t.Errorf("Set through the draft of %#v: %v, want ErrScalarRevision", root, err)
 		}
-		if _, err := tr.PrepareReplace(2.0); !errors.Is(err, ErrScalarRevision) {
-			t.Errorf("PrepareReplace of a scalar on %#v: %v, want ErrScalarRevision", root, err)
+		if err := mustPanic(t, func() { c.State().Get("a") }); !errors.Is(err, ErrScalarRevision) {
+			t.Errorf("Get through the draft of %#v: %v, want ErrScalarRevision", root, err)
 		}
+		if p := mustPrepare(t, c); len(p.Ops()) != 0 || !same(p.Value(), root) {
+			t.Errorf("untouched change of %#v prepared %v, %#v; want a no-op", root, p.Ops(), p.Value())
+		}
+		mustBegin(t, tr).Abort()
+		p, err := tr.PrepareReplace(2.0)
+		must(t, err)
+		wantOps(t, p.Ops(), `[["r", 2]]`)
 		if _, err := tr.PrepareReplace(map[string]any{}); err != nil {
 			t.Errorf("PrepareReplace of an object on %#v: %v", root, err)
 		}
@@ -705,6 +854,56 @@ func retainedPrepared(t *testing.T) (*Prepared[map[string]any], weak.Pointer[any
 	return p, weak.Make(&rows[0])
 }
 
+// abandonedDraft opens a change, places a large payload, and drops the change
+// without preparing or aborting it.
+//
+//go:noinline
+func abandonedDraft(t *testing.T, tr *Tracker[map[string]any]) weak.Pointer[any] {
+	c := mustBegin(t, tr)
+	must(t, c.State().Set("payload", bigPayload()))
+	backing := c.State().At("payload").At("rows").n.base.([]any)
+	return weak.Make(&backing[0])
+}
+
+// retained is retention.worker.ts's assertRetained: w survives collections.
+func retained[T any](t *testing.T, w weak.Pointer[T], what string) {
+	t.Helper()
+	for range 5 {
+		runtime.GC()
+	}
+	if w.Value() == nil {
+		t.Errorf("%s was collected", what)
+	}
+}
+
+// retention.worker.ts "tracker-with-open-draft": two open changes the caller
+// keeps, the older demoted to a competitor, retain neither the tracker nor
+// its revision.
+//
+//go:noinline
+func trackerWithOpenDraft(t *testing.T) weak.Pointer[Tracker[map[string]any]] {
+	tr := Track(map[string]any{"value": 0.0, "rows": bigPayload()["rows"]})
+	c := mustBegin(t, tr)
+	must(t, c.State().At("rows").At(0).Set("value", -1))
+	competitor := mustBegin(t, tr)
+	must(t, competitor.State().Set("value", 1))
+	retainedSettled = append(retainedSettled, c, competitor)
+	return weak.Make(tr)
+}
+
+// A retained prepared change does not retain the change its dropped tracker
+// held open: a context reaches its owner only weakly, as upstream's reaches
+// its tracker through a WeakRef and its owner is an empty identity object.
+//
+//go:noinline
+func preparedOfDroppedTracker(t *testing.T) weak.Pointer[any] {
+	tr := payloadTracker()
+	p, err := tr.PrepareReplace(map[string]any{"payload": nil, "value": 1.0})
+	must(t, err)
+	retainedSettled = append(retainedSettled, p)
+	return abandonedDraft(t, tr)
+}
+
 func TestTrackerRetention(t *testing.T) {
 	t.Run("aborted-payload", func(t *testing.T) {
 		tr := payloadTracker()
@@ -736,6 +935,48 @@ func TestTrackerRetention(t *testing.T) {
 		tr, obsolete := staleUnprepared(t)
 		collected(t, obsolete, "the revision a retained stale change was begun on")
 		wantJSON(t, tr.Value(), tree(t, `{"payload": {"rows": [{"value": 1}]}}`))
+	})
+	// retention.worker.ts "abandoned-draft-released": the tracker holds its
+	// most recent open change strongly; one dropped without settling stays
+	// until the tracker's next BeginChange or Adopt, which releases it.
+	t.Run("abandoned-draft-released", func(t *testing.T) {
+		byChange := payloadTracker()
+		first := abandonedDraft(t, byChange)
+		retained(t, first, "the tracker's latest open draft")
+		next := mustBegin(t, byChange)
+		collected(t, first, "an abandoned draft after the tracker's next change")
+		// A chain of abandoned drafts keeps only the latest.
+		next.Abort()
+		chain := make([]weak.Pointer[any], 20)
+		for i := range chain {
+			chain[i] = abandonedDraft(t, byChange)
+		}
+		for _, w := range chain[:len(chain)-1] {
+			collected(t, w, "an abandoned draft demoted by a later change")
+		}
+		retained(t, chain[len(chain)-1], "the tracker's latest open draft")
+		p, err := byChange.PrepareReplace(map[string]any{"value": 1.0, "payload": nil})
+		must(t, err)
+		must(t, byChange.Adopt(p))
+		collected(t, chain[len(chain)-1], "an abandoned draft after the tracker's adoption")
+
+		byAdopt := payloadTracker()
+		dropped := abandonedDraft(t, byAdopt)
+		p, err = byAdopt.PrepareReplace(map[string]any{"value": 1.0, "payload": nil})
+		must(t, err)
+		must(t, byAdopt.Adopt(p))
+		collected(t, dropped, "an abandoned draft after the tracker's adoption")
+		wantJSON(t, byAdopt.Value(), tree(t, `{"value": 1, "payload": null}`))
+	})
+	t.Run("tracker-with-open-draft", func(t *testing.T) {
+		before := len(retainedSettled)
+		collected(t, trackerWithOpenDraft(t), "a tracker whose two open changes are retained")
+		if got := len(retainedSettled) - before; got != 2 {
+			t.Errorf("retained %d changes, want 2", got)
+		}
+	})
+	t.Run("prepared-of-dropped-tracker", func(t *testing.T) {
+		collected(t, preparedOfDroppedTracker(t), "the open change of a dropped tracker whose prepared change is retained")
 	})
 	t.Run("retained-settled-prepared", func(t *testing.T) {
 		p, base := retainedPrepared(t)
@@ -868,17 +1109,27 @@ func TestTrackerWideObjectWriteIsLinear(t *testing.T) {
 }
 
 // A nil map or slice root is JSON null — encoding/json writes it so, and a
-// base batch carries it so — and pi's overlay refuses a null root as it does a
-// scalar (its WeakMap takes only objects). Drafting it as an empty container
-// would publish ops a replica built from that base cannot apply.
+// base batch carries it so — and pi's draft of a null root has no members
+// ("Cannot convert undefined or null to object"). Drafting it as an empty
+// container would publish ops a replica built from that base cannot apply.
+// Replacing a revision with one is replacing it with null.
 func TestTrackerRefusesANilRoot(t *testing.T) {
-	if _, err := Track[map[string]any](nil).BeginChange(); !errors.Is(err, ErrScalarRevision) {
-		t.Errorf("BeginChange on a nil map: %v, want ErrScalarRevision", err)
+	m, err := Track[map[string]any](nil).BeginChange()
+	must(t, err)
+	if err := m.State().Set("a", 1); !errors.Is(err, ErrScalarRevision) {
+		t.Errorf("Set through the draft of a nil map: %v, want ErrScalarRevision", err)
 	}
-	if _, err := Track[[]any](nil).BeginChange(); !errors.Is(err, ErrScalarRevision) {
-		t.Errorf("BeginChange on a nil slice: %v, want ErrScalarRevision", err)
+	s, err := Track[[]any](nil).BeginChange()
+	must(t, err)
+	if _, err := s.State().Push(1); !errors.Is(err, ErrScalarRevision) {
+		t.Errorf("Push through the draft of a nil slice: %v, want ErrScalarRevision", err)
 	}
-	if _, err := Track(map[string]any{"a": 1.0}).PrepareReplace(nil); !errors.Is(err, ErrScalarRevision) {
-		t.Errorf("PrepareReplace of a nil map: %v, want ErrScalarRevision", err)
+	for _, base := range []map[string]any{{"a": 1.0}, {}} {
+		p, err := Track(base).PrepareReplace(nil)
+		must(t, err)
+		wantOps(t, p.Ops(), `[["r", null]]`)
 	}
+	p, err := Track[any](nil).PrepareReplace(map[string]any(nil))
+	must(t, err)
+	wantOps(t, p.Ops(), `[]`)
 }

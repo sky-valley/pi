@@ -34,11 +34,13 @@ var (
 	// neither prepared nor settled, which no Go caller can hand Adopt.
 	errNotReady = errors.New("delta: Prepared change is not ready (prepare it with Change.Prepare or Tracker.PrepareReplace)")
 
-	// ErrScalarRevision is the refusal of a scalar root, with the text of the
-	// TypeError pi's overlay throws: it keys its nodes by their containers in a
-	// WeakMap, which takes only objects. A change drafts an object or array,
-	// and PrepareReplace takes one.
-	ErrScalarRevision = errors.New("delta: Invalid value used as weak map key (a change drafts a JSON object or array, a map[string]any or []any, and a replacement is one; this revision or value is a scalar, null — a nil map or slice among them — or a Go type the tracker does not hold)")
+	// ErrScalarRevision is the refusal of every use of a change's draft when
+	// the revision it drafts is a scalar or null, with the text of the
+	// TypeError pi's overlay throws reading one. pi opens such a change (its
+	// root is not keyed in a WeakMap since a92283056), and prepares or aborts
+	// it untouched; its draft has no members, and pi's writes to it are
+	// accidents of its Proxy (ledger Divergences).
+	ErrScalarRevision = errors.New("delta: Reflect.get called on non-object (this change drafts a scalar or null revision — a nil map or slice is null — which has no members to read or write; prepare or abort it untouched, and replace the revision whole with Tracker.PrepareReplace)")
 
 	// ErrZeroTracker is Go's own: a Tracker that Track did not make holds no
 	// revision, so BeginChange, PrepareReplace and Adopt refuse it.
@@ -60,60 +62,111 @@ const (
 // without the Change retaining its context.
 type statusCell struct{ value status }
 
-// owner is a tracker's identity as its contexts record it, and the registry
-// of its open changes. It is not the tracker itself, so that a retained change
-// or prepared change does not retain the tracker or its revision (upstream's
-// `#owner = {}` and its WeakRef'd tracker). The registry holds its contexts
-// weakly: a change the caller drops is not kept alive by the tracker.
+// owner is a tracker's registry of its open changes, and its identity as its
+// contexts record it — upstream TrackerImpl's `#owner = {}`, `#selfRef`,
+// `#open`, `#competitors` and `#pruneBudget`. The Tracker holds it; a context
+// holds it only weakly (overlayContext.owner, upstream's WeakRef'd tracker),
+// so that a retained change or prepared change retains neither the tracker,
+// its revision, nor the change it holds open.
+//
+// Open changes are tracked so that adopting one makes its open competitors
+// stale at once. Prepared contexts need no tracking: preparing releases their
+// overlay, and Adopt rejects them by revision. The most recent open context is
+// held strongly in open: with one transaction at a time per tracker, the
+// common case, that is the only one, and it costs no weak pointer. A second
+// BeginChange while one is open demotes the older context into competitors
+// through a weak pointer, so a change the caller drops can be collected. A
+// dropped change that was never settled stays held by open until the
+// tracker's next BeginChange or Adopt: at most one per tracker.
 type owner struct {
-	contexts    map[weak.Pointer[overlayContext]]struct{}
+	self        weak.Pointer[owner]
+	open        *overlayContext
+	competitors map[weak.Pointer[overlayContext]]struct{}
 	pruneBudget int
 }
 
-func (o *owner) register(c *overlayContext) {
-	c.registration = weak.Make(c)
-	c.registered = true
-	o.contexts[c.registration] = struct{}{}
+func newOwner() *owner {
+	o := &owner{pruneBudget: 256}
+	o.self = weak.Make(o)
+	return o
+}
+
+// beginChange is the registry half of upstream's beginChange: c becomes the
+// open change, and the one open before it a competitor.
+func (o *owner) beginChange(c *overlayContext) {
+	if o.open != nil {
+		o.demote(o.open)
+	}
+	o.open = c
+}
+
+// demote is upstream's #demote: c joins the competitors, weakly. The registry
+// prunes the collected ones every pruneBudget demotions.
+func (o *owner) demote(c *overlayContext) {
+	c.registryRef = weak.Make(c)
+	if o.competitors == nil {
+		o.competitors = map[weak.Pointer[overlayContext]]struct{}{}
+	}
+	o.competitors[c.registryRef] = struct{}{}
 	o.pruneBudget--
 	if o.pruneBudget == 0 {
-		for p := range o.contexts {
+		for p := range o.competitors {
 			if p.Value() == nil {
-				delete(o.contexts, p)
+				delete(o.competitors, p)
 			}
 		}
-		o.pruneBudget = max(256, len(o.contexts))
+		o.pruneBudget = max(256, len(o.competitors))
 	}
 }
 
-func (o *owner) release(c *overlayContext) {
-	if c.registered {
-		delete(o.contexts, c.registration)
-		c.registered = false
+// releaseContext is upstream's: a settled context leaves the registry.
+func (o *owner) releaseContext(c *overlayContext) {
+	if o.open == c {
+		o.open = nil
+	} else if c.registryRef != (weak.Pointer[overlayContext]{}) {
+		delete(o.competitors, c.registryRef)
 	}
+	c.registryRef = weak.Pointer[overlayContext]{}
 }
 
-// invalidate is upstream's: adopting one change makes every other change open
-// on the tracker stale, and drops what their overlays hold. A change prepared
-// before is not registered; Adopt finds it stale by its revision.
+// invalidate is upstream's #invalidate: adopting one change makes every other
+// change open on the tracker stale, and drops what their overlays hold. A
+// change prepared before is not tracked; Adopt finds it stale by its revision.
 func (o *owner) invalidate(winner *overlayContext) {
-	for p := range o.contexts {
-		c := p.Value()
-		if c == nil || c == winner {
-			continue
-		}
-		if c.status.value == statusOpen || c.status.value == statusPrepared {
-			c.status.value = statusStale
-		}
-		c.release()
-	}
-	clear(o.contexts)
+	open, competitors := o.open, o.competitors
+	o.open, o.competitors = nil, nil
 	o.pruneBudget = 256
+	if open != nil {
+		staleCompetitor(open, winner)
+	}
+	for p := range competitors {
+		if c := p.Value(); c != nil {
+			staleCompetitor(c, winner)
+		}
+	}
+}
+
+// staleCompetitor is upstream's: a competitor of the adopted change is stale,
+// and its overlay is dropped.
+func staleCompetitor(c, winner *overlayContext) {
+	if c == winner {
+		return
+	}
+	if c.status.value == statusOpen || c.status.value == statusPrepared {
+		c.status.value = statusStale
+	}
+	c.registryRef = weak.Pointer[overlayContext]{}
+	c.release()
 }
 
 // overlayContext is upstream's OverlayContext: one change's overlay, or one
 // replacement's.
 type overlayContext struct {
-	owner        *owner
+	// owner is upstream's context.owner and context.tracker at once: the
+	// tracker's identity, which Adopt compares (a weak pointer keeps its
+	// identity after its target is collected), and the WeakRef through which
+	// a settling context leaves the registry.
+	owner        weak.Pointer[owner]
 	baseRevision int
 	status       *statusCell
 	root         *node
@@ -124,7 +177,8 @@ type overlayContext struct {
 	// upstream's rawNodes, for the containers a draft copied in. Containers
 	// read from the revision are found by their slot (node.keyChildren,
 	// node.indexChildren), which needs no identity: an empty []any that
-	// encoding/json decoded has none of its own (value.go, anonymous).
+	// encoding/json decoded has none of its own (value.go, anonymous). Like
+	// upstream's, it is made on the first placement.
 	placed      map[identity]*node
 	ops         []Op
 	opsReady    bool
@@ -136,18 +190,19 @@ type overlayContext struct {
 	// objects, so the prepared value is the overlay copied, not the base with
 	// the ops applied.
 	simpleObjectMaterialization bool
-	registration                weak.Pointer[overlayContext]
-	registered                  bool
+	// registryRef is upstream's: the weak pointer the owner's competitors
+	// hold the context by, once it is demoted; zero while it is the open
+	// change or untracked.
+	registryRef weak.Pointer[overlayContext]
 }
 
 func newContext(o *owner, baseRevision int, root any, replacement bool, base any) *overlayContext {
 	c := &overlayContext{
-		owner:        o,
+		owner:        o.self,
 		baseRevision: baseRevision,
 		status:       &statusCell{},
 		baseValue:    base,
 		replacement:  replacement,
-		placed:       map[identity]*node{},
 	}
 	c.root = c.newNode(root, nil, slot{}, false)
 	return c
@@ -185,7 +240,9 @@ func (c *overlayContext) abort() {
 // draft handle the caller keeps retains neither the revision nor what the
 // change placed.
 func (c *overlayContext) release() {
-	c.owner.release(c)
+	if o := c.owner.Value(); o != nil {
+		o.releaseContext(c)
+	}
 	for _, n := range c.nodes {
 		*n = node{ctx: c, draft: n.draft}
 	}
@@ -194,10 +251,9 @@ func (c *overlayContext) release() {
 	c.released = true
 }
 
-// draftable reports whether a root can have an overlay: an object or array —
+// draftable reports whether a draft's node has members: an object or array —
 // not a scalar, and not a nil map or slice, which is JSON null (encoding/json
-// writes it so, and a base batch carries it so), as pi's overlay refuses a
-// null root.
+// writes it so, and a base batch carries it so). Only a root can be neither.
 func draftable(root any) bool {
 	switch x := root.(type) {
 	case map[string]any:
@@ -238,7 +294,7 @@ type Tracker[T any] struct {
 // this representation (chord.IsValue accepts more: aliases, other numeric
 // kinds, typed containers).
 func Track[T any](initial T) *Tracker[T] {
-	return &Tracker[T]{owner: &owner{contexts: map[weak.Pointer[overlayContext]]struct{}{}, pruneBudget: 256}, value: initial}
+	return &Tracker[T]{owner: newOwner(), value: initial}
 }
 
 // Value is the committed revision.
@@ -250,17 +306,17 @@ func (t *Tracker[T]) Revision() int { return t.revision }
 
 // BeginChange opens a change: an overlay draft of the committed revision that
 // the caller mutates, across any amount of work, then prepares or aborts. It
-// never modifies the committed revision. A scalar or null revision — a nil
-// map or slice is null — has no draft: ErrScalarRevision.
+// never modifies the committed revision. A change dropped without Prepare or
+// Abort stays referenced by the tracker until its next BeginChange or Adopt.
+// A change of a scalar or null revision — a nil map or slice is null — opens,
+// and prepares as a no-op or aborts, but every use of its draft fails with
+// ErrScalarRevision.
 func (t *Tracker[T]) BeginChange() (*Change[T], error) {
 	if t.owner == nil {
 		return nil, ErrZeroTracker
 	}
-	if !draftable(any(t.value)) {
-		return nil, ErrScalarRevision
-	}
 	c := newContext(t.owner, t.revision, any(t.value), false, any(t.value))
-	t.owner.register(c)
+	t.owner.beginChange(c)
 	return &Change[T]{ctx: c, root: c.root.draft}, nil
 }
 
@@ -268,17 +324,15 @@ func (t *Tracker[T]) BeginChange() (*Change[T], error) {
 // taking ownership of it, on Track's terms (build it with chord.CopyJSON). When value is deeply equal to the
 // committed revision the ops are empty and the prepared Value is the committed
 // revision itself; otherwise they are one Replace, and the prepared Value is
-// value. value must be an object or array, not nil: ErrScalarRevision.
+// value. value may be any JSON value, a scalar or null among them.
 func (t *Tracker[T]) PrepareReplace(value T) (*Prepared[T], error) {
 	if t.owner == nil {
 		return nil, ErrZeroTracker
 	}
-	if !draftable(any(value)) {
-		return nil, ErrScalarRevision
-	}
 	c := newContext(t.owner, t.revision, any(value), true, any(t.value))
 	c.status.value = statusPrepared
-	t.owner.register(c)
+	// Not tracked: materializePrepared releases the context before this
+	// returns, as Prepare does.
 	p, err := materializePrepared[T](c)
 	if err != nil {
 		c.status.value = statusAborted
@@ -297,7 +351,7 @@ func (t *Tracker[T]) Adopt(p *Prepared[T]) error {
 	if t.owner == nil {
 		return ErrZeroTracker
 	}
-	if p == nil || p.ctx == nil || p.ctx.owner != t.owner {
+	if p == nil || p.ctx == nil || p.ctx.owner != t.owner.self {
 		return ErrForeignPrepared
 	}
 	c := p.ctx

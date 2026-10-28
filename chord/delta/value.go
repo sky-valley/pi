@@ -178,10 +178,14 @@ func number(v any) (float64, bool) {
 }
 
 // jsonEqual is upstream's equalJson: same, or two containers of one kind whose
-// members are pairwise equalJson.
+// members are pairwise equalJson. A nil map or slice is null, as encoding/json
+// writes it: equal to null, and to no container.
 func jsonEqual(a, b any) bool {
 	if same(a, b) {
 		return true
+	}
+	if na, nb := isNull(a), isNull(b); na || nb {
+		return na && nb
 	}
 	switch x := a.(type) {
 	case []any:
@@ -207,6 +211,19 @@ func jsonEqual(a, b any) bool {
 			}
 		}
 		return true
+	}
+	return false
+}
+
+// isNull reports whether v is JSON null: nil, or a nil map or slice.
+func isNull(v any) bool {
+	switch x := v.(type) {
+	case nil:
+		return true
+	case map[string]any:
+		return x == nil
+	case []any:
+		return x == nil
 	}
 	return false
 }

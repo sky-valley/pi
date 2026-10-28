@@ -77,7 +77,8 @@
 // Adopting one makes every other stale: an open change's drafts are settled
 // and it cannot be prepared, and Adopt refuses a prepared one. Adopt also
 // refuses a prepared change from another tracker, one already adopted, and one
-// aborted.
+// aborted. A change dropped without Prepare or Abort stays referenced by its
+// tracker until the tracker's next BeginChange or Adopt.
 //
 // Strings publish as appends and front-truncations where they can; arrays as
 // splices of the entries removed and inserted, a permutation of the entries

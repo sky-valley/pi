@@ -104,6 +104,9 @@ func (n *node) childFor(s slot, value any, placement bool) *node {
 	c := n.ctx.newNode(value, n, s, placement)
 	if placement {
 		id, _ := identityOf(value)
+		if n.ctx.placed == nil {
+			n.ctx.placed = map[identity]*node{}
+		}
 		n.ctx.placed[id] = c
 	} else if s.kind == objectEntry {
 		if n.keyChildren == nil {
@@ -509,6 +512,9 @@ func (d *Draft) readable() (*node, error) {
 	if d.n.ctx.settled() {
 		return nil, ErrDraftSettled
 	}
+	if !draftable(d.n.base) {
+		return nil, ErrScalarRevision
+	}
 	return d.n, nil
 }
 
@@ -532,6 +538,9 @@ func (d *Draft) read() *node {
 	}
 	if d.n.ctx.settled() {
 		panic(ErrDraftSettled)
+	}
+	if !draftable(d.n.base) {
+		panic(ErrScalarRevision)
 	}
 	return d.n
 }

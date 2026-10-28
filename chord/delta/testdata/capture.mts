@@ -1092,9 +1092,9 @@ scenario("deeply equal replacement", { main: J(`{"value":{"nested":1},"retained"
 	{"do":"adopt"},
 	{"do":"value"}
 ]`));
-// A scalar root. track() takes any root as it is, but a change drafts the
-// revision and a replacement roots an overlay on its value, and both key the
-// overlay's WeakMap by that container: a scalar throws.
+// A scalar root. track() takes any root as it is. Up to a92283056 a change and
+// a replacement keyed their overlay's WeakMap by the root, so a scalar threw;
+// from a92283056 on the root is not keyed, and both take a scalar.
 scenario("scalar roots", { main: J(`1`), none: J(`null`), obj: J(`{"a":1}`) }, S(`[
 	{"do":"value"},
 	{"do":"begin"},
@@ -1118,6 +1118,50 @@ scenario("scalar roots", { main: J(`1`), none: J(`null`), obj: J(`{"a":1}`) }, S
 	{"do":"begin","t":"obj","c":"obj"},
 	{"do":"push","t":"obj","c":"obj","at":[],"items":[3]},
 	{"do":"prepare","t":"obj","c":"obj","p":"obj"}
+]`));
+// From a92283056 on, a change of a scalar or null revision opens, prepares
+// untouched as a no-op, aborts, and is staled like any other. Its draft is not
+// used here: pi's draft of a scalar has no members, and writes to it are
+// accidents of its Proxy (ledger Divergences).
+scenario("scalar root changes", { main: J(`1`), none: J(`null`) }, S(`[
+	{"do":"begin","c":"a"},
+	{"do":"prepare","c":"a","p":"a"},
+	{"do":"begin","c":"b"},
+	{"do":"abort","c":"b"},
+	{"do":"begin","c":"c"},
+	{"do":"begin","c":"d"},
+	{"do":"replace","value":2,"p":"r"},
+	{"do":"adopt","p":"r"},
+	{"do":"prepare","c":"c","p":"c"},
+	{"do":"prepare","c":"d","p":"d"},
+	{"do":"revision"},
+	{"do":"value"},
+	{"do":"begin","t":"none","c":"n"},
+	{"do":"prepare","t":"none","c":"n","p":"n"},
+	{"do":"adopt","t":"none","p":"n"},
+	{"do":"revision","t":"none"}
+]`));
+// tracker.test.ts (a92283056) "makes the older of two open drafts stale when
+// the newer is adopted": the older was demoted from the tracker's open change
+// to a competitor, and is staled as one.
+scenario("newer of two changes adopted", { main: J(`{"child":{"value":0},"value":0}`) }, S(`[
+	{"do":"begin","c":"older"},
+	{"do":"hold","c":"older","at":["child"],"as":"held"},
+	{"do":"set","from":"held","at":[],"key":"value","value":1},
+	{"do":"begin","c":"newer"},
+	{"do":"set","c":"newer","at":[],"key":"value","value":2},
+	{"do":"prepare","c":"newer","p":"newer"},
+	{"do":"adopt","p":"newer"},
+	{"do":"value"},
+	{"do":"get","from":"held","at":[],"key":"value"},
+	{"do":"get","c":"older","at":[],"key":"value"},
+	{"do":"prepare","c":"older","p":"older"},
+	{"do":"abort","c":"older"},
+	{"do":"begin","c":"next"},
+	{"do":"set","c":"next","at":[],"key":"value","value":3},
+	{"do":"prepare","c":"next","p":"next"},
+	{"do":"adopt","p":"next"},
+	{"do":"value"}
 ]`));
 // Draft array operations, one at a time and in combination.
 const arrays = (steps: string) => S(`[{"do":"begin"},${steps},{"do":"prepare"}]`);
