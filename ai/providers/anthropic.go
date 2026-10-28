@@ -1511,18 +1511,10 @@ func insertAnthropicThinkingLevelMessages(messages []map[string]any, levels map[
 	return append(out, effortMessage(activeEffort))
 }
 
-// anthropicStrictToolLimitMessages are the rejections of strict tools for
-// Anthropic's own limits that pi falls back on (upstream d4d53612b), matched as
-// substrings of the SDK's error message.
-var anthropicStrictToolLimitMessages = []string{
-	"The compiled grammar is too large",
-	"Too many strict tools (",
-	"Schemas contains too many parameters with union types (",
-}
-
-// isAnthropicStrictToolLimitError is pi's fallback test on the SDK's APIError:
-// status 400, `type` (the body's error.type) "invalid_request_error", and a
-// message naming one of Anthropic's strict-tool limits.
+// isAnthropicStrictToolLimitError is pi's fallback test on the SDK's APIError
+// (upstream d4d53612b): status 400, `type` (the body's error.type)
+// "invalid_request_error", and a message naming one of the strict-tool limits
+// (isStrictToolLimitErrorMessage).
 func isAnthropicStrictToolLimitError(status int, body []byte, message string) bool {
 	if status != http.StatusBadRequest {
 		return false
@@ -1537,9 +1529,7 @@ func isAnthropicStrictToolLimitError(status int, body []byte, message string) bo
 	if errType != "invalid_request_error" {
 		return false
 	}
-	return slices.ContainsFunc(anthropicStrictToolLimitMessages, func(limit string) bool {
-		return strings.Contains(message, limit)
-	})
+	return isStrictToolLimitErrorMessage(message)
 }
 
 // anthropicParams is what pi's buildParams returns: the params; whether a
@@ -1606,7 +1596,7 @@ func buildAnthropicParams(model *ai.Model, req ai.TranscriptContext, oauth bool,
 			return nil, err
 		}
 		for i, definition := range definitions {
-			if definition["strict"] == true && isPreferredStrictTool(tools[i]) {
+			if definition["strict"] == true && prefersJSONSchemaStrictSampling(tools[i]) {
 				hasPreferredStrictTools = true
 			}
 		}
@@ -1796,14 +1786,6 @@ func buildAnthropicParams(model *ai.Model, req ai.TranscriptContext, oauth bool,
 	return anthropicParams{body: params, hasPreferredStrictTools: hasPreferredStrictTools, providerThinkingLevel: providerThinkingLevel}, nil
 }
 
-// isPreferredStrictTool is pi's `config.type === "json_schema" &&
-// config.strict === "prefer"`. Go's zero strictness is the documented default,
-// prefer (ConstrainedSamplingConfig.Strict), so it counts too.
-func isPreferredStrictTool(tool ai.Tool) bool {
-	config := tool.ConstrainedSampling
-	return config != nil && config.Type == ai.ConstrainedSamplingJSONSchema && config.Strict != ai.ConstrainedSamplingRequire
-}
-
 // anthropicStrictUnsupportedKeywords are the keywords Anthropic strict tool use
 // rejects with a 400 for the whole request (port of
 // ANTHROPIC_STRICT_UNSUPPORTED_KEYWORDS).
@@ -1875,7 +1857,7 @@ func convertAnthropicTools(tools []ai.Tool, oauth, eager, supportsStrictTools bo
 			name = toClaudeCodeName(name)
 		}
 		strict := false
-		if !disablePreferredStrictTools || !isPreferredStrictTool(t) {
+		if !disablePreferredStrictTools || !prefersJSONSchemaStrictSampling(t) {
 			var err error
 			if strict, err = resolveJSONSchemaStrictSampling(t, supportsStrictTools, isAnthropicStrictUnsupportedKeyword); err != nil {
 				return nil, err

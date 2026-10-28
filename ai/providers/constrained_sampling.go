@@ -3,6 +3,7 @@ package providers
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/sky-valley/pi/ai"
@@ -206,6 +207,35 @@ func makeStrictJSONSchema(schema *ai.Schema, isUnsupportedKeyword unsupportedStr
 		return nil, &unsupportedStrictJSONSchemaError{"root schema must have type object"}
 	}
 	return cloned, nil
+}
+
+// prefersJSONSchemaStrictSampling returns true for a tool that asks for strict
+// JSON-schema sampling only when possible (`strict: "prefer"`). Port of
+// prefersJsonSchemaStrictSampling (upstream 842c73170). Go's zero strictness
+// is the documented default, prefer (ai.ConstrainedSamplingConfig.Strict), so
+// it counts too.
+func prefersJSONSchemaStrictSampling(tool ai.Tool) bool {
+	config := tool.ConstrainedSampling
+	return config != nil && config.Type == ai.ConstrainedSamplingJSONSchema && config.Strict != ai.ConstrainedSamplingRequire
+}
+
+// strictToolLimitErrorMessages: Claude rejects (on the Anthropic API and on
+// Bedrock) a request whose strict tools exceed its limits with one of these
+// messages. Observed limits: 20 strict tools, and 16 optional or union-typed
+// parameters across all strict tools. Port of STRICT_TOOL_LIMIT_ERROR_MESSAGES.
+var strictToolLimitErrorMessages = []string{
+	"The compiled grammar is too large",
+	"Too many strict tools (",
+	"Schemas contains too many parameters with union types (",
+}
+
+// isStrictToolLimitErrorMessage returns true when a provider error message
+// says the request's strict tools exceed the provider's limits. Port of
+// isStrictToolLimitErrorMessage.
+func isStrictToolLimitErrorMessage(message string) bool {
+	return slices.ContainsFunc(strictToolLimitErrorMessages, func(limitMessage string) bool {
+		return strings.Contains(message, limitMessage)
+	})
 }
 
 // jsonSchemaToolParameters returns the schema a provider should send for a

@@ -468,3 +468,47 @@ func assertErrString(t *testing.T, err error, want string) {
 		t.Fatalf("error = %q, want %q", err.Error(), want)
 	}
 }
+
+// TestStrictSamplingHelpersCharacterization is a characterization test of the
+// two helpers upstream 842c73170 extracted from anthropic-messages.ts into
+// constrained-sampling.ts (a behaviour-neutral refactor there, as here): which
+// tools prefer strict JSON-schema sampling, and which provider messages name a
+// strict-tool limit. Each row is what the inline code answered before the
+// extraction; the anthropic strict-fallback tests cover the call sites.
+func TestStrictSamplingHelpersCharacterization(t *testing.T) {
+	plain := ai.Tool{Name: "plain", Description: "d", Parameters: grammarParams()}
+	for _, tc := range []struct {
+		name string
+		tool ai.Tool
+		want bool
+	}{
+		{"prefer", jsonSchemaTool("t", ai.ConstrainedSamplingPrefer), true},
+		{"default strictness is prefer", jsonSchemaTool("t", ""), true},
+		{"require", jsonSchemaTool("t", ai.ConstrainedSamplingRequire), false},
+		{"grammar", grammarTool("t", ai.GrammarVariants{}), false},
+		{"unconstrained", plain, false},
+	} {
+		if got := prefersJSONSchemaStrictSampling(tc.tool); got != tc.want {
+			t.Errorf("prefersJSONSchemaStrictSampling(%s) = %v, want %v", tc.name, got, tc.want)
+		}
+	}
+	for _, tc := range []struct {
+		message string
+		want    bool
+	}{
+		{"400 The compiled grammar is too large, try fewer tools", true},
+		{"Too many strict tools (21). The maximum is 20.", true},
+		{"Schemas contains too many parameters with union types (17 parameters with type arrays or anyOf).", true},
+		// Each limit is a case-sensitive substring, and the parenthesis is part
+		// of it.
+		{"too many strict tools (21)", false},
+		{"Too many strict tools", false},
+		{"Schemas contains too many parameters with union types", false},
+		{"The compiled grammar is too big", false},
+		{"", false},
+	} {
+		if got := isStrictToolLimitErrorMessage(tc.message); got != tc.want {
+			t.Errorf("isStrictToolLimitErrorMessage(%q) = %v, want %v", tc.message, got, tc.want)
+		}
+	}
+}
