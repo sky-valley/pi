@@ -11,7 +11,9 @@ import (
 // prepareSignals makes a write to a closed stdout an error rather than a
 // fatal SIGPIPE (Rust ignores SIGPIPE), and has Go take over every signal the
 // daemon was started ignoring, so that children get the default disposition,
-// as libuv and the Rust daemon give them, while the daemon keeps ignoring it.
+// as libuv and the Rust daemon give them, while the daemon keeps ignoring it
+// (SIGPIPE, SIGTSTP, SIGTTIN, SIGTTOU; an ignored SIGHUP or SIGINT now ends
+// the daemon all the same, see exitOnSignals).
 //
 // A child gets SIG_DFL for the signals Go handles and inherits the rest. Go
 // handles every signal at start except SIGHUP and SIGINT when they were

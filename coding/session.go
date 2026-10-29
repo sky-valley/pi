@@ -443,6 +443,10 @@ type Session struct {
 	// streamResolvesAuth reports that the agent streams through models, which
 	// resolves each request's auth itself (pi markRuntimeStreamFunction,
 	// upstream 6fed3cfb9): the session was built with Models and no StreamFn.
+	// It is fixed at NewSession. pi compares the agent's current stream
+	// function by identity, which Go funcs do not allow, so a stream assigned
+	// to Agent.StreamFn later still gets no pre-resolved summary auth: pass it
+	// as SessionOptions.StreamFn instead.
 	streamResolvesAuth bool
 	// recMu guards Recorder against the tool-execution goroutine reading it for
 	// bash session metadata while Record attaches one.
