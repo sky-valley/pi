@@ -3,7 +3,6 @@
 package env
 
 import (
-	"os"
 	"strconv"
 	"strings"
 	"syscall"
@@ -18,7 +17,7 @@ func TestKillsRunningCommandsWhenTheConnectionCloses(t *testing.T) {
 	env, connection := environment(t)
 	command, running := startSleeper(t, env)
 	connection.Close()
-	<-running
+	settle(t, running)
 	expectGone(t, command)
 }
 
@@ -35,7 +34,7 @@ func TestKillsRunningCommandsWhenTheDaemonIsSignalled(t *testing.T) {
 			info, err := connection.Info(background())
 			mustDo(t, err)
 			mustDo(t, syscall.Kill(info.PID, sig))
-			<-running
+			settle(t, running)
 			expectGone(t, command)
 		})
 	}
@@ -70,13 +69,20 @@ func startSleeper(t *testing.T, env *RemoteExecutionEnv) (int, <-chan error) {
 	}
 }
 
+// settle waits for the command's RunProgram to return.
+func settle(t *testing.T, running <-chan error) {
+	t.Helper()
+	select {
+	case <-running:
+	case <-time.After(10 * time.Second):
+		t.Fatal("RunProgram never settled")
+	}
+}
+
 // expectGone fails unless pid is gone within 5 seconds.
 func expectGone(t *testing.T, pid int) {
 	t.Helper()
-	alive := func() bool {
-		process, err := os.FindProcess(pid)
-		return err == nil && process.Signal(syscall.Signal(0)) == nil
-	}
+	alive := func() bool { return syscall.Kill(pid, 0) == nil }
 	for deadline := time.Now().Add(5 * time.Second); alive() && time.Now().Before(deadline); {
 		time.Sleep(50 * time.Millisecond)
 	}

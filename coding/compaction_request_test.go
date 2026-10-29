@@ -481,7 +481,9 @@ func TestSummarizationPreResolvesAuthForAStreamOfItsOwn(t *testing.T) {
 	model, models, _ := oauthOnlySummaryModels(t)
 	var apiKey string
 	stream := func(_ context.Context, model *ai.Model, _ ai.TranscriptContext, opts *ai.SimpleStreamOptions) *ai.AssistantMessageEventStream {
-		apiKey = opts.APIKey
+		if opts != nil {
+			apiKey = opts.APIKey
+		}
 		s := ai.NewAssistantMessageEventStream()
 		s.Push(ai.AssistantMessageEvent{Type: ai.EventDone, Reason: ai.StopStop, Message: &ai.AssistantMessage{
 			Api: model.Api, Provider: model.Provider, Model: model.ID,
