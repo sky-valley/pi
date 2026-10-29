@@ -869,12 +869,20 @@ func messagesAsLlm(messages []agent.AgentMessage) []ai.Message {
 // here, or a Copilot compaction request goes to the Individual endpoint on a
 // Business/Enterprise account.
 //
+// That pre-resolution applies only to a session with a stream of its own
+// (SessionOptions.StreamFn). A session that streams through Models resolves
+// nothing here (pi markRuntimeStreamFunction, upstream 6fed3cfb9 / #11520):
+// Models resolves the request's auth itself, the stored OAuth login and its
+// base URL included, and a key passed back to it explicitly would take the
+// api-key path instead, which fails every summary for a provider whose api-key
+// path refuses the OAuth token.
+//
 // Resolution is best-effort, as pi's is: when it fails or resolves nothing,
 // the request goes to the session's own model with no auth of its own, and
 // the stream resolves it. A session without Models has no runtime to ask, and
 // its compat stream resolves each request's key from the environment.
 func (s *Session) summarizationRequest(ctx context.Context) (*ai.Model, summarizationAuth) {
-	if s.models == nil || s.Model == nil {
+	if s.models == nil || s.Model == nil || s.streamResolvesAuth {
 		return s.Model, summarizationAuth{}
 	}
 	result, err := s.models.GetAuth(ctx, s.Model, nil)

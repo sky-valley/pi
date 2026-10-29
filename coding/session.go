@@ -440,6 +440,10 @@ type Session struct {
 	Cwd      string
 	Recorder *SessionRecorder
 	models   ai.Models
+	// streamResolvesAuth reports that the agent streams through models, which
+	// resolves each request's auth itself (pi markRuntimeStreamFunction,
+	// upstream 6fed3cfb9): the session was built with Models and no StreamFn.
+	streamResolvesAuth bool
 	// recMu guards Recorder against the tool-execution goroutine reading it for
 	// bash session metadata while Record attaches one.
 	recMu sync.RWMutex
@@ -624,7 +628,7 @@ func NewSession(opts SessionOptions) (*Session, error) {
 	// reads them off the live ExtensionContext per call). The Session is
 	// allocated up front so the closure captures a stable, non-nil pointer; its
 	// Agent is filled in below, before NewSession returns and any tool can run.
-	sess := &Session{Cwd: cwd, Model: opts.Model, models: opts.Models}
+	sess := &Session{Cwd: cwd, Model: opts.Model, models: opts.Models, streamResolvesAuth: opts.Models != nil && opts.StreamFn == nil}
 	tools, err := resolveTools(cwd, opts, sess.bashSessionEnv, sess.currentModel)
 	if err != nil {
 		return nil, err

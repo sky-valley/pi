@@ -318,7 +318,9 @@ func TestSummarizationIsolatesRouting(t *testing.T) {
 // no base URL and never rebuilds the request model — and summarization passes
 // the key it resolved explicitly, which is exactly how the Individual endpoint
 // leaked through. The session streams through the real ai.Models runtime, as
-// upstream's SDK-style stream wrapper does, not a stream double.
+// upstream's SDK-style stream wrapper does, not a stream double. Since
+// upstream 6fed3cfb9 such a session passes the summary no auth at all, and
+// Models resolves the login and its base URL on the request itself.
 func TestSummarizationUsesAuthResolvedBaseURL(t *testing.T) {
 	const individualBaseURL = "https://api.individual.githubcopilot.com"
 	const enterpriseBaseURL = "https://api.enterprise.githubcopilot.com"
@@ -392,6 +394,112 @@ func TestSummarizationUsesAuthResolvedBaseURL(t *testing.T) {
 
 	if requestBaseURL != enterpriseBaseURL {
 		t.Fatalf("compaction request base URL = %q, want %q", requestBaseURL, enterpriseBaseURL)
+	}
+}
+
+// oauthOnlySummaryModels is the provider pi's regression test
+// 11520-sdk-summary-oauth-auth.test.ts registers: a stored OAuth login beside
+// an api-key method, so a key passed back to Models explicitly takes the
+// api-key path rather than the login. Its api-key path refuses every key, as
+// the issue's provider refused explicit keys. It returns the Models and the
+// api keys the provider's stream received.
+func oauthOnlySummaryModels(t *testing.T) (*ai.Model, ai.Models, *[]string) {
+	t.Helper()
+	var apiKeys []string
+	respond := func(_ context.Context, model *ai.Model, _ ai.TranscriptContext, opts *ai.SimpleStreamOptions) *ai.AssistantMessageEventStream {
+		key := ""
+		if opts != nil {
+			key = opts.APIKey
+		}
+		apiKeys = append(apiKeys, key)
+		s := ai.NewAssistantMessageEventStream()
+		s.Push(ai.AssistantMessageEvent{Type: ai.EventDone, Reason: ai.StopStop, Message: &ai.AssistantMessage{
+			Api: model.Api, Provider: model.Provider, Model: model.ID,
+			Content: ai.ContentList{ai.TextContent{Text: "branch summary text"}}, StopReason: ai.StopStop,
+		}})
+		s.End()
+		return s
+	}
+	model := &ai.Model{Provider: "oauth-only-provider", ID: "oauth-model", Api: "oauth-only-api", BaseURL: "https://example.test/v1"}
+	provider := ai.CreateProvider(ai.CreateProviderOptions{
+		ID: model.Provider,
+		Auth: ai.ProviderAuth{
+			APIKey: &ai.ApiKeyAuth{
+				Name: "API key",
+				Resolve: func(context.Context, ai.AuthContext, *ai.Credential) (*ai.AuthResult, error) {
+					return nil, fmt.Errorf("explicit api keys are refused")
+				},
+			},
+			OAuth: &ai.OAuthAuth{
+				Name:    "Subscription",
+				Refresh: func(_ context.Context, c ai.OAuthCredentials) (ai.OAuthCredentials, error) { return c, nil },
+				ToAuth:  func(c ai.OAuthCredentials) (ai.ModelAuth, error) { return ai.ModelAuth{APIKey: c.Access}, nil },
+			},
+		},
+		Models:   []*ai.Model{model},
+		APIByApi: map[ai.Api]ai.ProviderStreams{model.Api: {StreamSimple: respond}},
+	})
+	credentials := ai.NewInMemoryCredentialStore()
+	if _, err := credentials.Modify(context.Background(), model.Provider, func(*ai.Credential) (*ai.Credential, error) {
+		return &ai.Credential{
+			Type: ai.CredentialOAuth, Access: "oauth-access", Refresh: "refresh",
+			Expires: time.Now().Add(time.Hour).UnixMilli(),
+		}, nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	models := ai.CreateModels(&ai.CreateModelsOptions{Credentials: credentials})
+	models.SetProvider(provider)
+	return model, models, &apiKeys
+}
+
+// TestSummarizationLetsModelsResolveStoredOAuth ports pi's regression test
+// 11520-sdk-summary-oauth-auth.test.ts ("lets the runtime resolve stored
+// OAuth for branch summaries", upstream 6fed3cfb9): a session streaming
+// through Models passes no pre-resolved key to a summary, so Models resolves
+// the stored login, not an explicit key on the api-key path.
+func TestSummarizationLetsModelsResolveStoredOAuth(t *testing.T) {
+	model, models, apiKeys := oauthOnlySummaryModels(t)
+	sess := newTestSession(t, SessionOptions{Model: model, Cwd: t.TempDir(), NoTools: NoToolsAll, Models: models})
+	older := []agent.AgentMessage{
+		ai.NewUserText("abandoned branch work", 1),
+		ai.AssistantMessage{Content: ai.ContentList{ai.TextContent{Text: "abandoned reply"}}, StopReason: ai.StopStop, Timestamp: 2},
+	}
+	if summary := sess.summarize(context.Background(), older); !strings.Contains(summary, "branch summary text") {
+		t.Fatalf("summary = %q, want the provider's summary text", summary)
+	}
+	if len(*apiKeys) != 1 || (*apiKeys)[0] != "oauth-access" {
+		t.Fatalf("provider requests carried api keys %q, want one request with the stored login's %q", *apiKeys, "oauth-access")
+	}
+}
+
+// TestSummarizationPreResolvesAuthForAStreamOfItsOwn locks the other branch of
+// pi's _getSummarizationRequestAuth: a session whose stream is its own, not
+// Models', still has the summary's auth resolved through Models first and
+// passed on explicitly.
+func TestSummarizationPreResolvesAuthForAStreamOfItsOwn(t *testing.T) {
+	model, models, _ := oauthOnlySummaryModels(t)
+	var apiKey string
+	stream := func(_ context.Context, model *ai.Model, _ ai.TranscriptContext, opts *ai.SimpleStreamOptions) *ai.AssistantMessageEventStream {
+		apiKey = opts.APIKey
+		s := ai.NewAssistantMessageEventStream()
+		s.Push(ai.AssistantMessageEvent{Type: ai.EventDone, Reason: ai.StopStop, Message: &ai.AssistantMessage{
+			Api: model.Api, Provider: model.Provider, Model: model.ID,
+			Content: ai.ContentList{ai.TextContent{Text: "summary"}}, StopReason: ai.StopStop,
+		}})
+		s.End()
+		return s
+	}
+	sess := newTestSession(t, SessionOptions{Model: model, Cwd: t.TempDir(), NoTools: NoToolsAll, Models: models, StreamFn: stream})
+	older := []agent.AgentMessage{
+		ai.NewUserText("summarize me", 1),
+		ai.AssistantMessage{Content: ai.ContentList{ai.TextContent{Text: "ok"}}, StopReason: ai.StopStop, Timestamp: 2},
+	}
+	if summary := sess.summarize(context.Background(), older); summary == "" {
+		t.Fatal("summarization produced no summary")
+	}
+	if apiKey != "oauth-access" {
+		t.Fatalf("summary request api key = %q, want the pre-resolved %q", apiKey, "oauth-access")
 	}
 }
 
