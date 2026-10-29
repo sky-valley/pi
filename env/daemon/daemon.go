@@ -687,6 +687,8 @@ func (r seenReader) Read(b []byte) (int, error) {
 // serve speaks the protocol on stdin and stdout until stdin ends, then stops
 // everything it started.
 func serve(token string, stdin io.Reader, stdout io.Writer) error {
+	running := newGroups()
+	exitOnSignals(running)
 	if _, err := fmt.Fprintf(stdout, "PI-ENV %s\n", token); err != nil {
 		return err
 	}
@@ -703,7 +705,7 @@ func serve(token string, stdin io.Reader, stdout io.Writer) error {
 		handles:   map[uint64]*entry{},
 		controls:  map[uint32]*control{},
 		jobs:      startWorkers(),
-		running:   newGroups(),
+		running:   running,
 		terminals: newTerminals(),
 	}
 	s.nextHandle.Store(1)
