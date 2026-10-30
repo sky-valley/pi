@@ -457,47 +457,44 @@ func toFixed2(x float64) string {
 }
 
 func encodeUnderLimit(img image.Image, p resizeProfile) ([]byte, string, bool) {
-	type candidate struct {
-		data []byte
-		mime string
+	fits := func(data []byte, ok bool) bool { return ok && base64Size(len(data)) < p.maxBytes }
+	pngData, pngOK := encodeImage(img, -1)
+	if len(p.jpegQualities) == 0 {
+		return pngData, "image/png", fits(pngData, pngOK)
 	}
-	encodeJPEG := func(q int) (candidate, bool) {
-		var buf bytes.Buffer
-		if err := jpeg.Encode(&buf, img, &jpeg.Options{Quality: q}); err != nil {
-			return candidate{}, false
-		}
-		return candidate{buf.Bytes(), "image/jpeg"}, true
+	// pi prefers the smaller of PNG and the JPEG at the first quality step by
+	// base64 length (PNG on a tie), then the other, and only then the lower
+	// JPEG qualities (upstream e7a0df27c).
+	jpegData, jpegOK := encodeImage(img, p.jpegQualities[0])
+	jpegFirst := jpegOK && (!pngOK || base64Size(len(jpegData)) < base64Size(len(pngData)))
+	if jpegFirst && fits(jpegData, jpegOK) {
+		return jpegData, "image/jpeg", true
 	}
-	var candidates []candidate
-	var buf bytes.Buffer
-	if err := png.Encode(&buf, img); err == nil {
-		candidates = append(candidates, candidate{buf.Bytes(), "image/png"})
+	if fits(pngData, pngOK) {
+		return pngData, "image/png", true
 	}
-	// pi prefers the smaller of PNG and the JPEG at the first quality step
-	// by base64 length (PNG on a tie), and only then the lower JPEG qualities
-	// (upstream e7a0df27c).
-	lower := p.jpegQualities
-	if len(lower) > 0 {
-		lower = lower[1:]
-		if jpg, ok := encodeJPEG(p.jpegQualities[0]); ok {
-			if len(candidates) == 1 && base64Size(len(jpg.data)) < base64Size(len(candidates[0].data)) {
-				candidates = []candidate{jpg, candidates[0]}
-			} else {
-				candidates = append(candidates, jpg)
-			}
-		}
+	if !jpegFirst && fits(jpegData, jpegOK) {
+		return jpegData, "image/jpeg", true
 	}
-	for _, c := range candidates {
-		if base64Size(len(c.data)) < p.maxBytes {
-			return c.data, c.mime, true
-		}
-	}
-	for _, q := range lower {
-		if c, ok := encodeJPEG(q); ok && base64Size(len(c.data)) < p.maxBytes {
-			return c.data, c.mime, true
+	for _, q := range p.jpegQualities[1:] {
+		if data, ok := encodeImage(img, q); fits(data, ok) {
+			return data, "image/jpeg", true
 		}
 	}
 	return nil, "", false
+}
+
+// encodeImage encodes img as PNG for quality -1 and as JPEG at that quality
+// otherwise.
+func encodeImage(img image.Image, quality int) ([]byte, bool) {
+	var buf bytes.Buffer
+	var err error
+	if quality < 0 {
+		err = png.Encode(&buf, img)
+	} else {
+		err = jpeg.Encode(&buf, img, &jpeg.Options{Quality: quality})
+	}
+	return buf.Bytes(), err == nil
 }
 
 // bilinearResize downscales src to tw×th using bilinear interpolation.

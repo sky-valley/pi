@@ -98,3 +98,65 @@ func TestSessionDiscoveryComparesPathsCaseInsensitivelyOnWindows(t *testing.T) {
 		t.Error("case-sensitive: the default directory in another casing is another directory")
 	}
 }
+
+// pi paths.test.ts "isPathWithin matches whole path segments" (1be312b46),
+// and its Windows casing case on this platform's path rules.
+func TestIsPathWithin(t *testing.T) {
+	simulateCaseInsensitivePaths(t, false)
+	for _, tc := range []struct {
+		parent, child string
+		want          bool
+	}{
+		{"/home/me", "/home/me", true},
+		{"/home/me", "/home/me/project", true},
+		{"/home/me/", "/home/me/project", true},
+		{"/home/me", "/home/me2", false},
+		{"/", "/home", true},
+		{"/home/me", "/home/Me/project", false},
+	} {
+		if got := isPathWithin(tc.parent, tc.child); got != tc.want {
+			t.Errorf("isPathWithin(%q, %q) = %v; want %v", tc.parent, tc.child, got, tc.want)
+		}
+	}
+	simulateCaseInsensitivePaths(t, true)
+	if !isPathWithin("/Home/Me", "/home/me/project") || isPathWithin("/Home/Me", "/home/me2") {
+		t.Error("case-insensitive platforms fold casing, still by whole components")
+	}
+}
+
+// pi resource-loader.ts findShadowedContextFile (1be312b46): a worktree is
+// nested when the main repo root holds it, by isPathWithin — so a main repo at
+// the filesystem root holds every worktree, where a "<root>/" prefix test
+// ("//") never matched.
+func TestWorktreeNestedIn(t *testing.T) {
+	simulateCaseInsensitivePaths(t, false)
+	for _, tc := range []struct {
+		main, worktree string
+		want           bool
+	}{
+		{"/repo", "/repo/wt", true},
+		{"/", "/wt", true},
+		{"/repo", "/repo", false},
+		{"/repo", "/feat", false},
+		{"/repo", "/repo2/wt", false},
+	} {
+		if got := worktreeNestedIn(tc.main, tc.worktree); got != tc.want {
+			t.Errorf("worktreeNestedIn(%q, %q) = %v; want %v", tc.main, tc.worktree, got, tc.want)
+		}
+	}
+}
+
+// With no agent dir there is no default session directory, and an explicit
+// one is filtered by cwd as pi's always-real default would be: "" must not
+// resolve to the process cwd and pass for the default.
+func TestSessionListingDirWithoutAgentDirFilters(t *testing.T) {
+	t.Setenv("HOME", "")
+	if d := DefaultSessionDir("/project"); d != "" {
+		t.Skipf("an agent dir resolved without HOME (%q)", d)
+	}
+	for _, sessionDir := range []string{".", mustAbs(t, ".")} {
+		if _, filter, _ := sessionListingDir("/project", sessionDir); !filter {
+			t.Errorf("sessionListingDir(%q) with no agent dir must filter by cwd", sessionDir)
+		}
+	}
+}

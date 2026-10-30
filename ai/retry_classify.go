@@ -37,16 +37,15 @@ import (
 //
 // RE2 also has no lookaround, which the status-code alternative uses:
 // (?<![a-z0-9]) and (?![a-z0-9]) around the codes, and Zhipu's 1308 after its
-// code (?![0-9]). A lookaround here only
-// ever tests one neighbouring character against an ASCII class, and the
-// pattern is only ever tested for a match, never asked where it matched, so
-// each is rewritten as that neighbour or the edge of the text:
-// (?:^|[^a-z0-9]) before and (?:[^a-z0-9]|$) after. Consuming the neighbour
-// changes no answer, since nothing else in the alternative reads it. Under
-// "i" without "u" the class holds ASCII letters only (U+017F and U+212A are
-// not in it), which the A-Z-lowercased input matches exactly, and an astral
-// neighbour is a surrogate code unit outside the class in JavaScript and a
-// code point outside it in RE2.
+// code (?![0-9]). A lookaround here only ever tests one neighbouring character
+// against an ASCII class, and the pattern is only ever tested for a match,
+// never asked where it matched, so each is rewritten as that neighbour or the
+// edge of the text: (?:^|[^a-z0-9]) before and (?:[^a-z0-9]|$) after.
+// Consuming the neighbour changes no answer, since nothing else in the
+// alternative reads it. Under "i" without "u" the class holds ASCII letters
+// only (U+017F and U+212A are not in it), which the A-Z-lowercased input
+// matches exactly, and an astral neighbour is a surrogate code unit outside
+// the class in JavaScript and a code point outside it in RE2.
 type providerErrorPattern struct {
 	source string // RegExp.prototype.source: the alternatives joined with "|", "/" escaped
 	re     *regexp.Regexp
@@ -58,11 +57,15 @@ const jsDot = `[^\n\r\x{2028}\x{2029}\x{10000}-\x{10FFFF}]`
 
 // jsNonSpace is \S of a JavaScript RegExp: everything but the WhiteSpace and
 // LineTerminator code points.
-const jsNonSpace = `[^\t\n\v\f\r \x{A0}\x{1680}\x{2000}-\x{200A}\x{2028}\x{2029}\x{202F}\x{205F}\x{3000}\x{FEFF}]`
+const jsNonSpace = "[^" + jsSpaceMembers + "]"
 
 // jsSpace is \s of a JavaScript RegExp: the WhiteSpace and LineTerminator
 // code points, all in the BMP, where RE2's \s is the ASCII \t\n\f\r and space.
-const jsSpace = `[\t\n\v\f\r \x{A0}\x{1680}\x{2000}-\x{200A}\x{2028}\x{2029}\x{202F}\x{205F}\x{3000}\x{FEFF}]`
+const jsSpace = "[" + jsSpaceMembers + "]"
+
+// jsSpaceMembers are JavaScript's WhiteSpace and LineTerminator code points,
+// as the members of an RE2 class.
+const jsSpaceMembers = `\t\n\v\f\r \x{A0}\x{1680}\x{2000}-\x{200A}\x{2028}\x{2029}\x{202F}\x{205F}\x{3000}\x{FEFF}`
 
 func buildProviderErrorPattern(patterns []string) providerErrorPattern {
 	alternatives := make([]string, len(patterns))

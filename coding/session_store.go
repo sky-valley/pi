@@ -876,7 +876,9 @@ func sessionListingDir(cwd, sessionDir string) (dir string, filterCwd bool, reso
 	if sessionDir == "" {
 		return defaultDir, false, resolvedCwd
 	}
-	return sessionDir, !pathsEqual(sessionDir, defaultDir), resolvedCwd
+	// With no agent dir there is no default to be ("" would resolve to the
+	// process cwd); pi's default is always a real path.
+	return sessionDir, defaultDir == "" || !pathsEqual(sessionDir, defaultDir), resolvedCwd
 }
 
 // sessionCwdMatches reports whether a header cwd names resolvedCwd (pi
@@ -884,11 +886,7 @@ func sessionListingDir(cwd, sessionDir string) (dir string, filterCwd bool, reso
 // on Windows (pathsEqual), but never through symlinks, so a working directory
 // reached through a symlink matches only the spelling it was recorded under.
 func sessionCwdMatches(cwd, resolvedCwd string) bool {
-	if cwd == "" {
-		return false
-	}
-	abs, err := filepath.Abs(cwd)
-	return err == nil && pathsEqual(abs, resolvedCwd)
+	return cwd != "" && pathsEqual(cwd, resolvedCwd)
 }
 
 // FindSessionByID returns the path of the stored session whose header id is

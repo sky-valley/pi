@@ -184,6 +184,16 @@ func resolveFrom(base, p string) string {
 // Paths are canonicalized, because `git worktree add` writes the .git file's
 // `gitdir:` target in realpath form while cwd may still be symlinked (macOS
 // /tmp -> /private/tmp).
+// worktreeNestedIn reports whether worktreeRoot lies strictly inside
+// mainRepoRoot (pi 1be312b46: `isPathWithin(mainRepoRoot, worktreeRoot) &&
+// !pathsEqual(...)`). False for an ordinary repo, where the two are the same
+// dir, and for a sibling worktree (`git worktree add ../feat`), whose main
+// repo is not an ancestor. A main repo at the filesystem root holds every
+// worktree under it.
+func worktreeNestedIn(mainRepoRoot, worktreeRoot string) bool {
+	return isPathWithin(mainRepoRoot, worktreeRoot) && !pathsEqual(worktreeRoot, mainRepoRoot)
+}
+
 func findShadowedContextFile(cwd string) (string, bool) {
 	gp, ok := findGitPaths(cwd)
 	if !ok {
@@ -192,10 +202,7 @@ func findShadowedContextFile(cwd string) (string, bool) {
 	commonGitDir := canonicalizePath(gp.commonGitDir)
 	worktreeRoot := canonicalizePath(gp.repoDir)
 	mainRepoRoot := filepath.Dir(commonGitDir)
-	// False for an ordinary repo, where the two are the same dir, and for a
-	// sibling worktree (`git worktree add ../feat`), whose main repo is not an
-	// ancestor.
-	if !strings.HasPrefix(worktreeRoot, mainRepoRoot+string(filepath.Separator)) {
+	if !worktreeNestedIn(mainRepoRoot, worktreeRoot) {
 		return "", false
 	}
 	// The parent of the common git dir is the main worktree root only when that

@@ -74,7 +74,7 @@ func photoLikeImg(w, h int) *image.RGBA {
 		for x := 0; x < w; x++ {
 			seed = (seed*1103515245 + 12345) & 0x7fffffff
 			noise := float64(seed % 6)
-			img.Set(x, y, color.RGBA{
+			img.SetRGBA(x, y, color.RGBA{
 				R: uint8(float64(x)/float64(w)*200 + noise),
 				G: uint8(float64(y)/float64(h)*200 + noise),
 				B: uint8(128 + math.Sin(float64(x)/30)*60 + noise),
