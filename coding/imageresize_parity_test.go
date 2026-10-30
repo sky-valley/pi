@@ -7,6 +7,7 @@ import (
 	"image/color"
 	"image/jpeg"
 	"image/png"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -25,6 +26,13 @@ import (
 //
 // The image generators below MUST stay byte-stable, since the golden decisions
 // were captured from those exact bytes.
+//
+// photo_like.golden.json and oriented_big.golden.json are src captures at
+// e7a0df27c (resizeImageInProcess from packages/coding-agent/src/utils over the
+// 1.4.0 build's photon-node): that commit takes the smaller of PNG and JPEG, and
+// the 1.4.0 build predates it, so re-verify both against the first build that
+// ships it. Control: the same capture at e7a0df27c^1 answers PNG for both and
+// reproduces the other seven goldens.
 
 type imgDecision struct {
 	OriginalWidth  int    `json:"originalWidth"`
@@ -51,6 +59,27 @@ func noiseImg(w, h int) *image.RGBA {
 		for x := 0; x < w; x++ {
 			v := (x*2654435761 + y*40503 + x*y*97) & 0xFFFFFF
 			img.Set(x, y, color.RGBA{R: uint8(v), G: uint8(v >> 8), B: uint8(v >> 16), A: 255})
+		}
+	}
+	return img
+}
+
+// photoLikeImg is smooth gradients with light deterministic noise, so PNG
+// compresses it poorly: the shape of pi's photoLikeJpeg (#11551, e7a0df27c),
+// with an exact integer LCG.
+func photoLikeImg(w, h int) *image.RGBA {
+	img := image.NewRGBA(image.Rect(0, 0, w, h))
+	seed := uint32(1)
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			seed = (seed*1103515245 + 12345) & 0x7fffffff
+			noise := float64(seed % 6)
+			img.Set(x, y, color.RGBA{
+				R: uint8(float64(x)/float64(w)*200 + noise),
+				G: uint8(float64(y)/float64(h)*200 + noise),
+				B: uint8(128 + math.Sin(float64(x)/30)*60 + noise),
+				A: 255,
+			})
 		}
 	}
 	return img
@@ -83,6 +112,8 @@ func imgSample(t *testing.T, name string) ([]byte, string) {
 		return pngEncode(gradientImg(2501, 1337)), "image/png"
 	case "photo_noise":
 		return jpegEncode(noiseImg(3000, 2000), 92), "image/jpeg"
+	case "photo_like":
+		return jpegEncode(photoLikeImg(2400, 1600), 85), "image/jpeg"
 	case "oriented_small":
 		return injectExifOrientation(jpegEncode(gradientImg(40, 20), 95), 6), "image/jpeg"
 	case "oriented_big":

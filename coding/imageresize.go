@@ -148,8 +148,9 @@ func resizeImage(inputBytes []byte, mimeType string, opts *ai.ModelImageResizeOp
 		th = p.maxHeight
 	}
 
-	// Shrink-and-encode loop: at each size try PNG then the JPEG quality steps,
-	// taking the first candidate under the byte limit; otherwise scale down by
+	// Shrink-and-encode loop: at each size try the smaller of PNG and the first
+	// JPEG quality, then the other, then the lower JPEG qualities, taking the
+	// first candidate under the byte limit; otherwise scale down by
 	// 0.75 (floored) until 1×1 (mirrors pi's while loop exactly).
 	cw, ch := tw, th
 	for {
@@ -456,14 +457,44 @@ func toFixed2(x float64) string {
 }
 
 func encodeUnderLimit(img image.Image, p resizeProfile) ([]byte, string, bool) {
-	var buf bytes.Buffer
-	if err := png.Encode(&buf, img); err == nil && base64Size(buf.Len()) < p.maxBytes {
-		return append([]byte(nil), buf.Bytes()...), "image/png", true
+	type candidate struct {
+		data []byte
+		mime string
 	}
-	for _, q := range p.jpegQualities {
-		buf.Reset()
-		if err := jpeg.Encode(&buf, img, &jpeg.Options{Quality: q}); err == nil && base64Size(buf.Len()) < p.maxBytes {
-			return append([]byte(nil), buf.Bytes()...), "image/jpeg", true
+	encodeJPEG := func(q int) (candidate, bool) {
+		var buf bytes.Buffer
+		if err := jpeg.Encode(&buf, img, &jpeg.Options{Quality: q}); err != nil {
+			return candidate{}, false
+		}
+		return candidate{buf.Bytes(), "image/jpeg"}, true
+	}
+	var candidates []candidate
+	var buf bytes.Buffer
+	if err := png.Encode(&buf, img); err == nil {
+		candidates = append(candidates, candidate{buf.Bytes(), "image/png"})
+	}
+	// pi prefers the smaller of PNG and the JPEG at the first quality step
+	// by base64 length (PNG on a tie), and only then the lower JPEG qualities
+	// (upstream e7a0df27c).
+	lower := p.jpegQualities
+	if len(lower) > 0 {
+		lower = lower[1:]
+		if jpg, ok := encodeJPEG(p.jpegQualities[0]); ok {
+			if len(candidates) == 1 && base64Size(len(jpg.data)) < base64Size(len(candidates[0].data)) {
+				candidates = []candidate{jpg, candidates[0]}
+			} else {
+				candidates = append(candidates, jpg)
+			}
+		}
+	}
+	for _, c := range candidates {
+		if base64Size(len(c.data)) < p.maxBytes {
+			return c.data, c.mime, true
+		}
+	}
+	for _, q := range lower {
+		if c, ok := encodeJPEG(q); ok && base64Size(len(c.data)) < p.maxBytes {
+			return c.data, c.mime, true
 		}
 	}
 	return nil, "", false
