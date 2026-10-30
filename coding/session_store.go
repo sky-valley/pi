@@ -868,26 +868,27 @@ func readSessionHeaderForDiscovery(path string) *sessionFileHeader {
 // its matches are filtered to cwd — the prologue pi's SessionManager.list and
 // findById share. sessionDir "" means the default per-cwd directory. An
 // explicit directory that is not the default holds sessions from many working
-// directories, so matches are filtered to those whose header cwd is cwd.
+// directories, so matches are filtered to those whose header cwd is cwd. The
+// directory is the default when pathsEqual says so: on Windows, in any casing.
 func sessionListingDir(cwd, sessionDir string) (dir string, filterCwd bool, resolvedCwd string) {
 	resolvedCwd, _ = filepath.Abs(cwd)
 	defaultDir := DefaultSessionDir(cwd)
 	if sessionDir == "" {
 		return defaultDir, false, resolvedCwd
 	}
-	return sessionDir, sessionDir != defaultDir, resolvedCwd
+	return sessionDir, !pathsEqual(sessionDir, defaultDir), resolvedCwd
 }
 
 // sessionCwdMatches reports whether a header cwd names resolvedCwd (pi
-// sessionCwdMatches). Paths are compared textually after resolution, so a
-// working directory reached through a symlink matches only the spelling it
-// was recorded under.
+// sessionCwdMatches). Paths are compared after resolution, case-insensitively
+// on Windows (pathsEqual), but never through symlinks, so a working directory
+// reached through a symlink matches only the spelling it was recorded under.
 func sessionCwdMatches(cwd, resolvedCwd string) bool {
 	if cwd == "" {
 		return false
 	}
 	abs, err := filepath.Abs(cwd)
-	return err == nil && abs == resolvedCwd
+	return err == nil && pathsEqual(abs, resolvedCwd)
 }
 
 // FindSessionByID returns the path of the stored session whose header id is
