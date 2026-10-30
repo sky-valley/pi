@@ -3,18 +3,18 @@
 // in package ai.
 //
 //   node --experimental-strip-types capture.mts <extraction> <out.json> <sha>
-//   e.g. ... capture.mts <dir> classify-6e491cfa9.json 6e491cfa9
+//   e.g. ... capture.mts <dir> classify-c719d5b08.json c719d5b08
 //
 // <extraction> holds packages/ai at <sha> (`git archive <sha> packages/ai` from
 // the upstream clone) and a node_modules resolving pi-ai's dependencies (the npm
 // build's). It is a src capture, checked against the build when a release
-// ships the source it read (the BUILD wins): classify-6e491cfa9.json was
-// captured from src at 6e491cfa9 with the 1.4.0 build's node_modules, and
-// v1.4.0 (4a080252f) ships that retry.ts unchanged: its dist/utils/retry.js
-// builds both patterns with these sources, both "i", and its
-// isRetryableAssistantError answers every row the same. Control: the previous
-// script at the old pin 82432219a, with the same node_modules, reproduced
-// classify-cedefc532.json byte for byte but its sha.
+// ships the source it read (the BUILD wins): classify-c719d5b08.json was
+// captured from src at c719d5b08 with the 1.4.0 build's node_modules. The 1.4.0
+// build predates c719d5b08's Zhipu 1308 alternative, so re-verify it against
+// the first build that ships it. Control: this script at c719d5b08^1, with the
+// same node_modules, answers the 19 rows the 1308 alternative decides
+// differently (limitPattern false) and every older row as
+// classify-6e491cfa9.json did.
 //
 // Every row records three answers: isRetryableAssistantError on the message
 // retry.test.ts would build (fauxAssistantMessage), and RegExp.prototype.test of
@@ -81,6 +81,11 @@ const chatGPTWorkspaceLimitMessage =
 	'OpenAI API error (429): {"code":"subscription_sharing_workplace_individual_usage_limit_exceeded","message":"Usage limit reached."}';
 const azurePeakLoadError =
 	"The system is currently experiencing high demand and cannot process your request. Your request exceeds the maximum usage size allowed during peak load. For improved capacity reliability, consider switching to Provisioned Throughput.";
+
+// Zhipu/Z.ai's plan usage limit (c719d5b08, #11537), sent as HTTP 429.
+const ZHIPU_1308 = '"code"\\s*:\\s*"?1308(?![0-9])';
+const zhipuUsageLimitMessage =
+	'429 {"error":{"code":"1308","message":"Usage limit reached for 5 hour. Your limit will reset at 2026-10-29 18:00:00"}}';
 
 // The status-code alternative (6e491cfa9): a code must not sit inside a longer word or number.
 const STATUS = "(?<![a-z0-9])(?:429|500|502|503|504|520|524)(?![a-z0-9])";
@@ -225,6 +230,32 @@ const rows: Row[] = [
 		"subscription_sharing_workplace_individual_usage_limit_exceeded",
 		"SUBSCRIPTION_SHARING_WORKPLACE_INDIVIDUAL_USAGE_LIMIT_EXCEEDED (429)",
 	),
+	error(ZHIPU_1308, zhipuUsageLimitMessage),
+
+	// Zhipu's code 1308 (c719d5b08): optional quotes, JavaScript \s around the
+	// colon, and a code that must not run on into another ASCII digit.
+	error("1308: unquoted", '429 {"code":1308,"message":"limit"}'),
+	error("1308: spaces around the colon", '"code" : "1308" 429'),
+	error("1308: tab and newline", '"code"\t:\n1308 429'),
+	error("1308: upper-case key", '"CODE":1308 429'),
+	error("1308: at the end of the text", '429 "code":1308'),
+	error("1308: letter after is not [0-9]", '"code":1308a 429'),
+	error("1308: full-width digit after is not [0-9]", '"code":1308\uFF10 429'),
+	error("1308: \\s takes \\v", '"code"\v:1308 429'),
+	error("1308: \\s takes U+00A0", '"code"\u00a0:1308 429'),
+	error("1308: \\s takes U+1680", '"code":\u16801308 429'),
+	error("1308: \\s takes U+2000", '"code"\u2000:1308 429'),
+	error("1308: \\s takes U+200A", '"code":\u200a1308 429'),
+	error("1308: \\s takes U+2028", '"code"\u2028:1308 429'),
+	error("1308: \\s takes U+2029", '"code":\u20291308 429'),
+	error("1308: \\s takes U+202F", '"code"\u202f:1308 429'),
+	error("1308: \\s takes U+205F", '"code":\u205f1308 429'),
+	error("1308: \\s takes U+3000", '"code"\u3000:"1308" 429'),
+	error("1308: \\s takes U+FEFF", '"code"\ufeff:1308 429'),
+	error("1308: U+200B is not \\s", '"code"\u200b:1308 429'),
+	error("1308: U+180E is not \\s", '"code":\u180e1308 429'),
+	error("1308: U+0085 is not \\s", '"code"\u0085:1308 429'),
+	error("1308: an astral character is not \\s", '"code":\u{1F600}1308 429'),
 
 	// Limit near-misses: the retryable status stands.
 	error("near-miss limit", "GoUsageLimit 429"),
@@ -236,6 +267,13 @@ const rows: Row[] = [
 	error("near-miss limit", "bill 502"),
 	error("near-miss limit", "subscription sharing usage limit exceeded 429"),
 	error("near-miss limit", "subscription_sharing_workplace_usage_limit_exceeded 429"),
+	error("near-miss limit", '"code":13080 429'),
+	error("near-miss limit", '"code":11308 429'),
+	error("near-miss limit", '"code":""1308 429'),
+	error("near-miss limit", 'code:1308 429'),
+	error("near-miss limit", '"error_code" 1308 429'),
+	error("near-miss limit", '"code"=1308 429'),
+	error("near-miss limit", '"code":-1308 429'),
 
 	// Retryable near-misses.
 	error("near-miss", "model refused to answer"),

@@ -31,9 +31,13 @@ import (
 //     between spaces, and a run of non-whitespace code units that holds one
 //     surrogate of a pair holds its partner, so it is a run of code points
 //     outside JavaScript's whitespace.
+//   - \s matches one UTF-16 code unit of JavaScript whitespace, where RE2's
+//     matches only the ASCII \t\n\f\r and space. Every JavaScript whitespace
+//     code point is in the BMP, so the code units are those code points.
 //
 // RE2 also has no lookaround, which the status-code alternative uses:
-// (?<![a-z0-9]) and (?![a-z0-9]) around the codes. A lookaround here only
+// (?<![a-z0-9]) and (?![a-z0-9]) around the codes, and Zhipu's 1308 after its
+// code (?![0-9]). A lookaround here only
 // ever tests one neighbouring character against an ASCII class, and the
 // pattern is only ever tested for a match, never asked where it matched, so
 // each is rewritten as that neighbour or the edge of the text:
@@ -56,6 +60,10 @@ const jsDot = `[^\n\r\x{2028}\x{2029}\x{10000}-\x{10FFFF}]`
 // LineTerminator code points.
 const jsNonSpace = `[^\t\n\v\f\r \x{A0}\x{1680}\x{2000}-\x{200A}\x{2028}\x{2029}\x{202F}\x{205F}\x{3000}\x{FEFF}]`
 
+// jsSpace is \s of a JavaScript RegExp: the WhiteSpace and LineTerminator
+// code points, all in the BMP, where RE2's \s is the ASCII \t\n\f\r and space.
+const jsSpace = `[\t\n\v\f\r \x{A0}\x{1680}\x{2000}-\x{200A}\x{2028}\x{2029}\x{202F}\x{205F}\x{3000}\x{FEFF}]`
+
 func buildProviderErrorPattern(patterns []string) providerErrorPattern {
 	alternatives := make([]string, len(patterns))
 	for i, pattern := range patterns {
@@ -70,7 +78,7 @@ func buildProviderErrorPattern(patterns []string) providerErrorPattern {
 
 // translateProviderErrorPattern rewrites one alternative into RE2 syntax with
 // the JavaScript semantics providerErrorPattern describes. It knows literals,
-// ".", "?", "+", non-capturing groups (with "|" inside them), \S+, and a
+// ".", "?", "+", non-capturing groups (with "|" inside them), \S+, \s*, and a
 // lookbehind or lookahead of one ASCII class, and panics on anything else:
 // lowercasing would corrupt other escapes and classes, and RE2 and JavaScript
 // disagree on several of them.
@@ -86,11 +94,16 @@ func translateProviderErrorPattern(pattern string) string {
 		case '.':
 			b.WriteString(jsDot)
 		case '\\':
-			if !strings.HasPrefix(pattern[i:], `\S+`) {
-				unsupported("an escape other than \\S+")
+			switch rest := pattern[i:]; {
+			case strings.HasPrefix(rest, `\S+`):
+				b.WriteString(jsNonSpace)
+				i++ // the "+" follows as a quantifier
+			case strings.HasPrefix(rest, `\s*`):
+				b.WriteString(jsSpace + "*")
+				i += 2 // past the "s*"
+			default:
+				unsupported("an escape other than \\S+ or \\s*")
 			}
-			b.WriteString(jsNonSpace)
-			i++ // the "+" follows as a quantifier
 		case '(':
 			switch rest := pattern[i:]; {
 			case strings.HasPrefix(rest, "(?:"):
@@ -218,6 +231,10 @@ var nonRetryableProviderLimitErrorPattern = buildProviderErrorPattern([]string{
 	// Sign in with ChatGPT on a ChatGPT Business plan: a usage limit set by the
 	// workspace admin. Only the admin can raise it.
 	"subscription_sharing_workplace_individual_usage_limit_exceeded",
+
+	// Zhipu/Z.ai (open.bigmodel.cn) error code 1308: the plan's usage limit is
+	// reached, sent as HTTP 429. It resets after hours, not seconds (#11537).
+	`"code"\s*:\s*"?1308(?![0-9])`,
 })
 
 // retryableProviderErrorPattern matches provider/transport error text that
