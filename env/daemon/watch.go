@@ -528,9 +528,20 @@ func (w *fileWatcher) flush() bool {
 			paths = append(paths, path)
 		}
 		slices.SortFunc(paths, compareUTF16)
-		w.send(object{"kind": "change", "paths": paths})
+		w.send(changeEvent(paths))
 	}
 	return true
+}
+
+// changeEvent is a change event listing paths, or an overflow one when the
+// list would not fit in a frame: a frame that is too large would end the
+// connection's output.
+func changeEvent(paths []string) object {
+	event := object{"kind": "change", "paths": paths}
+	if len(marshal(event)) > frame.MaxPayload {
+		return object{"kind": "change", "overflow": true}
+	}
+	return event
 }
 
 func parseTargets(json any) ([]watchTarget, *failure) {
