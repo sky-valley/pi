@@ -1,7 +1,6 @@
 package daemon
 
 import (
-	"reflect"
 	"strings"
 	"testing"
 
@@ -24,9 +23,9 @@ func TestChangeEventOverflowsWhenPathsDoNotFitInAFrame(t *testing.T) {
 	for i := range paths {
 		paths[i] = path
 	}
-	got := changeEvent(paths)
-	if want := (object{"kind": "change", "overflow": true}); !reflect.DeepEqual(got, want) {
-		t.Fatalf("changeEvent of %d paths = %.200s, want %v", count, marshal(got), want)
+	got := marshal(changeEvent(paths))
+	if want := `{"kind":"change","overflow":true}`; string(got) != want {
+		t.Fatalf("changeEvent of %d paths = %.200s, want %s", count, got, want)
 	}
 }
 
