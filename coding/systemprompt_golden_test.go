@@ -13,10 +13,10 @@ import (
 
 // The system prompt goldens are pi's: testdata/systemprompt/capture.mts feeds
 // the Go port's inputs (ToolSnippets, the default tools' PromptGuidelines, and
-// fixture paths) to the published build's buildSystemPrompt,
-// buildSystemPromptSections, buildSystemPromptState and
-// diffSystemPromptSections (a src capture at upstream 705d047cb; see capture.mts) under node and records what
-// they return.
+// fixture paths) to pi's buildSystemPrompt, buildSystemPromptSections,
+// buildSystemPromptState and diffSystemPromptSections under node and records
+// what they return. The current golden is a src capture at upstream 705d047cb;
+// capture.mts says how it was taken.
 
 const systemPromptCaptureFile = "testdata/systemprompt/systemprompt-705d047cb.json"
 

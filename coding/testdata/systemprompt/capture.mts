@@ -2,12 +2,14 @@
 // coding/systemprompt_golden_test.go.
 //
 //   node capture.mts <pi-coding-agent package dir> <out.json> <version>
-//   e.g. ... capture.mts <npm>/node_modules/@earendil-works/pi-coding-agent systemprompt-1.3.0.json 1.3.0
+//   e.g. ... capture.mts <npm>/node_modules/@earendil-works/pi-coding-agent systemprompt-1.4.0.json 1.4.0
 //
-// The package dir is the published build (its dist/core/system-prompt.js and
-// the @earendil-works/pi-ai it resolves). 1.3.0 is the first build that ships
-// the codemode docs line (upstream 6f1072cc0) and hiddenTools (c30840c2e);
-// the earlier goldens were src captures at e4c75a732/4259686d9, from before
+// The package dir is normally the published build (its
+// dist/core/system-prompt.js and the @earendil-works/pi-ai it resolves), or a
+// src shim exposing the same path (below). History: systemprompt-1.3.0.json
+// (since replaced) came from the 1.3.0 build, the first that shipped the
+// codemode docs line (upstream 6f1072cc0) and hiddenTools (c30840c2e); the
+// goldens before it were src captures at e4c75a732/4259686d9, from before
 // any build shipped the sectioned prompt.
 //
 // systemprompt-705d047cb.json is a src capture: upstream 705d047cb tightened
