@@ -70,7 +70,7 @@ func TestSessionUsesCodingSystemPrompt(t *testing.T) {
 	if _, err := sess.RunPrint(context.Background(), &bytes.Buffer{}, "hi"); err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(capturedSystem, "expert coding assistant operating inside pi") {
+	if !strings.Contains(capturedSystem, "You are a coding assistant running inside pi") {
 		t.Fatalf("system prompt not applied: %q", capturedSystem)
 	}
 }

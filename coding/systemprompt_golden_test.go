@@ -15,10 +15,10 @@ import (
 // the Go port's inputs (ToolSnippets, the default tools' PromptGuidelines, and
 // fixture paths) to the published build's buildSystemPrompt,
 // buildSystemPromptSections, buildSystemPromptState and
-// diffSystemPromptSections (pi-coding-agent 1.3.0) under node and records what
+// diffSystemPromptSections (a src capture at upstream 705d047cb; see capture.mts) under node and records what
 // they return.
 
-const systemPromptCaptureFile = "testdata/systemprompt/systemprompt-1.3.0.json"
+const systemPromptCaptureFile = "testdata/systemprompt/systemprompt-705d047cb.json"
 
 // sectionPairs is a JS object written as [name, value] pairs, so its key order
 // survives JSON.
@@ -344,7 +344,7 @@ func TestBuildSystemPromptUpstreamCases(t *testing.T) {
 	t.Run("keeps the default and custom prompt prefixes exact", func(t *testing.T) {
 		defaultPrompt := mustBuildSystemPrompt(t, BuildSystemPromptOptions{Cwd: "/tmp", SelectedTools: []string{}})
 		customPrompt := mustBuildSystemPrompt(t, BuildSystemPromptOptions{CustomPrompt: "You are Exact.", Cwd: "/tmp", SelectedTools: []string{}})
-		if !strings.HasPrefix(defaultPrompt, "You are an expert coding assistant operating inside pi") {
+		if !strings.HasPrefix(defaultPrompt, "You are a coding assistant running inside pi, a coding agent harness.") {
 			t.Fatalf("default prefix:\n%s", defaultPrompt)
 		}
 		if !strings.HasPrefix(customPrompt, "You are Exact.\n\n<cwd>") {
@@ -407,6 +407,7 @@ func TestBuildSystemPromptUpstreamCases(t *testing.T) {
 		for _, want := range []string{
 			"- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory",
 			"environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md)",
+			"Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.",
 		} {
 			if !strings.Contains(prompt, want) {
 				t.Fatalf("missing %q:\n%s", want, prompt)
@@ -461,7 +462,7 @@ func TestBuildSystemPromptUpstreamCases(t *testing.T) {
 				Skills:        []Skill{skill},
 				Cwd:           cwd,
 			})
-			for _, want := range []string{"<skills>", "<available_skills>", "<name>test-skill</name>", "Use bash to load a skill's file"} {
+			for _, want := range []string{"<skills>", "<available_skills>", "<name>test-skill</name>", "Use bash to load a skill's file", "Resolve relative paths against the skill's directory (parent of SKILL.md). Use absolute paths in tool calls."} {
 				if !strings.Contains(prompt, want) {
 					t.Fatalf("missing %q:\n%s", want, prompt)
 				}

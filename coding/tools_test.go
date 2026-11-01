@@ -258,7 +258,7 @@ func TestSystemPromptShape(t *testing.T) {
 		ToolSnippets:  ToolSnippets,
 		Cwd:           "/work/project",
 	})
-	if !strings.Contains(p, "expert coding assistant operating inside pi") {
+	if !strings.Contains(p, "You are a coding assistant running inside pi") {
 		t.Fatal("missing preamble")
 	}
 	if !strings.Contains(p, "- read: Read file contents") {

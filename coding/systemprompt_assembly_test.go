@@ -29,7 +29,7 @@ func TestNewSessionCollectsPromptGuidelines(t *testing.T) {
 	wantOrder := []string{
 		"- Use bash for file operations like ls, rg, find",
 		"- Use read to examine files instead of cat or sed.",
-		"- Use edit for precise changes (edits[].oldText must match exactly)",
+		"- Use edit for targeted changes. Batch changes to one file in a single call.",
 		"- Use write only for new files or complete rewrites.",
 		"- Be concise in your responses",
 	}
@@ -130,7 +130,7 @@ func TestNewSessionCustomPromptStillAssembles(t *testing.T) {
 		last = idx
 	}
 	// Custom prompts get neither the docs, tools nor rules sections.
-	for _, banned := range []string{"Pi documentation", "Guidelines:", "<rules>", "<tools>", "<docs>", "expert coding assistant"} {
+	for _, banned := range []string{"Pi documentation", "Guidelines:", "<rules>", "<tools>", "<docs>", "coding assistant running inside pi"} {
 		if strings.Contains(prompt, banned) {
 			t.Fatalf("custom prompt must not include %q:\n%s", banned, prompt)
 		}

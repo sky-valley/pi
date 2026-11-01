@@ -61,7 +61,7 @@ func TestCompactionKeepsPromptAndToolsOnTheNextRequest(t *testing.T) {
 		t.Fatal(err)
 	}
 	declared, ok := ai.GetInitialSystemMessage(requests[0].Messages)
-	if !ok || !strings.Contains(ai.GetSystemMessageText(declared), "expert coding assistant") {
+	if !ok || !strings.Contains(ai.GetSystemMessageText(declared), "coding assistant running inside pi") {
 		t.Fatalf("first request carries no coding prompt: %+v", requests[0].Messages)
 	}
 	declaredTools := toolNames(ai.GetCurrentTools(requests[0].Messages))
@@ -81,7 +81,7 @@ func TestCompactionKeepsPromptAndToolsOnTheNextRequest(t *testing.T) {
 		t.Fatalf("summarization request lost its own prompt: %+v", summarization.Messages)
 	}
 	for _, m := range ai.WithoutInitialSystemMessage(summarization.Messages) {
-		if strings.Contains(userText(m), "expert coding assistant") || m.MessageRole() == ai.RoleSystem {
+		if strings.Contains(userText(m), "coding assistant running inside pi") || m.MessageRole() == ai.RoleSystem {
 			t.Fatalf("summarization request carries the coding prompt: %q", userText(m))
 		}
 	}

@@ -1,0 +1,2138 @@
+{
+	"version": "705d047cb",
+	"objectPrototypeNames": [
+		"constructor",
+		"__defineGetter__",
+		"__defineSetter__",
+		"hasOwnProperty",
+		"__lookupGetter__",
+		"__lookupSetter__",
+		"isPrototypeOf",
+		"propertyIsEnumerable",
+		"toString",
+		"valueOf",
+		"__proto__",
+		"toLocaleString"
+	],
+	"builds": [
+		{
+			"name": "default-tools",
+			"input": {
+				"selectedTools": [
+					"read",
+					"bash",
+					"edit",
+					"write"
+				],
+				"toolSnippets": {
+					"read": "Read file contents",
+					"bash": "Execute bash commands (ls, grep, find, etc.)",
+					"powershell": "Execute PowerShell commands",
+					"edit": "Make precise file edits with exact text replacement, including multiple disjoint edits in one call",
+					"write": "Create or overwrite files",
+					"grep": "Search file contents for patterns (respects .gitignore)",
+					"find": "Find files by glob pattern (respects .gitignore)",
+					"ls": "List directory contents",
+					"web_fetch": "Fetch a web URL and return readable text"
+				},
+				"toolGuidelines": {
+					"read": [
+						"Use read to examine files instead of cat or sed."
+					],
+					"bash": [
+						"You can inspect PI_* environment variables for current model and session details."
+					],
+					"edit": [
+						"Use edit for targeted changes. Batch changes to one file in a single call.",
+						"Each edits[].oldText must exactly and uniquely match the original file. Keep matches short and non-overlapping; merge nearby changes without including large unchanged regions."
+					],
+					"write": [
+						"Use write only for new files or complete rewrites."
+					]
+				},
+				"cwd": "/proj"
+			},
+			"prompt": "You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code.\n\n<tools>\n- read: Read file contents\n- bash: Execute bash commands (ls, grep, find, etc.)\n- edit: Make precise file edits with exact text replacement, including multiple disjoint edits in one call\n- write: Create or overwrite files\n\nAdditional tools may be available.\n</tools>\n\n<rules>\n- Use bash for file operations like ls, rg, find\n- Use read to examine files instead of cat or sed.\n- You can inspect PI_* environment variables for current model and session details.\n- Use edit for targeted changes. Batch changes to one file in a single call.\n- Each edits[].oldText must exactly and uniquely match the original file. Keep matches short and non-overlapping; merge nearby changes without including large unchanged regions.\n- Use write only for new files or complete rewrites.\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>\n\n<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>\n\n<cwd>\n/proj\n</cwd>",
+			"sections": [
+				[
+					"preamble",
+					"You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code."
+				],
+				[
+					"tools",
+					"<tools>\n- read: Read file contents\n- bash: Execute bash commands (ls, grep, find, etc.)\n- edit: Make precise file edits with exact text replacement, including multiple disjoint edits in one call\n- write: Create or overwrite files\n\nAdditional tools may be available.\n</tools>"
+				],
+				[
+					"rules",
+					"<rules>\n- Use bash for file operations like ls, rg, find\n- Use read to examine files instead of cat or sed.\n- You can inspect PI_* environment variables for current model and session details.\n- Use edit for targeted changes. Batch changes to one file in a single call.\n- Each edits[].oldText must exactly and uniquely match the original file. Keep matches short and non-overlapping; merge nearby changes without including large unchanged regions.\n- Use write only for new files or complete rewrites.\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>"
+				],
+				[
+					"docs",
+					"<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>"
+				],
+				[
+					"cwd",
+					"<cwd>\n/proj\n</cwd>"
+				]
+			],
+			"state": {
+				"content": "",
+				"sections": [
+					[
+						"preamble",
+						"You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code."
+					],
+					[
+						"tools",
+						"<tools>\n- read: Read file contents\n- bash: Execute bash commands (ls, grep, find, etc.)\n- edit: Make precise file edits with exact text replacement, including multiple disjoint edits in one call\n- write: Create or overwrite files\n\nAdditional tools may be available.\n</tools>"
+					],
+					[
+						"rules",
+						"<rules>\n- Use bash for file operations like ls, rg, find\n- Use read to examine files instead of cat or sed.\n- You can inspect PI_* environment variables for current model and session details.\n- Use edit for targeted changes. Batch changes to one file in a single call.\n- Each edits[].oldText must exactly and uniquely match the original file. Keep matches short and non-overlapping; merge nearby changes without including large unchanged regions.\n- Use write only for new files or complete rewrites.\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>"
+					],
+					[
+						"docs",
+						"<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>"
+					],
+					[
+						"cwd",
+						"<cwd>\n/proj\n</cwd>"
+					]
+				]
+			}
+		},
+		{
+			"name": "custom-prompt-assembly",
+			"input": {
+				"customPrompt": "You are a custom agent.",
+				"appendSystemPrompt": "Appended instructions.",
+				"selectedTools": [
+					"read",
+					"bash"
+				],
+				"toolSnippets": {
+					"read": "Read file contents",
+					"bash": "Execute bash commands (ls, grep, find, etc.)",
+					"powershell": "Execute PowerShell commands",
+					"edit": "Make precise file edits with exact text replacement, including multiple disjoint edits in one call",
+					"write": "Create or overwrite files",
+					"grep": "Search file contents for patterns (respects .gitignore)",
+					"find": "Find files by glob pattern (respects .gitignore)",
+					"ls": "List directory contents",
+					"web_fetch": "Fetch a web URL and return readable text"
+				},
+				"promptGuidelines": [
+					"Use read to examine files instead of cat or sed."
+				],
+				"cwd": "/proj",
+				"contextFiles": [
+					{
+						"path": "/proj/AGENTS.md",
+						"content": "follow the rules"
+					}
+				],
+				"skills": [
+					{
+						"name": "demo",
+						"description": "d",
+						"filePath": "/proj/.pi/skills/demo/SKILL.md",
+						"disableModelInvocation": false
+					}
+				]
+			},
+			"prompt": "You are a custom agent.\n\n<addendum>\nAppended instructions.\n</addendum>\n\n<project_context>\nProject-specific instructions and guidelines:\n\n<project_instructions path=\"/proj/AGENTS.md\">\nfollow the rules\n</project_instructions>\n</project_context>\n\n<skills>\nThe following skills provide specialized instructions for specific tasks.\nUse the read tool to load a skill's file when the task matches its description.\nResolve relative paths against the skill's directory (parent of SKILL.md). Use absolute paths in tool calls.\n\n<available_skills>\n  <skill>\n    <name>demo</name>\n    <description>d</description>\n    <location>/proj/.pi/skills/demo/SKILL.md</location>\n  </skill>\n</available_skills>\n</skills>\n\n<cwd>\n/proj\n</cwd>",
+			"sections": [
+				[
+					"preamble",
+					"You are a custom agent."
+				],
+				[
+					"addendum",
+					"<addendum>\nAppended instructions.\n</addendum>"
+				],
+				[
+					"project_context",
+					"<project_context>\nProject-specific instructions and guidelines:\n\n<project_instructions path=\"/proj/AGENTS.md\">\nfollow the rules\n</project_instructions>\n</project_context>"
+				],
+				[
+					"skills",
+					"<skills>\nThe following skills provide specialized instructions for specific tasks.\nUse the read tool to load a skill's file when the task matches its description.\nResolve relative paths against the skill's directory (parent of SKILL.md). Use absolute paths in tool calls.\n\n<available_skills>\n  <skill>\n    <name>demo</name>\n    <description>d</description>\n    <location>/proj/.pi/skills/demo/SKILL.md</location>\n  </skill>\n</available_skills>\n</skills>"
+				],
+				[
+					"cwd",
+					"<cwd>\n/proj\n</cwd>"
+				]
+			],
+			"state": {
+				"content": "",
+				"sections": [
+					[
+						"preamble",
+						"You are a custom agent."
+					],
+					[
+						"addendum",
+						"<addendum>\nAppended instructions.\n</addendum>"
+					],
+					[
+						"project_context",
+						"<project_context>\nProject-specific instructions and guidelines:\n\n<project_instructions path=\"/proj/AGENTS.md\">\nfollow the rules\n</project_instructions>\n</project_context>"
+					],
+					[
+						"skills",
+						"<skills>\nThe following skills provide specialized instructions for specific tasks.\nUse the read tool to load a skill's file when the task matches its description.\nResolve relative paths against the skill's directory (parent of SKILL.md). Use absolute paths in tool calls.\n\n<available_skills>\n  <skill>\n    <name>demo</name>\n    <description>d</description>\n    <location>/proj/.pi/skills/demo/SKILL.md</location>\n  </skill>\n</available_skills>\n</skills>"
+					],
+					[
+						"cwd",
+						"<cwd>\n/proj\n</cwd>"
+					]
+				]
+			}
+		},
+		{
+			"name": "bash-only-custom-prompt",
+			"input": {
+				"customPrompt": "You are a custom agent.",
+				"appendSystemPrompt": "Appended instructions.",
+				"selectedTools": [
+					"bash"
+				],
+				"toolSnippets": {
+					"read": "Read file contents",
+					"bash": "Execute bash commands (ls, grep, find, etc.)",
+					"powershell": "Execute PowerShell commands",
+					"edit": "Make precise file edits with exact text replacement, including multiple disjoint edits in one call",
+					"write": "Create or overwrite files",
+					"grep": "Search file contents for patterns (respects .gitignore)",
+					"find": "Find files by glob pattern (respects .gitignore)",
+					"ls": "List directory contents",
+					"web_fetch": "Fetch a web URL and return readable text"
+				},
+				"cwd": "/proj",
+				"contextFiles": [
+					{
+						"path": "/proj/AGENTS.md",
+						"content": "follow the rules"
+					}
+				],
+				"skills": [
+					{
+						"name": "demo",
+						"description": "d",
+						"filePath": "/proj/.pi/skills/demo/SKILL.md",
+						"disableModelInvocation": false
+					}
+				]
+			},
+			"prompt": "You are a custom agent.\n\n<addendum>\nAppended instructions.\n</addendum>\n\n<project_context>\nProject-specific instructions and guidelines:\n\n<project_instructions path=\"/proj/AGENTS.md\">\nfollow the rules\n</project_instructions>\n</project_context>\n\n<skills>\nThe following skills provide specialized instructions for specific tasks.\nUse bash to load a skill's file when the task matches its description.\nResolve relative paths against the skill's directory (parent of SKILL.md). Use absolute paths in tool calls.\n\n<available_skills>\n  <skill>\n    <name>demo</name>\n    <description>d</description>\n    <location>/proj/.pi/skills/demo/SKILL.md</location>\n  </skill>\n</available_skills>\n</skills>\n\n<cwd>\n/proj\n</cwd>",
+			"sections": [
+				[
+					"preamble",
+					"You are a custom agent."
+				],
+				[
+					"addendum",
+					"<addendum>\nAppended instructions.\n</addendum>"
+				],
+				[
+					"project_context",
+					"<project_context>\nProject-specific instructions and guidelines:\n\n<project_instructions path=\"/proj/AGENTS.md\">\nfollow the rules\n</project_instructions>\n</project_context>"
+				],
+				[
+					"skills",
+					"<skills>\nThe following skills provide specialized instructions for specific tasks.\nUse bash to load a skill's file when the task matches its description.\nResolve relative paths against the skill's directory (parent of SKILL.md). Use absolute paths in tool calls.\n\n<available_skills>\n  <skill>\n    <name>demo</name>\n    <description>d</description>\n    <location>/proj/.pi/skills/demo/SKILL.md</location>\n  </skill>\n</available_skills>\n</skills>"
+				],
+				[
+					"cwd",
+					"<cwd>\n/proj\n</cwd>"
+				]
+			],
+			"state": {
+				"content": "",
+				"sections": [
+					[
+						"preamble",
+						"You are a custom agent."
+					],
+					[
+						"addendum",
+						"<addendum>\nAppended instructions.\n</addendum>"
+					],
+					[
+						"project_context",
+						"<project_context>\nProject-specific instructions and guidelines:\n\n<project_instructions path=\"/proj/AGENTS.md\">\nfollow the rules\n</project_instructions>\n</project_context>"
+					],
+					[
+						"skills",
+						"<skills>\nThe following skills provide specialized instructions for specific tasks.\nUse bash to load a skill's file when the task matches its description.\nResolve relative paths against the skill's directory (parent of SKILL.md). Use absolute paths in tool calls.\n\n<available_skills>\n  <skill>\n    <name>demo</name>\n    <description>d</description>\n    <location>/proj/.pi/skills/demo/SKILL.md</location>\n  </skill>\n</available_skills>\n</skills>"
+					],
+					[
+						"cwd",
+						"<cwd>\n/proj\n</cwd>"
+					]
+				]
+			}
+		},
+		{
+			"name": "bash-only-default-prompt",
+			"input": {
+				"selectedTools": [
+					"bash"
+				],
+				"toolSnippets": {
+					"read": "Read file contents",
+					"bash": "Execute bash commands (ls, grep, find, etc.)",
+					"powershell": "Execute PowerShell commands",
+					"edit": "Make precise file edits with exact text replacement, including multiple disjoint edits in one call",
+					"write": "Create or overwrite files",
+					"grep": "Search file contents for patterns (respects .gitignore)",
+					"find": "Find files by glob pattern (respects .gitignore)",
+					"ls": "List directory contents",
+					"web_fetch": "Fetch a web URL and return readable text"
+				},
+				"appendSystemPrompt": "Appended instructions.",
+				"cwd": "/proj",
+				"contextFiles": [
+					{
+						"path": "/proj/AGENTS.md",
+						"content": "follow the rules"
+					}
+				],
+				"skills": [
+					{
+						"name": "demo",
+						"description": "d",
+						"filePath": "/proj/.pi/skills/demo/SKILL.md",
+						"disableModelInvocation": false
+					}
+				]
+			},
+			"prompt": "You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code.\n\n<tools>\n- bash: Execute bash commands (ls, grep, find, etc.)\n\nAdditional tools may be available.\n</tools>\n\n<rules>\n- Use bash for file operations like ls, rg, find\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>\n\n<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>\n\n<addendum>\nAppended instructions.\n</addendum>\n\n<project_context>\nProject-specific instructions and guidelines:\n\n<project_instructions path=\"/proj/AGENTS.md\">\nfollow the rules\n</project_instructions>\n</project_context>\n\n<skills>\nThe following skills provide specialized instructions for specific tasks.\nUse bash to load a skill's file when the task matches its description.\nResolve relative paths against the skill's directory (parent of SKILL.md). Use absolute paths in tool calls.\n\n<available_skills>\n  <skill>\n    <name>demo</name>\n    <description>d</description>\n    <location>/proj/.pi/skills/demo/SKILL.md</location>\n  </skill>\n</available_skills>\n</skills>\n\n<cwd>\n/proj\n</cwd>",
+			"sections": [
+				[
+					"preamble",
+					"You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code."
+				],
+				[
+					"tools",
+					"<tools>\n- bash: Execute bash commands (ls, grep, find, etc.)\n\nAdditional tools may be available.\n</tools>"
+				],
+				[
+					"rules",
+					"<rules>\n- Use bash for file operations like ls, rg, find\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>"
+				],
+				[
+					"docs",
+					"<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>"
+				],
+				[
+					"addendum",
+					"<addendum>\nAppended instructions.\n</addendum>"
+				],
+				[
+					"project_context",
+					"<project_context>\nProject-specific instructions and guidelines:\n\n<project_instructions path=\"/proj/AGENTS.md\">\nfollow the rules\n</project_instructions>\n</project_context>"
+				],
+				[
+					"skills",
+					"<skills>\nThe following skills provide specialized instructions for specific tasks.\nUse bash to load a skill's file when the task matches its description.\nResolve relative paths against the skill's directory (parent of SKILL.md). Use absolute paths in tool calls.\n\n<available_skills>\n  <skill>\n    <name>demo</name>\n    <description>d</description>\n    <location>/proj/.pi/skills/demo/SKILL.md</location>\n  </skill>\n</available_skills>\n</skills>"
+				],
+				[
+					"cwd",
+					"<cwd>\n/proj\n</cwd>"
+				]
+			],
+			"state": {
+				"content": "",
+				"sections": [
+					[
+						"preamble",
+						"You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code."
+					],
+					[
+						"tools",
+						"<tools>\n- bash: Execute bash commands (ls, grep, find, etc.)\n\nAdditional tools may be available.\n</tools>"
+					],
+					[
+						"rules",
+						"<rules>\n- Use bash for file operations like ls, rg, find\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>"
+					],
+					[
+						"docs",
+						"<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>"
+					],
+					[
+						"addendum",
+						"<addendum>\nAppended instructions.\n</addendum>"
+					],
+					[
+						"project_context",
+						"<project_context>\nProject-specific instructions and guidelines:\n\n<project_instructions path=\"/proj/AGENTS.md\">\nfollow the rules\n</project_instructions>\n</project_context>"
+					],
+					[
+						"skills",
+						"<skills>\nThe following skills provide specialized instructions for specific tasks.\nUse bash to load a skill's file when the task matches its description.\nResolve relative paths against the skill's directory (parent of SKILL.md). Use absolute paths in tool calls.\n\n<available_skills>\n  <skill>\n    <name>demo</name>\n    <description>d</description>\n    <location>/proj/.pi/skills/demo/SKILL.md</location>\n  </skill>\n</available_skills>\n</skills>"
+					],
+					[
+						"cwd",
+						"<cwd>\n/proj\n</cwd>"
+					]
+				]
+			}
+		},
+		{
+			"name": "empty-tool-set",
+			"input": {
+				"selectedTools": [],
+				"toolSnippets": {
+					"read": "Read file contents",
+					"bash": "Execute bash commands (ls, grep, find, etc.)",
+					"powershell": "Execute PowerShell commands",
+					"edit": "Make precise file edits with exact text replacement, including multiple disjoint edits in one call",
+					"write": "Create or overwrite files",
+					"grep": "Search file contents for patterns (respects .gitignore)",
+					"find": "Find files by glob pattern (respects .gitignore)",
+					"ls": "List directory contents",
+					"web_fetch": "Fetch a web URL and return readable text"
+				},
+				"cwd": "/proj",
+				"skills": [
+					{
+						"name": "demo",
+						"description": "d",
+						"filePath": "/proj/.pi/skills/demo/SKILL.md",
+						"disableModelInvocation": false
+					}
+				]
+			},
+			"prompt": "You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code.\n\n<tools>\n(none)\n\nAdditional tools may be available.\n</tools>\n\n<rules>\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>\n\n<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>\n\n<cwd>\n/proj\n</cwd>",
+			"sections": [
+				[
+					"preamble",
+					"You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code."
+				],
+				[
+					"tools",
+					"<tools>\n(none)\n\nAdditional tools may be available.\n</tools>"
+				],
+				[
+					"rules",
+					"<rules>\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>"
+				],
+				[
+					"docs",
+					"<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>"
+				],
+				[
+					"cwd",
+					"<cwd>\n/proj\n</cwd>"
+				]
+			],
+			"state": {
+				"content": "",
+				"sections": [
+					[
+						"preamble",
+						"You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code."
+					],
+					[
+						"tools",
+						"<tools>\n(none)\n\nAdditional tools may be available.\n</tools>"
+					],
+					[
+						"rules",
+						"<rules>\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>"
+					],
+					[
+						"docs",
+						"<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>"
+					],
+					[
+						"cwd",
+						"<cwd>\n/proj\n</cwd>"
+					]
+				]
+			}
+		},
+		{
+			"name": "rules-order-trim-dedupe",
+			"input": {
+				"selectedTools": [
+					"edit",
+					"read",
+					"bash",
+					"edit"
+				],
+				"toolSnippets": {
+					"read": "Read file contents",
+					"edit": "Edit"
+				},
+				"toolGuidelines": {
+					"read": [
+						"  shared rule  ",
+						"﻿bom rule﻿",
+						""
+					],
+					"edit": [
+						"edit rule",
+						"shared rule"
+					],
+					"bash": [
+						"bash rule",
+						"nel rule"
+					],
+					"grep": [
+						"unselected rule"
+					]
+				},
+				"promptGuidelines": [
+					"prompt rule",
+					"shared rule",
+					"   ",
+					" nbsp rule ",
+					"Be concise in your responses"
+				],
+				"cwd": "/proj"
+			},
+			"prompt": "You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code.\n\n<tools>\n- edit: Edit\n- read: Read file contents\n- edit: Edit\n\nAdditional tools may be available.\n</tools>\n\n<rules>\n- Use bash for file operations like ls, rg, find\n- edit rule\n- shared rule\n- bom rule\n- bash rule\n- nel rule\n- prompt rule\n- nbsp rule\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>\n\n<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>\n\n<cwd>\n/proj\n</cwd>",
+			"sections": [
+				[
+					"preamble",
+					"You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code."
+				],
+				[
+					"tools",
+					"<tools>\n- edit: Edit\n- read: Read file contents\n- edit: Edit\n\nAdditional tools may be available.\n</tools>"
+				],
+				[
+					"rules",
+					"<rules>\n- Use bash for file operations like ls, rg, find\n- edit rule\n- shared rule\n- bom rule\n- bash rule\n- nel rule\n- prompt rule\n- nbsp rule\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>"
+				],
+				[
+					"docs",
+					"<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>"
+				],
+				[
+					"cwd",
+					"<cwd>\n/proj\n</cwd>"
+				]
+			],
+			"state": {
+				"content": "",
+				"sections": [
+					[
+						"preamble",
+						"You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code."
+					],
+					[
+						"tools",
+						"<tools>\n- edit: Edit\n- read: Read file contents\n- edit: Edit\n\nAdditional tools may be available.\n</tools>"
+					],
+					[
+						"rules",
+						"<rules>\n- Use bash for file operations like ls, rg, find\n- edit rule\n- shared rule\n- bom rule\n- bash rule\n- nel rule\n- prompt rule\n- nbsp rule\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>"
+					],
+					[
+						"docs",
+						"<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>"
+					],
+					[
+						"cwd",
+						"<cwd>\n/proj\n</cwd>"
+					]
+				]
+			}
+		},
+		{
+			"name": "selected-tools-default",
+			"input": {
+				"toolSnippets": {
+					"read": "Read file contents",
+					"bash": "Execute bash commands (ls, grep, find, etc.)",
+					"powershell": "Execute PowerShell commands",
+					"edit": "Make precise file edits with exact text replacement, including multiple disjoint edits in one call",
+					"write": "Create or overwrite files",
+					"grep": "Search file contents for patterns (respects .gitignore)",
+					"find": "Find files by glob pattern (respects .gitignore)",
+					"ls": "List directory contents",
+					"web_fetch": "Fetch a web URL and return readable text"
+				},
+				"toolGuidelines": {
+					"read": [
+						"Use read to examine files instead of cat or sed."
+					],
+					"bash": [
+						"You can inspect PI_* environment variables for current model and session details."
+					],
+					"edit": [
+						"Use edit for targeted changes. Batch changes to one file in a single call.",
+						"Each edits[].oldText must exactly and uniquely match the original file. Keep matches short and non-overlapping; merge nearby changes without including large unchanged regions."
+					],
+					"write": [
+						"Use write only for new files or complete rewrites."
+					]
+				},
+				"cwd": "/proj",
+				"skills": [
+					{
+						"name": "demo",
+						"description": "d",
+						"filePath": "/proj/.pi/skills/demo/SKILL.md",
+						"disableModelInvocation": false
+					},
+					{
+						"name": "hidden",
+						"description": "no",
+						"filePath": "/proj/.pi/skills/hidden/SKILL.md",
+						"disableModelInvocation": true
+					}
+				]
+			},
+			"prompt": "You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code.\n\n<tools>\n- read: Read file contents\n- bash: Execute bash commands (ls, grep, find, etc.)\n- edit: Make precise file edits with exact text replacement, including multiple disjoint edits in one call\n- write: Create or overwrite files\n\nAdditional tools may be available.\n</tools>\n\n<rules>\n- Use bash for file operations like ls, rg, find\n- Use read to examine files instead of cat or sed.\n- You can inspect PI_* environment variables for current model and session details.\n- Use edit for targeted changes. Batch changes to one file in a single call.\n- Each edits[].oldText must exactly and uniquely match the original file. Keep matches short and non-overlapping; merge nearby changes without including large unchanged regions.\n- Use write only for new files or complete rewrites.\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>\n\n<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>\n\n<skills>\nThe following skills provide specialized instructions for specific tasks.\nUse the read tool to load a skill's file when the task matches its description.\nResolve relative paths against the skill's directory (parent of SKILL.md). Use absolute paths in tool calls.\n\n<available_skills>\n  <skill>\n    <name>demo</name>\n    <description>d</description>\n    <location>/proj/.pi/skills/demo/SKILL.md</location>\n  </skill>\n</available_skills>\n</skills>\n\n<cwd>\n/proj\n</cwd>",
+			"sections": [
+				[
+					"preamble",
+					"You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code."
+				],
+				[
+					"tools",
+					"<tools>\n- read: Read file contents\n- bash: Execute bash commands (ls, grep, find, etc.)\n- edit: Make precise file edits with exact text replacement, including multiple disjoint edits in one call\n- write: Create or overwrite files\n\nAdditional tools may be available.\n</tools>"
+				],
+				[
+					"rules",
+					"<rules>\n- Use bash for file operations like ls, rg, find\n- Use read to examine files instead of cat or sed.\n- You can inspect PI_* environment variables for current model and session details.\n- Use edit for targeted changes. Batch changes to one file in a single call.\n- Each edits[].oldText must exactly and uniquely match the original file. Keep matches short and non-overlapping; merge nearby changes without including large unchanged regions.\n- Use write only for new files or complete rewrites.\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>"
+				],
+				[
+					"docs",
+					"<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>"
+				],
+				[
+					"skills",
+					"<skills>\nThe following skills provide specialized instructions for specific tasks.\nUse the read tool to load a skill's file when the task matches its description.\nResolve relative paths against the skill's directory (parent of SKILL.md). Use absolute paths in tool calls.\n\n<available_skills>\n  <skill>\n    <name>demo</name>\n    <description>d</description>\n    <location>/proj/.pi/skills/demo/SKILL.md</location>\n  </skill>\n</available_skills>\n</skills>"
+				],
+				[
+					"cwd",
+					"<cwd>\n/proj\n</cwd>"
+				]
+			],
+			"state": {
+				"content": "",
+				"sections": [
+					[
+						"preamble",
+						"You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code."
+					],
+					[
+						"tools",
+						"<tools>\n- read: Read file contents\n- bash: Execute bash commands (ls, grep, find, etc.)\n- edit: Make precise file edits with exact text replacement, including multiple disjoint edits in one call\n- write: Create or overwrite files\n\nAdditional tools may be available.\n</tools>"
+					],
+					[
+						"rules",
+						"<rules>\n- Use bash for file operations like ls, rg, find\n- Use read to examine files instead of cat or sed.\n- You can inspect PI_* environment variables for current model and session details.\n- Use edit for targeted changes. Batch changes to one file in a single call.\n- Each edits[].oldText must exactly and uniquely match the original file. Keep matches short and non-overlapping; merge nearby changes without including large unchanged regions.\n- Use write only for new files or complete rewrites.\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>"
+					],
+					[
+						"docs",
+						"<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>"
+					],
+					[
+						"skills",
+						"<skills>\nThe following skills provide specialized instructions for specific tasks.\nUse the read tool to load a skill's file when the task matches its description.\nResolve relative paths against the skill's directory (parent of SKILL.md). Use absolute paths in tool calls.\n\n<available_skills>\n  <skill>\n    <name>demo</name>\n    <description>d</description>\n    <location>/proj/.pi/skills/demo/SKILL.md</location>\n  </skill>\n</available_skills>\n</skills>"
+					],
+					[
+						"cwd",
+						"<cwd>\n/proj\n</cwd>"
+					]
+				]
+			}
+		},
+		{
+			"name": "force-system-prompt",
+			"input": {
+				"forceSystemPrompt": "Exact prompt.",
+				"customPrompt": "ignored",
+				"selectedTools": [
+					"read"
+				],
+				"toolSnippets": {
+					"read": "Read file contents",
+					"bash": "Execute bash commands (ls, grep, find, etc.)",
+					"powershell": "Execute PowerShell commands",
+					"edit": "Make precise file edits with exact text replacement, including multiple disjoint edits in one call",
+					"write": "Create or overwrite files",
+					"grep": "Search file contents for patterns (respects .gitignore)",
+					"find": "Find files by glob pattern (respects .gitignore)",
+					"ls": "List directory contents",
+					"web_fetch": "Fetch a web URL and return readable text"
+				},
+				"sections": [
+					[
+						"Bad Name",
+						"never validated"
+					]
+				],
+				"cwd": "/tmp"
+			},
+			"prompt": "Exact prompt.",
+			"sectionsError": "Invalid system prompt section name: Bad Name",
+			"state": {
+				"content": "Exact prompt."
+			}
+		},
+		{
+			"name": "force-system-prompt-empty",
+			"input": {
+				"forceSystemPrompt": "",
+				"cwd": "/tmp"
+			},
+			"prompt": "",
+			"sections": [
+				[
+					"preamble",
+					"You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code."
+				],
+				[
+					"tools",
+					"<tools>\n(none)\n\nAdditional tools may be available.\n</tools>"
+				],
+				[
+					"rules",
+					"<rules>\n- Use bash for file operations like ls, rg, find\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>"
+				],
+				[
+					"docs",
+					"<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>"
+				],
+				[
+					"cwd",
+					"<cwd>\n/tmp\n</cwd>"
+				]
+			],
+			"state": {
+				"content": ""
+			}
+		},
+		{
+			"name": "force-system-prompt-exact",
+			"input": {
+				"forceSystemPrompt": "exact",
+				"cwd": "/tmp"
+			},
+			"prompt": "exact",
+			"sections": [
+				[
+					"preamble",
+					"You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code."
+				],
+				[
+					"tools",
+					"<tools>\n(none)\n\nAdditional tools may be available.\n</tools>"
+				],
+				[
+					"rules",
+					"<rules>\n- Use bash for file operations like ls, rg, find\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>"
+				],
+				[
+					"docs",
+					"<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>"
+				],
+				[
+					"cwd",
+					"<cwd>\n/tmp\n</cwd>"
+				]
+			],
+			"state": {
+				"content": "exact"
+			}
+		},
+		{
+			"name": "force-system-prompt-verbatim",
+			"input": {
+				"forceSystemPrompt": "  spaced\n\n",
+				"appendSystemPrompt": "Appended.",
+				"contextFiles": [
+					{
+						"path": "/proj/AGENTS.md",
+						"content": "follow the rules"
+					}
+				],
+				"skills": [
+					{
+						"name": "demo",
+						"description": "d",
+						"filePath": "/proj/.pi/skills/demo/SKILL.md",
+						"disableModelInvocation": false
+					}
+				],
+				"sections": [
+					[
+						"plan_mode",
+						"Plan only."
+					]
+				],
+				"cwd": "/tmp"
+			},
+			"prompt": "  spaced\n\n",
+			"sections": [
+				[
+					"preamble",
+					"You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code."
+				],
+				[
+					"tools",
+					"<tools>\n(none)\n\nAdditional tools may be available.\n</tools>"
+				],
+				[
+					"rules",
+					"<rules>\n- Use bash for file operations like ls, rg, find\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>"
+				],
+				[
+					"docs",
+					"<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>"
+				],
+				[
+					"addendum",
+					"<addendum>\nAppended.\n</addendum>"
+				],
+				[
+					"project_context",
+					"<project_context>\nProject-specific instructions and guidelines:\n\n<project_instructions path=\"/proj/AGENTS.md\">\nfollow the rules\n</project_instructions>\n</project_context>"
+				],
+				[
+					"skills",
+					"<skills>\nThe following skills provide specialized instructions for specific tasks.\nUse the read tool to load a skill's file when the task matches its description.\nResolve relative paths against the skill's directory (parent of SKILL.md). Use absolute paths in tool calls.\n\n<available_skills>\n  <skill>\n    <name>demo</name>\n    <description>d</description>\n    <location>/proj/.pi/skills/demo/SKILL.md</location>\n  </skill>\n</available_skills>\n</skills>"
+				],
+				[
+					"cwd",
+					"<cwd>\n/tmp\n</cwd>"
+				],
+				[
+					"plan_mode",
+					"<plan_mode>\nPlan only.\n</plan_mode>"
+				]
+			],
+			"state": {
+				"content": "  spaced\n\n"
+			}
+		},
+		{
+			"name": "custom-sections-default-prompt",
+			"input": {
+				"selectedTools": [
+					"read"
+				],
+				"toolSnippets": {
+					"read": "Read file contents"
+				},
+				"appendSystemPrompt": "Append.",
+				"contextFiles": [
+					{
+						"path": "/proj/AGENTS.md",
+						"content": "follow the rules"
+					}
+				],
+				"skills": [
+					{
+						"name": "demo",
+						"description": "d",
+						"filePath": "/proj/.pi/skills/demo/SKILL.md",
+						"disableModelInvocation": false
+					}
+				],
+				"cwd": "/proj",
+				"sections": [
+					[
+						"plan_mode",
+						"Plan only."
+					],
+					[
+						"tools",
+						"Overridden tools."
+					],
+					[
+						"empty",
+						""
+					],
+					[
+						"cwd",
+						"custom cwd"
+					],
+					[
+						"skills",
+						"Custom skills."
+					],
+					[
+						"z-9_x",
+						"last"
+					]
+				]
+			},
+			"prompt": "You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code.\n\n<tools>\nOverridden tools.\n</tools>\n\n<rules>\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>\n\n<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>\n\n<addendum>\nAppend.\n</addendum>\n\n<project_context>\nProject-specific instructions and guidelines:\n\n<project_instructions path=\"/proj/AGENTS.md\">\nfollow the rules\n</project_instructions>\n</project_context>\n\n<skills>\nCustom skills.\n</skills>\n\n<cwd>\ncustom cwd\n</cwd>\n\n<plan_mode>\nPlan only.\n</plan_mode>\n\n<z-9_x>\nlast\n</z-9_x>",
+			"sections": [
+				[
+					"preamble",
+					"You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code."
+				],
+				[
+					"tools",
+					"<tools>\nOverridden tools.\n</tools>"
+				],
+				[
+					"rules",
+					"<rules>\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>"
+				],
+				[
+					"docs",
+					"<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>"
+				],
+				[
+					"addendum",
+					"<addendum>\nAppend.\n</addendum>"
+				],
+				[
+					"project_context",
+					"<project_context>\nProject-specific instructions and guidelines:\n\n<project_instructions path=\"/proj/AGENTS.md\">\nfollow the rules\n</project_instructions>\n</project_context>"
+				],
+				[
+					"skills",
+					"<skills>\nCustom skills.\n</skills>"
+				],
+				[
+					"cwd",
+					"<cwd>\ncustom cwd\n</cwd>"
+				],
+				[
+					"plan_mode",
+					"<plan_mode>\nPlan only.\n</plan_mode>"
+				],
+				[
+					"z-9_x",
+					"<z-9_x>\nlast\n</z-9_x>"
+				]
+			],
+			"state": {
+				"content": "",
+				"sections": [
+					[
+						"preamble",
+						"You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code."
+					],
+					[
+						"tools",
+						"<tools>\nOverridden tools.\n</tools>"
+					],
+					[
+						"rules",
+						"<rules>\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>"
+					],
+					[
+						"docs",
+						"<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>"
+					],
+					[
+						"addendum",
+						"<addendum>\nAppend.\n</addendum>"
+					],
+					[
+						"project_context",
+						"<project_context>\nProject-specific instructions and guidelines:\n\n<project_instructions path=\"/proj/AGENTS.md\">\nfollow the rules\n</project_instructions>\n</project_context>"
+					],
+					[
+						"skills",
+						"<skills>\nCustom skills.\n</skills>"
+					],
+					[
+						"cwd",
+						"<cwd>\ncustom cwd\n</cwd>"
+					],
+					[
+						"plan_mode",
+						"<plan_mode>\nPlan only.\n</plan_mode>"
+					],
+					[
+						"z-9_x",
+						"<z-9_x>\nlast\n</z-9_x>"
+					]
+				]
+			}
+		},
+		{
+			"name": "custom-sections-custom-prompt",
+			"input": {
+				"customPrompt": "You are Exact.",
+				"selectedTools": [],
+				"cwd": "/tmp",
+				"sections": [
+					[
+						"tools",
+						"T"
+					],
+					[
+						"rules",
+						"R"
+					],
+					[
+						"docs",
+						""
+					]
+				]
+			},
+			"prompt": "You are Exact.\n\n<cwd>\n/tmp\n</cwd>\n\n<tools>\nT\n</tools>\n\n<rules>\nR\n</rules>",
+			"sections": [
+				[
+					"preamble",
+					"You are Exact."
+				],
+				[
+					"cwd",
+					"<cwd>\n/tmp\n</cwd>"
+				],
+				[
+					"tools",
+					"<tools>\nT\n</tools>"
+				],
+				[
+					"rules",
+					"<rules>\nR\n</rules>"
+				]
+			],
+			"state": {
+				"content": "",
+				"sections": [
+					[
+						"preamble",
+						"You are Exact."
+					],
+					[
+						"cwd",
+						"<cwd>\n/tmp\n</cwd>"
+					],
+					[
+						"tools",
+						"<tools>\nT\n</tools>"
+					],
+					[
+						"rules",
+						"<rules>\nR\n</rules>"
+					]
+				]
+			}
+		},
+		{
+			"name": "invalid-section-uppercase",
+			"input": {
+				"cwd": "/tmp",
+				"sections": [
+					[
+						"plan",
+						"x"
+					],
+					[
+						"Plan",
+						"y"
+					]
+				]
+			},
+			"promptError": "Invalid system prompt section name: Plan",
+			"sectionsError": "Invalid system prompt section name: Plan",
+			"stateError": "Invalid system prompt section name: Plan"
+		},
+		{
+			"name": "invalid-section-preamble",
+			"input": {
+				"cwd": "/tmp",
+				"sections": [
+					[
+						"preamble",
+						"x"
+					]
+				]
+			},
+			"promptError": "Invalid system prompt section name: preamble",
+			"sectionsError": "Invalid system prompt section name: preamble",
+			"stateError": "Invalid system prompt section name: preamble"
+		},
+		{
+			"name": "invalid-section-js-key-order",
+			"input": {
+				"cwd": "/tmp",
+				"sections": [
+					[
+						"bad name",
+						"x"
+					],
+					[
+						"7",
+						"y"
+					]
+				]
+			},
+			"promptError": "Invalid system prompt section name: 7",
+			"sectionsError": "Invalid system prompt section name: 7",
+			"stateError": "Invalid system prompt section name: 7"
+		},
+		{
+			"name": "invalid-section-empty-name",
+			"input": {
+				"cwd": "/tmp",
+				"sections": [
+					[
+						"",
+						"x"
+					]
+				]
+			},
+			"promptError": "Invalid system prompt section name: ",
+			"sectionsError": "Invalid system prompt section name: ",
+			"stateError": "Invalid system prompt section name: "
+		},
+		{
+			"name": "invalid-section-empty-content",
+			"input": {
+				"cwd": "/tmp",
+				"sections": [
+					[
+						"Bad",
+						""
+					]
+				]
+			},
+			"promptError": "Invalid system prompt section name: Bad",
+			"sectionsError": "Invalid system prompt section name: Bad",
+			"stateError": "Invalid system prompt section name: Bad"
+		},
+		{
+			"name": "skills-hidden-only",
+			"input": {
+				"selectedTools": [
+					"read"
+				],
+				"toolSnippets": {
+					"read": "Read file contents",
+					"bash": "Execute bash commands (ls, grep, find, etc.)",
+					"powershell": "Execute PowerShell commands",
+					"edit": "Make precise file edits with exact text replacement, including multiple disjoint edits in one call",
+					"write": "Create or overwrite files",
+					"grep": "Search file contents for patterns (respects .gitignore)",
+					"find": "Find files by glob pattern (respects .gitignore)",
+					"ls": "List directory contents",
+					"web_fetch": "Fetch a web URL and return readable text"
+				},
+				"cwd": "/proj",
+				"skills": [
+					{
+						"name": "hidden",
+						"description": "no",
+						"filePath": "/proj/.pi/skills/hidden/SKILL.md",
+						"disableModelInvocation": true
+					}
+				]
+			},
+			"prompt": "You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code.\n\n<tools>\n- read: Read file contents\n\nAdditional tools may be available.\n</tools>\n\n<rules>\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>\n\n<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>\n\n<cwd>\n/proj\n</cwd>",
+			"sections": [
+				[
+					"preamble",
+					"You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code."
+				],
+				[
+					"tools",
+					"<tools>\n- read: Read file contents\n\nAdditional tools may be available.\n</tools>"
+				],
+				[
+					"rules",
+					"<rules>\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>"
+				],
+				[
+					"docs",
+					"<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>"
+				],
+				[
+					"cwd",
+					"<cwd>\n/proj\n</cwd>"
+				]
+			],
+			"state": {
+				"content": "",
+				"sections": [
+					[
+						"preamble",
+						"You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code."
+					],
+					[
+						"tools",
+						"<tools>\n- read: Read file contents\n\nAdditional tools may be available.\n</tools>"
+					],
+					[
+						"rules",
+						"<rules>\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>"
+					],
+					[
+						"docs",
+						"<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>"
+					],
+					[
+						"cwd",
+						"<cwd>\n/proj\n</cwd>"
+					]
+				]
+			}
+		},
+		{
+			"name": "empty-custom-prompt",
+			"input": {
+				"customPrompt": "",
+				"selectedTools": [],
+				"cwd": "/proj"
+			},
+			"prompt": "You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code.\n\n<tools>\n(none)\n\nAdditional tools may be available.\n</tools>\n\n<rules>\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>\n\n<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>\n\n<cwd>\n/proj\n</cwd>",
+			"sections": [
+				[
+					"preamble",
+					"You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code."
+				],
+				[
+					"tools",
+					"<tools>\n(none)\n\nAdditional tools may be available.\n</tools>"
+				],
+				[
+					"rules",
+					"<rules>\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>"
+				],
+				[
+					"docs",
+					"<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>"
+				],
+				[
+					"cwd",
+					"<cwd>\n/proj\n</cwd>"
+				]
+			],
+			"state": {
+				"content": "",
+				"sections": [
+					[
+						"preamble",
+						"You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code."
+					],
+					[
+						"tools",
+						"<tools>\n(none)\n\nAdditional tools may be available.\n</tools>"
+					],
+					[
+						"rules",
+						"<rules>\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>"
+					],
+					[
+						"docs",
+						"<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>"
+					],
+					[
+						"cwd",
+						"<cwd>\n/proj\n</cwd>"
+					]
+				]
+			}
+		},
+		{
+			"name": "hidden-tools-readers",
+			"input": {
+				"selectedTools": [
+					"read",
+					"bash",
+					"run"
+				],
+				"hiddenTools": [
+					"read",
+					"bash"
+				],
+				"toolSnippets": {
+					"read": "Read files",
+					"bash": "Run commands",
+					"run": "Run a task"
+				},
+				"toolGuidelines": {
+					"read": [
+						"Use read for files."
+					],
+					"run": [
+						"Prefer run."
+					]
+				},
+				"skills": [
+					{
+						"name": "demo",
+						"description": "d",
+						"filePath": "/proj/.pi/skills/demo/SKILL.md",
+						"disableModelInvocation": false
+					}
+				],
+				"cwd": "/proj"
+			},
+			"prompt": "You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code.\n\n<tools>\n- run: Run a task\n\nAdditional tools may be available.\n</tools>\n\n<rules>\n- Prefer run.\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>\n\n<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>\n\n<skills>\nThe following skills provide specialized instructions for specific tasks.\nLoad a skill's file when the task matches its description.\nResolve relative paths against the skill's directory (parent of SKILL.md). Use absolute paths in tool calls.\n\n<available_skills>\n  <skill>\n    <name>demo</name>\n    <description>d</description>\n    <location>/proj/.pi/skills/demo/SKILL.md</location>\n  </skill>\n</available_skills>\n</skills>\n\n<cwd>\n/proj\n</cwd>",
+			"sections": [
+				[
+					"preamble",
+					"You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code."
+				],
+				[
+					"tools",
+					"<tools>\n- run: Run a task\n\nAdditional tools may be available.\n</tools>"
+				],
+				[
+					"rules",
+					"<rules>\n- Prefer run.\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>"
+				],
+				[
+					"docs",
+					"<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>"
+				],
+				[
+					"skills",
+					"<skills>\nThe following skills provide specialized instructions for specific tasks.\nLoad a skill's file when the task matches its description.\nResolve relative paths against the skill's directory (parent of SKILL.md). Use absolute paths in tool calls.\n\n<available_skills>\n  <skill>\n    <name>demo</name>\n    <description>d</description>\n    <location>/proj/.pi/skills/demo/SKILL.md</location>\n  </skill>\n</available_skills>\n</skills>"
+				],
+				[
+					"cwd",
+					"<cwd>\n/proj\n</cwd>"
+				]
+			],
+			"state": {
+				"content": "",
+				"sections": [
+					[
+						"preamble",
+						"You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code."
+					],
+					[
+						"tools",
+						"<tools>\n- run: Run a task\n\nAdditional tools may be available.\n</tools>"
+					],
+					[
+						"rules",
+						"<rules>\n- Prefer run.\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>"
+					],
+					[
+						"docs",
+						"<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>"
+					],
+					[
+						"skills",
+						"<skills>\nThe following skills provide specialized instructions for specific tasks.\nLoad a skill's file when the task matches its description.\nResolve relative paths against the skill's directory (parent of SKILL.md). Use absolute paths in tool calls.\n\n<available_skills>\n  <skill>\n    <name>demo</name>\n    <description>d</description>\n    <location>/proj/.pi/skills/demo/SKILL.md</location>\n  </skill>\n</available_skills>\n</skills>"
+					],
+					[
+						"cwd",
+						"<cwd>\n/proj\n</cwd>"
+					]
+				]
+			}
+		},
+		{
+			"name": "hidden-tools-read",
+			"input": {
+				"selectedTools": [
+					"read",
+					"bash",
+					"run"
+				],
+				"hiddenTools": [
+					"read"
+				],
+				"toolSnippets": {
+					"read": "Read files",
+					"bash": "Run commands",
+					"run": "Run a task"
+				},
+				"toolGuidelines": {
+					"read": [
+						"Use read for files."
+					],
+					"run": [
+						"Prefer run."
+					]
+				},
+				"skills": [
+					{
+						"name": "demo",
+						"description": "d",
+						"filePath": "/proj/.pi/skills/demo/SKILL.md",
+						"disableModelInvocation": false
+					}
+				],
+				"cwd": "/proj"
+			},
+			"prompt": "You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code.\n\n<tools>\n- bash: Run commands\n- run: Run a task\n\nAdditional tools may be available.\n</tools>\n\n<rules>\n- Use bash for file operations like ls, rg, find\n- Prefer run.\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>\n\n<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>\n\n<skills>\nThe following skills provide specialized instructions for specific tasks.\nUse bash to load a skill's file when the task matches its description.\nResolve relative paths against the skill's directory (parent of SKILL.md). Use absolute paths in tool calls.\n\n<available_skills>\n  <skill>\n    <name>demo</name>\n    <description>d</description>\n    <location>/proj/.pi/skills/demo/SKILL.md</location>\n  </skill>\n</available_skills>\n</skills>\n\n<cwd>\n/proj\n</cwd>",
+			"sections": [
+				[
+					"preamble",
+					"You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code."
+				],
+				[
+					"tools",
+					"<tools>\n- bash: Run commands\n- run: Run a task\n\nAdditional tools may be available.\n</tools>"
+				],
+				[
+					"rules",
+					"<rules>\n- Use bash for file operations like ls, rg, find\n- Prefer run.\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>"
+				],
+				[
+					"docs",
+					"<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>"
+				],
+				[
+					"skills",
+					"<skills>\nThe following skills provide specialized instructions for specific tasks.\nUse bash to load a skill's file when the task matches its description.\nResolve relative paths against the skill's directory (parent of SKILL.md). Use absolute paths in tool calls.\n\n<available_skills>\n  <skill>\n    <name>demo</name>\n    <description>d</description>\n    <location>/proj/.pi/skills/demo/SKILL.md</location>\n  </skill>\n</available_skills>\n</skills>"
+				],
+				[
+					"cwd",
+					"<cwd>\n/proj\n</cwd>"
+				]
+			],
+			"state": {
+				"content": "",
+				"sections": [
+					[
+						"preamble",
+						"You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code."
+					],
+					[
+						"tools",
+						"<tools>\n- bash: Run commands\n- run: Run a task\n\nAdditional tools may be available.\n</tools>"
+					],
+					[
+						"rules",
+						"<rules>\n- Use bash for file operations like ls, rg, find\n- Prefer run.\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>"
+					],
+					[
+						"docs",
+						"<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>"
+					],
+					[
+						"skills",
+						"<skills>\nThe following skills provide specialized instructions for specific tasks.\nUse bash to load a skill's file when the task matches its description.\nResolve relative paths against the skill's directory (parent of SKILL.md). Use absolute paths in tool calls.\n\n<available_skills>\n  <skill>\n    <name>demo</name>\n    <description>d</description>\n    <location>/proj/.pi/skills/demo/SKILL.md</location>\n  </skill>\n</available_skills>\n</skills>"
+					],
+					[
+						"cwd",
+						"<cwd>\n/proj\n</cwd>"
+					]
+				]
+			}
+		},
+		{
+			"name": "hidden-tools-none",
+			"input": {
+				"selectedTools": [
+					"read",
+					"bash",
+					"run"
+				],
+				"hiddenTools": [],
+				"toolSnippets": {
+					"read": "Read files",
+					"bash": "Run commands",
+					"run": "Run a task"
+				},
+				"toolGuidelines": {
+					"read": [
+						"Use read for files."
+					],
+					"run": [
+						"Prefer run."
+					]
+				},
+				"skills": [
+					{
+						"name": "demo",
+						"description": "d",
+						"filePath": "/proj/.pi/skills/demo/SKILL.md",
+						"disableModelInvocation": false
+					}
+				],
+				"cwd": "/proj"
+			},
+			"prompt": "You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code.\n\n<tools>\n- read: Read files\n- bash: Run commands\n- run: Run a task\n\nAdditional tools may be available.\n</tools>\n\n<rules>\n- Use bash for file operations like ls, rg, find\n- Use read for files.\n- Prefer run.\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>\n\n<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>\n\n<skills>\nThe following skills provide specialized instructions for specific tasks.\nUse the read tool to load a skill's file when the task matches its description.\nResolve relative paths against the skill's directory (parent of SKILL.md). Use absolute paths in tool calls.\n\n<available_skills>\n  <skill>\n    <name>demo</name>\n    <description>d</description>\n    <location>/proj/.pi/skills/demo/SKILL.md</location>\n  </skill>\n</available_skills>\n</skills>\n\n<cwd>\n/proj\n</cwd>",
+			"sections": [
+				[
+					"preamble",
+					"You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code."
+				],
+				[
+					"tools",
+					"<tools>\n- read: Read files\n- bash: Run commands\n- run: Run a task\n\nAdditional tools may be available.\n</tools>"
+				],
+				[
+					"rules",
+					"<rules>\n- Use bash for file operations like ls, rg, find\n- Use read for files.\n- Prefer run.\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>"
+				],
+				[
+					"docs",
+					"<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>"
+				],
+				[
+					"skills",
+					"<skills>\nThe following skills provide specialized instructions for specific tasks.\nUse the read tool to load a skill's file when the task matches its description.\nResolve relative paths against the skill's directory (parent of SKILL.md). Use absolute paths in tool calls.\n\n<available_skills>\n  <skill>\n    <name>demo</name>\n    <description>d</description>\n    <location>/proj/.pi/skills/demo/SKILL.md</location>\n  </skill>\n</available_skills>\n</skills>"
+				],
+				[
+					"cwd",
+					"<cwd>\n/proj\n</cwd>"
+				]
+			],
+			"state": {
+				"content": "",
+				"sections": [
+					[
+						"preamble",
+						"You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code."
+					],
+					[
+						"tools",
+						"<tools>\n- read: Read files\n- bash: Run commands\n- run: Run a task\n\nAdditional tools may be available.\n</tools>"
+					],
+					[
+						"rules",
+						"<rules>\n- Use bash for file operations like ls, rg, find\n- Use read for files.\n- Prefer run.\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>"
+					],
+					[
+						"docs",
+						"<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>"
+					],
+					[
+						"skills",
+						"<skills>\nThe following skills provide specialized instructions for specific tasks.\nUse the read tool to load a skill's file when the task matches its description.\nResolve relative paths against the skill's directory (parent of SKILL.md). Use absolute paths in tool calls.\n\n<available_skills>\n  <skill>\n    <name>demo</name>\n    <description>d</description>\n    <location>/proj/.pi/skills/demo/SKILL.md</location>\n  </skill>\n</available_skills>\n</skills>"
+					],
+					[
+						"cwd",
+						"<cwd>\n/proj\n</cwd>"
+					]
+				]
+			}
+		},
+		{
+			"name": "hidden-tools-unselected",
+			"input": {
+				"selectedTools": [
+					"read",
+					"bash",
+					"run"
+				],
+				"hiddenTools": [
+					"grep",
+					"run-not-selected"
+				],
+				"toolSnippets": {
+					"read": "Read files",
+					"bash": "Run commands",
+					"run": "Run a task"
+				},
+				"toolGuidelines": {
+					"read": [
+						"Use read for files."
+					],
+					"run": [
+						"Prefer run."
+					]
+				},
+				"skills": [
+					{
+						"name": "demo",
+						"description": "d",
+						"filePath": "/proj/.pi/skills/demo/SKILL.md",
+						"disableModelInvocation": false
+					}
+				],
+				"cwd": "/proj"
+			},
+			"prompt": "You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code.\n\n<tools>\n- read: Read files\n- bash: Run commands\n- run: Run a task\n\nAdditional tools may be available.\n</tools>\n\n<rules>\n- Use bash for file operations like ls, rg, find\n- Use read for files.\n- Prefer run.\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>\n\n<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>\n\n<skills>\nThe following skills provide specialized instructions for specific tasks.\nUse the read tool to load a skill's file when the task matches its description.\nResolve relative paths against the skill's directory (parent of SKILL.md). Use absolute paths in tool calls.\n\n<available_skills>\n  <skill>\n    <name>demo</name>\n    <description>d</description>\n    <location>/proj/.pi/skills/demo/SKILL.md</location>\n  </skill>\n</available_skills>\n</skills>\n\n<cwd>\n/proj\n</cwd>",
+			"sections": [
+				[
+					"preamble",
+					"You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code."
+				],
+				[
+					"tools",
+					"<tools>\n- read: Read files\n- bash: Run commands\n- run: Run a task\n\nAdditional tools may be available.\n</tools>"
+				],
+				[
+					"rules",
+					"<rules>\n- Use bash for file operations like ls, rg, find\n- Use read for files.\n- Prefer run.\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>"
+				],
+				[
+					"docs",
+					"<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>"
+				],
+				[
+					"skills",
+					"<skills>\nThe following skills provide specialized instructions for specific tasks.\nUse the read tool to load a skill's file when the task matches its description.\nResolve relative paths against the skill's directory (parent of SKILL.md). Use absolute paths in tool calls.\n\n<available_skills>\n  <skill>\n    <name>demo</name>\n    <description>d</description>\n    <location>/proj/.pi/skills/demo/SKILL.md</location>\n  </skill>\n</available_skills>\n</skills>"
+				],
+				[
+					"cwd",
+					"<cwd>\n/proj\n</cwd>"
+				]
+			],
+			"state": {
+				"content": "",
+				"sections": [
+					[
+						"preamble",
+						"You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code."
+					],
+					[
+						"tools",
+						"<tools>\n- read: Read files\n- bash: Run commands\n- run: Run a task\n\nAdditional tools may be available.\n</tools>"
+					],
+					[
+						"rules",
+						"<rules>\n- Use bash for file operations like ls, rg, find\n- Use read for files.\n- Prefer run.\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>"
+					],
+					[
+						"docs",
+						"<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>"
+					],
+					[
+						"skills",
+						"<skills>\nThe following skills provide specialized instructions for specific tasks.\nUse the read tool to load a skill's file when the task matches its description.\nResolve relative paths against the skill's directory (parent of SKILL.md). Use absolute paths in tool calls.\n\n<available_skills>\n  <skill>\n    <name>demo</name>\n    <description>d</description>\n    <location>/proj/.pi/skills/demo/SKILL.md</location>\n  </skill>\n</available_skills>\n</skills>"
+					],
+					[
+						"cwd",
+						"<cwd>\n/proj\n</cwd>"
+					]
+				]
+			}
+		},
+		{
+			"name": "hidden-bash-only-custom-prompt",
+			"input": {
+				"customPrompt": "You are a custom agent.",
+				"selectedTools": [
+					"bash",
+					"edit"
+				],
+				"hiddenTools": [
+					"bash"
+				],
+				"toolSnippets": {
+					"read": "Read file contents",
+					"bash": "Execute bash commands (ls, grep, find, etc.)",
+					"powershell": "Execute PowerShell commands",
+					"edit": "Make precise file edits with exact text replacement, including multiple disjoint edits in one call",
+					"write": "Create or overwrite files",
+					"grep": "Search file contents for patterns (respects .gitignore)",
+					"find": "Find files by glob pattern (respects .gitignore)",
+					"ls": "List directory contents",
+					"web_fetch": "Fetch a web URL and return readable text"
+				},
+				"toolGuidelines": {
+					"read": [
+						"Use read to examine files instead of cat or sed."
+					],
+					"bash": [
+						"You can inspect PI_* environment variables for current model and session details."
+					],
+					"edit": [
+						"Use edit for targeted changes. Batch changes to one file in a single call.",
+						"Each edits[].oldText must exactly and uniquely match the original file. Keep matches short and non-overlapping; merge nearby changes without including large unchanged regions."
+					],
+					"write": [
+						"Use write only for new files or complete rewrites."
+					]
+				},
+				"cwd": "/proj",
+				"skills": [
+					{
+						"name": "demo",
+						"description": "d",
+						"filePath": "/proj/.pi/skills/demo/SKILL.md",
+						"disableModelInvocation": false
+					}
+				]
+			},
+			"prompt": "You are a custom agent.\n\n<skills>\nThe following skills provide specialized instructions for specific tasks.\nLoad a skill's file when the task matches its description.\nResolve relative paths against the skill's directory (parent of SKILL.md). Use absolute paths in tool calls.\n\n<available_skills>\n  <skill>\n    <name>demo</name>\n    <description>d</description>\n    <location>/proj/.pi/skills/demo/SKILL.md</location>\n  </skill>\n</available_skills>\n</skills>\n\n<cwd>\n/proj\n</cwd>",
+			"sections": [
+				[
+					"preamble",
+					"You are a custom agent."
+				],
+				[
+					"skills",
+					"<skills>\nThe following skills provide specialized instructions for specific tasks.\nLoad a skill's file when the task matches its description.\nResolve relative paths against the skill's directory (parent of SKILL.md). Use absolute paths in tool calls.\n\n<available_skills>\n  <skill>\n    <name>demo</name>\n    <description>d</description>\n    <location>/proj/.pi/skills/demo/SKILL.md</location>\n  </skill>\n</available_skills>\n</skills>"
+				],
+				[
+					"cwd",
+					"<cwd>\n/proj\n</cwd>"
+				]
+			],
+			"state": {
+				"content": "",
+				"sections": [
+					[
+						"preamble",
+						"You are a custom agent."
+					],
+					[
+						"skills",
+						"<skills>\nThe following skills provide specialized instructions for specific tasks.\nLoad a skill's file when the task matches its description.\nResolve relative paths against the skill's directory (parent of SKILL.md). Use absolute paths in tool calls.\n\n<available_skills>\n  <skill>\n    <name>demo</name>\n    <description>d</description>\n    <location>/proj/.pi/skills/demo/SKILL.md</location>\n  </skill>\n</available_skills>\n</skills>"
+					],
+					[
+						"cwd",
+						"<cwd>\n/proj\n</cwd>"
+					]
+				]
+			}
+		},
+		{
+			"name": "hidden-everything-default-prompt",
+			"input": {
+				"selectedTools": [
+					"read",
+					"bash",
+					"edit",
+					"write"
+				],
+				"hiddenTools": [
+					"read",
+					"bash",
+					"edit",
+					"write"
+				],
+				"toolSnippets": {
+					"read": "Read file contents",
+					"bash": "Execute bash commands (ls, grep, find, etc.)",
+					"powershell": "Execute PowerShell commands",
+					"edit": "Make precise file edits with exact text replacement, including multiple disjoint edits in one call",
+					"write": "Create or overwrite files",
+					"grep": "Search file contents for patterns (respects .gitignore)",
+					"find": "Find files by glob pattern (respects .gitignore)",
+					"ls": "List directory contents",
+					"web_fetch": "Fetch a web URL and return readable text"
+				},
+				"toolGuidelines": {
+					"read": [
+						"Use read to examine files instead of cat or sed."
+					],
+					"bash": [
+						"You can inspect PI_* environment variables for current model and session details."
+					],
+					"edit": [
+						"Use edit for targeted changes. Batch changes to one file in a single call.",
+						"Each edits[].oldText must exactly and uniquely match the original file. Keep matches short and non-overlapping; merge nearby changes without including large unchanged regions."
+					],
+					"write": [
+						"Use write only for new files or complete rewrites."
+					]
+				},
+				"cwd": "/proj",
+				"skills": [
+					{
+						"name": "demo",
+						"description": "d",
+						"filePath": "/proj/.pi/skills/demo/SKILL.md",
+						"disableModelInvocation": false
+					},
+					{
+						"name": "hidden",
+						"description": "no",
+						"filePath": "/proj/.pi/skills/hidden/SKILL.md",
+						"disableModelInvocation": true
+					}
+				]
+			},
+			"prompt": "You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code.\n\n<tools>\n(none)\n\nAdditional tools may be available.\n</tools>\n\n<rules>\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>\n\n<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>\n\n<skills>\nThe following skills provide specialized instructions for specific tasks.\nLoad a skill's file when the task matches its description.\nResolve relative paths against the skill's directory (parent of SKILL.md). Use absolute paths in tool calls.\n\n<available_skills>\n  <skill>\n    <name>demo</name>\n    <description>d</description>\n    <location>/proj/.pi/skills/demo/SKILL.md</location>\n  </skill>\n</available_skills>\n</skills>\n\n<cwd>\n/proj\n</cwd>",
+			"sections": [
+				[
+					"preamble",
+					"You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code."
+				],
+				[
+					"tools",
+					"<tools>\n(none)\n\nAdditional tools may be available.\n</tools>"
+				],
+				[
+					"rules",
+					"<rules>\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>"
+				],
+				[
+					"docs",
+					"<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>"
+				],
+				[
+					"skills",
+					"<skills>\nThe following skills provide specialized instructions for specific tasks.\nLoad a skill's file when the task matches its description.\nResolve relative paths against the skill's directory (parent of SKILL.md). Use absolute paths in tool calls.\n\n<available_skills>\n  <skill>\n    <name>demo</name>\n    <description>d</description>\n    <location>/proj/.pi/skills/demo/SKILL.md</location>\n  </skill>\n</available_skills>\n</skills>"
+				],
+				[
+					"cwd",
+					"<cwd>\n/proj\n</cwd>"
+				]
+			],
+			"state": {
+				"content": "",
+				"sections": [
+					[
+						"preamble",
+						"You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code."
+					],
+					[
+						"tools",
+						"<tools>\n(none)\n\nAdditional tools may be available.\n</tools>"
+					],
+					[
+						"rules",
+						"<rules>\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>"
+					],
+					[
+						"docs",
+						"<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>"
+					],
+					[
+						"skills",
+						"<skills>\nThe following skills provide specialized instructions for specific tasks.\nLoad a skill's file when the task matches its description.\nResolve relative paths against the skill's directory (parent of SKILL.md). Use absolute paths in tool calls.\n\n<available_skills>\n  <skill>\n    <name>demo</name>\n    <description>d</description>\n    <location>/proj/.pi/skills/demo/SKILL.md</location>\n  </skill>\n</available_skills>\n</skills>"
+					],
+					[
+						"cwd",
+						"<cwd>\n/proj\n</cwd>"
+					]
+				]
+			}
+		},
+		{
+			"name": "windows-cwd-and-context-files",
+			"input": {
+				"selectedTools": [
+					"bash",
+					"powershell"
+				],
+				"toolSnippets": {
+					"read": "Read file contents",
+					"bash": "Execute bash commands (ls, grep, find, etc.)",
+					"powershell": "Execute PowerShell commands",
+					"edit": "Make precise file edits with exact text replacement, including multiple disjoint edits in one call",
+					"write": "Create or overwrite files",
+					"grep": "Search file contents for patterns (respects .gitignore)",
+					"find": "Find files by glob pattern (respects .gitignore)",
+					"ls": "List directory contents",
+					"web_fetch": "Fetch a web URL and return readable text"
+				},
+				"cwd": "C:\\Users\\me\\proj",
+				"contextFiles": [
+					{
+						"path": "/proj/AGENTS.md",
+						"content": "follow the rules"
+					},
+					{
+						"path": "C:\\Users\\me\\proj\\sub\\AGENTS.md",
+						"content": "nested\n"
+					}
+				]
+			},
+			"prompt": "You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code.\n\n<tools>\n- bash: Execute bash commands (ls, grep, find, etc.)\n- powershell: Execute PowerShell commands\n\nAdditional tools may be available.\n</tools>\n\n<rules>\n- Use bash or PowerShell for file operations like listing, searching, and finding files\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>\n\n<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>\n\n<project_context>\nProject-specific instructions and guidelines:\n\n<project_instructions path=\"/proj/AGENTS.md\">\nfollow the rules\n</project_instructions>\n\n<project_instructions path=\"C:\\Users\\me\\proj\\sub\\AGENTS.md\">\nnested\n\n</project_instructions>\n</project_context>\n\n<cwd>\nC:/Users/me/proj\n</cwd>",
+			"sections": [
+				[
+					"preamble",
+					"You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code."
+				],
+				[
+					"tools",
+					"<tools>\n- bash: Execute bash commands (ls, grep, find, etc.)\n- powershell: Execute PowerShell commands\n\nAdditional tools may be available.\n</tools>"
+				],
+				[
+					"rules",
+					"<rules>\n- Use bash or PowerShell for file operations like listing, searching, and finding files\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>"
+				],
+				[
+					"docs",
+					"<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>"
+				],
+				[
+					"project_context",
+					"<project_context>\nProject-specific instructions and guidelines:\n\n<project_instructions path=\"/proj/AGENTS.md\">\nfollow the rules\n</project_instructions>\n\n<project_instructions path=\"C:\\Users\\me\\proj\\sub\\AGENTS.md\">\nnested\n\n</project_instructions>\n</project_context>"
+				],
+				[
+					"cwd",
+					"<cwd>\nC:/Users/me/proj\n</cwd>"
+				]
+			],
+			"state": {
+				"content": "",
+				"sections": [
+					[
+						"preamble",
+						"You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code."
+					],
+					[
+						"tools",
+						"<tools>\n- bash: Execute bash commands (ls, grep, find, etc.)\n- powershell: Execute PowerShell commands\n\nAdditional tools may be available.\n</tools>"
+					],
+					[
+						"rules",
+						"<rules>\n- Use bash or PowerShell for file operations like listing, searching, and finding files\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>"
+					],
+					[
+						"docs",
+						"<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /pkg/README.md\n- Additional docs: /pkg/docs\n- Examples: /pkg/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>"
+					],
+					[
+						"project_context",
+						"<project_context>\nProject-specific instructions and guidelines:\n\n<project_instructions path=\"/proj/AGENTS.md\">\nfollow the rules\n</project_instructions>\n\n<project_instructions path=\"C:\\Users\\me\\proj\\sub\\AGENTS.md\">\nnested\n\n</project_instructions>\n</project_context>"
+					],
+					[
+						"cwd",
+						"<cwd>\nC:/Users/me/proj\n</cwd>"
+					]
+				]
+			}
+		}
+	],
+	"diffs": [
+		{
+			"name": "patch-in-js-key-order",
+			"previous": [
+				[
+					"b",
+					"1"
+				],
+				[
+					"10",
+					"x"
+				],
+				[
+					"a",
+					"2"
+				]
+			],
+			"current": [
+				[
+					"a",
+					"2"
+				],
+				[
+					"c",
+					"3"
+				]
+			],
+			"patch": [
+				[
+					"10",
+					null
+				],
+				[
+					"c",
+					"3"
+				],
+				[
+					"b",
+					null
+				]
+			]
+		},
+		{
+			"name": "unchanged",
+			"previous": [
+				[
+					"a",
+					"1"
+				]
+			],
+			"current": [
+				[
+					"a",
+					"1"
+				]
+			],
+			"patch": null
+		},
+		{
+			"name": "previous-null-values",
+			"previous": [
+				[
+					"a",
+					null
+				],
+				[
+					"b",
+					null
+				]
+			],
+			"current": [
+				[
+					"a",
+					"x"
+				]
+			],
+			"patch": [
+				[
+					"a",
+					"x"
+				],
+				[
+					"b",
+					null
+				]
+			]
+		},
+		{
+			"name": "current-null-value",
+			"previous": [
+				[
+					"a",
+					"1"
+				]
+			],
+			"current": [
+				[
+					"a",
+					null
+				],
+				[
+					"b",
+					null
+				]
+			],
+			"patch": [
+				[
+					"a",
+					null
+				],
+				[
+					"b",
+					null
+				]
+			]
+		},
+		{
+			"name": "object-prototype-names-are-never-removed",
+			"previous": [
+				[
+					"constructor",
+					"c"
+				],
+				[
+					"toString",
+					"t"
+				],
+				[
+					"__proto__",
+					"p"
+				],
+				[
+					"hasOwnProperty",
+					"h"
+				],
+				[
+					"kept",
+					"k"
+				]
+			],
+			"current": [],
+			"patch": [
+				[
+					"kept",
+					null
+				]
+			]
+		},
+		{
+			"name": "every-object-prototype-name-is-never-removed",
+			"previous": [
+				[
+					"constructor",
+					"constructor"
+				],
+				[
+					"__defineGetter__",
+					"__defineGetter__"
+				],
+				[
+					"__defineSetter__",
+					"__defineSetter__"
+				],
+				[
+					"hasOwnProperty",
+					"hasOwnProperty"
+				],
+				[
+					"__lookupGetter__",
+					"__lookupGetter__"
+				],
+				[
+					"__lookupSetter__",
+					"__lookupSetter__"
+				],
+				[
+					"isPrototypeOf",
+					"isPrototypeOf"
+				],
+				[
+					"propertyIsEnumerable",
+					"propertyIsEnumerable"
+				],
+				[
+					"toString",
+					"toString"
+				],
+				[
+					"valueOf",
+					"valueOf"
+				],
+				[
+					"__proto__",
+					"__proto__"
+				],
+				[
+					"toLocaleString",
+					"toLocaleString"
+				],
+				[
+					"plain",
+					"x"
+				]
+			],
+			"current": [],
+			"patch": [
+				[
+					"plain",
+					null
+				]
+			]
+		},
+		{
+			"name": "object-prototype-name-added",
+			"previous": [],
+			"current": [
+				[
+					"constructor",
+					"c"
+				],
+				[
+					"valueOf",
+					"v"
+				]
+			],
+			"patch": [
+				[
+					"constructor",
+					"c"
+				],
+				[
+					"valueOf",
+					"v"
+				]
+			]
+		},
+		{
+			"name": "proto-key-never-patched",
+			"previous": [],
+			"current": [
+				[
+					"__proto__",
+					"p"
+				],
+				[
+					"a",
+					"1"
+				]
+			],
+			"patch": [
+				[
+					"a",
+					"1"
+				]
+			]
+		}
+	]
+}
