@@ -16,12 +16,17 @@ const validationErrorsCaptureFile = "testdata/validation-errors/validation-error
 // recorded from upstream's validation-probes.test.ts at 6536f8012.
 const validationProbesCaptureFile = "testdata/validation-probes/validation-probes-6536f8012.json"
 
-// regexDivergentRows are capture rows whose pattern RE2 cannot express (a
-// lookahead): pi rejects the value and the port, which lets such a pattern
-// match every string (package schema's documented divergence), accepts it.
-// The test asserts the port still differs there, so a fix shows up.
-var regexDivergentRows = map[string]bool{
-	`{"type":"object","properties":{"v":{"type":"string","pattern":"^(?=.*a).*$"}},"required":["v"]} {"v":"b"}`: true,
+// knownDivergentRows are capture rows the port answers differently, keyed by
+// "<schema> <arguments>", with the reason. The test asserts the port still
+// differs there, so a fix shows up.
+var knownDivergentRows = map[string]string{
+	// RE2 has no lookahead: such a pattern matches every string (package
+	// schema's documented divergence), so pi rejects "b" and the port does not.
+	`{"type":"object","properties":{"v":{"type":"string","pattern":"^(?=.*a).*$"}},"required":["v"]} {"v":"b"}`: "RE2 lookahead",
+	// pi returns parse()'s value, here [{}]; ValidateToolArguments returns
+	// the arguments as a map, so a schema that coerces them to a non-object
+	// is refused with an error instead of answered with a nil map.
+	`{"type":"array"} {}`: "non-object root",
 }
 
 func reparseJSON(t *testing.T, v any) any {
@@ -105,9 +110,9 @@ func TestValidationErrorTextMatchesPi(t *testing.T) {
 		default:
 			matches = err != nil && err.Error() == row.Error
 		}
-		if regexDivergentRows[key] {
+		if reason, known := knownDivergentRows[key]; known {
 			if matches {
-				t.Errorf("%s: now matches pi; drop it from regexDivergentRows", key)
+				t.Errorf("%s now matches pi (was: %s); drop it from knownDivergentRows", key, reason)
 			}
 			continue
 		}
@@ -124,10 +129,6 @@ func TestValidationErrorTextMatchesPi(t *testing.T) {
 // probeDivergences are upstream's reviewer probes the port answers
 // differently, by the reason each cannot match (see the test).
 var probeDivergences = map[string]string{
-	// ai.Schema keeps one non-null member of a "type" array (K41), so
-	// ["string","number"] reaches the validator as "number" and true coerces
-	// to 1 where pi's first branch makes it "true".
-	`type-array-multi {"v":true}`: "K41: a type array collapses to its last non-null type",
 	// A lone surrogate escape decodes to U+FFFD (K39), so the received
 	// arguments echo "\uFFFDA" where pi's JSON.stringify writes "\\ud800A".
 	`unpaired high surrogate, maxLength 1 {"s":"\ud800A"}`: "K39: a lone surrogate decodes as U+FFFD",
@@ -228,4 +229,48 @@ func truncate(s string, n int) string {
 		return s
 	}
 	return s[:n] + "…"
+}
+
+// A decoded schema is validated as the text it came from, which ai.Schema's
+// typed fields cannot always hold (K41), until it is changed: then as it
+// marshals. A schema built in Go has no text.
+func TestSchemaTextFollowsTheDecodedSourceUntilChanged(t *testing.T) {
+	const src = `{"type":"object","properties":{"v":{"type":["null","string"]}}}`
+	var s Schema
+	if err := json.Unmarshal([]byte(src), &s); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := schemaText(&s); string(got) != src {
+		t.Errorf("unchanged: schemaText = %s, want the source %s", got, src)
+	}
+	if got, _ := schemaText(s.Properties["v"]); string(got) == `{"type":["null","string"]}` {
+		t.Errorf("a nested schema kept its own text: %s", got)
+	}
+	cp := s.Clone()
+	cp.Description = "changed"
+	want, _ := json.Marshal(cp)
+	if got, _ := schemaText(cp); string(got) != string(want) {
+		t.Errorf("changed: schemaText = %s, want the marshaled %s", got, want)
+	}
+	built := Object(Prop("v", String()))
+	want, _ = json.Marshal(built)
+	if got, _ := schemaText(built); string(got) != string(want) {
+		t.Errorf("built: schemaText = %s, want %s", got, want)
+	}
+}
+
+// One *Schema compiles once (pi's validatorCache).
+func TestValidatorForCachesPerSchema(t *testing.T) {
+	s := Object(Prop("v", String()))
+	a, err := validatorFor(s)
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, _ := validatorFor(s)
+	if a != b {
+		t.Error("the same *Schema compiled twice")
+	}
+	if c, _ := validatorFor(Object(Prop("v", String()))); c == a {
+		t.Error("two schemas share a validator")
+	}
 }

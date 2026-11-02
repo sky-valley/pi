@@ -339,6 +339,102 @@
 			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"type\":\"string\",\"minLength\":2}},\"required\":[\"v\"]}",
 			"args": "{\"v\":\"é\"}",
 			"error": "Validation failed for tool \"t\":\n  - v: expected at least 2 characters\n\nReceived arguments:\n{\n  \"v\": \"é\"\n}"
+		},
+		{
+			"name": "odd",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"type\":[\"null\",\"string\"]}}}",
+			"args": "{\"v\":[1]}",
+			"error": "Validation failed for tool \"odd\":\n  - v: expected null or string, got array\n\nReceived arguments:\n{\n  \"v\": [\n    1\n  ]\n}"
+		},
+		{
+			"name": "odd",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"type\":[\"null\",\"number\"]}}}",
+			"args": "{\"v\":false}",
+			"value": "{\"v\":null}"
+		},
+		{
+			"name": "odd",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"type\":[\"integer\"]}},\"required\":[\"v\"]}",
+			"args": "{\"v\":\"3.7\"}",
+			"error": "Validation failed for tool \"odd\":\n  - v: expected integer, got string\n\nReceived arguments:\n{\n  \"v\": \"3.7\"\n}"
+		},
+		{
+			"name": "odd",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"type\":[\"string\"]}},\"required\":[\"v\"]}",
+			"args": "{\"v\":null}",
+			"value": "{\"v\":\"\"}"
+		},
+		{
+			"name": "odd",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"type\":[\"null\"]}},\"required\":[\"v\"]}",
+			"args": "{\"v\":5}",
+			"error": "Validation failed for tool \"odd\":\n  - v: expected null, got integer\n\nReceived arguments:\n{\n  \"v\": 5\n}"
+		},
+		{
+			"name": "odd",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"type\":[\"string\",\"number\"]}}}",
+			"args": "{\"v\":true}",
+			"value": "{\"v\":\"true\"}"
+		},
+		{
+			"name": "odd",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"a\":{\"type\":\"number\"}},\"required\":[\"a\",1]}",
+			"args": "{\"a\":1}",
+			"value": "{\"a\":1}"
+		},
+		{
+			"name": "odd",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"anyOf\":[]}}}",
+			"args": "{\"v\":1}",
+			"error": "Validation failed for tool \"odd\":\n  - v: matches no alternative\n\nReceived arguments:\n{\n  \"v\": 1\n}"
+		},
+		{
+			"name": "odd",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"allOf\":[5]}}}",
+			"args": "{\"v\":1}",
+			"error": "A schema must be an object or a boolean, got 5"
+		},
+		{
+			"name": "odd",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"type\":\"object\",\"additionalProperties\":null}}}",
+			"args": "{\"v\":{\"a\":1}}",
+			"error": "A schema must be an object or a boolean, got null"
+		},
+		{
+			"name": "odd",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"type\":5}}}",
+			"args": "{\"v\":\"x\"}",
+			"error": "Validation failed for tool \"odd\":\n  - v: expected 5, got string\n\nReceived arguments:\n{\n  \"v\": \"x\"\n}"
+		},
+		{
+			"name": "odd",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"x\":{\"$ref\":\"#/$defs/X\"}},\"$defs\":{\"X\":{\"type\":\"object\",\"properties\":{\"z\":{\"type\":\"string\"},\"a\":{\"type\":\"string\"}}}}}",
+			"args": "{\"x\":{\"z\":[1],\"a\":[2]}}",
+			"error": "Validation failed for tool \"odd\":\n  - x.z: expected string, got array\n  - x.a: expected string, got array\n\nReceived arguments:\n{\n  \"x\": {\n    \"z\": [\n      1\n    ],\n    \"a\": [\n      2\n    ]\n  }\n}"
+		},
+		{
+			"name": "odd",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"enum\":[{\"b\":1,\"a\":2},\"x\"]}}}",
+			"args": "{\"v\":\"y\"}",
+			"error": "Validation failed for tool \"odd\":\n  - v: expected one of [{\"b\":1,\"a\":2},\"x\"]\n\nReceived arguments:\n{\n  \"v\": \"y\"\n}"
+		},
+		{
+			"name": "odd",
+			"parameters": "{\"$ref\":\"#\"}",
+			"args": "{}",
+			"error": "Maximum call stack size exceeded"
+		},
+		{
+			"name": "odd",
+			"parameters": "{\"type\":\"object\",\"allOf\":[{\"$ref\":\"#\"}]}",
+			"args": "{}",
+			"error": "Maximum call stack size exceeded"
+		},
+		{
+			"name": "odd",
+			"parameters": "{\"type\":\"array\"}",
+			"args": "{}",
+			"value": "[{}]"
 		}
 	]
 }

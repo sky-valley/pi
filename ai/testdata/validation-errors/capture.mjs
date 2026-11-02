@@ -160,6 +160,27 @@ const rows = [
 		const parameters = `{"type":"object","properties":{"v":${v}},"required":["v"]}`;
 		return [ok, bad].map((value) => ({ name: "t", parameters, args: `{"v":${value}}` }));
 	}),
+	// Schemas ai.Schema's typed fields cannot hold (the port compiles the
+	// decoded text), a schema that applies itself forever, and a non-object
+	// root.
+	...[
+		['{"type":"object","properties":{"v":{"type":["null","string"]}}}', '{"v":[1]}'],
+		['{"type":"object","properties":{"v":{"type":["null","number"]}}}', '{"v":false}'],
+		['{"type":"object","properties":{"v":{"type":["integer"]}},"required":["v"]}', '{"v":"3.7"}'],
+		['{"type":"object","properties":{"v":{"type":["string"]}},"required":["v"]}', '{"v":null}'],
+		['{"type":"object","properties":{"v":{"type":["null"]}},"required":["v"]}', '{"v":5}'],
+		['{"type":"object","properties":{"v":{"type":["string","number"]}}}', '{"v":true}'],
+		['{"type":"object","properties":{"a":{"type":"number"}},"required":["a",1]}', '{"a":1}'],
+		['{"type":"object","properties":{"v":{"anyOf":[]}}}', '{"v":1}'],
+		['{"type":"object","properties":{"v":{"allOf":[5]}}}', '{"v":1}'],
+		['{"type":"object","properties":{"v":{"type":"object","additionalProperties":null}}}', '{"v":{"a":1}}'],
+		['{"type":"object","properties":{"v":{"type":5}}}', '{"v":"x"}'],
+		['{"type":"object","properties":{"x":{"$ref":"#/$defs/X"}},"$defs":{"X":{"type":"object","properties":{"z":{"type":"string"},"a":{"type":"string"}}}}}', '{"x":{"z":[1],"a":[2]}}'],
+		['{"type":"object","properties":{"v":{"enum":[{"b":1,"a":2},"x"]}}}', '{"v":"y"}'],
+		['{"$ref":"#"}', "{}"],
+		['{"type":"object","allOf":[{"$ref":"#"}]}', "{}"],
+		['{"type":"array"}', "{}"],
+	].map(([parameters, args]) => ({ name: "odd", parameters, args })),
 ].map((row) => {
 	const schema = JSON.parse(row.parameters ?? parameters);
 	const toolCall = { type: "toolCall", id: "1", name: row.name, arguments: JSON.parse(row.args) };

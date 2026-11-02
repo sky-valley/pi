@@ -28,7 +28,7 @@ func validatorFor(s *Schema) (*schema.Validator, error) {
 	if v, ok := validators.Load(key); ok {
 		return v.(*schema.Validator), nil
 	}
-	data, err := json.Marshal(s)
+	data, err := schemaText(s)
 	if err != nil {
 		return nil, err
 	}
@@ -49,6 +49,25 @@ func validatorFor(s *Schema) (*schema.Validator, error) {
 	}
 	runtime.AddCleanup(s, func(key weak.Pointer[Schema]) { validators.Delete(key) }, key)
 	return v, nil
+}
+
+// schemaText is the JSON pi would compile for s: the text s was decoded from
+// while s still marshals as that text decodes (pi validates the schema object
+// it was given, which ai.Schema's typed fields cannot always hold, K41), else
+// the marshaled schema (one built in Go, or changed since it was decoded).
+func schemaText(s *Schema) ([]byte, error) {
+	data, err := json.Marshal(s)
+	if err != nil || s.source == nil {
+		return data, err
+	}
+	var decoded Schema
+	if json.Unmarshal(s.source, &decoded) != nil {
+		return data, nil
+	}
+	if again, err := json.Marshal(&decoded); err == nil && bytes.Equal(again, data) {
+		return s.source, nil
+	}
+	return data, nil
 }
 
 // ValidateToolArguments validates tool-call arguments against the tool's
@@ -77,7 +96,14 @@ func ValidateToolArguments(tool Tool, toolCall ToolCall) (args map[string]any, e
 		return nil, err
 	}
 	if errs == nil {
-		obj, _ := fromSchemaValue(coerced).(map[string]any)
+		obj, ok := fromSchemaValue(coerced).(map[string]any)
+		if !ok {
+			// pi returns whatever parse() coerced the arguments to (a root
+			// {"type":"array"} makes {} into [{}]); tool arguments are an
+			// object here, so a schema that coerces them to anything else
+			// is refused rather than answered with a nil map.
+			return nil, fmt.Errorf(`Validation failed for tool "%s": the schema coerces the arguments to a non-object`, toolCall.Name)
+		}
 		return obj, nil
 	}
 	lines := make([]string, len(errs))
@@ -104,8 +130,9 @@ func validationPath(pointer string) string {
 
 // toSchemaValue is a decoded arguments value in package schema's value
 // model: an OrderedObject becomes a schema.Object in the same order, at any
-// depth. Copying is also what keeps coercion away from the call's arguments
-// (pi's structuredClone).
+// depth. (Parse never modifies its input; it is fromSchemaValue's copy that
+// keeps a tool from modifying the call's arguments through the returned map,
+// pi's structuredClone, since a coerced value shares unchanged subtrees.)
 func toSchemaValue(v any) any {
 	switch x := v.(type) {
 	case OrderedObject:
