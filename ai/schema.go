@@ -1,6 +1,7 @@
 package ai
 
 import (
+	"bytes"
 	"encoding/json"
 	"iter"
 	"slices"
@@ -57,6 +58,16 @@ type Schema struct {
 	// reaches the wire in the order pi sends it. Keywords present but not
 	// listed follow in the default order.
 	KeywordOrder []string
+
+	// source is the JSON text the outermost UnmarshalJSON decoded this
+	// schema from (nil for a schema built in Go, and for a nested schema,
+	// whose text is inside its root's). The typed fields cannot hold every
+	// schema pi accepts (a type array in its own order, a non-string
+	// required entry, a malformed keyword pi rejects, nested key order), so
+	// ValidateToolArguments compiles this text, as pi validates the schema
+	// object it was given, while the schema still marshals as it did when
+	// decoded (validatorFor).
+	source []byte
 }
 
 // Field is a named object property used by Object.
@@ -459,7 +470,23 @@ func (s *Schema) UnmarshalJSON(data []byte) error {
 	if len(s.Extra) == 0 {
 		s.Extra = nil
 	}
+	// Only the outermost schema keeps its text; the nested ones decoded
+	// above recorded theirs, which this text already holds.
+	for _, child := range s.children() {
+		child.source = nil
+	}
+	s.source = bytes.Clone(data)
 	return nil
+}
+
+// children are the schemas held in s's typed fields.
+func (s *Schema) children() []*Schema {
+	out := slices.Concat(s.AnyOf, s.OneOf, s.AllOf)
+	for _, p := range s.Properties {
+		out = append(out, p)
+	}
+	out = append(out, s.Items, s.AdditionalSchema)
+	return slices.DeleteFunc(out, func(c *Schema) bool { return c == nil })
 }
 
 // Clone returns a deep copy of the schema (nil-safe). It is the analogue of
@@ -481,6 +508,7 @@ func (s *Schema) Clone() *Schema {
 	}
 	cp.PropertyOrder = slices.Clone(s.PropertyOrder)
 	cp.KeywordOrder = slices.Clone(s.KeywordOrder)
+	cp.source = bytes.Clone(s.source)
 	cp.Required = slices.Clone(s.Required)
 	cp.Items = s.Items.Clone()
 	if s.Enum != nil {

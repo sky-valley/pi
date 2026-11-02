@@ -270,6 +270,7 @@ func TestSchemaCloneNoAliasing(t *testing.T) {
 		AllOf:             []*Schema{{Type: "boolean"}},
 		Extra:             map[string]any{"x-note": []any{"e"}},
 		KeywordOrder:      []string{"type", "properties"},
+		source:            []byte(`{"type":"object"}`),
 	}
 
 	sv := reflect.ValueOf(src).Elem()
