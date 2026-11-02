@@ -124,10 +124,10 @@ func TestValidationErrorTextMatchesPi(t *testing.T) {
 // probeDivergences are upstream's reviewer probes the port answers
 // differently, by the reason each cannot match (see the test).
 var probeDivergences = map[string]string{
-	// ai.Schema keeps one non-null member of a "type" array (K40), so
+	// ai.Schema keeps one non-null member of a "type" array (K41), so
 	// ["string","number"] reaches the validator as "number" and true coerces
 	// to 1 where pi's first branch makes it "true".
-	`type-array-multi {"v":true}`: "K40: a type array collapses to its last non-null type",
+	`type-array-multi {"v":true}`: "K41: a type array collapses to its last non-null type",
 	// A lone surrogate escape decodes to U+FFFD (K39), so the received
 	// arguments echo "\uFFFDA" where pi's JSON.stringify writes "\\ud800A".
 	`unpaired high surrogate, maxLength 1 {"s":"\ud800A"}`: "K39: a lone surrogate decodes as U+FFFD",
@@ -175,7 +175,7 @@ func TestValidationProbesMatchPi(t *testing.T) {
 		key := row.Name + " " + row.Args
 		var schema Schema
 		if err := json.Unmarshal([]byte(row.Parameters), &schema); err != nil {
-			// ai.Schema has no form for a boolean subschema (K40).
+			// ai.Schema has no form for a boolean subschema (K41).
 			seen[key] = true
 			if _, known := undecodableProbes[key]; !known {
 				t.Errorf("probe %d %s: schema does not decode: %v", i, key, err)
