@@ -139,6 +139,27 @@ const rows = [
 	{ name: "pick", parameters: union, args: "{}" },
 	{ name: "ref", parameters: dangling, args: '{"ok":"x"}' },
 	{ name: "ref", parameters: dangling, args: '{"ok":"x","bad":1}' },
+	// One keyword each, on property "v": a value that passes, one that fails.
+	...[
+		['{"type":"string","pattern":"^a+$"}', '"aaa"', '"bbb"'],
+		['{"type":"string","minLength":2}', '"ab"', '"a"'],
+		['{"type":"string","maxLength":2}', '"ab"', '"abc"'],
+		['{"type":"array","items":{"type":"integer"},"minItems":2}', "[1,2]", "[1]"],
+		['{"type":"array","items":{"type":"integer"},"maxItems":1}', "[1]", "[1,2]"],
+		['{"type":"number","minimum":5}', "5", "4"],
+		['{"type":"number","maximum":5}', "5", "6"],
+		['{"type":"number","exclusiveMinimum":5}', "6", "5"],
+		['{"type":"number","exclusiveMaximum":5}', "4", "5"],
+		['{"type":"number","multipleOf":3}', "9", "7"],
+		['{"type":"number","multipleOf":0.1}', "0.3", "0.35"],
+		['{"type":"string","const":"x"}', '"x"', '"y"'],
+		['{"type":"null","const":null}', "null", '"null"'],
+		['{"type":"string","pattern":"^(?=.*a).*$"}', '"a"', '"b"'],
+		['{"type":"string","minLength":2}', '"😀"', '"é"'],
+	].flatMap(([v, ok, bad]) => {
+		const parameters = `{"type":"object","properties":{"v":${v}},"required":["v"]}`;
+		return [ok, bad].map((value) => ({ name: "t", parameters, args: `{"v":${value}}` }));
+	}),
 ].map((row) => {
 	const schema = JSON.parse(row.parameters ?? parameters);
 	const toolCall = { type: "toolCall", id: "1", name: row.name, arguments: JSON.parse(row.args) };

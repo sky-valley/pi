@@ -159,6 +159,186 @@
 			"parameters": "{\"type\":\"object\",\"properties\":{\"ok\":{\"type\":\"string\"},\"bad\":{\"$ref\":\"#/$defs/missing\"}}}",
 			"args": "{\"ok\":\"x\",\"bad\":1}",
 			"error": "Validation failed for tool \"ref\":\n  - bad: unresolved reference #/$defs/missing\n\nReceived arguments:\n{\n  \"ok\": \"x\",\n  \"bad\": 1\n}"
+		},
+		{
+			"name": "t",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"type\":\"string\",\"pattern\":\"^a+$\"}},\"required\":[\"v\"]}",
+			"args": "{\"v\":\"aaa\"}",
+			"value": "{\"v\":\"aaa\"}"
+		},
+		{
+			"name": "t",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"type\":\"string\",\"pattern\":\"^a+$\"}},\"required\":[\"v\"]}",
+			"args": "{\"v\":\"bbb\"}",
+			"error": "Validation failed for tool \"t\":\n  - v: expected to match ^a+$\n\nReceived arguments:\n{\n  \"v\": \"bbb\"\n}"
+		},
+		{
+			"name": "t",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"type\":\"string\",\"minLength\":2}},\"required\":[\"v\"]}",
+			"args": "{\"v\":\"ab\"}",
+			"value": "{\"v\":\"ab\"}"
+		},
+		{
+			"name": "t",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"type\":\"string\",\"minLength\":2}},\"required\":[\"v\"]}",
+			"args": "{\"v\":\"a\"}",
+			"error": "Validation failed for tool \"t\":\n  - v: expected at least 2 characters\n\nReceived arguments:\n{\n  \"v\": \"a\"\n}"
+		},
+		{
+			"name": "t",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"type\":\"string\",\"maxLength\":2}},\"required\":[\"v\"]}",
+			"args": "{\"v\":\"ab\"}",
+			"value": "{\"v\":\"ab\"}"
+		},
+		{
+			"name": "t",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"type\":\"string\",\"maxLength\":2}},\"required\":[\"v\"]}",
+			"args": "{\"v\":\"abc\"}",
+			"error": "Validation failed for tool \"t\":\n  - v: expected at most 2 characters\n\nReceived arguments:\n{\n  \"v\": \"abc\"\n}"
+		},
+		{
+			"name": "t",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"type\":\"array\",\"items\":{\"type\":\"integer\"},\"minItems\":2}},\"required\":[\"v\"]}",
+			"args": "{\"v\":[1,2]}",
+			"value": "{\"v\":[1,2]}"
+		},
+		{
+			"name": "t",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"type\":\"array\",\"items\":{\"type\":\"integer\"},\"minItems\":2}},\"required\":[\"v\"]}",
+			"args": "{\"v\":[1]}",
+			"error": "Validation failed for tool \"t\":\n  - v: expected at least 2 items\n\nReceived arguments:\n{\n  \"v\": [\n    1\n  ]\n}"
+		},
+		{
+			"name": "t",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"type\":\"array\",\"items\":{\"type\":\"integer\"},\"maxItems\":1}},\"required\":[\"v\"]}",
+			"args": "{\"v\":[1]}",
+			"value": "{\"v\":[1]}"
+		},
+		{
+			"name": "t",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"type\":\"array\",\"items\":{\"type\":\"integer\"},\"maxItems\":1}},\"required\":[\"v\"]}",
+			"args": "{\"v\":[1,2]}",
+			"error": "Validation failed for tool \"t\":\n  - v: expected at most 1 items\n\nReceived arguments:\n{\n  \"v\": [\n    1,\n    2\n  ]\n}"
+		},
+		{
+			"name": "t",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"type\":\"number\",\"minimum\":5}},\"required\":[\"v\"]}",
+			"args": "{\"v\":5}",
+			"value": "{\"v\":5}"
+		},
+		{
+			"name": "t",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"type\":\"number\",\"minimum\":5}},\"required\":[\"v\"]}",
+			"args": "{\"v\":4}",
+			"error": "Validation failed for tool \"t\":\n  - v: expected >= 5\n\nReceived arguments:\n{\n  \"v\": 4\n}"
+		},
+		{
+			"name": "t",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"type\":\"number\",\"maximum\":5}},\"required\":[\"v\"]}",
+			"args": "{\"v\":5}",
+			"value": "{\"v\":5}"
+		},
+		{
+			"name": "t",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"type\":\"number\",\"maximum\":5}},\"required\":[\"v\"]}",
+			"args": "{\"v\":6}",
+			"error": "Validation failed for tool \"t\":\n  - v: expected <= 5\n\nReceived arguments:\n{\n  \"v\": 6\n}"
+		},
+		{
+			"name": "t",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"type\":\"number\",\"exclusiveMinimum\":5}},\"required\":[\"v\"]}",
+			"args": "{\"v\":6}",
+			"value": "{\"v\":6}"
+		},
+		{
+			"name": "t",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"type\":\"number\",\"exclusiveMinimum\":5}},\"required\":[\"v\"]}",
+			"args": "{\"v\":5}",
+			"error": "Validation failed for tool \"t\":\n  - v: expected > 5\n\nReceived arguments:\n{\n  \"v\": 5\n}"
+		},
+		{
+			"name": "t",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"type\":\"number\",\"exclusiveMaximum\":5}},\"required\":[\"v\"]}",
+			"args": "{\"v\":4}",
+			"value": "{\"v\":4}"
+		},
+		{
+			"name": "t",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"type\":\"number\",\"exclusiveMaximum\":5}},\"required\":[\"v\"]}",
+			"args": "{\"v\":5}",
+			"error": "Validation failed for tool \"t\":\n  - v: expected < 5\n\nReceived arguments:\n{\n  \"v\": 5\n}"
+		},
+		{
+			"name": "t",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"type\":\"number\",\"multipleOf\":3}},\"required\":[\"v\"]}",
+			"args": "{\"v\":9}",
+			"value": "{\"v\":9}"
+		},
+		{
+			"name": "t",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"type\":\"number\",\"multipleOf\":3}},\"required\":[\"v\"]}",
+			"args": "{\"v\":7}",
+			"error": "Validation failed for tool \"t\":\n  - v: expected a multiple of 3\n\nReceived arguments:\n{\n  \"v\": 7\n}"
+		},
+		{
+			"name": "t",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"type\":\"number\",\"multipleOf\":0.1}},\"required\":[\"v\"]}",
+			"args": "{\"v\":0.3}",
+			"value": "{\"v\":0.3}"
+		},
+		{
+			"name": "t",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"type\":\"number\",\"multipleOf\":0.1}},\"required\":[\"v\"]}",
+			"args": "{\"v\":0.35}",
+			"error": "Validation failed for tool \"t\":\n  - v: expected a multiple of 0.1\n\nReceived arguments:\n{\n  \"v\": 0.35\n}"
+		},
+		{
+			"name": "t",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"type\":\"string\",\"const\":\"x\"}},\"required\":[\"v\"]}",
+			"args": "{\"v\":\"x\"}",
+			"value": "{\"v\":\"x\"}"
+		},
+		{
+			"name": "t",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"type\":\"string\",\"const\":\"x\"}},\"required\":[\"v\"]}",
+			"args": "{\"v\":\"y\"}",
+			"error": "Validation failed for tool \"t\":\n  - v: expected \"x\"\n\nReceived arguments:\n{\n  \"v\": \"y\"\n}"
+		},
+		{
+			"name": "t",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"type\":\"null\",\"const\":null}},\"required\":[\"v\"]}",
+			"args": "{\"v\":null}",
+			"value": "{\"v\":null}"
+		},
+		{
+			"name": "t",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"type\":\"null\",\"const\":null}},\"required\":[\"v\"]}",
+			"args": "{\"v\":\"null\"}",
+			"error": "Validation failed for tool \"t\":\n  - v: expected null, got string\n\nReceived arguments:\n{\n  \"v\": \"null\"\n}"
+		},
+		{
+			"name": "t",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"type\":\"string\",\"pattern\":\"^(?=.*a).*$\"}},\"required\":[\"v\"]}",
+			"args": "{\"v\":\"a\"}",
+			"value": "{\"v\":\"a\"}"
+		},
+		{
+			"name": "t",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"type\":\"string\",\"pattern\":\"^(?=.*a).*$\"}},\"required\":[\"v\"]}",
+			"args": "{\"v\":\"b\"}",
+			"error": "Validation failed for tool \"t\":\n  - v: expected to match ^(?=.*a).*$\n\nReceived arguments:\n{\n  \"v\": \"b\"\n}"
+		},
+		{
+			"name": "t",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"type\":\"string\",\"minLength\":2}},\"required\":[\"v\"]}",
+			"args": "{\"v\":\"😀\"}",
+			"error": "Validation failed for tool \"t\":\n  - v: expected at least 2 characters\n\nReceived arguments:\n{\n  \"v\": \"😀\"\n}"
+		},
+		{
+			"name": "t",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"v\":{\"type\":\"string\",\"minLength\":2}},\"required\":[\"v\"]}",
+			"args": "{\"v\":\"é\"}",
+			"error": "Validation failed for tool \"t\":\n  - v: expected at least 2 characters\n\nReceived arguments:\n{\n  \"v\": \"é\"\n}"
 		}
 	]
 }
