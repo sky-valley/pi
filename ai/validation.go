@@ -69,19 +69,13 @@ func ValidateToolArguments(tool Tool, toolCall ToolCall) (args map[string]any, e
 	if err != nil {
 		return nil, err
 	}
-	// Explaining a failure can meet a malformed subschema the check never
-	// compiled; pi's errors() throws there, and so does validateToolArguments.
-	defer func() {
-		if r := recover(); r != nil {
-			e, ok := r.(error)
-			if !ok {
-				panic(r)
-			}
-			args, err = nil, e
-		}
-	}()
-
-	coerced, errs := v.Parse(toSchemaValue(toolCall.OrderedArguments()))
+	// Parse fails where pi's parse() throws (a malformed subschema compiled
+	// on first use, a schema that applies itself to the arguments forever),
+	// and so does validateToolArguments.
+	coerced, errs, err := v.Parse(toSchemaValue(toolCall.OrderedArguments()))
+	if err != nil {
+		return nil, err
+	}
 	if errs == nil {
 		obj, _ := fromSchemaValue(coerced).(map[string]any)
 		return obj, nil

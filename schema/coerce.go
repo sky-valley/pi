@@ -51,6 +51,14 @@ type coerceRun struct {
 	// cuts is how often a re-entry was cut short; results computed across
 	// one are not memoized.
 	cuts int
+	// inPlace is, by node, the values pass 2's convertNode or pass 3's
+	// coerceTypes is working on, with how many pairs entered held then. A
+	// schema object can hold itself (one built in Go: {allOf: [itself]}),
+	// and both passes apply allOf, anyOf and oneOf members to the value
+	// itself: a node met again on the same value, with no `$ref` re-entry
+	// in between to cut it, would recurse forever, where upstream's coerce
+	// overflows V8's stack and throws RangeError (ErrStackOverflow).
+	inPlace map[*schemaObject][]inPlaceEntry
 	// memo holds results of `$ref` targets by (node, value): a recursive
 	// union whose branches all convert the same children (and all fail)
 	// would convert them once per branch, exponentially in the depth.
@@ -60,6 +68,29 @@ type coerceRun struct {
 type enteredPair struct {
 	node  *schemaObject
 	value any
+}
+
+type inPlaceEntry struct {
+	value   any
+	entered int
+}
+
+// enterNode records that node works on value, failing where that repeats a
+// node and value already being worked on (see inPlace).
+func (r *coerceRun) enterNode(node *schemaObject, value any) {
+	for _, e := range r.inPlace[node] {
+		if e.entered == len(r.entered) && sameValue(e.value, value) {
+			fail(ErrStackOverflow)
+		}
+	}
+	if r.inPlace == nil {
+		r.inPlace = map[*schemaObject][]inPlaceEntry{}
+	}
+	r.inPlace[node] = append(r.inPlace[node], inPlaceEntry{value, len(r.entered)})
+}
+
+func (r *coerceRun) leaveNode(node *schemaObject) {
+	r.inPlace[node] = r.inPlace[node][:len(r.inPlace[node])-1]
 }
 
 // coerce is value coerced: a copy along the changed paths only, or value
@@ -110,17 +141,11 @@ func (r *coerceRun) reenter(node *schemaObject, base string, value any, memoize 
 }
 
 // passes is whether value passes the schema node; ok is false when node
-// cannot be compiled.
+// cannot be compiled or its check throws (a cycle on one value): upstream
+// catches every throw there.
 func (r *coerceRun) passes(node any, base string, value any) (pass, ok bool) {
-	defer func() {
-		if p := recover(); p != nil {
-			if _, isCompile := p.(*compileError); !isCompile && p != errRestart {
-				panic(p)
-			}
-			pass, ok = false, false
-		}
-	}()
-	return r.c.check(node, r.baseOf(node, base))(value), true
+	err := r.c.try(func() { pass = r.c.check(node, r.baseOf(node, base))(value) })
+	return pass && err == nil, err == nil
 }
 
 // passesTrue is `passes(...) === true`.
@@ -138,12 +163,12 @@ func (r *coerceRun) baseOf(node any, base string) string {
 	return base
 }
 
-// regex is sharedRegex where coercion meets a pattern; one that is not valid
-// is upstream's throw out of coerce().
+// regexOrPanic is sharedRegex where coercion meets a pattern; one that is
+// not valid is upstream's throw out of coerce().
 func regexOrPanic(source string) *pattern {
 	re, err := sharedRegex(source)
 	if err != nil {
-		panic(err)
+		fail(err)
 	}
 	return re
 }
@@ -265,6 +290,8 @@ func (r *coerceRun) convert(v any, base string, value any) any {
 // convertNode is one schema node's conversion: its first keyword among
 // const, enum, the unions, allOf and type.
 func (r *coerceRun) convertNode(node *schemaObject, b string, value any) any {
+	r.enterNode(node, value)
+	defer r.leaveNode(node)
 	if literal, ok := node.get("const"); ok {
 		return convertLiteral(literal, value)
 	}
@@ -454,6 +481,8 @@ func (r *coerceRun) coerceTypes(value, schema any, base string) any {
 	if !ok {
 		return value
 	}
+	r.enterNode(node, value)
+	defer r.leaveNode(node)
 	b := r.baseOf(node, base)
 	next := value
 	if list, ok := node.kw("allOf").([]any); ok {

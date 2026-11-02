@@ -16,6 +16,8 @@
 //   - rows: compile(schema, options) and, per value, check, errors (path,
 //     keyword, message, in order), and with coerce: true coerce (the value,
 //     and whether it came back as itself) and parse; or the compile error.
+//     A call that throws is recorded as {"$":"throws","message": ...} in
+//     place of its result (a coerce that throws has no coerceSame).
 //   - uris: resolver.ts resolveUri(ref, base).
 //   - regexes: shared.ts sharedRegex(source): its SyntaxError, or test() of
 //     each string.
@@ -80,17 +82,36 @@ function capture(name, schema, options, values) {
 		return row;
 	}
 	row.cases = values.map((value) => {
-		const out = { value: enc(value), check: validator.check(value), errors: validator.errors(value) };
+		const out = { value: enc(value), check: attempt(() => validator.check(value)), errors: attempt(() => validator.errors(value)) };
 		if (options.coerce) {
-			const coerced = validator.coerce(value);
-			out.coerce = enc(coerced);
-			out.coerceSame = coerced === value;
-			const parsed = validator.parse(value);
-			out.parse = parsed.ok ? { ok: true, value: enc(parsed.value) } : { ok: false, errors: parsed.errors };
+			let coerced;
+			try {
+				coerced = validator.coerce(value);
+				out.coerce = enc(coerced);
+				out.coerceSame = coerced === value;
+			} catch (error) {
+				out.coerce = thrown(error);
+			}
+			out.parse = attempt(() => {
+				const parsed = validator.parse(value);
+				return parsed.ok ? { ok: true, value: enc(parsed.value) } : { ok: false, errors: parsed.errors };
+			});
 		}
 		return out;
 	});
 	return row;
+}
+
+function thrown(error) {
+	return { $: "throws", message: String(error.message) };
+}
+
+function attempt(f) {
+	try {
+		return f();
+	} catch (error) {
+		return thrown(error);
+	}
 }
 
 function encOptions(options) {
@@ -373,6 +394,36 @@ add("invalid pattern group", { pattern: "(?i)a" }, []);
 add("invalid pattern range", { pattern: "[z-a]" }, []);
 add("invalid pattern bounds", { pattern: "a{2,1}" }, []);
 
+// a subschema the check never compiles is compiled by errors() and coerce()
+coerceRows("malformed if compiled by errors", { if: { pattern: "(" }, minimum: 3 }, [1, 5]);
+coerceRows("malformed if in a property", { type: "object", properties: { a: { type: "string", minLength: 5, if: { pattern: "(" } } } }, [{ a: "x" }, { a: "xxxxx" }]);
+coerceRows("malformed draft 7 prefixItems met by coerce", { prefixItems: [{ patternProperties: { "(": true } }] }, [[{ a: 1 }], 5], { draft: "7" });
+
+// cycles on one value: upstream's check overflows V8's stack where a value reaches them
+const cycles = [
+	["ref to root", { $ref: "#" }, [{}, 5]],
+	["allOf ref to root", { type: "object", allOf: [{ $ref: "#" }] }, [{}, 5]],
+	["ref and type", { $ref: "#", type: "object" }, [{}, 5]],
+	["self ref def", { $defs: { A: { $ref: "#/$defs/A" } }, $ref: "#/$defs/A" }, [{}, 5]],
+	["mutual ref defs", { $defs: { A: { $ref: "#/$defs/B" }, B: { allOf: [{ $ref: "#/$defs/A" }] } }, anyOf: [{ type: "string" }, { $ref: "#/$defs/A" }] }, ["s", 5]],
+	["anyOf passes first", { anyOf: [{ type: "string" }, { $ref: "#" }] }, ["s", 5]],
+	["recursion into properties", { type: "object", properties: { x: { $ref: "#" } } }, [{}, { x: {} }, { x: 5 }, { x: { x: { x: 1 } } }]],
+	["cycle reached through a child first", { anyOf: [{ type: "object" }, { $ref: "#/$defs/Y" }], properties: { p: { $ref: "#/$defs/Y" } }, $defs: { Y: { $ref: "#" } } }, [{}, { p: 5 }, 5]],
+	["cycle only the explainer meets", { type: "object", minProperties: 1, allOf: [{ $ref: "#" }] }, [{}, { a: 1 }, 5]],
+	["unevaluated cycle", { unevaluatedProperties: false, allOf: [{ $ref: "#" }] }, [{}, { a: 1 }]],
+	["unevaluated cycle the explainer meets", { minProperties: 2, allOf: [{ $ref: "#" }], unevaluatedProperties: false }, [{ a: 1 }]],
+	["not cycle", { not: { $ref: "#" } }, [1]],
+	["dependentSchemas cycle", { dependentSchemas: { a: { $ref: "#" } } }, [{}, { a: 1 }]],
+	["if cycle", { if: { $ref: "#" }, then: true }, [1]],
+	["if alone is no cycle", { if: { $ref: "#" } }, [1]],
+	["items and allOf cycle", { items: { $ref: "#" }, minItems: 1, allOf: [{ $ref: "#" }] }, [[], [[]], 1]],
+	["dynamicRef cycle", { $dynamicAnchor: "a", $dynamicRef: "#a" }, [1, {}]],
+	["dynamicRef cycle in a def", { $defs: { x: { $dynamicAnchor: "a", $dynamicRef: "#a" } }, $ref: "#/$defs/x" }, [1]],
+	["dynamicRef recursion into properties", { $dynamicAnchor: "a", type: "object", properties: { c: { $dynamicRef: "#a" } } }, [{ c: { c: 1 } }, { c: { c: {} } }]],
+];
+for (const [name, schema, values] of cycles) coerceRows(name, schema, values);
+add("draft 7 ref cycle", { definitions: { A: { $ref: "#/definitions/A" } }, $ref: "#/definitions/A" }, [1], { draft: "7" });
+
 // bytes
 add("bytes bounds", { type: "object", properties: { data: { type: "bytes", minLength: 1, maxLength: 4 } } }, [
 	{ data: new Uint8Array(4) },
@@ -590,7 +641,9 @@ const uris = uriCases.map(([ref, base]) => [ref, base, resolveUri(ref, base)]);
 // sharedRegex
 // ---------------------------------------------------------------------------------------------------------------
 
-const subjects = ["", "a", "abc", "ABC", "a1", "1", "\n", "\r", "\u2028", "\t", "\u000b", "\u00a0", "\ufeff", "\u3000", " ", "😀", "é", "π", "৪", "a-b", "a]b", "a{b", "{", "}", "x{1,2}", "\\", "/", "\u0003", "ab\ncd", "aa", "aaa", "0", "p{L}", "_", "$", "^"];
+const subjects = ["", "a", "abc", "ABC", "a1", "1", "\n", "\r", "\u2028", "\t", "\u000b", "\u00a0", "\ufeff", "\u3000", " ", "😀", "é", "π", "৪", "a-b", "a]b", "a{b", "{", "}", "x{1,2}", "\\", "/", "\u0003", "ab\ncd", "aa", "aaa", "0", "p{L}", "_", "$", "^",
+	// UTF-16 code units, which a pattern without the u flag matches one by one
+	"-😀", "-😀😀", "\ud83d", "\ude00", "-\ud83d", "😀x", "\ude00\ud83d", "-\ud83d\ud83d", "-\u{F0000}", "\u{F0000}\u{F07FF}"];
 const sources = [
 	"^abc$", "abc", "^\\d+$", "^\\D$", "^\\w+$", "^\\W$", "^\\s$", "^\\S$", "^.$", "^.*$", "^[^]$", "^[]$", "[]", "^[a-z]+$",
 	"^[\\s]$", "^[\\S]$", "^[\\d-z]$", "^[\\w-]+$", "^[-a]$", "^[a-]$", "^[\\]]$", "^[\\-]$", "^[\\b]$", "^\\cC$", "^\\cc$", "\\c",
@@ -602,6 +655,15 @@ const sources = [
 	"a|b|", "^(a|b)$", "^\\bab\\b", "\\Ba", "^\\$\\^\\.\\*\\+\\?\\(\\)\\[\\]\\{\\}\\|\\\\$", "a{1001}", "^\\u00e9$",
 	"(", ")", "[", "a**", "*", "a\\", "(?i)a", "[z-a]", "a{2,1}", "a{2}{3}", "+a", "a|*", "^*", "(?<1a>x)",
 	"^\\uD83D$", "^[😀-😂]$", "^\\00$", "^\\01$", "^[\\01]$", "\\k", "^\\k$",
+	// duplicate group names (V8 12.4 predates duplicate named groups)
+	"(?<a>x)(?<a>y)", "(?<a>x)|(?<a>y)", "(?<a>x)(?<b>y)", "(?<a>x)\\-(?<a>y)", "((?<a>x))(?<a>y)", "(?<a>(?<a>x))",
+	// without the u flag (\- outside a class is invalid with it), code units
+	"^\\-.$", "^\\-..$", "^\\-[^a]$", "^\\-[😀]$", "^\\-\\S$", "^\\-😀+$", "^\\-.{2}$", "^\\-\\W$", "^\\-\\s$",
+	"^\\-(?:😀)+$", "^\\-[😀-😂]$", "^\\-[^😀]$", "^\\-[^😀]{2}$", "^\\-?\\ud83d", "\\-?\\ud83d$", "\\-?\\ude00",
+	"^\\-?[\\ud800-\\udbff]", "^\\-?[\\ud800-\\udfff]+$", "\\-?[^\\ud800-\\udfff]", "^\\-?\\ud83d\\ude00$", "^\\-?\\u{1F600}$",
+	"^\\-?[\\ud83d\\ude00]$", "^\\-?[\\ud83d\\ude00]{2}$", "^\\-?\\D{3}$", "^\\-?[\\s\\S]{3}$", "^\\-?[^]{2}$", "^\\-?.*$",
+	"^\\-?[a-\\ud83d]{2}$", "^\\-?(😀|x)$", "^\\-?\\😀$", "^\\-?[\\😀]{2}$",
+	"^\\-?\ud83d", "^\\-?[\ud800-\udfff]{2}$", "^\\-?[\u{F0000}]$", "^\\-?[\u{F0000}-\u{F07FF}]+$", "^\\-?(?<n😀>.)$", "^\\-?(?<𝑥>.)$", "^(?<𝑥>.)$", "^(?<é>.)$",
 ];
 const regexes = sources.map((source) => {
 	let re;

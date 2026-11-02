@@ -49,7 +49,7 @@ func TestBuildersCompileWithTheDeclaredSemantics(t *testing.T) {
 	if !v.Check(Object{{"name", "a"}}) || !v.Check(Object{{"name", "a"}, {"tags", []any{"x", "y"}}}) {
 		t.Error("valid values failed")
 	}
-	wantErrors(t, v.Errors(Object{{"name", ""}, {"tags", []any{"x", "x"}}, {"other", 1.0}}),
+	wantErrors(t, mustErrors(t, v, Object{{"name", ""}, {"tags", []any{"x", "x"}}, {"other", 1.0}}),
 		ValidationError{"/name", "minLength", "expected at least 1 characters"},
 		ValidationError{"/tags", "uniqueItems", "expected unique items"},
 		ValidationError{"/other", "additionalProperties", "unknown field"})
@@ -64,7 +64,7 @@ func TestTaggedUnionOfBuilders(t *testing.T) {
 	if !v.Check(Object{{"kind", "image"}, {"url", "u"}}) {
 		t.Error("valid image failed")
 	}
-	wantErrors(t, v.Errors(Object{{"kind", "image"}, {"text", "t"}}),
+	wantErrors(t, mustErrors(t, v, Object{{"kind", "image"}, {"text", "t"}}),
 		ValidationError{"/url", "required", "missing"},
 		ValidationError{"/text", "additionalProperties", "unknown field"})
 }

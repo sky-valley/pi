@@ -2,6 +2,8 @@ package schema
 
 import (
 	"math"
+	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/sky-valley/pi/internal/jstext"
@@ -12,23 +14,37 @@ import (
 // pattern cache drops a RegExp once its schemas are collected (the port's
 // cache keeps its patterns; see regexes). What carries over is the sharing.
 func TestSharedRegexIsSharedBySource(t *testing.T) {
+	// The cache is the process's: each run (go test -count=n) uses sources
+	// no run before it has.
+	prefix := "^unique-" + jstext.NumberToString(float64(sharedRegexRuns.Add(1))) + "-"
 	before := sharedRegexCount()
 	var validators []*Validator
 	for i := range 50 {
-		validators = append(validators, mustCompile(t, Object{{"type", "string"}, {"pattern", "^unique-" + jstext.NumberToString(float64(i)) + "$"}}, Options{}))
+		validators = append(validators, mustCompile(t, Object{{"type", "string"}, {"pattern", prefix + jstext.NumberToString(float64(i)) + "$"}}, Options{}))
 	}
-	again := mustCompile(t, Object{{"type", "string"}, {"pattern", "^unique-0$"}}, Options{})
+	again := mustCompile(t, Object{{"type", "string"}, {"pattern", prefix + "0$"}}, Options{})
 	if got := sharedRegexCount(); got != before+50 {
 		t.Errorf("cache holds %d, want %d", got, before+50)
 	}
-	if !again.Check("unique-0") || !validators[0].Check("unique-0") || validators[1].Check("unique-0") {
+	value := prefix[1:] + "0"
+	if !again.Check(value) || !validators[0].Check(value) || validators[1].Check(value) {
 		t.Error("checks")
 	}
-	a, _ := sharedRegex("^unique-0$")
-	b, _ := sharedRegex("^unique-0$")
+	a, _ := sharedRegex(prefix + "0$")
+	b, _ := sharedRegex(prefix + "0$")
 	if a != b {
 		t.Error("one source compiled twice")
 	}
+}
+
+// sharedRegexRuns counts the runs of TestSharedRegexIsSharedBySource.
+var sharedRegexRuns atomic.Int64
+
+// sharedRegexCount is the number of cached sources.
+func sharedRegexCount() int {
+	n := 0
+	regexes.Range(func(any, any) bool { n++; return true })
+	return n
 }
 
 func TestDecodeReadsJSONAsJSONParseDoes(t *testing.T) {
@@ -115,3 +131,40 @@ func TestDeepEqualAndIdentity(t *testing.T) {
 }
 
 func json6() any { return int8(6) }
+
+// TestDecodeLiteralsDoNotCopyTheInput: reading a literal (null, true, false)
+// compares in place; a copy of the rest of the input per literal made an
+// array of 80k nulls take seconds.
+func TestDecodeLiteralsDoNotCopyTheInput(t *testing.T) {
+	data := []byte("[" + strings.Repeat("null,true,false,", 1000) + "null]")
+	allocs := testing.AllocsPerRun(5, func() {
+		if _, err := Decode(data); err != nil {
+			t.Fatal(err)
+		}
+	})
+	if allocs > 100 {
+		t.Errorf("decoding 3001 literals allocates %v times", allocs)
+	}
+}
+
+func BenchmarkDecodeLiterals(b *testing.B) {
+	data := []byte("[" + strings.Repeat("null,", 80000) + "null]")
+	for b.Loop() {
+		if _, err := Decode(data); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+// TestDecodeOrdersIndexKeys: array-index keys come first, ascending over
+// their whole uint32 range (a difference of two cast to a 32-bit int would
+// wrap), and the other keys keep their order.
+func TestDecodeOrdersIndexKeys(t *testing.T) {
+	v, err := Decode([]byte(`{"b":0,"4294967294":1,"x":2,"0":3,"2147483648":4,"5":5,"4294967295":6}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := stringify(v), `{"0":3,"5":5,"2147483648":4,"4294967294":1,"b":0,"x":2,"4294967295":6}`; got != want {
+		t.Errorf("got %s, want %s", got, want)
+	}
+}

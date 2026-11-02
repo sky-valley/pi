@@ -173,15 +173,24 @@ func stringCheck(strict bool, lo, hi float64, re *pattern, format FormatCheck) c
 	}
 }
 
-// numberCheck is the number keywords. mode 0 passes other types, 1 requires a
-// number, 2 an integer.
-func numberCheck(mode int, lo, hi, xlo, xhi float64, multipleOf *float64) check {
+// numberType is what the number keywords' check asks of the type: nothing
+// (other types pass), a number, or an integer.
+type numberType int
+
+const (
+	othersPass numberType = iota
+	numberOnly
+	integerOnly
+)
+
+// numberCheck is the number keywords.
+func numberCheck(typ numberType, lo, hi, xlo, xhi float64, multipleOf *float64) check {
 	return func(v any) bool {
 		f, ok := numberOf(v)
 		if !ok {
-			return mode == 0
+			return typ == othersPass
 		}
-		if mode == 2 && !isIntegral(f) {
+		if typ == integerOnly && !isIntegral(f) {
 			return false
 		}
 		return f >= lo && f <= hi && f > xlo && f < xhi && (multipleOf == nil || isMultiple(f, *multipleOf))

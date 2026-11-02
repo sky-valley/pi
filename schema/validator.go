@@ -71,15 +71,17 @@ type ValidationError struct {
 //
 // A Validator is safe for concurrent use. Check runs lock-free unless the
 // schema tracks a dynamic scope (a bookended `$dynamicRef`), whose scope
-// stack the closures share; Errors and Coerce build their compiles on first
-// use and run one call at a time.
+// stack the closures share, or applies itself to the same value (a cycle,
+// recursion.go), whose guards share theirs; Errors and Coerce build their
+// compiles on first use and run one call at a time.
 type Validator struct {
 	schema  any
 	opts    *treeOptions
 	coerce  bool
+	c       *compiler
 	check   check
-	dynamic bool
-	checkMu sync.Mutex // serializes check when dynamic
+	serial  bool       // the check shares state: dynamic scope or guards
+	checkMu sync.Mutex // serializes check when serial
 
 	explainOnce sync.Once
 	explainMu   sync.Mutex
@@ -117,7 +119,7 @@ func Compile(schema any, opts Options) (*Validator, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Validator{schema: root, opts: tree, coerce: opts.Coerce, check: chk, dynamic: c.dynamic}, nil
+	return &Validator{schema: root, opts: tree, coerce: opts.Coerce, c: c, check: chk, serial: c.dynamic || c.cyclic}, nil
 }
 
 // compileRoot is validator.ts compiler(): most schemas compile without
@@ -160,13 +162,17 @@ func (v *Validator) mustCompiler() *compiler {
 	return c
 }
 
-// Check reports whether value is valid.
+// Check reports whether value is valid. A value Errors fails with an error
+// (upstream's check throws) is not valid.
 func (v *Validator) Check(value any) bool {
-	if v.dynamic {
-		v.checkMu.Lock()
-		defer v.checkMu.Unlock()
+	if !v.serial {
+		return v.check(value)
 	}
-	return v.check(value)
+	v.checkMu.Lock()
+	defer v.checkMu.Unlock()
+	ok := false
+	err := v.c.try(func() { ok = v.check(value) })
+	return err == nil && ok
 }
 
 // Errors is why value is invalid: one error per failing keyword, in the
@@ -174,17 +180,21 @@ func (v *Validator) Check(value any) bool {
 // on the first failure and kept, so a validator whose values always pass
 // never pays for it.
 //
-// Explaining compiles the subschemas it meets that the check never needed
-// (an `if` without `then` or `else`). Where one of those is malformed,
-// upstream's errors() throws; Errors panics with that error.
-func (v *Validator) Errors(value any) []ValidationError {
+// The error is upstream's throw out of errors(), and errs is nil with it:
+// ErrStackOverflow for a schema that applies itself to the value forever, or
+// the compile error of a malformed subschema the check never needed (an `if`
+// without `then` or `else`), which explaining compiles on first use.
+func (v *Validator) Errors(value any) (errs []ValidationError, err error) {
 	if v.Check(value) {
-		return nil
+		return nil, nil
 	}
 	v.explainOnce.Do(func() { v.explainer = newExplainer(v.mustCompiler()) })
 	v.explainMu.Lock()
 	defer v.explainMu.Unlock()
-	return v.explainer.errors(value)
+	if err := v.explainer.c.try(func() { errs = v.explainer.errors(value) }); err != nil {
+		return nil, err
+	}
+	return errs, nil
 }
 
 // Coerce is value coerced towards the schema: numeric strings to numbers,
@@ -192,27 +202,39 @@ func (v *Validator) Errors(value any) []ValidationError {
 // dropped, the first union branch the value converts to (coerce.ts lists
 // every rule). Only the changed paths are copied, keeping each object's kind
 // and member order; value comes back itself when nothing changes, and is
-// never modified. Values that cannot be coerced stay as they are.
+// never modified. Values that cannot be coerced stay as they are. The error
+// is upstream's throw out of coerce(): a pattern that is not a valid
+// regular expression in a subschema the check never compiled, or
+// ErrStackOverflow where a schema object built in Go holds itself in place
+// (`allOf` itself).
 //
 // It panics unless the validator was compiled with Options.Coerce, as
 // calling coerce() on upstream's plain Validator throws.
-func (v *Validator) Coerce(value any) any {
+func (v *Validator) Coerce(value any) (any, error) {
 	if !v.coerce {
 		panic("schema: Coerce needs a Validator compiled with Options.Coerce")
 	}
 	v.coerceOnce.Do(func() { v.coercer = &coercer{c: v.mustCompiler()} })
 	v.coerceMu.Lock()
 	defer v.coerceMu.Unlock()
-	return v.coercer.coerce(value)
+	var coerced any
+	if err := v.coercer.c.try(func() { coerced = v.coercer.coerce(value) }); err != nil {
+		return nil, err
+	}
+	return coerced, nil
 }
 
-// Parse coerces value, then checks it: the coerced value, and nil errors when
+// Parse coerces value, then checks it: the coerced value, and nil errs when
 // it is valid, else the errors of the coerced value (upstream's ParseResult,
-// whose `ok` is len(errs) == 0). It panics as Coerce does.
-func (v *Validator) Parse(value any) (coerced any, errs []ValidationError) {
-	coerced = v.Coerce(value)
-	if v.Check(coerced) {
-		return coerced, nil
+// whose `ok` is len(errs) == 0). err is an error Coerce or Errors returns,
+// upstream's throw out of parse(); coerced and errs are nil with it. It
+// panics as Coerce does.
+func (v *Validator) Parse(value any) (coerced any, errs []ValidationError, err error) {
+	if coerced, err = v.Coerce(value); err != nil {
+		return nil, nil, err
 	}
-	return coerced, v.Errors(coerced)
+	if errs, err = v.Errors(coerced); err != nil {
+		return nil, nil, err
+	}
+	return coerced, errs, nil
 }

@@ -29,9 +29,21 @@ func newExplainer(c *compiler) *explainer {
 // for object values. A recursive union explains each branch to pick the one
 // to blame, and every branch would explain the same children again,
 // exponentially in the depth.
+//
+// walking is the walks running, by node, base and path (the path names the
+// value). A walk that starts again on its own node and path would never end
+// (upstream's errors() overflows V8's stack there); it fails with
+// ErrStackOverflow. A check can stop before a cycle the walk meets: the walk
+// explains every keyword where the check stops at the first failure.
 type explainRun struct {
 	*explainer
-	memo map[memoKey]memoEntry
+	memo    map[memoKey]memoEntry
+	walking map[walkKey]bool
+}
+
+type walkKey struct {
+	node       *schemaObject
+	base, path string
 }
 
 type memoKey struct {
@@ -55,32 +67,18 @@ func (e *explainer) errors(value any) []ValidationError {
 	return out
 }
 
-// mustCheck is the compiler's check, compiling it if the check never needed
-// it; a compile failure is upstream's throw out of errors().
-func (e *explainer) mustCheck(node any, base string) check {
-	var chk check
-	func() {
-		defer func() {
-			if p := recover(); p != nil {
-				if ce, ok := p.(*compileError); ok {
-					panic(ce.err)
-				}
-				panic(p)
-			}
-		}()
-		chk = e.c.check(node, base)
-	}()
-	return chk
-}
-
+// ok is whether v passes node: the compiler's check, compiled on first use
+// where the check never needed it. A compile failure panics (a
+// *compileError), upstream's throw out of errors(), as do the explainer's
+// other throws (fail).
 func (e *explainer) ok(node any, base string, v any) bool {
-	return e.mustCheck(node, base)(v)
+	return e.c.check(node, base)(v)
 }
 
 func (e *explainer) resolve(ref, base string) resolved {
 	target, err := e.c.r.resolve(ref, base)
 	if err != nil {
-		panic(err)
+		fail(err)
 	}
 	return target
 }
@@ -103,6 +101,15 @@ func (e *explainRun) walk(v any, base string, value any, path string, out *[]Val
 	if e.ok(node, b, value) {
 		return
 	}
+	key := walkKey{node, b, path}
+	if e.walking[key] {
+		fail(ErrStackOverflow)
+	}
+	if e.walking == nil {
+		e.walking = map[walkKey]bool{}
+	}
+	e.walking[key] = true
+	defer delete(e.walking, key)
 	start := len(*out)
 	push := func(keyword, message string) {
 		*out = append(*out, ValidationError{path, keyword, message})
@@ -211,7 +218,7 @@ func (e *explainRun) walkString(node *schemaObject, v string, push func(string, 
 	}
 	if source, ok := node.kw("pattern").(string); ok {
 		if re, err := sharedRegex(source); err != nil {
-			panic(err)
+			fail(err)
 		} else if !re.test(v) {
 			push("pattern", "expected to match "+source)
 		}
@@ -284,7 +291,7 @@ func (e *explainRun) walkObject(node *schemaObject, b string, v any, path string
 		for _, p := range patterns {
 			re, err := sharedRegex(p.Key)
 			if err != nil {
-				panic(err)
+				fail(err)
 			}
 			if re.test(k) {
 				matched = true
@@ -387,7 +394,7 @@ func (e *explainRun) walkArray(node *schemaObject, b string, v []any, path strin
 			lo = numberOr(node.kw("minContains"), 1)
 			hi = numberOr(node.kw("maxContains"), math.Inf(1))
 		}
-		if !containsCheck(e.mustCheck(contains, b), lo, hi)(v) {
+		if !containsCheck(e.c.check(contains, b), lo, hi)(v) {
 			push("contains", containsMessage(lo, hi))
 		}
 	}
@@ -539,19 +546,7 @@ func (e *explainRun) walkUnevaluated(node *schemaObject, b string, v any, path s
 		e.rests[node] = rest
 	}
 	a := &annotations{}
-	var annotating annotatingCheck
-	func() {
-		defer func() {
-			if p := recover(); p != nil {
-				if ce, ok := p.(*compileError); ok {
-					panic(ce.err)
-				}
-				panic(p)
-			}
-		}()
-		annotating = e.c.annotating(rest, b)
-	}()
-	annotating(v, a)
+	e.c.annotating(rest, b)(v, a)
 	if unevaluated, ok := node.get("unevaluatedProperties"); ok && isObject(v) && !a.allProps {
 		for _, k := range ownKeys(v) {
 			if a.props[k] {

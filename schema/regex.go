@@ -9,6 +9,9 @@ import (
 	"sync"
 	"unicode"
 	"unicode/utf16"
+	"unicode/utf8"
+
+	"github.com/sky-valley/pi/internal/jstext"
 )
 
 // pattern is a compiled `pattern`/`patternProperties` regular expression. A
@@ -17,11 +20,70 @@ import (
 // earlier validator treated such patterns.
 type pattern struct {
 	re *regexp.Regexp
+	// units is whether the pattern was read without the `u` flag, so it
+	// matches UTF-16 code units: re is in unit space (see unitRune), and a
+	// value with a character outside the BMP or half a surrogate pair is
+	// matched in unit space too.
+	units bool
 }
 
 // test is RegExp.prototype.test: whether the pattern matches anywhere in s.
 func (p *pattern) test(s string) bool {
-	return p.re == nil || p.re.MatchString(s)
+	if p.re == nil {
+		return true
+	}
+	if p.units && hasNonBMP(s) {
+		s = unitSpace(s)
+	}
+	return p.re.MatchString(s)
+}
+
+// Unit space. Without the `u` flag a JavaScript pattern and the string it
+// tests are sequences of UTF-16 code units: "😀" is two, `.` matches one
+// half of it, `[😀]` is a class of two halves. RE2 matches code points, so
+// such a pattern is translated, and such a value rewritten, into unit space:
+// every code unit is one rune, a surrogate U+D800+x as unitRune's U+F0000+x
+// (plane 15, private use), every other unit as itself. A character outside
+// the BMP becomes its two units' runes, so a value in unit space holds no
+// rune above U+FFFF but those stand-ins: a value's own plane 15 characters
+// are split into units like any other, and the mapping is one to one.
+
+// unitRune is the rune that stands for a surrogate code unit in unit space.
+func unitRune(unit rune) rune { return 0xF0000 + unit - 0xD800 }
+
+// hasNonBMP is whether s has a character outside the BMP or half a
+// surrogate pair (as WTF-8), the only text unit space changes.
+func hasNonBMP(s string) bool {
+	for i := 0; i < len(s); i++ {
+		if b := s[i]; b >= 0xF0 || (b == 0xED && i+1 < len(s) && s[i+1] >= 0xA0) {
+			return true
+		}
+	}
+	return false
+}
+
+// unitSpace is s in unit space. Bytes that are not UTF-8 (nor a WTF-8
+// surrogate) stay as they are.
+func unitSpace(s string) string {
+	var b strings.Builder
+	b.Grow(len(s) + len(s)/2)
+	for i := 0; i < len(s); {
+		if unit, ok := jstext.WTF8Surrogate(s[i:]); ok {
+			b.WriteRune(unitRune(unit))
+			i += 3
+			continue
+		}
+		r, size := utf8.DecodeRuneInString(s[i:])
+		if r > 0xFFFF {
+			hi, lo := utf16.EncodeRune(r)
+			b.WriteRune(unitRune(hi))
+			b.WriteRune(unitRune(lo))
+		} else {
+			b.WriteString(s[i : i+size])
+		}
+		i += size
+	}
+	return b.String()
 }
 
 // regexes is shared.ts's cache of regular expressions by source. Upstream
@@ -50,13 +112,6 @@ func sharedRegex(source string) (*pattern, error) {
 	return actual.(*pattern), nil
 }
 
-// sharedRegexCount is the number of cached sources (for tests).
-func sharedRegexCount() int {
-	n := 0
-	regexes.Range(func(any, any) bool { n++; return true })
-	return n
-}
-
 // regexSyntaxError is the SyntaxError `new RegExp(source)` throws.
 type regexSyntaxError struct {
 	source, reason string
@@ -67,8 +122,10 @@ func (e *regexSyntaxError) Error() string {
 }
 
 func compileRegex(source string) (*pattern, error) {
+	units := false
 	out, err := translateRegex(source, true)
 	if err != nil && !errors.Is(err, errUnsupportedRegex) {
+		units = true
 		out, err = translateRegex(source, false)
 	}
 	var syntax *regexSyntaxError
@@ -84,7 +141,7 @@ func compileRegex(source string) (*pattern, error) {
 		// What JavaScript accepts and RE2 does not (a repeat count over 1000).
 		return &pattern{}, nil
 	}
-	return &pattern{re: re}, nil
+	return &pattern{re: re, units: units}, nil
 }
 
 // errUnsupportedRegex marks a valid ECMAScript pattern RE2 cannot express.
@@ -106,17 +163,28 @@ var errUnicodeMode = errors.New("invalid with the u flag")
 //     legacy octal escapes and identity escapes become \x{X};
 //   - `\p{…}` takes ECMAScript's General_Category names and aliases and
 //     Script names (Script_Extensions, script codes and binary properties
-//     are unsupported); `(?<name>` becomes `(?P<name>`.
+//     are unsupported); `(?<name>` becomes a plain capture `(` (RE2 has
+//     no backreference to use a name, and takes only ASCII names).
 //
 // It also reports what makes V8 throw — an unterminated group or class, an
 // unmatched ')', nothing to repeat, `{}` bounds out of order, a range out of
 // order, an invalid group, a trailing backslash — and, unless unicode, reads
 // Annex B's lenient forms (a lone `{`, `}` or `]`, `\c` without a letter, an
 // identity escape of any character). The `u` flag's code-point matching is
-// RE2's own; without it, ECMAScript matches UTF-16 code units, which the
-// port does not model.
+// RE2's own; without it, ECMAScript matches UTF-16 code units, and the
+// pattern is read as code units and translated into unit space (see
+// unitRune), where its value is matched too.
 func translateRegex(source string, unicodeMode bool) (string, error) {
-	t := regexTranslator{src: []rune(source), unicode: unicodeMode}
+	t := regexTranslator{unicode: unicodeMode}
+	if unicodeMode {
+		t.src = []rune(source)
+	} else {
+		units := jstext.CodeUnits(source)
+		t.src = make([]rune, len(units))
+		for i, u := range units {
+			t.src[i] = rune(u)
+		}
+	}
 	t.countGroups()
 	if err := t.run(); err != nil {
 		return "", err
@@ -128,12 +196,13 @@ func translateRegex(source string, unicodeMode bool) (string, error) {
 }
 
 type regexTranslator struct {
-	src         []rune
+	src         []rune // code points, or with unicode false code units
 	pos         int
 	unicode     bool
 	out         strings.Builder
-	groups      int  // capturing groups in the whole pattern
-	named       bool // whether the pattern has a named group
+	groups      int             // capturing groups in the whole pattern
+	named       bool            // whether the pattern has a named group
+	names       map[string]bool // the group names read so far
 	unsupported bool
 }
 
@@ -334,15 +403,38 @@ func (t *regexTranslator) group() error {
 		}
 		end := t.pos + 3
 		for end < len(t.src) && t.src[end] != '>' {
-			if !isIdentifierRune(t.src[end], end == t.pos+3) {
-				return syntaxError("Invalid capture group name")
-			}
 			end++
 		}
 		if end >= len(t.src) || end == t.pos+3 {
 			return syntaxError("Invalid capture group name")
 		}
-		t.out.WriteString("(?P<" + string(t.src[t.pos+3:end]) + ">")
+		// A name is read by code point in either mode.
+		nameRunes := t.src[t.pos+3 : end]
+		if !t.unicode {
+			units := make([]uint16, len(nameRunes))
+			for i, u := range nameRunes {
+				units[i] = uint16(u)
+			}
+			nameRunes = utf16.Decode(units)
+		}
+		for i, r := range nameRunes {
+			if !isIdentifierRune(r, i == 0) {
+				return syntaxError("Invalid capture group name")
+			}
+		}
+		// V8 12.4 predates duplicate named groups: a name may appear once in
+		// the whole pattern, alternatives included.
+		name := string(nameRunes)
+		if t.names[name] {
+			return syntaxError("Duplicate capture group name")
+		}
+		if t.names == nil {
+			t.names = map[string]bool{}
+		}
+		t.names[name] = true
+		// The name only names the group for a backreference, which RE2
+		// lacks anyway; RE2 takes ASCII names only.
+		t.out.WriteByte('(')
 		t.pos = end + 1
 		return nil
 	}
@@ -362,7 +454,32 @@ func (t *regexTranslator) literal(r rune) {
 		t.out.WriteRune(r)
 		return
 	}
-	fmt.Fprintf(&t.out, `\x{%X}`, r)
+	t.out.WriteString(char(r))
+}
+
+// char is r as an RE2 atom or class member; r is a surrogate only as a code
+// unit (without the `u` flag), which is its rune in unit space.
+func char(r rune) string {
+	if utf16.IsSurrogate(r) {
+		r = unitRune(r)
+	}
+	return fmt.Sprintf(`\x{%X}`, r)
+}
+
+// writeRange writes the class range lo-hi; a range of code units that
+// covers surrogates covers their runes in unit space.
+func writeRange(b *strings.Builder, lo, hi rune) {
+	if hi < 0xD800 || lo > 0xDFFF {
+		fmt.Fprintf(b, `\x{%X}-\x{%X}`, lo, hi)
+		return
+	}
+	if lo < 0xD800 {
+		fmt.Fprintf(b, `\x{%X}-\x{D7FF}`, lo)
+	}
+	fmt.Fprintf(b, `\x{%X}-\x{%X}`, unitRune(max(lo, 0xD800)), unitRune(min(hi, 0xDFFF)))
+	if hi > 0xDFFF {
+		fmt.Fprintf(b, `\x{E000}-\x{%X}`, hi)
+	}
 }
 
 // jsWhitespace is ECMAScript's \s: WhiteSpace and LineTerminator, as class
@@ -576,7 +693,7 @@ func (t *regexTranslator) unicodeEscape() (classItem, error) {
 		}
 		return classItem{char: 'u'}, nil
 	}
-	if utf16.IsSurrogate(r) && r < 0xDC00 && t.peek(0) == '\\' && t.peek(1) == 'u' {
+	if t.unicode && utf16.IsSurrogate(r) && r < 0xDC00 && t.peek(0) == '\\' && t.peek(1) == 'u' {
 		save := t.pos
 		t.pos += 2
 		if lo, ok := t.hex(4); ok && lo >= 0xDC00 && lo <= 0xDFFF {
@@ -587,10 +704,11 @@ func (t *regexTranslator) unicodeEscape() (classItem, error) {
 	return t.codePoint(r)
 }
 
-// codePoint is one escaped character; half a surrogate pair matches a code
-// unit, which RE2 cannot.
+// codePoint is one escaped character. With the `u` flag, half a surrogate
+// pair matches a lone code unit of the value, which RE2 cannot; without it,
+// it is a code unit like any other.
 func (t *regexTranslator) codePoint(r rune) (classItem, error) {
-	if utf16.IsSurrogate(r) {
+	if t.unicode && utf16.IsSurrogate(r) {
 		t.unsupported = true
 		return classItem{char: unicode.ReplacementChar}, nil
 	}
@@ -762,7 +880,7 @@ func (t *regexTranslator) class() error {
 			if lo.char > hi.char {
 				return syntaxError("Range out of order in character class")
 			}
-			fmt.Fprintf(&members, `\x{%X}-\x{%X}`, lo.char, hi.char)
+			writeRange(&members, lo.char, hi.char)
 			continue
 		}
 		writeClassItem(&members, lo)
@@ -780,7 +898,7 @@ func writeClassItem(b *strings.Builder, item classItem) {
 		b.WriteString(item.set)
 		return
 	}
-	fmt.Fprintf(b, `\x{%X}`, item.char)
+	b.WriteString(char(item.char))
 }
 
 // classAtom reads one character or class escape inside a class at pos.

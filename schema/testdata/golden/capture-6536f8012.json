@@ -6616,6 +6616,1178 @@
    "compileError": "Invalid regular expression: /a{2,1}/: numbers out of order in {} quantifier"
   },
   {
+   "name": "malformed if compiled by errors",
+   "schema": {
+    "if": {
+     "pattern": "("
+    },
+    "minimum": 3
+   },
+   "options": {
+    "coerce": true
+   },
+   "cases": [
+    {
+     "value": 1,
+     "check": false,
+     "errors": {
+      "$": "throws",
+      "message": "Invalid regular expression: /(/: Unterminated group"
+     },
+     "coerce": 1,
+     "coerceSame": true,
+     "parse": {
+      "$": "throws",
+      "message": "slot.check is not a function"
+     }
+    },
+    {
+     "value": 5,
+     "check": true,
+     "errors": [],
+     "coerce": 5,
+     "coerceSame": true,
+     "parse": {
+      "ok": true,
+      "value": 5
+     }
+    }
+   ]
+  },
+  {
+   "name": "malformed if in a property",
+   "schema": {
+    "type": "object",
+    "properties": {
+     "a": {
+      "type": "string",
+      "minLength": 5,
+      "if": {
+       "pattern": "("
+      }
+     }
+    }
+   },
+   "options": {
+    "coerce": true
+   },
+   "cases": [
+    {
+     "value": {
+      "a": "x"
+     },
+     "check": false,
+     "errors": {
+      "$": "throws",
+      "message": "Invalid regular expression: /(/: Unterminated group"
+     },
+     "coerce": {
+      "a": "x"
+     },
+     "coerceSame": true,
+     "parse": {
+      "$": "throws",
+      "message": "slot.check is not a function"
+     }
+    },
+    {
+     "value": {
+      "a": "xxxxx"
+     },
+     "check": true,
+     "errors": [],
+     "coerce": {
+      "a": "xxxxx"
+     },
+     "coerceSame": true,
+     "parse": {
+      "ok": true,
+      "value": {
+       "a": "xxxxx"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "malformed draft 7 prefixItems met by coerce",
+   "schema": {
+    "prefixItems": [
+     {
+      "patternProperties": {
+       "(": true
+      }
+     }
+    ]
+   },
+   "options": {
+    "draft": "7",
+    "coerce": true
+   },
+   "cases": [
+    {
+     "value": [
+      {
+       "a": 1
+      }
+     ],
+     "check": true,
+     "errors": [],
+     "coerce": {
+      "$": "throws",
+      "message": "Invalid regular expression: /(/: Unterminated group"
+     },
+     "parse": {
+      "$": "throws",
+      "message": "Invalid regular expression: /(/: Unterminated group"
+     }
+    },
+    {
+     "value": 5,
+     "check": true,
+     "errors": [],
+     "coerce": 5,
+     "coerceSame": true,
+     "parse": {
+      "ok": true,
+      "value": 5
+     }
+    }
+   ]
+  },
+  {
+   "name": "ref to root",
+   "schema": {
+    "$ref": "#"
+   },
+   "options": {
+    "coerce": true
+   },
+   "cases": [
+    {
+     "value": {},
+     "check": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "errors": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "coerce": {},
+     "coerceSame": true,
+     "parse": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     }
+    },
+    {
+     "value": 5,
+     "check": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "errors": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "coerce": 5,
+     "coerceSame": true,
+     "parse": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     }
+    }
+   ]
+  },
+  {
+   "name": "allOf ref to root",
+   "schema": {
+    "type": "object",
+    "allOf": [
+     {
+      "$ref": "#"
+     }
+    ]
+   },
+   "options": {
+    "coerce": true
+   },
+   "cases": [
+    {
+     "value": {},
+     "check": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "errors": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "coerce": {},
+     "coerceSame": true,
+     "parse": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     }
+    },
+    {
+     "value": 5,
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected object, got integer"
+      }
+     ],
+     "coerce": 5,
+     "coerceSame": true,
+     "parse": {
+      "ok": false,
+      "errors": [
+       {
+        "path": "",
+        "keyword": "type",
+        "message": "expected object, got integer"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "ref and type",
+   "schema": {
+    "$ref": "#",
+    "type": "object"
+   },
+   "options": {
+    "coerce": true
+   },
+   "cases": [
+    {
+     "value": {},
+     "check": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "errors": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "coerce": {},
+     "coerceSame": true,
+     "parse": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     }
+    },
+    {
+     "value": 5,
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected object, got integer"
+      }
+     ],
+     "coerce": 5,
+     "coerceSame": true,
+     "parse": {
+      "ok": false,
+      "errors": [
+       {
+        "path": "",
+        "keyword": "type",
+        "message": "expected object, got integer"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "self ref def",
+   "schema": {
+    "$defs": {
+     "A": {
+      "$ref": "#/$defs/A"
+     }
+    },
+    "$ref": "#/$defs/A"
+   },
+   "options": {
+    "coerce": true
+   },
+   "cases": [
+    {
+     "value": {},
+     "check": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "errors": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "coerce": {},
+     "coerceSame": true,
+     "parse": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     }
+    },
+    {
+     "value": 5,
+     "check": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "errors": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "coerce": 5,
+     "coerceSame": true,
+     "parse": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     }
+    }
+   ]
+  },
+  {
+   "name": "mutual ref defs",
+   "schema": {
+    "$defs": {
+     "A": {
+      "$ref": "#/$defs/B"
+     },
+     "B": {
+      "allOf": [
+       {
+        "$ref": "#/$defs/A"
+       }
+      ]
+     }
+    },
+    "anyOf": [
+     {
+      "type": "string"
+     },
+     {
+      "$ref": "#/$defs/A"
+     }
+    ]
+   },
+   "options": {
+    "coerce": true
+   },
+   "cases": [
+    {
+     "value": "s",
+     "check": true,
+     "errors": [],
+     "coerce": "s",
+     "coerceSame": true,
+     "parse": {
+      "ok": true,
+      "value": "s"
+     }
+    },
+    {
+     "value": 5,
+     "check": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "errors": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "coerce": "5",
+     "coerceSame": false,
+     "parse": {
+      "ok": true,
+      "value": "5"
+     }
+    }
+   ]
+  },
+  {
+   "name": "anyOf passes first",
+   "schema": {
+    "anyOf": [
+     {
+      "type": "string"
+     },
+     {
+      "$ref": "#"
+     }
+    ]
+   },
+   "options": {
+    "coerce": true
+   },
+   "cases": [
+    {
+     "value": "s",
+     "check": true,
+     "errors": [],
+     "coerce": "s",
+     "coerceSame": true,
+     "parse": {
+      "ok": true,
+      "value": "s"
+     }
+    },
+    {
+     "value": 5,
+     "check": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "errors": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "coerce": "5",
+     "coerceSame": false,
+     "parse": {
+      "ok": true,
+      "value": "5"
+     }
+    }
+   ]
+  },
+  {
+   "name": "recursion into properties",
+   "schema": {
+    "type": "object",
+    "properties": {
+     "x": {
+      "$ref": "#"
+     }
+    }
+   },
+   "options": {
+    "coerce": true
+   },
+   "cases": [
+    {
+     "value": {},
+     "check": true,
+     "errors": [],
+     "coerce": {},
+     "coerceSame": true,
+     "parse": {
+      "ok": true,
+      "value": {}
+     }
+    },
+    {
+     "value": {
+      "x": {}
+     },
+     "check": true,
+     "errors": [],
+     "coerce": {
+      "x": {}
+     },
+     "coerceSame": true,
+     "parse": {
+      "ok": true,
+      "value": {
+       "x": {}
+      }
+     }
+    },
+    {
+     "value": {
+      "x": 5
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/x",
+       "keyword": "type",
+       "message": "expected object, got integer"
+      }
+     ],
+     "coerce": {
+      "x": 5
+     },
+     "coerceSame": true,
+     "parse": {
+      "ok": false,
+      "errors": [
+       {
+        "path": "/x",
+        "keyword": "type",
+        "message": "expected object, got integer"
+       }
+      ]
+     }
+    },
+    {
+     "value": {
+      "x": {
+       "x": {
+        "x": 1
+       }
+      }
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/x/x/x",
+       "keyword": "type",
+       "message": "expected object, got integer"
+      }
+     ],
+     "coerce": {
+      "x": {
+       "x": {
+        "x": 1
+       }
+      }
+     },
+     "coerceSame": true,
+     "parse": {
+      "ok": false,
+      "errors": [
+       {
+        "path": "/x/x/x",
+        "keyword": "type",
+        "message": "expected object, got integer"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "cycle reached through a child first",
+   "schema": {
+    "anyOf": [
+     {
+      "type": "object"
+     },
+     {
+      "$ref": "#/$defs/Y"
+     }
+    ],
+    "properties": {
+     "p": {
+      "$ref": "#/$defs/Y"
+     }
+    },
+    "$defs": {
+     "Y": {
+      "$ref": "#"
+     }
+    }
+   },
+   "options": {
+    "coerce": true
+   },
+   "cases": [
+    {
+     "value": {},
+     "check": true,
+     "errors": [],
+     "coerce": {},
+     "coerceSame": true,
+     "parse": {
+      "ok": true,
+      "value": {}
+     }
+    },
+    {
+     "value": {
+      "p": 5
+     },
+     "check": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "errors": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "coerce": {
+      "p": 5
+     },
+     "coerceSame": true,
+     "parse": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     }
+    },
+    {
+     "value": 5,
+     "check": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "errors": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "coerce": 5,
+     "coerceSame": true,
+     "parse": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     }
+    }
+   ]
+  },
+  {
+   "name": "cycle only the explainer meets",
+   "schema": {
+    "type": "object",
+    "minProperties": 1,
+    "allOf": [
+     {
+      "$ref": "#"
+     }
+    ]
+   },
+   "options": {
+    "coerce": true
+   },
+   "cases": [
+    {
+     "value": {},
+     "check": false,
+     "errors": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "coerce": {},
+     "coerceSame": true,
+     "parse": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     }
+    },
+    {
+     "value": {
+      "a": 1
+     },
+     "check": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "errors": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "coerce": {
+      "a": 1
+     },
+     "coerceSame": true,
+     "parse": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     }
+    },
+    {
+     "value": 5,
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected object, got integer"
+      }
+     ],
+     "coerce": 5,
+     "coerceSame": true,
+     "parse": {
+      "ok": false,
+      "errors": [
+       {
+        "path": "",
+        "keyword": "type",
+        "message": "expected object, got integer"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "unevaluated cycle",
+   "schema": {
+    "unevaluatedProperties": false,
+    "allOf": [
+     {
+      "$ref": "#"
+     }
+    ]
+   },
+   "options": {
+    "coerce": true
+   },
+   "cases": [
+    {
+     "value": {},
+     "check": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "errors": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "coerce": {},
+     "coerceSame": true,
+     "parse": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     }
+    },
+    {
+     "value": {
+      "a": 1
+     },
+     "check": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "errors": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "coerce": {
+      "a": 1
+     },
+     "coerceSame": true,
+     "parse": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     }
+    }
+   ]
+  },
+  {
+   "name": "unevaluated cycle the explainer meets",
+   "schema": {
+    "minProperties": 2,
+    "allOf": [
+     {
+      "$ref": "#"
+     }
+    ],
+    "unevaluatedProperties": false
+   },
+   "options": {
+    "coerce": true
+   },
+   "cases": [
+    {
+     "value": {
+      "a": 1
+     },
+     "check": false,
+     "errors": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "coerce": {
+      "a": 1
+     },
+     "coerceSame": true,
+     "parse": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     }
+    }
+   ]
+  },
+  {
+   "name": "not cycle",
+   "schema": {
+    "not": {
+     "$ref": "#"
+    }
+   },
+   "options": {
+    "coerce": true
+   },
+   "cases": [
+    {
+     "value": 1,
+     "check": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "errors": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "coerce": 1,
+     "coerceSame": true,
+     "parse": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     }
+    }
+   ]
+  },
+  {
+   "name": "dependentSchemas cycle",
+   "schema": {
+    "dependentSchemas": {
+     "a": {
+      "$ref": "#"
+     }
+    }
+   },
+   "options": {
+    "coerce": true
+   },
+   "cases": [
+    {
+     "value": {},
+     "check": true,
+     "errors": [],
+     "coerce": {},
+     "coerceSame": true,
+     "parse": {
+      "ok": true,
+      "value": {}
+     }
+    },
+    {
+     "value": {
+      "a": 1
+     },
+     "check": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "errors": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "coerce": {
+      "a": 1
+     },
+     "coerceSame": true,
+     "parse": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     }
+    }
+   ]
+  },
+  {
+   "name": "if cycle",
+   "schema": {
+    "if": {
+     "$ref": "#"
+    },
+    "then": true
+   },
+   "options": {
+    "coerce": true
+   },
+   "cases": [
+    {
+     "value": 1,
+     "check": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "errors": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "coerce": 1,
+     "coerceSame": true,
+     "parse": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     }
+    }
+   ]
+  },
+  {
+   "name": "if alone is no cycle",
+   "schema": {
+    "if": {
+     "$ref": "#"
+    }
+   },
+   "options": {
+    "coerce": true
+   },
+   "cases": [
+    {
+     "value": 1,
+     "check": true,
+     "errors": [],
+     "coerce": 1,
+     "coerceSame": true,
+     "parse": {
+      "ok": true,
+      "value": 1
+     }
+    }
+   ]
+  },
+  {
+   "name": "items and allOf cycle",
+   "schema": {
+    "items": {
+     "$ref": "#"
+    },
+    "minItems": 1,
+    "allOf": [
+     {
+      "$ref": "#"
+     }
+    ]
+   },
+   "options": {
+    "coerce": true
+   },
+   "cases": [
+    {
+     "value": [],
+     "check": false,
+     "errors": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "coerce": [],
+     "coerceSame": true,
+     "parse": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     }
+    },
+    {
+     "value": [
+      []
+     ],
+     "check": false,
+     "errors": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "coerce": [
+      []
+     ],
+     "coerceSame": true,
+     "parse": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     }
+    },
+    {
+     "value": 1,
+     "check": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "errors": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "coerce": 1,
+     "coerceSame": true,
+     "parse": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     }
+    }
+   ]
+  },
+  {
+   "name": "dynamicRef cycle",
+   "schema": {
+    "$dynamicAnchor": "a",
+    "$dynamicRef": "#a"
+   },
+   "options": {
+    "coerce": true
+   },
+   "cases": [
+    {
+     "value": 1,
+     "check": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "errors": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "coerce": 1,
+     "coerceSame": true,
+     "parse": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     }
+    },
+    {
+     "value": {},
+     "check": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "errors": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "coerce": {},
+     "coerceSame": true,
+     "parse": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     }
+    }
+   ]
+  },
+  {
+   "name": "dynamicRef cycle in a def",
+   "schema": {
+    "$defs": {
+     "x": {
+      "$dynamicAnchor": "a",
+      "$dynamicRef": "#a"
+     }
+    },
+    "$ref": "#/$defs/x"
+   },
+   "options": {
+    "coerce": true
+   },
+   "cases": [
+    {
+     "value": 1,
+     "check": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "errors": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "coerce": 1,
+     "coerceSame": true,
+     "parse": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     }
+    }
+   ]
+  },
+  {
+   "name": "dynamicRef recursion into properties",
+   "schema": {
+    "$dynamicAnchor": "a",
+    "type": "object",
+    "properties": {
+     "c": {
+      "$dynamicRef": "#a"
+     }
+    }
+   },
+   "options": {
+    "coerce": true
+   },
+   "cases": [
+    {
+     "value": {
+      "c": {
+       "c": 1
+      }
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/c",
+       "keyword": "$dynamicRef",
+       "message": "does not match the dynamically referenced schema"
+      }
+     ],
+     "coerce": {
+      "c": {
+       "c": 1
+      }
+     },
+     "coerceSame": true,
+     "parse": {
+      "ok": false,
+      "errors": [
+       {
+        "path": "/c",
+        "keyword": "$dynamicRef",
+        "message": "does not match the dynamically referenced schema"
+       }
+      ]
+     }
+    },
+    {
+     "value": {
+      "c": {
+       "c": {}
+      }
+     },
+     "check": true,
+     "errors": [],
+     "coerce": {
+      "c": {
+       "c": {}
+      }
+     },
+     "coerceSame": true,
+     "parse": {
+      "ok": true,
+      "value": {
+       "c": {
+        "c": {}
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "draft 7 ref cycle",
+   "schema": {
+    "definitions": {
+     "A": {
+      "$ref": "#/definitions/A"
+     }
+    },
+    "$ref": "#/definitions/A"
+   },
+   "options": {
+    "draft": "7"
+   },
+   "cases": [
+    {
+     "value": 1,
+     "check": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     },
+     "errors": {
+      "$": "throws",
+      "message": "Maximum call stack size exceeded"
+     }
+    }
+   ]
+  },
+  {
    "name": "bytes bounds",
    "schema": {
     "type": "object",
@@ -10943,6 +12115,16 @@
     false,
     false,
     false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false
    ]
   },
@@ -10952,6 +12134,16 @@
     false,
     false,
     true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false,
     false,
     false,
@@ -11025,6 +12217,16 @@
     false,
     false,
     false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false
    ]
   },
@@ -11066,7 +12268,17 @@
     false,
     true,
     true,
-    true
+    true,
+    false,
+    false,
+    true,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
    ]
   },
   {
@@ -11106,6 +12318,16 @@
     true,
     false,
     true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false,
     false
    ]
@@ -11148,7 +12370,17 @@
     false,
     false,
     true,
-    true
+    true,
+    false,
+    false,
+    true,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
    ]
   },
   {
@@ -11169,6 +12401,16 @@
     true,
     true,
     true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false,
     false,
     false,
@@ -11230,7 +12472,17 @@
     false,
     true,
     true,
-    true
+    true,
+    false,
+    false,
+    true,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
    ]
   },
   {
@@ -11271,7 +12523,17 @@
     false,
     true,
     true,
-    true
+    true,
+    false,
+    false,
+    true,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
    ]
   },
   {
@@ -11306,6 +12568,16 @@
     true,
     true,
     false,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
     true,
     true,
     true,
@@ -11353,12 +12625,32 @@
     false,
     true,
     true,
-    true
+    true,
+    false,
+    false,
+    true,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
    ]
   },
   {
    "source": "^[]$",
    "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false,
     false,
     false,
@@ -11435,6 +12727,16 @@
     false,
     false,
     false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false
    ]
   },
@@ -11476,6 +12778,16 @@
     false,
     false,
     false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false
    ]
   },
@@ -11497,6 +12809,16 @@
     true,
     true,
     true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false,
     false,
     false,
@@ -11558,7 +12880,17 @@
     false,
     true,
     true,
-    true
+    true,
+    false,
+    false,
+    true,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
    ]
   },
   {
@@ -11596,6 +12928,16 @@
     false,
     false,
     true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false,
     false,
     false,
@@ -11640,6 +12982,16 @@
     false,
     true,
     false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false
    ]
   },
@@ -11648,6 +13000,16 @@
    "matches": [
     false,
     true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false,
     false,
     false,
@@ -11722,12 +13084,32 @@
     false,
     false,
     false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false
    ]
   },
   {
    "source": "^[\\]]$",
    "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false,
     false,
     false,
@@ -11804,12 +13186,32 @@
     false,
     false,
     false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false
    ]
   },
   {
    "source": "^[\\b]$",
    "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false,
     false,
     false,
@@ -11886,6 +13288,16 @@
     false,
     false,
     false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false
    ]
   },
@@ -11927,12 +13339,32 @@
     false,
     false,
     false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false
    ]
   },
   {
    "source": "\\c",
    "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false,
     false,
     false,
@@ -12009,12 +13441,32 @@
     false,
     false,
     false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false
    ]
   },
   {
    "source": "^\\x41$",
    "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false,
     false,
     false,
@@ -12091,6 +13543,16 @@
     false,
     false,
     false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false
    ]
   },
@@ -12113,6 +13575,16 @@
     false,
     false,
     true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false,
     false,
     false,
@@ -12173,12 +13645,32 @@
     false,
     false,
     false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false
    ]
   },
   {
    "source": "^\\0$",
    "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false,
     false,
     false,
@@ -12255,6 +13747,16 @@
     false,
     false,
     false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false
    ]
   },
@@ -12272,6 +13774,16 @@
     false,
     false,
     true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false,
     false,
     false,
@@ -12337,6 +13849,16 @@
     false,
     false,
     false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false
    ]
   },
@@ -12378,12 +13900,32 @@
     false,
     false,
     false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false
    ]
   },
   {
    "source": "^\\-$",
    "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false,
     false,
     false,
@@ -12460,12 +14002,32 @@
     false,
     false,
     false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false
    ]
   },
   {
    "source": "a{1",
    "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false,
     false,
     false,
@@ -12542,12 +14104,32 @@
     false,
     false,
     false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false
    ]
   },
   {
    "source": "a{,2}",
    "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false,
     false,
     false,
@@ -12624,6 +14206,16 @@
     false,
     false,
     false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    false,
     false
    ]
   },
@@ -12660,6 +14252,16 @@
     false,
     false,
     true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false,
     false,
     false,
@@ -12706,6 +14308,16 @@
     false,
     false,
     false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false
    ]
   },
@@ -12742,6 +14354,16 @@
     false,
     false,
     true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false,
     false,
     false,
@@ -12788,12 +14410,32 @@
     false,
     false,
     false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false
    ]
   },
   {
    "source": "a}",
    "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false,
     false,
     false,
@@ -12870,6 +14512,16 @@
     false,
     false,
     false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false
    ]
   },
@@ -12911,6 +14563,16 @@
     false,
     true,
     true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    false,
+    true,
+    true,
+    true,
     true
    ]
   },
@@ -12948,6 +14610,16 @@
     false,
     true,
     true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false,
     false,
     false,
@@ -12993,12 +14665,32 @@
     false,
     false,
     false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false
    ]
   },
   {
    "source": "^\\p{Lu}$",
    "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false,
     false,
     false,
@@ -13075,6 +14767,16 @@
     false,
     false,
     false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false
    ]
   },
@@ -13116,12 +14818,32 @@
     false,
     false,
     false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false
    ]
   },
   {
    "source": "^\\p{gc=Lu}$",
    "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false,
     false,
     false,
@@ -13198,6 +14920,16 @@
     false,
     false,
     false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false
    ]
   },
@@ -13239,7 +14971,17 @@
     false,
     true,
     true,
-    true
+    true,
+    false,
+    false,
+    true,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
    ]
   },
   {
@@ -13280,7 +15022,17 @@
     true,
     true,
     true,
-    true
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
    ]
   },
   {
@@ -13321,12 +15073,32 @@
     false,
     false,
     false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false
    ]
   },
   {
    "source": "^\\p{Greek}$",
    "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false,
     false,
     false,
@@ -13403,6 +15175,16 @@
     false,
     false,
     false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false
    ]
   },
@@ -13441,6 +15223,16 @@
     true,
     true,
     true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false,
     false,
     false,
@@ -13485,7 +15277,17 @@
     false,
     true,
     true,
-    true
+    true,
+    false,
+    false,
+    true,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
    ]
   },
   {
@@ -13522,6 +15324,16 @@
     false,
     true,
     true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false,
     false,
     false,
@@ -13567,12 +15379,32 @@
     false,
     false,
     false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false
    ]
   },
   {
    "source": "\\1",
    "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false,
     false,
     false,
@@ -13649,6 +15481,16 @@
     false,
     false,
     false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false
    ]
   },
@@ -13662,6 +15504,16 @@
     false,
     false,
     true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false,
     false,
     false,
@@ -13731,6 +15583,16 @@
     false,
     false,
     false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false
    ]
   },
@@ -13768,6 +15630,16 @@
     true,
     false,
     false,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
     true,
     true,
     true,
@@ -13813,6 +15685,16 @@
     false,
     false,
     false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false
    ]
   },
@@ -13841,6 +15723,16 @@
     true,
     true,
     true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false,
     false,
     false,
@@ -13895,6 +15787,16 @@
     false,
     false,
     false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false
    ]
   },
@@ -13936,12 +15838,32 @@
     false,
     false,
     false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false
    ]
   },
   {
    "source": "a|b|",
    "matches": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
     true,
     true,
     true,
@@ -14018,6 +15940,16 @@
     false,
     false,
     false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false
    ]
   },
@@ -14053,6 +15985,16 @@
     false,
     false,
     true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false,
     false,
     false,
@@ -14100,12 +16042,32 @@
     false,
     false,
     false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false
    ]
   },
   {
    "source": "^\\$\\^\\.\\*\\+\\?\\(\\)\\[\\]\\{\\}\\|\\\\$",
    "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false,
     false,
     false,
@@ -14182,6 +16144,16 @@
     false,
     false,
     false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false
    ]
   },
@@ -14205,6 +16177,16 @@
     false,
     false,
     true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false,
     false,
     false,
@@ -14320,6 +16302,16 @@
     false,
     false,
     false,
+    false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false
    ]
   },
@@ -14361,12 +16353,32 @@
     false,
     false,
     false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false
    ]
   },
   {
    "source": "^\\00$",
    "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false,
     false,
     false,
@@ -14443,12 +16455,32 @@
     false,
     false,
     false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false
    ]
   },
   {
    "source": "^[\\01]$",
    "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false,
     false,
     false,
@@ -14525,6 +16557,16 @@
     false,
     false,
     false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
     false
    ]
   },
@@ -14561,6 +16603,1935 @@
     false,
     false,
     false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+   ]
+  },
+  {
+   "source": "(?<a>x)(?<a>y)",
+   "error": "Invalid regular expression: /(?<a>x)(?<a>y)/: Duplicate capture group name"
+  },
+  {
+   "source": "(?<a>x)|(?<a>y)",
+   "error": "Invalid regular expression: /(?<a>x)|(?<a>y)/: Duplicate capture group name"
+  },
+  {
+   "source": "(?<a>x)(?<b>y)",
+   "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+   ]
+  },
+  {
+   "source": "(?<a>x)\\-(?<a>y)",
+   "error": "Invalid regular expression: /(?<a>x)\\-(?<a>y)/: Duplicate capture group name"
+  },
+  {
+   "source": "((?<a>x))(?<a>y)",
+   "error": "Invalid regular expression: /((?<a>x))(?<a>y)/: Duplicate capture group name"
+  },
+  {
+   "source": "(?<a>(?<a>x))",
+   "error": "Invalid regular expression: /(?<a>(?<a>x))/: Duplicate capture group name"
+  },
+  {
+   "source": "^\\-.$",
+   "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false
+   ]
+  },
+  {
+   "source": "^\\-..$",
+   "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    true,
+    false
+   ]
+  },
+  {
+   "source": "^\\-[^a]$",
+   "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false
+   ]
+  },
+  {
+   "source": "^\\-[😀]$",
+   "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false
+   ]
+  },
+  {
+   "source": "^\\-\\S$",
+   "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false
+   ]
+  },
+  {
+   "source": "^\\-😀+$",
+   "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+   ]
+  },
+  {
+   "source": "^\\-.{2}$",
+   "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    true,
+    false
+   ]
+  },
+  {
+   "source": "^\\-\\W$",
+   "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false
+   ]
+  },
+  {
+   "source": "^\\-\\s$",
+   "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+   ]
+  },
+  {
+   "source": "^\\-(?:😀)+$",
+   "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+   ]
+  },
+  {
+   "source": "^\\-[😀-😂]$",
+   "error": "Invalid regular expression: /^\\-[😀-😂]$/: Range out of order in character class"
+  },
+  {
+   "source": "^\\-[^😀]$",
+   "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+   ]
+  },
+  {
+   "source": "^\\-[^😀]{2}$",
+   "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    false
+   ]
+  },
+  {
+   "source": "^\\-?\\ud83d",
+   "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    true,
+    true,
+    false,
+    true,
+    true,
+    false,
+    true,
+    false,
+    false
+   ]
+  },
+  {
+   "source": "\\-?\\ud83d$",
+   "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    false,
+    true,
+    false,
+    true,
+    true,
+    false,
+    false
+   ]
+  },
+  {
+   "source": "\\-?\\ude00",
+   "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    true,
+    false,
+    true,
+    false,
+    true,
+    true,
+    false,
+    false,
+    false
+   ]
+  },
+  {
+   "source": "^\\-?[\\ud800-\\udbff]",
+   "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    true,
+    true,
+    false,
+    true,
+    true,
+    false,
+    true,
+    true,
+    true
+   ]
+  },
+  {
+   "source": "^\\-?[\\ud800-\\udfff]+$",
+   "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    true,
+    true,
+    true,
+    true,
+    false,
+    true,
+    true,
+    true,
+    true
+   ]
+  },
+  {
+   "source": "\\-?[^\\ud800-\\udfff]",
+   "matches": [
+    false,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    false,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    false,
+    false,
+    true,
+    true,
+    false,
+    true,
+    true,
+    false
+   ]
+  },
+  {
+   "source": "^\\-?\\ud83d\\ude00$",
+   "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+   ]
+  },
+  {
+   "source": "^\\-?\\u{1F600}$",
+   "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+   ]
+  },
+  {
+   "source": "^\\-?[\\ud83d\\ude00]$",
+   "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    true,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false
+   ]
+  },
+  {
+   "source": "^\\-?[\\ud83d\\ude00]{2}$",
+   "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    true,
+    false,
+    false
+   ]
+  },
+  {
+   "source": "^\\-?\\D{3}$",
+   "matches": [
+    false,
+    false,
+    true,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    true,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    false,
+    false,
+    true,
+    false,
+    true,
+    true,
+    false
+   ]
+  },
+  {
+   "source": "^\\-?[\\s\\S]{3}$",
+   "matches": [
+    false,
+    false,
+    true,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    true,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    false,
+    false,
+    true,
+    false,
+    true,
+    true,
+    false
+   ]
+  },
+  {
+   "source": "^\\-?[^]{2}$",
+   "matches": [
+    false,
+    false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    false,
+    true,
+    false,
+    true,
+    true,
+    true,
+    false
+   ]
+  },
+  {
+   "source": "^\\-?.*$",
+   "matches": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    false,
+    false,
+    false,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    false,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ]
+  },
+  {
+   "source": "^\\-?[a-\\ud83d]{2}$",
+   "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    false,
+    false
+   ]
+  },
+  {
+   "source": "^\\-?(😀|x)$",
+   "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+   ]
+  },
+  {
+   "source": "^\\-?\\😀$",
+   "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+   ]
+  },
+  {
+   "source": "^\\-?[\\😀]{2}$",
+   "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    true,
+    false,
+    false
+   ]
+  },
+  {
+   "source": "^\\-?\ud83d",
+   "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    true,
+    true,
+    false,
+    true,
+    true,
+    false,
+    true,
+    false,
+    false
+   ]
+  },
+  {
+   "source": "^\\-?[\ud800-\udfff]{2}$",
+   "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    true,
+    true,
+    false
+   ]
+  },
+  {
+   "source": "^\\-?[󰀀]$",
+   "matches": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+   ]
+  },
+  {
+   "source": "^\\-?[󰀀-󰟿]+$",
+   "error": "Invalid regular expression: /^\\-?[󰀀-󰟿]+$/: Range out of order in character class"
+  },
+  {
+   "source": "^\\-?(?<n😀>.)$",
+   "error": "Invalid regular expression: /^\\-?(?<n😀>.)$/: Invalid capture group name"
+  },
+  {
+   "source": "^\\-?(?<𝑥>.)$",
+   "matches": [
+    false,
+    true,
+    false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    false,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    false,
+    true,
+    true,
+    true,
+    false,
+    false,
+    false,
+    true,
+    true,
+    false,
+    true,
+    true,
+    true,
+    false,
+    false,
+    false,
+    true,
+    false,
+    true,
+    true,
+    true,
+    false,
+    false,
+    true,
+    true,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false
+   ]
+  },
+  {
+   "source": "^(?<𝑥>.)$",
+   "matches": [
+    false,
+    true,
+    false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    false,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    false,
+    false,
+    false,
+    true,
+    true,
+    false,
+    true,
+    true,
+    true,
+    false,
+    false,
+    false,
+    true,
+    false,
+    true,
+    true,
+    true,
+    false,
+    false,
+    true,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+   ]
+  },
+  {
+   "source": "^(?<é>.)$",
+   "matches": [
+    false,
+    true,
+    false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    false,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    false,
+    false,
+    false,
+    true,
+    true,
+    false,
+    true,
+    true,
+    true,
+    false,
+    false,
+    false,
+    true,
+    false,
+    true,
+    true,
+    true,
+    false,
+    false,
+    true,
+    true,
     false,
     false,
     false,
@@ -14606,7 +18577,17 @@
   "p{L}",
   "_",
   "$",
-  "^"
+  "^",
+  "-😀",
+  "-😀😀",
+  "\ud83d",
+  "\ude00",
+  "-\ud83d",
+  "😀x",
+  "\ude00\ud83d",
+  "-\ud83d\ud83d",
+  "-󰀀",
+  "󰀀󰟿"
  ],
  "typebox": [
   {

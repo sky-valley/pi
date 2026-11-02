@@ -2,6 +2,7 @@ package schema
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 	"slices"
@@ -39,6 +40,36 @@ func mustCompile(t *testing.T, schema any, opts Options) *Validator {
 	return v
 }
 
+// mustErrors is v.Errors(value), failing the test on an error.
+func mustErrors(t *testing.T, v *Validator, value any) []ValidationError {
+	t.Helper()
+	errs, err := v.Errors(value)
+	if err != nil {
+		t.Fatalf("errors: %v", err)
+	}
+	return errs
+}
+
+// mustCoerce is v.Coerce(value), failing the test on an error.
+func mustCoerce(t *testing.T, v *Validator, value any) any {
+	t.Helper()
+	coerced, err := v.Coerce(value)
+	if err != nil {
+		t.Fatalf("coerce: %v", err)
+	}
+	return coerced
+}
+
+// mustParse is v.Parse(value), failing the test on an error.
+func mustParse(t *testing.T, v *Validator, value any) (any, []ValidationError) {
+	t.Helper()
+	coerced, errs, err := v.Parse(value)
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	return coerced, errs
+}
+
 func wantErrors(t *testing.T, got []ValidationError, want ...ValidationError) {
 	t.Helper()
 	if len(want) == 0 {
@@ -57,30 +88,30 @@ const blockSchema = `{"anyOf":[
 
 func TestErrors(t *testing.T) {
 	t.Run("reports a missing field and an unknown field at the field", func(t *testing.T) {
-		wantErrors(t, mustCompile(t, js(t, readSchema), Options{}).Errors(js(t, `{"offset":0,"extra":true}`)),
+		wantErrors(t, mustErrors(t, mustCompile(t, js(t, readSchema), Options{}), js(t, `{"offset":0,"extra":true}`)),
 			ValidationError{"/path", "required", "missing"},
 			ValidationError{"/offset", "minimum", "expected >= 1"},
 			ValidationError{"/extra", "additionalProperties", "unknown field"})
 	})
 	t.Run("is empty for a valid value", func(t *testing.T) {
-		if errs := mustCompile(t, js(t, readSchema), Options{}).Errors(js(t, `{"path":"a.ts"}`)); errs != nil {
+		if errs := mustErrors(t, mustCompile(t, js(t, readSchema), Options{}), js(t, `{"path":"a.ts"}`)); errs != nil {
 			t.Errorf("errors %v", errs)
 		}
 	})
 	t.Run("reports the branch a tagged union's tag selects", func(t *testing.T) {
 		v := mustCompile(t, Object{{"type", "array"}, {"items", js(t, blockSchema)}}, Options{})
-		wantErrors(t, v.Errors(js(t, `[{"kind":"text","text":"a"},{"kind":"image","width":-1}]`)),
+		wantErrors(t, mustErrors(t, v, js(t, `[{"kind":"text","text":"a"},{"kind":"image","width":-1}]`)),
 			ValidationError{"/1/width", "minimum", "expected >= 0"})
-		wantErrors(t, v.Errors(js(t, `[{"kind":"video"}]`)),
+		wantErrors(t, mustErrors(t, v, js(t, `[{"kind":"video"}]`)),
 			ValidationError{"/0/kind", "anyOf", `expected one of ["text","image"]`})
 	})
 	t.Run("escapes ~ and / in paths as JSON Pointer does", func(t *testing.T) {
 		v := mustCompile(t, js(t, `{"type":"object","properties":{"a/b~c":{"type":"string"}}}`), Options{})
-		wantErrors(t, v.Errors(js(t, `{"a/b~c":1}`)), ValidationError{"/a~1b~0c", "type", "expected string, got integer"})
+		wantErrors(t, mustErrors(t, v, js(t, `{"a/b~c":1}`)), ValidationError{"/a~1b~0c", "type", "expected string, got integer"})
 	})
 	t.Run("follows $ref into the referenced schema", func(t *testing.T) {
 		v := mustCompile(t, js(t, `{"$defs":{"point":{"type":"object","properties":{"x":{"type":"number"}},"required":["x"]}},"type":"array","items":{"$ref":"#/$defs/point"}}`), Options{})
-		wantErrors(t, v.Errors(js(t, `[{"x":1},{}]`)), ValidationError{"/1/x", "required", "missing"})
+		wantErrors(t, mustErrors(t, v, js(t, `[{"x":1},{}]`)), ValidationError{"/1/x", "required", "missing"})
 	})
 }
 
@@ -99,7 +130,7 @@ func TestValues(t *testing.T) {
 				t.Errorf("check %v = %v", c.value, got)
 			}
 		}
-		wantErrors(t, v.Errors(Object{{"data", make([]byte, 5)}}), ValidationError{"/data", "maxLength", "expected at most 4 bytes"})
+		wantErrors(t, mustErrors(t, v, Object{{"data", make([]byte, 5)}}), ValidationError{"/data", "maxLength", "expected at most 4 bytes"})
 	})
 	t.Run("does not treat bytes as an object", func(t *testing.T) {
 		if mustCompile(t, Object{{"type", "object"}}, Options{}).Check(make([]byte, 1)) {
@@ -132,7 +163,7 @@ func TestValues(t *testing.T) {
 				t.Errorf("check %v = false", value)
 			}
 		}
-		wantErrors(t, v.Errors(map[string]any{"n": 1.5, "b": 1, "a": 2, "10": 3, "9": 4}),
+		wantErrors(t, mustErrors(t, v, map[string]any{"n": 1.5, "b": 1, "a": 2, "10": 3, "9": 4}),
 			ValidationError{"/n", "type", "expected integer, got number"})
 	})
 }
@@ -177,16 +208,16 @@ func TestSchemas(t *testing.T) {
 		if !v.Check(js(t, `{"name":"a","tags":[]}`)) {
 			t.Error("valid value failed")
 		}
-		wantErrors(t, v.Errors(js(t, `{"name":"a","tags":[1]}`)), ValidationError{"/tags/0", "type", "expected string, got integer"})
+		wantErrors(t, mustErrors(t, v, js(t, `{"name":"a","tags":[1]}`)), ValidationError{"/tags/0", "type", "expected string, got integer"})
 	})
 	t.Run("never modifies a schema", func(t *testing.T) {
 		schema := js(t, `{"anyOf":[{"type":"object","properties":{"kind":{"const":"text"},"text":{"type":"string"}},"required":["kind","text"]},{"type":"object","properties":{"kind":{"const":"image"},"width":{"type":"integer","minimum":0}},"required":["kind","width"]}],"$defs":{"s":{"type":"string","pattern":"^a"}}}`)
 		before := stringify(schema)
 		v := mustCompile(t, schema, Options{Coerce: true})
-		if !v.Check(js(t, `{"kind":"text","text":"x"}`)) || len(v.Errors(js(t, `{"kind":"image","width":-1}`))) != 1 {
+		if !v.Check(js(t, `{"kind":"text","text":"x"}`)) || len(mustErrors(t, v, js(t, `{"kind":"image","width":-1}`))) != 1 {
 			t.Error("checks")
 		}
-		v.Coerce(js(t, `{"kind":"image","width":"1"}`))
+		mustCoerce(t, v, js(t, `{"kind":"image","width":"1"}`))
 		if stringify(schema) != before {
 			t.Error("the schema changed")
 		}
@@ -196,7 +227,7 @@ func TestSchemas(t *testing.T) {
 		if !v.Check(js(t, `{"value":1,"children":[{"value":2,"children":[{"value":3}]}]}`)) {
 			t.Error("valid tree failed")
 		}
-		wantErrors(t, v.Errors(js(t, `{"value":1,"children":[{"value":2,"children":[{}]}]}`)),
+		wantErrors(t, mustErrors(t, v, js(t, `{"value":1,"children":[{"value":2,"children":[{}]}]}`)),
 			ValidationError{"/children/0/children/0/value", "required", "missing"})
 	})
 	t.Run("throws for a malformed schema", func(t *testing.T) {
@@ -224,17 +255,17 @@ func TestUnresolvedReferences(t *testing.T) {
 				t.Errorf("%s: reject", schema)
 			}
 		}
-		wantErrors(t, mustCompile(t, js(t, dangling), Options{UnresolvedRefs: UnresolvedReject}).Errors(Object{{"t", 1.0}}),
+		wantErrors(t, mustErrors(t, mustCompile(t, js(t, dangling), Options{UnresolvedRefs: UnresolvedReject}), Object{{"t", 1.0}}),
 			ValidationError{"/t", "$ref", "unresolved reference #/definitions/Missing"})
 	})
 	t.Run("leave values at their place uncoerced", func(t *testing.T) {
 		v := mustCompile(t, js(t, dangling), Options{UnresolvedRefs: UnresolvedReject, Coerce: true})
-		_, errs := v.Parse(Object{{"t", "1"}})
+		_, errs := mustParse(t, v, Object{{"t", "1"}})
 		wantErrors(t, errs, ValidationError{"/t", "$ref", "unresolved reference #/definitions/Missing"})
 	})
 	t.Run("reject a TypeBox Ref without its definition", func(t *testing.T) {
 		v := mustCompile(t, js(t, `{"type":"object","required":["a"],"properties":{"a":{"$ref":"A"}}}`), Options{UnresolvedRefs: UnresolvedReject})
-		wantErrors(t, v.Errors(js(t, `{"a":{"x":"1"}}`)), ValidationError{"/a", "$ref", "unresolved reference A"})
+		wantErrors(t, mustErrors(t, v, js(t, `{"a":{"x":"1"}}`)), ValidationError{"/a", "$ref", "unresolved reference A"})
 	})
 }
 
@@ -270,10 +301,10 @@ func TestErrorMessages(t *testing.T) {
 		}
 		listed := stringify(values[:20])
 		want := "expected one of " + listed[:len(listed)-1] + ", ... and 4980 more]"
-		if errs := v.Errors(Object{{"e", "v5000"}}); len(errs) == 0 || errs[0].Message != want {
+		if errs := mustErrors(t, v, Object{{"e", "v5000"}}); len(errs) == 0 || errs[0].Message != want {
 			t.Errorf("errors %v", errs)
 		}
-		wantErrors(t, mustCompile(t, js(t, `{"enum":["a","b"]}`), Options{}).Errors("c"), ValidationError{"", "enum", `expected one of ["a","b"]`})
+		wantErrors(t, mustErrors(t, mustCompile(t, js(t, `{"enum":["a","b"]}`), Options{}), "c"), ValidationError{"", "enum", `expected one of ["a","b"]`})
 	})
 	t.Run("accept a 10,000-value enum", func(t *testing.T) {
 		values := make([]any, 10000)
@@ -291,7 +322,7 @@ func TestErrorMessages(t *testing.T) {
 			`"contains":{"type":"string"},"maxContains":0,"minContains":0`: "expected at most 0 matching items",
 			`"contains":{"type":"number"},"minContains":1,"maxContains":3`: "expected between 1 and 3 matching items",
 		} {
-			errs := mustCompile(t, js(t, `{"type":"array",`+extra+`}`), Options{}).Errors([]any{"a"})
+			errs := mustErrors(t, mustCompile(t, js(t, `{"type":"array",`+extra+`}`), Options{}), []any{"a"})
 			if len(errs) == 0 || errs[0].Message != want {
 				t.Errorf("%s: %v, want %q", extra, errs, want)
 			}
@@ -301,52 +332,149 @@ func TestErrorMessages(t *testing.T) {
 		v := mustCompile(t, js(t, `{"type":"object","properties":{"where":{"$ref":"#/$defs/F"}},"$defs":{"F":{"oneOf":[
 			{"type":"object","properties":{"field":{"type":"string"},"eq":{"type":"string"}},"required":["field","eq"],"additionalProperties":false},
 			{"type":"object","properties":{"and":{"type":"array","items":{"$ref":"#/$defs/F"}}},"required":["and"],"additionalProperties":false}]}}}`), Options{})
-		wantErrors(t, v.Errors(js(t, `{"where":{"and":[{"field":"a","eq":1,"x":2}]}}`)),
+		wantErrors(t, mustErrors(t, v, js(t, `{"where":{"and":[{"field":"a","eq":1,"x":2}]}}`)),
 			ValidationError{"/where/and/0/eq", "type", "expected string, got integer"},
 			ValidationError{"/where/and/0/x", "additionalProperties", "unknown field"})
 	})
 	t.Run("explain one object reached through the same reference at two paths at each path", func(t *testing.T) {
 		v := mustCompile(t, js(t, `{"type":"object","properties":{"a":{"$ref":"#/$defs/P"},"b":{"$ref":"#/$defs/P"}},"$defs":{"P":{"type":"object","properties":{"n":{"type":"integer"}}}}}`), Options{})
 		shared := Object{{"n", "x"}}
-		wantErrors(t, v.Errors(Object{{"a", shared}, {"b", shared}}),
+		wantErrors(t, mustErrors(t, v, Object{{"a", shared}, {"b", shared}}),
 			ValidationError{"/a/n", "type", "expected integer, got string"},
 			ValidationError{"/b/n", "type", "expected integer, got string"})
 	})
 }
 
-// TestErrorsPanicsOnALazilyCompiledMalformedSchema pins the one panic Errors
-// documents: upstream's errors() throws when it meets a malformed subschema
-// the check never compiled.
-func TestErrorsPanicsOnALazilyCompiledMalformedSchema(t *testing.T) {
-	v := mustCompile(t, js(t, `{"if":5,"minimum":3}`), Options{})
-	defer func() {
-		err, ok := recover().(error)
-		if !ok || err.Error() != "A schema must be an object or a boolean, got 5" {
-			t.Errorf("panic %v", err)
+// TestErrorsReturnsALazilyCompiledSchemasThrow: where upstream's errors()
+// throws on a malformed subschema the check never compiled, Errors and Parse
+// return that error, and keep returning it: the failed compile is not
+// cached as a half-built check (upstream's second call throws "slot.check is
+// not a function" instead).
+func TestErrorsReturnsALazilyCompiledSchemasThrow(t *testing.T) {
+	_, syntaxError := sharedRegex("(")
+	for _, tc := range []struct{ schema, want string }{
+		{`{"if":5,"minimum":3}`, "A schema must be an object or a boolean, got 5"},
+		{`{"if":{"pattern":"("},"minimum":3}`, syntaxError.Error()},
+		{`{"type":"object","properties":{"a":{"type":"string","minLength":5,"if":{"pattern":"("}}}}`, syntaxError.Error()},
+	} {
+		v := mustCompile(t, js(t, tc.schema), Options{Coerce: true})
+		value := js(t, `{"a":"x"}`)
+		if !strings.HasPrefix(tc.schema, `{"type"`) {
+			value = 1.0
 		}
-	}()
-	v.Errors(1.0)
-	t.Error("no panic")
+		for i := range 3 {
+			if errs, err := v.Errors(value); err == nil || err.Error() != tc.want || errs != nil {
+				t.Errorf("%s: Errors call %d = %v, %v; want the error %q", tc.schema, i, errs, err, tc.want)
+			}
+			if coerced, errs, err := v.Parse(value); err == nil || err.Error() != tc.want || coerced != nil || errs != nil {
+				t.Errorf("%s: Parse call %d = %v, %v, %v; want the error %q", tc.schema, i, coerced, errs, err, tc.want)
+			}
+		}
+	}
+}
+
+// TestCycleOnOneValue: a schema that applies itself to the same value
+// compiles; a value that reaches the cycle is invalid to Check, and Errors
+// and Parse return ErrStackOverflow, where upstream's check, errors and
+// parse throw RangeError "Maximum call stack size exceeded" (the golden
+// rows "ref to root" and on record every case). Only such a schema's Check
+// is serialized.
+func TestCycleOnOneValue(t *testing.T) {
+	for _, tc := range []struct {
+		schema string
+		serial bool
+	}{
+		{`{"$ref":"#"}`, true},
+		{`{"type":"object","allOf":[{"$ref":"#"}]}`, true},
+		{`{"$defs":{"A":{"$ref":"#/$defs/A"}},"$ref":"#/$defs/A"}`, true},
+		{`{"anyOf":[{"type":"object"},{"$ref":"#/$defs/Y"}],"properties":{"p":{"$ref":"#/$defs/Y"}},"$defs":{"Y":{"$ref":"#"}}}`, true},
+		{`{"type":"object","properties":{"x":{"$ref":"#"}}}`, false},
+		{`{"$defs":{"T":{"anyOf":[{"type":"string"},{"type":"array","items":{"$ref":"#/$defs/T"}}]}},"$ref":"#/$defs/T"}`, false},
+	} {
+		v := mustCompile(t, js(t, tc.schema), Options{Coerce: true})
+		if v.serial != tc.serial {
+			t.Errorf("%s: serial %v, want %v", tc.schema, v.serial, tc.serial)
+		}
+		if !tc.serial {
+			continue
+		}
+		value := js(t, `{"p":5}`)
+		for range 2 {
+			if v.Check(value) {
+				t.Errorf("%s: Check passes", tc.schema)
+			}
+			if _, err := v.Errors(value); !errors.Is(err, ErrStackOverflow) {
+				t.Errorf("%s: Errors error %v", tc.schema, err)
+			}
+			if _, _, err := v.Parse(value); !errors.Is(err, ErrStackOverflow) {
+				t.Errorf("%s: Parse error %v", tc.schema, err)
+			}
+			if coerced, err := v.Coerce(value); err != nil || stringify(coerced) != `{"p":5}` {
+				t.Errorf("%s: Coerce = %v, %v; want the value", tc.schema, coerced, err)
+			}
+		}
+		if len(v.c.active) != 0 || len(*v.c.scope) != 0 {
+			t.Errorf("%s: a throw left the guards %v, the scope %v", tc.schema, v.c.active, *v.c.scope)
+		}
+	}
+}
+
+// TestDeepValueUnderRecursiveSchema: recursion that steps into children is
+// bounded by the value, and Go's stack grows past V8's, so a value nested
+// far deeper than upstream can check validates (doc.go).
+func TestDeepValueUnderRecursiveSchema(t *testing.T) {
+	v := mustCompile(t, js(t, `{"type":"object","properties":{"x":{"$ref":"#"}}}`), Options{})
+	value := any(Object{})
+	for range 2000 {
+		value = Object{{"x", value}}
+	}
+	if !v.Check(value) {
+		t.Error("a deep valid value fails")
+	}
+	value = Object{{"x", 1.0}}
+	for range 2000 {
+		value = Object{{"x", value}}
+	}
+	if errs := mustErrors(t, v, value); len(errs) != 1 || len(errs[0].Path) != 2*2001 {
+		t.Errorf("errors %v", errs)
+	}
 }
 
 // TestConcurrentUse runs every method from many goroutines (under -race),
-// including a schema with a dynamic scope.
+// including a schema with a dynamic scope, and compares each result with a
+// serial run's.
 func TestConcurrentUse(t *testing.T) {
 	dynamic := js(t, `{"$id":"https://example.com/tree","$dynamicAnchor":"node","type":"object","properties":{"data":true,"children":{"type":"array","items":{"$dynamicRef":"#node"}}},"$defs":{"strict":{"$id":"https://example.com/strict-tree","$dynamicAnchor":"node","$ref":"tree","unevaluatedProperties":false}}}`)
-	for _, schema := range []any{js(t, readSchema), dynamic} {
+	const n = 16
+	values := make([]any, n)
+	for i := range values {
+		values[i] = js(t, fmt.Sprintf(`{"path":%d,"offset":"%d","children":[{"data":1}]}`, i, i))
+	}
+	// result is one value's results, as JSON text.
+	result := func(v *Validator, value any) string {
+		errs, err := v.Errors(value)
+		coerced, parseErrs, parseErr := v.Parse(value)
+		return fmt.Sprint(v.Check(value), stringify(errorList(errs)), err, stringify(coerced), stringify(errorList(parseErrs)), parseErr)
+	}
+	cyclic := js(t, `{"anyOf":[{"type":"string"},{"$ref":"#"}]}`)
+	for _, schema := range []any{js(t, readSchema), dynamic, cyclic} {
+		serial := mustCompile(t, schema, Options{Coerce: true})
+		want := make([]string, n)
+		for i, value := range values {
+			want[i] = result(serial, value)
+		}
 		v := mustCompile(t, schema, Options{Coerce: true})
+		got := make([]string, n)
 		var wg sync.WaitGroup
-		for i := range 16 {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				value := js(t, fmt.Sprintf(`{"path":%d,"offset":"%d","children":[{"data":1}]}`, i, i))
-				v.Check(value)
-				v.Errors(value)
-				v.Parse(value)
-			}()
+		for i, value := range values {
+			wg.Go(func() { got[i] = result(v, value) })
 		}
 		wg.Wait()
+		for i := range got {
+			if got[i] != want[i] {
+				t.Errorf("value %d: concurrent %s, serial %s", i, got[i], want[i])
+			}
+		}
 	}
 }
 
@@ -356,5 +484,5 @@ func TestCoerceNeedsTheOption(t *testing.T) {
 			t.Error("no panic")
 		}
 	}()
-	mustCompile(t, true, Options{}).Coerce(1.0)
+	_, _ = mustCompile(t, true, Options{}).Coerce(1.0)
 }

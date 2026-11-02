@@ -15,8 +15,9 @@ import (
 // It fails by panicking with a *compileError (or errRestart), which the
 // package's entry points recover: the compile is a deep recursion whose every
 // level would otherwise return an error it can only pass up, and upstream
-// throws. No panic leaves the package except the one Validator.Errors
-// documents.
+// throws. A check that would recurse forever fails the same way at run time
+// (recursion.go). No panic leaves the package but the programmer error
+// Validator.Coerce documents.
 type compiler struct {
 	r       *resolver
 	draft   string
@@ -28,9 +29,21 @@ type compiler struct {
 	scope           *[]string
 	cache           map[*schemaObject]check
 	annotatingCache map[*schemaObject]annotatingCheck
+
+	// The in-place graph and its guards (recursion.go): the compile stack,
+	// the edges and guards of the vertices built since the last search for
+	// cycles, whether a cycle was found, and the guarded checks running.
+	building []frame
+	edges    map[vertex][]vertex
+	fresh    []vertex
+	guards   map[vertex]func()
+	cyclic   bool
+	active   []activation
 }
 
-// compileError is an error compile() throws upstream.
+// compileError is an error upstream throws: compile()'s, or one thrown out of
+// errors() or coerce() by a subschema compiled on first use, or the
+// RangeError of a check that would recurse forever (ErrStackOverflow).
 type compileError struct{ err error }
 
 // errRestart is compiler.ts RESTART: a compile without dynamic scope tracking
@@ -49,6 +62,8 @@ func newCompiler(schema any, opts *treeOptions, dynamic bool) *compiler {
 		scope:           &[]string{},
 		cache:           map[*schemaObject]check{},
 		annotatingCache: map[*schemaObject]annotatingCheck{},
+		edges:           map[vertex][]vertex{},
+		guards:          map[vertex]func(){},
 	}
 }
 
@@ -58,7 +73,8 @@ func (c *compiler) root() check {
 }
 
 // check is the check of a schema, cached by schema object; a recursive
-// reference goes through an indirection.
+// reference goes through an indirection, the slot, which is where a cycle
+// on one value is guarded (recursion.go).
 func (c *compiler) check(v any, base string) check {
 	switch v {
 	case true:
@@ -70,6 +86,7 @@ func (c *compiler) check(v any, base string) check {
 	if !ok {
 		fail(errors.New("A schema must be an object or a boolean, got " + stringifyNode(v)))
 	}
+	c.edge(vertex{node, false})
 	if cached, ok := c.cache[node]; ok {
 		return cached
 	}
@@ -78,7 +95,10 @@ func (c *compiler) check(v any, base string) check {
 	}
 	var slot check
 	c.cache[node] = func(v any) bool { return slot(v) }
-	slot = c.build(node, c.r.baseFor(node, base))
+	c.build(vertex{node, false},
+		func() { slot = c.buildCheck(node, c.r.baseFor(node, base)) },
+		func(p any) { slot = func(any) bool { panic(p) } },
+		func() { slot = c.guard(node, slot) })
 	c.cache[node] = slot
 	return slot
 }
@@ -91,7 +111,7 @@ func stringifyNode(v any) string {
 	return stringify(v)
 }
 
-func (c *compiler) build(node *schemaObject, base string) check {
+func (c *compiler) buildCheck(node *schemaObject, base string) check {
 	if ref, ok := node.kw("$ref").(string); ok && c.draft == Draft7 {
 		return c.ref(ref, base)
 	}
@@ -157,14 +177,14 @@ func (c *compiler) plain(node *schemaObject, base string) check {
 			parts = append(parts, str)
 		}
 		numeric := single == "number" || single == "integer"
-		mode := 0
+		typ := othersPass
 		switch single {
 		case "number":
-			mode = 1
+			typ = numberOnly
 		case "integer":
-			mode = 2
+			typ = integerOnly
 		}
-		num := numberGroup(node, mode)
+		num := numberGroup(node, typ)
 		if num != nil {
 			parts = append(parts, num)
 		}
@@ -272,15 +292,20 @@ func (c *compiler) dynamicRef(ref, base string) check {
 	fallback := c.check(initial.node, initial.base)
 	lookup := dynamicLookup(c, name, c.check)
 	scope := c.scope
-	return func(v any) bool {
+	// The schema the scope names is an edge the compile cannot see.
+	return c.guard(new(dynamicSite), func(v any) bool {
 		for _, uri := range *scope {
 			if chk := lookup(uri); chk != nil {
 				return chk(v)
 			}
 		}
 		return fallback(v)
-	}
+	})
 }
+
+// dynamicSite is a key of the guard of one `$dynamicRef` check (never
+// zero-sized, so each is a distinct pointer).
+type dynamicSite struct{ _ byte }
 
 // bookended is the initial target and anchor name of a `$dynamicRef` that
 // resolves dynamically; ok is false for one that is a plain reference.
@@ -455,7 +480,7 @@ func (c *compiler) regex(source string) *pattern {
 	return re
 }
 
-func numberGroup(node *schemaObject, mode int) check {
+func numberGroup(node *schemaObject, typ numberType) check {
 	lo, hasLo := numberKw(node, "minimum")
 	hi, hasHi := numberKw(node, "maximum")
 	xlo, hasXlo := numberKw(node, "exclusiveMinimum")
@@ -481,7 +506,7 @@ func numberGroup(node *schemaObject, mode int) check {
 	if hasMultiple {
 		multipleOf = &m
 	}
-	return numberCheck(mode, lo, hi, xlo, xhi, multipleOf)
+	return numberCheck(typ, lo, hi, xlo, xhi, multipleOf)
 }
 
 func (c *compiler) objectGroup(node *schemaObject, base string, strict bool) check {
@@ -504,7 +529,7 @@ func (c *compiler) objectGroup(node *schemaObject, base string, strict bool) che
 		parts = append(parts, core)
 	}
 	if s, ok := node.get("propertyNames"); ok {
-		parts = append(parts, propertyNamesCheck(c.check(s, base)))
+		parts = append(parts, propertyNamesCheck(c.child(s, base)))
 	}
 	lo, hasLo := numberKw(node, "minProperties")
 	hi, hasHi := numberKw(node, "maxProperties")
@@ -581,7 +606,7 @@ func (c *compiler) objectCore(node *schemaObject, base string, g guard) check {
 		if isRequired {
 			requiredCount++
 		}
-		declaredEntries[i] = declared{m.Key, c.check(m.Value, base), isRequired}
+		declaredEntries[i] = declared{m.Key, c.child(m.Value, base), isRequired}
 		keys[i] = m.Key
 	}
 	var extraRequired []string
@@ -592,11 +617,11 @@ func (c *compiler) objectCore(node *schemaObject, base string, g guard) check {
 	}
 	pats := make([]patternCheck, len(patterns.members))
 	for i, m := range patterns.members {
-		pats[i] = patternCheck{c.regex(m.Key), c.check(m.Value, base)}
+		pats[i] = patternCheck{c.regex(m.Key), c.child(m.Value, base)}
 	}
 	var extra check
 	if !openAdditional {
-		extra = c.check(additional, base)
+		extra = c.child(additional, base)
 	}
 	if len(pats) == 0 && len(extraRequired) == 0 && (extra == nil || additional == false) {
 		return declaredObject(declaredEntries, requiredCount, additional == false, g)
@@ -617,10 +642,10 @@ func (c *compiler) arrayGroup(node *schemaObject, base string, strict bool) chec
 		}
 		rest, hasRest = node.get("items")
 	}
-	prefixChecks := c.checks(prefix, base)
+	prefixChecks := c.children(prefix, base)
 	var restCheck check
 	if hasRest && rest != true {
-		restCheck = c.check(rest, base)
+		restCheck = c.child(rest, base)
 	}
 	lo, hasLo := numberKw(node, "minItems")
 	hi, hasHi := numberKw(node, "maxItems")
@@ -653,7 +678,7 @@ func (c *compiler) arrayGroup(node *schemaObject, base string, strict bool) chec
 			minContains = numberOr(node.kw("minContains"), 1)
 			maxContains = numberOr(node.kw("maxContains"), math.Inf(1))
 		}
-		parts = append(parts, containsCheck(c.check(contains, base), minContains, maxContains))
+		parts = append(parts, containsCheck(c.child(contains, base), minContains, maxContains))
 	}
 	if node.kw("uniqueItems") == true {
 		parts = append(parts, uniqueCheck)
@@ -680,12 +705,16 @@ func (c *compiler) annotating(v any, base string) annotatingCheck {
 	if !ok {
 		fail(errors.New("A schema must be an object or a boolean, got " + stringifyNode(v)))
 	}
+	c.edge(vertex{node, true})
 	if cached, ok := c.annotatingCache[node]; ok {
 		return cached
 	}
 	var slot annotatingCheck
 	c.annotatingCache[node] = func(v any, a *annotations) bool { return slot(v, a) }
-	slot = c.buildAnnotating(node, c.r.baseFor(node, base))
+	c.build(vertex{node, true},
+		func() { slot = c.buildAnnotating(node, c.r.baseFor(node, base)) },
+		func(p any) { slot = func(any, *annotations) bool { panic(p) } },
+		func() { slot = c.guardAnnotating(vertex{node, true}, slot) })
 	c.annotatingCache[node] = slot
 	return slot
 }
@@ -718,15 +747,15 @@ func (c *compiler) annotatingParts(node *schemaObject, base string) []annotating
 	if node.has("properties") || node.has("patternProperties") || node.has("additionalProperties") {
 		var props []propertyCheck
 		for _, m := range entries(node.kw("properties")) {
-			props = append(props, propertyCheck{m.Key, c.check(m.Value, base)})
+			props = append(props, propertyCheck{m.Key, c.child(m.Value, base)})
 		}
 		var pats []patternCheck
 		for _, m := range entries(node.kw("patternProperties")) {
-			pats = append(pats, patternCheck{c.regex(m.Key), c.check(m.Value, base)})
+			pats = append(pats, patternCheck{c.regex(m.Key), c.child(m.Value, base)})
 		}
 		var extra check
 		if s, ok := node.get("additionalProperties"); ok {
-			extra = c.check(s, base)
+			extra = c.child(s, base)
 		}
 		parts = append(parts, annotateObject(props, pats, extra))
 	}
@@ -741,12 +770,12 @@ func (c *compiler) annotatingParts(node *schemaObject, base string) []annotating
 		}
 		var restCheck, containsCheck check
 		if hasRest {
-			restCheck = c.check(rest, base)
+			restCheck = c.child(rest, base)
 		}
 		if s, ok := node.get("contains"); ok {
-			containsCheck = c.check(s, base)
+			containsCheck = c.child(s, base)
 		}
-		parts = append(parts, annotateArray(c.checks(prefix, base), restCheck, containsCheck,
+		parts = append(parts, annotateArray(c.children(prefix, base), restCheck, containsCheck,
 			numberOr(node.kw("minContains"), 1), numberOr(node.kw("maxContains"), math.Inf(1))))
 	}
 	if list, ok := node.kw("allOf").([]any); ok {
@@ -780,10 +809,10 @@ func (c *compiler) annotatingParts(node *schemaObject, base string) []annotating
 		parts = append(parts, annotateDependent(m.Key, c.annotating(m.Value, base)))
 	}
 	if s, ok := node.get("unevaluatedProperties"); ok {
-		parts = append(parts, unevaluatedPropertiesCheck(c.check(s, base)))
+		parts = append(parts, unevaluatedPropertiesCheck(c.child(s, base)))
 	}
 	if s, ok := node.get("unevaluatedItems"); ok {
-		parts = append(parts, unevaluatedItemsCheck(c.check(s, base)))
+		parts = append(parts, unevaluatedItemsCheck(c.child(s, base)))
 	}
 	return parts
 }
@@ -813,14 +842,14 @@ func (c *compiler) annotatingDynamicRef(ref, base string) annotatingCheck {
 	fallback := c.annotating(initial.node, initial.base)
 	lookup := dynamicLookup(c, name, c.annotating)
 	scope := c.scope
-	return func(v any, a *annotations) bool {
+	return c.guardAnnotating(new(dynamicSite), func(v any, a *annotations) bool {
 		for _, uri := range *scope {
 			if chk := lookup(uri); chk != nil {
 				return chk(v, a)
 			}
 		}
 		return fallback(v, a)
-	}
+	})
 }
 
 // neutralKeywords never affect a check.

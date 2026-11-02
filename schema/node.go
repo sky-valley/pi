@@ -49,14 +49,6 @@ func (s *schemaObject) without(drop func(string) bool) *schemaObject {
 	return out
 }
 
-func newSchemaObject(members []Member) *schemaObject {
-	s := &schemaObject{members: members, index: make(map[string]int, len(members))}
-	for i, m := range members {
-		s.index[m.Key] = i
-	}
-	return s
-}
-
 // toTree converts a schema (or a document of options.Schemas) into the tree
 // the compiler reads: every object a *schemaObject, every array []any, every
 // number float64, including inside `const`, `enum` and other data keywords,

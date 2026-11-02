@@ -3,6 +3,7 @@ package schema
 import (
 	"math"
 	"os"
+	"slices"
 	"strings"
 	"testing"
 
@@ -224,17 +225,25 @@ func TestGoldenMatchesUpstream(t *testing.T) {
 		for i, c := range field(r, "cases").([]any) {
 			cases++
 			value := untag(field(c, "value"))
-			got := Object{{"value", tag(value)}, {"check", v.Check(value)}, {"errors", errorList(v.Errors(value))}}
+			errs, err := v.Errors(value)
+			got := Object{{"value", tag(value)}, {"check", goldenCheck(v.Check(value), err, field(c, "check"))}, {"errors", orThrown(errorList(errs), err)}}
 			if opts.Coerce {
-				coerced := v.Coerce(value)
-				got = append(got, Member{"coerce", tag(coerced)}, Member{"coerceSame", strictEquals(coerced, value)})
-				parsed, errs := v.Parse(value)
-				if errs == nil {
-					got = append(got, Member{"parse", Object{{"ok", true}, {"value", tag(parsed)}}})
+				if coerced, err := v.Coerce(value); err != nil {
+					got = append(got, Member{"coerce", thrown(err)})
 				} else {
+					got = append(got, Member{"coerce", tag(coerced)}, Member{"coerceSame", strictEquals(coerced, value)})
+				}
+				parsed, errs, err := v.Parse(value)
+				switch {
+				case err != nil:
+					got = append(got, Member{"parse", thrown(err)})
+				case errs == nil:
+					got = append(got, Member{"parse", Object{{"ok", true}, {"value", tag(parsed)}}})
+				default:
 					got = append(got, Member{"parse", Object{{"ok", false}, {"errors", errorList(errs)}}})
 				}
 			}
+			c = upstreamSlotBug(c)
 			if g, w := stringify(got), stringify(c); g != w {
 				t.Errorf("%s case %d:\n got %s\nwant %s", name, i, g, w)
 			}
@@ -243,6 +252,46 @@ func TestGoldenMatchesUpstream(t *testing.T) {
 	if cases < 500 {
 		t.Fatalf("only %d golden cases", cases)
 	}
+}
+
+// thrown is capture.mjs's record of a call that throws.
+func thrown(err error) Object {
+	return Object{{"$", "throws"}, {"message", err.Error()}}
+}
+
+func orThrown(v any, err error) any {
+	if err != nil {
+		return thrown(err)
+	}
+	return v
+}
+
+// goldenCheck is Check's result as the golden records it. Where upstream's
+// check throws (a cycle on one value), Check reports the value invalid and
+// Errors returns the error: the row then wants Check false and that error.
+func goldenCheck(ok bool, err error, want any) any {
+	if _, throws := want.(Object); throws && !ok && err != nil {
+		return thrown(err)
+	}
+	return ok
+}
+
+// upstreamSlotBug is a golden case with upstream's second throw out of a
+// failed lazy compile, "slot.check is not a function" (its cache keeps the
+// half-built check), replaced by the first throw, which the port repeats on
+// every call (doc.go).
+func upstreamSlotBug(c any) any {
+	parse, _ := field(c, "parse").(Object)
+	if field(parse, "message") != "slot.check is not a function" {
+		return c
+	}
+	out := slices.Clone(c.(Object))
+	for i, m := range out {
+		if m.Key == "parse" {
+			out[i].Value = field(c, "errors")
+		}
+	}
+	return out
 }
 
 func TestResolveURIMatchesUpstream(t *testing.T) {
@@ -268,6 +317,16 @@ var re2Unsupported = map[string]bool{
 	"^\\p{sc=Grek}$":    true, // script code; Go knows script names only
 	"^\\p{Alphabetic}$": true, // binary property
 	"^\\uD83D$":         true, // half a surrogate pair
+}
+
+// hasSurrogate is whether s holds half a surrogate pair (as WTF-8).
+func hasSurrogate(s string) bool {
+	for i := range len(s) {
+		if _, ok := jstext.WTF8Surrogate(s[i:]); ok {
+			return true
+		}
+	}
+	return false
 }
 
 func TestRegexMatchesUpstream(t *testing.T) {
@@ -299,6 +358,9 @@ func TestRegexMatchesUpstream(t *testing.T) {
 		}
 		for i, m := range field(r, "matches").([]any) {
 			s := subjects[i].(string)
+			if !re.units && hasSurrogate(s) {
+				continue // with the u flag, half a pair in a value is not one character to RE2 (doc.go)
+			}
 			if got := re.test(s); got != m.(bool) {
 				t.Errorf("%q.test(%q) = %v, want %v (translated %s)", source, s, got, m, re.re)
 			}

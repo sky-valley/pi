@@ -13,7 +13,7 @@ import (
 
 func coerceWith(t *testing.T, schema, value any) any {
 	t.Helper()
-	return mustCompile(t, schema, Options{Coerce: true}).Coerce(value)
+	return mustCoerce(t, mustCompile(t, schema, Options{Coerce: true}), value)
 }
 
 // coerceValue is the coerced `value` property of {value} under an object
@@ -33,7 +33,7 @@ func wantJSON(t *testing.T, got any, want string) {
 
 func parseJSON(t *testing.T, v *Validator, value any) string {
 	t.Helper()
-	coerced, errs := v.Parse(value)
+	coerced, errs := mustParse(t, v, value)
 	if errs == nil {
 		return `{"ok":true,"value":` + stringify(coerced) + `}`
 	}
@@ -74,7 +74,7 @@ func TestCoerce(t *testing.T) {
 	})
 	t.Run("leaves values it cannot coerce for the check to report", func(t *testing.T) {
 		v := mustCompile(t, Obj(Object{{"count", Num()}}), Options{Coerce: true})
-		coerced := v.Coerce(Object{{"count", "many"}})
+		coerced := mustCoerce(t, v, Object{{"count", "many"}})
 		wantJSON(t, coerced, `{"count":"many"}`)
 		if v.Check(coerced) {
 			t.Error("check passed")
@@ -187,7 +187,7 @@ func TestConversionRules(t *testing.T) {
 	t.Run("leaves values no rule coerces", func(t *testing.T) {
 		v := mustCompile(t, js(t, `{"type":"object","properties":{"value":{"type":"integer"}},"required":["value"]}`), Options{Coerce: true})
 		for _, input := range []string{`"abc"`, `"4x"`, `{}`, `["1","2"]`} {
-			if v.Check(v.Coerce(Object{{"value", js(t, input)}})) {
+			if v.Check(mustCoerce(t, v, Object{{"value", js(t, input)}})) {
 				t.Errorf("%s coerced to a valid value", input)
 			}
 		}
@@ -210,7 +210,7 @@ func TestRecursiveCoercion(t *testing.T) {
 	}
 	fails := func(t *testing.T, v *Validator, value any) {
 		t.Helper()
-		if _, errs := v.Parse(value); errs == nil {
+		if _, errs := mustParse(t, v, value); errs == nil {
 			t.Errorf("parse %s passed", stringify(value))
 		}
 	}
@@ -224,7 +224,7 @@ func TestRecursiveCoercion(t *testing.T) {
 	t.Run("leave a value a recursive schema cannot convert as it is", func(t *testing.T) {
 		v := mustCompile(t, tree, Options{Coerce: true})
 		fails(t, v, js(t, `{"t":{}}`))
-		wantJSON(t, v.Coerce(js(t, `{"t":{"a":1}}`)), `{"t":{"a":1}}`)
+		wantJSON(t, mustCoerce(t, v, js(t, `{"t":{"a":1}}`)), `{"t":{"a":1}}`)
 	})
 	t.Run("convert a scalar-or-array schema that refers to itself", func(t *testing.T) {
 		v := mustCompile(t, js(t, `{"type":"object","properties":{"value":{"anyOf":[{"type":"number"},{"type":"array","items":{"$ref":"#/properties/value"}}]}},"required":["value"]}`), Options{Coerce: true})
@@ -261,7 +261,7 @@ func TestRecursiveCoercion(t *testing.T) {
 			value = Object{{"c", value}}
 		}
 		start := time.Now()
-		_, errs := v.Parse(Object{{"s", value}})
+		_, errs := mustParse(t, v, Object{{"s", value}})
 		if elapsed := time.Since(start); elapsed > 5*time.Second {
 			t.Errorf("took %v", elapsed)
 		}
@@ -335,5 +335,58 @@ func TestMemberKeywords(t *testing.T) {
 			}
 			wantJSON(t, input, `{"a":"3","c":"2"}`)
 		})
+	}
+}
+
+// TestCoerceCyclicSchemaObject: a schema built in Go may hold itself (Compile
+// keeps the cycle, as upstream sees one JS object). Upstream's coerce
+// overflows V8's stack on {type:"number", allOf:[itself]} and throws
+// RangeError; on {anyOf:[{type:"string"}, itself]} it returns "5" for 5,
+// its check of the cyclic branch throwing inside coerce, which catches it;
+// a cycle through properties is recursion into children.
+func TestCoerceCyclicSchemaObject(t *testing.T) {
+	all := map[string]any{"type": "number"}
+	all["allOf"] = []any{all}
+	anyOf := map[string]any{}
+	anyOf["anyOf"] = []any{map[string]any{"type": "string"}, anyOf}
+	props := map[string]any{"type": "object"}
+	props["properties"] = map[string]any{"x": props}
+	for _, tc := range []struct {
+		schema         any
+		value          any
+		check          bool
+		errors, coerce string
+		parse          string
+	}{
+		{all, "5", false, `[{"path":"","keyword":"type","message":"expected number, got string"}]`, "Maximum call stack size exceeded", "Maximum call stack size exceeded"},
+		{all, 5.0, false, "Maximum call stack size exceeded", "Maximum call stack size exceeded", "Maximum call stack size exceeded"},
+		{anyOf, "s", true, `[]`, `"s"`, `{"ok":true,"value":"s"}`},
+		{anyOf, 5.0, false, "Maximum call stack size exceeded", `"5"`, `{"ok":true,"value":"5"}`},
+		{props, Object{{"x", Object{{"x", Object{}}}}}, true, `[]`, `{"x":{"x":{}}}`, `{"ok":true,"value":{"x":{"x":{}}}}`},
+		{props, Object{{"x", 5.0}}, false, `[{"path":"/x","keyword":"type","message":"expected object, got integer"}]`, `{"x":5}`,
+			`{"ok":false,"errors":[{"path":"/x","keyword":"type","message":"expected object, got integer"}]}`},
+	} {
+		v := mustCompile(t, tc.schema, Options{Coerce: true})
+		show := func(v any, err error) string {
+			if err != nil {
+				return err.Error()
+			}
+			return stringify(v)
+		}
+		errs, err := v.Errors(tc.value)
+		if errs == nil && err == nil {
+			errs = []ValidationError{}
+		}
+		coerced, coerceErr := v.Coerce(tc.value)
+		parsed, parseErrs, parseErr := v.Parse(tc.value)
+		parse := `{"ok":true,"value":` + stringify(parsed) + `}`
+		if parseErr != nil {
+			parse = parseErr.Error()
+		} else if parseErrs != nil {
+			parse = `{"ok":false,"errors":` + stringify(errorList(parseErrs)) + `}`
+		}
+		if got := [...]any{v.Check(tc.value), show(errorList(errs), err), show(coerced, coerceErr), parse}; got != [...]any{tc.check, tc.errors, tc.coerce, tc.parse} {
+			t.Errorf("%v: got %q", stringify(tc.value), got)
+		}
 	}
 }

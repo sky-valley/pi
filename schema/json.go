@@ -1,6 +1,8 @@
 package schema
 
 import (
+	"bytes"
+	"cmp"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -74,6 +76,10 @@ func writeJSON(b *strings.Builder, v any) {
 		b.WriteByte('}')
 	default:
 		// Not a value of the model; json.Marshal is the closest reading.
+		// Every value of the model is written above, so Marshal only meets
+		// what a caller put outside it (a func, a channel, a cyclic
+		// pointer); JSON.stringify writes such a value (a function, a
+		// symbol) as nothing, and null keeps the text JSON.
 		out, err := json.Marshal(v)
 		if err != nil {
 			b.WriteString("null")
@@ -215,7 +221,7 @@ func (p *decoder) value(depth int) (any, error) {
 }
 
 func (p *decoder) literal(word string, value any) (any, error) {
-	if !strings.HasPrefix(string(p.data[p.pos:]), word) {
+	if !bytes.HasPrefix(p.data[p.pos:], []byte(word)) {
 		return nil, p.fail("expected " + word)
 	}
 	p.pos += len(word)
@@ -291,7 +297,7 @@ func (p *decoder) object(depth int) (any, error) {
 					bi, bIndex := jstext.ArrayIndexKey(b.Key)
 					switch {
 					case aIndex && bIndex:
-						return int(int64(ai) - int64(bi))
+						return cmp.Compare(ai, bi)
 					case aIndex:
 						return -1
 					case bIndex:

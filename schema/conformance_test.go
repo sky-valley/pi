@@ -142,8 +142,8 @@ func TestConformance(t *testing.T) {
 					continue
 				}
 				got := v.Check(data)
-				if errs := v.Errors(data); (len(errs) == 0) != got {
-					t.Errorf("%s (errors agree with check): check %v, errors %v", name, got, errs)
+				if errs, err := v.Errors(data); err != nil || (len(errs) == 0) != got {
+					t.Errorf("%s (errors agree with check): check %v, errors %v, %v", name, got, errs, err)
 				}
 				known := knownFailures[name] || re2Failures[name]
 				switch {

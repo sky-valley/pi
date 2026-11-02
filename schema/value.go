@@ -35,8 +35,12 @@ type Member struct {
 // Object is a JSON object whose members are listed in JavaScript own-key
 // order: array-index keys ascending, then the others in insertion order (the
 // order JSON.parse, Object.keys and JSON.stringify follow). Its keys are
-// distinct. The package never reorders an Object: it lists its members in the
-// order the caller gave, and a coerced copy keeps that order.
+// distinct, a precondition the package does not check (Decode, like
+// JSON.parse, never repeats one): with a repeated key, reads see the first
+// member while member counts (minProperties, maxProperties) count each, so
+// such an object validates as no JavaScript object could. The package never
+// reorders an Object: it lists its members in the order the caller gave, and
+// a coerced copy keeps that order.
 type Object []Member
 
 // Get returns the value of key and whether the object has it.
