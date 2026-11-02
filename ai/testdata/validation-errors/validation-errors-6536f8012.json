@@ -1,0 +1,164 @@
+{
+	"piAi": "6536f8012",
+	"parameters": {
+		"type": "object",
+		"properties": {
+			"value": {
+				"type": "string"
+			}
+		},
+		"required": [
+			"value"
+		]
+	},
+	"rows": [
+		{
+			"name": "echo",
+			"args": "{\"note\":\"<a & b>\"}",
+			"error": "Validation failed for tool \"echo\":\n  - value: missing\n\nReceived arguments:\n{\n  \"note\": \"<a & b>\"\n}"
+		},
+		{
+			"name": "we\"ird\\name",
+			"args": "{\"note\":1}",
+			"error": "Validation failed for tool \"we\"ird\\name\":\n  - value: missing\n\nReceived arguments:\n{\n  \"note\": 1\n}"
+		},
+		{
+			"name": "echo",
+			"args": "{\"n\":1e21,\"z\":-0,\"f\":0.1,\"big\":123456789012345680000,\"tiny\":1e-7,\"line\":\"a b\"}",
+			"error": "Validation failed for tool \"echo\":\n  - value: missing\n\nReceived arguments:\n{\n  \"n\": 1e+21,\n  \"z\": 0,\n  \"f\": 0.1,\n  \"big\": 123456789012345680000,\n  \"tiny\": 1e-7,\n  \"line\": \"a b\"\n}"
+		},
+		{
+			"name": "echo",
+			"args": "{\"nested\":{\"b\":1,\"2\":[1,{\"y\":\"<>\"}],\"a\":[],\"o\":{}}}",
+			"error": "Validation failed for tool \"echo\":\n  - value: missing\n\nReceived arguments:\n{\n  \"nested\": {\n    \"2\": [\n      1,\n      {\n        \"y\": \"<>\"\n      }\n    ],\n    \"b\": 1,\n    \"a\": [],\n    \"o\": {}\n  }\n}"
+		},
+		{
+			"name": "mi\"ssé",
+			"args": "{}",
+			"tools": [
+				"echo"
+			],
+			"error": "Tool \"mi\"ssé\" not found"
+		},
+		{
+			"name": "echo",
+			"args": "{\"value\":\"ok\"}",
+			"value": "{\"value\":\"ok\"}"
+		},
+		{
+			"name": "echo",
+			"args": "{\"value\":42}",
+			"value": "{\"value\":\"42\"}"
+		},
+		{
+			"name": "echo",
+			"args": "{\"value\":true}",
+			"value": "{\"value\":\"true\"}"
+		},
+		{
+			"name": "echo",
+			"args": "{\"value\":null}",
+			"value": "{\"value\":\"null\"}"
+		},
+		{
+			"name": "echo",
+			"args": "{\"value\":[\"x\"]}",
+			"error": "Validation failed for tool \"echo\":\n  - value: expected string, got array\n\nReceived arguments:\n{\n  \"value\": [\n    \"x\"\n  ]\n}"
+		},
+		{
+			"name": "echo",
+			"args": "{\"value\":{\"x\":1}}",
+			"error": "Validation failed for tool \"echo\":\n  - value: expected string, got object\n\nReceived arguments:\n{\n  \"value\": {\n    \"x\": 1\n  }\n}"
+		},
+		{
+			"name": "edit",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\",\"minLength\":1},\"count\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":10},\"ratio\":{\"type\":\"number\",\"exclusiveMinimum\":0},\"mode\":{\"type\":\"string\",\"enum\":[\"fast\",\"slow\"]},\"flag\":{\"type\":\"boolean\"},\"tags\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"maxItems\":2},\"email\":{\"type\":\"string\",\"format\":\"email\"},\"when\":{\"type\":\"string\",\"format\":\"date-time\"},\"note\":{\"type\":\"string\"},\"edits\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"oldText\":{\"type\":\"string\"},\"newText\":{\"type\":\"string\"}},\"required\":[\"oldText\",\"newText\"],\"additionalProperties\":false}},\"a/b~c\":{\"type\":\"number\"}},\"required\":[\"path\"],\"additionalProperties\":false}",
+			"args": "{\"path\":\"a.txt\",\"count\":\"3\",\"ratio\":\"0.5\",\"flag\":\"true\",\"tags\":\"one\",\"note\":null}",
+			"value": "{\"path\":\"a.txt\",\"count\":3,\"ratio\":0.5,\"flag\":true,\"tags\":[\"one\"]}"
+		},
+		{
+			"name": "edit",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\",\"minLength\":1},\"count\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":10},\"ratio\":{\"type\":\"number\",\"exclusiveMinimum\":0},\"mode\":{\"type\":\"string\",\"enum\":[\"fast\",\"slow\"]},\"flag\":{\"type\":\"boolean\"},\"tags\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"maxItems\":2},\"email\":{\"type\":\"string\",\"format\":\"email\"},\"when\":{\"type\":\"string\",\"format\":\"date-time\"},\"note\":{\"type\":\"string\"},\"edits\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"oldText\":{\"type\":\"string\"},\"newText\":{\"type\":\"string\"}},\"required\":[\"oldText\",\"newText\"],\"additionalProperties\":false}},\"a/b~c\":{\"type\":\"number\"}},\"required\":[\"path\"],\"additionalProperties\":false}",
+			"args": "{\"path\":\"\",\"count\":11,\"ratio\":0,\"mode\":\"medium\",\"flag\":\"yes\",\"tags\":[\"a\",\"b\",\"c\"],\"extra\":1}",
+			"error": "Validation failed for tool \"edit\":\n  - path: expected at least 1 characters\n  - count: expected <= 10\n  - ratio: expected > 0\n  - mode: expected one of [\"fast\",\"slow\"]\n  - flag: expected boolean, got string\n  - tags: expected at most 2 items\n  - extra: unknown field\n\nReceived arguments:\n{\n  \"path\": \"\",\n  \"count\": 11,\n  \"ratio\": 0,\n  \"mode\": \"medium\",\n  \"flag\": \"yes\",\n  \"tags\": [\n    \"a\",\n    \"b\",\n    \"c\"\n  ],\n  \"extra\": 1\n}"
+		},
+		{
+			"name": "edit",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\",\"minLength\":1},\"count\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":10},\"ratio\":{\"type\":\"number\",\"exclusiveMinimum\":0},\"mode\":{\"type\":\"string\",\"enum\":[\"fast\",\"slow\"]},\"flag\":{\"type\":\"boolean\"},\"tags\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"maxItems\":2},\"email\":{\"type\":\"string\",\"format\":\"email\"},\"when\":{\"type\":\"string\",\"format\":\"date-time\"},\"note\":{\"type\":\"string\"},\"edits\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"oldText\":{\"type\":\"string\"},\"newText\":{\"type\":\"string\"}},\"required\":[\"oldText\",\"newText\"],\"additionalProperties\":false}},\"a/b~c\":{\"type\":\"number\"}},\"required\":[\"path\"],\"additionalProperties\":false}",
+			"args": "{\"count\":1.5,\"email\":\"not-an-email\",\"when\":\"yesterday\"}",
+			"error": "Validation failed for tool \"edit\":\n  - path: missing\n  - email: expected format email\n  - when: expected format date-time\n\nReceived arguments:\n{\n  \"count\": 1.5,\n  \"email\": \"not-an-email\",\n  \"when\": \"yesterday\"\n}"
+		},
+		{
+			"name": "edit",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\",\"minLength\":1},\"count\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":10},\"ratio\":{\"type\":\"number\",\"exclusiveMinimum\":0},\"mode\":{\"type\":\"string\",\"enum\":[\"fast\",\"slow\"]},\"flag\":{\"type\":\"boolean\"},\"tags\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"maxItems\":2},\"email\":{\"type\":\"string\",\"format\":\"email\"},\"when\":{\"type\":\"string\",\"format\":\"date-time\"},\"note\":{\"type\":\"string\"},\"edits\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"oldText\":{\"type\":\"string\"},\"newText\":{\"type\":\"string\"}},\"required\":[\"oldText\",\"newText\"],\"additionalProperties\":false}},\"a/b~c\":{\"type\":\"number\"}},\"required\":[\"path\"],\"additionalProperties\":false}",
+			"args": "{\"path\":\"p\",\"email\":\"me@example.com\",\"when\":\"2026-11-02T10:00:00Z\"}",
+			"value": "{\"path\":\"p\",\"email\":\"me@example.com\",\"when\":\"2026-11-02T10:00:00Z\"}"
+		},
+		{
+			"name": "edit",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\",\"minLength\":1},\"count\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":10},\"ratio\":{\"type\":\"number\",\"exclusiveMinimum\":0},\"mode\":{\"type\":\"string\",\"enum\":[\"fast\",\"slow\"]},\"flag\":{\"type\":\"boolean\"},\"tags\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"maxItems\":2},\"email\":{\"type\":\"string\",\"format\":\"email\"},\"when\":{\"type\":\"string\",\"format\":\"date-time\"},\"note\":{\"type\":\"string\"},\"edits\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"oldText\":{\"type\":\"string\"},\"newText\":{\"type\":\"string\"}},\"required\":[\"oldText\",\"newText\"],\"additionalProperties\":false}},\"a/b~c\":{\"type\":\"number\"}},\"required\":[\"path\"],\"additionalProperties\":false}",
+			"args": "{\"path\":\"p\",\"edits\":[{\"oldText\":\"a\",\"newText\":\"b\"},{\"oldText\":\"c\"},{\"oldText\":1,\"newText\":\"d\",\"x\":true}]}",
+			"error": "Validation failed for tool \"edit\":\n  - edits.1.newText: missing\n  - edits.2.x: unknown field\n\nReceived arguments:\n{\n  \"path\": \"p\",\n  \"edits\": [\n    {\n      \"oldText\": \"a\",\n      \"newText\": \"b\"\n    },\n    {\n      \"oldText\": \"c\"\n    },\n    {\n      \"oldText\": 1,\n      \"newText\": \"d\",\n      \"x\": true\n    }\n  ]\n}"
+		},
+		{
+			"name": "edit",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\",\"minLength\":1},\"count\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":10},\"ratio\":{\"type\":\"number\",\"exclusiveMinimum\":0},\"mode\":{\"type\":\"string\",\"enum\":[\"fast\",\"slow\"]},\"flag\":{\"type\":\"boolean\"},\"tags\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"maxItems\":2},\"email\":{\"type\":\"string\",\"format\":\"email\"},\"when\":{\"type\":\"string\",\"format\":\"date-time\"},\"note\":{\"type\":\"string\"},\"edits\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"oldText\":{\"type\":\"string\"},\"newText\":{\"type\":\"string\"}},\"required\":[\"oldText\",\"newText\"],\"additionalProperties\":false}},\"a/b~c\":{\"type\":\"number\"}},\"required\":[\"path\"],\"additionalProperties\":false}",
+			"args": "{\"path\":\"p\",\"edits\":{\"oldText\":\"a\",\"newText\":\"b\"}}",
+			"value": "{\"path\":\"p\",\"edits\":[{\"oldText\":\"a\",\"newText\":\"b\"}]}"
+		},
+		{
+			"name": "edit",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\",\"minLength\":1},\"count\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":10},\"ratio\":{\"type\":\"number\",\"exclusiveMinimum\":0},\"mode\":{\"type\":\"string\",\"enum\":[\"fast\",\"slow\"]},\"flag\":{\"type\":\"boolean\"},\"tags\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"maxItems\":2},\"email\":{\"type\":\"string\",\"format\":\"email\"},\"when\":{\"type\":\"string\",\"format\":\"date-time\"},\"note\":{\"type\":\"string\"},\"edits\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"oldText\":{\"type\":\"string\"},\"newText\":{\"type\":\"string\"}},\"required\":[\"oldText\",\"newText\"],\"additionalProperties\":false}},\"a/b~c\":{\"type\":\"number\"}},\"required\":[\"path\"],\"additionalProperties\":false}",
+			"args": "{\"path\":\"p\",\"a/b~c\":\"x\"}",
+			"error": "Validation failed for tool \"edit\":\n  - a/b~c: expected number, got string\n\nReceived arguments:\n{\n  \"path\": \"p\",\n  \"a/b~c\": \"x\"\n}"
+		},
+		{
+			"name": "edit",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\",\"minLength\":1},\"count\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":10},\"ratio\":{\"type\":\"number\",\"exclusiveMinimum\":0},\"mode\":{\"type\":\"string\",\"enum\":[\"fast\",\"slow\"]},\"flag\":{\"type\":\"boolean\"},\"tags\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"maxItems\":2},\"email\":{\"type\":\"string\",\"format\":\"email\"},\"when\":{\"type\":\"string\",\"format\":\"date-time\"},\"note\":{\"type\":\"string\"},\"edits\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"oldText\":{\"type\":\"string\"},\"newText\":{\"type\":\"string\"}},\"required\":[\"oldText\",\"newText\"],\"additionalProperties\":false}},\"a/b~c\":{\"type\":\"number\"}},\"required\":[\"path\"],\"additionalProperties\":false}",
+			"args": "{\"path\":\"p\",\"count\":\"-1\",\"ratio\":\"abc\"}",
+			"error": "Validation failed for tool \"edit\":\n  - count: expected >= 0\n  - ratio: expected number, got string\n\nReceived arguments:\n{\n  \"path\": \"p\",\n  \"count\": \"-1\",\n  \"ratio\": \"abc\"\n}"
+		},
+		{
+			"name": "edit",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\",\"minLength\":1},\"count\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":10},\"ratio\":{\"type\":\"number\",\"exclusiveMinimum\":0},\"mode\":{\"type\":\"string\",\"enum\":[\"fast\",\"slow\"]},\"flag\":{\"type\":\"boolean\"},\"tags\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"maxItems\":2},\"email\":{\"type\":\"string\",\"format\":\"email\"},\"when\":{\"type\":\"string\",\"format\":\"date-time\"},\"note\":{\"type\":\"string\"},\"edits\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"oldText\":{\"type\":\"string\"},\"newText\":{\"type\":\"string\"}},\"required\":[\"oldText\",\"newText\"],\"additionalProperties\":false}},\"a/b~c\":{\"type\":\"number\"}},\"required\":[\"path\"],\"additionalProperties\":false}",
+			"args": "{\"path\":7}",
+			"value": "{\"path\":\"7\"}"
+		},
+		{
+			"name": "pick",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"target\":{\"anyOf\":[{\"type\":\"number\"},{\"type\":\"boolean\"}]},\"pick\":{\"oneOf\":[{\"type\":\"string\",\"const\":\"a\"},{\"type\":\"string\",\"const\":\"b\"}]},\"maybe\":{\"type\":[\"string\",\"null\"]}},\"required\":[\"target\"]}",
+			"args": "{\"target\":\"12\",\"pick\":\"a\",\"maybe\":null}",
+			"value": "{\"target\":12,\"pick\":\"a\",\"maybe\":null}"
+		},
+		{
+			"name": "pick",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"target\":{\"anyOf\":[{\"type\":\"number\"},{\"type\":\"boolean\"}]},\"pick\":{\"oneOf\":[{\"type\":\"string\",\"const\":\"a\"},{\"type\":\"string\",\"const\":\"b\"}]},\"maybe\":{\"type\":[\"string\",\"null\"]}},\"required\":[\"target\"]}",
+			"args": "{\"target\":\"false\"}",
+			"value": "{\"target\":0}"
+		},
+		{
+			"name": "pick",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"target\":{\"anyOf\":[{\"type\":\"number\"},{\"type\":\"boolean\"}]},\"pick\":{\"oneOf\":[{\"type\":\"string\",\"const\":\"a\"},{\"type\":\"string\",\"const\":\"b\"}]},\"maybe\":{\"type\":[\"string\",\"null\"]}},\"required\":[\"target\"]}",
+			"args": "{\"target\":\"x\",\"pick\":\"c\",\"maybe\":3}",
+			"error": "Validation failed for tool \"pick\":\n  - target: expected number, got string\n  - pick: expected \"a\"\n\nReceived arguments:\n{\n  \"target\": \"x\",\n  \"pick\": \"c\",\n  \"maybe\": 3\n}"
+		},
+		{
+			"name": "pick",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"target\":{\"anyOf\":[{\"type\":\"number\"},{\"type\":\"boolean\"}]},\"pick\":{\"oneOf\":[{\"type\":\"string\",\"const\":\"a\"},{\"type\":\"string\",\"const\":\"b\"}]},\"maybe\":{\"type\":[\"string\",\"null\"]}},\"required\":[\"target\"]}",
+			"args": "{}",
+			"error": "Validation failed for tool \"pick\":\n  - target: missing\n\nReceived arguments:\n{}"
+		},
+		{
+			"name": "ref",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"ok\":{\"type\":\"string\"},\"bad\":{\"$ref\":\"#/$defs/missing\"}}}",
+			"args": "{\"ok\":\"x\"}",
+			"value": "{\"ok\":\"x\"}"
+		},
+		{
+			"name": "ref",
+			"parameters": "{\"type\":\"object\",\"properties\":{\"ok\":{\"type\":\"string\"},\"bad\":{\"$ref\":\"#/$defs/missing\"}}}",
+			"args": "{\"ok\":\"x\",\"bad\":1}",
+			"error": "Validation failed for tool \"ref\":\n  - bad: unresolved reference #/$defs/missing\n\nReceived arguments:\n{\n  \"ok\": \"x\",\n  \"bad\": 1\n}"
+		}
+	]
+}
