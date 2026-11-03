@@ -1870,6 +1870,10 @@ func convertAnthropicTools(tools []ai.Tool, oauth, eager, supportsStrictTools bo
 		var full map[string]any
 		props := map[string]any{}
 		var required []string
+		// Root $defs and definitions ride along with the legacy shape so a
+		// property's $ref still resolves (upstream 4a6a58eb5). Present-but-null
+		// is kept, as pi's `=== undefined` test keeps it.
+		var defs, definitions json.RawMessage
 		if parameters != nil {
 			if raw, err := json.Marshal(parameters); err == nil {
 				if strict {
@@ -1880,26 +1884,37 @@ func convertAnthropicTools(tools []ai.Tool, oauth, eager, supportsStrictTools bo
 					_ = json.Unmarshal(raw, &full)
 				}
 				var sch struct {
-					Properties json.RawMessage `json:"properties"`
-					Required   []string        `json:"required"`
+					Properties  json.RawMessage `json:"properties"`
+					Required    []string        `json:"required"`
+					Defs        json.RawMessage `json:"$defs"`
+					Definitions json.RawMessage `json:"definitions"`
 				}
 				_ = json.Unmarshal(raw, &sch)
 				if len(sch.Properties) > 0 {
 					_ = json.Unmarshal(sch.Properties, &props)
 				}
 				required = sch.Required
+				defs, definitions = sch.Defs, sch.Definitions
 			}
 		}
 		if required == nil {
 			required = []string{}
 		}
-		// The legacy {type, properties, required} shape is always sent; strict
-		// tools carry the rest of the JSON Schema underneath it (pi spreads the
-		// full parameters first, then the legacy shape over the top).
+		// The legacy {type, properties, required} shape (plus root $defs and
+		// definitions) is always sent; strict tools carry the rest of the JSON
+		// Schema underneath it (pi spreads the full parameters first, then the
+		// legacy shape over the top). Other root keywords stay out: Anthropic
+		// rejects a root anyOf/oneOf/allOf with a 400.
 		inputSchema := map[string]any{
 			"type":       "object",
 			"properties": props,
 			"required":   required,
+		}
+		if defs != nil {
+			inputSchema["$defs"] = defs
+		}
+		if definitions != nil {
+			inputSchema["definitions"] = definitions
 		}
 		if strict {
 			if full == nil {

@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -1380,6 +1381,47 @@ func TestAnthropicStrictTools(t *testing.T) {
 	schema, _ = plainTool["input_schema"].(map[string]any)
 	if len(schema) != 3 {
 		t.Fatalf("non-strict input_schema must stay the legacy 3-key shape: %#v", schema)
+	}
+}
+
+// Upstream 4a6a58eb5 (#9557): a non-strict tool keeps its root $defs and
+// definitions so a property's $ref resolves; any other root keyword stays out.
+// Mirrors anthropic-strict-tool-schema.test.ts "keeps root definitions in
+// non-strict schemas so property refs resolve".
+func TestAnthropicNonStrictToolKeepsRootDefinitions(t *testing.T) {
+	model := &ai.Model{ID: "claude-x", Api: ai.APIAnthropicMessages, Provider: "anthropic", Input: []string{"text"}, MaxTokens: 100}
+	settings := `{"type":"object","properties":{"verbose":{"type":"boolean"}}}`
+	for _, tc := range []struct{ ref, key string }{
+		{"#/$defs/Settings", "$defs"},
+		{"#/definitions/Settings", "definitions"},
+	} {
+		var params ai.Schema
+		src := `{"type":"object","properties":{"settings":{"$ref":"` + tc.ref + `"}},"required":["settings"],` +
+			`"anyOf":[{"required":["settings"]}],"` + tc.key + `":{"Settings":` + settings + `}}`
+		if err := json.Unmarshal([]byte(src), &params); err != nil {
+			t.Fatal(err)
+		}
+		req := ai.Context{Messages: []ai.Message{ai.NewUserText("hi", 1)}, Tools: []ai.Tool{{Name: "t", Description: "d", Parameters: &params}}}
+		body := mustBuildAnthropicParams(t, model, req, false, &AnthropicOptions{})
+		tools, _ := body["tools"].([]map[string]any)
+		if len(tools) != 1 {
+			t.Fatalf("tools wrong: %#v", body["tools"])
+		}
+		if _, has := tools[0]["strict"]; has {
+			t.Fatalf("%s: strict must be absent: %#v", tc.key, tools[0])
+		}
+		got, err := json.Marshal(tools[0]["input_schema"])
+		if err != nil {
+			t.Fatal(err)
+		}
+		want := `{"` + tc.key + `":{"Settings":` + settings + `},"properties":{"settings":{"$ref":"` + tc.ref +
+			`"}},"required":["settings"],"type":"object"}`
+		var gotV, wantV any
+		_ = json.Unmarshal(got, &gotV)
+		_ = json.Unmarshal([]byte(want), &wantV)
+		if !reflect.DeepEqual(gotV, wantV) {
+			t.Fatalf("%s: input_schema\n got %s\nwant %s", tc.key, got, want)
+		}
 	}
 }
 
