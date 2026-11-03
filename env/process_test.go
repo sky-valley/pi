@@ -288,6 +288,17 @@ func TestProcessReportsTheExitCodeOfAProgramThatExitsOnItsOwn(t *testing.T) {
 	expectExit(t, process, 3)
 }
 
+// A nil OnStdout drops stdout instead of panicking on the connection's
+// goroutine (review of 08c8ef5; pi types onStdout as required, so this is a
+// Go-only guard, like OnStderr's and RemoteTerminal's OnData).
+func TestProcessWithoutOnStdoutDropsStdout(t *testing.T) {
+	process, err := OpenProcess(background(), newConnection(t), ProcessOptions{
+		Cwd: processDir(t), Argv: program(t, "large"),
+	})
+	mustDo(t, err)
+	expectExit(t, process, 0)
+}
+
 func TestProcessKillsTheProgramAndWhatItStartedOnClose(t *testing.T) {
 	stdout := &collector{}
 	process, err := OpenProcess(background(), newConnection(t), ProcessOptions{

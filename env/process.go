@@ -23,7 +23,8 @@ type ProcessOptions struct {
 	// InheritEnv nil is the daemon's default (true).
 	InheritEnv *bool
 	// OnStdout receives the program's stdout, raw bytes in order, from one
-	// goroutine.
+	// goroutine; nil drops it (pi's onStdout is required; a Go caller that
+	// leaves it out must not crash the program, as RemoteTerminal's OnData).
 	OnStdout func(data []byte)
 	// OnStderr receives the program's stderr, raw bytes in order, from the
 	// same goroutine; nil drops it.
@@ -120,7 +121,9 @@ func OpenProcess(ctx context.Context, connection *Connection, options ProcessOpt
 				switch e.Kind {
 				case "output":
 					if e.Stream != "stderr" {
-						options.OnStdout(payload)
+						if options.OnStdout != nil {
+							options.OnStdout(payload)
+						}
 					} else if options.OnStderr != nil {
 						options.OnStderr(payload)
 					}
