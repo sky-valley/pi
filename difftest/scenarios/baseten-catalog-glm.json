@@ -1,6 +1,6 @@
 {
   "name": "baseten-catalog-glm",
-  "note": "Catalog-backed counterpart to baseten-thinking, which uses a synthetic model. This model object is a VERBATIM copy of baseten/zai-org/GLM-5.2 from the pi-ai 1.4.0 catalog (catalogModel); until the 1.4.0 regen the scenario copied baseten/moonshotai/Kimi-K2.5, which 1.4.0 retired, and GLM-5.2 is the live baseten model with the same shape. capture.mjs refuses the scenario when this copy differs from the pinned build entry, and prints the entry to paste. It pins the chatTemplateArgs + supportsUsageInStreaming shape that real shipped models actually carry -- {\"enable_thinking\":{\"$var\":\"thinking.enabled\"}} under thinkingFormat baseten -- rather than the richer synthetic shape; unlike Kimi-K2.5, GLM-5.2 also sets supportsReasoningEffort, so the request carries its effort too. Backend is dist: this data is released, so the published build arbitrates it.",
+  "note": "Catalog-backed counterpart to baseten-thinking, which uses a synthetic model. This model object is a VERBATIM copy of baseten/zai-org/GLM-5.2 from the pi-ai 1.5.0 catalog (catalogModel; refreshed at 1.5.0, which changed only its key order); until the 1.4.0 regen the scenario copied baseten/moonshotai/Kimi-K2.5, which 1.4.0 retired, and GLM-5.2 is the live baseten model with the same shape. capture.mjs refuses the scenario when this copy differs from the pinned build entry, and prints the entry to paste. It pins the chatTemplateArgs + supportsUsageInStreaming shape that real shipped models actually carry -- {\"enable_thinking\":{\"$var\":\"thinking.enabled\"}} under thinkingFormat baseten -- rather than the richer synthetic shape; unlike Kimi-K2.5, GLM-5.2 also sets supportsReasoningEffort, so the request carries its effort too. Backend is dist: this data is released, so the published build arbitrates it.",
   "backend": "dist",
   "catalogModel": "baseten/zai-org/GLM-5.2",
   "api": "openai-completions",
@@ -15,15 +15,6 @@
     "provider": "baseten",
     "baseUrl": "https://inference.baseten.co/v1",
     "reasoning": true,
-    "thinkingLevelMap": {
-      "off": "none",
-      "minimal": null,
-      "low": null,
-      "medium": null,
-      "high": "high",
-      "xhigh": null,
-      "max": "max"
-    },
     "input": [
       "text"
     ],
@@ -32,6 +23,17 @@
       "output": 4.4,
       "cacheRead": 0.14,
       "cacheWrite": 0
+    },
+    "contextWindow": 1048576,
+    "maxTokens": 262144,
+    "thinkingLevelMap": {
+      "off": "none",
+      "minimal": null,
+      "low": null,
+      "medium": null,
+      "high": "high",
+      "xhigh": null,
+      "max": "max"
     },
     "compat": {
       "supportsStrictMode": true,
@@ -49,8 +51,6 @@
         }
       }
     },
-    "contextWindow": 1048576,
-    "maxTokens": 262144,
     "type": "chat"
   },
   "context": {
