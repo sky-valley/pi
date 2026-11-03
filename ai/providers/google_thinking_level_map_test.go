@@ -383,7 +383,7 @@ func TestGoogleThinkingConfigMatchesPi(t *testing.T) {
 // capture-catalog-gemini4.mjs recorded from pi-ai 1.3.0: the thinkingConfig
 // its streamSimple sends for every google-generative-ai catalog model whose
 // id is Gemini 4 or later, at every reasoning level.
-const catalogGemini4CaptureFile = "testdata/google-thinking/catalog-gemini4-1.3.0.json"
+const catalogGemini4CaptureFile = "testdata/google-thinking/catalog-gemini4-1.5.0.json"
 
 // The shipped catalog's Gemini 4 models send thinkingLevel, not a token
 // budget (upstream 1692bba63, #10890): the catalog entries themselves, so a

@@ -150,12 +150,13 @@ func TestResponsesNonReasoningNoInclude(t *testing.T) {
 // A set ToolChoice is forwarded verbatim as the tool_choice request param
 // alongside the tools; unset (nil) omits it so the API defaults to "auto".
 // Mirrors pi's "forwards required tool choice" case (upstream eacaa130), on the
-// catalog's gpt-5.4 as pi's is: it declares its tools in additional_tools items
-// (upstream caa6967b6), and tool_choice applies to them.
+// catalog's gpt-5.6-luna as pi's is since 81d6759fc took additional tools off
+// gpt-5.4: it declares its tools in additional_tools items (upstream
+// caa6967b6), and tool_choice applies to them.
 func TestResponsesToolChoiceForwarded(t *testing.T) {
-	model := ai.GetModel("openai", "gpt-5.4")
+	model := ai.GetModel("openai", "gpt-5.6-luna")
 	if model == nil {
-		t.Fatal("catalog has no openai/gpt-5.4")
+		t.Fatal("catalog has no openai/gpt-5.6-luna")
 	}
 	req := ai.Context{
 		Messages: []ai.Message{ai.NewUserText("Do not call ping. Respond with text instead.", 1)},

@@ -2,7 +2,7 @@
 // TestIdentityHeadersMatchPi in package providers.
 //
 //   node --experimental-strip-types capture-identity.mts <extraction> <out.json> <sha>
-//   e.g. ... capture-identity.mts <dir> identity-9ffd27cfa.json 9ffd27cfa
+//   e.g. ... capture-identity.mts <dir> identity-f9a263655.json f9a263655
 //
 // <extraction> holds packages/ai at <sha> (`git archive <sha> packages/ai` from
 // the upstream clone) and a node_modules resolving pi-ai's dependencies (the

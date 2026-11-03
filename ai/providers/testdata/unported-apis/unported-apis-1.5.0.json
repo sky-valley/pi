@@ -1,5 +1,5 @@
 {
-	"version": "1.4.0",
+	"version": "1.5.0",
 	"rows": [
 		{
 			"api": "anthropic-messages",
@@ -32,7 +32,7 @@
 		{
 			"api": "azure-openai-responses",
 			"provider": "azure",
-			"model": "gpt-4",
+			"model": "chat-latest",
 			"dispatch": "Provider azure has no API implementation for \"azure-openai-responses\"",
 			"unregistered": "No API provider registered for api: azure-openai-responses"
 		},
