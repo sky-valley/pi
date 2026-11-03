@@ -1883,18 +1883,18 @@ func convertAnthropicTools(tools []ai.Tool, oauth, eager, supportsStrictTools bo
 					// round-trip yields the legacy shape, as pi's spread does.
 					_ = json.Unmarshal(raw, &full)
 				}
-				var sch struct {
-					Properties  json.RawMessage `json:"properties"`
-					Required    []string        `json:"required"`
-					Defs        json.RawMessage `json:"$defs"`
-					Definitions json.RawMessage `json:"definitions"`
+				// Exact keys, as pi reads schema.properties etc.: a tagged
+				// struct would match "Properties" or "$DEFS" too, since
+				// encoding/json folds case.
+				var root map[string]json.RawMessage
+				_ = json.Unmarshal(raw, &root)
+				if p := root["properties"]; len(p) > 0 {
+					_ = json.Unmarshal(p, &props)
 				}
-				_ = json.Unmarshal(raw, &sch)
-				if len(sch.Properties) > 0 {
-					_ = json.Unmarshal(sch.Properties, &props)
+				if r := root["required"]; len(r) > 0 {
+					_ = json.Unmarshal(r, &required)
 				}
-				required = sch.Required
-				defs, definitions = sch.Defs, sch.Definitions
+				defs, definitions = root["$defs"], root["definitions"]
 			}
 		}
 		if required == nil {
@@ -1910,11 +1910,13 @@ func convertAnthropicTools(tools []ai.Tool, oauth, eager, supportsStrictTools bo
 			"properties": props,
 			"required":   required,
 		}
-		if defs != nil {
-			inputSchema["$defs"] = defs
-		}
-		if definitions != nil {
-			inputSchema["definitions"] = definitions
+		// Decoded like properties, so an OnPayload hook sees maps, not bytes.
+		for key, value := range map[string]json.RawMessage{"$defs": defs, "definitions": definitions} {
+			if value != nil {
+				var v any
+				_ = json.Unmarshal(value, &v)
+				inputSchema[key] = v
+			}
 		}
 		if strict {
 			if full == nil {

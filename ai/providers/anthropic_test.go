@@ -1417,11 +1417,45 @@ func TestAnthropicNonStrictToolKeepsRootDefinitions(t *testing.T) {
 		want := `{"` + tc.key + `":{"Settings":` + settings + `},"properties":{"settings":{"$ref":"` + tc.ref +
 			`"}},"required":["settings"],"type":"object"}`
 		var gotV, wantV any
-		_ = json.Unmarshal(got, &gotV)
-		_ = json.Unmarshal([]byte(want), &wantV)
+		if err := json.Unmarshal(got, &gotV); err != nil {
+			t.Fatal(err)
+		}
+		if err := json.Unmarshal([]byte(want), &wantV); err != nil {
+			t.Fatal(err)
+		}
 		if !reflect.DeepEqual(gotV, wantV) {
 			t.Fatalf("%s: input_schema\n got %s\nwant %s", tc.key, got, want)
 		}
+	}
+}
+
+// pi reads the root schema's properties, required, $defs and definitions by
+// exact key, so a differently cased key ("Properties", "$DEFS") is neither
+// read nor lets it overwrite the real one (review of 2185fd6).
+func TestAnthropicToolSchemaRootKeysAreCaseSensitive(t *testing.T) {
+	model := &ai.Model{ID: "claude-x", Api: ai.APIAnthropicMessages, Provider: "anthropic", Input: []string{"text"}, MaxTokens: 100}
+	var params ai.Schema
+	src := `{"type":"object","properties":{"a":{"type":"string"}},"Properties":{"b":{"type":"string"}},` +
+		`"Required":["b"],"$defs":{"A":{}},"$DEFS":{"B":{}},"Definitions":{"C":{}}}`
+	if err := json.Unmarshal([]byte(src), &params); err != nil {
+		t.Fatal(err)
+	}
+	req := ai.Context{Messages: []ai.Message{ai.NewUserText("hi", 1)}, Tools: []ai.Tool{{Name: "t", Description: "d", Parameters: &params}}}
+	body := mustBuildAnthropicParams(t, model, req, false, &AnthropicOptions{})
+	tools, _ := body["tools"].([]map[string]any)
+	if len(tools) != 1 {
+		t.Fatalf("tools wrong: %#v", body["tools"])
+	}
+	got, err := json.Marshal(tools[0]["input_schema"])
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := `{"$defs":{"A":{}},"properties":{"a":{"type":"string"}},"required":[],"type":"object"}`
+	if string(got) != want {
+		t.Fatalf("input_schema\n got %s\nwant %s", got, want)
+	}
+	if _, ok := tools[0]["input_schema"].(map[string]any)["$defs"].(map[string]any); !ok {
+		t.Fatalf("$defs must reach OnPayload decoded, got %T", tools[0]["input_schema"].(map[string]any)["$defs"])
 	}
 }
 
