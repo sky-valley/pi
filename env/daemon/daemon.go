@@ -41,7 +41,7 @@ const (
 
 // features are operations added after protocol 1's first release; clients
 // check hello.features before using them.
-var features = []string{"listFiles"}
+var features = []string{"listFiles", "process"}
 
 // handle is an open file or directory of the connection, valid until close.
 type handle interface{ close() }
@@ -95,6 +95,7 @@ type server struct {
 	jobs       *jobQueue
 	running    *groups
 	terminals  *terminals
+	processes  *processes
 }
 
 func missingField(key string) *failure {
@@ -299,6 +300,12 @@ func (s *server) run(id uint32, op string, json any, payload []byte, ctl *contro
 			return nil, fail
 		}
 		return runPty(id, request, s.out, ctl, s.running, s.terminals)
+	case "process":
+		request, fail := processRequestFromJSON(json)
+		if fail != nil {
+			return nil, fail
+		}
+		return runProcess(id, request, s.out, ctl, s.running, s.processes)
 	}
 	return nil, newFailure("EINVAL", "unknown operation "+op)
 }
@@ -585,7 +592,7 @@ func (s *server) respond(id uint32, op string, json any, payload []byte, ctl *co
 	s.mu.Unlock()
 	// A command's result follows its output; large payloads do not hold up
 	// pings and small replies.
-	if op == "exec" || op == "pty" || len(reply.Payload) > controlPayload {
+	if op == "exec" || op == "pty" || op == "process" || len(reply.Payload) > controlPayload {
 		s.out.sendBulk(reply, nil)
 	} else {
 		s.out.sendControl(reply)
@@ -606,7 +613,7 @@ func (s *server) serveFrames(input io.Reader) error {
 			json := parseRequestJSON(request.JSON)
 			op, _ := asString(get(json, "op"))
 			switch op {
-			case "ptyWrite", "ptyResize", "ptyForeground":
+			case "ptyWrite", "ptyResize", "ptyForeground", "processWrite", "processCloseStdin":
 				// Answered here, in arrival order: through the worker pool, two
 				// writes could swap.
 				var result object
@@ -616,6 +623,10 @@ func (s *server) serveFrames(input io.Reader) error {
 					result, fail = ptyWrite(s.terminals, json, request.Payload)
 				case "ptyResize":
 					result, fail = ptyResize(s.terminals, json)
+				case "processWrite":
+					result, fail = processWrite(s.processes, json, request.Payload)
+				case "processCloseStdin":
+					result, fail = processCloseStdin(s.processes, json)
 				default:
 					result, fail = ptyForeground(s.terminals, json)
 				}
@@ -635,7 +646,7 @@ func (s *server) serveFrames(input io.Reader) error {
 			s.mu.Unlock()
 			respond := func() { s.respond(id, op, json, payload, ctl) }
 			switch op {
-			case "exec", "watch", "pty":
+			case "exec", "watch", "pty", "process":
 				// Commands and watchers last; they get their own goroutines.
 				go respond()
 			case "writeChunk":
@@ -707,6 +718,7 @@ func serve(token string, stdin io.Reader, stdout io.Writer) error {
 		jobs:      startWorkers(),
 		running:   running,
 		terminals: newTerminals(),
+		processes: newProcesses(),
 	}
 	s.nextHandle.Store(1)
 	lastSeen := new(atomic.Int64)

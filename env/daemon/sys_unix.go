@@ -748,6 +748,21 @@ func removeTree(parent int, name string, root bool) error {
 	return err
 }
 
+// childPipe is a pipe for a child's stdin (daemonReads false) or for one of
+// its outputs (daemonReads true): the daemon's end and the child's. The
+// daemon's end goes through the runtime poller, so closing it stops a read or
+// write in progress, also while a descendant holds the child's end.
+func childPipe(daemonReads bool) (ours, theirs *os.File, err error) {
+	r, w, err := os.Pipe()
+	if err != nil {
+		return nil, nil, err
+	}
+	if daemonReads {
+		return r, w, nil
+	}
+	return w, r, nil
+}
+
 // spawnProcess starts program with args (argv[0] is program as given), the
 // environment Rust's Command builds, its working directory, and files as its
 // standard streams.

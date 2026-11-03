@@ -195,9 +195,7 @@ func runPty(id uint32, request ptyRequest, out *output, ctl *control, running *g
 	pid := process.pid
 	running.add(pid)
 	term := &terminal{input: newInputQueue(), master: master, pid: pid}
-	terms.mu.Lock()
-	terms.running[id] = term
-	terms.mu.Unlock()
+	terms.add(id, term)
 	out.sendControl(frame.Frame{Kind: frame.Event, ID: id, JSON: marshal(object{"kind": "started", "pid": int64(pid)})})
 
 	stop := new(atomic.Bool)
@@ -224,20 +222,14 @@ func runPty(id uint32, request ptyRequest, out *output, ctl *control, running *g
 	}()
 	go func() {
 		for {
-			b, ok := term.input.pop()
-			if !ok || !term.writeAll(b, stop) {
+			in, ok := term.input.pop()
+			if !ok || !term.writeAll(in.data, stop) {
 				term.input.close()
 				return
 			}
 		}
 	}()
-	go func() {
-		code, err := process.wait()
-		select {
-		case messages <- commandMessage{exited: true, code: code, err: err}:
-		case <-done:
-		}
-	}()
+	waitInBackground(process, messages, done)
 
 	var (
 		exited    bool
@@ -311,9 +303,7 @@ loop:
 	stop.Store(true)
 	close(done)
 	// Ending the input ends the writer.
-	terms.mu.Lock()
-	delete(terms.running, id)
-	terms.mu.Unlock()
+	terms.remove(id)
 	term.input.close()
 	running.remove(pid)
 	<-readerDone

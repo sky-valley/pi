@@ -1,6 +1,7 @@
 package daemon
 
 import (
+	"encoding/hex"
 	"errors"
 	"io"
 	"os"
@@ -9,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"unicode/utf16"
 	"unsafe"
@@ -773,6 +775,47 @@ var job = sync.OnceValue(func() windows.Handle {
 		uintptr(unsafe.Pointer(&information)), uint32(unsafe.Sizeof(information)))
 	return h
 })
+
+// pipeCount makes the names of childPipe's pipes unique in the daemon.
+var pipeCount atomic.Uint64
+
+// childPipe is a pipe for a child's stdin (daemonReads false) or for one of
+// its outputs (daemonReads true): the daemon's end and the child's. As the
+// Rust daemon's standard library makes them, the daemon's end is a named pipe
+// opened for overlapped I/O and the child's end an ordinary synchronous
+// handle. The runtime poller runs the daemon's reads and writes as overlapped
+// operations of their own, so closing the daemon's end cancels one in
+// progress and waits for it (CancelIoEx), also while a descendant holds the
+// child's end without reading or writing. (On a synchronous pipe, os.Pipe's,
+// closing cancels only an operation already started: a read about to start
+// stays blocked, and the close with it.)
+func childPipe(daemonReads bool) (ours, theirs *os.File, err error) {
+	access, theirAccess := uint32(windows.PIPE_ACCESS_OUTBOUND), uint32(windows.GENERIC_READ)
+	if daemonReads {
+		access, theirAccess = windows.PIPE_ACCESS_INBOUND, windows.GENERIC_WRITE
+	}
+	random := randomBytes()
+	name, err := windows.UTF16PtrFromString(`\\.\pipe\pi-env-` + strconv.Itoa(os.Getpid()) + "-" +
+		strconv.FormatUint(pipeCount.Add(1), 10) + "-" + hex.EncodeToString(random[:8]))
+	if err != nil {
+		return nil, nil, err
+	}
+	// One instance of 4 KiB buffers, local clients only, as Rust's anonymous
+	// pipes.
+	h, err := windows.CreateNamedPipe(name, access|windows.FILE_FLAG_FIRST_PIPE_INSTANCE|windows.FILE_FLAG_OVERLAPPED,
+		windows.PIPE_TYPE_BYTE|windows.PIPE_READMODE_BYTE|windows.PIPE_WAIT|windows.PIPE_REJECT_REMOTE_CLIENTS, 1, 4096, 4096, 0, nil)
+	if err != nil {
+		return nil, nil, os.NewSyscallError("CreateNamedPipe", err)
+	}
+	t, err := windows.CreateFile(name, theirAccess, 0, nil, windows.OPEN_EXISTING, 0, 0)
+	if err != nil {
+		windows.CloseHandle(h)
+		return nil, nil, os.NewSyscallError("CreateFile", err)
+	}
+	// os.NewFile sees that the daemon's end is overlapped and adds it to the
+	// runtime poller.
+	return os.NewFile(uintptr(h), "|pipe"), os.NewFile(uintptr(t), "|child"), nil
+}
 
 // spawnProcess starts program with args quoted as libuv quotes them, Node's
 // environment, and a hidden console, in the daemon's job.

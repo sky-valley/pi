@@ -56,6 +56,22 @@ listing, err := localEnv.ListFiles(ctx, ".", &env.ListFilesOptions{Exclude: []st
 daemon: raw output, input, resizing and its exit code, for interactive terminals. `LocalDaemon()` is the daemon for
 this machine, for terminals without SSH. Terminals are not supported on Windows yet.
 
+`OpenProcess(ctx, connection, options)` runs a program with plain pipes, for programs that speak a protocol on stdin
+and stdout, such as an MCP server: `Write` and `CloseStdin` for its input, raw stdout and stderr bytes through
+`OnStdout` and `OnStderr`, `Close` to kill its process group, and `Wait` for its exit code. Nothing is echoed,
+translated or merged, unlike a terminal; it works on every supported system. A daemon released before it fails the open
+with `not_supported`. `Argv` runs as an argv command does: on Windows, batch files such as `npx.cmd` are refused, as
+Node refuses them without a shell, so callers start them through `cmd.exe`.
+
+```go
+server, err := env.OpenProcess(ctx, connection, env.ProcessOptions{
+	Cwd:      "/home/me/project",
+	Argv:     []string{"npx", "-y", "@modelcontextprotocol/server-filesystem", "."},
+	OnStdout: parser.Push,
+})
+server.Write(append(initialize, '\n'))
+```
+
 Supported remote systems: Linux, macOS, Android (Termux) and Windows, on x86-64 and arm64. On Windows, string commands
 run through Git Bash as `NodeExecutionEnv` runs them there; argv commands run directly.
 

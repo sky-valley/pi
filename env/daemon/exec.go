@@ -17,7 +17,8 @@ import (
 )
 
 // exec: Durable's NodeExecutionEnv.exec semantics (docs/semantics.md), output
-// streamed as output events.
+// streamed as output events; and what the commands of exec, pty and process
+// share: cancellation, starting, reading pipes and reaping.
 
 const (
 	exitStdioGrace = 100 * time.Millisecond
@@ -82,16 +83,91 @@ func (c *control) cancel(kill bool) {
 	}
 }
 
+// targets are the running requests that follow-up requests address by the id
+// in their target field: terminals (ptyWrite, ...) and processes
+// (processWrite, ...).
+type targets[T any] struct {
+	mu   sync.Mutex
+	byID map[uint32]*T
+	// what names the kind in errors.
+	what string
+}
+
+func newTargets[T any](what string) *targets[T] {
+	return &targets[T]{byID: map[uint32]*T{}, what: what}
+}
+
+func (r *targets[T]) add(id uint32, value *T) {
+	r.mu.Lock()
+	r.byID[id] = value
+	r.mu.Unlock()
+}
+
+func (r *targets[T]) remove(id uint32) {
+	r.mu.Lock()
+	delete(r.byID, id)
+	r.mu.Unlock()
+}
+
+// find is the running request a follow-up request names in target.
+func (r *targets[T]) find(json any) (*T, *failure) {
+	target, ok := asU64(get(json, "target"))
+	if !ok {
+		return nil, newFailure("EINVAL", "missing field target")
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	value, ok := r.byID[uint32(target)]
+	if !ok {
+		return nil, newFailure("EBADF", "no running "+r.what+" with this id")
+	}
+	return value, nil
+}
+
+// launch is where and with which environment a command starts.
+type launch struct {
+	cwd        string
+	env        object
+	inheritEnv bool
+}
+
+// launchFromJSON reads a request's cwd (required: "<op> needs cwd"), env and
+// inheritEnv (default true).
+func launchFromJSON(json any, op string) (launch, *failure) {
+	cwd, ok := asString(get(json, "cwd"))
+	if !ok {
+		return launch{}, newFailure("EINVAL", op+" needs cwd")
+	}
+	l := launch{cwd: cwd, inheritEnv: true}
+	l.env, _ = asObject(get(json, "env"))
+	if inherit, ok := asBool(get(json, "inheritEnv")); ok {
+		l.inheritEnv = inherit
+	}
+	return l, nil
+}
+
+// argvField is the argv of a pty or process request: absent (false), or a
+// non-empty array of strings.
+func argvField(json any) ([]string, bool, *failure) {
+	value := get(json, "argv")
+	if value == nil {
+		return nil, false, nil
+	}
+	argv, ok := asStrings(value)
+	if !ok || len(argv) == 0 {
+		return nil, false, newFailure("EINVAL", "argv must be a non-empty array of strings")
+	}
+	return argv, true, nil
+}
+
 type spillLimits struct{ afterBytes, afterLines uint64 }
 
 type execRequest struct {
+	launch
 	command      string
 	hasCommand   bool
 	argv         []string
 	hasArgv      bool
-	cwd          string
-	env          object
-	inheritEnv   bool
 	shellPath    string
 	hasShellPath bool
 	timeout      time.Duration
@@ -104,15 +180,9 @@ func execRequestFromJSON(json any) (execRequest, *failure) {
 	var r execRequest
 	r.command, r.hasCommand = asString(get(json, "command"))
 	r.argv, r.hasArgv = asStrings(get(json, "argv"))
-	cwd, ok := asString(get(json, "cwd"))
-	if !ok {
-		return r, newFailure("EINVAL", "exec needs cwd")
-	}
-	r.cwd = cwd
-	r.env, _ = asObject(get(json, "env"))
-	r.inheritEnv = true
-	if inherit, ok := asBool(get(json, "inheritEnv")); ok {
-		r.inheritEnv = inherit
+	var fail *failure
+	if r.launch, fail = launchFromJSON(json, "exec"); fail != nil {
+		return r, fail
 	}
 	r.shellPath, r.hasShellPath = asString(get(json, "shellPath"))
 	if ms, ok := asF64(get(json, "timeoutMs")); ok {
@@ -270,6 +340,18 @@ func readPipe(stream int, pipe *os.File, messages chan<- commandMessage, done <-
 	}
 }
 
+// waitInBackground reaps the command on a goroutine of its own, which
+// reports its exit unless done closes first.
+func waitInBackground(process child, messages chan<- commandMessage, done <-chan struct{}) {
+	go func() {
+		code, err := process.wait()
+		select {
+		case messages <- commandMessage{exited: true, code: code, err: err}:
+		case <-done:
+		}
+	}()
+}
+
 func outputFrame(id uint32, stream, text string, skipped object) frame.Frame {
 	json := object{"kind": "output", "stream": stream}
 	if skipped != nil {
@@ -319,7 +401,7 @@ func runExec(id uint32, request execRequest, tmpdir string, out *output, ctl *co
 	if !pathExists(request.cwd) {
 		return nil, newFailure("spawn_error", "Working directory does not exist: "+request.cwd+"\nCannot execute bash commands.")
 	}
-	command, fail := startCommand(program, args, request, pipeCommand)
+	command, fail := startCommand(program, args, request.launch, pipeCommand)
 	if fail != nil {
 		return nil, fail
 	}
@@ -348,13 +430,7 @@ func runExec(id uint32, request execRequest, tmpdir string, out *output, ctl *co
 	for stream, pipe := range command.output {
 		go readPipe(stream, pipe, messages, done, stop, gate)
 	}
-	go func() {
-		code, err := command.process.wait()
-		select {
-		case messages <- commandMessage{exited: true, code: code, err: err}:
-		case <-done:
-		}
-	}()
+	waitInBackground(command.process, messages, done)
 
 	decoders := [2]*decoder{newStreamDecoder(), newStreamDecoder()}
 	var spilled *spill
@@ -524,10 +600,9 @@ type command struct {
 	stdin   *os.File
 }
 
-// startCommand starts program with args as the request asks: in its working
-// directory and environment, stdin empty (or a pipe), and stdout and stderr
-// piped.
-func startCommand(program string, args []string, request execRequest, pipeStdin bool) (*command, *failure) {
+// startCommand starts program with args in the launch's working directory
+// and environment, stdin empty (or a pipe), and stdout and stderr piped.
+func startCommand(program string, args []string, l launch, pipeStdin bool) (*command, *failure) {
 	spawnError := func(err error) (*command, *failure) {
 		return nil, newFailure("spawn_error", ioErrorText(unwrapPathError(err)))
 	}
@@ -539,12 +614,12 @@ func startCommand(program string, args []string, request execRequest, pipeStdin 
 	}
 	var stdin *os.File
 	if pipeStdin {
-		r, w, err := os.Pipe()
+		ours, theirs, err := childPipe(false)
 		if err != nil {
 			return spawnError(err)
 		}
-		childEnds, parentEnds = append(childEnds, r), append(parentEnds, w)
-		stdin = w
+		childEnds, parentEnds = append(childEnds, theirs), append(parentEnds, ours)
+		stdin = ours
 	} else {
 		null, err := os.OpenFile(os.DevNull, os.O_RDWR, 0)
 		if err != nil {
@@ -554,15 +629,15 @@ func startCommand(program string, args []string, request execRequest, pipeStdin 
 	}
 	var outputs [2]*os.File
 	for i := range outputs {
-		r, w, err := os.Pipe()
+		ours, theirs, err := childPipe(true)
 		if err != nil {
 			closeAll()
 			return spawnError(err)
 		}
-		childEnds, parentEnds = append(childEnds, w), append(parentEnds, r)
-		outputs[i] = r
+		childEnds, parentEnds = append(childEnds, theirs), append(parentEnds, ours)
+		outputs[i] = ours
 	}
-	process, err := spawnProcess(program, args, request.cwd, request.env, request.inheritEnv, childEnds)
+	process, err := spawnProcess(program, args, l.cwd, l.env, l.inheritEnv, childEnds)
 	for _, f := range childEnds {
 		f.Close()
 	}

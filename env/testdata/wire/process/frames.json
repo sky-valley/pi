@@ -1,0 +1,52 @@
+{
+	"frames": [
+		{
+			"type": 1,
+			"id": 1,
+			"json": "{\"protocol\":1,\"op\":\"hello\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 2,
+			"json": "{\"cwd\":\"<root>\",\"argv\":[\"sh\",\"-c\",\"cat > /dev/null; exit 4\"],\"env\":{\"A\":\"1\"},\"inheritEnv\":false,\"op\":\"process\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 3,
+			"json": "{\"target\":2,\"op\":\"processWrite\"}",
+			"payload": "8f434346648f6b96df89dda901c5176b10a6d83961dd3c1ac88b59b2dc327aa4"
+		},
+		{
+			"type": 1,
+			"id": 4,
+			"json": "{\"target\":2,\"op\":\"processWrite\"}",
+			"payload": "631b84027d6b9e52b539c4e8373622d23032dfadc64d60af87339c9037e4f769"
+		},
+		{
+			"type": 1,
+			"id": 5,
+			"json": "{\"target\":2,\"op\":\"processWrite\"}",
+			"payload": "b1b4e4c72096ecd1b04ebfb29b487273dbde80cb4bf492f4a715012844059471"
+		},
+		{
+			"type": 1,
+			"id": 6,
+			"json": "{\"target\":2,\"op\":\"processCloseStdin\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 1,
+			"id": 7,
+			"json": "{\"cwd\":\"<root>\",\"argv\":[\"sleep\",\"5\"],\"op\":\"process\"}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		},
+		{
+			"type": 5,
+			"id": 7,
+			"json": "{}",
+			"payload": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		}
+	]
+}

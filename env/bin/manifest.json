@@ -1,38 +1,38 @@
 {
-	"go": "go1.26.4",
-	"source": "8e36da70999f443d728cba022397f1b68043a87e702f1b4b733d7df407891cef",
+	"go": "go1.26.0",
+	"source": "1b946cf3c992ee980ec948790a9042875e53e32fd572a11ab688e98bdc3433b3",
 	"daemons": {
 		"pi-env-android-arm64": {
-			"sha256": "179d5f081b032a56ce14129bcee77a4688dfe94c3c298abd9c57ac88de43f82c",
+			"sha256": "625bd65c1aa2a86fe458c7352c96672c49ff4ed284fe319e9dd3902a375648c1",
 			"size": 3408132
 		},
 		"pi-env-android-x64": {
-			"sha256": "b8359026feb74d28c08b409ebd5afe82475c98d9b6cec34455df8a61bc9cb533",
-			"size": 3174526
+			"sha256": "0102fde2cbf7afb62235adbbc4aed5776f55563aea308d42de963c4fe63bf270",
+			"size": 3195006
 		},
 		"pi-env-darwin-arm64": {
-			"sha256": "4605646ba263840060c6cc34cdf5712cfdc7bc6b027e250f454ac8a7737b5df3",
-			"size": 2988450
+			"sha256": "ad4edb6eb10079892050dd8c74988d92598e8e7f9652408632bf57d67fbbb85e",
+			"size": 3005826
 		},
 		"pi-env-darwin-x64": {
-			"sha256": "da26860658836baa655b020eae1d5741fb9bef882d5110d8bd1061859882ccf8",
-			"size": 3149552
+			"sha256": "69642a28cf7a48b977ad4c9d8b8add264bb9cb307b869319fe3ab62502f3405d",
+			"size": 3170864
 		},
 		"pi-env-linux-arm64": {
-			"sha256": "46fba7efd3a58b41708593b8cd162415e291816a9d590a8c24e55000713214da",
+			"sha256": "a31c15b9914be4ef603541e62da82e79e48258ca62e5dfdc75c10f76381534bb",
 			"size": 3080318
 		},
 		"pi-env-linux-x64": {
-			"sha256": "ab22eefeb7ba1b012dcf185f819811e5fad39dc8edd2e25f64d69573cfb085ac",
-			"size": 3174526
+			"sha256": "40a52094c001c1b812c460107518b0ab72c41a5468031a53a208dacb6ad2b02c",
+			"size": 3195006
 		},
 		"pi-env-windows-arm64": {
-			"sha256": "83b5c322188b62db51d1d0c70f1947a768567fa119bdb66387e3b2719e4a74b9",
-			"size": 3298816
+			"sha256": "4beec409a91374ea0e267eb2dd70092791e518560b47e2b7caff9379ebcd3808",
+			"size": 3325440
 		},
 		"pi-env-windows-x64": {
-			"sha256": "84642513aa7170c726c92cf79a7dc25be38dd1d5be3c85b09b61c829f8da08c7",
-			"size": 3560448
+			"sha256": "5a781c220016831d7129dad3d673f2e03167b14b706181202019176a2a0d26ce",
+			"size": 3587072
 		}
 	}
 }

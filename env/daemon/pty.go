@@ -14,33 +14,14 @@ import (
 const maxCells = 4096
 
 // terminals are the running terminals by the id of their pty request.
-type terminals struct {
-	mu      sync.Mutex
-	running map[uint32]*terminal
-}
+type terminals = targets[terminal]
 
-func newTerminals() *terminals { return &terminals{running: map[uint32]*terminal{}} }
-
-func (t *terminals) find(json any) (*terminal, *failure) {
-	target, ok := asU64(get(json, "target"))
-	if !ok {
-		return nil, newFailure("EINVAL", "missing field target")
-	}
-	t.mu.Lock()
-	defer t.mu.Unlock()
-	terminal, ok := t.running[uint32(target)]
-	if !ok {
-		return nil, newFailure("EBADF", "no running terminal with this id")
-	}
-	return terminal, nil
-}
+func newTerminals() *terminals { return newTargets[terminal]("terminal") }
 
 type ptyRequest struct {
+	launch
 	argv       []string
 	hasArgv    bool
-	cwd        string
-	env        object
-	inheritEnv bool
 	cols, rows uint16
 }
 
@@ -54,24 +35,13 @@ func terminalSize(json any, key string) (uint16, *failure) {
 
 func ptyRequestFromJSON(json any) (ptyRequest, *failure) {
 	var r ptyRequest
-	if argv := get(json, "argv"); argv != nil {
-		items, ok := asStrings(argv)
-		if !ok || len(items) == 0 {
-			return r, newFailure("EINVAL", "argv must be a non-empty array of strings")
-		}
-		r.argv, r.hasArgv = items, true
-	}
-	cwd, ok := asString(get(json, "cwd"))
-	if !ok {
-		return r, newFailure("EINVAL", "pty needs cwd")
-	}
-	r.cwd = cwd
-	r.env, _ = asObject(get(json, "env"))
-	r.inheritEnv = true
-	if inherit, ok := asBool(get(json, "inheritEnv")); ok {
-		r.inheritEnv = inherit
-	}
 	var fail *failure
+	if r.argv, r.hasArgv, fail = argvField(json); fail != nil {
+		return r, fail
+	}
+	if r.launch, fail = launchFromJSON(json, "pty"); fail != nil {
+		return r, fail
+	}
 	if r.cols, fail = terminalSize(json, "cols"); fail != nil {
 		return r, fail
 	}
@@ -81,11 +51,19 @@ func ptyRequestFromJSON(json any) (ptyRequest, *failure) {
 	return r, nil
 }
 
-// inputQueue is a terminal's unbounded input, written in arrival order by one
-// writer, so queueing input never holds up the thread that reads frames.
+// input is one item of an inputQueue: bytes to write, or, for a process,
+// the end of its stdin.
+type input struct {
+	data     []byte
+	endStdin bool
+}
+
+// inputQueue is the unbounded input of a terminal or a process, written in
+// arrival order by one writer, so queueing input never holds up the thread
+// that reads frames.
 type inputQueue struct {
 	mu     sync.Mutex
-	chunks [][]byte
+	items  []input
 	closed bool
 	ready  chan struct{}
 }
@@ -93,13 +71,13 @@ type inputQueue struct {
 func newInputQueue() *inputQueue { return &inputQueue{ready: make(chan struct{}, 1)} }
 
 // push queues input; false once the writer has stopped.
-func (q *inputQueue) push(b []byte) bool {
+func (q *inputQueue) push(in input) bool {
 	q.mu.Lock()
 	if q.closed {
 		q.mu.Unlock()
 		return false
 	}
-	q.chunks = append(q.chunks, b)
+	q.items = append(q.items, in)
 	q.mu.Unlock()
 	select {
 	case q.ready <- struct{}{}:
@@ -109,17 +87,17 @@ func (q *inputQueue) push(b []byte) bool {
 }
 
 // pop waits for the next input; false once closed.
-func (q *inputQueue) pop() ([]byte, bool) {
+func (q *inputQueue) pop() (input, bool) {
 	for {
 		q.mu.Lock()
 		if q.closed {
 			q.mu.Unlock()
-			return nil, false
+			return input{}, false
 		}
-		if len(q.chunks) > 0 {
-			next := q.chunks[0]
-			q.chunks[0] = nil
-			q.chunks = q.chunks[1:]
+		if len(q.items) > 0 {
+			next := q.items[0]
+			q.items[0] = input{}
+			q.items = q.items[1:]
 			q.mu.Unlock()
 			return next, true
 		}
@@ -128,10 +106,11 @@ func (q *inputQueue) pop() ([]byte, bool) {
 	}
 }
 
+// close stops the writer; input still queued is dropped.
 func (q *inputQueue) close() {
 	q.mu.Lock()
 	q.closed = true
-	q.chunks = nil
+	q.items = nil
 	q.mu.Unlock()
 	select {
 	case q.ready <- struct{}{}:
@@ -146,7 +125,7 @@ func ptyWrite(t *terminals, json any, payload []byte) (object, *failure) {
 	if fail != nil {
 		return nil, fail
 	}
-	if !terminal.input.push(payload) {
+	if !terminal.input.push(input{data: payload}) {
 		return nil, newFailure("EBADF", "the terminal has ended")
 	}
 	return object{}, nil
