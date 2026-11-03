@@ -1,6 +1,9 @@
 package ai
 
-import "maps"
+import (
+	"maps"
+	"math"
+)
 
 // Ported from pi packages/ai/src/api/simple-options.ts (upstream 09f10595).
 // pi's buildBaseOptions sets the base maxTokens to
@@ -13,19 +16,35 @@ import "maps"
 
 const (
 	contextSafetyTokens = 4096
-	minMaxTokens        = 1
+	// contextSafetyRatio: OpenRouter counts the input with its own tokenizer
+	// and rejects input + max_tokens above the window before routing; it
+	// counted prose up to 12% above the provider's count (#10497, upstream
+	// 0a4fad548).
+	contextSafetyRatio = 0.15
+	// minOutputWithRatioMargin: the 15% margin is kept only while it leaves at
+	// least this much output. Otherwise (a nearly full large window, or any
+	// small window such as a 32k local model) only the fixed margin is kept,
+	// and output is capped at this size.
+	minOutputWithRatioMargin = 32768
+	minMaxTokens             = 1
 )
 
 // ClampMaxTokensToContext caps maxTokens to what fits in the model's context
-// window after the estimated context and a safety margin, mirroring pi's
-// clampMaxTokensToContext. Models with no known context window only get the
-// MIN_MAX_TOKENS floor applied.
+// window, leaving room for the input being counted higher than estimated,
+// mirroring pi's clampMaxTokensToContext. Models with no known context window
+// only get the MIN_MAX_TOKENS floor applied.
 func ClampMaxTokensToContext(model *Model, context TranscriptContext, maxTokens int) int {
 	if model.ContextWindow <= 0 {
 		return max(minMaxTokens, maxTokens)
 	}
-	available := model.ContextWindow - estimateContextTokens(context.Messages).Tokens - contextSafetyTokens
-	return min(maxTokens, max(minMaxTokens, available))
+	input := estimateContextTokens(context.Messages).Tokens
+	// pi's Math.ceil(input * 0.15), in the same float64 arithmetic.
+	margin := max(contextSafetyTokens, int(math.Ceil(float64(input)*contextSafetyRatio)))
+	room := model.ContextWindow - input - margin
+	if room < minOutputWithRatioMargin {
+		room = min(minOutputWithRatioMargin, model.ContextWindow-input-contextSafetyTokens)
+	}
+	return min(maxTokens, max(minMaxTokens, room))
 }
 
 // SimpleMaxTokensDefault returns the maxTokens that pi's buildBaseOptions feeds

@@ -264,6 +264,42 @@ func TestClampMaxTokensToContext(t *testing.T) {
 	}
 }
 
+// Upstream 0a4fad548 (clamp-max-tokens.test.ts): a 15% margin over the
+// estimated input, kept only while it leaves 32768 tokens of output. The last
+// assistant usage anchors the estimate, so the input is exactly the usage.
+func TestClampMaxTokensLeavesRoomForOverCount(t *testing.T) {
+	const window = 1_048_576
+	model := func(maxTokens, contextWindow int) *Model {
+		return &Model{ContextWindow: contextWindow, MaxTokens: maxTokens}
+	}
+	withInput := func(input int) TranscriptContext {
+		return NormalizeContext(Context{Messages: []Message{NewUserText("hi", 1), estimateTestAssistant(2, input)}})
+	}
+	for _, tc := range []struct {
+		name                         string
+		maxTokens, contextWindow, in int
+		want                         int
+	}{
+		// #10497: OpenRouter counted 229,747 where pi estimated 220,815.
+		{"15% of the input", 943_718, window, 220_815, window - 220_815 - 33_123},
+		{"at least 4096", window, window, 10_000, window - 10_000 - 4096},
+		{"output limit already fits", 64_000, window, 100_000, 64_000},
+		{"32768 when the margin leaves no room", 943_718, window, 912_000, 32_768},
+		{"real room minus 4096 under 32768", 943_718, window, 1_030_000, window - 1_030_000 - 4096},
+		{"small window keeps the fixed margin", 32_768, 32_768, 20_000, 32_768 - 20_000 - 4096},
+		{"input over the window", 943_718, window, 1_050_000, 1},
+		// The margin rounds up: ceil(30_001 * 0.15) = 4501.
+		{"margin rounds up", 1 << 30, 100_000, 30_001, 100_000 - 30_001 - 4501},
+	} {
+		if got := ClampMaxTokensToContext(model(tc.maxTokens, tc.contextWindow), withInput(tc.in), tc.maxTokens); got != tc.want {
+			t.Errorf("%s: got %d, want %d", tc.name, got, tc.want)
+		}
+	}
+	if 229_747+ClampMaxTokensToContext(model(943_718, window), withInput(220_815), 943_718) > window {
+		t.Fatal("#10497's real input count must still fit")
+	}
+}
+
 func TestSimpleMaxTokensDefault(t *testing.T) {
 	model := &Model{MaxTokens: 4096}
 	if got := SimpleMaxTokensDefault(model, nil); got != 4096 {
