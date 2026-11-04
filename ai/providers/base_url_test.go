@@ -95,9 +95,9 @@ func loadBaseURLCapture(t *testing.T) baseURLCapture {
 		var i int
 		switch {
 		case scanPointer(pointer, "/rows/%d", &i) && i < len(capture.Rows):
-			capture.Rows[i].ErrorMessage = message
+			overlayErrorMessage(t, pointer, &capture.Rows[i].ErrorMessage, message)
 		case scanPointer(pointer, "/requests/%d", &i) && i < len(capture.Requests):
-			capture.Requests[i].ErrorMessage = message
+			overlayErrorMessage(t, pointer, &capture.Requests[i].ErrorMessage, message)
 		default:
 			t.Fatalf("the cause-detail overlay names %s", pointer)
 		}

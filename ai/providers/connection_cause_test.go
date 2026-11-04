@@ -128,10 +128,16 @@ func TestConnectionErrorFromClosedPort(t *testing.T) {
 	}
 	// A custom HTTPClient is pi's custom fetch, whose rejection is the
 	// APIConnectionError's cause as it is: its chain is the error's own,
-	// walked to the deepest of five.
+	// walked to the deepest of five: the platform's socket error, whose text
+	// is the OS's ("connection refused" on Unix).
 	t.Run("custom client", func(t *testing.T) {
+		_, dialErr := net.Dial("tcp", addr)
+		var errno syscall.Errno
+		if !errors.As(dialErr, &errno) {
+			t.Fatalf("dialing the closed port: %v, no socket error", dialErr)
+		}
 		final := streamSDKAdapter(t.Context(), "openai-completions", "http://"+addr, ai.StreamOptions{ProviderRequestOptions: ai.ProviderRequestOptions{APIKey: "k", HTTPClient: &http.Client{}}})
-		if want := "Connection error.: connection refused"; final.ErrorMessage != want {
+		if want := "Connection error.: " + errno.Error(); final.ErrorMessage != want {
 			t.Fatalf("stream = %s %q; want %q", final.StopReason, final.ErrorMessage, want)
 		}
 	})
@@ -202,6 +208,29 @@ func TestConnectionErrorSelfSignedCertificate(t *testing.T) {
 	}
 }
 
+// TestConnectionErrorProxyRefused: a request through a proxy at a closed
+// port. pi's EnvHttpProxyAgent (undici 8.12.3) fails it "fetch failed" with
+// the proxy dial's error for a cause, for an https and an http target alike;
+// net/http wraps that error in an OpError "proxyconnect".
+func TestConnectionErrorProxyRefused(t *testing.T) {
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	proxy := ln.Addr().String()
+	ln.Close()
+	client := &http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(&url.URL{Scheme: "http", Host: proxy})}}
+	for _, target := range []string{"https://api.example.test/v1/messages", "http://api.example.test/v1/messages"} {
+		_, err := client.Post(target, "application/json", strings.NewReader("{}"))
+		if err == nil {
+			t.Fatalf("%s: the request went through", target)
+		}
+		if got, want := withCauseDetail(sdkFetchError(&fetchRejection{err: err})), "Connection error.: connect ECONNREFUSED "+proxy; got != want {
+			t.Errorf("%s: got %q, want %q", target, got, want)
+		}
+	}
+}
+
 // TestConnectionErrorNodeRenderings: net/http's failures rendered as Node
 // words the socket, DNS and TLS errors undici's "fetch failed" carries; each
 // string was measured against the same failure in node (see the file
@@ -232,6 +261,12 @@ func TestConnectionErrorNodeRenderings(t *testing.T) {
 		{"read timed out", &net.OpError{Op: "read", Net: "tcp", Err: &os.SyscallError{Syscall: "read", Err: errnoFor(t, "ETIMEDOUT")}}, "read ETIMEDOUT"},
 		{"not found", &net.OpError{Op: "dial", Net: "tcp", Err: &net.DNSError{Err: "no such host", Name: "api.example.test", IsNotFound: true}}, "getaddrinfo ENOTFOUND api.example.test"},
 		{"dns try again", &net.OpError{Op: "dial", Net: "tcp", Err: &net.DNSError{Err: "server misbehaving", Name: "api.example.test", IsTemporary: true}}, "getaddrinfo EAI_AGAIN api.example.test"},
+		// undici's connect timer runs from before the lookup: a lookup
+		// slower than it is a connect timeout (undici 8.12.3, a lookup
+		// held past connect.timeout).
+		{"dns timeout", &net.OpError{Op: "dial", Net: "tcp", Err: &net.DNSError{Err: "i/o timeout", Name: "api.example.test", IsTimeout: true, IsTemporary: true}}, "Connect Timeout Error (attempted address: api.example.test:443, timeout: 10000ms) (UND_ERR_CONNECT_TIMEOUT)"},
+		// A proxy that cannot be reached fails as a connection to it does.
+		{"proxy refused", &net.OpError{Op: "proxyconnect", Net: "tcp", Err: dialError("127.0.0.1", 3128, errnoFor(t, "ECONNREFUSED"))}, "connect ECONNREFUSED 127.0.0.1:3128"},
 		{"closed", io.EOF, "other side closed (UND_ERR_SOCKET)"},
 		{"headers timeout", causeTimeoutError{"net/http: timeout awaiting response headers"}, "Headers Timeout Error (UND_ERR_HEADERS_TIMEOUT)"},
 		{"connect timeout", &net.OpError{Op: "dial", Net: "tcp", Err: causeTimeoutError{"i/o timeout"}}, "Connect Timeout Error (attempted address: api.example.test:443, timeout: 10000ms) (UND_ERR_CONNECT_TIMEOUT)"},
@@ -264,6 +299,11 @@ func TestConnectionErrorCauseDepth(t *testing.T) {
 		err = fmt.Errorf("level %d: %w", i, err)
 	}
 	if got, want := withCauseDetail(sdkFetchError(&fetchRejection{err: err, custom: true})), "Connection error.: level 5: level 6"; got != want {
+		t.Fatalf("got %q, want %q", got, want)
+	}
+	// A JS cause is one error: of several joined, the walk follows the first.
+	joined := errors.Join(fmt.Errorf("first: %w", errors.New("first cause")), errors.New("second"))
+	if got, want := withCauseDetail(sdkFetchError(&fetchRejection{err: joined, custom: true})), "Connection error.: first cause"; got != want {
 		t.Fatalf("got %q, want %q", got, want)
 	}
 	refused := &fetchCredentialsError{href: "http://u:p@127.0.0.1:8080/v1/messages"}
@@ -340,6 +380,17 @@ func causeDetailMessages(t *testing.T, dir string) map[string]string {
 var llhttpDivergences = map[string]string{
 	"Response does not match the HTTP/1.1 protocol (Expected HTTP/) (HPE_INVALID_CONSTANT)":        `malformed HTTP status code "HTTP"`,
 	"Response does not match the HTTP/1.1 protocol (Invalid response status) (HPE_INVALID_STATUS)": `malformed HTTP status code "OK"`,
+}
+
+// overlayErrorMessage sets the captured errorMessage at pointer to the
+// overlay's message, which must be it with a cause appended: an overlay that
+// names the wrong row fails here, not as a replay mismatch.
+func overlayErrorMessage(t *testing.T, pointer string, captured *string, message string) {
+	t.Helper()
+	if detail, ok := strings.CutPrefix(message, *captured+": "); !ok || detail == "" {
+		t.Fatalf("the cause-detail overlay's %s is %q, not the capture's %q with a cause", pointer, message, *captured)
+	}
+	*captured = message
 }
 
 // scanPointer reads a cause-detail overlay's JSON pointer by format, which

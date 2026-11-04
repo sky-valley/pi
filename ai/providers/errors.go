@@ -309,9 +309,9 @@ type jsCauser interface {
 // applies it to whatever it fails with.
 //
 // Below the first cause, the chain is a jsCauser's cause where there is one
-// and Go's Unwrap otherwise: a custom HTTPClient's error is pi's custom
-// fetch's rejection, whose chain is its own. A Go error has no `name` to fall
-// back on, so a cause whose text is empty adds nothing.
+// and Go's Unwrap otherwise (causeOf): a custom HTTPClient's error is pi's
+// custom fetch's rejection, whose chain is its own. A Go error has no `name`
+// to fall back on, so a cause whose text is empty adds nothing.
 func withCauseDetail(err error) string {
 	message := err.Error()
 	causer, ok := err.(jsCauser)
@@ -322,11 +322,7 @@ func withCauseDetail(err error) string {
 	current := causer.jsCause()
 	for depth := 0; depth < maxCauseDepth && current != nil; depth++ {
 		deepest = current
-		if c, ok := current.(jsCauser); ok {
-			current = c.jsCause()
-		} else {
-			current = errors.Unwrap(current)
-		}
+		current = causeOf(current)
 	}
 	if deepest == nil {
 		return message
@@ -346,4 +342,20 @@ func withCauseDetail(err error) string {
 		return detail
 	}
 	return message + ": " + detail
+}
+
+// causeOf is the next error down a cause chain from err: a jsCauser's cause,
+// else what err wraps — the first of several, for an errors.Join or a
+// multi-%w error, a JS cause being one error.
+func causeOf(err error) error {
+	switch e := err.(type) {
+	case jsCauser:
+		return e.jsCause()
+	case interface{ Unwrap() []error }:
+		if errs := e.Unwrap(); len(errs) > 0 {
+			return errs[0]
+		}
+		return nil
+	}
+	return errors.Unwrap(err)
 }

@@ -14,7 +14,6 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 )
 
@@ -88,8 +87,19 @@ const undiciConnectTimeoutMs = 10_000
 // node v22 (undici 6.29.1). A failure Node words in a way net/http's error
 // does not carry — a malformed response (undici's HTTPParserError), an HTTPS
 // request answered in plain HTTP (OpenSSL's text), a certificate that does not
-// match the host — is err itself, so its own chain gives the detail.
+// match the host, a proxy's refusal of a CONNECT — is err itself, so its own
+// chain gives the detail.
 func undiciCause(err error, target string) error {
+	// A request through a proxy (pi's EnvHttpProxyAgent) that cannot reach
+	// it fails as a connection to the proxy does: net/http wraps that dial's
+	// error in an OpError "proxyconnect", undici reports the dial's own.
+	var op *net.OpError
+	if errors.As(err, &op) && op.Op == "proxyconnect" && op.Err != nil {
+		return undiciCause(op.Err, target)
+	}
+	// A lookup that times out is undici's connect timeout, whose timer runs
+	// from before the lookup (measured with undici 8.12.3), so undiciTimeout
+	// takes it; one that fails sooner is getaddrinfo's own error.
 	if timeout := undiciTimeout(err, target); timeout != nil {
 		return timeout
 	}
@@ -98,26 +108,24 @@ func undiciCause(err error, target string) error {
 		switch {
 		case dns.IsNotFound:
 			return &nodeSystemError{"getaddrinfo ENOTFOUND " + dns.Name, "ENOTFOUND"}
-		case dns.IsTimeout || dns.IsTemporary:
+		case dns.IsTemporary:
 			return &nodeSystemError{"getaddrinfo EAI_AGAIN " + dns.Name, "EAI_AGAIN"}
 		}
 		return err
 	}
-	var op *net.OpError
-	var errno syscall.Errno
-	if errors.As(err, &op) && errors.As(op.Err, &errno) {
-		code, known := errnoCodes[errno]
-		switch {
-		case !known:
-		case op.Op == "dial" && op.Addr != nil:
-			// Node's address is the bare IP, an IPv6 one unbracketed.
-			if host, port, splitErr := net.SplitHostPort(op.Addr.String()); splitErr == nil {
-				return &nodeSystemError{"connect " + code + " " + host + ":" + port, code}
+	if errors.As(err, &op) {
+		if code, known := errnoCode(op.Err); known {
+			switch {
+			case op.Op == "dial" && op.Addr != nil:
+				// Node's address is the bare IP, an IPv6 one unbracketed.
+				if host, port, splitErr := net.SplitHostPort(op.Addr.String()); splitErr == nil {
+					return &nodeSystemError{"connect " + code + " " + host + ":" + port, code}
+				}
+			case op.Op == "read" || op.Op == "write":
+				return &nodeSystemError{op.Op + " " + code, code}
 			}
-		case op.Op == "read" || op.Op == "write":
-			return &nodeSystemError{op.Op + " " + code, code}
+			return err
 		}
-		return err
 	}
 	// The server closed the connection before the response, or short of the
 	// body the head promised.

@@ -1,6 +1,9 @@
 package providers
 
-import "syscall"
+import (
+	"errors"
+	"syscall"
+)
 
 // errnoCodes names the socket errors undiciCause renders as Node's codes. On
 // Windows a socket fails with a Winsock or Win32 error, which libuv maps to
@@ -19,4 +22,15 @@ var errnoCodes = map[syscall.Errno]string{
 	10051: "ENETUNREACH",   // WSAENETUNREACH
 	1231:  "ENETUNREACH",   // ERROR_NETWORK_UNREACHABLE
 	10049: "EADDRNOTAVAIL", // WSAEADDRNOTAVAIL
+}
+
+// errnoCode is Node's code for the socket error in err's chain, if it names
+// one.
+func errnoCode(err error) (string, bool) {
+	var errno syscall.Errno
+	if !errors.As(err, &errno) {
+		return "", false
+	}
+	code, known := errnoCodes[errno]
+	return code, known
 }

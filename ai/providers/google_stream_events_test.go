@@ -172,7 +172,7 @@ func loadGoogleStreamCapture(t *testing.T) googleStreamCapture {
 		if !scanPointer(pointer, "/scenarios/%d/pi", &i) || i >= len(c.Scenarios) {
 			t.Fatalf("the cause-detail overlay names %s", pointer)
 		}
-		c.Scenarios[i].Pi.ErrorMessage = message
+		overlayErrorMessage(t, pointer, &c.Scenarios[i].Pi.ErrorMessage, message)
 	}
 	return c
 }

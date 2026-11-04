@@ -109,7 +109,7 @@ func loadStreamAbortCapture(t *testing.T) []streamAbortRun {
 		if !scanPointer(pointer, "/runs/%d", &i) || i >= len(capture.Runs) {
 			t.Fatalf("the cause-detail overlay names %s", pointer)
 		}
-		capture.Runs[i].ErrorMessage = message
+		overlayErrorMessage(t, pointer, &capture.Runs[i].ErrorMessage, message)
 	}
 	return capture.Runs
 }
