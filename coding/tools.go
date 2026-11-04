@@ -1764,6 +1764,9 @@ func relativizeFindResultPath(resultPath, searchPath string) string {
 	return rel
 }
 
+// errFindAborted is pi find's rejection once its signal has aborted.
+var errFindAborted = errors.New("Operation aborted")
+
 // findTool builds the find tool against the local filesystem.
 func findTool(cwd string) agent.AgentTool { return findToolOps(cwd, nil) }
 
@@ -1802,7 +1805,16 @@ func findToolOps(cwd string, custom *FindOperations) agent.AgentTool {
 			}
 			// pi branches on the CUSTOM operations' glob, not the resolved one.
 			if custom != nil && custom.Glob != nil {
+				// pi checks its signal before and after the glob (find.ts at
+				// 676af1d77); the fd branch below has no such checks in the
+				// port.
+				if ctx.Err() != nil {
+					return agent.AgentToolResult{}, errFindAborted
+				}
 				results, err := custom.Glob(ctx, pattern, root, []string{"**/node_modules/**", "**/.git/**"}, probeLimit)
+				if ctx.Err() != nil {
+					return agent.AgentToolResult{}, errFindAborted
+				}
 				if err != nil {
 					return agent.AgentToolResult{}, err
 				}

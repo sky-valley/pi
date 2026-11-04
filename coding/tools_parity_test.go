@@ -748,3 +748,37 @@ func TestLsReportsLimitOnlyWhenMoreEntriesExist(t *testing.T) {
 		t.Fatalf("got %q, details %v; pi %q, none", got, r.Details, "a.txt\nb.txt\nc.txt")
 	}
 }
+
+// pi's custom-glob branch of find rejects with "Operation aborted" when the
+// signal has aborted before or after ops.glob (find.ts at 676af1d77).
+func TestFindCustomGlobChecksAbort(t *testing.T) {
+	dir := t.TempDir()
+	for _, tc := range []struct {
+		name        string
+		cancelFirst bool
+	}{{"before glob", true}, {"during glob", false}} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			if tc.cancelFirst {
+				cancel()
+			}
+			globbed := false
+			tool := findToolOps(dir, &FindOperations{
+				Exists: func(context.Context, string) (bool, error) { return true, nil },
+				Glob: func(context.Context, string, string, []string, int) ([]string, error) {
+					globbed = true
+					cancel()
+					return []string{"a.txt"}, nil
+				},
+			})
+			_, err := tool.Execute(ctx, "id", map[string]any{"pattern": "*.txt"}, func(agent.AgentToolResult) {})
+			if err == nil || err.Error() != "Operation aborted" {
+				t.Fatalf("err = %v, pi rejects with %q", err, "Operation aborted")
+			}
+			if globbed == tc.cancelFirst {
+				t.Fatalf("glob ran = %v; pi checks before the glob and after it", globbed)
+			}
+		})
+	}
+}
