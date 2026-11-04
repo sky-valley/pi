@@ -8,8 +8,10 @@ import (
 )
 
 // Session-affinity header formats (pi SessionAffinityFormat). "openai" sends
-// session_id + x-client-request-id (+ x-session-affinity on completions);
-// "openai-nosession" drops session_id; "openrouter" sends x-session-id.
+// session_id + x-client-request-id (+ x-session-affinity) on completions, and
+// session-id + x-client-request-id on Responses (upstream c5d397835);
+// "openai-nosession" drops session_id / session-id; "openrouter" sends
+// x-session-id.
 const (
 	sessionAffinityOpenAI     = "openai"
 	sessionAffinityOpenRouter = "openrouter"

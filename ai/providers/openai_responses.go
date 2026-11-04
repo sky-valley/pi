@@ -379,7 +379,8 @@ func StreamOpenAIResponses(ctx context.Context, model *ai.Model, req ai.Transcri
 				o.set("x-session-id", opts.SessionID)
 			} else {
 				if compat.SessionAffinityFormat == sessionAffinityOpenAI {
-					o.set("session_id", opts.SessionID)
+					// session-id, not session_id, since upstream c5d397835.
+					o.set("session-id", opts.SessionID)
 				}
 				o.set("x-client-request-id", opts.SessionID)
 			}
