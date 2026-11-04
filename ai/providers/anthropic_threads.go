@@ -344,7 +344,7 @@ func anthropicThreadErrorCode(body []byte) (code string, ok bool) {
 	return rawString(parsed.Error.Details.ErrorCode)
 }
 
-// sendAnthropicThread is pi's sendThreadRequest: it sends thread, and resends
+// send is pi's sendThreadRequest: it sends thread, and resends
 // a rejection about the thread (never a started stream) once in full — as a
 // new thread when the old one cannot be continued, or without `thread` when
 // the endpoint cannot use threads, which also turns threads off for the
