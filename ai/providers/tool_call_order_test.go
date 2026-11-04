@@ -92,7 +92,7 @@ func TestOpenAIResponsesReplaysToolCallArgumentsInModelOrder(t *testing.T) {
 
 func TestAnthropicReplaysToolCallArgumentsInModelOrder(t *testing.T) {
 	model := &ai.Model{ID: "claude-sonnet-4", Api: ai.APIAnthropicMessages, Provider: "anthropic", MaxTokens: 1024}
-	params, err := buildAnthropicParams(model, ai.NormalizeContext(loadOrderedToolCallContext(t)), false, &AnthropicOptions{}, false)
+	params, err := buildAnthropicParams(model, ai.NormalizeContext(loadOrderedToolCallContext(t)), false, &AnthropicOptions{}, anthropicBuildFlags{})
 	if err != nil {
 		t.Fatalf("buildAnthropicParams: %v", err)
 	}

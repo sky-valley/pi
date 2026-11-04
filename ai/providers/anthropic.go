@@ -163,6 +163,15 @@ type anthropicCompat struct {
 	// 9e05370b2, b271b0a52). Default: false. It takes effect only together with
 	// supportsMidConvoSystemMessages.
 	supportsMidConvoToolChanges bool
+	// supportsMessageThreads reports whether the endpoint keeps Anthropic
+	// message threads, so a request with a session id can send only the new
+	// messages and continue from the previous reply (pi
+	// AnthropicMessagesCompat.supportsMessageThreads, upstream a758f3ae4).
+	// Default: true for provider anthropic with a baseUrl on api.anthropic.com,
+	// false otherwise: a gateway that drops the unknown `thread` field would
+	// silently turn a `continue` into a request without the earlier
+	// conversation.
+	supportsMessageThreads bool
 	// allowedFallbackModels are the catalog's permitted server-side fallback
 	// models: what the request's `fallbacks` field lists, what turns the fallback
 	// beta on, and where the local pricing used to cost a response one of them
@@ -214,6 +223,7 @@ func getAnthropicCompat(model *ai.Model) anthropicCompat {
 		sendSessionAffinityHeaders:      isOpenRouter,
 		supportsCacheControlOnTools:     true,
 		supportsTemperature:             true,
+		supportsMessageThreads:          model.Provider == "anthropic" && strings.Contains(model.BaseURL, "api.anthropic.com"),
 	}
 	// pi's `?? (isOpenRouter ? "openrouter" : undefined)`: off OpenRouter the
 	// format stays unset, which is why sessionAffinityFormatFor is not reused —
@@ -239,6 +249,7 @@ func getAnthropicCompat(model *ai.Model) anthropicCompat {
 	applyCompat(o, "supportsMidConvoEffort", &c.supportsMidConvoEffort)
 	applyCompat(o, "supportsMidConvoSystemMessages", &c.supportsMidConvoSystemMessages)
 	applyCompat(o, "supportsMidConvoToolChanges", &c.supportsMidConvoToolChanges)
+	applyCompat(o, "supportsMessageThreads", &c.supportsMessageThreads)
 	applyCompat(o, "allowedFallbackModels", &c.allowedFallbackModels)
 	return c
 }
@@ -572,7 +583,8 @@ func StreamAnthropic(ctx context.Context, model *ai.Model, req ai.TranscriptCont
 	if opts == nil {
 		opts = &AnthropicOptions{}
 	}
-	normalized := ai.ResolveTranscript(req, getAnthropicCompat(model).supportsMidConvoSystemMessages)
+	compat := getAnthropicCompat(model)
+	normalized := ai.ResolveTranscript(req, compat.supportsMidConvoSystemMessages)
 	currentTools := ai.GetCurrentTools(normalized.Messages)
 
 	go func() {
@@ -606,14 +618,27 @@ func StreamAnthropic(ctx context.Context, model *ai.Model, req ai.TranscriptCont
 			model.Provider != "github-copilot" &&
 			isOAuthToken(apiKey)
 
+		// threadSessionID is the session whose requests may use message threads,
+		// "" when threads do not apply: they need a session id, prompt caching
+		// and an endpoint that keeps threads (upstream a758f3ae4). A session for
+		// which the endpoint rejected threads still sends the threads beta, which
+		// the resend that turned them off was accepted with; prepare just sends
+		// no `thread` for it.
+		threadSessionID := ""
+		if compat.supportsMessageThreads && resolveCacheRetention(opts.CacheRetention, opts.Env) != ai.CacheNone {
+			threadSessionID = opts.SessionID
+		}
+
 		// prepare is one pass of pi's request loop up to the send: the params
 		// built — with every strict:"prefer" tool non-strict once the strict-tool
-		// fallback is on — handed to onPayload, and turned into the wire body and
-		// the per-request anthropic-beta value.
-		prepare := func(disablePreferredStrictTools bool) (payload []byte, betaHeader *string, hasPreferredStrictTools bool, err error) {
-			built, err := buildAnthropicParams(model, normalized, oauth, opts, disablePreferredStrictTools)
+		// fallback is on — and handed to onPayload.
+		prepare := func(disablePreferredStrictTools bool) (body map[string]any, hasPreferredStrictTools bool, err error) {
+			built, err := buildAnthropicParams(model, normalized, oauth, opts, anthropicBuildFlags{
+				disablePreferredStrictTools: disablePreferredStrictTools,
+				messageThreads:              threadSessionID != "",
+			})
 			if err != nil {
-				return nil, nil, false, err
+				return nil, false, err
 			}
 			// A response that ran with effort markers records the effort of the
 			// last one, so the NEXT request can replay this turn at the same
@@ -623,12 +648,12 @@ func StreamAnthropic(ctx context.Context, model *ai.Model, req ai.TranscriptCont
 			if built.providerThinkingLevel != "" {
 				output.ProviderThinkingLevel = built.providerThinkingLevel
 			}
-			body := built.body
+			body = built.body
 			if opts.OnPayload != nil {
 				next, perr := opts.OnPayload(body, model)
 				if perr != nil {
 					// pi: a throw from onPayload propagates and fails the stream.
-					return nil, nil, false, perr
+					return nil, false, perr
 				}
 				// pi: any `!== undefined` return replaces the params wholesale —
 				// except `stream`, which is re-forced to true immediately
@@ -650,6 +675,12 @@ func StreamAnthropic(ctx context.Context, model *ai.Model, req ai.TranscriptCont
 					body = overridden
 				}
 			}
+			return body, built.hasPreferredStrictTools, nil
+		}
+		// encode turns a body into the wire body and the per-request
+		// anthropic-beta value, as the SDK's create() does with the params it is
+		// handed.
+		encode := func(body map[string]any) (payload []byte, betaHeader *string, err error) {
 			// The beta namespace rewrites a deprecated top-level `output_format`
 			// into `output_config.format` before it looks at anything else, and
 			// refuses a params object carrying both (transformOutputFormat,
@@ -658,7 +689,7 @@ func StreamAnthropic(ctx context.Context, model *ai.Model, req ai.TranscriptCont
 			// path.
 			body, err = transformAnthropicOutputFormat(body)
 			if err != nil {
-				return nil, nil, false, err
+				return nil, nil, err
 			}
 			// The SDK's beta namespace destructures `betas` OUT of the params
 			// object and re-emits it as the per-request `anthropic-beta` header,
@@ -666,7 +697,7 @@ func StreamAnthropic(ctx context.Context, model *ai.Model, req ai.TranscriptCont
 			// `onPayload` sees, which is why buildAnthropicParams puts it there.
 			body, betaHeader = splitAnthropicBetas(body)
 			payload, err = json.Marshal(body)
-			return payload, betaHeader, built.hasPreferredStrictTools, err
+			return payload, betaHeader, err
 		}
 
 		// pi's loop opens each pass with signal.throwIfAborted() (upstream
@@ -677,7 +708,7 @@ func StreamAnthropic(ctx context.Context, model *ai.Model, req ai.TranscriptCont
 			fail(errOperationAborted)
 			return
 		}
-		payload, betaHeader, hasPreferredStrictTools, err := prepare(false)
+		params, hasPreferredStrictTools, err := prepare(false)
 		if err != nil {
 			fail(err)
 			return
@@ -693,12 +724,9 @@ func StreamAnthropic(ctx context.Context, model *ai.Model, req ai.TranscriptCont
 		// only, so it is pinned by test instead.
 		// The SDK's buildURL makes the request URL with `new URL(...)` before
 		// anything else about the request, and fetch sends what that makes of
-		// it (requestURL).
-		url, err := requestURL(sdkJoinURL(baseURL, "/v1/messages?beta=true"))
-		if err != nil {
-			fail(err)
-			return
-		}
+		// it (requestURL). A bad URL fails each send after its body is encoded,
+		// as create() converts the params before it builds the URL.
+		url, urlErr := requestURL(sdkJoinURL(baseURL, "/v1/messages?beta=true"))
 		// pi builds the client once per stream, and its constructor reads the
 		// environment then (see anthropicClientHeaders).
 		headers := anthropicClientHeaders(model, opts, oauth, apiKey, authToken, normalized.Messages)
@@ -717,6 +745,9 @@ func StreamAnthropic(ctx context.Context, model *ai.Model, req ai.TranscriptCont
 			}
 		}
 		headers.validate = anthropicValidateHeaders(tokens != nil)
+		// The wire body and anthropic-beta value of the request being sent.
+		var payload []byte
+		var betaHeader *string
 		build := func() (*http.Request, error) {
 			r, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(payload))
 			if err != nil {
@@ -757,46 +788,79 @@ func StreamAnthropic(ctx context.Context, model *ai.Model, req ai.TranscriptCont
 			return r, nil
 		}
 
-		// A rejection of strict tools for Anthropic's own limits is retried once
-		// with the preferred ones non-strict (upstream d4d53612b): only a
-		// rejected request, never a started stream, and never a second time.
-		disablePreferredStrictTools := false
-		var resp *http.Response
-		for {
-			resp, err = sendWithRetry(ctx, build, retry)
+		// send is one create() of the body, with its retries: a 2xx response,
+		// or the rejection as an *anthropicAPIError, or the error that kept the
+		// request from being answered.
+		send := func(body map[string]any) (*http.Response, error) {
+			var err error
+			if payload, betaHeader, err = encode(body); err != nil {
+				return nil, err
+			}
+			if urlErr != nil {
+				return nil, urlErr
+			}
+			resp, err := sendWithRetry(ctx, build, retry)
 			if err != nil {
-				fail(sdkFetchError(err))
-				return
+				return nil, sdkFetchError(err)
 			}
 			if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-				break
+				return resp, nil
 			}
 			nullResponseBody(resp) // a nil Body reads as an empty one
 			data, err := readSDKErrorBody(ctx, sdkResponseBody(ctx, resp, opts.HTTPClient))
 			resp.Body.Close()
 			if err != nil {
+				return nil, err
+			}
+			// pi surfaces the SDK's APIError message as is.
+			return nil, &anthropicAPIError{status: resp.StatusCode, body: data, message: anthropicSDKErrorMessage(resp.StatusCode, data)}
+		}
+
+		// A rejection of strict tools for Anthropic's own limits is retried once
+		// with the preferred ones non-strict (upstream d4d53612b): only a
+		// rejected request, never a started stream, and never a second time.
+		disablePreferredStrictTools := false
+		var resp *http.Response
+		// thread is the thread request that produced resp; nil when no
+		// `thread` was sent.
+		var thread *anthropicThreadRequest
+		for {
+			// A replay such as cache warming neither continues the session's
+			// thread nor replaces it (StreamOptions.DisableContinuation).
+			var prepared *anthropicThreadRequest
+			if threadSessionID != "" && !opts.DisableContinuation {
+				prepared = anthropicThreads.prepare(model, threadSessionID, params)
+			}
+			if prepared != nil {
+				resp, thread, err = anthropicThreads.send(ctx, prepared, params, send, output)
+			} else {
+				resp, err = send(params)
+			}
+			if err == nil {
+				break
+			}
+			var rejected *anthropicAPIError
+			if !errors.As(err, &rejected) {
 				fail(err)
 				return
 			}
-			// pi surfaces the SDK's APIError message as is.
-			message := anthropicSDKErrorMessage(resp.StatusCode, data)
 			if (ctx != nil && ctx.Err() != nil) || disablePreferredStrictTools || !hasPreferredStrictTools ||
-				!isAnthropicStrictToolLimitError(resp.StatusCode, data, message) {
-				fail(errors.New(message))
+				!isAnthropicStrictToolLimitError(rejected.status, rejected.body, rejected.message) {
+				fail(errors.New(rejected.message))
 				return
 			}
 			disablePreferredStrictTools = true
 			output.Diagnostics = append(output.Diagnostics, ai.Diagnostic{
 				Type:      "anthropic_strict_tools_fallback",
 				Timestamp: nowMillis(),
-				Error:     &ai.DiagnosticErrorInfo{Message: message},
+				Error:     &ai.DiagnosticErrorInfo{Message: rejected.message},
 				Details:   ai.OrderedObject{{Key: "reason", Value: "strict_tool_limits_exceeded"}},
 			})
 			if ctx != nil && ctx.Err() != nil {
 				fail(errOperationAborted)
 				return
 			}
-			if payload, betaHeader, hasPreferredStrictTools, err = prepare(true); err != nil {
+			if params, hasPreferredStrictTools, err = prepare(true); err != nil {
 				fail(err)
 				return
 			}
@@ -1175,6 +1239,9 @@ func StreamAnthropic(ctx context.Context, model *ai.Model, req ai.TranscriptCont
 		// an aborted/errored turn all fire above this point — and a null entry
 		// still fails it here, as pi's read of its `.type` throws.
 		materialize()
+		if thread != nil {
+			anthropicThreads.record(model, thread, params, output, oauth, compat.allowEmptySignature)
+		}
 		if err := appendAnthropicInputTransformationsDiagnostic(output, inputTransformations); err != nil {
 			fail(err)
 			return
@@ -1263,6 +1330,16 @@ func isAnthropicEffort(value string) bool {
 	return false
 }
 
+// anthropicBetaFlags are pi's BetaFeatureFlags.
+type anthropicBetaFlags struct {
+	oauth bool
+	// nativeToolChanges is buildAnthropicParams' decision to send tool changes
+	// as tool_addition/tool_removal blocks, which needs the inline-tools beta.
+	nativeToolChanges bool
+	// messageThreads is set when the session uses message threads.
+	messageThreads bool
+}
+
 // getAnthropicBetaFeatures is pi's getBetaFeatures (upstream 4e69b0c28): the
 // betas that ride in the request body and, via the SDK, in the `anthropic-beta`
 // header. Beta assembly used to live in createClient with a per-auth-branch
@@ -1279,10 +1356,8 @@ func isAnthropicEffort(value string) bool {
 // compat is passed in rather than re-decoded: pi reads plain properties here,
 // so a second decode of the raw compat blob would be duplicated per-request work
 // and a second place for the two reads to drift (the same reasoning as
-// buildAnthropicParams' fallbacks list). nativeToolChanges is buildAnthropicParams'
-// decision to send tool changes as tool_addition/tool_removal blocks, which
-// needs the inline-tools beta.
-func getAnthropicBetaFeatures(model *ai.Model, req ai.TranscriptContext, oauth, nativeToolChanges bool, opts *AnthropicOptions, compat anthropicCompat) []string {
+// buildAnthropicParams' fallbacks list).
+func getAnthropicBetaFeatures(model *ai.Model, req ai.TranscriptContext, opts *AnthropicOptions, compat anthropicCompat, flags anthropicBetaFlags) []string {
 	var optHeaders ai.ProviderHeaders
 	if opts != nil {
 		optHeaders = opts.Headers
@@ -1319,7 +1394,7 @@ func getAnthropicBetaFeatures(model *ai.Model, req ai.TranscriptContext, oauth, 
 	// The six sources below contribute disjoint literals, so pi's `new Set`
 	// round-trip cannot drop anything here.
 	var features []string
-	if oauth {
+	if flags.oauth {
 		features = append(features, "claude-code-20250219", "oauth-2025-04-20")
 	}
 	if len(ai.GetCurrentTools(req.Messages)) > 0 && !compat.supportsEagerToolInputStreaming {
@@ -1342,8 +1417,11 @@ func getAnthropicBetaFeatures(model *ai.Model, req ai.TranscriptContext, oauth, 
 	if compat.supportsMidConvoEffort {
 		features = append(features, midConvoOutputConfigBeta, thinkingBindingBeta)
 	}
-	if nativeToolChanges {
+	if flags.nativeToolChanges {
 		features = append(features, inlineToolsBeta)
+	}
+	if flags.messageThreads {
+		features = append(features, messageThreadsBeta)
 	}
 	return features
 }
@@ -1542,10 +1620,20 @@ type anthropicParams struct {
 	providerThinkingLevel   string
 }
 
-// buildAnthropicParams is pi's buildParams. With disablePreferredStrictTools
-// every strict:"prefer" tool — top-level or inline — is sent with its original
-// non-strict schema; strict:"require" tools stay strict.
-func buildAnthropicParams(model *ai.Model, req ai.TranscriptContext, oauth bool, opts *AnthropicOptions, disablePreferredStrictTools bool) (anthropicParams, error) {
+// anthropicBuildFlags are pi's BuildParamsFlags.
+type anthropicBuildFlags struct {
+	// disablePreferredStrictTools sends every strict:"prefer" tool — top-level
+	// or inline — with its original non-strict schema, after Anthropic rejected
+	// them; strict:"require" tools stay strict.
+	disablePreferredStrictTools bool
+	// messageThreads is set when the session uses message threads, so the
+	// threads beta is sent.
+	messageThreads bool
+}
+
+// buildAnthropicParams is pi's buildParams.
+func buildAnthropicParams(model *ai.Model, req ai.TranscriptContext, oauth bool, opts *AnthropicOptions, flags anthropicBuildFlags) (anthropicParams, error) {
+	disablePreferredStrictTools := flags.disablePreferredStrictTools
 	retention := ai.CacheRetention("")
 	var env map[string]string
 	if opts != nil {
@@ -1649,7 +1737,8 @@ func buildAnthropicParams(model *ai.Model, req ai.TranscriptContext, oauth bool,
 	}
 	// `betas` travels in the params object so onPayload observes it; the SDK
 	// lifts it back out into the anthropic-beta header before sending.
-	if betas := getAnthropicBetaFeatures(model, req, oauth, nativeToolChanges, opts, compat); len(betas) > 0 {
+	betaFlags := anthropicBetaFlags{oauth: oauth, nativeToolChanges: nativeToolChanges, messageThreads: flags.messageThreads}
+	if betas := getAnthropicBetaFeatures(model, req, opts, compat, betaFlags); len(betas) > 0 {
 		params["betas"] = betas
 	}
 

@@ -1307,7 +1307,7 @@ func streamAnthropicSSE(t *testing.T, model *ai.Model, sse string) *ai.Assistant
 // the errors constrained sampling can raise.
 func mustBuildAnthropicParams(t *testing.T, model *ai.Model, req ai.Context, oauth bool, opts *AnthropicOptions) map[string]any {
 	t.Helper()
-	params, err := buildAnthropicParams(model, ai.NormalizeContext(req), oauth, opts, false)
+	params, err := buildAnthropicParams(model, ai.NormalizeContext(req), oauth, opts, anthropicBuildFlags{})
 	if err != nil {
 		t.Fatalf("buildAnthropicParams: %v", err)
 	}
@@ -1498,7 +1498,7 @@ func TestAnthropicStrictUnsupportedKeywordsMatchPi(t *testing.T) {
 					Type: ai.ConstrainedSamplingJSONSchema, Strict: ai.ConstrainedSamplingStrictness(row.Strict),
 				}}},
 		}
-		built, err := buildAnthropicParams(model, ai.NormalizeContext(req), false, &AnthropicOptions{}, false)
+		built, err := buildAnthropicParams(model, ai.NormalizeContext(req), false, &AnthropicOptions{}, anthropicBuildFlags{})
 		body := built.body
 		if row.Error != "" {
 			if err == nil || err.Error() != row.Error {
@@ -1564,7 +1564,7 @@ func TestAnthropicStrictToolsRequireFails(t *testing.T) {
 			},
 		}},
 	}
-	_, err := buildAnthropicParams(model, ai.NormalizeContext(req), false, &AnthropicOptions{}, false)
+	_, err := buildAnthropicParams(model, ai.NormalizeContext(req), false, &AnthropicOptions{}, anthropicBuildFlags{})
 	assertErrString(t, err, `Tool "js_require" requires JSON-schema constrained sampling, but strict tools are unsupported.`)
 }
 

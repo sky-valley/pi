@@ -1554,11 +1554,17 @@ type StreamOptions struct {
 	// repetition_penalty. The adapter merges them over Model.SamplingParams per
 	// key. Only the OpenAI-compatible adapters (completions, responses) apply
 	// them; other APIs ignore them.
-	SamplingParams            map[string]any
-	MaxTokens                 *int
-	Transport                 Transport
-	CacheRetention            CacheRetention
-	SessionID                 string
+	SamplingParams map[string]any
+	MaxTokens      *int
+	Transport      Transport
+	CacheRetention CacheRetention
+	SessionID      string
+	// DisableContinuation keeps this request from using or recording
+	// server-side continuation state, such as Anthropic message threads (pi
+	// StreamOptions.disableContinuation, upstream a758f3ae4). Set it for replays
+	// such as cache warming, which must not replace the state of the real
+	// conversation. Providers that keep no continuation state ignore it.
+	DisableContinuation       bool
 	WebSocketConnectTimeoutMs int
 	Metadata                  map[string]any
 }
