@@ -20,10 +20,14 @@ type resolved struct {
 
 // resolver is resolver.ts Resolver: reference resolution of one compile over
 // the root schema and the registered documents. The schema is indexed on the
-// first reference, so a schema without references is never walked for
-// identifiers.
+// first reference or the first `$id` a walker meets, so a schema with neither
+// is never walked for identifiers.
 type resolver struct {
-	draft    string
+	draft string
+	// rootBase is the base URI the root schema is walked from: always the
+	// default base. Walkers apply the root's own `$id` through baseFor, once
+	// (upstream 2bd2c2d0a; applying it here as well put a relative `$id`
+	// with a directory part in twice).
 	rootBase string
 	// baseOf is each indexed schema object's base URI.
 	baseOf map[*schemaObject]string
@@ -55,10 +59,7 @@ func newResolver(root any, draft string, schemas map[string]any, reject bool) *r
 		resources:      map[string]any{},
 		anchors:        map[string]*schemaObject{},
 		unresolved:     map[string]bool{},
-	}
-	r.rootBase = defaultBase
-	if s, ok := root.(*schemaObject); ok {
-		r.rootBase = r.baseFor(s, defaultBase)
+		rootBase:       defaultBase,
 	}
 	return r
 }
@@ -73,6 +74,14 @@ func (r *resolver) baseFor(node *schemaObject, base string) string {
 	id, ok := node.kw("$id").(string)
 	if !ok {
 		return base
+	}
+	// Index before applying an `$id`: a caller's base may already include
+	// it, and the index applies it once (upstream 2bd2c2d0a).
+	if !r.indexed {
+		r.ensureIndexed()
+		if indexed, ok := r.baseOf[node]; ok {
+			return indexed
+		}
 	}
 	if _, ref := node.kw("$ref").(string); r.draft == Draft7 && (ref || strings.HasPrefix(id, "#")) {
 		return base

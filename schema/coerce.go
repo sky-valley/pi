@@ -156,9 +156,7 @@ func (r *coerceRun) passesTrue(node any, base string, value any) bool {
 
 func (r *coerceRun) baseOf(node any, base string) string {
 	if s, ok := node.(*schemaObject); ok {
-		if b, ok := r.c.r.baseOf[s]; ok {
-			return b
-		}
+		return r.c.r.baseFor(s, base)
 	}
 	return base
 }

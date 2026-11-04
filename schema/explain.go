@@ -460,7 +460,8 @@ func (e *explainRun) walkUnion(branches []any, b string, v any, path string, out
 func (e *explainRun) throughRef(s any, b string) any {
 	if node, ok := s.(*schemaObject); ok {
 		if ref, ok := node.kw("$ref").(string); ok {
-			return e.resolve(ref, b).node
+			// The branch's own `$id` is its base (upstream 2bd2c2d0a).
+			return e.resolve(ref, e.c.r.baseFor(node, b)).node
 		}
 	}
 	return s
@@ -542,7 +543,11 @@ func tagValue(s any, key string) any {
 func (e *explainRun) walkUnevaluated(node *schemaObject, b string, v any, path string, out *[]ValidationError) {
 	rest, ok := e.rests[node]
 	if !ok {
-		rest = node.without(func(k string) bool { return k == "unevaluatedProperties" || k == "unevaluatedItems" })
+		// b already applies the node's `$id`; the copy must not apply it
+		// again (upstream 2bd2c2d0a).
+		rest = node.without(func(k string) bool {
+			return k == "unevaluatedProperties" || k == "unevaluatedItems" || k == "$id"
+		})
 		e.rests[node] = rest
 	}
 	a := &annotations{}
