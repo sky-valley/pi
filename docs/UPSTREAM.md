@@ -1718,6 +1718,28 @@ differences: find does not reproduce pi handing fd an unparsable
 rejects it) — the port clamps and lists; and find sorts and keeps every result
 where pi's fd branch stores up to the byte cap (same output and totals).
 
+**D115 — connection errors' causes are rendered from Go's net errors
+(`4c992154d`).** pi appends the deepest `cause` of a connection-level failure
+(`withCauseDetail`); the port has no undici, so `ai/providers/fetch_cause.go`
+renders what Node would put there from net/http's errors — measured against
+openai 7.19.0 and @anthropic-ai/sdk 0.129.0 over node 22's undici 6.29.1 and
+re-measured on undici 8.12.3 with pi's own dispatcher (`http-dispatcher.ts`):
+ECONNREFUSED/ENOTFOUND/ECONNRESET, `other side closed (UND_ERR_SOCKET)`,
+`terminated: …`, the connect and headers timeouts, TLS verification codes,
+zlib and `bad port` (undici's blocked-port list now applies to the port's own
+client, not to an injected one, as in pi). Decided differences: a hostname
+whose several addresses all refuse reports the first address's error where
+undici reports `AggregateError (<code>)` (dual-stack `localhost`); a connect
+timeout names `attempted address: <url host>:<port>` where undici names
+`attempted addresses: <ip:port>, …` once DNS returned several, and says
+`timeout: 10000ms` although Go's dial timeout is 30s; a response that is not
+HTTP keeps net/http's words where llhttp's `HPE_*` texts cannot be told apart;
+a TLS name mismatch and other failures with no Node rendering keep the deepest
+Go error's text; and an injected `HTTPClient`'s error is walked by Go's
+`Unwrap`. The replay oracles' errorMessages for these rows come from a node 22
+recapture (`testdata/*/cause-detail-4c992154d.json` overlays, each entry
+asserted to be the node-26 capture's message plus `": <cause>"`).
+
 **D13 — `StreamOptions.HTTPClient` does not carry `TimeoutMs`.** An injected
 client bypasses `sharedClient`, so `TimeoutMs` does not apply. pi keeps its
 timeout under an injected fetch because its SDKs apply it outside fetch, whereas
