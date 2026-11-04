@@ -2,11 +2,13 @@ package coding
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"slices"
 	"strings"
 	"testing"
@@ -507,6 +509,112 @@ func TestFindResultLimitNotice(t *testing.T) {
 	}
 }
 
+// #7121: exactly `limit` matches must not report that the limit was reached
+// (tools.test.ts, upstream 676af1d77).
+func TestFindReportsLimitOnlyWhenMoreResultsExist(t *testing.T) {
+	dir := t.TempDir()
+	for _, n := range []string{"a.txt", "b.txt", "c.txt"} {
+		os.WriteFile(filepath.Join(dir, n), []byte(n), 0o644)
+	}
+	r, _ := run(t, findTool(dir), map[string]any{"pattern": "*.txt", "path": dir, "limit": float64(3)})
+	got := strings.Split(resultText(r), "\n")
+	slices.Sort(got)
+	if !slices.Equal(got, []string{"a.txt", "b.txt", "c.txt"}) || r.Details != nil {
+		t.Fatalf("exact: got %q, details %v; pi the three names and no details", resultText(r), r.Details)
+	}
+
+	r, _ = run(t, findTool(dir), map[string]any{"pattern": "*.txt", "path": dir, "limit": float64(2)})
+	listing, notice, _ := strings.Cut(resultText(r), "\n\n")
+	if n := len(strings.Split(listing, "\n")); n != 2 {
+		t.Errorf("over: %d results listed, pi 2: %q", n, listing)
+	}
+	if want := "[2 results limit reached. Use limit=4 for more, or refine pattern]"; notice != want {
+		t.Errorf("over: notice %q, pi %q", notice, want)
+	}
+	if want := (map[string]any{"resultLimitReached": 2}); !reflect.DeepEqual(r.Details, want) {
+		t.Errorf("over: details %v, pi %v", r.Details, want)
+	}
+}
+
+func TestFindClampsAndFloorsLimit(t *testing.T) {
+	dir := t.TempDir()
+	for _, n := range []string{"a.txt", "b.txt", "c.txt"} {
+		os.WriteFile(filepath.Join(dir, n), []byte(n), 0o644)
+	}
+	for _, limit := range []float64{0, -5, 0.5, 1.9} {
+		r, _ := run(t, findTool(dir), map[string]any{"pattern": "*.txt", "path": dir, "limit": limit})
+		listing, notice, _ := strings.Cut(resultText(r), "\n\n")
+		if n := len(strings.Split(listing, "\n")); n != 1 {
+			t.Errorf("limit=%v: %d results listed, pi 1: %q", limit, n, listing)
+		}
+		if want := "[1 results limit reached. Use limit=2 for more, or refine pattern]"; notice != want {
+			t.Errorf("limit=%v: notice %q, pi %q", limit, notice, want)
+		}
+		if want := (map[string]any{"resultLimitReached": 1}); !reflect.DeepEqual(r.Details, want) {
+			t.Errorf("limit=%v: details %v, pi %v", limit, r.Details, want)
+		}
+	}
+}
+
+// details.truncation describes the full output, as truncateHead of every
+// result would.
+func TestFindReportsFullOutputTotalsPastByteCap(t *testing.T) {
+	dir := t.TempDir()
+	// 300 names of 200 bytes join to about 60KB.
+	names := make([]string, 300)
+	for i := range names {
+		names[i] = fmt.Sprintf("%03d%s.txt", i, strings.Repeat("x", 193))
+		os.WriteFile(filepath.Join(dir, names[i]), nil, 0o644)
+	}
+	r, _ := run(t, findTool(dir), map[string]any{"pattern": "*.txt", "path": dir})
+	details, _ := r.Details.(map[string]any)
+	got, _ := details["truncation"].(TruncationResult)
+	want := TruncateHead(strings.Join(names, "\n"), maxInt, 0)
+	want.Content = got.Content
+	if got != want {
+		t.Fatalf("truncation = %+v, pi %+v", got, want)
+	}
+	if n := len(strings.Split(got.Content, "\n")); n != want.OutputLines {
+		t.Errorf("content has %d lines, outputLines %d", n, want.OutputLines)
+	}
+	if details["resultLimitReached"] != nil {
+		t.Errorf("resultLimitReached = %v, pi undefined", details["resultLimitReached"])
+	}
+	if text := resultText(r); !strings.HasSuffix(text, "\n\n[50.0KB limit reached]") {
+		t.Errorf("output ends %q", text[max(0, len(text)-60):])
+	}
+}
+
+// A custom Glob is asked for one result past the limit, and the tool shows
+// at most `limit` of what it returns.
+func TestFindAsksCustomGlobForOneResultPastLimit(t *testing.T) {
+	dir := t.TempDir()
+	var requested []int
+	tool := func(results []string) agent.AgentTool {
+		return findToolOps(dir, &FindOperations{
+			Exists: func(context.Context, string) (bool, error) { return true, nil },
+			Glob: func(_ context.Context, _, _ string, _ []string, limit int) ([]string, error) {
+				requested = append(requested, limit)
+				return results[:min(limit, len(results))], nil
+			},
+		})
+	}
+	r, _ := run(t, tool([]string{"a.txt", "b.txt"}), map[string]any{"pattern": "*.txt", "limit": float64(2)})
+	if got := resultText(r); got != "a.txt\nb.txt" || r.Details != nil {
+		t.Errorf("exact: %q, details %v; pi %q, none", got, r.Details, "a.txt\nb.txt")
+	}
+	r, _ = run(t, tool([]string{"a.txt", "b.txt", "c.txt"}), map[string]any{"pattern": "*.txt", "limit": float64(0)})
+	if got, want := resultText(r), "a.txt\n\n[1 results limit reached]"; got != want {
+		t.Errorf("over: %q, pi %q", got, want)
+	}
+	if want := (map[string]any{"resultLimitReached": 1}); !reflect.DeepEqual(r.Details, want) {
+		t.Errorf("over: details %v, pi %v", r.Details, want)
+	}
+	if !slices.Equal(requested, []int{3, 2}) {
+		t.Errorf("Glob asked for %v, pi [3 2]", requested)
+	}
+}
+
 // find basename-default glob: pattern without "/" matches basename at any depth.
 func TestFindBasenameGlob(t *testing.T) {
 	dir := t.TempDir()
@@ -610,5 +718,33 @@ func TestLsEntryLimitNotice(t *testing.T) {
 	want := "2 entries limit reached. Use limit=4 for more"
 	if !strings.Contains(text, want) {
 		t.Fatalf("expected entry-limit notice %q in %q", want, text)
+	}
+}
+
+// tools.test.ts, upstream 676af1d77.
+func TestLsClampsAndFloorsLimit(t *testing.T) {
+	dir := t.TempDir()
+	for _, n := range []string{"a.txt", "b.txt", "c.txt"} {
+		os.WriteFile(filepath.Join(dir, n), []byte(n), 0o644)
+	}
+	for _, limit := range []float64{0, -5, 0.5, 1.9} {
+		r, _ := run(t, lsTool(dir), map[string]any{"path": dir, "limit": limit})
+		if got, want := resultText(r), "a.txt\n\n[1 entries limit reached. Use limit=2 for more]"; got != want {
+			t.Errorf("limit=%v: %q, pi %q", limit, got, want)
+		}
+		if want := (map[string]any{"entryLimitReached": 1}); !reflect.DeepEqual(r.Details, want) {
+			t.Errorf("limit=%v: details %v, pi %v", limit, r.Details, want)
+		}
+	}
+}
+
+func TestLsReportsLimitOnlyWhenMoreEntriesExist(t *testing.T) {
+	dir := t.TempDir()
+	for _, n := range []string{"a.txt", "b.txt", "c.txt"} {
+		os.WriteFile(filepath.Join(dir, n), []byte(n), 0o644)
+	}
+	r, _ := run(t, lsTool(dir), map[string]any{"path": dir, "limit": float64(3)})
+	if got := resultText(r); got != "a.txt\nb.txt\nc.txt" || r.Details != nil {
+		t.Fatalf("got %q, details %v; pi %q, none", got, r.Details, "a.txt\nb.txt\nc.txt")
 	}
 }

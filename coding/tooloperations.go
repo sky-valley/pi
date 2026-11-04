@@ -339,6 +339,8 @@ type FindOperations struct {
 	Exists func(ctx context.Context, absolutePath string) (bool, error)
 	// Glob returns paths matching a pattern. Nil keeps pi's behavior, where the
 	// default is a placeholder and real matching happens in the tool via fd.
+	// The tool asks for one result past its own limit, shows at most `limit`
+	// of what comes back, and reports the limit only when more came back.
 	Glob func(ctx context.Context, pattern, cwd string, ignore []string, limit int) ([]string, error)
 }
 

@@ -1666,10 +1666,9 @@ func lsToolOps(cwd string, custom *LsOperations) agent.AgentTool {
 			if p := argStr(params, "path"); p != "" {
 				dir = resolveToCwd(p, cwd)
 			}
-			limit := lsDefaultLimit
-			if l, ok := argInt(params, "limit"); ok {
-				limit = l
-			}
+			// A limit of 0 would list nothing and report "(empty directory)",
+			// so it means 1.
+			limit := argLimit(params, lsDefaultLimit)
 			isDir, err := ops.Stat(ctx, dir)
 			if err != nil {
 				return agent.AgentToolResult{}, fmt.Errorf("Path not found: %s", dir)
@@ -1789,15 +1788,39 @@ func findToolOps(cwd string, custom *FindOperations) agent.AgentTool {
 			if p := argStr(params, "path"); p != "" {
 				root = resolveToCwd(p, cwd)
 			}
-			limit := findDefaultLimit
-			if l, ok := argInt(params, "limit"); ok {
-				limit = l
+			// fd treats --max-results 0 as unlimited, so a limit below 1
+			// means 1.
+			limit := argLimit(params, findDefaultLimit)
+			// One result past the limit tells "exactly N matches" apart from
+			// "more than N" (#7121).
+			probeLimit := limit
+			if probeLimit < maxInt {
+				probeLimit++
 			}
-			// fd --max-results treats 0 as unlimited; never slice with a
-			// non-positive limit.
-			unlimited := limit <= 0
 			if ok, err := ops.Exists(ctx, root); err != nil || !ok {
 				return agent.AgentToolResult{}, fmt.Errorf("Path not found: %s", root)
+			}
+			// pi branches on the CUSTOM operations' glob, not the resolved one.
+			if custom != nil && custom.Glob != nil {
+				results, err := custom.Glob(ctx, pattern, root, []string{"**/node_modules/**", "**/.git/**"}, probeLimit)
+				if err != nil {
+					return agent.AgentToolResult{}, err
+				}
+				if len(results) == 0 {
+					return textResult("No files found matching pattern"), nil
+				}
+				resultLimitReached := len(results) > limit
+				// Relativize paths against the search root for stable output.
+				relativized := make([]string, 0, min(len(results), limit))
+				for _, p := range results[:min(len(results), limit)] {
+					relativized = append(relativized, relativizeFindResultPath(p, root))
+				}
+				// pi's glob branch words its limit notice without the hint.
+				var notice string
+				if resultLimitReached {
+					notice = fmt.Sprintf("%d results limit reached", limit)
+				}
+				return findResult(relativized, resultLimitReached, limit, notice), nil
 			}
 			// fd: gitignore applies whether or not we are in a repo (the old
 			// --no-require-git effect outside a repo). But inside a repo, fd's
@@ -1819,7 +1842,7 @@ func findToolOps(cwd string, custom *FindOperations) agent.AgentTool {
 					}
 					return nil
 				}
-				if !unlimited && len(results) >= limit {
+				if len(results) == probeLimit {
 					return filepath.SkipAll
 				}
 				// fd matches directories as well as files, and marks them with a
@@ -1836,38 +1859,47 @@ func findToolOps(cwd string, custom *FindOperations) agent.AgentTool {
 			if err != nil {
 				return agent.AgentToolResult{}, err
 			}
-			// Deterministic, documented ordering: sort lexicographically. fd's native
-			// traversal order is unspecified; we keep a stable sort for reproducible output.
-			sort.Strings(results)
-			// pi: resultLimitReached = relativized.length >= effectiveLimit (so a
-			// limit of 0 still reports the notice, matching fd's 0-is-unlimited).
-			resultLimitReached := limit >= 0 && len(results) >= limit
 			if len(results) == 0 {
 				return textResult("No files found matching pattern"), nil
 			}
-			rawOutput := strings.Join(results, "\n")
-			tr := TruncateHead(rawOutput, maxInt, 0)
-			output := tr.Content
-			details := map[string]any{}
-			var notices []string
-			if resultLimitReached {
-				notices = append(notices, fmt.Sprintf("%d results limit reached. Use limit=%d for more, or refine pattern", limit, limit*2))
-				details["resultLimitReached"] = limit
-			}
-			if tr.Truncated {
-				notices = append(notices, fmt.Sprintf("%s limit reached", FormatSize(DefaultMaxBytes)))
-				details["truncation"] = tr
-			}
-			if len(notices) > 0 {
-				output += "\n\n[" + strings.Join(notices, ". ") + "]"
-			}
-			res := textResult(output)
-			if len(details) > 0 {
-				res.Details = details
-			}
-			return res, nil
+			// The extra result is the last one found, as fd's is the last it
+			// prints; it only proves that more exist.
+			resultLimitReached := len(results) > limit
+			results = results[:min(len(results), limit)]
+			// Deterministic, documented ordering: sort lexicographically. fd's native
+			// traversal order is unspecified; we keep a stable sort for reproducible output.
+			sort.Strings(results)
+			return findResult(results, resultLimitReached, limit,
+				fmt.Sprintf("%d results limit reached. Use limit=%d for more, or refine pattern", limit, limit*2)), nil
 		},
 	}
+}
+
+// findResult renders find's results with its limit and byte-cap notices.
+// pi's fd path keeps results only up to the first past the byte cap and
+// counts the rest; the port sorts its results, so it holds them all, and
+// truncating them all gives the same output and totals.
+func findResult(results []string, resultLimitReached bool, limit int, limitNotice string) agent.AgentToolResult {
+	tr := TruncateHead(strings.Join(results, "\n"), maxInt, 0)
+	output := tr.Content
+	details := map[string]any{}
+	var notices []string
+	if resultLimitReached {
+		notices = append(notices, limitNotice)
+		details["resultLimitReached"] = limit
+	}
+	if tr.Truncated {
+		notices = append(notices, fmt.Sprintf("%s limit reached", FormatSize(DefaultMaxBytes)))
+		details["truncation"] = tr
+	}
+	if len(notices) > 0 {
+		output += "\n\n[" + strings.Join(notices, ". ") + "]"
+	}
+	res := textResult(output)
+	if len(details) > 0 {
+		res.Details = details
+	}
+	return res
 }
 
 // ---------------------------------------------------------------------------

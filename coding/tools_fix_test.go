@@ -265,46 +265,6 @@ func TestReadNegativeLimitWithOffset(t *testing.T) {
 	}
 }
 
-func TestFindLimitZeroUnlimited(t *testing.T) {
-	dir := t.TempDir()
-	for _, n := range []string{"a.go", "b.go", "c.go"} {
-		os.WriteFile(filepath.Join(dir, n), nil, 0o644)
-	}
-	// fd treats --max-results 0 as unlimited; pi still computes
-	// resultLimitReached = len >= 0 → the (odd, but faithful) notice appears.
-	r, err := run(t, findTool(dir), map[string]any{"pattern": "*.go", "limit": float64(0)})
-	if err != nil {
-		t.Fatal(err)
-	}
-	text := resultText(r)
-	for _, n := range []string{"a.go", "b.go", "c.go"} {
-		if !strings.Contains(text, n) {
-			t.Fatalf("limit=0 should be unlimited; missing %s: %q", n, text)
-		}
-	}
-	if !strings.Contains(text, "0 results limit reached") {
-		t.Fatalf("expected pi's limit-0 notice: %q", text)
-	}
-}
-
-func TestFindLimitNegativeNoPanic(t *testing.T) {
-	dir := t.TempDir()
-	for _, n := range []string{"a.go", "b.go"} {
-		os.WriteFile(filepath.Join(dir, n), nil, 0o644)
-	}
-	r, err := run(t, findTool(dir), map[string]any{"pattern": "*.go", "limit": float64(-1)})
-	if err != nil {
-		t.Fatal(err)
-	}
-	text := resultText(r)
-	if !strings.Contains(text, "a.go") || !strings.Contains(text, "b.go") {
-		t.Fatalf("negative limit should not slice/panic: %q", text)
-	}
-	if strings.Contains(text, "limit reached") {
-		t.Fatalf("negative limit should not produce a limit notice: %q", text)
-	}
-}
-
 func TestGrepLimitClampedToOne(t *testing.T) {
 	dir := t.TempDir()
 	os.WriteFile(filepath.Join(dir, "a.txt"), []byte("hit\nhit\nhit\n"), 0o644)
