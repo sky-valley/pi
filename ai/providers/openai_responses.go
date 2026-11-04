@@ -332,7 +332,7 @@ func StreamOpenAIResponses(ctx context.Context, model *ai.Model, req ai.Transcri
 			} else {
 				output.StopReason = ai.StopError
 			}
-			output.ErrorMessage = withChatGPTUsageHint(err.Error())
+			output.ErrorMessage = withChatGPTUsageHint(withCauseDetail(err))
 			stream.Push(ai.AssistantMessageEvent{Type: ai.EventError, Reason: output.StopReason, Error: output})
 			stream.End()
 		}

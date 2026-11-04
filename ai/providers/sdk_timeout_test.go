@@ -26,7 +26,14 @@ import (
 //   - timeoutMs 1000 (the tie) or 100: each fails "Request timed out." at
 //     timeoutMs, the SDK's own timer.
 //
-// The port shortens undiciHeadersTimeoutMs the same way.
+// The port shortens undiciHeadersTimeoutMs the same way. Since upstream
+// 4c992154d pi appends the error's cause (withCauseDetail), and openai 7.19.0
+// keeps the rejected fetch as its timeout error's cause where anthropic keeps
+// none: openai's headers timeout reads "...: Headers Timeout Error
+// (UND_ERR_HEADERS_TIMEOUT)", its own timer's "Request timed out.: This
+// operation was aborted (20)" (the AbortError its abort makes fetch reject
+// with), and anthropic's stays "Request timed out." (measured with node
+// v22.23.4, undici 6.29.1, openai 7.19.0, @anthropic-ai/sdk 0.129.0).
 
 // openaiHeadersTimeoutText is openai 7.19.0's APIConnectionTimeoutError
 // message for a fetch whose cause is undici's UND_ERR_HEADERS_TIMEOUT.
@@ -88,8 +95,12 @@ func TestSDKAdaptersWaitOnUndiciHeadersTimeout(t *testing.T) {
 		for _, adapter := range sdkAdapters {
 			t.Run(tc.name+"/"+adapter, func(t *testing.T) {
 				want := "Request timed out."
-				if tc.undici && adapter != "anthropic-messages" {
-					want = openaiHeadersTimeoutText
+				switch {
+				case adapter == "anthropic-messages":
+				case tc.undici:
+					want = openaiHeadersTimeoutText + ": Headers Timeout Error (UND_ERR_HEADERS_TIMEOUT)"
+				default:
+					want += ": This operation was aborted (20)"
 				}
 				ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
 				defer cancel()
@@ -118,7 +129,8 @@ func TestSDKAdaptersWaitOnUndiciHeadersTimeout(t *testing.T) {
 // handshake timeout (10s, as undici's connect timeout is) stands for it here.
 // Measured against pi at 2b0a123de: an https base URL whose server never
 // answers the handshake fails both openai loops "Request timed out." after
-// 10.5s.
+// 10.5s; since 4c992154d the message ends with its cause, undici's
+// ConnectTimeoutError for the URL's host and port.
 func TestSDKAdaptersConnectTimeoutIsNotUndicisHeadersTimeout(t *testing.T) {
 	if testing.Short() {
 		t.Skip("waits on net/http's 10s TLS handshake timeout")
@@ -153,8 +165,9 @@ func TestSDKAdaptersConnectTimeoutIsNotUndicisHeadersTimeout(t *testing.T) {
 			ctx, cancel := context.WithTimeout(t.Context(), 30*time.Second)
 			defer cancel()
 			final := streamSDKAdapter(ctx, adapter, "https://"+ln.Addr().String(), ai.StreamOptions{ProviderRequestOptions: ai.ProviderRequestOptions{APIKey: "k"}})
-			if final.StopReason != ai.StopError || final.ErrorMessage != "Request timed out." {
-				t.Fatalf("stream = %s %q; pi: error \"Request timed out.\"", final.StopReason, final.ErrorMessage)
+			want := "Request timed out.: Connect Timeout Error (attempted address: " + ln.Addr().String() + ", timeout: 10000ms) (UND_ERR_CONNECT_TIMEOUT)"
+			if final.StopReason != ai.StopError || final.ErrorMessage != want {
+				t.Fatalf("stream = %s %q; pi: error %q", final.StopReason, final.ErrorMessage, want)
 			}
 		})
 	}

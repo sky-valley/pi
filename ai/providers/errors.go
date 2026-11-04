@@ -284,3 +284,66 @@ func anthropicSDKErrorMessage(status int, body []byte) string {
 	}
 	return fmt.Sprintf("%d %s", status, msg)
 }
+
+// maxCauseDepth is how far withCauseDetail follows a cause chain
+// (error-body.ts MAX_CAUSE_DEPTH).
+const maxCauseDepth = 5
+
+// jsCauser is an error that stands for a JS error with a `cause`: the SDKs'
+// APIConnectionError (apiConnectionError), and undici's TypeErrors "fetch
+// failed" and "terminated" (fetchFailedError, terminatedError). Go's own
+// wrapping is no cause: an error that is no jsCauser has none.
+type jsCauser interface {
+	jsCause() error
+}
+
+// withCauseDetail ports pi's withCauseDetail (error-body.ts, upstream
+// 4c992154d). A request that fails before the provider answers surfaces as
+// the SDK's "Connection error." (or fetch's "fetch failed", or a body's
+// "terminated") with the reason in its cause chain, so the deepest cause is
+// appended — `Connection error.: connect ECONNREFUSED 127.0.0.1:8080` — with
+// its code when its message lacks it (`Connection error.: other side closed
+// (UND_ERR_SOCKET)`). pi applies it in normalizeProviderError to an error with
+// neither HTTP status nor body, and in the anthropic catch to any error; in the
+// port, an error response's error has no cause, so each of those adapters
+// applies it to whatever it fails with.
+//
+// Below the first cause, the chain is a jsCauser's cause where there is one
+// and Go's Unwrap otherwise: a custom HTTPClient's error is pi's custom
+// fetch's rejection, whose chain is its own. A Go error has no `name` to fall
+// back on, so a cause whose text is empty adds nothing.
+func withCauseDetail(err error) string {
+	message := err.Error()
+	causer, ok := err.(jsCauser)
+	if !ok {
+		return message
+	}
+	var deepest error
+	current := causer.jsCause()
+	for depth := 0; depth < maxCauseDepth && current != nil; depth++ {
+		deepest = current
+		if c, ok := current.(jsCauser); ok {
+			current = c.jsCause()
+		} else {
+			current = errors.Unwrap(current)
+		}
+	}
+	if deepest == nil {
+		return message
+	}
+	detail := strings.TrimSpace(deepest.Error())
+	if sys, ok := deepest.(*nodeSystemError); ok && !strings.Contains(detail, sys.code) {
+		if detail == "" {
+			detail = sys.code
+		} else {
+			detail += " (" + sys.code + ")"
+		}
+	}
+	if detail == "" || strings.Contains(message, detail) {
+		return message
+	}
+	if message == "" {
+		return detail
+	}
+	return message + ": " + detail
+}

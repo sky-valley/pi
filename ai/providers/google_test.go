@@ -1026,15 +1026,17 @@ func TestGoogleNeverCallsOnResponse(t *testing.T) {
 // TestGoogleRefusedConnectionFailsFetch: a request that gets no response
 // fails as fetch rejects it in pi, with undici's "fetch failed" and no start
 // event, not with net/http's error text. Measured against pi's stream at
-// 8676a0dcd (node v26.4.0): a closed port gives [error] "fetch failed". The
-// malformed-response case is the capture's "a malformed response fails the
-// fetch".
+// 8676a0dcd (node v26.4.0): a closed port gives [error] "fetch failed"; since
+// upstream 4c992154d pi appends its cause, "fetch failed: connect ECONNREFUSED
+// 127.0.0.1:<port>" (node v22.23.4). The malformed-response case is the
+// capture's "a malformed response fails the fetch".
 func TestGoogleRefusedConnectionFailsFetch(t *testing.T) {
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		t.Fatal(err)
 	}
 	baseURL := "http://" + ln.Addr().String()
+	want := "fetch failed: connect ECONNREFUSED " + ln.Addr().String()
 	ln.Close()
 	var types []string
 	stream := StreamGoogle(context.Background(), googleCaptureModel(baseURL),
@@ -1044,8 +1046,8 @@ func TestGoogleRefusedConnectionFailsFetch(t *testing.T) {
 		types = append(types, string(ev.Type))
 	}
 	final := stream.Result()
-	if !slices.Equal(types, []string{"error"}) || final.StopReason != ai.StopError || final.ErrorMessage != "fetch failed" {
-		t.Fatalf("stream %v, stop %s %q; pi: [error], error \"fetch failed\"", types, final.StopReason, final.ErrorMessage)
+	if !slices.Equal(types, []string{"error"}) || final.StopReason != ai.StopError || final.ErrorMessage != want {
+		t.Fatalf("stream %v, stop %s %q; pi: [error], error %q", types, final.StopReason, final.ErrorMessage, want)
 	}
 }
 
@@ -1074,7 +1076,8 @@ func TestGoogleIgnoresTimeoutMs(t *testing.T) {
 // every other no-response failure does: "fetch failed", no start event.
 // Measured against pi's stream at 8676a0dcd (node v26.4.0): a server that
 // reads the request and never answers → [error] "fetch failed" after 301s,
-// timeoutMs 50 or 1000 alike.
+// timeoutMs 50 or 1000 alike; since upstream 4c992154d with its cause,
+// undici's HeadersTimeoutError (node v22.23.4, undici 6.29.1).
 func TestGoogleHeadersTimeoutFailsFetch(t *testing.T) {
 	shortenUndiciHeadersTimeout(t, 50)
 	release := make(chan struct{})
@@ -1094,8 +1097,9 @@ func TestGoogleHeadersTimeoutFailsFetch(t *testing.T) {
 		types = append(types, string(ev.Type))
 	}
 	final := stream.Result()
-	if !slices.Equal(types, []string{"error"}) || final.StopReason != ai.StopError || final.ErrorMessage != "fetch failed" {
-		t.Fatalf("stream %v, stop %s %q; pi: [error], error \"fetch failed\"", types, final.StopReason, final.ErrorMessage)
+	const want = "fetch failed: Headers Timeout Error (UND_ERR_HEADERS_TIMEOUT)"
+	if !slices.Equal(types, []string{"error"}) || final.StopReason != ai.StopError || final.ErrorMessage != want {
+		t.Fatalf("stream %v, stop %s %q; pi: [error], error %q", types, final.StopReason, final.ErrorMessage, want)
 	}
 }
 

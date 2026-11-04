@@ -148,7 +148,7 @@ func streamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Transc
 			} else {
 				output.StopReason = ai.StopError
 			}
-			output.ErrorMessage = err.Error()
+			output.ErrorMessage = withCauseDetail(err)
 			stream.Push(ai.AssistantMessageEvent{Type: ai.EventError, Reason: output.StopReason, Error: output})
 			stream.End()
 		}

@@ -167,6 +167,13 @@ func loadGoogleStreamCapture(t *testing.T) googleStreamCapture {
 	if err := json.Unmarshal(raw, &c); err != nil {
 		t.Fatal(err)
 	}
+	for pointer, message := range causeDetailMessages(t, "google-stream-events") {
+		var i int
+		if !scanPointer(pointer, "/scenarios/%d/pi", &i) || i >= len(c.Scenarios) {
+			t.Fatalf("the cause-detail overlay names %s", pointer)
+		}
+		c.Scenarios[i].Pi.ErrorMessage = message
+	}
 	return c
 }
 

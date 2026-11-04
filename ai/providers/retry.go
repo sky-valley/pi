@@ -404,11 +404,12 @@ func readFetchErrorBody(ctx context.Context, body io.Reader) ([]byte, error) {
 // connection, a failed TLS handshake, a malformed response, a header value
 // its client refuses, or undici's own connect and headers timeouts. client.Do
 // reports every such failure as a *url.Error whose Op is the method; any
-// other error is returned as it is.
+// other error is returned as it is. The failure is its cause
+// (fetchFailedError).
 func undiciFetchError(err error) error {
 	var sent *url.Error
 	if errors.As(err, &sent) && sent.Op == "Post" {
-		return errors.New("fetch failed")
+		return &fetchFailedError{sent.Err, sent.URL}
 	}
 	return err
 }
@@ -458,14 +459,22 @@ var errOpenAIHeadersTimeout = errors.New("Request timed out. Node.js fetch timed
 
 // openaiFetchError is sdkFetchError for the two openai loops: openai 7.19.0
 // words a rejection whose cause is undici's headers timeout apart
-// (errOpenAIHeadersTimeout). @anthropic-ai/sdk 0.129.0 does not, so
-// anthropic's is "Request timed out." like any other timeout.
+// (errOpenAIHeadersTimeout), and gives its APIConnectionTimeoutError the
+// rejection for a cause, as it does its APIConnectionError. @anthropic-ai/sdk
+// 0.129.0 does neither, so anthropic's is "Request timed out." like any other
+// timeout, with no cause.
 func openaiFetchError(err error) error {
 	var rejected *fetchRejection
-	if errors.As(err, &rejected) && rejected.headersTimeout {
-		return errOpenAIHeadersTimeout
+	if !errors.As(err, &rejected) {
+		return err
 	}
-	return sdkFetchError(err)
+	switch {
+	case rejected.headersTimeout:
+		return &sdkConnectionError{errOpenAIHeadersTimeout, rejected.cause()}
+	case rejected.timedOut():
+		return &sdkConnectionError{errAPIConnectionTimeout, rejected.cause()}
+	}
+	return &sdkConnectionError{errAPIConnection, rejected.cause()}
 }
 
 // sdkFetchError is the error an SDK adapter (anthropic, both openai loops)
@@ -481,7 +490,8 @@ func openaiFetchError(err error) error {
 // undici's refusal is undici's own, and a custom client's error is its own,
 // so for those the SDKs' test reads the text. Any other error — an abort, a
 // request that could not be built, a server's refused retry delay — is pi's
-// and passes through.
+// and passes through. The APIConnectionError keeps the rejection for its
+// cause (sdkConnectionError); anthropic's timeout error has none.
 func sdkFetchError(err error) error {
 	var rejected *fetchRejection
 	if !errors.As(err, &rejected) {
@@ -490,7 +500,30 @@ func sdkFetchError(err error) error {
 	if rejected.timedOut() {
 		return errAPIConnectionTimeout
 	}
-	return errAPIConnection
+	return &sdkConnectionError{errAPIConnection, rejected.cause()}
+}
+
+// cause is what the SDK's fetch rejected with, the cause its error keeps:
+// undici's refusal of a URL with credentials; a custom fetch's own error (an
+// AbortError or TimeoutError for its context's); the AbortError the SDK's own
+// timeoutMs timer makes fetch reject with, for a wait on the headers that
+// timeoutMs ended (sendWithRetry's client waits at most the shorter of it and
+// undici's headersTimeout); or undici's "fetch failed" for anything else.
+func (e *fetchRejection) cause() error {
+	var refused *fetchCredentialsError
+	switch {
+	case errors.As(e.err, &refused):
+		return refused
+	case !e.custom && !e.headersTimeout && strings.Contains(e.err.Error(), "timeout awaiting response headers"):
+		return errFetchAborted
+	case !e.custom:
+		return undiciFetchError(e.err)
+	case errors.Is(e.err, context.Canceled):
+		return errFetchAborted
+	case errors.Is(e.err, context.DeadlineExceeded):
+		return errFetchTimedOut
+	}
+	return e.err
 }
 
 func (e *fetchRejection) timedOut() bool {
@@ -505,7 +538,9 @@ func (e *fetchRejection) timedOut() bool {
 
 // errTerminated is the message of the TypeError undici's fetch errors a
 // response body's stream with when its connection fails mid-body — dropped,
-// reset, or closed short of the length or chunks the head promised.
+// reset, or closed short of the length or chunks the head promised. A body's
+// read fails with a terminatedError, which is errTerminated with the read's
+// error for its cause.
 var errTerminated = errors.New("terminated")
 
 // fetchBody is a response body read through the port's own client, the
@@ -537,7 +572,7 @@ func (b fetchBody) Read(p []byte) (int, error) {
 	case err == io.EOF && n > 0:
 		err = nil
 	case err != nil && err != io.EOF:
-		err = errTerminated
+		err = &terminatedError{err}
 		if aborted() {
 			err = errOperationAborted
 		}

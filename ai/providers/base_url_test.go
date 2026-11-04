@@ -91,6 +91,17 @@ func loadBaseURLCapture(t *testing.T) baseURLCapture {
 	if len(capture.Rows) == 0 || len(capture.Hrefs) == 0 || len(capture.Requests) == 0 {
 		t.Fatalf("the base-url capture has %d rows, %d hrefs and %d requests", len(capture.Rows), len(capture.Hrefs), len(capture.Requests))
 	}
+	for pointer, message := range causeDetailMessages(t, "base-url") {
+		var i int
+		switch {
+		case scanPointer(pointer, "/rows/%d", &i) && i < len(capture.Rows):
+			capture.Rows[i].ErrorMessage = message
+		case scanPointer(pointer, "/requests/%d", &i) && i < len(capture.Requests):
+			capture.Requests[i].ErrorMessage = message
+		default:
+			t.Fatalf("the cause-detail overlay names %s", pointer)
+		}
+	}
 	return capture
 }
 

@@ -1,0 +1,23 @@
+{
+	"source": "upstream 4c992154d: google-stream-events-4c992154d.json (upstream 4c992154d packages/ai/src/api/google-generative-ai.ts (onProviderStreamEvent, 002fc8385), @google/genai 2.21.0 sha512-+PDtco2/Z0ONdzCGekCoCT+O1VJS9xJQNN4XzQpXG/t3El/SWWMkCWlFRO1KmivOHPa4Q0VjUYu1HBKCZ/v33Q==, node v22.23.4) over google-stream-events-49681e1b7.json",
+	"errorMessages": {
+		"/scenarios/25/pi": "fetch failed: too many content-encodings in response: 6, maximum allowed is 5",
+		"/scenarios/27/pi": "terminated: incorrect data check (Z_DATA_ERROR)",
+		"/scenarios/28/pi": "terminated: other side closed (UND_ERR_SOCKET)",
+		"/scenarios/29/pi": "terminated: other side closed (UND_ERR_SOCKET)",
+		"/scenarios/30/pi": "terminated: other side closed (UND_ERR_SOCKET)",
+		"/scenarios/31/pi": "terminated: other side closed (UND_ERR_SOCKET)",
+		"/scenarios/32/pi": "terminated: other side closed (UND_ERR_SOCKET)",
+		"/scenarios/33/pi": "terminated: other side closed (UND_ERR_SOCKET)",
+		"/scenarios/34/pi": "terminated: other side closed (UND_ERR_SOCKET)",
+		"/scenarios/35/pi": "terminated: other side closed (UND_ERR_SOCKET)",
+		"/scenarios/37/pi": "terminated: incorrect header check (Z_DATA_ERROR)",
+		"/scenarios/46/pi": "terminated: incorrect header check (Z_DATA_ERROR)",
+		"/scenarios/51/pi": "terminated: incorrect header check (Z_DATA_ERROR)",
+		"/scenarios/52/pi": "terminated: incorrect header check (Z_DATA_ERROR)",
+		"/scenarios/54/pi": "terminated: incorrect data check (Z_DATA_ERROR)",
+		"/scenarios/55/pi": "terminated: incorrect data check (Z_DATA_ERROR)",
+		"/scenarios/67/pi": "fetch failed: Response body length does not match content-length header (UND_ERR_RES_CONTENT_LENGTH_MISMATCH)",
+		"/scenarios/69/pi": "fetch failed: Response does not match the HTTP/1.1 protocol (Invalid response status) (HPE_INVALID_STATUS)"
+	}
+}

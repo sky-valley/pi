@@ -358,7 +358,7 @@ func StreamGoogle(ctx context.Context, model *ai.Model, req ai.TranscriptContext
 			} else {
 				output.StopReason = ai.StopError
 			}
-			output.ErrorMessage = err.Error()
+			output.ErrorMessage = withCauseDetail(err)
 			stream.Push(ai.AssistantMessageEvent{Type: ai.EventError, Reason: output.StopReason, Error: output})
 			stream.End()
 		}
@@ -1732,7 +1732,7 @@ func googleResponseBody(resp *http.Response) (io.Reader, error) {
 	}
 	codings := strings.Split(strings.ToLower(value), ",")
 	if len(codings) > 5 {
-		return nil, errors.New("fetch failed")
+		return nil, &fetchFailedError{err: fmt.Errorf("too many content-encodings in response: %d, maximum allowed is 5", len(codings))}
 	}
 	var chain []string
 	for i := len(codings) - 1; i >= 0; i-- {

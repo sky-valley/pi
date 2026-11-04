@@ -416,7 +416,7 @@ func postTokenExchange(endpoint string, body []byte, httpClient ai.HTTPDoer) (*h
 	// undici refuses a URL with credentials before sending anything; without
 	// this the identity token would go to the server, with Basic auth on top.
 	if err := fetchRefusal(req); err != nil {
-		return nil, fmt.Errorf("TypeError: %w", err)
+		return nil, fmt.Errorf("TypeError: %w", undiciFetchError(err))
 	}
 	resp, err := sharedClient(undiciHeadersTimeoutMs).Do(req)
 	if err != nil {

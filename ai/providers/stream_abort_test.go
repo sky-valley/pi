@@ -104,6 +104,13 @@ func loadStreamAbortCapture(t *testing.T) []streamAbortRun {
 	if len(capture.Runs) == 0 {
 		t.Fatalf("%s has no runs", streamAbortCaptureFile)
 	}
+	for pointer, message := range causeDetailMessages(t, "stream-abort") {
+		var i int
+		if !scanPointer(pointer, "/runs/%d", &i) || i >= len(capture.Runs) {
+			t.Fatalf("the cause-detail overlay names %s", pointer)
+		}
+		capture.Runs[i].ErrorMessage = message
+	}
 	return capture.Runs
 }
 

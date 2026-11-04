@@ -963,7 +963,7 @@ func StreamPiMessages(ctx context.Context, model *ai.Model, req ai.TranscriptCon
 		if !custom {
 			// undici's fetch refuses some requests before it looks at the
 			// signal or sends anything.
-			err = fetchRefusal(httpReq)
+			err = undiciFetchError(fetchRefusal(httpReq))
 		}
 		if err == nil {
 			resp, err = client.Do(httpReq)
