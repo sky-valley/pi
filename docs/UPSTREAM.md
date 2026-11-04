@@ -1690,6 +1690,34 @@ falls through to the identity beneath or to `ai.PiAIVersion`. Nothing sets an
 empty version on purpose; `TestClientIdentityFunctionsMatchPi` skips exactly
 the two captured cells that do.
 
+**D113 — Anthropic message threads (`a758f3ae4`): what the port treats as no
+session, and how it fingerprints a thread's prefix.** Measured against pi's
+adapter at `a758f3ae4` over 65 scenarios (62 byte-identical): (1) an empty
+`SessionID` is no session, so `""` never opens a thread, where pi keys one by
+`""`; (2) the prefix digest is SHA-256 over messages decoded and re-marshaled
+with sorted keys, so a request whose messages differ from the last one only in
+JSON key order (an `onPayload` that reorders keys) continues the thread where
+pi starts a new one — the server holds the same messages, so the continue is
+valid, and the port never continues where pi would not; (3) a reply with an
+empty response id is not recorded, where pi records it and spends one rejected
+`continue` before resending as `create`; (4) `messages` that an `onPayload`
+turns into a non-list goes out as a new thread and is not recorded, where pi's
+spread throws (unreachable: the server rejects such a body); (5) the body's
+`thread` key sits where the port's sorted body puts it, not last.
+`ai.CleanupSessionResources` joins its cleanups' errors after pi's
+`AggregateError` text, and a panicking cleanup propagates.
+
+**D114 — grep, find and ls emulate rg and fd (`8da141c2a`, `676af1d77`).** The
+port has no rg: grep walks and matches in Go and reads each file through
+`GrepOperations.ReadFile`, which upstream removed with its own read and the
+port keeps as its only read (so a huge file is still loaded whole, the OOM
+upstream #9276 fixed). Its output matched pi's real tool with real rg 14.1.0
+over 400 random context/limit cases and the review's fixture sets. Decided
+differences: find does not reproduce pi handing fd an unparsable
+`--max-results` (`String(limit + 1)` prints `1e+30` for a limit of 1e30, and fd
+rejects it) — the port clamps and lists; and find sorts and keeps every result
+where pi's fd branch stores up to the byte cap (same output and totals).
+
 **D13 — `StreamOptions.HTTPClient` does not carry `TimeoutMs`.** An injected
 client bypasses `sharedClient`, so `TimeoutMs` does not apply. pi keeps its
 timeout under an injected fetch because its SDKs apply it outside fetch, whereas
@@ -2878,6 +2906,29 @@ marshaled form. Probes asserting the gap: `TestValidationProbesMatchPi`'s
 `Type`/`Nullable`), a boolean-schema form for subschemas, and presence
 tracking for the malformed keywords, with `constrained_sampling.go` reading
 them as pi does; gate on difftest, since it changes request bodies.
+
+**K42 — nothing in `coding` calls `ai.CleanupSessionResources`.** pi's
+`AgentSession.dispose()` calls `cleanupSessionResources(sessionId)` on
+replace, fork and switch (`agent-session.ts` at `a758f3ae4`), freeing the
+session's Anthropic thread state; `coding.Session` has no dispose, and `Reset`
+keeps the session id. The state is bounded by the store's 10,000-session cap
+and is harmless when stale (the prefix hash gates every `continue`). Fix with
+Scope queue row 12's session lifecycle.
+
+**K43 — find's fd branch has no abort checks.** pi rejects with "Operation
+aborted" whenever its signal aborts during the fd walk; the port's walk ignores
+`ctx` (its custom-glob branch checks, `bafaf6e`). A custom `FindOperations`
+with `Glob` and a nil `Exists` panics where pi rejects with a TypeError.
+
+**K44 — grep does not split a transcoded UTF-16 file's NULs into lines.** rg's
+binary "convert" mode turns each NUL of an explicitly named, transcoded file
+into a line break, shifting later line numbers (BOM + UTF-16LE `"hit\0x\n"` with
+context 1: pi `:1: hit` then `-2- x`; the port prints `:1: hit\u0000x`). Plain
+UTF-8 files keep the NUL in both. Pre-existing beside it: rg sniffs NUL per
+~64KB read buffer, the port only in the first 8KB; `!`-negated globs and a
+`--glob` that overrides `.gitignore`; a backslash in a Linux file name, which
+pi rewrites to `/`; fd's per-component sort order; and
+`details.truncation.maxLines` (`MAX_SAFE_INTEGER` in pi, `maxInt` here).
 
 ## Conventions
 
