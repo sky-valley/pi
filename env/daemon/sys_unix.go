@@ -595,6 +595,32 @@ func killTree(pid int) {
 	}
 }
 
+// programGroup is the process group of a process program: what the program
+// started there is killed once it exits.
+type programGroup struct{ pid int }
+
+// newProgramGroup is the group of a program just started; startProcess
+// already made it a process group of its own.
+func newProgramGroup(c child) (*programGroup, error) { return &programGroup{pid: c.pid}, nil }
+
+// waitForExit waits until the program has exited, leaving it unreaped: its
+// pid, which is the group's id, names no other process until it is reaped.
+func (g *programGroup) waitForExit() error {
+	if err := retry(func() error { return waitExited(g.pid) }); err != nil {
+		return os.NewSyscallError("waitid", err)
+	}
+	return nil
+}
+
+// end kills what is left in the group, the program too if it still runs.
+func (g *programGroup) end() { killTree(g.pid) }
+
+// release: a process group holds nothing.
+func (*programGroup) release() {}
+
+// kill kills the command itself.
+func (c child) kill() { _ = unix.Kill(c.pid, unix.SIGKILL) }
+
 // child is a started command; its pid is also its process group's. Commands
 // start through syscall.ForkExec and are reaped with wait4(2), not through
 // os.StartProcess and os.Process: on Linux their first use probes pidfd

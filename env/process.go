@@ -34,7 +34,9 @@ type ProcessOptions struct {
 // RemoteProcess is a program running with plain pipes in a pi-env daemon,
 // for programs that speak a protocol on stdin and stdout, such as an MCP
 // server. It ends when the program exits, Close kills it, or the connection
-// is lost (the daemon then kills it).
+// is lost (the daemon then kills it). When the program exits, the daemon kills
+// whatever it started in its process group, so a wrapper such as npx that
+// exits leaves nothing running.
 type RemoteProcess struct {
 	// PID is the program's process id.
 	PID        int

@@ -183,6 +183,31 @@ func TestProcessCancelKillsTheProgramsGroup(t *testing.T) {
 	}
 }
 
+// TestProcessKillsWhatTheProgramLeftRunningWhenItExits (upstream 032656b6c):
+// a wrapper that starts a server in its group and exits, as npx can, leaves
+// nothing running.
+func TestProcessKillsWhatTheProgramLeftRunningWhenItExits(t *testing.T) {
+	skipOnWindows(t)
+	d := startDaemon(t, testedDaemon())
+	id := d.start(`{"op":"process","argv":["sh","-c","sleep 30 </dev/null >/dev/null 2>&1 & echo $!"],"cwd":"`+t.TempDir()+`"}`, nil)
+	frames := joinOutput(d.wait(id, finished))
+	if len(frames) != 3 {
+		t.Fatalf("frames: %s", describe(frames))
+	}
+	expectFrames(t, "exit", frames[2:], "2 {\"exitCode\":0}\n")
+	child, err := strconv.Atoi(strings.TrimSpace(string(frames[1].Payload)))
+	if err != nil {
+		t.Fatalf("child pid: %s", describe(frames))
+	}
+	// The killed child is an orphan; it is gone once init has reaped it.
+	for deadline := time.Now().Add(5 * time.Second); processExists(child) && time.Now().Before(deadline); {
+		time.Sleep(20 * time.Millisecond)
+	}
+	if processExists(child) {
+		t.Fatalf("the program's child %d survived the program's exit", child)
+	}
+}
+
 // TestProcessStopsWritingOnceTheProgramHasExited: a writer blocked on a pipe
 // that a descendant holds open without reading stops when the program exits,
 // so the request settles and the descendant sees stdin end.
@@ -192,7 +217,10 @@ func TestProcessStopsWritingOnceTheProgramHasExited(t *testing.T) {
 	dir := t.TempDir()
 	count := filepath.Join(dir, "count")
 	// fd 3: a non-interactive shell gives background jobs /dev/null as stdin.
-	script := `exec 3<&0; (sleep 1; wc -c <&3 > ` + count + `.tmp; mv ` + count + `.tmp ` + count + `) >/dev/null 2>&1 & sleep 0.3`
+	// The descendant leaves the program's process group, which is killed when
+	// the program exits (perl's setsid: macOS has no setsid command).
+	descendant := `sleep 1; wc -c <&3 > ` + count + `.tmp; mv ` + count + `.tmp ` + count
+	script := `exec 3<&0; perl -MPOSIX -e 'POSIX::setsid(); exec @ARGV' sh -c '` + descendant + `' >/dev/null 2>&1 & sleep 0.3`
 	id := d.start(`{"op":"process","argv":["sh","-c",`+strconv.Quote(script)+`],"cwd":"`+dir+`"}`, nil)
 	d.wait(id, started)
 	expectFrames(t, "write", d.request(`{"op":"processWrite","target":`+strconv.Itoa(int(id))+`}`, bytes.Repeat([]byte("x"), 4<<20)), "2 {}\n")

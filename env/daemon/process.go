@@ -87,6 +87,20 @@ func runProcess(id uint32, request processRequest, out *output, ctl *control, ru
 	}
 	pid := command.process.pid
 	running.add(pid)
+	// What the program starts in its group dies when it exits: a wrapper such
+	// as npx that exits does not leave the server it started running, out of
+	// reach of close() and of a lost connection.
+	group, err := newProgramGroup(command.process)
+	if err != nil {
+		// The started program is killed and reaped. On Windows the group kill
+		// starts taskkill, which can fail too; the program is killed directly.
+		killTree(pid)
+		command.process.kill()
+		command.process.wait()
+		running.remove(pid)
+		command.close()
+		return nil, newFailure("spawn_error", ioErrorText(err))
+	}
 	stop := new(atomic.Bool)
 	done := make(chan struct{})
 	messages := make(chan commandMessage, 64)
@@ -112,7 +126,7 @@ func runProcess(id uint32, request processRequest, out *output, ctl *control, ru
 			}
 		}
 	}()
-	waitInBackground(command.process, messages, done)
+	waitInBackground(command.process, &ending{group: group, running: running}, messages, done)
 	// Registered before started goes out, so input sent after it always finds
 	// the program.
 	procs.add(id, p)
@@ -132,7 +146,9 @@ func runProcess(id uint32, request processRequest, out *output, ctl *control, ru
 	kill := func() {
 		if !killed {
 			killed = true
-			killTree(pid)
+			// Only while the program is in running: the waiter removes it
+			// under its lock before reaping it.
+			running.kill(pid)
 		}
 	}
 	if ctl.killed.Load() {
@@ -168,6 +184,9 @@ func runProcess(id uint32, request processRequest, out *output, ctl *control, ru
 					waitErr = message.err
 					idleUntil = time.Now()
 				} else {
+					// The waiter already ended the group; nothing is left to
+					// kill.
+					killed = true
 					reported, code = true, message.code
 					idleUntil = time.Now().Add(exitStdioGrace)
 				}

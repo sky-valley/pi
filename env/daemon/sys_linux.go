@@ -188,3 +188,10 @@ func syncFile(f *os.File) error {
 	}
 	return syncErr
 }
+
+// waitExited waits for pid to exit without reaping it: waitid(2) with
+// WNOWAIT.
+func waitExited(pid int) error {
+	var info unix.Siginfo
+	return unix.Waitid(unix.P_PID, pid, &info, unix.WEXITED|unix.WNOWAIT, nil)
+}

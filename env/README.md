@@ -58,9 +58,10 @@ this machine, for terminals without SSH. Terminals are not supported on Windows 
 
 `OpenProcess(ctx, connection, options)` runs a program with plain pipes, for programs that speak a protocol on stdin
 and stdout, such as an MCP server: `Write` and `CloseStdin` for its input, raw stdout and stderr bytes through
-`OnStdout` and `OnStderr`, `Close` to kill its process group, and `Wait` for its exit code. Nothing is echoed,
-translated or merged, unlike a terminal; it works on every supported system. A daemon released before it fails the open
-with `not_supported`. `Argv` runs as an argv command does: on Windows, batch files such as `npx.cmd` are refused, as
+`OnStdout` and `OnStderr`, `Close` to kill its process group, and `Wait` for its exit code. When the program exits,
+what it started in its process group is killed too, so a wrapper such as `npx` leaves nothing running. Nothing is
+echoed, translated or merged, unlike a terminal; it works on every supported system. A daemon released before it fails
+the open with `not_supported`. `Argv` runs as an argv command does: on Windows, batch files such as `npx.cmd` are refused, as
 Node refuses them without a shell, so callers start them through `cmd.exe`.
 
 ```go

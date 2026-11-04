@@ -50,6 +50,17 @@ func (g *groups) remove(pid int) {
 	g.mu.Unlock()
 }
 
+// kill kills pid's group while the daemon still has it: a process program's
+// waiter removes it under this lock before reaping it, so a pid that may name
+// another process once reaped is never signalled.
+func (g *groups) kill(pid int) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	if _, ok := g.pids[pid]; ok {
+		killTree(pid)
+	}
+}
+
 func (g *groups) killAll() {
 	g.mu.Lock()
 	defer g.mu.Unlock()
@@ -340,11 +351,36 @@ func readPipe(stream int, pipe *os.File, messages chan<- commandMessage, done <-
 	}
 }
 
+// ending is a process program's group, ended once the program exits, and the
+// daemon's groups, which forget the program before it is reaped.
+type ending struct {
+	group   *programGroup
+	running *groups
+}
+
 // waitInBackground reaps the command on a goroutine of its own, which
-// reports its exit unless done closes first.
-func waitInBackground(process child, messages chan<- commandMessage, done <-chan struct{}) {
+// reports its exit unless done closes first. With end, what the command
+// started in its group is killed once it exits, before the exit is reported.
+func waitInBackground(process child, end *ending, messages chan<- commandMessage, done <-chan struct{}) {
 	go func() {
-		code, err := process.wait()
+		var code int64
+		var err error
+		if end == nil {
+			code, err = process.wait()
+		} else {
+			// After a failed wait, ending the group kills the program, so the
+			// reap below still returns.
+			exited := end.group.waitForExit()
+			end.group.end()
+			// Forgotten before it is reaped: a kill that checks running under
+			// its lock never reaches a reused pid.
+			end.running.remove(process.pid)
+			code, err = process.wait()
+			end.group.release()
+			if exited != nil {
+				err = exited
+			}
+		}
 		select {
 		case messages <- commandMessage{exited: true, code: code, err: err}:
 		case <-done:
@@ -430,7 +466,7 @@ func runExec(id uint32, request execRequest, tmpdir string, out *output, ctl *co
 	for stream, pipe := range command.output {
 		go readPipe(stream, pipe, messages, done, stop, gate)
 	}
-	waitInBackground(command.process, messages, done)
+	waitInBackground(command.process, nil, messages, done)
 
 	decoders := [2]*decoder{newStreamDecoder(), newStreamDecoder()}
 	var spilled *spill
@@ -598,6 +634,16 @@ type command struct {
 	process child
 	output  [2]*os.File
 	stdin   *os.File
+}
+
+// close closes the daemon's ends of the command's pipes.
+func (c *command) close() {
+	for _, pipe := range c.output {
+		pipe.Close()
+	}
+	if c.stdin != nil {
+		c.stdin.Close()
+	}
 }
 
 // startCommand starts program with args in the launch's working directory

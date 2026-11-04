@@ -17,7 +17,8 @@ import (
 	"time"
 )
 
-// Ported from upstream's packages/env/test/process.test.ts (9c9ce8547). Its
+// Ported from upstream's packages/env/test/process.test.ts (9c9ce8547,
+// 032656b6c). Its
 // programs are Node scripts, so they run the same on every system; here they
 // are this test binary in processProgramArg's modes, for the same reason.
 
@@ -47,6 +48,8 @@ func program(t *testing.T, mode string, args ...string) []string {
 //   - wrapper: starts `sleep` with its stdio ignored, as npx and uvx start the
 //     real server, prints its pid and waits 30 s.
 //   - sleep: waits 30 s.
+//   - starter: starts `sleep` with its stdio ignored (detached on Windows),
+//     prints its pid and exits, as npx can once stdin closes.
 //   - spawn-descendant <file>: starts `descendant <file>` in a session of
 //     its own, inheriting stdin, and exits after 300 ms.
 //   - descendant <file>: after 1.5 s reads stdin until its end and writes how
@@ -91,6 +94,15 @@ func runProcessProgram(args []string) int {
 		}
 		fmt.Printf("%d\n", child.Process.Pid)
 		time.Sleep(30 * time.Second)
+	case "starter":
+		child := exec.Command(self, processProgramArg, "sleep")
+		if runtime.GOOS == "windows" {
+			detach(child)
+		}
+		if err := child.Start(); err != nil {
+			return 1
+		}
+		fmt.Printf("%d\n", child.Process.Pid)
 	case "spawn-descendant":
 		descendant := exec.Command(self, processProgramArg, "descendant", args[1])
 		descendant.Stdin = os.Stdin
@@ -323,10 +335,32 @@ func TestProcessKillsTheProgramAndWhatItStartedOnClose(t *testing.T) {
 	}
 }
 
+func TestProcessKillsWhatTheProgramStartedWhenItExits(t *testing.T) {
+	stdout := &collector{}
+	// A wrapper that exits and leaves the server it started running. On
+	// Windows the server is detached, as upstream's is from libuv's job object.
+	process, err := OpenProcess(background(), newConnection(t), ProcessOptions{
+		Cwd: processDir(t), Argv: program(t, "starter"), OnStdout: stdout.onData,
+	})
+	mustDo(t, err)
+	expectExit(t, process, 0)
+	child, err := strconv.Atoi(strings.TrimSpace(string(stdout.bytes())))
+	mustDo(t, err)
+	if !waitUntilGone(child) {
+		t.Fatalf("the program's child %d survived the program's exit", child)
+	}
+}
+
 // On Windows the Rust daemon's pipe ends are overlapped; a writer blocked in
 // the standard library's write could not be cancelled, so it kept stdin open,
-// still writing, for as long as a descendant held it.
+// still writing, for as long as a descendant held it. There a descendant now
+// dies with the program's job object; only one started before the program was
+// assigned to the job (see the protocol) can still hold stdin, which a test
+// cannot arrange reliably. On Unix the descendant leaves the process group.
 func TestProcessStopsWritingToStdinADescendantStillHoldsOnceTheProgramHasExited(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("a descendant dies with the program's job object on Windows")
+	}
 	cwd := processDir(t)
 	count := filepath.Join(cwd, "count.txt")
 	process, err := OpenProcess(background(), newConnection(t), ProcessOptions{

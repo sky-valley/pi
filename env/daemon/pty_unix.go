@@ -229,7 +229,7 @@ func runPty(id uint32, request ptyRequest, out *output, ctl *control, running *g
 			}
 		}
 	}()
-	waitInBackground(process, messages, done)
+	waitInBackground(process, nil, messages, done)
 
 	var (
 		exited    bool

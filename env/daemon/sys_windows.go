@@ -863,6 +863,68 @@ func killTree(pid int) {
 	}
 }
 
+// programGroup is the job object of a process program: what is left in it is
+// killed once the program exits, and when the daemon ends (the job is closed
+// with it). It is nested in the daemon's job. The program's handle keeps its
+// pid from naming another process until the group is released.
+type programGroup struct {
+	job, process windows.Handle
+}
+
+// newProgramGroup puts a program just started into a job object of its own.
+// The program already runs: a child it starts before this assignment stays
+// outside the job, as one started before spawnProcess assigns it stays
+// outside the daemon's job. Starting it suspended would close that gap.
+func newProgramGroup(c child) (*programGroup, error) {
+	job, err := windows.CreateJobObject(nil, nil)
+	if err != nil {
+		return nil, os.NewSyscallError("CreateJobObject", err)
+	}
+	g := &programGroup{job: job}
+	// No breakaway: a child started after the assignment stays in this job,
+	// even though the daemon's job allows breakaway.
+	var information windows.JOBOBJECT_EXTENDED_LIMIT_INFORMATION
+	information.BasicLimitInformation.LimitFlags = windows.JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
+	if _, err := windows.SetInformationJobObject(job, windows.JobObjectExtendedLimitInformation,
+		uintptr(unsafe.Pointer(&information)), uint32(unsafe.Sizeof(information))); err != nil {
+		g.release()
+		return nil, os.NewSyscallError("SetInformationJobObject", err)
+	}
+	if g.process, err = windows.OpenProcess(windows.PROCESS_SET_QUOTA|windows.PROCESS_TERMINATE|windows.SYNCHRONIZE, false, uint32(c.pid)); err != nil {
+		g.release()
+		return nil, os.NewSyscallError("OpenProcess", err)
+	}
+	if err := windows.AssignProcessToJobObject(job, g.process); err != nil {
+		g.release()
+		return nil, os.NewSyscallError("AssignProcessToJobObject", err)
+	}
+	return g, nil
+}
+
+// waitForExit waits until the program has exited.
+func (g *programGroup) waitForExit() error {
+	if _, err := windows.WaitForSingleObject(g.process, windows.INFINITE); err != nil {
+		return os.NewSyscallError("WaitForSingleObject", err)
+	}
+	return nil
+}
+
+// end kills what is left in the job, the program too if it still runs.
+func (g *programGroup) end() { _ = windows.TerminateJobObject(g.job, 1) }
+
+// release closes the job, which kills what is still in it, and the program's
+// handle.
+func (g *programGroup) release() {
+	for _, h := range []windows.Handle{g.process, g.job} {
+		if h != 0 {
+			windows.CloseHandle(h)
+		}
+	}
+}
+
+// kill kills the command itself.
+func (c child) kill() { _ = c.process.Kill() }
+
 // child is a started command.
 type child struct {
 	pid     int
