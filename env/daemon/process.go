@@ -96,7 +96,8 @@ func runProcess(id uint32, request processRequest, out *output, ctl *control, ru
 		// starts taskkill, which can fail too; the program is killed directly.
 		killTree(pid)
 		command.process.kill()
-		command.process.wait()
+		// Only reaped: the request fails with the group's error either way.
+		_, _ = command.process.wait()
 		running.remove(pid)
 		command.close()
 		return nil, newFailure("spawn_error", ioErrorText(err))
@@ -147,7 +148,7 @@ func runProcess(id uint32, request processRequest, out *output, ctl *control, ru
 		if !killed {
 			killed = true
 			// Only while the program is in running: the waiter removes it
-			// under its lock before reaping it.
+			// under its lock before reaping it (see groups.kill for Windows).
 			running.kill(pid)
 		}
 	}

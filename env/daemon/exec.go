@@ -51,8 +51,10 @@ func (g *groups) remove(pid int) {
 }
 
 // kill kills pid's group while the daemon still has it: a process program's
-// waiter removes it under this lock before reaping it, so a pid that may name
-// another process once reaped is never signalled.
+// waiter removes it under this lock before reaping it, so on Unix a pid that
+// may name another process once reaped is never signalled. On Windows
+// killTree only starts taskkill, which finds the pid after the lock is
+// released and may then reach a reused one; the Rust daemon has the same gap.
 func (g *groups) kill(pid int) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
@@ -373,7 +375,7 @@ func waitInBackground(process child, end *ending, messages chan<- commandMessage
 			exited := end.group.waitForExit()
 			end.group.end()
 			// Forgotten before it is reaped: a kill that checks running under
-			// its lock never reaches a reused pid.
+			// its lock never reaches a reused pid (on Unix; see groups.kill).
 			end.running.remove(process.pid)
 			code, err = process.wait()
 			end.group.release()

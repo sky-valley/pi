@@ -216,12 +216,14 @@ func TestProcessStopsWritingOnceTheProgramHasExited(t *testing.T) {
 	d := startDaemon(t, testedDaemon())
 	dir := t.TempDir()
 	count := filepath.Join(dir, "count")
-	// fd 3: a non-interactive shell gives background jobs /dev/null as stdin.
-	// The descendant leaves the program's process group, which is killed when
-	// the program exits (perl's setsid: macOS has no setsid command).
-	descendant := `sleep 1; wc -c <&3 > ` + count + `.tmp; mv ` + count + `.tmp ` + count
-	script := `exec 3<&0; perl -MPOSIX -e 'POSIX::setsid(); exec @ARGV' sh -c '` + descendant + `' >/dev/null 2>&1 & sleep 0.3`
-	id := d.start(`{"op":"process","argv":["sh","-c",`+strconv.Quote(script)+`],"cwd":"`+dir+`"}`, nil)
+	// The descendant starts in a session of its own, outside the program's
+	// process group, which is killed when the program exits.
+	self, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	argv := strconv.Quote(self) + `,"` + processProgramArg + `","spawn-descendant",` + strconv.Quote(count)
+	id := d.start(`{"op":"process","argv":[`+argv+`],"cwd":"`+dir+`"}`, nil)
 	d.wait(id, started)
 	expectFrames(t, "write", d.request(`{"op":"processWrite","target":`+strconv.Itoa(int(id))+`}`, bytes.Repeat([]byte("x"), 4<<20)), "2 {}\n")
 	expectFrames(t, "exit", d.wait(id, finished), "4 {\"kind\":\"started\",\"pid\":0}\n2 {\"exitCode\":0}\n")

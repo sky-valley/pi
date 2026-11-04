@@ -43,7 +43,14 @@ var (
 	buildFlags []string
 )
 
+// processProgramArg makes the test binary a program for the process tests:
+// `<test binary> pi-env-process-program <mode> [args]` (runProcessProgram).
+const processProgramArg = "pi-env-process-program"
+
 func TestMain(m *testing.M) {
+	if len(os.Args) > 2 && os.Args[1] == processProgramArg {
+		os.Exit(runProcessProgram(os.Args[2:]))
+	}
 	if daemon := os.Getenv(seccompExecVariable); daemon != "" {
 		// Started by TestAndroidBuildRunsCommandsWithoutPidfd to run a daemon.
 		execUnderSeccomp(daemon)

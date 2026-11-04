@@ -32,8 +32,19 @@ func TestEndingAGroupKillsWhatTheProgramLeftRunning(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// A test that stops early leaves nothing running or unreaped.
+	reaped := false
+	t.Cleanup(func() {
+		if !reaped {
+			killTree(process.pid)
+			_, _ = process.wait()
+		}
+	})
 	group, err := newProgramGroup(process)
 	if err != nil {
+		t.Fatal(err)
+	}
+	if err := read.SetReadDeadline(time.Now().Add(10 * time.Second)); err != nil {
 		t.Fatal(err)
 	}
 	stdout, err := io.ReadAll(read)
@@ -48,7 +59,9 @@ func TestEndingAGroupKillsWhatTheProgramLeftRunning(t *testing.T) {
 		t.Fatal(err)
 	}
 	group.end()
-	if code, err := process.wait(); err != nil || code != 0 {
+	code, err := process.wait()
+	reaped = true
+	if err != nil || code != 0 {
 		t.Fatalf("the wrapper: exit %d, %v", code, err)
 	}
 	// The killed sleeper is an orphan; it is gone once init has reaped it.

@@ -383,8 +383,11 @@ func syncFile(f *os.File) error {
 
 // waitExited waits for pid to exit without reaping it: waitid(2) with
 // WNOWAIT, as a raw system call (x/sys has no Waitid for macOS). There
-// waitid returns for a stopped process too (Go's issue 19314), so a
-// stopped program counts as exited, as in the Rust daemon, which calls it.
+// waitid returns for a stopped process too, even with WEXITED (Go's issue
+// 19314): a process program stopped by SIGSTOP or SIGTSTP counts as exited,
+// so its group, the program included, is killed with SIGKILL and the request
+// reports the killed program's exit (137). The Rust daemon, which calls
+// waitid the same way, does the same.
 func waitExited(pid int) error {
 	const pPID = 1     // P_PID
 	var info [104]byte // siginfo_t
