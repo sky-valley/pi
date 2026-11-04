@@ -10,6 +10,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"unicode/utf16"
 
 	"github.com/sky-valley/pi/agent"
 	"github.com/sky-valley/pi/ai"
@@ -123,23 +124,22 @@ func TestGrepMatchAndContextFormat(t *testing.T) {
 	}
 }
 
-// A lone CR is not a line break: line numbers stay rg's, and the CR is
-// dropped from the printed line (tools.test.ts, upstream fecc19e4e).
+// A lone CR is not a line break: line numbers stay rg's, and the CR stays in
+// the printed line (tools.test.ts, upstream fecc19e4e and 8da141c2a).
 func TestGrepLoneCRKeepsLineNumbers(t *testing.T) {
 	dir := t.TempDir()
 	file := filepath.Join(dir, "lone-cr.txt")
 	os.WriteFile(file, []byte("before\rprogress\nneedle\nafter"), 0o644)
 	r, _ := run(t, grepTool(dir), map[string]any{"pattern": "needle", "path": file, "context": float64(1)})
 	text := resultText(r)
-	for _, want := range []string{"lone-cr.txt-1- beforeprogress", "lone-cr.txt:2: needle", "lone-cr.txt-3- after"} {
+	for _, want := range []string{"lone-cr.txt-1- before\rprogress", "lone-cr.txt:2: needle", "lone-cr.txt-3- after"} {
 		if !strings.Contains(text, want) {
 			t.Fatalf("missing %q in %q", want, text)
 		}
 	}
-	// pi strips every CR from a printed line, the match line's too.
 	r, _ = run(t, grepTool(dir), map[string]any{"pattern": "progress", "path": file})
-	if text := resultText(r); text != "lone-cr.txt:1: beforeprogress" {
-		t.Fatalf("match line = %q, pi %q", text, "lone-cr.txt:1: beforeprogress")
+	if text := resultText(r); text != "lone-cr.txt:1: before\rprogress" {
+		t.Fatalf("match line = %q, pi %q", text, "lone-cr.txt:1: before\rprogress")
 	}
 }
 
@@ -212,10 +212,10 @@ func TestGrepNoPhantomLineAfterFinalNewline(t *testing.T) {
 		t.Errorf("3 real matches tripped limit=4: %q", text)
 	}
 
-	// Context still clamps to pi's getFileLines length, which keeps the
-	// trailing empty element (grep.ts formatBlock at a92283056).
+	// Context comes from rg too (upstream 8da141c2a), so it has no phantom
+	// line either.
 	r, _ = run(t, grepTool(dir), map[string]any{"pattern": "b", "context": float64(2)})
-	want := "a.txt-1- a\na.txt-2- \na.txt:3: b\na.txt-4- "
+	want := "a.txt-1- a\na.txt-2- \na.txt:3: b"
 	if text := resultText(r); text != want {
 		t.Errorf("context=2 = %q, pi %q", text, want)
 	}
@@ -281,6 +281,203 @@ func TestGrepMatchLimitNotice(t *testing.T) {
 	want := "2 matches limit reached. Use limit=4 for more, or refine pattern"
 	if !strings.Contains(text, want) {
 		t.Fatalf("expected match-limit notice %q in %q", want, text)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// grep: context the way ripgrep sends it (tools.test.ts, upstream 8da141c2a)
+// ---------------------------------------------------------------------------
+
+// rg merges overlapping context, and after the last allowed match it still
+// sends that match's trailing context; a match inside it shows as context
+// (#9276).
+func TestGrepMergesContextAndKeepsTrailingContextAtLimit(t *testing.T) {
+	dir := t.TempDir()
+	file := filepath.Join(dir, "rg-context.txt")
+	os.WriteFile(file, []byte(strings.Join([]string{"a", "match one", "b", "match two", "match three", "c", "match four"}, "\n")), 0o644)
+	r, _ := run(t, grepTool(dir), map[string]any{"pattern": "match", "path": file, "context": float64(1), "limit": float64(2)})
+	want := strings.Join([]string{
+		"rg-context.txt-1- a",
+		"rg-context.txt:2: match one",
+		"rg-context.txt-3- b",
+		"rg-context.txt:4: match two",
+		"rg-context.txt-5- match three",
+	}, "\n")
+	if got := strings.Split(resultText(r), "\n\n")[0]; got != want {
+		t.Fatalf("got %q, pi %q", got, want)
+	}
+}
+
+// With rg on PATH, the rows grep prints with context are exactly the match
+// and context events rg sends with pi's flags plus --context N, in order.
+func TestGrepContextRowsMatchRipgrep(t *testing.T) {
+	rgPath, err := exec.LookPath("rg")
+	if err != nil {
+		t.Skip("rg not on PATH")
+	}
+	content := strings.Join([]string{"m", "a", "b", "m", "c", "d", "e", "f", "m", "m", "g", "h", "i", "j", "k", "m"}, "\n") + "\n"
+	for _, n := range []int{1, 2, 3, 4, 20} {
+		dir := t.TempDir()
+		file := filepath.Join(dir, "f.txt")
+		os.WriteFile(file, []byte(content), 0o644)
+		out, err := exec.Command(rgPath, "--no-config", "--json", "--line-number", "--color=never", "--hidden", "--context", fmt.Sprint(n), "--", "m", file).Output()
+		if err != nil {
+			t.Fatalf("rg: %v", err)
+		}
+		var want []string
+		for _, raw := range bytes.Split(out, []byte("\n")) {
+			var ev struct {
+				Type string `json:"type"`
+				Data struct {
+					LineNumber int `json:"line_number"`
+				} `json:"data"`
+			}
+			if json.Unmarshal(raw, &ev) == nil && (ev.Type == "match" || ev.Type == "context") {
+				sep := map[string]string{"match": ":", "context": "-"}[ev.Type]
+				want = append(want, fmt.Sprintf("f.txt%s%d%s", sep, ev.Data.LineNumber, sep))
+			}
+		}
+		r, _ := run(t, grepTool(dir), map[string]any{"pattern": "m", "path": file, "context": float64(n)})
+		var got []string
+		for _, row := range strings.Split(resultText(r), "\n") {
+			got = append(got, row[:strings.IndexByte(row, ' ')])
+		}
+		if !slices.Equal(got, want) {
+			t.Errorf("context=%d: grep rows %v, rg %v", n, got, want)
+		}
+	}
+}
+
+func TestGrepKeepsCountingMatchesPastByteCap(t *testing.T) {
+	dir := t.TempDir()
+	file := filepath.Join(dir, "byte-cap.txt")
+	lines := make([]string, 200)
+	for i := range lines {
+		lines[i] = "match " + strings.Repeat("x", 400)
+	}
+	os.WriteFile(file, []byte(strings.Join(lines, "\n")), 0o644)
+	r, _ := run(t, grepTool(dir), map[string]any{"pattern": "match", "path": file, "limit": float64(150)})
+	text := resultText(r)
+	for _, want := range []string{"150 matches limit reached", "50.0KB limit reached"} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("missing %q in %q", want, text[max(0, len(text)-200):])
+		}
+	}
+	details, _ := r.Details.(map[string]any)
+	if got := details["matchLimitReached"]; got != 150 {
+		t.Fatalf("matchLimitReached = %v, pi 150", got)
+	}
+	if tr, _ := details["truncation"].(TruncationResult); tr.TotalLines != 150 {
+		t.Fatalf("truncation.totalLines = %d, pi 150", tr.TotalLines)
+	}
+}
+
+func TestGrepReportsTruncationWhenStoredOutputEndsAtByteCap(t *testing.T) {
+	dir := t.TempDir()
+	file := filepath.Join(dir, "x")
+	// 103 rows of 500 bytes plus one of 12 bytes, with newlines, join to
+	// exactly 50KB; one more match follows.
+	var lines []string
+	for range 103 {
+		lines = append(lines, strings.Repeat("x", 490))
+	}
+	lines = append(lines, strings.Repeat("x", 7), "extra x")
+	os.WriteFile(file, []byte(strings.Join(lines, "\n")), 0o644)
+	r, _ := run(t, grepTool(dir), map[string]any{"pattern": "x", "path": file, "limit": float64(1000)})
+	if text := resultText(r); !strings.Contains(text, "[50.0KB limit reached]") {
+		t.Fatalf("missing byte-cap notice in %q", text[max(0, len(text)-200):])
+	}
+	details, _ := r.Details.(map[string]any)
+	if tr, _ := details["truncation"].(TruncationResult); tr.TotalLines != 105 {
+		t.Fatalf("truncation.totalLines = %d, pi 105", tr.TotalLines)
+	}
+}
+
+func TestGrepAcceptsHugeContext(t *testing.T) {
+	dir := t.TempDir()
+	file := filepath.Join(dir, "huge-context.txt")
+	os.WriteFile(file, []byte("before\nneedle\nafter"), 0o644)
+	r, _ := run(t, grepTool(dir), map[string]any{"pattern": "needle", "path": file, "context": 1e30})
+	want := "huge-context.txt-1- before\nhuge-context.txt:2: needle\nhuge-context.txt-3- after"
+	if got := resultText(r); got != want {
+		t.Fatalf("got %q, pi %q", got, want)
+	}
+}
+
+// rg sniffs a UTF-16 BOM and searches the decoded text, so context lines are
+// decoded too (#11423).
+func TestGrepDecodesUTF16WithContext(t *testing.T) {
+	dir := t.TempDir()
+	file := filepath.Join(dir, "utf16.txt")
+	var data []byte
+	for _, u := range utf16.Encode([]rune("\uFEFFbefore\nneedle 中文\nafter\n")) {
+		data = append(data, byte(u), byte(u>>8))
+	}
+	os.WriteFile(file, data, 0o644)
+	r, _ := run(t, grepTool(dir), map[string]any{"pattern": "needle", "path": file, "context": float64(1)})
+	want := "utf16.txt-1- before\nutf16.txt:2: needle 中文\nutf16.txt-3- after"
+	if got := resultText(r); got != want {
+		t.Fatalf("got %q, pi %q", got, want)
+	}
+}
+
+// rg drops a UTF-8 BOM, searches a UTF-16 file in a directory as text (its
+// NULs are gone once decoded), and sends a non-UTF-8 line as bytes that pi
+// decodes with U+FFFD replacement.
+func TestGrepDecodesLinesAsRipgrep(t *testing.T) {
+	dir := t.TempDir()
+	os.WriteFile(filepath.Join(dir, "bom.txt"), []byte("\xef\xbb\xbfneedle bom\n"), 0o644)
+	os.WriteFile(filepath.Join(dir, "latin1.txt"), []byte("caf\xe9 needle\n"), 0o644)
+	os.WriteFile(filepath.Join(dir, "utf16be.txt"), []byte("\xfe\xff\x00n\x00e\x00e\x00d\x00l\x00e\x00\n"), 0o644)
+	r, _ := run(t, grepTool(dir), map[string]any{"pattern": "needle"})
+	got := strings.Split(resultText(r), "\n")
+	slices.Sort(got)
+	want := []string{"bom.txt:1: needle bom", "latin1.txt:1: caf� needle", "utf16be.txt:1: needle"}
+	if !slices.Equal(got, want) {
+		t.Fatalf("got %q, pi %q", got, want)
+	}
+}
+
+// Only the line terminator is stripped: a lone CR is content, as in read.
+func TestGrepKeepsLoneCRAndStripsCRLF(t *testing.T) {
+	dir := t.TempDir()
+	file := filepath.Join(dir, "mixed-cr.txt")
+	os.WriteFile(file, []byte("one\rtwo needle\r\nnext\r\n"), 0o644)
+	r, _ := run(t, grepTool(dir), map[string]any{"pattern": "needle", "path": file})
+	if got, want := resultText(r), "mixed-cr.txt:1: one\rtwo needle"; got != want {
+		t.Fatalf("plain = %q, pi %q", got, want)
+	}
+	r, _ = run(t, grepTool(dir), map[string]any{"pattern": "needle", "path": file, "context": float64(1)})
+	if got, want := resultText(r), "mixed-cr.txt:1: one\rtwo needle\nmixed-cr.txt-2- next"; got != want {
+		t.Fatalf("context = %q, pi %q", got, want)
+	}
+}
+
+// The limit notice needs proof of one more match than the limit.
+func TestGrepNoLimitNoticeWithExactlyLimitMatches(t *testing.T) {
+	dir := t.TempDir()
+	file := filepath.Join(dir, "exact-limit.txt")
+	os.WriteFile(file, []byte(strings.Join([]string{"match one", "x", "match two", "y"}, "\n")), 0o644)
+	const notice = "[1 matches limit reached. Use limit=2 for more, or refine pattern]"
+	for _, ctx := range []float64{0, 1} {
+		r, _ := run(t, grepTool(dir), map[string]any{"pattern": "match", "path": file, "limit": float64(2), "context": ctx})
+		if text := resultText(r); strings.Contains(text, "limit reached") {
+			t.Errorf("context=%v: exactly limit matches reported the limit: %q", ctx, text)
+		}
+		if details, _ := r.Details.(map[string]any); details["matchLimitReached"] != nil {
+			t.Errorf("context=%v: matchLimitReached = %v, pi undefined", ctx, details["matchLimitReached"])
+		}
+		r, _ = run(t, grepTool(dir), map[string]any{"pattern": "match", "path": file, "limit": float64(1), "context": ctx})
+		if text := resultText(r); !strings.Contains(text, notice) {
+			t.Errorf("context=%v: missing %q in %q", ctx, notice, text)
+		}
+		if details, _ := r.Details.(map[string]any); details["matchLimitReached"] != 1 {
+			t.Errorf("context=%v: matchLimitReached = %v, pi 1", ctx, details["matchLimitReached"])
+		}
+	}
+	r, _ := run(t, grepTool(dir), map[string]any{"pattern": "match", "path": file, "limit": 1.5})
+	if text := resultText(r); !strings.Contains(text, notice) {
+		t.Errorf("limit=1.5: missing %q in %q", notice, text)
 	}
 }
 

@@ -30,15 +30,17 @@ import (
 // Every tool keeps its existing env-free constructor, which uses the local
 // defaults, so none of this changes behavior until a host injects something.
 //
-// ONE RECORDED DIVERGENCE, in GrepOperations.ReadFile. In pi that member is
-// NOT the primary scan: pi matches with ripgrep and calls readFile only to
-// fetch CONTEXT LINES around a hit (grep.ts:210). This port has no ripgrep
-// dependency — it walks and matches in Go — so the same member IS the primary
-// read here, and a custom implementation therefore controls strictly more than
-// it would upstream: it decides what grep can see at all, not just how context
-// is rendered. That is a consequence of the port's own grep architecture rather
-// than a porting choice, it cannot be avoided without taking a ripgrep
-// dependency, and it is stated on the member so nobody has to rediscover it.
+// ONE RECORDED DIVERGENCE, in GrepOperations.ReadFile. pi has no such member:
+// it matches with the local ripgrep, which also sends the context lines, so
+// pi's GrepOperations is the directory check alone and a remote search
+// overrides the tool's execute() (upstream 8da141c2a removed readFile, which
+// only fetched context lines). This port has no ripgrep dependency — it walks
+// and matches in Go — so it needs a read, and ReadFile is it: the one read of
+// each file, from which matches and context both come. A custom
+// implementation therefore decides what grep can see at all. That is a
+// consequence of the port's own grep architecture rather than a porting
+// choice, it cannot be avoided without taking a ripgrep dependency, and it is
+// stated on the member so nobody has to rediscover it.
 //
 // Note these are the CODING-AGENT seams. pi-durable's separate tools
 // (packages/durable/src/tools) take a single broad ExecutionEnv instead (see
@@ -263,9 +265,9 @@ type GrepOperations struct {
 	// not exist.
 	IsDirectory func(ctx context.Context, absolutePath string) (bool, error)
 	// ReadFile reads a file's contents. NOTE the divergence recorded at the top
-	// of this file: here this is the PRIMARY scan read, not pi's context-line
-	// fetch, because the port matches in Go rather than shelling out to
-	// ripgrep. Whatever this returns is what grep can match.
+	// of this file: pi has no such member, because it searches with ripgrep;
+	// the port matches in Go and reads each file once, here. Whatever this
+	// returns is what grep matches and prints, context lines included.
 	ReadFile func(ctx context.Context, absolutePath string) ([]byte, error)
 }
 

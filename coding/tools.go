@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"math"
 	"net/url"
 	"os"
 	"os/exec"
@@ -26,6 +27,7 @@ import (
 	"github.com/sky-valley/pi/ai"
 	"github.com/sky-valley/pi/internal/jstext"
 	"golang.org/x/text/collate"
+	xunicode "golang.org/x/text/encoding/unicode"
 	"golang.org/x/text/language"
 	"golang.org/x/text/unicode/norm"
 )
@@ -220,6 +222,24 @@ func argInt(params map[string]any, key string) (int, bool) {
 		return v, true
 	}
 	return 0, false
+}
+
+// argLimit is pi's Math.max(1, Math.floor(limit ?? def)) for the "limit"
+// argument, a JSON number. A limit past maxInt saturates there; no tool
+// collects that many results, so the result is the same.
+func argLimit(params map[string]any, def int) int {
+	v, ok := argFloat(params, "limit")
+	if !ok {
+		return def
+	}
+	switch f := math.Floor(v); {
+	case !(f >= 1):
+		return 1
+	case f >= float64(maxInt):
+		return maxInt
+	default:
+		return int(f)
+	}
 }
 
 func argBool(params map[string]any, key string) bool {
@@ -1854,12 +1874,54 @@ func findToolOps(cwd string, custom *FindOperations) agent.AgentTool {
 // grep
 // ---------------------------------------------------------------------------
 
+// grepContextLines is pi's `context && context > 0 ? Math.min(Math.floor(context),
+// Number.MAX_SAFE_INTEGER) : 0` (grep.ts), saturating at maxInt instead: any
+// count past a file's length shows the same lines.
+func grepContextLines(params map[string]any) int {
+	v, ok := argFloat(params, "context")
+	if !ok || !(v > 0) {
+		return 0
+	}
+	if f := math.Floor(v); f < float64(maxInt) {
+		return int(f)
+	}
+	return maxInt
+}
+
+var (
+	utf16LEBOM = []byte{0xFF, 0xFE}
+	utf16BEBOM = []byte{0xFE, 0xFF}
+)
+
+// rgDecode is the BOM sniffing ripgrep applies to every file it searches: a
+// UTF-16 BOM transcodes the file to UTF-8 (unpaired surrogates and a stray
+// odd byte become U+FFFD), and a UTF-8 BOM is dropped. rg matches, numbers
+// and prints the result, so pi's grep shows a UTF-16 file as text.
+func rgDecode(data []byte) []byte {
+	var order xunicode.Endianness
+	switch {
+	case bytes.HasPrefix(data, []byte(utf8BOM)):
+		return data[len(utf8BOM):]
+	case bytes.HasPrefix(data, utf16LEBOM):
+		order = xunicode.LittleEndian
+	case bytes.HasPrefix(data, utf16BEBOM):
+		order = xunicode.BigEndian
+	default:
+		return data
+	}
+	decoded, err := xunicode.UTF16(order, xunicode.IgnoreBOM).NewDecoder().Bytes(data[2:])
+	if err != nil {
+		return data
+	}
+	return decoded
+}
+
 // grepTool builds the grep tool against the local filesystem.
 func grepTool(cwd string) agent.AgentTool { return grepToolOps(cwd, nil) }
 
 // grepToolOps builds the grep tool against injectable file operations, porting
-// pi's GrepOperations seam (core/tools/grep.ts:56). See the divergence note on
-// GrepOperations.ReadFile: here it is the primary scan read.
+// pi's GrepOperations seam (core/tools/grep.ts:52). See the divergence note on
+// GrepOperations.ReadFile: pi has no such member; here it is the only read.
 func grepToolOps(cwd string, custom *GrepOperations) agent.AgentTool {
 	ops := resolveGrepOperations(custom)
 	return agent.AgentTool{
@@ -1882,19 +1944,8 @@ func grepToolOps(cwd string, custom *GrepOperations) agent.AgentTool {
 				root = resolveToCwd(p, cwd)
 			}
 			globPat := argStr(params, "glob")
-			// pi: Math.max(1, limit ?? 100) — non-positive limits clamp to 1
-			// (grep.ts:189).
-			limit := grepDefaultLimit
-			if l, ok := argInt(params, "limit"); ok {
-				limit = l
-			}
-			if limit < 1 {
-				limit = 1
-			}
-			ctxLines := 0
-			if c, ok := argInt(params, "context"); ok {
-				ctxLines = c
-			}
+			limit := argLimit(params, grepDefaultLimit)
+			ctxLines := grepContextLines(params)
 
 			flags := ""
 			if argBool(params, "ignoreCase") {
@@ -1915,19 +1966,87 @@ func grepToolOps(cwd string, custom *GrepOperations) agent.AgentTool {
 			}
 			isDir := rootIsDir
 
-			var matchLines []string
+			// What follows ports grep.ts's handling of rg's JSON stream (upstream
+			// 8da141c2a): searchFile produces the match and context events rg
+			// sends with --context N, and handle consumes them as grep.ts's
+			// "line" listener does. Context lines come from that stream, never
+			// from a second read of the file.
+			var outputLines []string
+			// Size of the full output, including lines past the byte cap that
+			// are counted but not stored.
+			outputBytes, outputLineCount := 0, 0
 			matchCount := 0
 			matchLimitReached := false
 			linesTruncated := false
+			lastFile := ""
+			// Set at the last allowed match. rg still sends that match's
+			// trailing context, kept up to limitLine+ctxLines, and the limit
+			// notice waits for proof of one more match.
+			limitHit := false
+			limitLine := 0
 
-			// searchFile scans one file; skipBinary mirrors rg's NUL sniff (a NUL
-			// byte in the first 8KB marks the file binary; only applies during
-			// directory traversal — explicitly-given files are always searched).
+			pushLine := func(file, rel string, lineNumber int, lineText string, isMatch bool) {
+				lastFile = file
+				// Strip only the line terminator: a lone CR inside a line is
+				// content, as in the read tool. rg sends non-UTF-8 lines as
+				// bytes, which pi decodes with U+FFFD replacement.
+				text, was := TruncateLine(jstext.DecodeUTF8([]byte(strings.TrimSuffix(lineText, "\r"))), 0)
+				if was {
+					linesTruncated = true
+				}
+				// Match line: "path:N: text". Context line: "path-N- text".
+				var line string
+				if isMatch {
+					line = fmt.Sprintf("%s:%d: %s", rel, lineNumber, text)
+				} else {
+					line = fmt.Sprintf("%s-%d- %s", rel, lineNumber, text)
+				}
+				// Byte truncation below drops everything past the cap, so keep
+				// counting but stop storing. outputBytes counts a newline after
+				// every line; the joined output has one fewer.
+				if outputBytes-1 <= DefaultMaxBytes {
+					outputLines = append(outputLines, line)
+				}
+				outputBytes += len(line) + 1
+				outputLineCount++
+			}
+
+			// handle takes one rg event and reports whether rg keeps running.
+			handle := func(file, rel string, lineNumber int, lineText string, isMatch bool) bool {
+				if !limitHit {
+					pushLine(file, rel, lineNumber, lineText, isMatch)
+					if isMatch {
+						matchCount++
+						if matchCount >= limit {
+							limitHit, limitLine = true, lineNumber
+						}
+					}
+					return true
+				}
+				// Differences, not limitLine+ctxLines: ctxLines may be maxInt.
+				inWindow := file == lastFile && lineNumber-limitLine <= ctxLines
+				// A match inside the last match's trailing context is shown as
+				// context.
+				if inWindow {
+					pushLine(file, rel, lineNumber, lineText, false)
+				}
+				// Only another match proves that the limit cut results off.
+				if isMatch {
+					matchLimitReached = true
+				}
+				return !matchLimitReached || (inWindow && lineNumber-limitLine < ctxLines)
+			}
+
+			// searchFile scans one file, reporting false once the search is
+			// over; skipBinary mirrors rg's NUL sniff (a NUL byte in the first
+			// 8KB marks the file binary; only applies during directory
+			// traversal — explicitly-given files are always searched).
 			searchFile := func(path, rel string, skipBinary bool) bool {
 				data, err := ops.ReadFile(ctx, path)
 				if err != nil {
 					return true
 				}
+				data = rgDecode(data)
 				if skipBinary {
 					window := data
 					if len(window) > 8*1024 {
@@ -1937,56 +2056,41 @@ func grepToolOps(cwd string, custom *GrepOperations) agent.AgentTool {
 						return true
 					}
 				}
-				// One split at \n serves both sides. rg (no --crlf) matches each
-				// line as the file holds it, a CRLF line's \r included, and a
-				// lone \r stays in its line, as in rg's line numbering. pi's
-				// display lines (grep.ts getFileLines) are the same lines with
-				// \r stripped at print time. Reading the whole file also avoids
-				// any per-line length cap (rg has none).
+				// rg (no --crlf) matches each line as the file holds it, a CRLF
+				// line's \r included, and a lone \r stays in its line, as in
+				// rg's line numbering. Reading the whole file also avoids any
+				// per-line length cap (rg has none).
 				lines := strings.Split(string(data), "\n")
-				searched := lines
-				if searched[len(searched)-1] == "" { // rg never sees a line after a final \n (or in an empty file)
-					searched = searched[:len(searched)-1]
+				if lines[len(lines)-1] == "" { // rg never sees a line after a final \n (or in an empty file)
+					lines = lines[:len(lines)-1]
 				}
-				// Context still clamps to len(lines): getFileLines keeps the
-				// trailing empty element, so pi can print it as context.
-				for i, line := range searched {
-					if matchCount >= limit {
-						matchLimitReached = true
+				rel = jstext.DecodeUTF8([]byte(rel))
+				nextMatch := func(from int) int {
+					for i := from; i < len(lines); i++ {
+						if re.MatchString(lines[i]) {
+							return i
+						}
+					}
+					return -1
+				}
+				// rg sends each line within ctxLines of a match once, in order,
+				// so overlapping context is merged.
+				next, last := nextMatch(0), -1
+				for i := 0; i < len(lines); {
+					switch {
+					case i == next:
+						last, next = i, nextMatch(i+1)
+					case last >= 0 && i-last <= ctxLines, next >= 0 && next-i <= ctxLines:
+					case next < 0:
+						return true
+					default:
+						i = next - ctxLines
+						continue
+					}
+					if !handle(path, rel, i+1, lines[i], i == last) {
 						return false
 					}
-					if re.MatchString(line) {
-						matchCount++
-						start := i - ctxLines
-						if ctxLines <= 0 {
-							start = i
-						} else if start < 0 {
-							start = 0
-						}
-						end := i + ctxLines
-						if ctxLines <= 0 {
-							end = i
-						} else if end >= len(lines) {
-							end = len(lines) - 1
-						}
-						for j := start; j <= end; j++ {
-							// pi's formatBlock strips every \r from a printed line.
-							text, was := TruncateLine(strings.ReplaceAll(lines[j], "\r", ""), 0)
-							if was {
-								linesTruncated = true
-							}
-							// Match line: "path:N: text". Context line: "path-N- text".
-							if j == i {
-								matchLines = append(matchLines, fmt.Sprintf("%s:%d: %s", rel, j+1, text))
-							} else {
-								matchLines = append(matchLines, fmt.Sprintf("%s-%d- %s", rel, j+1, text))
-							}
-						}
-						if matchCount >= limit {
-							matchLimitReached = true
-							return false
-						}
-					}
+					i++
 				}
 				return true
 			}
@@ -2016,10 +2120,6 @@ func grepToolOps(cwd string, custom *GrepOperations) agent.AgentTool {
 					if globPat != "" && !matchRgGlob(globPat, rel) {
 						return nil
 					}
-					if matchCount >= limit {
-						matchLimitReached = true
-						return filepath.SkipAll
-					}
 					if !searchFile(p, rel, true) {
 						return filepath.SkipAll
 					}
@@ -2034,8 +2134,10 @@ func grepToolOps(cwd string, custom *GrepOperations) agent.AgentTool {
 				return textResult("No matches found"), nil
 			}
 
-			rawOutput := strings.Join(matchLines, "\n")
+			rawOutput := strings.Join(outputLines, "\n")
 			tr := TruncateHead(rawOutput, maxInt, 0)
+			tr.TotalLines = outputLineCount
+			tr.TotalBytes = outputBytes - 1
 			output := tr.Content
 			details := map[string]any{}
 			var notices []string
