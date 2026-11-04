@@ -151,8 +151,10 @@ func sessionStreamFn(models ai.Models, next agent.StreamFn) agent.StreamFn {
 		}
 	}
 	return func(ctx context.Context, model *ai.Model, req ai.TranscriptContext, opts *ai.SimpleStreamOptions) *ai.AssistantMessageEventStream {
+		// pi's ModelRuntime asserts inside lazyStream with the request's
+		// signal (upstream f3a64af07): an abort once ctx is done.
 		if err := ai.AssertChatModel(model); err != nil {
-			return ai.ErrorStream(model, err)
+			return ai.ErrorStreamContext(ctx, model, err)
 		}
 		// pi's buildRequestOptions sets the session's identity on every
 		// request, replacing the agent loop's default (upstream adc5fa9f8).

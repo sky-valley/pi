@@ -401,7 +401,7 @@ func anthropicRequestAuth(model *ai.Model, apiKey, authToken string, headers ai.
 // 8b5899dce), ahead of everything else. pi throws there, before a stream
 // exists, and its lazyApi turns the throw into the stream's error with
 // createSetupErrorMessage; under G3 (ai/stream.go) the port renders it as
-// ai.ErrorStream, which builds that same message — errorMessage before
+// ai.ErrorStreamContext, which builds that same message — errorMessage before
 // timestamp. The full Stream path fails inside its own output object, as pi's
 // stream does.
 func StreamSimpleAnthropic(ctx context.Context, model *ai.Model, req ai.TranscriptContext, opts *ai.SimpleStreamOptions) *ai.AssistantMessageEventStream {
@@ -410,7 +410,7 @@ func StreamSimpleAnthropic(ctx context.Context, model *ai.Model, req ai.Transcri
 		base = opts.StreamOptions
 	}
 	if _, err := anthropicRequestAuth(model, base.APIKey, anthropicAuthToken(model, base.APIKey, base.Env), base.Headers, base.Env); err != nil {
-		return ai.ErrorStream(model, err)
+		return ai.ErrorStreamContext(ctx, model, err)
 	}
 	// pi buildBaseOptions: maxTokens = clamp(options?.maxTokens ?? model.maxTokens).
 	// Anthropic ignores samplingParams when building its body, exactly like pi.

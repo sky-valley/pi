@@ -180,7 +180,17 @@ func CompleteSimple(ctx context.Context, model *Model, req Context, opts *Simple
 // created, as pi's lazyStream stamps a setup error (3ba22ce17), so the stream
 // times it only when both readings fall in the same millisecond.
 func ErrorStream(model *Model, err error) *AssistantMessageEventStream {
-	return startStreamSetup(model, nil).fail(err)
+	return startStreamSetup(nil, model, nil).fail(err)
+}
+
+// ErrorStreamContext is ErrorStream for a setup that ran on behalf of a
+// request: when the request's ctx is already done as the setup fails, the
+// failure reads as an abort — stopReason and the error event's reason
+// "aborted" — as pi's lazyStream reports a setup that rejects once the
+// request's signal has aborted (upstream f3a64af07, #8409). Use it where pi
+// hands lazyStream the request's signal; ErrorStream where it does not.
+func ErrorStreamContext(ctx context.Context, model *Model, err error) *AssistantMessageEventStream {
+	return startStreamSetup(ctx, model, nil).fail(err)
 }
 
 // streamSetup is pi's lazyStream around setup the port runs inline before it
@@ -194,6 +204,9 @@ func ErrorStream(model *Model, err error) *AssistantMessageEventStream {
 // observer, when set, sees each event the stream delivers and then its
 // result, once.
 type streamSetup struct {
+	// ctx is the request's context, nil for a lazyStream pi gives no signal:
+	// a failure once it is done is an abort (upstream f3a64af07).
+	ctx       context.Context
 	model     *Model
 	startedAt int64
 	stream    *AssistantMessageEventStream
@@ -220,16 +233,21 @@ type streamObserver interface {
 }
 
 // startStreamSetup reads the call's start, then creates the stream.
-func startStreamSetup(model *Model, observer streamObserver) streamSetup {
+func startStreamSetup(ctx context.Context, model *Model, observer streamObserver) streamSetup {
 	startedAt := nowMillis()
-	return streamSetup{model: model, startedAt: startedAt, stream: NewAssistantMessageEventStream(), observer: observer}
+	return streamSetup{ctx: ctx, model: model, startedAt: startedAt, stream: NewAssistantMessageEventStream(), observer: observer}
 }
 
-// fail ends the setup's stream with err (pi createSetupErrorMessage).
+// fail ends the setup's stream with err (pi createSetupErrorMessage): an
+// abort when the request's ctx is done by then, an error otherwise.
 func (s streamSetup) fail(err error) *AssistantMessageEventStream {
-	msg := NewErrorMessage(s.model.Api, s.model.Provider, s.model.ID, StopError, err.Error())
+	reason := StopError
+	if s.ctx != nil && s.ctx.Err() != nil {
+		reason = StopAborted
+	}
+	msg := NewErrorMessage(s.model.Api, s.model.Provider, s.model.ID, reason, err.Error())
 	msg.Timestamp = s.startedAt
-	event := AssistantMessageEvent{Type: EventError, Reason: StopError, Error: msg}
+	event := AssistantMessageEvent{Type: EventError, Reason: reason, Error: msg}
 	// pi's catch pushes the event, which times the message, before its
 	// observer sees it: the observer's own time is not the request's.
 	s.stream.time(msg)

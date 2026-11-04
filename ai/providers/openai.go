@@ -34,9 +34,10 @@ type OpenAIOptions struct {
 // StreamSimpleOpenAICompletions maps unified reasoning to OpenAI options.
 // Like pi's streamSimple it asserts the client api key first
 // (getClientApiKey); pi throws there and lazyApi builds the stream's error
-// with createSetupErrorMessage, which ai.ErrorStream builds too. An azure
-// model's endpoint is resolved before that, as pi's azure provider resolves
-// it before dispatching to this streamSimple.
+// with createSetupErrorMessage, which ai.ErrorStreamContext builds too — an
+// abort once ctx is done (upstream f3a64af07). An azure model's endpoint is
+// resolved before that, as pi's azure provider resolves it before dispatching
+// to this streamSimple, in a lazyStream given no signal: ai.ErrorStream.
 func StreamSimpleOpenAICompletions(ctx context.Context, model *ai.Model, req ai.TranscriptContext, opts *ai.SimpleStreamOptions) *ai.AssistantMessageEventStream {
 	if model.Provider == azureProvider {
 		var env map[string]string
@@ -48,7 +49,7 @@ func StreamSimpleOpenAICompletions(ctx context.Context, model *ai.Model, req ai.
 		}
 	}
 	if err := assertSimpleClientAPIKey(model, opts); err != nil {
-		return ai.ErrorStream(model, err)
+		return ai.ErrorStreamContext(ctx, model, err)
 	}
 	o := &OpenAIOptions{}
 	if opts != nil {

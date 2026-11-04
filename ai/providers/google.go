@@ -77,7 +77,7 @@ func StreamSimpleGoogle(ctx context.Context, model *ai.Model, req ai.TranscriptC
 	// is pi's for the full Stream path, which 8b5899dce did not touch, so it
 	// stays exactly as it is.
 	if g.APIKey == "" {
-		return ai.ErrorStream(model, fmt.Errorf("No API key for provider: %s", model.Provider))
+		return ai.ErrorStreamContext(ctx, model, fmt.Errorf("No API key for provider: %s", model.Provider))
 	}
 	// pi buildBaseOptions: maxTokens = clamp(options?.maxTokens ?? model.maxTokens).
 	// Google ignores samplingParams when building its body, exactly like pi.
@@ -108,7 +108,7 @@ func StreamSimpleGoogle(ctx context.Context, model *ai.Model, req ai.TranscriptC
 	// with neither thinkingLevel nor thinkingBudget.
 	effort, err := resolveGoogleThinkingLevel(model, ai.ThinkingLevel(clamped))
 	if err != nil {
-		return ai.ErrorStream(model, err)
+		return ai.ErrorStreamContext(ctx, model, err)
 	}
 	g.ThinkingProvided = true
 	g.ThinkingEnabled = true

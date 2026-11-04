@@ -476,7 +476,7 @@ func (p *providerImpl) streamsFor(model *Model) (ProviderStreams, bool) {
 func (p *providerImpl) Stream(ctx context.Context, model *Model, req TranscriptContext, opts *StreamOptions) *AssistantMessageEventStream {
 	s, ok := p.streamsFor(model)
 	if !ok || s.Stream == nil {
-		return ErrorStream(model, newModelsError(ErrStream, "Provider "+p.id+" has no API implementation for \""+model.Api+"\"", nil))
+		return ErrorStreamContext(ctx, model, newModelsError(ErrStream, "Provider "+p.id+" has no API implementation for \""+model.Api+"\"", nil))
 	}
 	return s.Stream(ctx, model, req, opts)
 }
@@ -484,7 +484,7 @@ func (p *providerImpl) Stream(ctx context.Context, model *Model, req TranscriptC
 func (p *providerImpl) StreamSimple(ctx context.Context, model *Model, req TranscriptContext, opts *SimpleStreamOptions) *AssistantMessageEventStream {
 	s, ok := p.streamsFor(model)
 	if !ok || s.StreamSimple == nil {
-		return ErrorStream(model, newModelsError(ErrStream, "Provider "+p.id+" has no API implementation for \""+model.Api+"\"", nil))
+		return ErrorStreamContext(ctx, model, newModelsError(ErrStream, "Provider "+p.id+" has no API implementation for \""+model.Api+"\"", nil))
 	}
 	return s.StreamSimple(ctx, model, req, opts)
 }
@@ -494,7 +494,7 @@ func (p *providerImpl) StreamSimple(ctx context.Context, model *Model, req Trans
 func (p *providerImpl) fetchDeferred(ctx context.Context, model *Model, handle DeferredHandle, opts *DeferredFetchOptions) *AssistantMessageEventStream {
 	s, ok := p.streamsFor(model)
 	if !ok || s.FetchDeferred == nil {
-		return ErrorStream(model, newModelsError(ErrProvider,
+		return ErrorStreamContext(ctx, model, newModelsError(ErrProvider,
 			"Provider "+p.id+" does not support deferred responses for \""+model.Api+"\""+
 				deferredUnsupportedHint, nil))
 	}
@@ -1547,7 +1547,7 @@ func (m *modelsImpl) Stream(ctx context.Context, model *Model, req Context, opts
 	if opts != nil {
 		parent = opts.Telemetry
 	}
-	setup := startStreamSetup(model, observeModelRequest(model, parent, "", false))
+	setup := startStreamSetup(ctx, model, observeModelRequest(model, parent, "", false))
 	if err := AssertChatModel(model); err != nil {
 		return setup.fail(err)
 	}
@@ -1586,7 +1586,7 @@ func (m *modelsImpl) StreamSimple(ctx context.Context, model *Model, req Context
 	if opts != nil {
 		parent, reasoning = opts.Telemetry, opts.Reasoning
 	}
-	setup := startStreamSetup(model, observeModelRequest(model, parent, reasoning, false))
+	setup := startStreamSetup(ctx, model, observeModelRequest(model, parent, reasoning, false))
 	if err := AssertChatModel(model); err != nil {
 		return setup.fail(err)
 	}
@@ -1623,7 +1623,7 @@ func (m *modelsImpl) StreamDeferred(ctx context.Context, model *Model, handle De
 	if opts != nil {
 		parent = opts.Telemetry
 	}
-	setup := startStreamSetup(model, observeModelRequest(model, parent, "", true))
+	setup := startStreamSetup(ctx, model, observeModelRequest(model, parent, "", true))
 	if err := AssertChatModel(model); err != nil {
 		return setup.fail(err)
 	}
