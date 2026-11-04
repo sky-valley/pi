@@ -38,6 +38,12 @@ func TestSimpleSetupThrowAfterAbortReadsAsAborted(t *testing.T) {
 			m := &ai.Model{Api: "google-generative-ai", Provider: "google", ID: "gemini", BaseURL: "https://generativelanguage.googleapis.com/v1beta", MaxTokens: 1000}
 			return StreamSimpleGoogle(ctx, m, ai.TranscriptContext{}, noKey)
 		}, ai.StopAborted},
+		{"google thinking level", func(ctx context.Context) *ai.AssistantMessageEventStream {
+			m := &ai.Model{Api: "google-generative-ai", Provider: "google", ID: "gemini", BaseURL: "https://generativelanguage.googleapis.com/v1beta", MaxTokens: 1000,
+				Reasoning: true, ThinkingLevelMap: ai.ThinkingLevelMap{"high": strPtr("ULTRA")}}
+			opts := &ai.SimpleStreamOptions{StreamOptions: ai.StreamOptions{ProviderRequestOptions: ai.ProviderRequestOptions{APIKey: "k", Env: map[string]string{}}}, Reasoning: "high"}
+			return StreamSimpleGoogle(ctx, m, ai.TranscriptContext{}, opts)
+		}, ai.StopAborted},
 		{"azure endpoint", func(ctx context.Context) *ai.AssistantMessageEventStream {
 			m := &ai.Model{Api: "openai-completions", Provider: "azure", ID: "gpt", MaxTokens: 1000}
 			return StreamSimpleOpenAICompletions(ctx, m, ai.TranscriptContext{}, noKey)

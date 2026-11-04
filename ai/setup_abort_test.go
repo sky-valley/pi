@@ -25,6 +25,18 @@ func TestSetupFailureAfterAbortReadsAsAborted(t *testing.T) {
 		APIByApi: map[Api]ProviderStreams{"api": *stubAPI()},
 	}))
 	noAPI := &Model{Provider: "p", ID: "m", Api: "other-api"}
+	// A provider announces deferred fetches when any of its apis has them;
+	// a model on another api still has none.
+	fetchStub := *stubAPI()
+	fetchStub.FetchDeferred = func(_ context.Context, model *Model, _ DeferredHandle, _ *DeferredFetchOptions) *AssistantMessageEventStream {
+		return ErrorStream(model, errors.New("stub"))
+	}
+	deferredOnly := CreateProvider(CreateProviderOptions{
+		ID:       "d",
+		Models:   []*Model{{Provider: "d", ID: "m", Api: "api"}},
+		APIByApi: map[Api]ProviderStreams{"api": fetchStub, "other-api": *stubAPI()},
+	})
+	deferredModel := &Model{Provider: "d", ID: "m", Api: "other-api"}
 
 	cases := []struct {
 		name string
@@ -41,6 +53,12 @@ func TestSetupFailureAfterAbortReadsAsAborted(t *testing.T) {
 		}},
 		{"provider without the model's api", func(ctx context.Context) *AssistantMessageEventStream {
 			return m.GetProvider("p").StreamSimple(ctx, noAPI, TranscriptContext{}, nil)
+		}},
+		{"provider without the model's api, Stream", func(ctx context.Context) *AssistantMessageEventStream {
+			return m.GetProvider("p").Stream(ctx, noAPI, TranscriptContext{}, nil)
+		}},
+		{"provider without deferred support for the model's api", func(ctx context.Context) *AssistantMessageEventStream {
+			return deferredOnly.(DeferredFetcher).FetchDeferred(ctx, deferredModel, DeferredHandle{}, nil)
 		}},
 	}
 	for _, tc := range cases {

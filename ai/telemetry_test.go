@@ -831,7 +831,7 @@ func TestStreamSetupObservesBeforeDelivery(t *testing.T) {
 		}
 		inner.End(result)
 		observer := &recordingObserver{}
-		setup := startStreamSetup(nil, telemetryTestModel, observer)
+		setup := startStreamSetup(context.Background(), telemetryTestModel, observer)
 		observer.stream = setup.stream
 		stream := setup.forward(inner)
 		if got := stream.Result(); got != result {
@@ -856,7 +856,7 @@ func TestStreamSetupObservesBeforeDelivery(t *testing.T) {
 // events and the result once".
 func TestStreamSetupObservesSetupFailureOnce(t *testing.T) {
 	observer := &recordingObserver{}
-	setup := startStreamSetup(nil, telemetryTestModel, observer)
+	setup := startStreamSetup(context.Background(), telemetryTestModel, observer)
 	stream := setup.fail(errors.New("setup-secret"))
 	if got := stream.Result(); got.ErrorMessage != "setup-secret" {
 		t.Errorf("errorMessage = %q", got.ErrorMessage)
@@ -887,7 +887,7 @@ func (o *slowObserver) onResult(*AssistantMessage) { time.Sleep(o.delay) }
 // the observer sees it timed and the time it takes is not in the duration.
 func TestStreamSetupTimesASetupFailureBeforeObserving(t *testing.T) {
 	observer := &slowObserver{delay: 40 * time.Millisecond}
-	stream := startStreamSetup(nil, telemetryTestModel, observer).fail(errors.New("setup"))
+	stream := startStreamSetup(context.Background(), telemetryTestModel, observer).fail(errors.New("setup"))
 	got := stream.Result()
 	if got.Timestamp < stream.startedAtMs {
 		// The call's start and the stream's creation fell in different

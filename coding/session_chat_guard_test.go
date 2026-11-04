@@ -89,3 +89,25 @@ func TestSessionSummarizationRejectsNonChatModel(t *testing.T) {
 		t.Fatalf("dispatches = %d, want 1", dispatches)
 	}
 }
+
+// The assertion runs inside pi's ModelRuntime lazyStream with the request's
+// signal (upstream f3a64af07): once the request has aborted, it reads as an
+// abort, not an error.
+func TestSessionStreamFnNonChatModelAfterAbortReadsAsAborted(t *testing.T) {
+	dispatches := 0
+	fn := sessionStreamFn(nil, countingStream(&dispatches))
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	for _, tc := range []struct {
+		ctx  context.Context
+		want ai.StopReason
+	}{{context.Background(), ai.StopError}, {ctx, ai.StopAborted}} {
+		res := fn(tc.ctx, imageSessionModel(), ai.TranscriptContext{}, nil).Result()
+		if res.StopReason != tc.want || res.ErrorMessage != imageSessionModelError {
+			t.Fatalf("ctx err %v: stopReason %q errorMessage %q, want %q with %q", tc.ctx.Err(), res.StopReason, res.ErrorMessage, tc.want, imageSessionModelError)
+		}
+	}
+	if dispatches != 0 {
+		t.Fatalf("dispatches = %d, want none", dispatches)
+	}
+}

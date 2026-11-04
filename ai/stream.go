@@ -179,8 +179,11 @@ func CompleteSimple(ctx context.Context, model *Model, req Context, opts *Simple
 // The message is stamped with the wall clock read just before the stream is
 // created, as pi's lazyStream stamps a setup error (3ba22ce17), so the stream
 // times it only when both readings fall in the same millisecond.
+//
+// It always reports StopError, as a lazyStream pi gives no signal does; for a
+// setup that ran on behalf of a request, see ErrorStreamContext.
 func ErrorStream(model *Model, err error) *AssistantMessageEventStream {
-	return startStreamSetup(nil, model, nil).fail(err)
+	return startStreamSetup(context.Background(), model, nil).fail(err)
 }
 
 // ErrorStreamContext is ErrorStream for a setup that ran on behalf of a
@@ -188,7 +191,8 @@ func ErrorStream(model *Model, err error) *AssistantMessageEventStream {
 // failure reads as an abort — stopReason and the error event's reason
 // "aborted" — as pi's lazyStream reports a setup that rejects once the
 // request's signal has aborted (upstream f3a64af07, #8409). Use it where pi
-// hands lazyStream the request's signal; ErrorStream where it does not.
+// hands lazyStream the request's signal; ErrorStream where it does not. A nil
+// ctx is treated as one that is never done.
 func ErrorStreamContext(ctx context.Context, model *Model, err error) *AssistantMessageEventStream {
 	return startStreamSetup(ctx, model, nil).fail(err)
 }
@@ -204,8 +208,8 @@ func ErrorStreamContext(ctx context.Context, model *Model, err error) *Assistant
 // observer, when set, sees each event the stream delivers and then its
 // result, once.
 type streamSetup struct {
-	// ctx is the request's context, nil for a lazyStream pi gives no signal:
-	// a failure once it is done is an abort (upstream f3a64af07).
+	// ctx is the request's context (Background for a lazyStream pi gives no
+	// signal): a failure once it is done is an abort (upstream f3a64af07).
 	ctx       context.Context
 	model     *Model
 	startedAt int64
