@@ -174,6 +174,21 @@ func TestQwenTokenPlanEnvKeys(t *testing.T) {
 	}
 }
 
+// pi 3e4f87265 adds the Qwen Token Plan Individual CN provider: it reuses the
+// CN plan's QWEN_TOKEN_PLAN_CN_API_KEY, and its key prompt names the plan. The
+// provider stays latent until the next catalog regen carries its models.
+func TestQwenTokenPlanIndividualCNEnvKey(t *testing.T) {
+	if vars := apiKeyEnvVars("qwen-token-plan-individual-cn"); len(vars) != 1 || vars[0] != "QWEN_TOKEN_PLAN_CN_API_KEY" {
+		t.Fatalf("apiKeyEnvVars(qwen-token-plan-individual-cn) = %v, want [QWEN_TOKEN_PLAN_CN_API_KEY]", vars)
+	}
+	if got := GetEnvApiKey("qwen-token-plan-individual-cn", map[string]string{"QWEN_TOKEN_PLAN_CN_API_KEY": "scoped"}); got != "scoped" {
+		t.Errorf("GetEnvApiKey(qwen-token-plan-individual-cn) = %q, want %q", got, "scoped")
+	}
+	if got := builtinAPIKeyNames["qwen-token-plan-individual-cn"]; got != "Qwen Token Plan Individual CN API key" {
+		t.Errorf("builtinAPIKeyNames[qwen-token-plan-individual-cn] = %q", got)
+	}
+}
+
 // pi c1019d92 adds the Baseten provider: its API key comes from BASETEN_API_KEY.
 // The provider itself stays latent here until the catalog carries Baseten models.
 func TestBasetenEnvKey(t *testing.T) {
