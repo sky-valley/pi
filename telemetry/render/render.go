@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/sky-valley/pi/internal/jstext"
 	"github.com/sky-valley/pi/telemetry"
@@ -26,7 +27,8 @@ import (
 // the last one at the first's place. A span whose parent is absent is a
 // root. Roots and each span's children are in start order, ties keeping
 // their input order; links are printed, never followed. Values are
-// JSON.stringify's text, numbers JavaScript's. pi lists attributes in
+// JSON.stringify's text, numbers JavaScript's and control characters in ids, names, attribute keys
+// and error messages are escaped. pi lists attributes in
 // insertion order, which a Go map does not keep: they come out array-index
 // keys first, ascending, then by UTF-16 code unit (D92(10)). The input is
 // not modified, and a tree of any depth renders without recursion.
@@ -81,15 +83,15 @@ func Trace(spans []telemetry.StoredSpan) string {
 		if span.Status.Code == telemetry.StatusError {
 			failure = " error"
 			if span.Status.Error != nil {
-				failure += fmt.Sprintf(" %s: %s", span.Status.Error.Name, span.Status.Error.Message)
+				failure += fmt.Sprintf(" %s: %s", escaped(span.Status.Error.Name), escaped(span.Status.Error.Message))
 			}
 		}
-		lines = append(lines, fmt.Sprintf("%s%s%s (%sms)%s", indent, span.Name, formatAttributes(span.Attributes), jstext.NumberToString(span.EndedMs-span.StartedMs), failure))
+		lines = append(lines, fmt.Sprintf("%s%s%s (%sms)%s", indent, escaped(span.Name), formatAttributes(span.Attributes), jstext.NumberToString(span.EndedMs-span.StartedMs), failure))
 		for _, event := range span.Events {
-			lines = append(lines, fmt.Sprintf("%s  · %s%s (+%sms)", indent, event.Name, formatAttributes(event.Attributes), jstext.NumberToString(event.TimeMs)))
+			lines = append(lines, fmt.Sprintf("%s  · %s%s (+%sms)", indent, escaped(event.Name), formatAttributes(event.Attributes), jstext.NumberToString(event.TimeMs)))
 		}
 		for _, link := range span.Links {
-			lines = append(lines, fmt.Sprintf("%s  → link trace %s span %s%s", indent, link.TraceID, link.SpanID, formatAttributes(link.Attributes)))
+			lines = append(lines, fmt.Sprintf("%s  → link trace %s span %s%s", indent, escaped(link.TraceID), escaped(link.SpanID), formatAttributes(link.Attributes)))
 		}
 		descendants := children[span.ID]
 		for index := len(descendants) - 1; index >= 0; index-- {
@@ -99,11 +101,37 @@ func Trace(spans []telemetry.StoredSpan) string {
 	return strings.Join(lines, "\n")
 }
 
+// escaped writes every C0 and C1 control character and DEL in text as a
+// \uXXXX escape (pi render.ts escaped, upstream 378d45a05): a stored id,
+// name or message may come from another process, so none reaches a terminal
+// or a viewer raw. Bytes that are not valid UTF-8 pass through unchanged.
+func escaped(text string) string {
+	if !strings.ContainsFunc(text, isControl) {
+		return text
+	}
+	var b strings.Builder
+	for len(text) > 0 {
+		r, size := utf8.DecodeRuneInString(text)
+		if r != utf8.RuneError && isControl(r) {
+			fmt.Fprintf(&b, "\\u%04x", r)
+		} else {
+			b.WriteString(text[:size])
+		}
+		text = text[size:]
+	}
+	return b.String()
+}
+
+// isControl matches pi's /[\u0000-\u001f\u007f-\u009f]/.
+func isControl(r rune) bool {
+	return r <= 0x1f || (r >= 0x7f && r <= 0x9f)
+}
+
 // formatAttributes writes each attribute as " key=<JSON.stringify(value)>".
 func formatAttributes(attributes telemetry.SpanAttributes) string {
 	var b strings.Builder
 	for _, key := range objectKeyOrder(attributes) {
-		b.WriteString(" " + key + "=" + stringify(attributes[key]))
+		b.WriteString(" " + escaped(key) + "=" + stringify(attributes[key]))
 	}
 	return b.String()
 }

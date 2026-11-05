@@ -3,6 +3,7 @@ package render
 import (
 	"math"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 	"testing"
@@ -200,4 +201,35 @@ func TestTraceWritesNonFiniteNumbersAsNull(t *testing.T) {
 	check(t, Trace([]telemetry.StoredSpan{span("root", func(s *telemetry.StoredSpan) {
 		s.Attributes = telemetry.SpanAttributes{"i": []float64{math.NaN(), math.Copysign(0, -1), 1e21}, "f": float32(math.NaN())}
 	})}), "root f=null i=[null,0,1e+21] (10ms)")
+}
+
+var controlCharacter = regexp.MustCompile(`[\x00-\x1f\x7f-\x{9f}]`)
+
+// Upstream 378d45a05: control characters in ids, names, attribute keys and
+// error messages are escaped; attribute values are JSON.
+func TestTraceEscapesControlCharacters(t *testing.T) {
+	const hostile = "\u001b]0;PWNED\u0007\u001b[2J"
+	rendered := Trace([]telemetry.StoredSpan{span("root", func(s *telemetry.StoredSpan) {
+		s.Name = "name" + hostile
+		s.Attributes = telemetry.SpanAttributes{"key" + hostile: hostile}
+		s.Events = []telemetry.StoredEvent{{Name: "event" + hostile, TimeMs: 1, Attributes: telemetry.SpanAttributes{}}}
+		s.Links = []telemetry.StoredLink{{TraceID: hostile, SpanID: "span\u009b" + hostile}}
+		s.Status = telemetry.SpanStatus{Code: telemetry.StatusError, Error: &telemetry.SpanError{Name: "error" + hostile, Message: "message\u007f" + hostile}}
+	})})
+	for _, line := range strings.Split(rendered, "\n") {
+		if controlCharacter.MatchString(line) {
+			t.Errorf("line carries a raw control character: %q", line)
+		}
+	}
+	for _, want := range []string{
+		`name\u001b]0;PWNED\u0007\u001b[2J`,
+		`→ link trace \u001b]0;PWNED`,
+		`span\u009b`,
+		`message\u007f`,
+		`key\u001b]0;PWNED\u0007\u001b[2J="\u001b]0;PWNED\u0007\u001b[2J"`,
+	} {
+		if !strings.Contains(rendered, want) {
+			t.Errorf("rendered trace lacks %q:\n%s", want, rendered)
+		}
+	}
 }
