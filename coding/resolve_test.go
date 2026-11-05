@@ -256,7 +256,7 @@ func TestResolveModelCustomIDFallbackInvalidSuffix(t *testing.T) {
 // still has passes TestDefaultModelsExistInCatalog. Re-capture at every
 // re-pin, and point file at the capture for the new pin.
 func TestDefaultModelPerProviderMatchesPi(t *testing.T) {
-	const file = "testdata/defaultmodels/default-models-b425754a2.json"
+	const file = "testdata/defaultmodels/default-models-d84123b32.json"
 	data, err := os.ReadFile(file)
 	if err != nil {
 		t.Fatalf("read %s: %v (regenerate it with testdata/defaultmodels/capture.mjs)", file, err)
@@ -285,7 +285,7 @@ func TestDefaultModelPerProviderMatchesPi(t *testing.T) {
 // Without their defaultModelPerProvider entries, a custom model id under the
 // qwen-token-plan providers falls through to providerModels[0] — MiniMax-M2.5
 // after the sort — and clones its contextWindow/maxTokens (196608/32768)
-// instead of qwen3.7-max's (1000000/131072), which changes the emitted
+// instead of the default's (qwen3.8-max since d84123b32; 1000000/131072), which changes the emitted
 // max_tokens and the context clamp. Lock the consequence, not just the entry.
 func TestDefaultModelPerProviderQwenTokenPlanLimits(t *testing.T) {
 	for _, provider := range []string{"qwen-token-plan", "qwen-token-plan-cn"} {
