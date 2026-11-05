@@ -233,3 +233,12 @@ func TestTraceEscapesControlCharacters(t *testing.T) {
 		}
 	}
 }
+
+// Upstream ff33ef42c: lengths of time render to the microsecond, as the
+// adapters record them.
+func TestTraceRendersTimeToTheMicrosecond(t *testing.T) {
+	root := span("root", times(1_793_789_452_816.123, 1_793_789_452_816.431), func(s *telemetry.StoredSpan) {
+		s.Events = []telemetry.StoredEvent{{Name: "half", TimeMs: 0.15400000002, Attributes: telemetry.SpanAttributes{}}}
+	})
+	check(t, Trace([]telemetry.StoredSpan{root}), "root (0.308ms)\n  · half (+0.154ms)")
+}

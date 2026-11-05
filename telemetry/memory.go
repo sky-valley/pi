@@ -105,6 +105,46 @@ var (
 	performanceNow = func() float64 { return float64(time.Since(processStart)) / float64(time.Millisecond) }
 )
 
+// The clock of span times: wall-clock milliseconds at microsecond
+// resolution, from the monotonic clock anchored to the wall clock (pi
+// telemetryNow, upstream ff33ef42c).
+
+// nowTolerance is how far the anchored clock may part from dateNow before it
+// is anchored anew: more than Date.now()'s own truncation to whole
+// milliseconds, less than any step worth following (a wall clock set, a sleep
+// the monotonic clock did not count).
+const nowTolerance = 10
+
+// nowAnchor is the wall-clock time of performanceNow's zero: the process
+// start (pi performance.timeOrigin) until the first step is followed.
+var nowAnchor = struct {
+	sync.Mutex
+	ms float64
+}{ms: float64(processStart.UnixNano()) / float64(time.Millisecond)}
+
+// Now is the current time as milliseconds since the epoch, rounded to the
+// microsecond (pi telemetryNow): the monotonic clock plus an anchor to the
+// wall clock. While the two agree within 10 ms, times in one process keep
+// their order and spacing to the microsecond; past that it follows the wall
+// clock again, at whole milliseconds. The in-memory recorder stamps span
+// starts with it.
+func Now() float64 {
+	clock := performanceNow()
+	wall := dateNow()
+	nowAnchor.Lock()
+	defer nowAnchor.Unlock()
+	if math.Abs(nowAnchor.ms+clock-wall) > nowTolerance {
+		nowAnchor.ms = wall - clock
+	}
+	return microseconds(nowAnchor.ms + clock)
+}
+
+// microseconds rounds ms to the microsecond, as span times are (pi
+// Math.round(ms * 1000) / 1000).
+func microseconds(ms float64) float64 {
+	return jstext.MathRound(ms*1000) / 1000
+}
+
 // intervalLength is the width of the metric intervals FindMetrics reports a
 // measurement in, ten seconds.
 const intervalLength = 10_000
@@ -351,7 +391,7 @@ func (c *InMemoryContext) startSpan(parent *inMemoryParent, options SpanOptions,
 		}
 	}
 	span := &recordedSpan{
-		startedMs:  dateNow(),
+		startedMs:  Now(),
 		clock:      performanceNow(),
 		id:         id,
 		context:    Carrier{memoryScopeKey: scope, memorySpanKey: strconv.Itoa(id), memoryTraceKey: trace},
@@ -401,7 +441,7 @@ func (c *InMemoryContext) settle(span *recordedSpan, err error) {
 		span.status = automaticErrorStatus(err)
 	}
 	span.settled = true
-	span.endedMs = span.startedMs + performanceNow() - span.clock
+	span.endedMs = microseconds(span.startedMs + performanceNow() - span.clock)
 	c.settledCount++
 	span.endSequence = c.settledCount
 }
@@ -516,7 +556,7 @@ func (s *inMemorySpan) AddEvent(name string, attributes SpanAttributes) {
 		return
 	}
 	s.span.events = append(s.span.events, timedEvent{
-		timeMs: performanceNow() - s.span.clock,
+		timeMs: microseconds(performanceNow() - s.span.clock),
 		event:  RecordedEvent{Name: name, Attributes: copyAttributes(attributes)},
 	})
 }

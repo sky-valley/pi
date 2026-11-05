@@ -214,8 +214,9 @@ type StoredLink struct {
 }
 
 // StoredSpan is a settled span snapshot, independent of the adapter that
-// recorded it (pi StoredSpan). Times are epoch milliseconds measured with a
-// monotonic clock from the span's start, so EndedMs-StartedMs and event
+// recorded it (pi StoredSpan). Times are epoch milliseconds at microsecond
+// resolution (StartedMs from Now), measured with a monotonic clock from the
+// span's start, so EndedMs-StartedMs and event
 // offsets are exact while wall clocks across processes may disagree. Parent
 // relationships, not timestamp containment, define a trace's tree.
 type StoredSpan struct {

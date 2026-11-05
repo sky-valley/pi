@@ -3,6 +3,7 @@ package telemetry
 import (
 	"context"
 	"fmt"
+	"math"
 	"reflect"
 	"regexp"
 	"strings"
@@ -476,6 +477,8 @@ func TestInMemoryFindTracesRejectsForeignCursors(t *testing.T) {
 // The cursor is pi's JSON.stringify([startedMs, traceId]), byte for byte.
 func TestInMemoryFindTracesCursorIsPisJSON(t *testing.T) {
 	mockClock(t, &dateNow, 20_000)
+	// Starts are telemetry.Now, which reads both clocks (upstream ff33ef42c).
+	mockClock(t, &performanceNow, 100)
 	c := NewInMemoryContext()
 	for range 2 {
 		_ = c.StartSpan(SpanOptions{Name: "root"}, func(Span) error { return nil })
@@ -510,6 +513,8 @@ func TestInMemoryFindTracesRejectsNegativeLimit(t *testing.T) {
 // "<scope>:2".
 func TestInMemoryGetTraceBreaksStartTiesByUTF16ID(t *testing.T) {
 	mockClock(t, &dateNow, 20_000)
+	// Starts are telemetry.Now, which reads both clocks (upstream ff33ef42c).
+	mockClock(t, &performanceNow, 100)
 	c := NewInMemoryContext()
 	var trace string
 	_ = c.StartSpan(SpanOptions{Name: "root"}, func(root Span) error {
@@ -538,5 +543,57 @@ func TestInMemoryFindMetricsFloorsTheInterval(t *testing.T) {
 	rows := mustFindMetrics(t, c, MetricQuery{Name: "calls"})
 	if len(rows) != 1 || rows[0].IntervalMs != 10_000 {
 		t.Errorf("rows = %+v, want one at interval 10000", rows)
+	}
+}
+
+// Upstream ff33ef42c: starts are stamped with Now, so spans less than a
+// millisecond apart keep their order and spacing to the microsecond.
+func TestInMemoryStampsStartsWithNow(t *testing.T) {
+	mockClock(t, &dateNow, 1000)
+	clock := mockClock(t, &performanceNow, 100)
+	c := NewInMemoryContext()
+	_ = c.StartSpan(SpanOptions{Name: "first"}, func(Span) error { *clock = 100.25; return nil })
+	_ = c.StartSpan(SpanOptions{Name: "second"}, func(Span) error { *clock = 100.5; return nil })
+	var got [][3]any
+	for _, trace := range mustFindTraces(t, c, TraceQuery{}).Traces {
+		for _, s := range trace.Spans {
+			got = append(got, [3]any{s.Name, s.StartedMs, s.EndedMs})
+		}
+	}
+	if want := [][3]any{{"second", 1000.25, 1000.5}, {"first", 1000.0, 1000.25}}; !reflect.DeepEqual(got, want) {
+		t.Errorf("spans = %v, want %v", got, want)
+	}
+}
+
+// Upstream ff33ef42c (pi store.test.ts "telemetryNow"): Now counts
+// sub-millisecond steps of the monotonic clock while the wall clock stays in
+// its millisecond, and follows a wall-clock step past 10 ms.
+func TestNowCountsMonotonicStepsAndFollowsWallClockSteps(t *testing.T) {
+	wall := mockClock(t, &dateNow, 50_000)
+	clock := mockClock(t, &performanceNow, 1000.25)
+	first := Now()
+	*clock = 1000.2504
+	if d := Now() - first; math.Abs(d) > 1e-6 {
+		t.Errorf("a 0.4µs step moved Now by %v", d)
+	}
+	*clock = 1000.7512
+	if d := Now() - first; math.Abs(d-0.501) > 1e-6 {
+		t.Errorf("Now moved by %v, want 0.501", d)
+	}
+	if v := Now() * 1000; v != math.Trunc(v) {
+		t.Errorf("Now() = %v is not whole microseconds", Now())
+	}
+
+	*wall, *clock = 80_000, 1000
+	for _, step := range []struct{ wall, clock, want float64 }{
+		{80_000, 1000, 80_000},       // far from the earlier anchor: anchored anew
+		{80_005, 1003.5, 80_003.5},   // within 10 ms: keeps its own spacing
+		{3_650_004, 1004, 3_650_004}, // a step of the wall clock is followed
+		{3_650_004, 1004.125, 3_650_004.125},
+	} {
+		*wall, *clock = step.wall, step.clock
+		if got := Now(); got != step.want {
+			t.Errorf("Now() at wall %v, clock %v = %v, want %v", step.wall, step.clock, got, step.want)
+		}
 	}
 }

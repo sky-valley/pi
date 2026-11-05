@@ -27,7 +27,8 @@ import (
 // the last one at the first's place. A span whose parent is absent is a
 // root. Roots and each span's children are in start order, ties keeping
 // their input order; links are printed, never followed. Values are
-// JSON.stringify's text, numbers JavaScript's and control characters in ids, names, attribute keys
+// JSON.stringify's text, numbers JavaScript's; lengths of time are rounded
+// to the microsecond, and control characters in ids, names, attribute keys
 // and error messages are escaped. pi lists attributes in
 // insertion order, which a Go map does not keep: they come out array-index
 // keys first, ascending, then by UTF-16 code unit (D92(10)). The input is
@@ -86,9 +87,9 @@ func Trace(spans []telemetry.StoredSpan) string {
 				failure += fmt.Sprintf(" %s: %s", escaped(span.Status.Error.Name), escaped(span.Status.Error.Message))
 			}
 		}
-		lines = append(lines, fmt.Sprintf("%s%s%s (%sms)%s", indent, escaped(span.Name), formatAttributes(span.Attributes), jstext.NumberToString(span.EndedMs-span.StartedMs), failure))
+		lines = append(lines, fmt.Sprintf("%s%s%s (%sms)%s", indent, escaped(span.Name), formatAttributes(span.Attributes), jstext.NumberToString(microseconds(span.EndedMs-span.StartedMs)), failure))
 		for _, event := range span.Events {
-			lines = append(lines, fmt.Sprintf("%s  · %s%s (+%sms)", indent, escaped(event.Name), formatAttributes(event.Attributes), jstext.NumberToString(event.TimeMs)))
+			lines = append(lines, fmt.Sprintf("%s  · %s%s (+%sms)", indent, escaped(event.Name), formatAttributes(event.Attributes), jstext.NumberToString(microseconds(event.TimeMs))))
 		}
 		for _, link := range span.Links {
 			lines = append(lines, fmt.Sprintf("%s  → link trace %s span %s%s", indent, escaped(link.TraceID), escaped(link.SpanID), formatAttributes(link.Attributes)))
@@ -125,6 +126,12 @@ func escaped(text string) string {
 // isControl matches pi's /[\u0000-\u001f\u007f-\u009f]/.
 func isControl(r rune) bool {
 	return r <= 0x1f || (r >= 0x7f && r <= 0x9f)
+}
+
+// microseconds rounds ms to the microsecond, as the adapters record span
+// times (pi render.ts microseconds, upstream ff33ef42c).
+func microseconds(ms float64) float64 {
+	return jstext.MathRound(ms*1000) / 1000
 }
 
 // formatAttributes writes each attribute as " key=<JSON.stringify(value)>".
