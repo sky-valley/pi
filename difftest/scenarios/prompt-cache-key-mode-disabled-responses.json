@@ -1,0 +1,44 @@
+{
+  "name": "prompt-cache-key-mode-disabled-responses",
+  "note": "Upstream 0f4d5e960: compat.promptCacheKeyMode \"disabled\" drops prompt_cache_key from an openai-responses request while caching is active; nothing else moves. src until the first release that ships 0f4d5e960, then flip to dist (README rule).",
+  "backend": "src",
+  "api": "openai-responses",
+  "entry": "stream",
+  "model": {
+    "id": "test-model",
+    "name": "Test Model",
+    "api": "openai-responses",
+    "provider": "test-proxy",
+    "baseUrl": "https://proxy.example.com/v1",
+    "reasoning": false,
+    "input": [
+      "text"
+    ],
+    "cost": {
+      "input": 0,
+      "output": 0,
+      "cacheRead": 0,
+      "cacheWrite": 0
+    },
+    "contextWindow": 128000,
+    "maxTokens": 4096,
+    "compat": {
+      "promptCacheKeyMode": "disabled"
+    }
+  },
+  "context": {
+    "systemPrompt": "You are a helpful assistant.",
+    "messages": [
+      {
+        "role": "user",
+        "content": "hello",
+        "timestamp": 1
+      }
+    ]
+  },
+  "options": {
+    "apiKey": "test-key",
+    "sessionId": "session-disabled",
+    "maxTokens": 1024
+  }
+}
