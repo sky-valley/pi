@@ -39,7 +39,15 @@ type RuntimeCredentials struct {
 	// order they were first set, pi's Map insertion order, which List keeps.
 	overrides map[string]string
 	order     []string
+
+	// pending holds a channel per Modify still writing, closed when it
+	// returns: pi's pendingModifications (upstream b2cb62923).
+	pendingMu sync.Mutex
+	pending   map[*modification]struct{}
 }
+
+// modification is one Modify in progress; done closes when it returns.
+type modification struct{ done chan struct{} }
 
 // NewRuntimeCredentials lays runtime API keys over store. A nil store is an
 // empty ai.InMemoryCredentialStore; pi's ModelRuntime defaults to its
@@ -125,8 +133,45 @@ func (c *RuntimeCredentials) List(ctx context.Context) ([]ai.CredentialInfo, err
 }
 
 // Modify writes through to the store; a runtime key keeps masking the result.
+// Settled waits for it while it runs.
 func (c *RuntimeCredentials) Modify(ctx context.Context, providerID string, fn func(current *ai.Credential) (*ai.Credential, error)) (*ai.Credential, error) {
+	m := &modification{done: make(chan struct{})}
+	c.pendingMu.Lock()
+	if c.pending == nil {
+		c.pending = map[*modification]struct{}{}
+	}
+	c.pending[m] = struct{}{}
+	c.pendingMu.Unlock()
+	defer func() {
+		c.pendingMu.Lock()
+		delete(c.pending, m)
+		c.pendingMu.Unlock()
+		close(m.done)
+	}()
 	return c.store.Modify(ctx, providerID, fn)
+}
+
+// Settled returns once every Modify started before the call has written or
+// failed, or with ctx's error when ctx ends first (pi RuntimeCredentials
+// settled, upstream b2cb62923). Call it before the process exits: an OAuth
+// refresh may already have spent the old single-use refresh token, so
+// exiting before its result is written leaves only the spent token in the
+// store, and the login is lost.
+func (c *RuntimeCredentials) Settled(ctx context.Context) error {
+	c.pendingMu.Lock()
+	waits := make([]chan struct{}, 0, len(c.pending))
+	for m := range c.pending {
+		waits = append(waits, m.done)
+	}
+	c.pendingMu.Unlock()
+	for _, done := range waits {
+		select {
+		case <-done:
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
+	return nil
 }
 
 // Delete removes providerID's credential from the store and then its runtime

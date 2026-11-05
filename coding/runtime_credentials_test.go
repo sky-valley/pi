@@ -194,3 +194,70 @@ func TestRuntimeCredentialsEmptyKeyAndListingOrder(t *testing.T) {
 		t.Errorf("list: %+v, pi %+v", got, want)
 	}
 }
+
+// Upstream b2cb62923 (#11692): Settled waits until a Modify in progress is
+// written, so a rotated OAuth token is not lost at exit.
+func TestRuntimeCredentialsSettledWaitsForPendingModifications(t *testing.T) {
+	store := ai.NewInMemoryCredentialStore()
+	credentials := NewRuntimeCredentials(store)
+	respond, entered := make(chan struct{}), make(chan struct{})
+	modified := make(chan error, 1)
+	go func() {
+		_, err := credentials.Modify(context.Background(), "anthropic", func(*ai.Credential) (*ai.Credential, error) {
+			close(entered)
+			<-respond
+			return &ai.Credential{Type: ai.CredentialAPIKey, Key: "rotated"}, nil
+		})
+		modified <- err
+	}()
+	<-entered
+
+	settled := make(chan error, 1)
+	go func() { settled <- credentials.Settled(context.Background()) }()
+	select {
+	case err := <-settled:
+		t.Fatalf("Settled returned (%v) while a modification was pending", err)
+	case <-time.After(20 * time.Millisecond):
+	}
+	close(respond)
+	if err := <-settled; err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := store.Read(context.Background(), "anthropic"); got == nil || got.Key != "rotated" {
+		t.Fatalf("store holds %+v after Settled, want the rotated key", got)
+	}
+	if err := <-modified; err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestRuntimeCredentialsSettledAfterAFailedModification(t *testing.T) {
+	credentials := NewRuntimeCredentials(nil)
+	_, err := credentials.Modify(context.Background(), "anthropic", func(*ai.Credential) (*ai.Credential, error) {
+		return nil, errors.New("invalid_grant")
+	})
+	if err == nil || err.Error() != "invalid_grant" {
+		t.Fatalf("Modify = %v", err)
+	}
+	if err := credentials.Settled(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// Settled gives up with the context's error.
+func TestRuntimeCredentialsSettledHonoursItsContext(t *testing.T) {
+	credentials := NewRuntimeCredentials(nil)
+	release, entered := make(chan struct{}), make(chan struct{})
+	defer close(release)
+	go credentials.Modify(context.Background(), "p", func(*ai.Credential) (*ai.Credential, error) {
+		close(entered)
+		<-release
+		return nil, nil
+	})
+	<-entered
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
+	defer cancel()
+	if err := credentials.Settled(ctx); !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("Settled = %v, want the deadline", err)
+	}
+}
