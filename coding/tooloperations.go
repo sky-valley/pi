@@ -234,11 +234,7 @@ func localShellOperations(shellName string, resolveShellConfig func() (ShellConf
 			// fds shortly after Wait returns so we never hang.
 			cmd.WaitDelay = time.Second
 
-			var deadline <-chan struct{}
-			if timeoutSeconds > 0 {
-				deadline = runCtx.Done()
-			}
-			exitedBeforeDeadline, runErr := runBashCommand(cmd, onDataWriter(options.OnData), deadline)
+			exitedBeforeDeadline, runErr := runBashCommand(cmd, onDataWriter(options.OnData), runCtx.Done())
 
 			return classifyShellRun(ctx.Err(), runCtx.Err(), runErr, timeoutSeconds, exitedBeforeDeadline)
 		},
@@ -268,7 +264,7 @@ func classifyShellRun(ctxErr, runCtxErr, runErr error, timeoutSeconds float64, e
 	if errors.As(runErr, &exitErr) {
 		code = exitCode(exitErr.ProcessState)
 	}
-	if runCtxErr == context.DeadlineExceeded {
+	if errors.Is(runCtxErr, context.DeadlineExceeded) {
 		timeout := &ShellTimeoutError{Seconds: timeoutSeconds}
 		if exitedBeforeDeadline != nil {
 			// pi: Math.round(ms / 100) / 10.
@@ -592,7 +588,7 @@ func localReadFile(path string) ([]byte, error) {
 		return nil, err
 	}
 	if st.IsDir() {
-		return nil, errors.New("EISDIR: illegal operation on a directory, read")
+		return nil, errEISDIR
 	}
 	return os.ReadFile(path)
 }

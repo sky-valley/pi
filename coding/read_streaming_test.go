@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
+	"sync"
 	"testing"
 	"testing/iotest"
 
@@ -280,26 +281,36 @@ func TestReadStreamStopsWhenAborted(t *testing.T) {
 	if err == nil || err.Error() != "Operation aborted" {
 		t.Fatalf("err = %v, want Operation aborted", err)
 	}
+	stream.mu.Lock()
+	defer stream.mu.Unlock()
 	if stream.reads != 3 || !stream.closed {
 		t.Errorf("reads = %d, closed = %v; want 3 reads, then closed", stream.reads, stream.closed)
 	}
 }
 
+// abortingStream cancels its read on the third Read. Close may come from the
+// abort's own goroutine, hence the lock.
 type abortingStream struct {
 	cancel func()
+	mu     sync.Mutex
 	reads  int
 	closed bool
 }
 
 func (s *abortingStream) Read(p []byte) (int, error) {
+	s.mu.Lock()
 	s.reads++
-	if s.reads == 3 {
+	reads := s.reads
+	s.mu.Unlock()
+	if reads == 3 {
 		s.cancel()
 	}
 	return copy(p, "line\n"), nil
 }
 
 func (s *abortingStream) Close() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	s.closed = true
 	return nil
 }

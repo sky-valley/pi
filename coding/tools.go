@@ -570,7 +570,19 @@ func readFile(cwd string, ops ReadOperations, model toolModelFn) func(ctx contex
 		if hasOffset && offset > 0 {
 			rng.startLine = offset - 1
 		}
-		rng.limit, rng.hasLimit = argInt(params, "limit")
+		if limit, ok := argFloat(params, "limit"); ok {
+			// pi's Math.min(startLine + limit, length): a limit past the int
+			// range selects to the end of the file, never wraps negative.
+			rng.hasLimit = true
+			switch {
+			case limit >= float64(maxInt-rng.startLine):
+				rng.limit = maxInt - rng.startLine
+			case limit <= float64(-maxInt):
+				rng.limit = -maxInt
+			default:
+				rng.limit = int(limit)
+			}
+		}
 		startLine, startLineDisplay := rng.startLine, rng.startLine+1
 		var sel selectedLines
 		if ops.CreateReadStream != nil && isStreamableRange(params) {
@@ -578,9 +590,20 @@ func readFile(cwd string, ops ReadOperations, model toolModelFn) func(ctx contex
 			if err != nil {
 				return agent.AgentToolResult{}, err
 			}
+			// An abort closes the stream, which also ends a Read blocked on a
+			// pipe or device that never sends EOF (pi destroys the stream).
+			closed := make(chan struct{})
+			stop := context.AfterFunc(ctx, func() { stream.Close(); close(closed) })
 			sel, err = selectLinesFromStream(ctx, stream, rng)
-			stream.Close()
+			if stop() {
+				stream.Close()
+			} else {
+				<-closed // the abort is closing it: return once it has
+			}
 			if err != nil {
+				if ctx.Err() != nil {
+					err = errReadAborted
+				}
 				return agent.AgentToolResult{}, err
 			}
 		} else {
@@ -1211,14 +1234,15 @@ const bashExitStdioGrace = 100 * time.Millisecond
 // interleaving, like pi's shared onData handler), streams the merged output into
 // u, and waits for the process. After exit it drains the pipe on a re-arming
 // idle grace rather than a fixed deadline so output a detached descendant writes
-// past exit is captured (port of 3fa40956). deadline is the command's timeout
-// (nil for none): when it passes after the shell exited, the process group is
-// still killed, so background processes holding the pipe stop writing (pi
-// kills the tree at the deadline whether or not the shell is still there).
+// past exit is captured (port of 3fa40956). done closes when the command's
+// timeout passes or it is aborted: when that happens after the shell exited,
+// the process group is still killed, so background processes holding the
+// pipe stop writing (pi kills the tree on timeout and on abort whether or not
+// the shell is still there).
 // It returns the same error cmd.Wait would — nil or *exec.ExitError on a
 // non-zero/​signalled exit — and, when the shell itself exited before the
 // deadline, how long after the start it did (pi 06aa6563e's shellExit).
-func runBashCommand(cmd *exec.Cmd, w io.Writer, deadline <-chan struct{}) (exitedBeforeDeadline *time.Duration, err error) {
+func runBashCommand(cmd *exec.Cmd, w io.Writer, done <-chan struct{}) (exitedBeforeDeadline *time.Duration, err error) {
 	pr, pw, err := os.Pipe()
 	if err != nil {
 		return nil, err
@@ -1261,13 +1285,11 @@ func runBashCommand(cmd *exec.Cmd, w io.Writer, deadline <-chan struct{}) (exite
 
 	waitErr := cmd.Wait()
 	select {
-	case <-deadline:
-		deadline = nil // it passed while the shell ran; os/exec already killed the tree
+	case <-done:
+		done = nil // it fired while the shell ran; os/exec already killed the tree
 	default:
-		if deadline != nil {
-			exited := time.Since(started)
-			exitedBeforeDeadline = &exited
-		}
+		exited := time.Since(started)
+		exitedBeforeDeadline = &exited
 	}
 
 	// Process has exited. Drain any output still arriving, re-arming the idle
@@ -1289,11 +1311,11 @@ drain:
 			timer.Reset(bashExitStdioGrace)
 		case <-timer.C:
 			break drain
-		case <-deadline:
+		case <-done:
 			// The shell exited but its background processes still hold the
 			// pipe: kill the group (on Unix it still reaches them) and keep
 			// draining what they wrote.
-			deadline = nil
+			done = nil
 			_ = killProcessTree(cmd)
 		}
 	}

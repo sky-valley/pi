@@ -78,6 +78,9 @@ func selectLinesFromBuffer(data []byte, r readRange) selectedLines {
 	return selectedLines{totalFileLines: len(allLines), truncation: truncation, firstLineBytes: firstLineBytes}
 }
 
+// errEISDIR is Node's error for reading a directory as a file.
+var errEISDIR = errors.New("EISDIR: illegal operation on a directory, read")
+
 // errReadAborted is the read tool's error when its context ends mid-read
 // (pi: "Operation aborted").
 var errReadAborted = errors.New("Operation aborted")
@@ -230,7 +233,7 @@ func openLocalReadStream(path string) (io.ReadCloser, error) {
 	}
 	if st.IsDir() {
 		f.Close()
-		return nil, errors.New("EISDIR: illegal operation on a directory, read")
+		return nil, errEISDIR
 	}
 	if st.Mode().IsRegular() && st.Size() > 0 {
 		return limitedFile{io.LimitReader(f, st.Size()), f}, nil
