@@ -28,7 +28,7 @@ const DefaultModelSpec = "anthropic/claude-sonnet-4-5"
 var defaultModelPerProvider = map[string]string{
 	"amazon-bedrock":                "us.anthropic.claude-opus-4-6-v1",
 	"ant-ling":                      "Ring-2.6-1T",
-	"anthropic":                     "claude-opus-4-8",
+	"anthropic":                     "claude-opus-5-5",
 	"openai":                        "gpt-6.1-sol",
 	"azure":                         "gpt-5.4",
 	"openai-codex":                  "gpt-6.1-sol",
