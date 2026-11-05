@@ -564,57 +564,45 @@ func readFile(cwd string, ops ReadOperations, model toolModelFn) func(ctx contex
 			}}, nil
 		}
 
-		data, err := ops.ReadFile(ctx, abs)
-		if err != nil {
-			return agent.AgentToolResult{}, err
-		}
-		allLines := strings.Split(string(data), "\n")
-		totalFileLines := len(allLines)
+		// Convert offset from 1-indexed input to 0-indexed line access.
 		offset, hasOffset := argInt(params, "offset")
-		startLine := 0
+		rng := readRange{}
 		if hasOffset && offset > 0 {
-			startLine = offset - 1
+			rng.startLine = offset - 1
 		}
-		startLineDisplay := startLine + 1
-		if startLine >= len(allLines) {
-			return agent.AgentToolResult{}, fmt.Errorf("Offset %d is beyond end of file (%d lines total)", offset, len(allLines))
-		}
-		var selected string
-		hasLimit := false
-		userLimitedLines := 0
-		if limit, ok := argInt(params, "limit"); ok {
-			hasLimit = true
-			// pi: endLine = Math.min(startLine + limit, allLines.length), then
-			// allLines.slice(startLine, endLine) with JS slice semantics: a
-			// negative end counts back from the array end, and an end before
-			// start yields an empty slice (never a panic).
-			endLine := startLine + limit
-			if endLine > len(allLines) {
-				endLine = len(allLines)
+		rng.limit, rng.hasLimit = argInt(params, "limit")
+		startLine, startLineDisplay := rng.startLine, rng.startLine+1
+		var sel selectedLines
+		if ops.CreateReadStream != nil && isStreamableRange(params) {
+			stream, err := ops.CreateReadStream(ctx, abs)
+			if err != nil {
+				return agent.AgentToolResult{}, err
 			}
-			effEnd := endLine
-			if effEnd < 0 {
-				effEnd = len(allLines) + effEnd
-				if effEnd < 0 {
-					effEnd = 0
-				}
+			sel, err = selectLinesFromStream(ctx, stream, rng)
+			stream.Close()
+			if err != nil {
+				return agent.AgentToolResult{}, err
 			}
-			if effEnd < startLine {
-				effEnd = startLine
-			}
-			selected = strings.Join(allLines[startLine:effEnd], "\n")
-			// pi keeps the raw arithmetic value (may be zero or negative) for
-			// the continuation-footer math.
-			userLimitedLines = endLine - startLine
 		} else {
-			selected = strings.Join(allLines[startLine:], "\n")
+			data, err := ops.ReadFile(ctx, abs)
+			if err != nil {
+				return agent.AgentToolResult{}, err
+			}
+			sel = selectLinesFromBuffer(data, rng)
 		}
-
-		tr := TruncateHead(selected, 0, 0)
+		totalFileLines := sel.totalFileLines
+		if startLine >= totalFileLines {
+			return agent.AgentToolResult{}, fmt.Errorf("Offset %d is beyond end of file (%d lines total)", offset, totalFileLines)
+		}
+		// A user-specified limit is honored before truncation. pi keeps the raw
+		// arithmetic value (zero or negative for an unusual limit) for the
+		// continuation-footer math.
+		userLimitedLines := min(startLine+rng.limit, totalFileLines) - startLine
+		tr := sel.truncation
 		var out string
 		switch {
 		case tr.FirstLineExceedsLimit:
-			firstLineSize := FormatSize(len(allLines[startLine]))
+			firstLineSize := FormatSize(sel.firstLineBytes)
 			out = fmt.Sprintf("[Line %d is %s, exceeds %s limit. Use bash: sed -n '%dp' %s | head -c %d]",
 				startLineDisplay, firstLineSize, FormatSize(DefaultMaxBytes), startLineDisplay, path, DefaultMaxBytes)
 		case tr.Truncated:
@@ -626,8 +614,8 @@ func readFile(cwd string, ops ReadOperations, model toolModelFn) func(ctx contex
 			} else {
 				out += fmt.Sprintf("\n\n[Showing lines %d-%d of %d (%s limit). Use offset=%d to continue.]", startLineDisplay, endLineDisplay, totalFileLines, FormatSize(DefaultMaxBytes), nextOffset)
 			}
-		case hasLimit && startLine+userLimitedLines < len(allLines):
-			remaining := len(allLines) - (startLine + userLimitedLines)
+		case rng.hasLimit && startLine+userLimitedLines < totalFileLines:
+			remaining := totalFileLines - (startLine + userLimitedLines)
 			nextOffset := startLine + userLimitedLines + 1
 			out = fmt.Sprintf("%s\n\n[%d more lines in file. Use offset=%d to continue.]", tr.Content, remaining, nextOffset)
 		default:

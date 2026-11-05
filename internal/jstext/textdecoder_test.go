@@ -116,3 +116,19 @@ func TestTextDecoderStartsOverAfterFlush(t *testing.T) {
 		t.Fatalf("got %+q, node %+q", got, want)
 	}
 }
+
+// TextDecoder("utf-8", {ignoreBOM: true}) keeps a leading byte-order mark,
+// however the calls split it, and still decodes like Buffer.toString.
+func TestTextDecoderIgnoreBOMKeepsTheMark(t *testing.T) {
+	input := []byte("\xef\xbb\xbfa\xc3")
+	for split := 0; split <= len(input); split++ {
+		d := TextDecoder{IgnoreBOM: true}
+		got := d.Decode(input[:split]) + d.Decode(input[split:]) + d.Flush()
+		if want := "\ufeffa\ufffd"; got != want {
+			t.Errorf("split at %d: %q, want %q", split, got, want)
+		}
+		if !d.IgnoreBOM {
+			t.Errorf("Flush reset IgnoreBOM")
+		}
+	}
+}

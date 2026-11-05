@@ -57,6 +57,12 @@ type ReadOperations struct {
 	// DetectImageMimeType returns the image MIME type for a path, or "" for a
 	// non-image. Optional — nil uses the built-in detector, matching pi's `?`.
 	DetectImageMimeType func(ctx context.Context, absolutePath string) string
+	// CreateReadStream opens a file's contents as a stream. Optional (pi's
+	// `createReadStream?`, upstream 3a7bb6f48): when set, text files are read
+	// through it and only the lines that will be shown are kept in memory;
+	// nil reads the whole file with ReadFile. The read tool closes the stream
+	// and stops reading it when its context ends.
+	CreateReadStream func(ctx context.Context, absolutePath string) (io.ReadCloser, error)
 }
 
 // EditOperations are the file operations the edit tool performs.
@@ -359,7 +365,10 @@ type LsOperations struct {
 func DefaultReadOperations() ReadOperations {
 	return ReadOperations{
 		ReadFile: func(_ context.Context, p string) ([]byte, error) { return localReadFile(p) },
-		Access:   func(_ context.Context, p string) error { return accessReadable(p) },
+		CreateReadStream: func(_ context.Context, p string) (io.ReadCloser, error) {
+			return openLocalReadStream(p)
+		},
+		Access: func(_ context.Context, p string) error { return accessReadable(p) },
 		DetectImageMimeType: func(_ context.Context, p string) string {
 			return DetectSupportedImageMimeTypeFromFile(p)
 		},
