@@ -1041,9 +1041,7 @@ func buildOpenAIParams(model *ai.Model, req ai.TranscriptContext, opts *OpenAIOp
 	// pi (openai-completions.ts:510-515): prompt_cache_key needs a sessionId,
 	// but prompt_cache_retention is sent independently of any sessionId.
 	retention := resolveCacheRetention(opts.CacheRetention, opts.Env)
-	if opts.SessionID != "" &&
-		((strings.Contains(model.BaseURL, "api.openai.com") && retention != ai.CacheNone) ||
-			(retention == ai.CacheLong && compat.SupportsLongCacheRetention)) {
+	if opts.SessionID != "" && compat.sendsPromptCacheKey(model, retention) {
 		params["prompt_cache_key"] = clampPromptCacheKey(opts.SessionID)
 	}
 	if retention == ai.CacheLong && compat.SupportsLongCacheRetention {

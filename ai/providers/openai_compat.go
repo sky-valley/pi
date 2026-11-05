@@ -96,6 +96,13 @@ type openAICompletionsCompat struct {
 	// else sessionAffinityOpenAI.
 	SessionAffinityFormat string
 	CacheControlFormat    string // "" | "anthropic"
+	// PromptCacheKeyMode controls the prompt_cache_key request field (pi
+	// compat.promptCacheKeyMode, upstream 0f4d5e960). "" (pi's undefined) and
+	// "auto" send it to api.openai.com, or with long retention when
+	// SupportsLongCacheRetention is set; "enabled" sends it whenever caching
+	// is active, for compatible proxies; "disabled" never sends it. pi reads
+	// the key bare, without a detected default.
+	PromptCacheKeyMode string
 	// OpenRouterRouting is an arbitrary provider-routing object sent as `provider`.
 	OpenRouterRouting map[string]any
 	// HasOpenRouterRouting records that model.compat carried a non-null
@@ -125,6 +132,31 @@ type openAICompletionsCompat struct {
 	// `!== undefined`. An explicit JSON null therefore rides as `"priority":null`
 	// where a `??` key would have fallen through to its default.
 	HasVLLMPriority bool
+}
+
+// The values of compat.promptCacheKeyMode (pi 0f4d5e960).
+const (
+	promptCacheKeyAuto     = "auto"
+	promptCacheKeyEnabled  = "enabled"
+	promptCacheKeyDisabled = "disabled"
+)
+
+// sendsPromptCacheKey ports the openai-completions gate on prompt_cache_key:
+// caching must be active, and the mode either "enabled" or "auto" (pi's
+// `promptCacheKeyMode ?? "auto"`) with the native-OpenAI or long-retention
+// condition. Any other mode string, "disabled" included, sends none.
+func (c openAICompletionsCompat) sendsPromptCacheKey(model *ai.Model, retention ai.CacheRetention) bool {
+	if retention == ai.CacheNone {
+		return false
+	}
+	switch c.PromptCacheKeyMode {
+	case promptCacheKeyEnabled:
+		return true
+	case "", promptCacheKeyAuto:
+		return strings.Contains(model.BaseURL, "api.openai.com") ||
+			(retention == ai.CacheLong && c.SupportsLongCacheRetention)
+	}
+	return false
 }
 
 // detectOpenAICompat infers compatibility settings from provider + baseUrl,
@@ -244,6 +276,7 @@ func getOpenAICompat(model *ai.Model) openAICompletionsCompat {
 	applyCompat(o, "sendSessionAffinityHeaders", &c.SendSessionAffinityHeaders)
 	applyCompat(o, "sessionAffinityFormat", &c.SessionAffinityFormat)
 	applyCompat(o, "cacheControlFormat", &c.CacheControlFormat)
+	applyCompat(o, "promptCacheKeyMode", &c.PromptCacheKeyMode)
 	applyCompat(o, "vercelGatewayRouting", &c.VercelGatewayRouting)
 	// pi: openRouterRouting falls back to {} (an override always replaces). An
 	// explicit {} in model.compat is truthy in JS, so record its presence.

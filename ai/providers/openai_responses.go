@@ -81,6 +81,11 @@ type responsesCompat struct {
 	// SessionAffinityFormat selects the session-affinity header shape (pi
 	// SessionAffinityFormat). Auto-detected from provider/baseURL.
 	SessionAffinityFormat string
+	// PromptCacheKeyMode controls the prompt_cache_key request field (pi
+	// compat.promptCacheKeyMode, upstream 0f4d5e960): "auto" and "enabled"
+	// send it whenever caching is active, "disabled" never sends it, for
+	// compatible proxies that reject it. Default: "auto".
+	PromptCacheKeyMode string
 	// SupportsLongCacheRetention reports whether the provider supports long
 	// prompt cache retention. Upstream 17de82d7b: this is spelled
 	// `prompt_cache_options.ttl: "30m"` on GPT-5.6+ and
@@ -126,6 +131,7 @@ func getResponsesCompat(model *ai.Model) responsesCompat {
 	c := responsesCompat{
 		SupportsDeveloperRole:      true,
 		SessionAffinityFormat:      detectResponsesSessionAffinityFormat(model),
+		PromptCacheKeyMode:         promptCacheKeyAuto,
 		SupportsLongCacheRetention: true,
 		SupportsToolSearch:         false,
 		SupportsMaxOutputTokens:    true,
@@ -136,6 +142,7 @@ func getResponsesCompat(model *ai.Model) responsesCompat {
 	applyCompat(o, "supportsDeveloperRole", &c.SupportsDeveloperRole)
 	applyCompat(o, "supportsMidConvoSystemMessages", &c.SupportsMidConvoSystemMessages)
 	applyCompat(o, "sessionAffinityFormat", &c.SessionAffinityFormat)
+	applyCompat(o, "promptCacheKeyMode", &c.PromptCacheKeyMode)
 	applyCompat(o, "supportsLongCacheRetention", &c.SupportsLongCacheRetention)
 	applyCompat(o, "supportsStrictMode", &c.SupportsStrictMode)
 	applyCompat(o, "supportsOpenAIGrammarTools", &c.SupportsOpenAIGrammarTools)
@@ -1059,7 +1066,7 @@ func buildResponsesParams(model *ai.Model, req ai.TranscriptContext, opts *OpenA
 	omitUnsupported := isChatGPTSignIn(model, opts.APIKey)
 	// Prompt caching: route same-session requests to a stable cache key so OpenAI
 	// can reuse the cached system-prompt + tool prefix (latency/cost win).
-	if retention != ai.CacheNone && opts.SessionID != "" {
+	if retention != ai.CacheNone && compat.PromptCacheKeyMode != promptCacheKeyDisabled && opts.SessionID != "" {
 		params["prompt_cache_key"] = clampPromptCacheKey(opts.SessionID)
 	}
 	// pi getPromptCacheRetention (openai-responses.ts) sets prompt_cache_retention
