@@ -744,14 +744,15 @@ func TestReadDirectoryEISDIR(t *testing.T) {
 }
 
 func TestTruncateLineUTF16(t *testing.T) {
-	// 499 BMP chars + one astral char: utf16 length is 501 > 500; JS slice(0,500)
-	// splits the surrogate pair, leaving a lone high surrogate (→ U+FFFD).
+	// 499 BMP chars + one astral char: utf16 length is 501 > 500. Since
+	// upstream 9e870f6f0 pi's sliceHead leaves the straddling pair out whole
+	// (it used to split it, leaving a lone high surrogate, U+FFFD here).
 	line := strings.Repeat("x", 499) + "🎈"
 	got, was := TruncateLine(line, 0)
 	if !was {
 		t.Fatal("expected truncation (501 UTF-16 units)")
 	}
-	if want := strings.Repeat("x", 499) + "�" + "... [truncated]"; got != want {
+	if want := strings.Repeat("x", 499) + "... [truncated]"; got != want {
 		t.Fatalf("surrogate split\n got: %q\nwant: %q", got, want)
 	}
 	// Astral counts as 2 units: balloon + 499 x = 501 units → keeps balloon + 498 x.

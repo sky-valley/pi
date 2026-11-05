@@ -167,9 +167,10 @@ func truncateStringToBytesFromEnd(s string, maxBytes int) string {
 }
 
 // TruncateLine truncates a single line to maxChars, appending a marker.
-// maxChars counts UTF-16 code units like pi's `line.length`/`line.slice`
-// (astral characters count as 2). A slice that would split a surrogate pair
-// yields a lone high surrogate in JS, which serializes as U+FFFD.
+// maxChars counts UTF-16 code units like pi's `line.length` (astral
+// characters count as 2), and an astral character that would straddle the
+// limit is left out whole, as pi's sliceHead leaves out a surrogate pair
+// (upstream 9e870f6f0).
 func TruncateLine(line string, maxChars int) (string, bool) {
 	if maxChars == 0 {
 		maxChars = GrepMaxLineLength
@@ -177,25 +178,24 @@ func TruncateLine(line string, maxChars int) (string, bool) {
 	if jstext.UTF16Length(line) <= maxChars {
 		return line, false
 	}
-	var b strings.Builder
-	n := 0
-	for _, r := range line {
-		units := 1
+	return sliceHead(line, maxChars) + "... [truncated]", true
+}
+
+// sliceHead returns the longest prefix of s holding at most n UTF-16 code
+// units without splitting a character (pi sliceHead, core/tools/truncate.ts):
+// an astral rune counts as 2 units and is left out when it straddles the
+// boundary. A negative n gives "".
+func sliceHead(s string, n int) string {
+	units := 0
+	for i, r := range s {
+		w := 1
 		if r > 0xFFFF {
-			units = 2
+			w = 2
 		}
-		if n+units > maxChars {
-			if units == 2 && n+1 == maxChars {
-				// JS slice cuts mid-pair, leaving a lone high surrogate.
-				b.WriteRune('�')
-			}
-			break
+		if units+w > n {
+			return s[:i]
 		}
-		b.WriteRune(r)
-		n += units
-		if n == maxChars {
-			break
-		}
+		units += w
 	}
-	return b.String() + "... [truncated]", true
+	return s
 }

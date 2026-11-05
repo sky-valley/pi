@@ -1142,33 +1142,15 @@ func textOf(content ai.ContentList) string {
 }
 
 // truncateForSummary truncates text to maxChars UTF-16 code units, appending a
-// marker (utils.ts truncateForSummary; JS .length/.slice count UTF-16 units).
-// Unlike JS slice, a surrogate pair on the boundary is dropped whole rather than
-// split, so the output is always valid UTF-8.
+// marker (utils.ts truncateForSummary; JS .length counts UTF-16 units). A
+// surrogate pair on the boundary is dropped whole, as pi's sliceHead does
+// since 9e870f6f0.
 func truncateForSummary(text string, maxChars int) string {
 	length := jstext.UTF16Length(text)
 	if length <= maxChars {
 		return text
 	}
-	return sliceUTF16(text, maxChars) + fmt.Sprintf("\n\n[... %d more characters truncated]", length-maxChars)
-}
-
-// sliceUTF16 returns the longest prefix of s holding at most n UTF-16 code
-// units without splitting a rune (an astral rune counts as 2 units and is
-// excluded entirely when it straddles the boundary).
-func sliceUTF16(s string, n int) string {
-	units := 0
-	for i, r := range s {
-		w := 1
-		if r > 0xFFFF {
-			w = 2
-		}
-		if units+w > n {
-			return s[:i]
-		}
-		units += w
-	}
-	return s
+	return sliceHead(text, maxChars) + fmt.Sprintf("\n\n[... %d more characters truncated]", length-maxChars)
 }
 
 // fileOps mirrors pi's FileOperations (utils.ts createFileOps): three Sets.
