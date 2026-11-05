@@ -408,31 +408,31 @@ func TestClassifyShellRunPrecedence(t *testing.T) {
 	deadline := context.DeadlineExceeded
 
 	// Both fired: abort must win.
-	if _, err := classifyShellRun(canceled, deadline, nil, 2); !errors.Is(err, ErrShellAborted) {
+	if _, err := classifyShellRun(canceled, deadline, nil, 2, nil); !errors.Is(err, ErrShellAborted) {
 		t.Fatalf("abort+timeout = %v, want abort to win", err)
 	}
 	// Timeout alone.
 	var te *ShellTimeoutError
-	_, err := classifyShellRun(nil, deadline, nil, 0.5)
+	_, err := classifyShellRun(nil, deadline, nil, 0.5, nil)
 	if !errors.As(err, &te) || te.Seconds != 0.5 {
 		t.Fatalf("timeout alone = %v, want *ShellTimeoutError{0.5}", err)
 	}
 	// Abort alone.
-	if _, err := classifyShellRun(canceled, nil, nil, 0); !errors.Is(err, ErrShellAborted) {
+	if _, err := classifyShellRun(canceled, nil, nil, 0, nil); !errors.Is(err, ErrShellAborted) {
 		t.Fatalf("abort alone = %v", err)
 	}
 	// Clean exit.
-	if code, err := classifyShellRun(nil, nil, nil, 0); err != nil || code == nil || *code != 0 {
+	if code, err := classifyShellRun(nil, nil, nil, 0, nil); err != nil || code == nil || *code != 0 {
 		t.Fatalf("clean run = (%v, %v), want (0, nil)", code, err)
 	}
 	// A spawn failure that is not an ExitError passes through untouched.
 	boom := errors.New("exec: not found")
-	if _, err := classifyShellRun(nil, nil, boom, 0); !errors.Is(err, boom) {
+	if _, err := classifyShellRun(nil, nil, boom, 0, nil); !errors.Is(err, boom) {
 		t.Fatalf("spawn failure = %v, want it passed through", err)
 	}
 	// Abort is checked BEFORE the exit status: a non-zero exit alongside an
 	// abort must still report the abort.
-	if _, err := classifyShellRun(canceled, nil, errors.New("exit status 1"), 0); !errors.Is(err, ErrShellAborted) {
+	if _, err := classifyShellRun(canceled, nil, errors.New("exit status 1"), 0, nil); !errors.Is(err, ErrShellAborted) {
 		t.Fatalf("abort with a failing exit = %v, want abort", err)
 	}
 }

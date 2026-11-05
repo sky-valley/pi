@@ -12,6 +12,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/sky-valley/pi/internal/jstext"
 )
 
 // Pluggable operations for the built-in tools, ported from pi's per-tool
@@ -90,7 +92,20 @@ var ErrShellAborted = errors.New("aborted")
 // its timeout — pi's `throw new Error("timeout:<seconds>")` (bash.ts:464),
 // rendered as a typed error so the tool can recover the seconds with errors.As
 // instead of parsing a message.
-type ShellTimeoutError struct{ Seconds float64 }
+type ShellTimeoutError struct {
+	Seconds float64
+	// ShellExit is set when the shell itself exited before the deadline, so
+	// the command was only still running because background processes it
+	// started kept writing to the inherited output pipe (pi 06aa6563e, #11613).
+	ShellExit *ShellExit
+}
+
+// ShellExit is how a shell that exited before its timeout ended: its exit
+// code, and after how many seconds, rounded to a tenth.
+type ShellExit struct {
+	ExitCode     int
+	AfterSeconds float64
+}
 
 func (e *ShellTimeoutError) Error() string {
 	return "timeout:" + strconv.FormatFloat(e.Seconds, 'g', -1, 64)
@@ -219,9 +234,13 @@ func localShellOperations(shellName string, resolveShellConfig func() (ShellConf
 			// fds shortly after Wait returns so we never hang.
 			cmd.WaitDelay = time.Second
 
-			runErr := runBashCommand(cmd, onDataWriter(options.OnData))
+			var deadline <-chan struct{}
+			if timeoutSeconds > 0 {
+				deadline = runCtx.Done()
+			}
+			exitedBeforeDeadline, runErr := runBashCommand(cmd, onDataWriter(options.OnData), deadline)
 
-			return classifyShellRun(ctx.Err(), runCtx.Err(), runErr, timeoutSeconds)
+			return classifyShellRun(ctx.Err(), runCtx.Err(), runErr, timeoutSeconds, exitedBeforeDeadline)
 		},
 	}
 }
@@ -238,23 +257,30 @@ func localShellOperations(shellName string, resolveShellConfig func() (ShellConf
 //   - A signal-killed child takes 128 + the signal number (pi a8b3dd199,
 //     bash.ts:139 `exitCode ?? (signalCode ? 128 + signals[signalCode] : 1)`),
 //     so the termination is never mistaken for a clean exit.
-func classifyShellRun(ctxErr, runCtxErr, runErr error, timeoutSeconds float64) (*int, error) {
+//   - A timeout after the shell itself exited (exitedBeforeDeadline set)
+//     carries that exit's code and time (pi 06aa6563e).
+func classifyShellRun(ctxErr, runCtxErr, runErr error, timeoutSeconds float64, exitedBeforeDeadline *time.Duration) (*int, error) {
 	if ctxErr != nil {
 		return nil, ErrShellAborted
 	}
+	var code int
+	var exitErr *exec.ExitError
+	if errors.As(runErr, &exitErr) {
+		code = exitCode(exitErr.ProcessState)
+	}
 	if runCtxErr == context.DeadlineExceeded {
-		return nil, &ShellTimeoutError{Seconds: timeoutSeconds}
-	}
-	if runErr != nil {
-		var exitErr *exec.ExitError
-		if !errors.As(runErr, &exitErr) {
-			return nil, runErr
+		timeout := &ShellTimeoutError{Seconds: timeoutSeconds}
+		if exitedBeforeDeadline != nil {
+			// pi: Math.round(ms / 100) / 10.
+			ms := float64(*exitedBeforeDeadline) / float64(time.Millisecond)
+			timeout.ShellExit = &ShellExit{ExitCode: code, AfterSeconds: jstext.MathRound(ms/100) / 10}
 		}
-		code := exitCode(exitErr.ProcessState)
-		return &code, nil
+		return nil, timeout
 	}
-	zero := 0
-	return &zero, nil
+	if runErr != nil && exitErr == nil {
+		return nil, runErr
+	}
+	return &code, nil
 }
 
 // onDataWriter adapts pi's onData callback to the io.Writer runBashCommand

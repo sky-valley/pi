@@ -1098,7 +1098,14 @@ func createShellTool(cwd string, config shellToolConfig, options *BashToolOption
 					text, _ := formatOutput("")
 					// pi prints the raw timeout value (`timeout:${timeout}`), so 0.5
 					// renders "0.5" and 2 renders "2".
-					return agent.AgentToolResult{}, fmt.Errorf("%s", appendStatus(text, fmt.Sprintf("Command timed out after %s seconds", strconv.FormatFloat(timeoutErr.Seconds, 'g', -1, 64))))
+					status := fmt.Sprintf("Command timed out after %s seconds", strconv.FormatFloat(timeoutErr.Seconds, 'g', -1, 64))
+					if exit := timeoutErr.ShellExit; exit != nil {
+						// Both facts matter: the command's real result, and that its
+						// background processes were still writing output when the
+						// timeout hit (pi 06aa6563e, #11613).
+						status += fmt.Sprintf(". The shell exited with code %d after %s seconds, but background processes it started kept writing output until the timeout.", exit.ExitCode, jstext.NumberToString(exit.AfterSeconds))
+					}
+					return agent.AgentToolResult{}, fmt.Errorf("%s", appendStatus(text, status))
 				}
 				return agent.AgentToolResult{}, execErr
 			}
@@ -1204,12 +1211,17 @@ const bashExitStdioGrace = 100 * time.Millisecond
 // interleaving, like pi's shared onData handler), streams the merged output into
 // u, and waits for the process. After exit it drains the pipe on a re-arming
 // idle grace rather than a fixed deadline so output a detached descendant writes
-// past exit is captured (port of 3fa40956). It returns the same error cmd.Wait
-// would: nil or *exec.ExitError on a non-zero/​signalled exit.
-func runBashCommand(cmd *exec.Cmd, w io.Writer) error {
+// past exit is captured (port of 3fa40956). deadline is the command's timeout
+// (nil for none): when it passes after the shell exited, the process group is
+// still killed, so background processes holding the pipe stop writing (pi
+// kills the tree at the deadline whether or not the shell is still there).
+// It returns the same error cmd.Wait would — nil or *exec.ExitError on a
+// non-zero/​signalled exit — and, when the shell itself exited before the
+// deadline, how long after the start it did (pi 06aa6563e's shellExit).
+func runBashCommand(cmd *exec.Cmd, w io.Writer, deadline <-chan struct{}) (exitedBeforeDeadline *time.Duration, err error) {
 	pr, pw, err := os.Pipe()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	// Same *os.File on both keeps the child on one pipe so stderr interleaves
 	// with stdout in write order.
@@ -1218,8 +1230,9 @@ func runBashCommand(cmd *exec.Cmd, w io.Writer) error {
 	if err := cmd.Start(); err != nil {
 		pw.Close()
 		pr.Close()
-		return err
+		return nil, err
 	}
+	started := time.Now()
 	// The parent must drop its write end or pr never sees EOF.
 	pw.Close()
 
@@ -1247,6 +1260,15 @@ func runBashCommand(cmd *exec.Cmd, w io.Writer) error {
 	}()
 
 	waitErr := cmd.Wait()
+	select {
+	case <-deadline:
+		deadline = nil // it passed while the shell ran; os/exec already killed the tree
+	default:
+		if deadline != nil {
+			exited := time.Since(started)
+			exitedBeforeDeadline = &exited
+		}
+	}
 
 	// Process has exited. Drain any output still arriving, re-arming the idle
 	// grace per chunk; release on idle-grace OR pipe EOF (reader done).
@@ -1267,6 +1289,12 @@ drain:
 			timer.Reset(bashExitStdioGrace)
 		case <-timer.C:
 			break drain
+		case <-deadline:
+			// The shell exited but its background processes still hold the
+			// pipe: kill the group (on Unix it still reaches them) and keep
+			// draining what they wrote.
+			deadline = nil
+			_ = killProcessTree(cmd)
 		}
 	}
 	// Stop tracking the (possibly still-open) inherited handle and unblock the
@@ -1274,7 +1302,7 @@ drain:
 	// double-counted.
 	pr.Close()
 	<-readDone
-	return waitErr
+	return exitedBeforeDeadline, waitErr
 }
 
 func argFloat(params map[string]any, key string) (float64, bool) {
