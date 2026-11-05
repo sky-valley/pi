@@ -68,8 +68,13 @@ type openAICompletionsCompat struct {
 	RequiresReasoningContentOnAssistantMessages bool
 	RequiresToolResultName                      bool
 	RequiresAssistantAfterToolResult            bool
-	RequiresThinkingAsText                      bool
-	ZaiToolStream                               bool
+	// RequiresNonNullAssistantContent reports whether replayed assistant
+	// messages with no text (tool-call-only turns) must send "" instead of
+	// null content (pi compat.requiresNonNullAssistantContent, upstream
+	// 14b804d80). Default: false; detectCompat never sets it.
+	RequiresNonNullAssistantContent bool
+	RequiresThinkingAsText          bool
+	ZaiToolStream                   bool
 	// ThinkingTokenBudgetField is the top-level request field used to cap
 	// reasoning tokens from the caller's ThinkingBudgets (pi types.ts:596-606,
 	// upstream b23741269). Reasoning and the answer share max_tokens on these
@@ -196,6 +201,7 @@ func detectOpenAICompat(model *ai.Model) openAICompletionsCompat {
 		RequiresReasoningContentOnAssistantMessages: isDeepSeek,
 		RequiresToolResultName:                      false,
 		RequiresAssistantAfterToolResult:            false,
+		RequiresNonNullAssistantContent:             false,
 		RequiresThinkingAsText:                      false,
 		ZaiToolStream:                               false,
 		ThinkingTokenBudgetField:                    "",
@@ -230,6 +236,7 @@ func getOpenAICompat(model *ai.Model) openAICompletionsCompat {
 	applyCompat(o, "requiresReasoningContentOnAssistantMessages", &c.RequiresReasoningContentOnAssistantMessages)
 	applyCompat(o, "requiresToolResultName", &c.RequiresToolResultName)
 	applyCompat(o, "requiresAssistantAfterToolResult", &c.RequiresAssistantAfterToolResult)
+	applyCompat(o, "requiresNonNullAssistantContent", &c.RequiresNonNullAssistantContent)
 	applyCompat(o, "requiresThinkingAsText", &c.RequiresThinkingAsText)
 	applyCompat(o, "zaiToolStream", &c.ZaiToolStream)
 	applyCompat(o, "thinkingTokenBudgetField", &c.ThinkingTokenBudgetField)

@@ -812,7 +812,7 @@ func buildOpenAIParams(model *ai.Model, req ai.TranscriptContext, opts *OpenAIOp
 		} else if am, ok := asAssistantMsg(m); ok {
 			msg := map[string]any{"role": "assistant"}
 			// Some providers don't accept null content; use an empty string instead.
-			if compat.RequiresAssistantAfterToolResult {
+			if compat.RequiresAssistantAfterToolResult || compat.RequiresNonNullAssistantContent {
 				msg["content"] = ""
 			} else {
 				msg["content"] = nil
