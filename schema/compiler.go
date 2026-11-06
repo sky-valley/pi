@@ -176,13 +176,15 @@ func (c *compiler) plain(node *schemaObject, base string) check {
 		if str != nil {
 			parts = append(parts, str)
 		}
-		numeric := single == "number" || single == "integer"
+		numeric := single == "number" || single == "integer" || single == "bigint"
 		typ := othersPass
 		switch single {
 		case "number":
 			typ = numberOnly
 		case "integer":
 			typ = integerOnly
+		case "bigint":
+			typ = bigintOnly
 		}
 		num := numberGroup(node, typ)
 		if num != nil {
@@ -481,28 +483,28 @@ func (c *compiler) regex(source string) *pattern {
 }
 
 func numberGroup(node *schemaObject, typ numberType) check {
-	lo, hasLo := numberKw(node, "minimum")
-	hi, hasHi := numberKw(node, "maximum")
-	xlo, hasXlo := numberKw(node, "exclusiveMinimum")
-	xhi, hasXhi := numberKw(node, "exclusiveMaximum")
-	m, hasMultiple := numberKw(node, "multipleOf")
+	lo, hasLo := boundKw(node, "minimum")
+	hi, hasHi := boundKw(node, "maximum")
+	xlo, hasXlo := boundKw(node, "exclusiveMinimum")
+	xhi, hasXhi := boundKw(node, "exclusiveMaximum")
+	m, hasMultiple := boundKw(node, "multipleOf")
 	if !hasLo && !hasHi && !hasXlo && !hasXhi && !hasMultiple {
 		return nil
 	}
 	inf := math.Inf(1)
 	if !hasLo {
-		lo = -inf
+		lo = bound{f: -inf}
 	}
 	if !hasHi {
-		hi = inf
+		hi = bound{f: inf}
 	}
 	if !hasXlo {
-		xlo = -inf
+		xlo = bound{f: -inf}
 	}
 	if !hasXhi {
-		xhi = inf
+		xhi = bound{f: inf}
 	}
-	var multipleOf *float64
+	var multipleOf *bound
 	if hasMultiple {
 		multipleOf = &m
 	}
@@ -879,6 +881,12 @@ func setOf(keys ...string) map[string]bool {
 // numberKw is compiler.ts number(node[key]): the keyword when it is a number.
 func numberKw(node *schemaObject, key string) (float64, bool) {
 	return numberOf(node.kw(key))
+}
+
+// boundKw is compiler.ts bound(node[key]): the keyword when it is a number
+// or a bigint (TypeBox's Type.BigInt bounds).
+func boundKw(node *schemaObject, key string) (bound, bool) {
+	return boundOf(node.kw(key))
 }
 
 func numberOr(v any, fallback float64) float64 {

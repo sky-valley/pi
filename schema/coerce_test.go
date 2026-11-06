@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"math/big"
 	"strings"
 	"testing"
 	"time"
@@ -91,6 +92,55 @@ func TestParse(t *testing.T) {
 	if got := parseJSON(t, v, js(t, `{"count":"many","name":7}`)); got != `{"ok":false,"errors":[{"path":"/count","keyword":"type","message":"expected number, got string"}]}` {
 		t.Error(got)
 	}
+}
+
+// validate() (coerce.test.ts, since af79b0c3d) checks and explains without
+// coercing; the port's Errors already is that: nil for a valid value (which
+// is the caller's own), else its errors, with or without Options.Coerce.
+func TestErrorsChecksWithoutCoercing(t *testing.T) {
+	schema := Obj(Object{{"count", Num()}, {"tags", Arr(Str())}})
+	for _, opts := range []Options{{}, {Coerce: true}} {
+		v := mustCompile(t, schema, opts)
+		wantErrors(t, mustErrors(t, v, js(t, `{"count":42,"tags":["a"]}`)))
+		// Parse would turn "42" into 42 and "a" into ["a"]; Errors reports both.
+		wantErrors(t, mustErrors(t, v, js(t, `{"count":"42","tags":"a"}`)),
+			ValidationError{"/count", "type", "expected number, got string"},
+			ValidationError{"/tags", "type", "expected array, got string"})
+	}
+}
+
+// bigint and undefined, as TypeBox's Value.Convert (coerce.test.ts, since
+// af79b0c3d).
+func TestCoerceBigIntAndUndefined(t *testing.T) {
+	bigint := Object{{"type", "bigint"}}
+	t.Run("converts to a bigint like TypeBox's TryBigInt", func(t *testing.T) {
+		v := mustCompile(t, js(t, `{"type":"object","properties":{"n":{"type":"bigint","minimum":0}},"required":["n"]}`), Options{Coerce: true})
+		coerced, errs := mustParse(t, v, js(t, `{"n":"42"}`))
+		if n, ok := propOf(coerced, "n").(*big.Int); errs != nil || !ok || n.Cmp(big.NewInt(42)) != 0 {
+			t.Errorf("parse = %v, %v", coerced, errs)
+		}
+		for _, c := range []struct {
+			value any
+			want  int64
+		}{{"12n", 12}, {"12.9", 12}, {3.7, 3}, {true, 1}} {
+			if n, ok := coerceValue(t, bigint, c.value).(*big.Int); !ok || n.Cmp(big.NewInt(c.want)) != 0 {
+				t.Errorf("coerce %v = %v, want %dn", c.value, coerceValue(t, bigint, c.value), c.want)
+			}
+		}
+		if got := coerceValue(t, bigint, "x"); got != "x" {
+			t.Errorf("coerce x = %v", got)
+		}
+	})
+	t.Run("converts to undefined like TypeBox's TryUndefined", func(t *testing.T) {
+		for _, value := range []any{nil, 0.0, big.NewInt(0), false, "", "0", "null", "undefined"} {
+			if got := coerceValue(t, Object{{"type", "undefined"}}, value); got != Undefined {
+				t.Errorf("coerce %v = %v, want undefined", value, got)
+			}
+		}
+		if got := coerceValue(t, Object{{"type", "undefined"}}, "x"); got != "x" {
+			t.Errorf("coerce x = %v", got)
+		}
+	})
 }
 
 func TestOptionalNulls(t *testing.T) {

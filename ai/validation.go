@@ -158,25 +158,34 @@ func toSchemaValue(v any) any {
 }
 
 // fromSchemaValue is a coerced value back in encoding/json's shapes, the
-// shape ValidateToolArguments has always returned.
+// shape ValidateToolArguments has always returned. A property a schema
+// converted to undefined (`{"type":"undefined"}`, TypeBox's Type.Undefined,
+// takes null) is left out, and such an item is nil, as pi's arguments read
+// as JSON; a bigint (`{"type":"bigint"}`) stays a *big.Int.
 func fromSchemaValue(v any) any {
 	switch x := v.(type) {
 	case schema.Object:
 		m := make(map[string]any, len(x))
 		for _, f := range x {
-			m[f.Key] = fromSchemaValue(f.Value)
+			if f.Value != schema.Undefined {
+				m[f.Key] = fromSchemaValue(f.Value)
+			}
 		}
 		return m
 	case map[string]any:
 		m := make(map[string]any, len(x))
 		for k, e := range x {
-			m[k] = fromSchemaValue(e)
+			if e != schema.Undefined {
+				m[k] = fromSchemaValue(e)
+			}
 		}
 		return m
 	case []any:
 		out := make([]any, len(x))
 		for i, e := range x {
-			out[i] = fromSchemaValue(e)
+			if e != schema.Undefined {
+				out[i] = fromSchemaValue(e)
+			}
 		}
 		return out
 	}

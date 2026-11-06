@@ -2,6 +2,7 @@ package ai
 
 import (
 	"encoding/json"
+	"math/big"
 	"os"
 	"reflect"
 	"testing"
@@ -9,12 +10,12 @@ import (
 
 // validationErrorsCaptureFile is what testdata/validation-errors/capture.mjs
 // recorded from pi-ai's validateToolCall / validateToolArguments at src
-// 6536f8012 (the first pi-ai on pi-schema; no build ships it yet).
-const validationErrorsCaptureFile = "testdata/validation-errors/validation-errors-6536f8012.json"
+// 55a5c6914 (pi-ai on pi-schema since 6536f8012; no build ships it yet).
+const validationErrorsCaptureFile = "testdata/validation-errors/validation-errors-55a5c6914.json"
 
 // validationProbesCaptureFile is what testdata/validation-probes/capture.mjs
-// recorded from upstream's validation-probes.test.ts at 6536f8012.
-const validationProbesCaptureFile = "testdata/validation-probes/validation-probes-6536f8012.json"
+// recorded from upstream's validation-probes.test.ts at 55a5c6914.
+const validationProbesCaptureFile = "testdata/validation-probes/validation-probes-55a5c6914.json"
 
 // knownDivergentRows are capture rows the port answers differently, keyed by
 // "<schema> <arguments>", with the reason. The test asserts the port still
@@ -29,9 +30,12 @@ var knownDivergentRows = map[string]string{
 	`{"type":"array"} {}`: "non-object root",
 }
 
+// reparseJSON is v as the captures write a returned value:
+// JSON.stringify with a bigint as its digits and "n" (capture.mjs's
+// replacer), read back.
 func reparseJSON(t *testing.T, v any) any {
 	t.Helper()
-	data, err := json.Marshal(v)
+	data, err := json.Marshal(bigintsAsText(v))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -40,6 +44,26 @@ func reparseJSON(t *testing.T, v any) any {
 		t.Fatal(err)
 	}
 	return out
+}
+
+func bigintsAsText(v any) any {
+	switch x := v.(type) {
+	case *big.Int:
+		return x.String() + "n"
+	case map[string]any:
+		out := make(map[string]any, len(x))
+		for k, e := range x {
+			out[k] = bigintsAsText(e)
+		}
+		return out
+	case []any:
+		out := make([]any, len(x))
+		for i, e := range x {
+			out[i] = bigintsAsText(e)
+		}
+		return out
+	}
+	return v
 }
 
 func decodeCapturedValue(t *testing.T, text string) any {

@@ -1,5 +1,5 @@
 {
-	"sha": "6536f8012",
+	"sha": "55a5c6914",
 	"rows": [
 		{
 			"name": "cyclic",
@@ -59,13 +59,13 @@
 			"name": "bigint",
 			"parameters": "{\"type\":\"object\",\"required\":[\"n\"],\"properties\":{\"n\":{\"type\":\"bigint\"}}}",
 			"args": "{\"n\":1}",
-			"error": "Validation failed for tool \"bigint\":\n  - n: expected bigint, got integer\n\nReceived arguments:\n{\n  \"n\": 1\n}"
+			"value": "{\"n\":\"1n\"}"
 		},
 		{
 			"name": "bigint",
 			"parameters": "{\"type\":\"object\",\"required\":[\"n\"],\"properties\":{\"n\":{\"type\":\"bigint\"}}}",
 			"args": "{\"n\":\"12\"}",
-			"error": "Validation failed for tool \"bigint\":\n  - n: expected bigint, got string\n\nReceived arguments:\n{\n  \"n\": \"12\"\n}"
+			"value": "{\"n\":\"12n\"}"
 		},
 		{
 			"name": "refine",
@@ -881,13 +881,13 @@
 			"name": "BigInt from a JSON string",
 			"parameters": "{\"type\":\"object\",\"required\":[\"n\"],\"properties\":{\"n\":{\"type\":\"bigint\"}}}",
 			"args": "{\"n\":\"42\"}",
-			"error": "Validation failed for tool \"BigInt from a JSON string\":\n  - n: expected bigint, got string\n\nReceived arguments:\n{\n  \"n\": \"42\"\n}"
+			"value": "{\"n\":\"42n\"}"
 		},
 		{
 			"name": "Undefined from JSON null",
 			"parameters": "{\"type\":\"object\",\"required\":[\"n\"],\"properties\":{\"n\":{\"type\":\"undefined\"}}}",
 			"args": "{\"n\":null}",
-			"error": "Validation failed for tool \"Undefined from JSON null\":\n  - n: expected undefined, got null\n\nReceived arguments:\n{\n  \"n\": null\n}"
+			"value": "{}"
 		},
 		{
 			"name": "additionalProperties on declared properties",

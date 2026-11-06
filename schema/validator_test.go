@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
+	"math/big"
 	"reflect"
 	"slices"
 	"strings"
@@ -13,9 +15,8 @@ import (
 	"github.com/sky-valley/pi/internal/jstext"
 )
 
-// Ported from upstream's test/validator.test.ts at 6536f8012. Not ported:
-// "treats a property set to undefined as absent" (Go has no undefined), the
-// deep-frozen half of "compiles deep-frozen schemas" (Go values cannot be
+// Ported from upstream's test/validator.test.ts at 6536f8012, and its cases
+// added by af79b0c3d and 55a5c6914. Not ported: the deep-frozen half of "compiles deep-frozen schemas" (Go values cannot be
 // frozen; the never-modified half is kept), and "TypeBox's extra formats"
 // with "treats format as an annotation" against the real formats (the
 // format checks are schema/formats'; the annotation rule is tested here with
@@ -485,4 +486,102 @@ func TestCoerceNeedsTheOption(t *testing.T) {
 		}
 	}()
 	_, _ = mustCompile(t, true, Options{}).Coerce(1.0)
+}
+
+// TypeBox's JavaScript types (validator.test.ts, since af79b0c3d): a bigint
+// is a *big.Int, undefined is Undefined.
+func TestTypeBoxJavaScriptTypes(t *testing.T) {
+	n := big.NewInt
+	checks := func(t *testing.T, v *Validator, want bool, values ...any) {
+		t.Helper()
+		for _, value := range values {
+			if got := v.Check(value); got != want {
+				t.Errorf("check %s = %v, want %v", stringify(tag(value)), got, want)
+			}
+		}
+	}
+	t.Run("check Type.BigInt with its bounds, as TypeBox does", func(t *testing.T) {
+		v := mustCompile(t, Object{{"anyOf", []any{Object{{"type", "bigint"}, {"minimum", n(0)}}, Object{{"type", "null"}}}}}, Options{})
+		checks(t, v, true, n(5), n(0), nil)
+		checks(t, v, false, n(-1), 5.0, "5", Undefined)
+		checks(t, mustCompile(t, Object{{"type", "bigint"}, {"maximum", n(10)}, {"multipleOf", n(5)}}, Options{}), true, n(10))
+		checks(t, mustCompile(t, Object{{"type", "bigint"}, {"multipleOf", n(5)}}, Options{}), false, n(7))
+		checks(t, mustCompile(t, Object{{"type", "bigint"}, {"exclusiveMaximum", n(3)}}, Options{}), false, n(3))
+		wantErrors(t, mustErrors(t, mustCompile(t, Object{{"type", "bigint"}, {"minimum", n(0)}}, Options{}), n(-2)),
+			ValidationError{"", "minimum", "expected >= 0"})
+		wantErrors(t, mustErrors(t, mustCompile(t, Object{{"type", "bigint"}}, Options{}), 2.0),
+			ValidationError{"", "type", "expected bigint, got integer"})
+	})
+	t.Run("check Type.Undefined: only undefined, and a required property with it must be present", func(t *testing.T) {
+		checks(t, mustCompile(t, Object{{"type", "undefined"}}, Options{}), true, Undefined)
+		checks(t, mustCompile(t, Object{{"type", "undefined"}}, Options{}), false, nil)
+		v := mustCompile(t, js(t, `{"type":"object","properties":{"selection":{"const":"average"},"principalId":{"type":"undefined"}},"required":["selection","principalId"]}`), Options{})
+		checks(t, v, true, Object{{"selection", "average"}, {"principalId", Undefined}})
+		checks(t, v, false, Object{{"selection", "average"}}, Object{{"selection", "average"}, {"principalId", "x"}}, Object{{"selection", "average"}, {"principalId", nil}})
+		wantErrors(t, mustErrors(t, v, Object{{"selection", "average"}}), ValidationError{"/principalId", "required", "missing"})
+		wantErrors(t, mustErrors(t, v, Object{{"selection", "average"}, {"principalId", "x"}}),
+			ValidationError{"/principalId", "type", "expected undefined, got string"})
+	})
+	t.Run("check a required property set to undefined by its schema, as TypeBox does", func(t *testing.T) {
+		// Present and undefined: valid when the schema takes undefined
+		// (Undefined in a union, Unknown, Any: the last two are {}).
+		for _, property := range []any{js(t, `{"anyOf":[{"type":"string"},{"type":"undefined"}]}`), Object{}} {
+			for _, closed := range []bool{false, true} {
+				schema := Object{{"type", "object"}, {"properties", Object{{"a", property}}}, {"required", []any{"a"}}}
+				if closed {
+					schema = append(schema, Member{"additionalProperties", false})
+				}
+				v := mustCompile(t, schema, Options{})
+				checks(t, v, true, Object{{"a", Undefined}}, map[string]any{"a": Undefined})
+				checks(t, v, false, Object{})
+			}
+		}
+		// A required property whose schema does not take undefined stays
+		// missing when set to undefined.
+		name := mustCompile(t, js(t, `{"type":"object","properties":{"name":{"type":"string"}},"required":["name"]}`), Options{})
+		checks(t, name, false, Object{{"name", Undefined}})
+		wantErrors(t, mustErrors(t, name, Object{{"name", Undefined}}), ValidationError{"/name", "required", "missing"})
+		// An optional property set to undefined still counts as absent.
+		checks(t, mustCompile(t, js(t, `{"type":"object","properties":{"name":{"type":"string"}}}`), Options{}), true, Object{{"name", Undefined}})
+	})
+	t.Run("treats a property set to undefined as absent", func(t *testing.T) {
+		v := mustCompile(t, js(t, readSchema), Options{})
+		checks(t, v, true, Object{{"path", "a.ts"}, {"offset", Undefined}})
+		checks(t, v, false, Object{{"path", Undefined}})
+	})
+	t.Run("check multipleOf of bigints exactly, however large", func(t *testing.T) {
+		five := mustCompile(t, Object{{"type", "bigint"}, {"multipleOf", n(5)}}, Options{})
+		huge := new(big.Int).Exp(n(10), n(400), nil)
+		checks(t, five, true, huge)
+		checks(t, five, false, new(big.Int).Add(huge, n(1)))
+		// A bigint is no multiple of 0 or of a fraction.
+		checks(t, mustCompile(t, Object{{"multipleOf", n(0)}}, Options{}), false, n(4))
+		checks(t, mustCompile(t, Object{{"multipleOf", 0.5}}, Options{}), false, n(3))
+	})
+}
+
+// validator.test.ts (since 55a5c6914): a number is finite, as in TypeBox.
+func TestRejectsNaNAndInfinityAsANumberOrAnInteger(t *testing.T) {
+	schemas := []string{
+		`{"type":"number"}`,
+		`{"type":"integer"}`,
+		`{"type":"number","minimum":0}`,
+		`{"type":["number","string"]}`,
+		`{"anyOf":[{"type":"number"},{"type":"null"}]}`,
+		`{"type":"object","properties":{"a":{"type":"number"}}}`,
+	}
+	for _, text := range schemas {
+		v := mustCompile(t, js(t, text), Options{})
+		for _, f := range []float64{math.NaN(), math.Inf(1), math.Inf(-1)} {
+			value := any(f)
+			if strings.Contains(text, `"object"`) {
+				value = Object{{"a", f}}
+			}
+			if v.Check(value) {
+				t.Errorf("%s: check %v = true", text, f)
+			}
+		}
+	}
+	wantErrors(t, mustErrors(t, mustCompile(t, Object{{"type", "number"}}, Options{}), math.NaN()),
+		ValidationError{"", "type", "expected number, got NaN"})
 }

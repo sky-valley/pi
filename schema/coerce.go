@@ -344,6 +344,14 @@ func (r *coerceRun) convertNode(node *schemaObject, b string, value any) any {
 		if tryNull(value) {
 			return nil
 		}
+	case typ == "bigint":
+		if n, ok := tryBigInt(value); ok {
+			return n
+		}
+	case typ == "undefined":
+		if tryUndefined(value) {
+			return undefined
+		}
 	case typ == "array":
 		return r.convertArray(node, b, value)
 	case typ == "object":
@@ -699,6 +707,8 @@ func convertLiteral(literal, value any) any {
 		}
 	case isBoolean(literal):
 		result, ok = tryBoolean(value)
+	case isBigInt(literal):
+		result, ok = tryBigInt(value)
 	}
 	if ok && strictEquals(result, literal) {
 		return result
@@ -707,6 +717,9 @@ func convertLiteral(literal, value any) any {
 }
 
 func tryString(value any) (string, bool) {
+	if n, ok := bigintOf(value); ok {
+		return n.String(), true
+	}
 	switch x := value.(type) {
 	case bool:
 		return jsString(x), true
@@ -729,6 +742,12 @@ var (
 )
 
 func tryNumber(value any) (float64, bool) {
+	if n, ok := bigintOf(value); ok {
+		if n.Cmp(maxSafe) <= 0 && n.Cmp(minSafe) >= 0 {
+			return float64(n.Int64()), true
+		}
+		return 0, false
+	}
 	switch x := value.(type) {
 	case bool:
 		if x {
@@ -781,7 +800,68 @@ func bigIntOfString(value string) (*big.Int, bool) {
 	return new(big.Int).SetString(digits, 10)
 }
 
+// tryBigInt is TypeBox's TryBigInt: booleans to 1n and 0n, numbers
+// truncated, null and undefined to 0n, bigint-like strings.
+func tryBigInt(value any) (*big.Int, bool) {
+	if n, ok := bigintOf(value); ok {
+		return n, true
+	}
+	switch x := value.(type) {
+	case bool:
+		if x {
+			return big.NewInt(1), true
+		}
+		return new(big.Int), true
+	case nil, undefinedValue:
+		return new(big.Int), true
+	case string:
+		if n, ok := bigIntOfString(x); ok {
+			return n, true
+		}
+		switch jstext.ToLower(x) {
+		case "false":
+			return new(big.Int), true
+		case "true":
+			return big.NewInt(1), true
+		}
+		return nil, false
+	}
+	if f, ok := numberOf(value); ok && isFinite(f) {
+		n, _ := new(big.Float).SetFloat64(math.Trunc(f)).Int(nil)
+		return n, true
+	}
+	return nil, false
+}
+
+// tryUndefined is TypeBox's TryUndefined: whether value converts to
+// undefined (0n, false, 0, null, "undefined", "null", "" and "0" do).
+func tryUndefined(value any) bool {
+	if n, ok := bigintOf(value); ok {
+		return n.Sign() == 0
+	}
+	switch x := value.(type) {
+	case nil, undefinedValue:
+		return true
+	case bool:
+		return !x
+	case string:
+		lower := jstext.ToLower(x)
+		return lower == "undefined" || lower == "null" || x == "" || x == "0"
+	}
+	f, ok := numberOf(value)
+	return ok && f == 0
+}
+
 func tryBoolean(value any) (bool, bool) {
+	if n, ok := bigintOf(value); ok {
+		switch {
+		case n.Sign() == 0:
+			return false, true
+		case n.IsInt64() && n.Int64() == 1:
+			return true, true
+		}
+		return false, false
+	}
 	switch x := value.(type) {
 	case bool:
 		return x, true
@@ -810,6 +890,9 @@ func tryBoolean(value any) (bool, bool) {
 
 // tryNull reports whether value converts to null.
 func tryNull(value any) bool {
+	if n, ok := bigintOf(value); ok {
+		return n.Sign() == 0
+	}
 	switch x := value.(type) {
 	case bool:
 		return !x
@@ -823,11 +906,6 @@ func tryNull(value any) bool {
 		return f == 0
 	}
 	return false
-}
-
-func isFiniteNumber(v any) bool {
-	f, ok := numberOf(v)
-	return ok && isFinite(f)
 }
 
 // typeNames is the string members of `type`.
@@ -850,7 +928,7 @@ func typeNames(node *schemaObject) []string {
 func matchesType(value any, typ string) bool {
 	switch typ {
 	case "number":
-		return isNumber(value)
+		return isFiniteNumber(value)
 	case "integer":
 		return isInteger(value)
 	case "boolean":
@@ -859,6 +937,10 @@ func matchesType(value any, typ string) bool {
 		return isString(value)
 	case "null":
 		return value == nil
+	case "bigint":
+		return isBigInt(value)
+	case "undefined":
+		return value == undefined
 	case "array":
 		return isArray(value)
 	case "object":

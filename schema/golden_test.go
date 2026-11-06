@@ -2,6 +2,7 @@ package schema
 
 import (
 	"math"
+	"math/big"
 	"os"
 	"slices"
 	"strings"
@@ -10,12 +11,12 @@ import (
 	"github.com/sky-valley/pi/internal/jstext"
 )
 
-// The differential golden: testdata/golden/capture-6536f8012.json, written by
-// testdata/golden/capture.mjs from upstream's src at 6536f8012. Each test
+// The differential golden: testdata/golden/capture-55a5c6914.json, written by
+// testdata/golden/capture.mjs from upstream's src at 55a5c6914. Each test
 // replays one section and compares, as JSON text with key order kept, what
 // the port returns with what upstream returned.
 
-const goldenFile = "testdata/golden/capture-6536f8012.json"
+const goldenFile = "testdata/golden/capture-55a5c6914.json"
 
 // goldenFormats are capture.mjs's stand-in formats.
 var goldenFormats = map[string]FormatCheck{
@@ -73,6 +74,12 @@ func untag(v any) any {
 				return math.Inf(1)
 			case "-Infinity":
 				return math.Inf(-1)
+			case "bigint":
+				n, ok := new(big.Int).SetString(field(x, "v").(string), 10)
+				if !ok {
+					return unsupportedValue{}
+				}
+				return n
 			case "bytes":
 				items := field(x, "v").([]any)
 				b := make([]byte, len(items))
@@ -99,8 +106,7 @@ func untag(v any) any {
 	return v
 }
 
-// unsupportedValue is a tagged value the port has no form for (a bigint, a
-// symbol).
+// unsupportedValue is a tagged value the port has no form for (a symbol).
 type unsupportedValue struct{}
 
 func hasUnsupported(v any) bool {
@@ -141,6 +147,8 @@ func tag(v any) any {
 	switch x := v.(type) {
 	case undefinedValue:
 		return Object{{"$", "undefined"}}
+	case *big.Int:
+		return Object{{"$", "bigint"}, {"v", x.String()}}
 	case []byte:
 		items := make([]any, len(x))
 		for i, b := range x {
@@ -380,10 +388,10 @@ func TestTypeBoxConvertMatchesUpstream(t *testing.T) {
 		value := untag(field(r, "value"))
 		want := untag(field(r, "result"))
 		if hasUnsupported(schema) || hasUnsupported(value) || hasUnsupported(want) {
-			unsupported++ // a bigint: no Go form
+			unsupported++ // a symbol: no Go form
 			continue
 		}
-		if strings.Contains(stringify(schema), `"format"`) {
+		if strings.Contains(stringify(tag(schema)), `"format"`) {
 			t.Fatalf("%s: the schema has a format; replay it with real formats", name)
 		}
 		c := newCompiler(toTree(schema), &treeOptions{draft: Draft2020}, false)
@@ -395,7 +403,7 @@ func TestTypeBoxConvertMatchesUpstream(t *testing.T) {
 		replayed++
 	}
 	skipped, _ := golden.Get("typeboxSkipped")
-	t.Logf("TypeBox Value.Convert: %d calls replayed, %d with a bigint skipped, %d tests upstream skips", replayed, unsupported, len(skipped.([]any)))
+	t.Logf("TypeBox Value.Convert: %d calls replayed, %d unsupported skipped, %d tests upstream skips", replayed, unsupported, len(skipped.([]any)))
 	if replayed < 200 {
 		t.Fatalf("only %d TypeBox rows replayed", replayed)
 	}

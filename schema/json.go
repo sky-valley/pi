@@ -20,12 +20,17 @@ import (
 // own-key order, numbers as JavaScript writes them, a non-finite number as
 // null, half a surrogate pair as its \u escape, bytes as the object of index
 // keys a Uint8Array is. It writes what jstext.Stringify cannot: an Object's
-// order and WTF-8 surrogates.
+// order and WTF-8 surrogates. A bigint fails (panics with) V8's TypeError,
+// which JSON.stringify throws: the compile, errors() and parse() that embed
+// one (a bigint `const`) throw it upstream.
 func stringify(v any) string {
 	var b strings.Builder
 	writeJSON(&b, v)
 	return b.String()
 }
+
+// errBigIntJSON is V8's TypeError of JSON.stringify of a bigint.
+var errBigIntJSON = errors.New("Do not know how to serialize a BigInt")
 
 func writeJSON(b *strings.Builder, v any) {
 	if f, ok := numberOf(v); ok {
@@ -35,6 +40,9 @@ func writeJSON(b *strings.Builder, v any) {
 			b.WriteString("null")
 		}
 		return
+	}
+	if _, ok := bigintOf(v); ok {
+		fail(errBigIntJSON)
 	}
 	switch x := v.(type) {
 	case nil:

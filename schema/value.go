@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"encoding/json"
 	"math"
+	"math/big"
 	"reflect"
 	"slices"
 	"strconv"
@@ -18,7 +19,11 @@ import (
 // string (UTF-8, half a surrogate pair as its WTF-8 triple, as
 // internal/jstext holds one), []any, []byte (pi-schema's "bytes", a
 // Uint8Array upstream) and an object: an Object, whose members keep the
-// own-key order a JavaScript object lists, or a map[string]any.
+// own-key order a JavaScript object lists, or a map[string]any. Two
+// JavaScript values that JSON never holds extend it, for values built in
+// code and for TypeBox's Type.BigInt and Type.Undefined: a *big.Int is a
+// bigint (`{"type":"bigint"}`), and Undefined is undefined
+// (`{"type":"undefined"}`).
 //
 // A Go map has no insertion order, so a map[string]any lists its keys the
 // way a JavaScript object would if its keys had been added in sorted order:
@@ -54,16 +59,50 @@ func (o Object) Get(key string) (any, bool) {
 }
 
 // MarshalJSON writes the object as JSON.stringify does: members in order,
-// numbers as JavaScript writes them, a non-finite number as null.
-func (o Object) MarshalJSON() ([]byte, error) {
+// numbers as JavaScript writes them, a non-finite number as null, a member
+// set to Undefined left out. A bigint fails it, as JSON.stringify throws.
+func (o Object) MarshalJSON() (out []byte, err error) {
+	defer func() {
+		if p := recover(); p != nil {
+			ce, ok := p.(*compileError)
+			if !ok {
+				panic(p)
+			}
+			err = ce.err
+		}
+	}()
 	return []byte(stringify(o)), nil
 }
 
-// undefinedValue stands for JavaScript's undefined where a coercion reads a
-// property an object does not have; it never leaves the package.
+// undefinedValue is the type of Undefined.
 type undefinedValue struct{}
 
-var undefined any = undefinedValue{}
+// Undefined is JavaScript's undefined. A property set to it is present, as
+// `{ a: undefined }` has the key a: an optional one counts as absent, and a
+// required one is valid where its schema takes undefined (`{}`, or a union
+// with `{"type":"undefined"}`). Decode never produces it; Coerce and Parse
+// return it where a schema converts to it (`{"type":"undefined"}` takes
+// null, "", 0, false and the like), and JSON (Object.MarshalJSON) leaves
+// out a property set to it.
+var Undefined = undefinedValue{}
+
+// undefined is Undefined as the package compares it: also what a read of a
+// property an object does not have returns (propOf), as in JavaScript.
+var undefined any = Undefined
+
+// bigintOf returns v as the bigint it is, and whether it is one (typeof v
+// === "bigint").
+func bigintOf(v any) (*big.Int, bool) {
+	n, ok := v.(*big.Int)
+	return n, ok && n != nil
+}
+
+// Equal is JSON equality, as const, enum and uniqueItems compare (checks.ts
+// deepEqual, exported as equal): the same primitives, arrays with equal
+// items in order, objects with the same keys and equal values, whatever
+// their order or kind (an Object equals a map[string]any with its members).
+// On JSON values it answers as TypeBox's Value.Equal does.
+func Equal(a, b any) bool { return deepEqual(a, b) }
 
 // numberOf returns v as the JavaScript number it denotes, and whether v is a
 // number at all (typeof v === "number").
@@ -102,6 +141,13 @@ func numberOf(v any) (float64, bool) {
 func isNumber(v any) bool {
 	_, ok := numberOf(v)
 	return ok
+}
+
+// isFiniteNumber is Number.isFinite: a number, not NaN or ±Infinity (the
+// `number` type, since 55a5c6914).
+func isFiniteNumber(v any) bool {
+	f, ok := numberOf(v)
+	return ok && isFinite(f)
 }
 
 // isInteger is Number.isInteger.
@@ -245,6 +291,10 @@ func strictEquals(a, b any) bool {
 		y, ok := numberOf(b)
 		return ok && x == y
 	}
+	if x, ok := bigintOf(a); ok {
+		y, ok := bigintOf(b)
+		return ok && x.Cmp(y) == 0
+	}
 	switch x := a.(type) {
 	case nil:
 		return b == nil
@@ -308,6 +358,9 @@ func identityOf(v any) (identity, bool) {
 // nanKey stands for NaN in a SameValueZero-keyed map, where NaN is one key.
 type nanKey struct{}
 
+// bigintKey is a bigint in a SameValueZero-keyed map: its digits.
+type bigintKey string
+
 // zeroKey is v as a key with SameValueZero equality (Map and Set keys): a
 // number as its float64 (-0 as 0, NaN as one key), an object or array by
 // identity, any other primitive as itself. ok is false for a value with
@@ -321,6 +374,9 @@ func zeroKey(v any) (any, bool) {
 			f = 0
 		}
 		return f, true
+	}
+	if n, ok := bigintOf(v); ok {
+		return bigintKey(n.String()), true
 	}
 	switch v.(type) {
 	case nil, bool, string, undefinedValue:
@@ -398,6 +454,9 @@ func bytesObject(b []byte) Object {
 func jsString(v any) string {
 	if f, ok := numberOf(v); ok {
 		return jstext.NumberToString(f)
+	}
+	if n, ok := bigintOf(v); ok {
+		return n.String()
 	}
 	switch x := v.(type) {
 	case nil:

@@ -1,5 +1,5 @@
 // Package schema mirrors upstream's packages/schema (@earendil-works/pi-schema)
-// at 6536f8012: JSON Schema validation, drafts 2020-12 and 7, compiled once
+// at 55a5c6914: JSON Schema validation, drafts 2020-12 and 7, compiled once
 // into closures. Compile builds a Validator whose Check is the boolean fast
 // path and whose Errors explains a failure as JSON Pointer paths, keywords
 // and messages — text pi-ai hands to the model, so it, and its order, follow
@@ -46,7 +46,8 @@
 //     not a function".
 //   - A map[string]any has no key order; its keys are listed as a
 //     JavaScript object would list keys added in sorted order (value.go).
-//   - Go has no undefined: a property is either present or absent.
+//   - JavaScript's undefined is the Undefined value and a bigint a *big.Int
+//     (value.go), which JSON never holds; a nil *big.Int is no bigint.
 //   - The regular-expression cache keeps its entries, where upstream's holds
 //     them weakly; the TypeScript type inference (Static, StaticObject) has
 //     no Go form.

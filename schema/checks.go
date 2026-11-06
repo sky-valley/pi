@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"cmp"
 	"math"
 	"math/big"
 	"strings"
@@ -39,18 +40,30 @@ func isBytes(v any) bool {
 	return ok
 }
 
+func isBigInt(v any) bool {
+	_, ok := bigintOf(v)
+	return ok
+}
+
+func isUndefined(v any) bool { return v == undefined }
+
 // typeChecks is checks.ts TYPE_CHECKS: the check of a `type` name. `bytes` (a
-// []byte, a Uint8Array upstream) extends JSON Schema for values that never
-// pass through JSON.
+// []byte, a Uint8Array upstream), `bigint` (a *big.Int, TypeBox's
+// Type.BigInt) and `undefined` (Undefined, TypeBox's Type.Undefined) extend
+// JSON Schema for values that never pass through JSON. A `number` is finite,
+// as in TypeBox: JSON has no NaN or Infinity, so only a value built in code
+// can be one.
 var typeChecks = map[string]check{
-	"string":  isString,
-	"number":  isNumber,
-	"integer": isInteger,
-	"boolean": isBoolean,
-	"null":    isNull,
-	"array":   isArray,
-	"object":  isObject,
-	"bytes":   isBytes,
+	"string":    isString,
+	"number":    isFiniteNumber,
+	"integer":   isInteger,
+	"boolean":   isBoolean,
+	"null":      isNull,
+	"array":     isArray,
+	"object":    isObject,
+	"bytes":     isBytes,
+	"bigint":    isBigInt,
+	"undefined": isUndefined,
 }
 
 // guard is whether a combined object or array check also checks the type: not
@@ -174,31 +187,132 @@ func stringCheck(strict bool, lo, hi float64, re *pattern, format FormatCheck) c
 }
 
 // numberType is what the number keywords' check asks of the type: nothing
-// (other types pass), a number, or an integer.
+// (other types pass), a number, an integer, or a bigint.
 type numberType int
 
 const (
 	othersPass numberType = iota
 	numberOnly
 	integerOnly
+	bigintOnly
 )
 
-// numberCheck is the number keywords.
-func numberCheck(typ numberType, lo, hi, xlo, xhi float64, multipleOf *float64) check {
+// bound is a number keyword's value, or a value the number keywords check
+// (checks.ts Bound): a number, or a bigint when n is set (TypeBox's
+// Type.BigInt writes its bounds as bigints).
+type bound struct {
+	f float64
+	n *big.Int
+}
+
+// boundOf is v as a bound: a number or a bigint.
+func boundOf(v any) (bound, bool) {
+	if n, ok := bigintOf(v); ok {
+		return bound{n: n}, true
+	}
+	f, ok := numberOf(v)
+	return bound{f: f}, ok
+}
+
+// compareBounds compares a and b exactly, as JavaScript's relational
+// operators compare numbers and bigints of either kind; ok is false where a
+// NaN makes every comparison false.
+func compareBounds(a, b bound) (c int, ok bool) {
+	switch {
+	case a.n == nil && b.n == nil:
+		if math.IsNaN(a.f) || math.IsNaN(b.f) {
+			return 0, false
+		}
+		return cmp.Compare(a.f, b.f), true
+	case a.n != nil && b.n != nil:
+		return a.n.Cmp(b.n), true
+	case a.n != nil:
+		c, ok := compareBounds(b, a)
+		return -c, ok
+	}
+	switch {
+	case math.IsNaN(a.f):
+		return 0, false
+	case math.IsInf(a.f, 1):
+		return 1, true
+	case math.IsInf(a.f, -1):
+		return -1, true
+	}
+	return new(big.Float).SetFloat64(a.f).Cmp(new(big.Float).SetInt(b.n)), true
+}
+
+// inBounds is `v >= lo && v <= hi && v > xlo && v < xhi`.
+func inBounds(v, lo, hi, xlo, xhi bound) bool {
+	c, ok := compareBounds(v, lo)
+	if !ok || c < 0 {
+		return false
+	}
+	if c, ok = compareBounds(v, hi); !ok || c > 0 {
+		return false
+	}
+	if c, ok = compareBounds(v, xlo); !ok || c <= 0 {
+		return false
+	}
+	c, ok = compareBounds(v, xhi)
+	return ok && c < 0
+}
+
+// numberCheck is the number keywords, for numbers and bigints alike (as
+// TypeBox applies them): bounds of either kind compare with values of either
+// kind.
+func numberCheck(typ numberType, lo, hi, xlo, xhi bound, multipleOf *bound) check {
 	return func(v any) bool {
-		f, ok := numberOf(v)
+		x, ok := boundOf(v)
 		if !ok {
 			return typ == othersPass
 		}
-		if typ == integerOnly && !isIntegral(f) {
-			return false
+		switch typ {
+		case bigintOnly:
+			if x.n == nil {
+				return false
+			}
+		case numberOnly, integerOnly:
+			if x.n != nil || !isFinite(x.f) || (typ == integerOnly && !isIntegral(x.f)) {
+				return false
+			}
 		}
-		return f >= lo && f <= hi && f > xlo && f < xhi && (multipleOf == nil || isMultiple(f, *multipleOf))
+		return inBounds(x, lo, hi, xlo, xhi) && (multipleOf == nil || isMultipleBound(x, *multipleOf))
 	}
 }
 
-// isMultiple is checks.ts isMultiple: whether v is a multiple of d, exactly
-// for decimals (0.0075 / 0.0001 is 74.99999999999999 in floating point).
+// isMultipleBound is checks.ts isMultiple of a number or a bigint: with a
+// bigint on either side, exact integer arithmetic, and a bigint is no
+// multiple of 0 or of a fraction. Deliberately unlike TypeBox, which throws
+// there (`BigInt(0.5)`, division by zero), as upstream's is: a check answers
+// for every value and never throws.
+func isMultipleBound(v, d bound) bool {
+	if v.n == nil && d.n == nil {
+		return isMultiple(v.f, d.f)
+	}
+	vi, ok := integerOf(v)
+	if !ok {
+		return false
+	}
+	di, ok := integerOf(d)
+	return ok && di.Sign() != 0 && new(big.Int).Rem(vi, di).Sign() == 0
+}
+
+// integerOf is BigInt(b) of an integral bound; ok is false for a number that
+// is not an integer.
+func integerOf(b bound) (*big.Int, bool) {
+	if b.n != nil {
+		return b.n, true
+	}
+	if !isIntegral(b.f) {
+		return nil, false
+	}
+	n, _ := new(big.Float).SetFloat64(b.f).Int(nil)
+	return n, true
+}
+
+// isMultiple is checks.ts isMultiple of two numbers: whether v is a multiple
+// of d, exactly for decimals (0.0075 / 0.0001 is 74.99999999999999 in
+// floating point).
 func isMultiple(v, d float64) bool {
 	q := v / d
 	if isIntegral(q) {
@@ -265,7 +379,7 @@ type declared struct {
 
 // declaredObject is an object with declared properties only: each own key
 // is found among them, `closed` rejects any other key, and the required ones
-// must all be there.
+// must all be there. An optional property set to Undefined counts as absent.
 func declaredObject(entries []declared, requiredCount int, closed bool, g guard) check {
 	at := make(map[string]int, len(entries))
 	for i, e := range entries {
@@ -284,6 +398,13 @@ func declaredObject(entries []declared, requiredCount int, closed bool, g guard)
 			if !found {
 				ok = !closed
 				return ok
+			}
+			// An optional property set to undefined counts as absent; a
+			// required one is present, and its schema decides whether
+			// undefined is a value of it (TypeBox's Type.Undefined,
+			// Unknown, Any).
+			if x == undefined && !entries[i].required {
+				return true
 			}
 			if !entries[i].check(x) {
 				ok = false
@@ -320,7 +441,9 @@ func openObject(entries []declared, keys, extraRequired []string, patterns []pat
 		}
 		for _, e := range entries {
 			x, ok := getOwn(v, e.key)
-			if !ok {
+			// Absent, or an optional property set to undefined (which
+			// counts as absent); see declaredObject.
+			if !ok || (x == undefined && !e.required) {
 				if e.required {
 					return false
 				}

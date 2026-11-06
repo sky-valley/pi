@@ -1,5 +1,7 @@
 package schema
 
+import "slices"
+
 // The schema builders (builders.ts): short functions that return plain JSON
 // Schema objects. Upstream's builders also carry the static type of the
 // values a schema accepts (Static, StaticObject); that is TypeScript type
@@ -72,6 +74,23 @@ func Map(value Object, opts ...Member) Object {
 // Bytes is a []byte (a Uint8Array upstream) with optional length bounds: an
 // extension of JSON Schema for values that never pass through JSON.
 func Bytes(opts ...Member) Object { return spread(Object{{"type", "bytes"}}, opts) }
+
+// BigInt is a bigint (a *big.Int; builders.ts bigint, TypeBox's
+// Type.BigInt) within optional bounds, given as *big.Int members
+// (Member{"minimum", big.NewInt(0)}) or as numbers: an extension of JSON
+// Schema for values that never pass through JSON, such as 64-bit integers a
+// Parquet reader decodes.
+func BigInt(opts ...Member) Object { return spread(Object{{"type", "bigint"}}, opts) }
+
+// Recursive is a schema that contains itself, as a tree's children are
+// trees (builders.ts recursive): build receives a reference to the schema
+// it returns, Recursive("Tree", func(tree Object) Object { return
+// Obj(Object{{"name", Str()}, {"children", Arr(tree)}}) }). id becomes the
+// schema's `$id` and the target of the reference, so it must be unique
+// among the recursive schemas within one schema.
+func Recursive(id string, build func(self Object) Object) Object {
+	return spread(slices.Clone(build(Object{{"$ref", id}})), []Member{{"$id", id}})
+}
 
 // Optional marks a property of Obj as optional (builders.ts Optional).
 type Optional struct {

@@ -168,3 +168,27 @@ func TestDecodeOrdersIndexKeys(t *testing.T) {
 		t.Errorf("got %s, want %s", got, want)
 	}
 }
+
+// equal.test.ts (since af79b0c3d): Equal is JSON equality, a drop-in for
+// TypeBox's Value.Equal; the wants are Value.Equal's.
+func TestEqualComparesJSONValuesStructurally(t *testing.T) {
+	for _, c := range []struct {
+		a, b any
+		want bool
+	}{
+		{1.0, 1.0, true},
+		{"a", "b", false},
+		{nil, nil, true},
+		{nil, Undefined, false},
+		{js(t, `{"a":1,"b":[1,{"c":2}]}`), js(t, `{"b":[1,{"c":2}],"a":1}`), true},
+		{js(t, `{"a":1}`), js(t, `{"a":1,"b":2}`), false},
+		{js(t, `[1,2]`), js(t, `[2,1]`), false},
+		{js(t, `[1]`), js(t, `{"0":1}`), false},
+		{js(t, `{}`), js(t, `[]`), false},
+		{Object{{"a", Undefined}}, Object{}, false},
+	} {
+		if got := Equal(c.a, c.b); got != c.want {
+			t.Errorf("Equal(%s, %s) = %v", stringify(c.a), stringify(c.b), got)
+		}
+	}
+}

@@ -137,8 +137,8 @@ func (e *explainRun) walk(v any, base string, value any, path string, out *[]Val
 	if bs, ok := value.([]byte); ok && node.kw("type") == "bytes" {
 		e.walkBytes(node, bs, push)
 	}
-	if f, ok := numberOf(value); ok {
-		walkNumber(node, f, push)
+	if x, ok := boundOf(value); ok {
+		walkNumber(node, x, push)
 	}
 	if isObject(value) {
 		e.walkObject(node, b, value, path, out, push)
@@ -240,22 +240,40 @@ func (e *explainRun) walkBytes(node *schemaObject, v []byte, push func(string, s
 	}
 }
 
-func walkNumber(node *schemaObject, v float64, push func(string, string)) {
-	if x, ok := numberKw(node, "minimum"); ok && v < x {
-		push("minimum", "expected >= "+jstext.NumberToString(x))
+// walkNumber explains the number keywords, for numbers and bigints alike:
+// bounds of either kind compare with values of either kind.
+func walkNumber(node *schemaObject, v bound, push func(string, string)) {
+	if x, ok := boundKw(node, "minimum"); ok {
+		if c, ok := compareBounds(v, x); ok && c < 0 {
+			push("minimum", "expected >= "+boundString(x))
+		}
 	}
-	if x, ok := numberKw(node, "maximum"); ok && v > x {
-		push("maximum", "expected <= "+jstext.NumberToString(x))
+	if x, ok := boundKw(node, "maximum"); ok {
+		if c, ok := compareBounds(v, x); ok && c > 0 {
+			push("maximum", "expected <= "+boundString(x))
+		}
 	}
-	if x, ok := numberKw(node, "exclusiveMinimum"); ok && v <= x {
-		push("exclusiveMinimum", "expected > "+jstext.NumberToString(x))
+	if x, ok := boundKw(node, "exclusiveMinimum"); ok {
+		if c, ok := compareBounds(v, x); ok && c <= 0 {
+			push("exclusiveMinimum", "expected > "+boundString(x))
+		}
 	}
-	if x, ok := numberKw(node, "exclusiveMaximum"); ok && v >= x {
-		push("exclusiveMaximum", "expected < "+jstext.NumberToString(x))
+	if x, ok := boundKw(node, "exclusiveMaximum"); ok {
+		if c, ok := compareBounds(v, x); ok && c >= 0 {
+			push("exclusiveMaximum", "expected < "+boundString(x))
+		}
 	}
-	if x, ok := numberKw(node, "multipleOf"); ok && !isMultiple(v, x) {
-		push("multipleOf", "expected a multiple of "+jstext.NumberToString(x))
+	if x, ok := boundKw(node, "multipleOf"); ok && !isMultipleBound(v, x) {
+		push("multipleOf", "expected a multiple of "+boundString(x))
 	}
+}
+
+// boundString is a bound as a template literal writes it.
+func boundString(b bound) string {
+	if b.n != nil {
+		return b.n.String()
+	}
+	return jstext.NumberToString(b.f)
 }
 
 func (e *explainRun) walkObject(node *schemaObject, b string, v any, path string, out *[]ValidationError, push func(string, string)) {
@@ -268,13 +286,20 @@ func (e *explainRun) walkObject(node *schemaObject, b string, v any, path string
 	}
 	if required, ok := node.kw("required").([]any); ok {
 		for _, k := range required {
-			if s, ok := k.(string); ok && !hasOwn(v, s) {
+			s, ok := k.(string)
+			if !ok {
+				continue
+			}
+			// Present and set to undefined: missing unless its schema takes
+			// undefined (see declaredObject).
+			x, present := getOwn(v, s)
+			if !present || (x == undefined && !e.acceptsUndefined(properties, b, s)) {
 				pushAt(pointer(path, s), "required", "missing")
 			}
 		}
 	}
 	for _, m := range properties.members {
-		if x, ok := getOwn(v, m.Key); ok {
+		if x, ok := getOwn(v, m.Key); ok && x != undefined {
 			e.walk(m.Value, b, x, pointer(path, m.Key), out)
 		}
 	}
@@ -354,6 +379,13 @@ func (e *explainRun) walkObject(node *schemaObject, b string, v any, path string
 			}
 		}
 	}
+}
+
+// acceptsUndefined is whether properties declares key with a schema that
+// takes undefined.
+func (e *explainRun) acceptsUndefined(properties *schemaObject, b, key string) bool {
+	schema, ok := properties.get(key)
+	return ok && e.ok(schema, b, undefined)
 }
 
 func (e *explainRun) walkArray(node *schemaObject, b string, v []any, path string, out *[]ValidationError, push func(string, string)) {
@@ -618,8 +650,12 @@ func pointer(path, key string) string {
 }
 
 // typeName is the type a `type` error names: "integer" for an integral
-// number, else typeof.
+// number, the value itself for NaN and ±Infinity (which are no number:
+// "expected number, got NaN"), else typeof.
 func typeName(v any) string {
+	if isBigInt(v) {
+		return "bigint"
+	}
 	switch v.(type) {
 	case nil:
 		return "null"
@@ -631,10 +667,15 @@ func typeName(v any) string {
 		return "string"
 	case bool:
 		return "boolean"
+	case undefinedValue:
+		return "undefined"
 	}
 	if f, ok := numberOf(v); ok {
 		if isIntegral(f) {
 			return "integer"
+		}
+		if !isFinite(f) {
+			return jstext.NumberToString(f)
 		}
 		return "number"
 	}

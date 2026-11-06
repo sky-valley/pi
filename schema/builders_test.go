@@ -1,6 +1,9 @@
 package schema
 
-import "testing"
+import (
+	"math/big"
+	"testing"
+)
 
 // Ported from upstream's test/builders.test.ts at 6536f8012. The static-type
 // tests ("carry the static type of valid values", "narrow values through a
@@ -67,4 +70,41 @@ func TestTaggedUnionOfBuilders(t *testing.T) {
 	wantErrors(t, mustErrors(t, v, Object{{"kind", "image"}, {"text", "t"}}),
 		ValidationError{"/url", "required", "missing"},
 		ValidationError{"/text", "additionalProperties", "unknown field"})
+}
+
+// Since af79b0c3d: bigint() and recursive(). unsafe<T>() is TypeScript
+// typing only (it returns its schema as it is), so it has no Go form.
+
+func TestBuildBigIntWithBounds(t *testing.T) {
+	metric := Nullable(BigInt(Member{"minimum", big.NewInt(0)}))
+	if got := stringify(tag(metric)); got != `{"anyOf":[{"type":"bigint","minimum":{"$":"bigint","v":"0"}},{"type":"null"}]}` {
+		t.Errorf("schema %s", got)
+	}
+	v := mustCompile(t, metric, Options{})
+	if !v.Check(big.NewInt(3)) || v.Check(big.NewInt(-1)) || v.Check(3.0) {
+		t.Error("bigint bounds")
+	}
+}
+
+func TestBuildRecursiveSchemaThatChecksEveryLevel(t *testing.T) {
+	tree := Recursive("Tree", func(self Object) Object { return Obj(Object{{"name", Str()}, {"children", Arr(self)}}) })
+	wantJSON(t, tree, `{"type":"object","properties":{"name":{"type":"string"},"children":{"type":"array","items":{"$ref":"Tree"}}},"required":["name","children"],"additionalProperties":false,"$id":"Tree"}`)
+	v := mustCompile(t, tree, Options{})
+	if !v.Check(js(t, `{"name":"a","children":[{"name":"b","children":[]}]}`)) {
+		t.Error("valid tree failed")
+	}
+	wantErrors(t, mustErrors(t, v, js(t, `{"name":"a","children":[{"name":"b","children":[{"name":1,"children":[]}]}]}`)),
+		ValidationError{"/children/0/children/0/name", "type", "expected string, got integer"})
+}
+
+func TestNestRecursiveSchemasWithDistinctIDs(t *testing.T) {
+	tree := Recursive("Tree", func(self Object) Object { return Obj(Object{{"name", Str()}, {"children", Arr(self)}}) })
+	list := Recursive("List", func(self Object) Object { return Obj(Object{{"value", Num()}, {"next", Nullable(self)}}) })
+	check := mustCompile(t, Obj(Object{{"tree", tree}, {"list", Opt(list)}}), Options{}).Check
+	root := `{"name":"a","children":[{"name":"b","children":[]}]}`
+	if !check(js(t, `{"tree":`+root+`,"list":{"value":1,"next":{"value":2,"next":null}}}`)) ||
+		check(js(t, `{"tree":`+root+`,"list":{"value":1,"next":{"value":"2","next":null}}}`)) ||
+		check(js(t, `{"tree":{"name":"a","children":[{"name":"b","children":[{"name":3}]}]}}`)) {
+		t.Error("nested recursive schemas")
+	}
 }

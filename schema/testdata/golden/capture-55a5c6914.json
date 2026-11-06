@@ -1,5 +1,5 @@
 {
- "sha": "6536f8012",
+ "sha": "55a5c6914",
  "rows": [
   {
    "name": "type string",
@@ -11872,6 +11872,4130 @@
      }
     }
    ]
+  },
+  {
+   "name": "type bigint",
+   "schema": {
+    "type": "bigint"
+   },
+   "options": {},
+   "cases": [
+    {
+     "value": null,
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected bigint, got null"
+      }
+     ]
+    },
+    {
+     "value": true,
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected bigint, got boolean"
+      }
+     ]
+    },
+    {
+     "value": false,
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected bigint, got boolean"
+      }
+     ]
+    },
+    {
+     "value": 0,
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected bigint, got integer"
+      }
+     ]
+    },
+    {
+     "value": {
+      "$": "-0"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected bigint, got integer"
+      }
+     ]
+    },
+    {
+     "value": 1,
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected bigint, got integer"
+      }
+     ]
+    },
+    {
+     "value": 1.5,
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected bigint, got number"
+      }
+     ]
+    },
+    {
+     "value": -7,
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected bigint, got integer"
+      }
+     ]
+    },
+    {
+     "value": "",
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected bigint, got string"
+      }
+     ]
+    },
+    {
+     "value": "a",
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected bigint, got string"
+      }
+     ]
+    },
+    {
+     "value": "1",
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected bigint, got string"
+      }
+     ]
+    },
+    {
+     "value": [],
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected bigint, got array"
+      }
+     ]
+    },
+    {
+     "value": {},
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected bigint, got object"
+      }
+     ]
+    },
+    {
+     "value": [
+      1
+     ],
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected bigint, got array"
+      }
+     ]
+    },
+    {
+     "value": {
+      "a": 1
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected bigint, got object"
+      }
+     ]
+    },
+    {
+     "value": {
+      "$": "undefined"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected bigint, got undefined"
+      }
+     ]
+    },
+    {
+     "value": {
+      "$": "bigint",
+      "v": "0"
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {
+      "$": "bigint",
+      "v": "5"
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {
+      "$": "bigint",
+      "v": "-1"
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {
+      "$": "NaN"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected bigint, got NaN"
+      }
+     ]
+    },
+    {
+     "value": {
+      "$": "Infinity"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected bigint, got Infinity"
+      }
+     ]
+    },
+    {
+     "value": {
+      "$": "-Infinity"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected bigint, got -Infinity"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "type undefined",
+   "schema": {
+    "type": "undefined"
+   },
+   "options": {},
+   "cases": [
+    {
+     "value": null,
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected undefined, got null"
+      }
+     ]
+    },
+    {
+     "value": true,
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected undefined, got boolean"
+      }
+     ]
+    },
+    {
+     "value": false,
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected undefined, got boolean"
+      }
+     ]
+    },
+    {
+     "value": 0,
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected undefined, got integer"
+      }
+     ]
+    },
+    {
+     "value": {
+      "$": "-0"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected undefined, got integer"
+      }
+     ]
+    },
+    {
+     "value": 1,
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected undefined, got integer"
+      }
+     ]
+    },
+    {
+     "value": 1.5,
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected undefined, got number"
+      }
+     ]
+    },
+    {
+     "value": -7,
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected undefined, got integer"
+      }
+     ]
+    },
+    {
+     "value": "",
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected undefined, got string"
+      }
+     ]
+    },
+    {
+     "value": "a",
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected undefined, got string"
+      }
+     ]
+    },
+    {
+     "value": "1",
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected undefined, got string"
+      }
+     ]
+    },
+    {
+     "value": [],
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected undefined, got array"
+      }
+     ]
+    },
+    {
+     "value": {},
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected undefined, got object"
+      }
+     ]
+    },
+    {
+     "value": [
+      1
+     ],
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected undefined, got array"
+      }
+     ]
+    },
+    {
+     "value": {
+      "a": 1
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected undefined, got object"
+      }
+     ]
+    },
+    {
+     "value": {
+      "$": "undefined"
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {
+      "$": "bigint",
+      "v": "0"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected undefined, got bigint"
+      }
+     ]
+    },
+    {
+     "value": {
+      "$": "bigint",
+      "v": "5"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected undefined, got bigint"
+      }
+     ]
+    },
+    {
+     "value": {
+      "$": "bigint",
+      "v": "-1"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected undefined, got bigint"
+      }
+     ]
+    },
+    {
+     "value": {
+      "$": "NaN"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected undefined, got NaN"
+      }
+     ]
+    },
+    {
+     "value": {
+      "$": "Infinity"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected undefined, got Infinity"
+      }
+     ]
+    },
+    {
+     "value": {
+      "$": "-Infinity"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected undefined, got -Infinity"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "type list bigint",
+   "schema": {
+    "type": [
+     "bigint",
+     "null"
+    ]
+   },
+   "options": {},
+   "cases": [
+    {
+     "value": {
+      "$": "bigint",
+      "v": "1"
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": null,
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": 1,
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected bigint or null, got integer"
+      }
+     ]
+    },
+    {
+     "value": {
+      "$": "undefined"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected bigint or null, got undefined"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "bigint bounds",
+   "schema": {
+    "type": "bigint",
+    "minimum": {
+     "$": "bigint",
+     "v": "0"
+    },
+    "exclusiveMaximum": {
+     "$": "bigint",
+     "v": "10"
+    },
+    "multipleOf": {
+     "$": "bigint",
+     "v": "2"
+    }
+   },
+   "options": {},
+   "cases": [
+    {
+     "value": {
+      "$": "bigint",
+      "v": "0"
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {
+      "$": "bigint",
+      "v": "4"
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {
+      "$": "bigint",
+      "v": "5"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "multipleOf",
+       "message": "expected a multiple of 2"
+      }
+     ]
+    },
+    {
+     "value": {
+      "$": "bigint",
+      "v": "10"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "exclusiveMaximum",
+       "message": "expected < 10"
+      }
+     ]
+    },
+    {
+     "value": {
+      "$": "bigint",
+      "v": "-2"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "minimum",
+       "message": "expected >= 0"
+      }
+     ]
+    },
+    {
+     "value": 4,
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected bigint, got integer"
+      }
+     ]
+    },
+    {
+     "value": 4.5,
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected bigint, got number"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "bigint number bounds",
+   "schema": {
+    "type": "bigint",
+    "minimum": 0.5,
+    "maximum": {
+     "$": "bigint",
+     "v": "9007199254740993"
+    }
+   },
+   "options": {},
+   "cases": [
+    {
+     "value": {
+      "$": "bigint",
+      "v": "0"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "minimum",
+       "message": "expected >= 0.5"
+      }
+     ]
+    },
+    {
+     "value": {
+      "$": "bigint",
+      "v": "1"
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {
+      "$": "bigint",
+      "v": "9007199254740993"
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {
+      "$": "bigint",
+      "v": "9007199254740994"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "maximum",
+       "message": "expected <= 9007199254740993"
+      }
+     ]
+    },
+    {
+     "value": 1,
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected bigint, got integer"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "number bigint bounds",
+   "schema": {
+    "minimum": {
+     "$": "bigint",
+     "v": "1"
+    },
+    "multipleOf": {
+     "$": "bigint",
+     "v": "3"
+    }
+   },
+   "options": {},
+   "cases": [
+    {
+     "value": 3,
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {
+      "$": "bigint",
+      "v": "3"
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {
+      "$": "bigint",
+      "v": "0"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "minimum",
+       "message": "expected >= 1"
+      }
+     ]
+    },
+    {
+     "value": 1.5,
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "multipleOf",
+       "message": "expected a multiple of 3"
+      }
+     ]
+    },
+    {
+     "value": {
+      "$": "bigint",
+      "v": "6"
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": 6.5,
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "multipleOf",
+       "message": "expected a multiple of 3"
+      }
+     ]
+    },
+    {
+     "value": {
+      "$": "NaN"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "multipleOf",
+       "message": "expected a multiple of 3"
+      }
+     ]
+    },
+    {
+     "value": {
+      "$": "Infinity"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "multipleOf",
+       "message": "expected a multiple of 3"
+      }
+     ]
+    },
+    {
+     "value": "x",
+     "check": true,
+     "errors": []
+    }
+   ]
+  },
+  {
+   "name": "number bigint exclusive",
+   "schema": {
+    "type": "number",
+    "exclusiveMinimum": {
+     "$": "bigint",
+     "v": "1"
+    },
+    "exclusiveMaximum": {
+     "$": "bigint",
+     "v": "9007199254740993"
+    }
+   },
+   "options": {},
+   "cases": [
+    {
+     "value": 1,
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "exclusiveMinimum",
+       "message": "expected > 1"
+      }
+     ]
+    },
+    {
+     "value": 2,
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": 9007199254740992,
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": 9007199254740994,
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "exclusiveMaximum",
+       "message": "expected < 9007199254740993"
+      }
+     ]
+    },
+    {
+     "value": {
+      "$": "bigint",
+      "v": "2"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected number, got bigint"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "integer bigint bounds",
+   "schema": {
+    "type": "integer",
+    "maximum": {
+     "$": "bigint",
+     "v": "3"
+    }
+   },
+   "options": {},
+   "cases": [
+    {
+     "value": 3,
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": 4,
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "maximum",
+       "message": "expected <= 3"
+      }
+     ]
+    },
+    {
+     "value": {
+      "$": "bigint",
+      "v": "3"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected integer, got bigint"
+      }
+     ]
+    },
+    {
+     "value": 2.5,
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected integer, got number"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "multipleOf bigint zero",
+   "schema": {
+    "multipleOf": {
+     "$": "bigint",
+     "v": "0"
+    }
+   },
+   "options": {},
+   "cases": [
+    {
+     "value": {
+      "$": "bigint",
+      "v": "4"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "multipleOf",
+       "message": "expected a multiple of 0"
+      }
+     ]
+    },
+    {
+     "value": {
+      "$": "bigint",
+      "v": "0"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "multipleOf",
+       "message": "expected a multiple of 0"
+      }
+     ]
+    },
+    {
+     "value": 4,
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "multipleOf",
+       "message": "expected a multiple of 0"
+      }
+     ]
+    },
+    {
+     "value": 0,
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "multipleOf",
+       "message": "expected a multiple of 0"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "multipleOf fraction bigint",
+   "schema": {
+    "multipleOf": 0.5
+   },
+   "options": {},
+   "cases": [
+    {
+     "value": {
+      "$": "bigint",
+      "v": "3"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "multipleOf",
+       "message": "expected a multiple of 0.5"
+      }
+     ]
+    },
+    {
+     "value": 3,
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {
+      "$": "bigint",
+      "v": "0"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "multipleOf",
+       "message": "expected a multiple of 0.5"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "multipleOf number bigint",
+   "schema": {
+    "multipleOf": 4
+   },
+   "options": {},
+   "cases": [
+    {
+     "value": {
+      "$": "bigint",
+      "v": "8"
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {
+      "$": "bigint",
+      "v": "6"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "multipleOf",
+       "message": "expected a multiple of 4"
+      }
+     ]
+    },
+    {
+     "value": {
+      "$": "bigint",
+      "v": "1208925819614629174706176"
+     },
+     "check": true,
+     "errors": []
+    }
+   ]
+  },
+  {
+   "name": "multipleOf huge bigint",
+   "schema": {
+    "type": "bigint",
+    "multipleOf": {
+     "$": "bigint",
+     "v": "5"
+    }
+   },
+   "options": {},
+   "cases": [
+    {
+     "value": {
+      "$": "bigint",
+      "v": "10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {
+      "$": "bigint",
+      "v": "10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "multipleOf",
+       "message": "expected a multiple of 5"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "const bigint",
+   "schema": {
+    "const": {
+     "$": "bigint",
+     "v": "5"
+    }
+   },
+   "options": {},
+   "cases": [
+    {
+     "value": {
+      "$": "bigint",
+      "v": "5"
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": 5,
+     "check": false,
+     "errors": {
+      "$": "throws",
+      "message": "Do not know how to serialize a BigInt"
+     }
+    },
+    {
+     "value": {
+      "$": "bigint",
+      "v": "6"
+     },
+     "check": false,
+     "errors": {
+      "$": "throws",
+      "message": "Do not know how to serialize a BigInt"
+     }
+    }
+   ]
+  },
+  {
+   "name": "enum bigint",
+   "schema": {
+    "enum": [
+     {
+      "$": "bigint",
+      "v": "1"
+     },
+     {
+      "$": "bigint",
+      "v": "2"
+     },
+     "a"
+    ]
+   },
+   "options": {},
+   "cases": [
+    {
+     "value": {
+      "$": "bigint",
+      "v": "1"
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {
+      "$": "bigint",
+      "v": "2"
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": 1,
+     "check": false,
+     "errors": {
+      "$": "throws",
+      "message": "Do not know how to serialize a BigInt"
+     }
+    },
+    {
+     "value": {
+      "$": "bigint",
+      "v": "3"
+     },
+     "check": false,
+     "errors": {
+      "$": "throws",
+      "message": "Do not know how to serialize a BigInt"
+     }
+    }
+   ]
+  },
+  {
+   "name": "enum bigint long",
+   "schema": {
+    "enum": [
+     {
+      "$": "bigint",
+      "v": "1"
+     },
+     {
+      "$": "bigint",
+      "v": "2"
+     },
+     {
+      "$": "bigint",
+      "v": "3"
+     },
+     {
+      "$": "bigint",
+      "v": "4"
+     },
+     {
+      "$": "bigint",
+      "v": "5"
+     },
+     {
+      "$": "bigint",
+      "v": "6"
+     },
+     {
+      "$": "bigint",
+      "v": "7"
+     },
+     {
+      "$": "bigint",
+      "v": "8"
+     },
+     {
+      "$": "bigint",
+      "v": "9"
+     }
+    ]
+   },
+   "options": {},
+   "cases": [
+    {
+     "value": {
+      "$": "bigint",
+      "v": "9"
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {
+      "$": "bigint",
+      "v": "10"
+     },
+     "check": false,
+     "errors": {
+      "$": "throws",
+      "message": "Do not know how to serialize a BigInt"
+     }
+    },
+    {
+     "value": 9,
+     "check": false,
+     "errors": {
+      "$": "throws",
+      "message": "Do not know how to serialize a BigInt"
+     }
+    }
+   ]
+  },
+  {
+   "name": "unique bigints",
+   "schema": {
+    "type": "array",
+    "uniqueItems": true
+   },
+   "options": {},
+   "cases": [
+    {
+     "value": [
+      {
+       "$": "bigint",
+       "v": "1"
+      },
+      {
+       "$": "bigint",
+       "v": "2"
+      }
+     ],
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": [
+      {
+       "$": "bigint",
+       "v": "1"
+      },
+      {
+       "$": "bigint",
+       "v": "1"
+      }
+     ],
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "uniqueItems",
+       "message": "expected unique items"
+      }
+     ]
+    },
+    {
+     "value": [
+      {
+       "$": "bigint",
+       "v": "1"
+      },
+      1
+     ],
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": [
+      {
+       "$": "undefined"
+      },
+      {
+       "$": "undefined"
+      }
+     ],
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "uniqueItems",
+       "message": "expected unique items"
+      }
+     ]
+    },
+    {
+     "value": [
+      {
+       "$": "undefined"
+      },
+      null
+     ],
+     "check": true,
+     "errors": []
+    }
+   ]
+  },
+  {
+   "name": "non-finite number",
+   "schema": {
+    "type": "number"
+   },
+   "options": {},
+   "cases": [
+    {
+     "value": {
+      "$": "NaN"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected number, got NaN"
+      }
+     ]
+    },
+    {
+     "value": {
+      "$": "Infinity"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected number, got Infinity"
+      }
+     ]
+    },
+    {
+     "value": {
+      "$": "-Infinity"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected number, got -Infinity"
+      }
+     ]
+    },
+    {
+     "value": 1,
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": 1.5,
+     "check": true,
+     "errors": []
+    }
+   ]
+  },
+  {
+   "name": "non-finite integer",
+   "schema": {
+    "type": "integer"
+   },
+   "options": {},
+   "cases": [
+    {
+     "value": {
+      "$": "NaN"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected integer, got NaN"
+      }
+     ]
+    },
+    {
+     "value": {
+      "$": "Infinity"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected integer, got Infinity"
+      }
+     ]
+    },
+    {
+     "value": {
+      "$": "-Infinity"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected integer, got -Infinity"
+      }
+     ]
+    },
+    {
+     "value": 1,
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": 1.5,
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected integer, got number"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "non-finite bounded",
+   "schema": {
+    "type": "number",
+    "minimum": 0
+   },
+   "options": {},
+   "cases": [
+    {
+     "value": {
+      "$": "NaN"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected number, got NaN"
+      }
+     ]
+    },
+    {
+     "value": {
+      "$": "Infinity"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected number, got Infinity"
+      }
+     ]
+    },
+    {
+     "value": {
+      "$": "-Infinity"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected number, got -Infinity"
+      }
+     ]
+    },
+    {
+     "value": 1,
+     "check": true,
+     "errors": []
+    }
+   ]
+  },
+  {
+   "name": "non-finite bounds only",
+   "schema": {
+    "minimum": 0
+   },
+   "options": {},
+   "cases": [
+    {
+     "value": {
+      "$": "NaN"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "schema",
+       "message": "invalid"
+      }
+     ]
+    },
+    {
+     "value": {
+      "$": "Infinity"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "schema",
+       "message": "invalid"
+      }
+     ]
+    },
+    {
+     "value": {
+      "$": "-Infinity"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "minimum",
+       "message": "expected >= 0"
+      }
+     ]
+    },
+    {
+     "value": 1,
+     "check": true,
+     "errors": []
+    }
+   ]
+  },
+  {
+   "name": "non-finite type list",
+   "schema": {
+    "type": [
+     "number",
+     "string"
+    ]
+   },
+   "options": {},
+   "cases": [
+    {
+     "value": {
+      "$": "NaN"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected number or string, got NaN"
+      }
+     ]
+    },
+    {
+     "value": {
+      "$": "Infinity"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected number or string, got Infinity"
+      }
+     ]
+    },
+    {
+     "value": "x",
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": 1,
+     "check": true,
+     "errors": []
+    }
+   ]
+  },
+  {
+   "name": "non-finite anyOf",
+   "schema": {
+    "anyOf": [
+     {
+      "type": "number"
+     },
+     {
+      "type": "null"
+     }
+    ]
+   },
+   "options": {},
+   "cases": [
+    {
+     "value": {
+      "$": "NaN"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected number, got NaN"
+      }
+     ]
+    },
+    {
+     "value": {
+      "$": "-Infinity"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected number, got -Infinity"
+      }
+     ]
+    },
+    {
+     "value": null,
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": 1,
+     "check": true,
+     "errors": []
+    }
+   ]
+  },
+  {
+   "name": "non-finite property",
+   "schema": {
+    "type": "object",
+    "properties": {
+     "a": {
+      "type": "number"
+     }
+    }
+   },
+   "options": {},
+   "cases": [
+    {
+     "value": {
+      "a": {
+       "$": "NaN"
+      }
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/a",
+       "keyword": "type",
+       "message": "expected number, got NaN"
+      }
+     ]
+    },
+    {
+     "value": {
+      "a": {
+       "$": "Infinity"
+      }
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/a",
+       "keyword": "type",
+       "message": "expected number, got Infinity"
+      }
+     ]
+    },
+    {
+     "value": {
+      "a": 1
+     },
+     "check": true,
+     "errors": []
+    }
+   ]
+  },
+  {
+   "name": "non-finite enum",
+   "schema": {
+    "enum": [
+     {
+      "$": "NaN"
+     },
+     {
+      "$": "Infinity"
+     }
+    ]
+   },
+   "options": {},
+   "cases": [
+    {
+     "value": {
+      "$": "NaN"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "enum",
+       "message": "expected one of [null,null]"
+      }
+     ]
+    },
+    {
+     "value": {
+      "$": "Infinity"
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": 1,
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "enum",
+       "message": "expected one of [null,null]"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "required undefined",
+   "schema": {
+    "type": "object",
+    "properties": {
+     "a": {
+      "type": "undefined"
+     }
+    },
+    "required": [
+     "a"
+    ]
+   },
+   "options": {},
+   "cases": [
+    {
+     "value": {
+      "a": {
+       "$": "undefined"
+      }
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {},
+     "check": false,
+     "errors": [
+      {
+       "path": "/a",
+       "keyword": "required",
+       "message": "missing"
+      }
+     ]
+    },
+    {
+     "value": {
+      "a": null
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/a",
+       "keyword": "type",
+       "message": "expected undefined, got null"
+      }
+     ]
+    },
+    {
+     "value": {
+      "a": "x"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/a",
+       "keyword": "type",
+       "message": "expected undefined, got string"
+      }
+     ]
+    },
+    {
+     "value": {
+      "a": {
+       "$": "undefined"
+      },
+      "b": {
+       "$": "undefined"
+      }
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {
+      "b": {
+       "$": "undefined"
+      }
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/a",
+       "keyword": "required",
+       "message": "missing"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "required undefined closed",
+   "schema": {
+    "type": "object",
+    "properties": {
+     "a": {
+      "type": "undefined"
+     },
+     "b": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "a"
+    ],
+    "additionalProperties": false
+   },
+   "options": {},
+   "cases": [
+    {
+     "value": {
+      "a": {
+       "$": "undefined"
+      }
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {},
+     "check": false,
+     "errors": [
+      {
+       "path": "/a",
+       "keyword": "required",
+       "message": "missing"
+      }
+     ]
+    },
+    {
+     "value": {
+      "a": null
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/a",
+       "keyword": "type",
+       "message": "expected undefined, got null"
+      }
+     ]
+    },
+    {
+     "value": {
+      "a": "x"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/a",
+       "keyword": "type",
+       "message": "expected undefined, got string"
+      }
+     ]
+    },
+    {
+     "value": {
+      "a": {
+       "$": "undefined"
+      },
+      "b": {
+       "$": "undefined"
+      }
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {
+      "b": {
+       "$": "undefined"
+      }
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/a",
+       "keyword": "required",
+       "message": "missing"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "required undefined open",
+   "schema": {
+    "type": "object",
+    "properties": {
+     "a": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "undefined"
+       }
+      ]
+     },
+     "b": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "a"
+    ],
+    "patternProperties": {
+     "^c": {
+      "type": "undefined"
+     }
+    }
+   },
+   "options": {},
+   "cases": [
+    {
+     "value": {
+      "a": {
+       "$": "undefined"
+      }
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {},
+     "check": false,
+     "errors": [
+      {
+       "path": "/a",
+       "keyword": "required",
+       "message": "missing"
+      }
+     ]
+    },
+    {
+     "value": {
+      "a": null
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/a",
+       "keyword": "type",
+       "message": "expected string, got null"
+      }
+     ]
+    },
+    {
+     "value": {
+      "a": "x"
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {
+      "a": {
+       "$": "undefined"
+      },
+      "b": {
+       "$": "undefined"
+      }
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {
+      "b": {
+       "$": "undefined"
+      }
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/a",
+       "keyword": "required",
+       "message": "missing"
+      }
+     ]
+    },
+    {
+     "value": {
+      "a": {
+       "$": "undefined"
+      },
+      "c": {
+       "$": "undefined"
+      }
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {
+      "a": {
+       "$": "undefined"
+      },
+      "c": 1
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/c",
+       "keyword": "type",
+       "message": "expected undefined, got integer"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "required unknown",
+   "schema": {
+    "type": "object",
+    "properties": {
+     "a": {}
+    },
+    "required": [
+     "a"
+    ]
+   },
+   "options": {},
+   "cases": [
+    {
+     "value": {
+      "a": {
+       "$": "undefined"
+      }
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {},
+     "check": false,
+     "errors": [
+      {
+       "path": "/a",
+       "keyword": "required",
+       "message": "missing"
+      }
+     ]
+    },
+    {
+     "value": {
+      "a": null
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {
+      "a": "x"
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {
+      "a": {
+       "$": "undefined"
+      },
+      "b": {
+       "$": "undefined"
+      }
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {
+      "b": {
+       "$": "undefined"
+      }
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/a",
+       "keyword": "required",
+       "message": "missing"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "required unknown closed",
+   "schema": {
+    "type": "object",
+    "properties": {
+     "a": {}
+    },
+    "required": [
+     "a"
+    ],
+    "additionalProperties": false
+   },
+   "options": {},
+   "cases": [
+    {
+     "value": {
+      "a": {
+       "$": "undefined"
+      }
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {},
+     "check": false,
+     "errors": [
+      {
+       "path": "/a",
+       "keyword": "required",
+       "message": "missing"
+      }
+     ]
+    },
+    {
+     "value": {
+      "a": null
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {
+      "a": "x"
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {
+      "a": {
+       "$": "undefined"
+      },
+      "b": {
+       "$": "undefined"
+      }
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/b",
+       "keyword": "additionalProperties",
+       "message": "unknown field"
+      }
+     ]
+    },
+    {
+     "value": {
+      "b": {
+       "$": "undefined"
+      }
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/a",
+       "keyword": "required",
+       "message": "missing"
+      },
+      {
+       "path": "/b",
+       "keyword": "additionalProperties",
+       "message": "unknown field"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "required string undefined",
+   "schema": {
+    "type": "object",
+    "properties": {
+     "a": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "a"
+    ]
+   },
+   "options": {},
+   "cases": [
+    {
+     "value": {
+      "a": {
+       "$": "undefined"
+      }
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/a",
+       "keyword": "required",
+       "message": "missing"
+      }
+     ]
+    },
+    {
+     "value": {},
+     "check": false,
+     "errors": [
+      {
+       "path": "/a",
+       "keyword": "required",
+       "message": "missing"
+      }
+     ]
+    },
+    {
+     "value": {
+      "a": null
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/a",
+       "keyword": "type",
+       "message": "expected string, got null"
+      }
+     ]
+    },
+    {
+     "value": {
+      "a": "x"
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {
+      "a": {
+       "$": "undefined"
+      },
+      "b": {
+       "$": "undefined"
+      }
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/a",
+       "keyword": "required",
+       "message": "missing"
+      }
+     ]
+    },
+    {
+     "value": {
+      "b": {
+       "$": "undefined"
+      }
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/a",
+       "keyword": "required",
+       "message": "missing"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "required not declared undefined",
+   "schema": {
+    "type": "object",
+    "required": [
+     "a"
+    ]
+   },
+   "options": {},
+   "cases": [
+    {
+     "value": {
+      "a": {
+       "$": "undefined"
+      }
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {},
+     "check": false,
+     "errors": [
+      {
+       "path": "/a",
+       "keyword": "required",
+       "message": "missing"
+      }
+     ]
+    },
+    {
+     "value": {
+      "a": null
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {
+      "a": "x"
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {
+      "a": {
+       "$": "undefined"
+      },
+      "b": {
+       "$": "undefined"
+      }
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {
+      "b": {
+       "$": "undefined"
+      }
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/a",
+       "keyword": "required",
+       "message": "missing"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "optional undefined",
+   "schema": {
+    "type": "object",
+    "properties": {
+     "a": {
+      "type": "string"
+     },
+     "b": {
+      "type": "number"
+     }
+    },
+    "additionalProperties": false
+   },
+   "options": {},
+   "cases": [
+    {
+     "value": {
+      "a": {
+       "$": "undefined"
+      }
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {},
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {
+      "a": null
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/a",
+       "keyword": "type",
+       "message": "expected string, got null"
+      }
+     ]
+    },
+    {
+     "value": {
+      "a": "x"
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {
+      "a": {
+       "$": "undefined"
+      },
+      "b": {
+       "$": "undefined"
+      }
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {
+      "b": {
+       "$": "undefined"
+      }
+     },
+     "check": true,
+     "errors": []
+    }
+   ]
+  },
+  {
+   "name": "undefined counts",
+   "schema": {
+    "type": "object",
+    "minProperties": 1,
+    "dependentRequired": {
+     "b": [
+      "a"
+     ]
+    }
+   },
+   "options": {},
+   "cases": [
+    {
+     "value": {
+      "a": {
+       "$": "undefined"
+      }
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {},
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "minProperties",
+       "message": "expected at least 1 properties"
+      }
+     ]
+    },
+    {
+     "value": {
+      "a": null
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {
+      "a": "x"
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {
+      "a": {
+       "$": "undefined"
+      },
+      "b": {
+       "$": "undefined"
+      }
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {
+      "b": {
+       "$": "undefined"
+      }
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/a",
+       "keyword": "dependentRequired",
+       "message": "required when b is present"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "required undefined ref",
+   "schema": {
+    "type": "object",
+    "$defs": {
+     "u": {
+      "type": "undefined"
+     }
+    },
+    "properties": {
+     "a": {
+      "$ref": "#/$defs/u"
+     }
+    },
+    "required": [
+     "a"
+    ]
+   },
+   "options": {},
+   "cases": [
+    {
+     "value": {
+      "a": {
+       "$": "undefined"
+      }
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {},
+     "check": false,
+     "errors": [
+      {
+       "path": "/a",
+       "keyword": "required",
+       "message": "missing"
+      }
+     ]
+    },
+    {
+     "value": {
+      "a": null
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/a",
+       "keyword": "type",
+       "message": "expected undefined, got null"
+      }
+     ]
+    },
+    {
+     "value": {
+      "a": "x"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/a",
+       "keyword": "type",
+       "message": "expected undefined, got string"
+      }
+     ]
+    },
+    {
+     "value": {
+      "a": {
+       "$": "undefined"
+      },
+      "b": {
+       "$": "undefined"
+      }
+     },
+     "check": true,
+     "errors": []
+    },
+    {
+     "value": {
+      "b": {
+       "$": "undefined"
+      }
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/a",
+       "keyword": "required",
+       "message": "missing"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "coerce bigint",
+   "schema": {
+    "type": "object",
+    "properties": {
+     "n": {
+      "type": "bigint",
+      "minimum": {
+       "$": "bigint",
+       "v": "0"
+      }
+     }
+    },
+    "required": [
+     "n"
+    ]
+   },
+   "options": {
+    "coerce": true
+   },
+   "cases": [
+    {
+     "value": {
+      "n": "42"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/n",
+       "keyword": "type",
+       "message": "expected bigint, got string"
+      }
+     ],
+     "coerce": {
+      "n": {
+       "$": "bigint",
+       "v": "42"
+      }
+     },
+     "coerceSame": false,
+     "parse": {
+      "ok": true,
+      "value": {
+       "n": {
+        "$": "bigint",
+        "v": "42"
+       }
+      }
+     }
+    },
+    {
+     "value": {
+      "n": "12n"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/n",
+       "keyword": "type",
+       "message": "expected bigint, got string"
+      }
+     ],
+     "coerce": {
+      "n": {
+       "$": "bigint",
+       "v": "12"
+      }
+     },
+     "coerceSame": false,
+     "parse": {
+      "ok": true,
+      "value": {
+       "n": {
+        "$": "bigint",
+        "v": "12"
+       }
+      }
+     }
+    },
+    {
+     "value": {
+      "n": "12.9"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/n",
+       "keyword": "type",
+       "message": "expected bigint, got string"
+      }
+     ],
+     "coerce": {
+      "n": {
+       "$": "bigint",
+       "v": "12"
+      }
+     },
+     "coerceSame": false,
+     "parse": {
+      "ok": true,
+      "value": {
+       "n": {
+        "$": "bigint",
+        "v": "12"
+       }
+      }
+     }
+    },
+    {
+     "value": {
+      "n": 3.7
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/n",
+       "keyword": "type",
+       "message": "expected bigint, got number"
+      }
+     ],
+     "coerce": {
+      "n": {
+       "$": "bigint",
+       "v": "3"
+      }
+     },
+     "coerceSame": false,
+     "parse": {
+      "ok": true,
+      "value": {
+       "n": {
+        "$": "bigint",
+        "v": "3"
+       }
+      }
+     }
+    },
+    {
+     "value": {
+      "n": true
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/n",
+       "keyword": "type",
+       "message": "expected bigint, got boolean"
+      }
+     ],
+     "coerce": {
+      "n": {
+       "$": "bigint",
+       "v": "1"
+      }
+     },
+     "coerceSame": false,
+     "parse": {
+      "ok": true,
+      "value": {
+       "n": {
+        "$": "bigint",
+        "v": "1"
+       }
+      }
+     }
+    },
+    {
+     "value": {
+      "n": "FALSE"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/n",
+       "keyword": "type",
+       "message": "expected bigint, got string"
+      }
+     ],
+     "coerce": {
+      "n": {
+       "$": "bigint",
+       "v": "0"
+      }
+     },
+     "coerceSame": false,
+     "parse": {
+      "ok": true,
+      "value": {
+       "n": {
+        "$": "bigint",
+        "v": "0"
+       }
+      }
+     }
+    },
+    {
+     "value": {
+      "n": "x"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/n",
+       "keyword": "type",
+       "message": "expected bigint, got string"
+      }
+     ],
+     "coerce": {
+      "n": "x"
+     },
+     "coerceSame": true,
+     "parse": {
+      "ok": false,
+      "errors": [
+       {
+        "path": "/n",
+        "keyword": "type",
+        "message": "expected bigint, got string"
+       }
+      ]
+     }
+    },
+    {
+     "value": {
+      "n": null
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/n",
+       "keyword": "type",
+       "message": "expected bigint, got null"
+      }
+     ],
+     "coerce": {
+      "n": {
+       "$": "bigint",
+       "v": "0"
+      }
+     },
+     "coerceSame": false,
+     "parse": {
+      "ok": true,
+      "value": {
+       "n": {
+        "$": "bigint",
+        "v": "0"
+       }
+      }
+     }
+    },
+    {
+     "value": {
+      "n": -1
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/n",
+       "keyword": "type",
+       "message": "expected bigint, got integer"
+      }
+     ],
+     "coerce": {
+      "n": {
+       "$": "bigint",
+       "v": "-1"
+      }
+     },
+     "coerceSame": false,
+     "parse": {
+      "ok": false,
+      "errors": [
+       {
+        "path": "/n",
+        "keyword": "minimum",
+        "message": "expected >= 0"
+       }
+      ]
+     }
+    },
+    {
+     "value": {
+      "n": {
+       "$": "NaN"
+      }
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/n",
+       "keyword": "type",
+       "message": "expected bigint, got NaN"
+      }
+     ],
+     "coerce": {
+      "n": {
+       "$": "NaN"
+      }
+     },
+     "coerceSame": false,
+     "parse": {
+      "ok": false,
+      "errors": [
+       {
+        "path": "/n",
+        "keyword": "type",
+        "message": "expected bigint, got NaN"
+       }
+      ]
+     }
+    },
+    {
+     "value": {
+      "n": {
+       "$": "bigint",
+       "v": "1"
+      }
+     },
+     "check": true,
+     "errors": [],
+     "coerce": {
+      "n": {
+       "$": "bigint",
+       "v": "1"
+      }
+     },
+     "coerceSame": true,
+     "parse": {
+      "ok": true,
+      "value": {
+       "n": {
+        "$": "bigint",
+        "v": "1"
+       }
+      }
+     }
+    },
+    {
+     "value": {},
+     "check": false,
+     "errors": [
+      {
+       "path": "/n",
+       "keyword": "required",
+       "message": "missing"
+      }
+     ],
+     "coerce": {},
+     "coerceSame": true,
+     "parse": {
+      "ok": false,
+      "errors": [
+       {
+        "path": "/n",
+        "keyword": "required",
+        "message": "missing"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "coerce undefined",
+   "schema": {
+    "type": "object",
+    "properties": {
+     "n": {
+      "type": "undefined"
+     }
+    },
+    "required": [
+     "n"
+    ]
+   },
+   "options": {
+    "coerce": true
+   },
+   "cases": [
+    {
+     "value": {
+      "n": null
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/n",
+       "keyword": "type",
+       "message": "expected undefined, got null"
+      }
+     ],
+     "coerce": {
+      "n": {
+       "$": "undefined"
+      }
+     },
+     "coerceSame": false,
+     "parse": {
+      "ok": true,
+      "value": {
+       "n": {
+        "$": "undefined"
+       }
+      }
+     }
+    },
+    {
+     "value": {
+      "n": 0
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/n",
+       "keyword": "type",
+       "message": "expected undefined, got integer"
+      }
+     ],
+     "coerce": {
+      "n": {
+       "$": "undefined"
+      }
+     },
+     "coerceSame": false,
+     "parse": {
+      "ok": true,
+      "value": {
+       "n": {
+        "$": "undefined"
+       }
+      }
+     }
+    },
+    {
+     "value": {
+      "n": {
+       "$": "bigint",
+       "v": "0"
+      }
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/n",
+       "keyword": "type",
+       "message": "expected undefined, got bigint"
+      }
+     ],
+     "coerce": {
+      "n": {
+       "$": "undefined"
+      }
+     },
+     "coerceSame": false,
+     "parse": {
+      "ok": true,
+      "value": {
+       "n": {
+        "$": "undefined"
+       }
+      }
+     }
+    },
+    {
+     "value": {
+      "n": false
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/n",
+       "keyword": "type",
+       "message": "expected undefined, got boolean"
+      }
+     ],
+     "coerce": {
+      "n": {
+       "$": "undefined"
+      }
+     },
+     "coerceSame": false,
+     "parse": {
+      "ok": true,
+      "value": {
+       "n": {
+        "$": "undefined"
+       }
+      }
+     }
+    },
+    {
+     "value": {
+      "n": ""
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/n",
+       "keyword": "type",
+       "message": "expected undefined, got string"
+      }
+     ],
+     "coerce": {
+      "n": {
+       "$": "undefined"
+      }
+     },
+     "coerceSame": false,
+     "parse": {
+      "ok": true,
+      "value": {
+       "n": {
+        "$": "undefined"
+       }
+      }
+     }
+    },
+    {
+     "value": {
+      "n": "0"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/n",
+       "keyword": "type",
+       "message": "expected undefined, got string"
+      }
+     ],
+     "coerce": {
+      "n": {
+       "$": "undefined"
+      }
+     },
+     "coerceSame": false,
+     "parse": {
+      "ok": true,
+      "value": {
+       "n": {
+        "$": "undefined"
+       }
+      }
+     }
+    },
+    {
+     "value": {
+      "n": "NULL"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/n",
+       "keyword": "type",
+       "message": "expected undefined, got string"
+      }
+     ],
+     "coerce": {
+      "n": {
+       "$": "undefined"
+      }
+     },
+     "coerceSame": false,
+     "parse": {
+      "ok": true,
+      "value": {
+       "n": {
+        "$": "undefined"
+       }
+      }
+     }
+    },
+    {
+     "value": {
+      "n": "undefined"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/n",
+       "keyword": "type",
+       "message": "expected undefined, got string"
+      }
+     ],
+     "coerce": {
+      "n": {
+       "$": "undefined"
+      }
+     },
+     "coerceSame": false,
+     "parse": {
+      "ok": true,
+      "value": {
+       "n": {
+        "$": "undefined"
+       }
+      }
+     }
+    },
+    {
+     "value": {
+      "n": "x"
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/n",
+       "keyword": "type",
+       "message": "expected undefined, got string"
+      }
+     ],
+     "coerce": {
+      "n": "x"
+     },
+     "coerceSame": true,
+     "parse": {
+      "ok": false,
+      "errors": [
+       {
+        "path": "/n",
+        "keyword": "type",
+        "message": "expected undefined, got string"
+       }
+      ]
+     }
+    },
+    {
+     "value": {
+      "n": {
+       "$": "bigint",
+       "v": "1"
+      }
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/n",
+       "keyword": "type",
+       "message": "expected undefined, got bigint"
+      }
+     ],
+     "coerce": {
+      "n": {
+       "$": "bigint",
+       "v": "1"
+      }
+     },
+     "coerceSame": true,
+     "parse": {
+      "ok": false,
+      "errors": [
+       {
+        "path": "/n",
+        "keyword": "type",
+        "message": "expected undefined, got bigint"
+       }
+      ]
+     }
+    },
+    {
+     "value": {},
+     "check": false,
+     "errors": [
+      {
+       "path": "/n",
+       "keyword": "required",
+       "message": "missing"
+      }
+     ],
+     "coerce": {},
+     "coerceSame": true,
+     "parse": {
+      "ok": false,
+      "errors": [
+       {
+        "path": "/n",
+        "keyword": "required",
+        "message": "missing"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "coerce root bigint",
+   "schema": {
+    "type": "bigint"
+   },
+   "options": {
+    "coerce": true
+   },
+   "cases": [
+    {
+     "value": "7",
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected bigint, got string"
+      }
+     ],
+     "coerce": {
+      "$": "bigint",
+      "v": "7"
+     },
+     "coerceSame": false,
+     "parse": {
+      "ok": true,
+      "value": {
+       "$": "bigint",
+       "v": "7"
+      }
+     }
+    },
+    {
+     "value": null,
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected bigint, got null"
+      }
+     ],
+     "coerce": {
+      "$": "bigint",
+      "v": "0"
+     },
+     "coerceSame": false,
+     "parse": {
+      "ok": true,
+      "value": {
+       "$": "bigint",
+       "v": "0"
+      }
+     }
+    },
+    {
+     "value": true,
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected bigint, got boolean"
+      }
+     ],
+     "coerce": {
+      "$": "bigint",
+      "v": "1"
+     },
+     "coerceSame": false,
+     "parse": {
+      "ok": true,
+      "value": {
+       "$": "bigint",
+       "v": "1"
+      }
+     }
+    },
+    {
+     "value": 2.5,
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected bigint, got number"
+      }
+     ],
+     "coerce": {
+      "$": "bigint",
+      "v": "2"
+     },
+     "coerceSame": false,
+     "parse": {
+      "ok": true,
+      "value": {
+       "$": "bigint",
+       "v": "2"
+      }
+     }
+    },
+    {
+     "value": "x",
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected bigint, got string"
+      }
+     ],
+     "coerce": "x",
+     "coerceSame": true,
+     "parse": {
+      "ok": false,
+      "errors": [
+       {
+        "path": "",
+        "keyword": "type",
+        "message": "expected bigint, got string"
+       }
+      ]
+     }
+    },
+    {
+     "value": {
+      "$": "bigint",
+      "v": "9007199254740993"
+     },
+     "check": true,
+     "errors": [],
+     "coerce": {
+      "$": "bigint",
+      "v": "9007199254740993"
+     },
+     "coerceSame": true,
+     "parse": {
+      "ok": true,
+      "value": {
+       "$": "bigint",
+       "v": "9007199254740993"
+      }
+     }
+    },
+    {
+     "value": "9007199254740993",
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected bigint, got string"
+      }
+     ],
+     "coerce": {
+      "$": "bigint",
+      "v": "9007199254740993"
+     },
+     "coerceSame": false,
+     "parse": {
+      "ok": true,
+      "value": {
+       "$": "bigint",
+       "v": "9007199254740993"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "coerce root undefined",
+   "schema": {
+    "type": "undefined"
+   },
+   "options": {
+    "coerce": true
+   },
+   "cases": [
+    {
+     "value": null,
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected undefined, got null"
+      }
+     ],
+     "coerce": {
+      "$": "undefined"
+     },
+     "coerceSame": false,
+     "parse": {
+      "ok": true,
+      "value": {
+       "$": "undefined"
+      }
+     }
+    },
+    {
+     "value": "",
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected undefined, got string"
+      }
+     ],
+     "coerce": {
+      "$": "undefined"
+     },
+     "coerceSame": false,
+     "parse": {
+      "ok": true,
+      "value": {
+       "$": "undefined"
+      }
+     }
+    },
+    {
+     "value": "x",
+     "check": false,
+     "errors": [
+      {
+       "path": "",
+       "keyword": "type",
+       "message": "expected undefined, got string"
+      }
+     ],
+     "coerce": "x",
+     "coerceSame": true,
+     "parse": {
+      "ok": false,
+      "errors": [
+       {
+        "path": "",
+        "keyword": "type",
+        "message": "expected undefined, got string"
+       }
+      ]
+     }
+    },
+    {
+     "value": {
+      "$": "undefined"
+     },
+     "check": true,
+     "errors": [],
+     "coerce": {
+      "$": "undefined"
+     },
+     "coerceSame": true,
+     "parse": {
+      "ok": true,
+      "value": {
+       "$": "undefined"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "coerce bigint literal",
+   "schema": {
+    "const": {
+     "$": "bigint",
+     "v": "100"
+    }
+   },
+   "options": {
+    "coerce": true
+   },
+   "cases": [
+    {
+     "value": 100,
+     "check": false,
+     "errors": {
+      "$": "throws",
+      "message": "Do not know how to serialize a BigInt"
+     },
+     "coerce": {
+      "$": "bigint",
+      "v": "100"
+     },
+     "coerceSame": false,
+     "parse": {
+      "ok": true,
+      "value": {
+       "$": "bigint",
+       "v": "100"
+      }
+     }
+    },
+    {
+     "value": "100",
+     "check": false,
+     "errors": {
+      "$": "throws",
+      "message": "Do not know how to serialize a BigInt"
+     },
+     "coerce": {
+      "$": "bigint",
+      "v": "100"
+     },
+     "coerceSame": false,
+     "parse": {
+      "ok": true,
+      "value": {
+       "$": "bigint",
+       "v": "100"
+      }
+     }
+    },
+    {
+     "value": {
+      "$": "bigint",
+      "v": "100"
+     },
+     "check": true,
+     "errors": [],
+     "coerce": {
+      "$": "bigint",
+      "v": "100"
+     },
+     "coerceSame": true,
+     "parse": {
+      "ok": true,
+      "value": {
+       "$": "bigint",
+       "v": "100"
+      }
+     }
+    },
+    {
+     "value": "2",
+     "check": false,
+     "errors": {
+      "$": "throws",
+      "message": "Do not know how to serialize a BigInt"
+     },
+     "coerce": "2",
+     "coerceSame": true,
+     "parse": {
+      "$": "throws",
+      "message": "Do not know how to serialize a BigInt"
+     }
+    },
+    {
+     "value": "100n",
+     "check": false,
+     "errors": {
+      "$": "throws",
+      "message": "Do not know how to serialize a BigInt"
+     },
+     "coerce": {
+      "$": "bigint",
+      "v": "100"
+     },
+     "coerceSame": false,
+     "parse": {
+      "ok": true,
+      "value": {
+       "$": "bigint",
+       "v": "100"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "coerce bigint enum",
+   "schema": {
+    "enum": [
+     {
+      "$": "bigint",
+      "v": "1"
+     },
+     "b"
+    ]
+   },
+   "options": {
+    "coerce": true
+   },
+   "cases": [
+    {
+     "value": 1,
+     "check": false,
+     "errors": {
+      "$": "throws",
+      "message": "Do not know how to serialize a BigInt"
+     },
+     "coerce": {
+      "$": "bigint",
+      "v": "1"
+     },
+     "coerceSame": false,
+     "parse": {
+      "ok": true,
+      "value": {
+       "$": "bigint",
+       "v": "1"
+      }
+     }
+    },
+    {
+     "value": "1",
+     "check": false,
+     "errors": {
+      "$": "throws",
+      "message": "Do not know how to serialize a BigInt"
+     },
+     "coerce": {
+      "$": "bigint",
+      "v": "1"
+     },
+     "coerceSame": false,
+     "parse": {
+      "ok": true,
+      "value": {
+       "$": "bigint",
+       "v": "1"
+      }
+     }
+    },
+    {
+     "value": true,
+     "check": false,
+     "errors": {
+      "$": "throws",
+      "message": "Do not know how to serialize a BigInt"
+     },
+     "coerce": {
+      "$": "bigint",
+      "v": "1"
+     },
+     "coerceSame": false,
+     "parse": {
+      "ok": true,
+      "value": {
+       "$": "bigint",
+       "v": "1"
+      }
+     }
+    },
+    {
+     "value": "b",
+     "check": true,
+     "errors": [],
+     "coerce": "b",
+     "coerceSame": true,
+     "parse": {
+      "ok": true,
+      "value": "b"
+     }
+    }
+   ]
+  },
+  {
+   "name": "coerce from bigint",
+   "schema": {
+    "type": "object",
+    "properties": {
+     "s": {
+      "type": "string"
+     },
+     "n": {
+      "type": "number"
+     },
+     "i": {
+      "type": "integer"
+     },
+     "b": {
+      "type": "boolean"
+     },
+     "z": {
+      "type": "null"
+     }
+    }
+   },
+   "options": {
+    "coerce": true
+   },
+   "cases": [
+    {
+     "value": {
+      "s": {
+       "$": "bigint",
+       "v": "5"
+      },
+      "n": {
+       "$": "bigint",
+       "v": "5"
+      },
+      "i": {
+       "$": "bigint",
+       "v": "5"
+      },
+      "b": {
+       "$": "bigint",
+       "v": "1"
+      },
+      "z": {
+       "$": "bigint",
+       "v": "0"
+      }
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/s",
+       "keyword": "type",
+       "message": "expected string, got bigint"
+      },
+      {
+       "path": "/n",
+       "keyword": "type",
+       "message": "expected number, got bigint"
+      },
+      {
+       "path": "/i",
+       "keyword": "type",
+       "message": "expected integer, got bigint"
+      },
+      {
+       "path": "/b",
+       "keyword": "type",
+       "message": "expected boolean, got bigint"
+      },
+      {
+       "path": "/z",
+       "keyword": "type",
+       "message": "expected null, got bigint"
+      }
+     ],
+     "coerce": {
+      "s": "5",
+      "n": 5,
+      "i": 5,
+      "b": true,
+      "z": null
+     },
+     "coerceSame": false,
+     "parse": {
+      "ok": true,
+      "value": {
+       "s": "5",
+       "n": 5,
+       "i": 5,
+       "b": true,
+       "z": null
+      }
+     }
+    },
+    {
+     "value": {
+      "n": {
+       "$": "bigint",
+       "v": "1152921504606846976"
+      },
+      "b": {
+       "$": "bigint",
+       "v": "2"
+      },
+      "z": {
+       "$": "bigint",
+       "v": "1"
+      }
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/n",
+       "keyword": "type",
+       "message": "expected number, got bigint"
+      },
+      {
+       "path": "/b",
+       "keyword": "type",
+       "message": "expected boolean, got bigint"
+      },
+      {
+       "path": "/z",
+       "keyword": "type",
+       "message": "expected null, got bigint"
+      }
+     ],
+     "coerce": {
+      "n": {
+       "$": "bigint",
+       "v": "1152921504606846976"
+      },
+      "b": {
+       "$": "bigint",
+       "v": "2"
+      },
+      "z": {
+       "$": "bigint",
+       "v": "1"
+      }
+     },
+     "coerceSame": true,
+     "parse": {
+      "ok": false,
+      "errors": [
+       {
+        "path": "/n",
+        "keyword": "type",
+        "message": "expected number, got bigint"
+       },
+       {
+        "path": "/b",
+        "keyword": "type",
+        "message": "expected boolean, got bigint"
+       },
+       {
+        "path": "/z",
+        "keyword": "type",
+        "message": "expected null, got bigint"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "coerce non-finite",
+   "schema": {
+    "type": "object",
+    "properties": {
+     "a": {
+      "type": [
+       "number",
+       "string"
+      ]
+     },
+     "b": {
+      "type": "number"
+     }
+    }
+   },
+   "options": {
+    "coerce": true
+   },
+   "cases": [
+    {
+     "value": {
+      "a": {
+       "$": "NaN"
+      },
+      "b": {
+       "$": "NaN"
+      }
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/a",
+       "keyword": "type",
+       "message": "expected number or string, got NaN"
+      },
+      {
+       "path": "/b",
+       "keyword": "type",
+       "message": "expected number, got NaN"
+      }
+     ],
+     "coerce": {
+      "a": {
+       "$": "NaN"
+      },
+      "b": {
+       "$": "NaN"
+      }
+     },
+     "coerceSame": false,
+     "parse": {
+      "ok": false,
+      "errors": [
+       {
+        "path": "/a",
+        "keyword": "type",
+        "message": "expected number or string, got NaN"
+       },
+       {
+        "path": "/b",
+        "keyword": "type",
+        "message": "expected number, got NaN"
+       }
+      ]
+     }
+    },
+    {
+     "value": {
+      "a": {
+       "$": "Infinity"
+      },
+      "b": {
+       "$": "-Infinity"
+      }
+     },
+     "check": false,
+     "errors": [
+      {
+       "path": "/a",
+       "keyword": "type",
+       "message": "expected number or string, got Infinity"
+      },
+      {
+       "path": "/b",
+       "keyword": "type",
+       "message": "expected number, got -Infinity"
+      }
+     ],
+     "coerce": {
+      "a": "Infinity",
+      "b": {
+       "$": "-Infinity"
+      }
+     },
+     "coerceSame": false,
+     "parse": {
+      "ok": false,
+      "errors": [
+       {
+        "path": "/b",
+        "keyword": "type",
+        "message": "expected number, got -Infinity"
+       }
+      ]
+     }
+    }
+   ]
   }
  ],
  "uris": [
@@ -18820,6 +22944,25 @@
    ]
   },
   {
+   "test": "Value.Convert.Array > Should Convert 10",
+   "schema": {
+    "type": "array",
+    "items": {
+     "type": "bigint"
+    }
+   },
+   "value": {
+    "$": "bigint",
+    "v": "1"
+   },
+   "result": [
+    {
+     "$": "bigint",
+     "v": "1"
+    }
+   ]
+  },
+  {
    "test": "Value.Convert.Array > Should Convert 11",
    "schema": {
     "type": "array",
@@ -20081,6 +24224,216 @@
    "schema": {
     "type": "boolean",
     "const": false
+   },
+   "value": "2",
+   "result": "2"
+  },
+  {
+   "test": "Value.Convert.Literal > LiteralBigInt: Should convert 1",
+   "schema": {
+    "type": "bigint",
+    "const": {
+     "$": "bigint",
+     "v": "100"
+    }
+   },
+   "value": {
+    "$": "bigint",
+    "v": "100"
+   },
+   "result": {
+    "$": "bigint",
+    "v": "100"
+   }
+  },
+  {
+   "test": "Value.Convert.Literal > LiteralBigInt: Should convert 2",
+   "schema": {
+    "type": "bigint",
+    "const": {
+     "$": "bigint",
+     "v": "100"
+    }
+   },
+   "value": 100,
+   "result": {
+    "$": "bigint",
+    "v": "100"
+   }
+  },
+  {
+   "test": "Value.Convert.Literal > LiteralBigInt: Should convert 3",
+   "schema": {
+    "type": "bigint",
+    "const": {
+     "$": "bigint",
+     "v": "1"
+    }
+   },
+   "value": "true",
+   "result": {
+    "$": "bigint",
+    "v": "1"
+   }
+  },
+  {
+   "test": "Value.Convert.Literal > LiteralBigInt: Should convert 4",
+   "schema": {
+    "type": "bigint",
+    "const": {
+     "$": "bigint",
+     "v": "0"
+    }
+   },
+   "value": "false",
+   "result": {
+    "$": "bigint",
+    "v": "0"
+   }
+  },
+  {
+   "test": "Value.Convert.Literal > LiteralBigInt: Should convert 5",
+   "schema": {
+    "type": "bigint",
+    "const": {
+     "$": "bigint",
+     "v": "1"
+    }
+   },
+   "value": "1",
+   "result": {
+    "$": "bigint",
+    "v": "1"
+   }
+  },
+  {
+   "test": "Value.Convert.Literal > LiteralBigInt: Should convert 6",
+   "schema": {
+    "type": "bigint",
+    "const": {
+     "$": "bigint",
+     "v": "0"
+    }
+   },
+   "value": "0",
+   "result": {
+    "$": "bigint",
+    "v": "0"
+   }
+  },
+  {
+   "test": "Value.Convert.Literal > LiteralBigInt: Should convert 7",
+   "schema": {
+    "type": "bigint",
+    "const": {
+     "$": "bigint",
+     "v": "100"
+    }
+   },
+   "value": "2",
+   "result": "2"
+  },
+  {
+   "test": "Value.Convert.Literal > LiteralBigInt: Should convert 1",
+   "schema": {
+    "type": "bigint",
+    "const": {
+     "$": "bigint",
+     "v": "100"
+    }
+   },
+   "value": {
+    "$": "bigint",
+    "v": "100"
+   },
+   "result": {
+    "$": "bigint",
+    "v": "100"
+   }
+  },
+  {
+   "test": "Value.Convert.Literal > LiteralBigInt: Should convert 2",
+   "schema": {
+    "type": "bigint",
+    "const": {
+     "$": "bigint",
+     "v": "100"
+    }
+   },
+   "value": 100,
+   "result": {
+    "$": "bigint",
+    "v": "100"
+   }
+  },
+  {
+   "test": "Value.Convert.Literal > LiteralBigInt: Should convert 3",
+   "schema": {
+    "type": "bigint",
+    "const": {
+     "$": "bigint",
+     "v": "1"
+    }
+   },
+   "value": "true",
+   "result": {
+    "$": "bigint",
+    "v": "1"
+   }
+  },
+  {
+   "test": "Value.Convert.Literal > LiteralBigInt: Should convert 4",
+   "schema": {
+    "type": "bigint",
+    "const": {
+     "$": "bigint",
+     "v": "0"
+    }
+   },
+   "value": "false",
+   "result": {
+    "$": "bigint",
+    "v": "0"
+   }
+  },
+  {
+   "test": "Value.Convert.Literal > LiteralBigInt: Should convert 5",
+   "schema": {
+    "type": "bigint",
+    "const": {
+     "$": "bigint",
+     "v": "1"
+    }
+   },
+   "value": "1",
+   "result": {
+    "$": "bigint",
+    "v": "1"
+   }
+  },
+  {
+   "test": "Value.Convert.Literal > LiteralBigInt: Should convert 6",
+   "schema": {
+    "type": "bigint",
+    "const": {
+     "$": "bigint",
+     "v": "0"
+    }
+   },
+   "value": "0",
+   "result": {
+    "$": "bigint",
+    "v": "0"
+   }
+  },
+  {
+   "test": "Value.Convert.Literal > LiteralBigInt: Should convert 7",
+   "schema": {
+    "type": "bigint",
+    "const": {
+     "$": "bigint",
+     "v": "100"
+    }
    },
    "value": "2",
    "result": "2"
@@ -21537,21 +25890,6 @@
  ],
  "typeboxSkipped": [
   "Value.Convert.Any > Should Convert 8",
-  "Value.Convert.Array > Should Convert 10",
-  "Value.Convert.Literal > LiteralBigInt: Should convert 1",
-  "Value.Convert.Literal > LiteralBigInt: Should convert 2",
-  "Value.Convert.Literal > LiteralBigInt: Should convert 3",
-  "Value.Convert.Literal > LiteralBigInt: Should convert 4",
-  "Value.Convert.Literal > LiteralBigInt: Should convert 5",
-  "Value.Convert.Literal > LiteralBigInt: Should convert 6",
-  "Value.Convert.Literal > LiteralBigInt: Should convert 7",
-  "Value.Convert.Literal > LiteralBigInt: Should convert 1",
-  "Value.Convert.Literal > LiteralBigInt: Should convert 2",
-  "Value.Convert.Literal > LiteralBigInt: Should convert 3",
-  "Value.Convert.Literal > LiteralBigInt: Should convert 4",
-  "Value.Convert.Literal > LiteralBigInt: Should convert 5",
-  "Value.Convert.Literal > LiteralBigInt: Should convert 6",
-  "Value.Convert.Literal > LiteralBigInt: Should convert 7",
   "Value.Convert.Null > Should Convert 18"
  ]
 }

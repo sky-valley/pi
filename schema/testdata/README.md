@@ -7,5 +7,5 @@
   AFL-3.0 or BSD-3-Clause — see each directory's README). `conformance_test.go`
   runs them as upstream's `test/conformance.test.ts` does.
 - `golden/`: the differential golden. `capture.mjs` (usage in its header)
-  runs upstream's `packages/schema/src` at `6536f8012` over a corpus and
-  writes `capture-6536f8012.json`; `golden_test.go` replays it.
+  runs upstream's `packages/schema/src` at `55a5c6914` over a corpus and
+  writes `capture-55a5c6914.json`; `golden_test.go` replays it.

@@ -3,7 +3,7 @@
 // TestResolveURIMatchesUpstream, TestRegexMatchesUpstream and
 // TestTypeBoxConvertMatchesUpstream in schema/golden_test.go.
 //
-//   node capture.mjs <upstream tree> <typebox package dir> > capture-<sha>.json
+//   node capture.mjs <upstream tree> <typebox package dir> <sha> > capture-<sha>.json
 //
 // <upstream tree> is an extracted upstream checkout at the sha
 // (`git -C ~/.cache/pi-upstream archive <sha> packages/schema | tar -x -C
@@ -35,9 +35,9 @@ import { registerHooks } from "node:module";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
-const [tree, typeboxDir] = process.argv.slice(2);
-if (!tree || !typeboxDir) {
-	console.error("usage: node capture.mjs <upstream tree> <typebox package dir>");
+const [tree, typeboxDir, sha] = process.argv.slice(2);
+if (!tree || !typeboxDir || !sha) {
+	console.error("usage: node capture.mjs <upstream tree> <typebox package dir> <sha>");
 	process.exit(2);
 }
 const src = (file) => pathToFileURL(path.join(tree, "packages/schema/src", file)).href;
@@ -588,6 +588,77 @@ coerceRows("coerce with index keys", {
 	properties: { 10: { type: "number" }, b: { type: "number" }, 2: { type: "number" } },
 }, [JSON.parse('{"b":"1","10":"2","x":"3","2":"4"}')]);
 
+// TypeBox's JavaScript types (Type.BigInt, Type.Undefined) and non-finite numbers, which only values built in code
+// hold (since af79b0c3d and 55a5c6914).
+const jsValues = [undefined, 0n, 5n, -1n, NaN, Infinity, -Infinity];
+for (const t of ["bigint", "undefined"]) add(`type ${t}`, { type: t }, [...scalars, ...jsValues]);
+add("type list bigint", { type: ["bigint", "null"] }, [1n, null, 1, undefined]);
+add("bigint bounds", { type: "bigint", minimum: 0n, exclusiveMaximum: 10n, multipleOf: 2n }, [0n, 4n, 5n, 10n, -2n, 4, 4.5]);
+add("bigint number bounds", { type: "bigint", minimum: 0.5, maximum: 9007199254740993n }, [0n, 1n, 9007199254740993n, 9007199254740994n, 1]);
+add("number bigint bounds", { minimum: 1n, multipleOf: 3n }, [3, 3n, 0n, 1.5, 6n, 6.5, NaN, Infinity, "x"]);
+add("number bigint exclusive", { type: "number", exclusiveMinimum: 1n, exclusiveMaximum: 9007199254740993n }, [1, 2, 9007199254740992, 9007199254740994, 2n]);
+add("integer bigint bounds", { type: "integer", maximum: 3n }, [3, 4, 3n, 2.5]);
+add("multipleOf bigint zero", { multipleOf: 0n }, [4n, 0n, 4, 0]);
+add("multipleOf fraction bigint", { multipleOf: 0.5 }, [3n, 3, 0n]);
+add("multipleOf number bigint", { multipleOf: 4 }, [8n, 6n, 2n ** 80n]);
+add("multipleOf huge bigint", { type: "bigint", multipleOf: 5n }, [10n ** 400n, 10n ** 400n + 1n]);
+add("const bigint", { const: 5n }, [5n, 5, 6n]);
+add("enum bigint", { enum: [1n, 2n, "a"] }, [1n, 2n, 1, 3n]);
+add("enum bigint long", { enum: [1n, 2n, 3n, 4n, 5n, 6n, 7n, 8n, 9n] }, [9n, 10n, 9]);
+add("unique bigints", { type: "array", uniqueItems: true }, [[1n, 2n], [1n, 1n], [1n, 1], [undefined, undefined], [undefined, null]]);
+for (const t of ["number", "integer"]) add(`non-finite ${t}`, { type: t }, [NaN, Infinity, -Infinity, 1, 1.5]);
+add("non-finite bounded", { type: "number", minimum: 0 }, [NaN, Infinity, -Infinity, 1]);
+add("non-finite bounds only", { minimum: 0 }, [NaN, Infinity, -Infinity, 1]);
+add("non-finite type list", { type: ["number", "string"] }, [NaN, Infinity, "x", 1]);
+add("non-finite anyOf", { anyOf: [{ type: "number" }, { type: "null" }] }, [NaN, -Infinity, null, 1]);
+add("non-finite property", { type: "object", properties: { a: { type: "number" } } }, [{ a: NaN }, { a: Infinity }, { a: 1 }]);
+add("non-finite enum", { enum: [NaN, Infinity] }, [NaN, Infinity, 1]);
+const undefinedValues = [{ a: undefined }, {}, { a: null }, { a: "x" }, { a: undefined, b: undefined }, { b: undefined }];
+add("required undefined", { type: "object", properties: { a: { type: "undefined" } }, required: ["a"] }, undefinedValues);
+add("required undefined closed", {
+	type: "object",
+	properties: { a: { type: "undefined" }, b: { type: "string" } },
+	required: ["a"],
+	additionalProperties: false,
+}, undefinedValues);
+add("required undefined open", {
+	type: "object",
+	properties: { a: { anyOf: [{ type: "string" }, { type: "undefined" }] }, b: { type: "string" } },
+	required: ["a"],
+	patternProperties: { "^c": { type: "undefined" } },
+}, [...undefinedValues, { a: undefined, c: undefined }, { a: undefined, c: 1 }]);
+add("required unknown", { type: "object", properties: { a: {} }, required: ["a"] }, undefinedValues);
+add("required unknown closed", { type: "object", properties: { a: {} }, required: ["a"], additionalProperties: false }, undefinedValues);
+add("required string undefined", { type: "object", properties: { a: { type: "string" } }, required: ["a"] }, undefinedValues);
+add("required not declared undefined", { type: "object", required: ["a"] }, undefinedValues);
+add("optional undefined", { type: "object", properties: { a: { type: "string" }, b: { type: "number" } }, additionalProperties: false }, undefinedValues);
+add("undefined counts", { type: "object", minProperties: 1, dependentRequired: { b: ["a"] } }, undefinedValues);
+add("required undefined ref", {
+	type: "object",
+	$defs: { u: { type: "undefined" } },
+	properties: { a: { $ref: "#/$defs/u" } },
+	required: ["a"],
+}, undefinedValues);
+coerceRows("coerce bigint", {
+	type: "object",
+	properties: { n: { type: "bigint", minimum: 0n } },
+	required: ["n"],
+}, [{ n: "42" }, { n: "12n" }, { n: "12.9" }, { n: 3.7 }, { n: true }, { n: "FALSE" }, { n: "x" }, { n: null }, { n: -1 }, { n: NaN }, { n: 1n }, {}]);
+coerceRows("coerce undefined", { type: "object", properties: { n: { type: "undefined" } }, required: ["n"] }, [
+	{ n: null }, { n: 0 }, { n: 0n }, { n: false }, { n: "" }, { n: "0" }, { n: "NULL" }, { n: "undefined" }, { n: "x" }, { n: 1n }, {},
+]);
+coerceRows("coerce root bigint", { type: "bigint" }, ["7", null, true, 2.5, "x", 9007199254740993n, "9007199254740993"]);
+coerceRows("coerce root undefined", { type: "undefined" }, [null, "", "x", undefined]);
+coerceRows("coerce bigint literal", { const: 100n }, [100, "100", 100n, "2", "100n"]);
+coerceRows("coerce bigint enum", { enum: [1n, "b"] }, [1, "1", true, "b"]);
+coerceRows("coerce from bigint", {
+	type: "object",
+	properties: { s: { type: "string" }, n: { type: "number" }, i: { type: "integer" }, b: { type: "boolean" }, z: { type: "null" } },
+}, [{ s: 5n, n: 5n, i: 5n, b: 1n, z: 0n }, { n: 2n ** 60n, b: 2n, z: 1n }]);
+coerceRows("coerce non-finite", { type: "object", properties: { a: { type: ["number", "string"] }, b: { type: "number" } } }, [
+	{ a: NaN, b: NaN }, { a: Infinity, b: -Infinity },
+]);
+
 // ---------------------------------------------------------------------------------------------------------------
 // resolveUri
 // ---------------------------------------------------------------------------------------------------------------
@@ -705,13 +776,21 @@ globalThis.__piSchemaCapture = {
 		typeboxSkipped.push([...names, name].join(" > "));
 	},
 };
+// The schema as JSON keeps it (TypeBox's symbol-keyed kinds and functions
+// dropped), with its bigints (Type.BigInt bounds, Type.Literal(100n)) kept as
+// bigints, which JSON.stringify cannot write.
+const BIGINT = "\u0000bigint";
+function jsonOnly(schema) {
+	const text = JSON.stringify(schema, (_k, v) => (typeof v === "bigint" ? { [BIGINT]: String(v) } : v));
+	return JSON.parse(text, (_k, v) => (v !== null && typeof v === "object" && Object.hasOwn(v, BIGINT) ? BigInt(v[BIGINT]) : v));
+}
 const original = Coercer.prototype.convertOnly;
 Coercer.prototype.convertOnly = function (value) {
 	const result = original.call(this, value);
-	typebox.push({ test: current, schema: enc(JSON.parse(JSON.stringify(this.schema))), value: enc(value), result: enc(result) });
+	typebox.push({ test: current, schema: enc(jsonOnly(this.schema)), value: enc(value), result: enc(result) });
 	return result;
 };
 await import(pathToFileURL(path.join(tree, "packages/schema/test/coerce-typebox.test.ts")).href);
 Coercer.prototype.convertOnly = original;
 
-process.stdout.write(`${JSON.stringify({ sha: "6536f8012", rows, uris, regexes, subjects, typebox, typeboxSkipped }, null, 1)}\n`);
+process.stdout.write(`${JSON.stringify({ sha, rows, uris, regexes, subjects, typebox, typeboxSkipped }, null, 1)}\n`);

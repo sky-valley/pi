@@ -13,13 +13,13 @@
 // packages/schema/src with a resolve hook, so nothing is written into the
 // tree. Node v22 strips the types.
 //
-// validation-errors-6536f8012.json is a src capture: upstream 6536f8012
+// validation-errors-55a5c6914.json is a src capture: upstream 6536f8012
 // moved validation onto pi-schema (compile(schema, {formats, coerce: true,
 // unresolvedRefs: "reject"}).parse) after 1.4.0 shipped, which changed every
 // message ("must have required properties value" became "missing") and the
-// coercion rules. It replaces validation-errors-1.3.0.json, the 1.3.0
-// build's capture. Re-verify against the first build that ships 6536f8012
-// (the BUILD wins).
+// coercion rules; it replaced validation-errors-1.3.0.json, the 1.3.0
+// build's capture, and was re-captured at 55a5c6914 (its rows unchanged).
+// Re-verify against the first build that ships 55a5c6914 (the BUILD wins).
 //
 // Rows pin the parts of the text the port builds itself: the tool name as
 // written between quotes (no escaping), each error as "  - <path>: <message>"
