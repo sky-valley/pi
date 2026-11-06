@@ -1926,8 +1926,13 @@ package docs (`schema/doc.go`, `schema/formats/formats.go`); in short:
 - **S3 — a failed lazy compile repeats its error** on later calls, where
   upstream's half-built cache throws "slot.check is not a function".
 - **S4 — value model:** a `map[string]any` has no insertion order (keys
-  listed index-first, then sorted); Go has no `undefined`; the regex cache is
-  not weak; `Errors`/`Coerce`/`Parse` return the error upstream throws.
+  listed index-first, then sorted); JS `undefined` is the sentinel
+  `schema.Undefined` (2026-11-06, `af79b0c3d`: `{type: "undefined"}` and a
+  required property set to undefined need a present-but-undefined value),
+  which `Decode` never produces and `Coerce`/`Parse` return only where a
+  schema converts to undefined; a bigint is a non-nil `*big.Int` (a `big.Int`
+  value is not one); the regex cache is not weak; `Errors`/`Coerce`/`Parse`
+  return the error upstream throws.
 - **S5 — formats:** lone surrogates reach a Go string as U+FFFD (one
   `regex` answer differs); NFC in idn-email/idn-hostname is `x/text`'s
   Unicode 15.0 against Node's 17.0 (20 code points listed in the package
@@ -1935,13 +1940,21 @@ package docs (`schema/doc.go`, `schema/formats/formats.go`); in short:
 - **S6 — `ai.ValidateToolArguments`** refuses, with an error, a schema that
   coerces the arguments to a non-object (pi returns the value; Go's map
   return cannot carry it), and compiles a decoded tool schema's source text
-  while it is unmodified (K41).
+  while it is unmodified (K41). Members a schema converts to `undefined`
+  (TypeBox's `Type.Undefined` from JSON `null`) are dropped from the
+  arguments map, as pi's JSON form has them (`{}`); pi returns `{n: undefined}`.
+- **S7 — TypeBox extras (2026-11-06, `af79b0c3d`):** `Validator.validate()` is
+  Go's existing `Errors` (check plus explain, no coercion, nil when valid);
+  `unsafe<T>` and `Static` are type-level (E3); bigint bounds have no helper
+  (the bound helpers stay `float64`; pass `Member{"minimum", big.NewInt(0)}`).
+  `writeJSON` of a bigint fails with V8's `Do not know how to serialize a
+  BigInt`, as `JSON.stringify` throws.
 
-Oracles (src captures at `6536f8012`; re-verify against the first build that
-ships it): `schema/testdata/golden/capture-6536f8012.json`,
-`schema/formats/testdata/golden/capture-6536f8012.json`,
-`ai/testdata/validation-errors/validation-errors-6536f8012.json`,
-`ai/testdata/validation-probes/validation-probes-6536f8012.json`; upstream's
+Oracles: `schema/formats/testdata/golden/capture-6536f8012.json` (confirmed by
+the 1.5.0 build); src captures at `55a5c6914`, re-verify against the first
+build that ships it: `schema/testdata/golden/capture-55a5c6914.json`,
+`ai/testdata/validation-errors/validation-errors-55a5c6914.json`,
+`ai/testdata/validation-probes/validation-probes-55a5c6914.json`; upstream's
 JSON-Schema-Test-Suite run (`schema/conformance_test.go`).
 
 ### chord (ported 2026-09-03, upstream `packages/chord` at `64eeb82a4`; service runtime deleted 2026-10-19)
