@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"math/big"
 	"reflect"
 	"slices"
 )
@@ -72,6 +73,12 @@ func (c *converter) convert(v any) any {
 		return v
 	case *schemaObject:
 		return x
+	case *big.Int:
+		if x != nil {
+			// A copy: a caller changing its bigint after Compile does not
+			// change the validator's bounds or const.
+			return new(big.Int).Set(x)
+		}
 	case Object:
 		return c.object(v, len(x), func(add func(string, any)) {
 			for _, m := range x {

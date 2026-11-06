@@ -1,7 +1,9 @@
 package schema
 
 import (
+	"encoding/json"
 	"math"
+	"math/big"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -105,9 +107,27 @@ func TestStringifyWritesWhatJSONStringifyWrites(t *testing.T) {
 			t.Errorf("stringify %#v = %s, want %s", c.v, got, c.want)
 		}
 	}
-	b, err := Object{{"z", 1.0}, {"a", Object{{"y", "x"}}}}.MarshalJSON()
+	b, err := Object{{"z", 1.0}, {"a", Object{{"y", "x"}}}, {"u", Undefined}}.MarshalJSON()
 	if err != nil || string(b) != `{"z":1,"a":{"y":"x"}}` {
 		t.Errorf("MarshalJSON %s %v", b, err)
+	}
+	// JSON.stringify of a bigint throws V8's TypeError.
+	if b, err := (Object{{"a", big.NewInt(1)}}).MarshalJSON(); err == nil || err.Error() != "Do not know how to serialize a BigInt" {
+		t.Errorf("MarshalJSON of a bigint = %s, %v", b, err)
+	}
+	// encoding/json writes Undefined as null, as JSON.stringify writes an
+	// undefined array item; a map keeps an Undefined member's key.
+	for _, c := range []struct {
+		v    any
+		want string
+	}{
+		{[]any{Undefined}, `[null]`},
+		{map[string]any{"a": Undefined}, `{"a":null}`},
+		{Undefined, `null`},
+	} {
+		if b, err := json.Marshal(c.v); err != nil || string(b) != c.want {
+			t.Errorf("json.Marshal %#v = %s, %v, want %s", c.v, b, err, c.want)
+		}
 	}
 }
 

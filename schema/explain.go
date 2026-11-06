@@ -129,7 +129,7 @@ func (e *explainRun) walk(v any, base string, value any, path string, out *[]Val
 		push("enum", "expected one of "+listValues(values))
 	}
 	if c, ok := node.get("const"); ok && !constCheck(c)(value) {
-		push("const", "expected "+stringify(c))
+		push("const", "expected "+stringifyNode(c))
 	}
 	if s, ok := value.(string); ok && node.kw("type") != "bytes" {
 		e.walkString(node, s, push)

@@ -58,9 +58,7 @@ func TestLeafChecksAgreeInObjectsAndArrays(t *testing.T) {
 	}
 }
 
-// pi's "find properties in any order". Its {c: 0, b: undefined, a: 1} case
-// is not ported: Go has no undefined (as "treats a property set to undefined
-// as absent" is not).
+// pi's "find properties in any order" (validator.test.ts at 55a5c6914).
 func TestClosedObjectFindsPropertiesInAnyOrder(t *testing.T) {
 	v := mustCompile(t, js(t, `{"type":"object","properties":{"a":{"const":1},"b":{"type":"string"},"c":{"type":"integer","minimum":0}},"required":["a","c"],"additionalProperties":false}`), Options{})
 	for _, tc := range []struct {
@@ -78,5 +76,9 @@ func TestClosedObjectFindsPropertiesInAnyOrder(t *testing.T) {
 		if got := v.Check(js(t, tc.value)); got != tc.want {
 			t.Errorf("Check(%s) = %v, want %v", tc.value, got, tc.want)
 		}
+	}
+	// {c: 0, b: undefined, a: 1}: an optional property set to undefined.
+	if !v.Check(Object{{"c", 0.0}, {"b", Undefined}, {"a", 1.0}}) {
+		t.Error("Check({c: 0, b: undefined, a: 1}) = false, want true")
 	}
 }

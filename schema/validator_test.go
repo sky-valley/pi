@@ -558,6 +558,31 @@ func TestTypeBoxJavaScriptTypes(t *testing.T) {
 		checks(t, mustCompile(t, Object{{"multipleOf", n(0)}}, Options{}), false, n(4))
 		checks(t, mustCompile(t, Object{{"multipleOf", 0.5}}, Options{}), false, n(3))
 	})
+	t.Run("compare a bigint with number bounds, and a number with bigint bounds", func(t *testing.T) {
+		// Number bounds take the numbers' fast path; a bigint value, or a
+		// bigint bound, compares exactly. Infinity fails every bound, as the
+		// absent exclusiveMaximum is Infinity (pi: v < xmax).
+		checks(t, mustCompile(t, Object{{"type", "bigint"}, {"minimum", 0.0}, {"exclusiveMaximum", 10.5}}, Options{}), true, n(0), n(10))
+		checks(t, mustCompile(t, Object{{"type", "bigint"}, {"minimum", 0.0}, {"exclusiveMaximum", 10.5}}, Options{}), false, n(-1), n(11), 5.0)
+		checks(t, mustCompile(t, Object{{"minimum", 0.0}, {"multipleOf", 2.0}}, Options{}), true, n(4), 4.0, "x")
+		checks(t, mustCompile(t, Object{{"minimum", 0.0}, {"multipleOf", 2.0}}, Options{}), false, n(3), 3.0, n(-2), math.NaN(), math.Inf(1))
+		checks(t, mustCompile(t, Object{{"type", "number"}, {"maximum", n(10)}}, Options{}), true, 10.0, 9.5)
+		checks(t, mustCompile(t, Object{{"type", "number"}, {"maximum", n(10)}}, Options{}), false, 10.5, n(5), math.Inf(-1))
+	})
+	t.Run("copy a schema's bigints at Compile", func(t *testing.T) {
+		lo, c := n(0), n(7)
+		bounded := mustCompile(t, Object{{"type", "bigint"}, {"minimum", lo}}, Options{})
+		constant := mustCompile(t, Object{{"const", c}}, Options{})
+		lo.SetInt64(100)
+		c.SetInt64(8)
+		checks(t, bounded, true, n(5))
+		checks(t, constant, true, n(7))
+		checks(t, constant, false, n(8))
+	})
+	t.Run("report a const of undefined as expected undefined", func(t *testing.T) {
+		wantErrors(t, mustErrors(t, mustCompile(t, Object{{"const", Undefined}}, Options{}), 1.0),
+			ValidationError{"", "const", "expected undefined"})
+	})
 }
 
 // validator.test.ts (since 55a5c6914): a number is finite, as in TypeBox.

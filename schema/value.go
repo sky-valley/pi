@@ -84,7 +84,17 @@ type undefinedValue struct{}
 // return it where a schema converts to it (`{"type":"undefined"}` takes
 // null, "", 0, false and the like), and JSON (Object.MarshalJSON) leaves
 // out a property set to it.
+//
+// encoding/json cannot leave a member out, so a map[string]any that Coerce
+// or Parse returns keeps the key of a member set to Undefined, and
+// json.Marshal writes it as null (where JSON.stringify drops it). Callers
+// that marshal a result should marshal it as an Object or drop the
+// Undefined members first.
 var Undefined = undefinedValue{}
+
+// MarshalJSON writes Undefined as null, as JSON.stringify writes an
+// undefined array item (`[undefined]` is `[null]`).
+func (undefinedValue) MarshalJSON() ([]byte, error) { return []byte("null"), nil }
 
 // undefined is Undefined as the package compares it: also what a read of a
 // property an object does not have returns (propOf), as in JavaScript.

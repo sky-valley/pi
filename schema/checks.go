@@ -259,9 +259,25 @@ func inBounds(v, lo, hi, xlo, xhi bound) bool {
 
 // numberCheck is the number keywords, for numbers and bigints alike (as
 // TypeBox applies them): bounds of either kind compare with values of either
-// kind.
+// kind. Where every bound is a number (upstream's `plain` leaf), a number
+// takes a fast path of plain float comparisons, which answer as
+// compareBounds does for two numbers.
 func numberCheck(typ numberType, lo, hi, xlo, xhi bound, multipleOf *bound) check {
+	floats := lo.n == nil && hi.n == nil && xlo.n == nil && xhi.n == nil && (multipleOf == nil || multipleOf.n == nil)
 	return func(v any) bool {
+		if floats {
+			if f, ok := numberOf(v); ok {
+				switch typ {
+				case bigintOnly:
+					return false
+				case numberOnly, integerOnly:
+					if !isFinite(f) || (typ == integerOnly && !isIntegral(f)) {
+						return false
+					}
+				}
+				return f >= lo.f && f <= hi.f && f > xlo.f && f < xhi.f && (multipleOf == nil || isMultiple(f, multipleOf.f))
+			}
+		}
 		x, ok := boundOf(v)
 		if !ok {
 			return typ == othersPass

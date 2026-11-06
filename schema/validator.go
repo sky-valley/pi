@@ -208,6 +208,11 @@ func (v *Validator) Errors(value any) (errs []ValidationError, err error) {
 // ErrStackOverflow where a schema object built in Go holds itself in place
 // (`allOf` itself).
 //
+// A member the coercion sets to Undefined keeps its key in a map[string]any
+// result, which encoding/json writes as null rather than leaving out as
+// JSON.stringify does: marshal the result as an Object, or drop the
+// Undefined members first.
+//
 // It panics unless the validator was compiled with Options.Coerce, as
 // calling coerce() on upstream's plain Validator throws.
 func (v *Validator) Coerce(value any) (any, error) {
@@ -228,7 +233,8 @@ func (v *Validator) Coerce(value any) (any, error) {
 // it is valid, else the errors of the coerced value (upstream's ParseResult,
 // whose `ok` is len(errs) == 0). err is an error Coerce or Errors returns,
 // upstream's throw out of parse(); coerced and errs are nil with it. It
-// panics as Coerce does.
+// panics as Coerce does, and a map[string]any it returns keeps Undefined
+// members' keys as Coerce's does.
 func (v *Validator) Parse(value any) (coerced any, errs []ValidationError, err error) {
 	if coerced, err = v.Coerce(value); err != nil {
 		return nil, nil, err
