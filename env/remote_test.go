@@ -327,22 +327,23 @@ func (c *endingContext) Err() error {
 	return c.Context.Err()
 }
 
-// TestEndedContextsAbortOnlyWhereUpstreamChecks: upstream's info() never
-// looks at an abort signal, nor do its operations after their last abort
-// checkpoint (Stat after lstat, BinaryReader.Info after fstat, ListDir of an
-// empty directory after readdir, CreateTempFile after mkdtemp): a context
-// that ends there does not fail them, also when the connection is lost
-// meanwhile and must start again.
+// TestEndedContextsAbortOnlyWhereUpstreamChecks: upstream's operations do
+// not look at an abort signal after their last abort checkpoint (Stat after
+// lstat, BinaryReader.Info after fstat, ListDir of an empty directory after
+// readdir, CreateTempFile after mkdtemp): a context that ends there does not
+// fail them, also when the connection is lost meanwhile and must start again.
+// Waiting for the connection is a checkpoint of its own (c96e368e2), also
+// when it is started already.
 func TestEndedContextsAbortOnlyWhereUpstreamChecks(t *testing.T) {
 	env, connection := environment(t)
 	mustDo(t, env.WriteFile(background(), "a.txt", []byte("a")))
 	mustDo(t, env.CreateDir(background(), "empty", nil))
+	if _, err := connection.Info(abortedContext()); remoteCode(err) != "aborted" {
+		t.Errorf("Info with an ended context: %v, want aborted", err)
+	}
 	failures := map[string]int{}
 	for range 30 {
-		if _, err := connection.Info(abortedContext()); err != nil {
-			failures["Info"]++
-		}
-		if _, err := env.Stat(newEndingContext(1), "a.txt"); err != nil {
+		if _, err := env.Stat(newEndingContext(2), "a.txt"); err != nil {
 			failures["Stat"]++
 		}
 		reader, err := env.OpenBinaryReader(background(), "a.txt", nil)
@@ -351,10 +352,10 @@ func TestEndedContextsAbortOnlyWhereUpstreamChecks(t *testing.T) {
 			failures["BinaryReader.Info"]++
 		}
 		reader.Close()
-		if infos, err := env.ListDir(newEndingContext(1), "empty"); err != nil || len(infos) != 0 {
+		if infos, err := env.ListDir(newEndingContext(2), "empty"); err != nil || len(infos) != 0 {
 			failures["ListDir"]++
 		}
-		if path, err := env.CreateTempFile(newEndingContext(1), nil); err != nil {
+		if path, err := env.CreateTempFile(newEndingContext(2), nil); err != nil {
 			failures["CreateTempFile"]++
 		} else {
 			mustDo(t, os.RemoveAll(filepath.Dir(path)))
@@ -363,38 +364,37 @@ func TestEndedContextsAbortOnlyWhereUpstreamChecks(t *testing.T) {
 	if len(failures) != 0 {
 		t.Errorf("failed with an ended context (of 30 each): %v", failures)
 	}
-	// Upstream's createTempDir checks before it waits for the daemon to start,
-	// not after.
+	// A context that ends while the daemon starts fails CreateTempDir, which
+	// checks before it waits for the start and while it waits.
 	fresh := NewRemoteExecutionEnv(RemoteExecutionEnvOptions{Connection: newConnection(t), ID: "pi-env:test", Cwd: env.Cwd()})
-	if dir, err := fresh.CreateTempDir(newEndingContext(1), ""); err != nil {
-		t.Errorf("CreateTempDir with a context that ended while the daemon started: %v", err)
-	} else {
-		mustDo(t, os.Remove(dir))
+	if dir, err := fresh.CreateTempDir(newEndingContext(1), ""); errorCode(err) != "aborted" {
+		t.Errorf("CreateTempDir with a context that ended while the daemon started: %q, %v, want aborted", dir, err)
 	}
 	// The listing daemon exits when the handle of "exiting" is closed, after
 	// readdir: ListDir starts it again for the remote's path rules.
 	listing := NewConnection(ConnectionOptions{Command: []string{os.Args[0], listingDaemonArg, "linux"}})
 	t.Cleanup(listing.Close)
 	listingEnv := NewRemoteExecutionEnv(RemoteExecutionEnvOptions{Connection: listing, ID: "pi-env:listing", Cwd: "/"})
-	if infos, err := listingEnv.ListDir(newEndingContext(1), "exiting"); err != nil || len(infos) != 0 {
+	if infos, err := listingEnv.ListDir(newEndingContext(2), "exiting"); err != nil || len(infos) != 0 {
 		t.Errorf("ListDir with the connection lost after readdir: %v, %v", infos, err)
 	}
 }
 
 // TestWriteChecksForAbortsBetweenChunksAndAppendDoesNot: Node's writeFile
 // checks its signal before each 512 KiB write, appendFile only before and
-// after, so an append aborted midway still writes everything.
+// after, so an append aborted midway still writes everything. The first
+// check is the wait for the connection.
 func TestWriteChecksForAbortsBetweenChunksAndAppendDoesNot(t *testing.T) {
 	env, _ := environment(t)
 	content := bytes.Repeat([]byte("0123456789abcdef"), 3*1024*1024/16)
-	err := env.WriteFile(&expiringContext{Context: background(), checks: 1}, "w.bin", content)
+	err := env.WriteFile(&expiringContext{Context: background(), checks: 2}, "w.bin", content)
 	if errorCode(err) != "aborted" {
 		t.Fatalf("write aborted midway: %v", err)
 	}
 	if info, err := os.Stat(filepath.Join(env.Cwd(), "w.bin")); err != nil || info.Size() != writeChunk {
 		t.Fatalf("an aborted write wrote %d bytes, want %d (%v)", info.Size(), writeChunk, err)
 	}
-	err = env.AppendFile(&expiringContext{Context: background(), checks: 1}, "w.bin", content)
+	err = env.AppendFile(&expiringContext{Context: background(), checks: 2}, "w.bin", content)
 	if errorCode(err) != "aborted" {
 		t.Fatalf("append aborted midway: %v", err)
 	}

@@ -14,6 +14,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/sky-valley/pi/coding"
@@ -566,7 +567,8 @@ func (r *remoteTextLineReader) Close() error {
 var driveRelative = regexp.MustCompile(`^([a-zA-Z]:)([^\\/]|$)`)
 
 // resolve is Node's resolvePath on the remote system, with its home
-// directory and working directories.
+// directory and working directories. It connects first; ending ctx stops
+// waiting for that (code aborted).
 func (e *RemoteExecutionEnv) resolve(ctx context.Context, path string) (string, error) {
 	info, err := e.connection.Info(ctx)
 	if err != nil {
@@ -659,10 +661,10 @@ func (e *RemoteExecutionEnv) open(resolved string, fields object) (*handle, open
 	return &handle{env: e, id: opened.Handle, session: reply.Session, path: resolved}, opened, nil
 }
 
-// AbsolutePath implements coding.FileSystem. As upstream's absolutePath, it
-// does not look at ctx.
+// AbsolutePath implements coding.FileSystem. As upstream's absolutePath, ctx
+// only bounds the wait for the connection.
 func (e *RemoteExecutionEnv) AbsolutePath(ctx context.Context, path string) (string, error) {
-	resolved, err := e.resolve(context.WithoutCancel(ctx), path)
+	resolved, err := e.resolve(ctx, path)
 	if err != nil {
 		return "", toFileError(err, path)
 	}
@@ -1167,8 +1169,7 @@ func (e *RemoteExecutionEnv) CreateTempDir(ctx context.Context, prefix string) (
 	if prefix == "" {
 		prefix = "tmp-"
 	}
-	// Upstream checks for an abort before it waits for the daemon, not after.
-	info, err := e.connection.Info(context.WithoutCancel(ctx))
+	info, err := e.connection.Info(ctx)
 	if err != nil {
 		return "", toFileError(err, "")
 	}
@@ -1353,20 +1354,6 @@ func (e *RemoteExecutionEnv) run(ctx context.Context, command object, options *R
 		}
 	}
 	inheritEnv := options.InheritEnv == nil || *options.InheritEnv
-	cwd := e.Cwd()
-	if options.Cwd != "" {
-		resolved, err := e.resolve(ctx, options.Cwd)
-		if err != nil {
-			if ctx.Err() != nil {
-				return RunResult{}, &ExecutionError{Code: ExecAborted, Message: "aborted"}
-			}
-			return RunResult{}, &ExecutionError{Code: ExecUnknown, Message: err.Error(), Cause: err}
-		}
-		cwd = resolved
-	}
-	if ctx.Err() != nil {
-		return RunResult{}, &ExecutionError{Code: ExecAborted, Message: "aborted"}
-	}
 	env := map[string]string{}
 	if inheritEnv {
 		for key, value := range e.shellEnv {
@@ -1375,6 +1362,46 @@ func (e *RemoteExecutionEnv) run(ctx context.Context, command object, options *R
 	}
 	for key, value := range options.Env {
 		env[key] = value
+	}
+
+	// Aborting ctx, the timeout or a failing callback cancels the request; it
+	// still settles with the daemon's answer, or as aborted after the grace.
+	requestCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	// The daemon enforces the timeout once it runs the command. This timer
+	// also covers starting the connection and a daemon that stopped
+	// answering (a rebooting host), so the call ends on time whatever the
+	// remote host does.
+	var timedOut atomic.Bool
+	if timeout != 0 {
+		timer := time.AfterFunc(time.Duration(timeout*float64(time.Second)), func() {
+			if requestCtx.Err() != nil {
+				return
+			}
+			timedOut.Store(true)
+			cancel()
+		})
+		defer timer.Stop()
+	}
+	stopped := func() *ExecutionError {
+		if timedOut.Load() {
+			return &ExecutionError{Code: ExecTimeout, Message: "timeout:" + jstext.NumberToString(timeout), timeout: timeout}
+		}
+		return &ExecutionError{Code: ExecAborted, Message: "aborted"}
+	}
+	cwd := e.Cwd()
+	if options.Cwd != "" {
+		resolved, err := e.resolve(requestCtx, options.Cwd)
+		if err != nil {
+			if requestCtx.Err() != nil {
+				return RunResult{}, stopped()
+			}
+			return RunResult{}, &ExecutionError{Code: ExecUnknown, Message: err.Error(), Cause: err}
+		}
+		cwd = resolved
+	}
+	if requestCtx.Err() != nil {
+		return RunResult{}, stopped()
 	}
 	fields := append(command, object{}.with("cwd", cwd).with("env", env).with("inheritEnv", inheritEnv)...)
 	if e.shellPath != "" {
@@ -1394,10 +1421,6 @@ func (e *RemoteExecutionEnv) run(ctx context.Context, command object, options *R
 	settled := false
 	var running uint32
 	started := false
-	// Aborting ctx or failing the callback cancels the request; it still
-	// settles with the daemon's answer.
-	requestCtx, cancel := context.WithCancel(ctx)
-	defer cancel()
 	reply, err := e.connection.Request(requestCtx, "exec", fields, &RequestOptions{
 		OnStart: func(id uint32, session int) {
 			running, started = id, true
@@ -1443,10 +1466,6 @@ func (e *RemoteExecutionEnv) run(ctx context.Context, command object, options *R
 	if err != nil {
 		var remote *RemoteError
 		if !errors.As(err, &remote) {
-			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
-				// The context ended while the connection was starting.
-				return RunResult{}, &ExecutionError{Code: ExecAborted, Message: "aborted", Cause: err}
-			}
 			return RunResult{}, &ExecutionError{Code: ExecUnknown, Message: err.Error(), Cause: err}
 		}
 		failure := &ExecutionError{Code: ExecUnknown, Message: remote.Message, timeout: timeout}
@@ -1454,7 +1473,7 @@ func (e *RemoteExecutionEnv) run(ctx context.Context, command object, options *R
 		case "timeout":
 			failure.Code, failure.Message = ExecTimeout, "timeout:"+jstext.NumberToString(timeout)
 		case "aborted":
-			failure.Code, failure.Message = ExecAborted, "aborted"
+			failure = stopped()
 		case "shell_unavailable", "spawn_error":
 			failure.Code = ExecutionErrorCode(remote.Code)
 		}

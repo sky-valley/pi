@@ -41,6 +41,8 @@ const scriptedDaemonArg = "pi-env-scripted-daemon"
 //     later.
 //   - sleep <ms> [text]: writes text to stderr after ms (a process the
 //     daemon starts).
+//   - never, silent: a daemon that never gets ready, and one that answers
+//     its hello and nothing else (remote_abort_test.go).
 func runScriptedDaemon(args []string) int {
 	switch args[0] {
 	case "stderr":
@@ -66,6 +68,10 @@ func runScriptedDaemon(args []string) int {
 		return 7
 	case "fake":
 		return runFakeDaemon(args[1], args[2:])
+	case "never":
+		return runNeverReadyDaemon()
+	case "silent":
+		return runSilentDaemon(args[1:])
 	case "linger":
 		os.Stderr.Write([]byte(args[1]))
 		child := exec.Command(os.Args[0], scriptedDaemonArg, "sleep", "500", args[2])

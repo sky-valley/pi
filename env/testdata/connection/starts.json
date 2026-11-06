@@ -541,7 +541,9 @@
 	"abortedPaths": [
 		{
 			"operation": "absolutePath ~/a",
-			"result": "/home/me/a"
+			"result": {
+				"code": "aborted"
+			}
 		},
 		{
 			"operation": "joinPath a b",
@@ -569,11 +571,11 @@
 		{
 			"name": "daemon stops reading",
 			"outcome": {
-				"code": "unknown",
-				"message": "pi-env connection timed out",
-				"lost": true
+				"code": "aborted",
+				"message": "aborted",
+				"lost": false
 			},
-			"afterSilenceLimit": true
+			"afterSilenceLimit": false
 		}
 	]
 }

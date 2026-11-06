@@ -4,21 +4,24 @@
 // RemoteExecutionEnv resolves paths against a POSIX and a Windows daemon's
 // hello (also with an aborted context, before the daemon started), and how
 // requests fail when the connection is lost: a request larger than a frame,
-// and a daemon that stops reading and pinging (this one takes 35 s).
+// and a daemon that stops reading and pinging.
 //
-// Copy this file into upstream's packages/env at 479d6e5e2 and run, from
+// Copy this file into upstream's packages/env at c96e368e2 and run, from
 // there,
 //
 //	node --conditions=source capture.mts <path of testdata/connection> <pi-env daemon> > <path of testdata/connection>/starts.json
 //
-// with the daemon of @earendil-works/pi-env 1.4.0
-// (bin/pi-env-<platform>-<arch>/pi-env). A `git archive 479d6e5e2 packages`
-// extraction runs from source without a build or an install: link
-// node_modules/@earendil-works/{chord,pi-durable,pi-telemetry,pi-ai,
-// pi-codemode,pi-agent-core} to their packages/*, whose "source" export
-// condition names src/*.ts. Against 479d6e5e2^1's connection.ts it gives the
-// capture of d2e7d8b7c byte for byte; 479d6e5e2 adds the daemon's stderr to
-// the "exit" start's message.
+// with the daemon of @earendil-works/pi-env 1.4.0 or 1.5.0, which give the
+// same capture (bin/pi-env-<platform>-<arch>/pi-env). A `git archive
+// c96e368e2 packages` extraction runs from source without a build or an
+// install: link packages/node_modules/@earendil-works/{chord,pi-durable,
+// pi-telemetry,pi-ai,pi-codemode,pi-agent-core} to their packages/*, whose
+// "source" export condition names src/*.ts. Against 479d6e5e2^1's
+// connection.ts it gives the capture of d2e7d8b7c byte for byte; 479d6e5e2
+// adds the daemon's stderr to the "exit" start's message, and c96e368e2 (its
+// parent gives the capture of 479d6e5e2) makes an aborted absolutePath stop
+// waiting for the start and an aborted request settle a second after its
+// cancel.
 import { join } from "node:path";
 import { BACKGROUND_CONTEXT, withAbortSignal } from "@earendil-works/chord/context";
 import { Connection, type ConnectionOptions, isConnectionLost, RemoteError } from "./src/connection.ts";
@@ -81,8 +84,8 @@ for (const [mode, cwd] of [
 	connection.close();
 }
 
-// absolutePath and joinPath do not look at the context: aborted, they still
-// wait for the daemon to start and resolve.
+// Aborted, absolutePath stops waiting for the daemon to start; joinPath does
+// not look at the context and still waits and joins.
 const aborted = withAbortSignal(AbortSignal.abort(), BACKGROUND_CONTEXT);
 const abortedPaths: unknown[] = [];
 for (const operation of ["absolutePath ~/a", "joinPath a b"]) {
@@ -126,8 +129,8 @@ const lost: unknown[] = [];
 }
 {
 	// A daemon that stops reading and pinging: writes queue up behind the
-	// request, aborting it only queues a cancel, and the silence limit (30 s,
-	// checked every 5 s) loses the connection.
+	// request, aborting it queues a cancel and settles it a second later,
+	// before the silence limit (30 s, checked every 5 s) loses the connection.
 	const connection = new Connection({ command: ["sh", script, "silent"] });
 	await connection.info();
 	const started = Date.now();

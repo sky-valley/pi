@@ -32,12 +32,18 @@ const (
 	silenceLimit = 30 * time.Second
 	// startTimeout is how long starting the daemon and its hello may take.
 	startTimeout = 60 * time.Second
+	// abortGrace is how long an aborted request waits for the daemon's answer
+	// to its cancel before it settles as aborted on its own. A live daemon
+	// answers within a round trip, with its own result (an exec's spill
+	// file); a connection that died unnoticed (a rebooting host) would
+	// otherwise hold the request until the keepalive gives up.
+	abortGrace = time.Second
 )
 
-// timing is how often a Connection pings and how much silence loses it;
-// tests shorten them.
+// timing is how often a Connection pings, how much silence loses it and how
+// long an aborted request waits for the daemon; tests shorten them.
 type timing struct {
-	ping, silence time.Duration
+	ping, silence, abortGrace time.Duration
 }
 
 // RemoteError is a failure reported by the daemon, with its Node-style code,
@@ -77,6 +83,10 @@ func lost(message string) *RemoteError {
 
 func closedError() *RemoteError {
 	return newRemoteError(map[string]any{"code": "unknown", "message": "Connection closed"})
+}
+
+func abortedError() *RemoteError {
+	return newRemoteError(map[string]any{"code": "aborted", "message": "aborted"})
 }
 
 // IsConnectionLost reports whether err means the connection was lost, not
@@ -209,7 +219,7 @@ type Connection struct {
 // request.
 func NewConnection(options ConnectionOptions) *Connection {
 	life, stop := context.WithCancel(context.Background())
-	c := &Connection{options: options, life: life, stopLife: stop, timing: timing{pingInterval, silenceLimit}, nextID: 1}
+	c := &Connection{options: options, life: life, stopLife: stop, timing: timing{pingInterval, silenceLimit, abortGrace}, nextID: 1}
 	c.logs.fn = options.OnLog
 	return c
 }
@@ -228,7 +238,11 @@ type session struct {
 	process *os.Process
 	stdin   io.WriteCloser
 	token   string
-	writeMu sync.Mutex
+	// writes writes frames to stdin in order, on a goroutine of its own:
+	// like upstream's writes to the child's stdin, they queue and never block
+	// the writer, so a daemon that stopped reading cannot hold a request, its
+	// cancel or a ping.
+	writes serial[frame.Frame]
 	// pending and live are guarded by Connection.mu.
 	pending  map[uint32]*call
 	live     bool
@@ -255,8 +269,8 @@ type session struct {
 }
 
 // Info connects if needed and returns what the daemon reported about its
-// machine. Ending ctx stops the wait for a daemon that is starting (upstream's
-// info cannot be aborted); a started daemon's answer is returned regardless.
+// machine. Ending ctx stops waiting for the start (code aborted), not the
+// start itself.
 func (c *Connection) Info(ctx context.Context) (RemoteInfo, error) {
 	st, err := c.connect(ctx)
 	if err != nil {
@@ -276,9 +290,10 @@ func (c *Connection) Session(ctx context.Context) (int, error) {
 
 // Request sends a request for op with fields (a JSON object; nil is {}) and
 // waits for its result, starting the daemon first if needed. Ending ctx
-// sends cancel; the request still settles with the daemon's result or error,
-// as upstream's abort signal does. Starting the daemon is not cut short by
-// ctx (it has its own time limits); Info bounds that wait by its context.
+// while the connection starts fails it at once with code aborted (the start
+// goes on for other requests); after the request was sent, it sends cancel,
+// and the request settles with the daemon's result or error, or with code
+// aborted if the daemon does not answer within a second.
 func (c *Connection) Request(ctx context.Context, op string, fields any, options *RequestOptions) (Reply, error) {
 	call, err := c.begin(ctx, op, fields, options)
 	if err != nil {
@@ -308,9 +323,7 @@ func (c *Connection) begin(ctx context.Context, op string, fields any, options *
 		}
 		s = current
 	} else {
-		// As upstream, waiting for the start is not cut short; ctx then
-		// cancels the request itself, which settles with the daemon's answer.
-		st, err := c.connect(context.WithoutCancel(ctx))
+		st, err := c.connect(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -367,7 +380,13 @@ func (c *Connection) Kill(id uint32, session int) {
 	}
 }
 
+// connect connects if needed and returns the live start. Ending ctx fails the
+// wait with code aborted at once, already ended before it, and leaves the
+// start going on for others (upstream's untilAborted).
 func (c *Connection) connect(ctx context.Context) (*starting, error) {
+	if ctx.Err() != nil {
+		return nil, abortedError()
+	}
 	c.mu.Lock()
 	if c.closed {
 		c.mu.Unlock()
@@ -380,8 +399,8 @@ func (c *Connection) connect(ctx context.Context) (*starting, error) {
 		go c.start(st)
 	}
 	c.mu.Unlock()
-	// A daemon already started answers even if ctx ended; select alone would
-	// pick between the two at random.
+	// A daemon already started answers; select alone would pick between the
+	// two at random.
 	select {
 	case <-st.done:
 		return st.result()
@@ -391,7 +410,7 @@ func (c *Connection) connect(ctx context.Context) (*starting, error) {
 	case <-st.done:
 		return st.result()
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		return nil, abortedError()
 	}
 }
 
@@ -480,6 +499,7 @@ func (c *Connection) startSession() (RemoteInfo, *session, error) {
 		exited:  make(chan struct{}),
 		closed:  make(chan struct{}),
 	}
+	s.writes.fn = func(f frame.Frame) { c.writeNow(s, f) }
 	s.lastSeen.Store(time.Now().UnixNano())
 	closed := c.closed
 	if !closed {
@@ -662,51 +682,51 @@ func (c *Connection) send(s *session, body []byte, options *RequestOptions) (*ca
 	return call, nil
 }
 
-// write writes f to the daemon. A write to a daemon that exited fails; its
-// requests fail with the exit. A frame above the protocol's limit loses the
-// connection, as upstream's daemon refuses it and exits.
+// write queues f for the daemon, after the frames written before it, and
+// returns at once.
 func (c *Connection) write(s *session, f frame.Frame) {
+	c.mu.Lock()
+	live := s.live
+	c.mu.Unlock()
+	if live {
+		s.writes.push(f)
+	}
+}
+
+// writeNow writes f to the daemon. A write to a daemon that exited fails;
+// its requests fail with the exit. A frame above the protocol's limit loses
+// the connection, as upstream's daemon refuses it and exits.
+func (c *Connection) writeNow(s *session, f frame.Frame) {
 	c.mu.Lock()
 	live := s.live
 	c.mu.Unlock()
 	if !live {
 		return
 	}
-	s.writeMu.Lock()
 	w := bufio.NewWriterSize(s.stdin, 13+len(f.JSON)+min(len(f.Payload), 64*1024))
 	err := frame.Write(w, f)
 	if err == nil {
 		_ = w.Flush()
 	}
-	s.writeMu.Unlock()
 	if errors.Is(err, frame.ErrTooLarge) {
 		c.teardown(s, lost("pi-env connection lost"))
 	}
 }
 
 // ping pings the daemon and loses the connection after the silence limit
-// without input from it. A ping waits behind a write in progress, as it
-// queues behind it in upstream's stdin buffer; the silence check does not, so
-// a daemon that stopped reading cannot hold a blocked write forever: the
+// without input from it. A ping queues behind a write in progress, as in
+// upstream's stdin buffer, and the silence check does not wait for it, so a
+// daemon that stopped reading cannot hold a blocked write forever: the
 // teardown closes stdin, which ends that write.
 func (c *Connection) ping(s *session) {
 	ticker := time.NewTicker(c.timing.ping)
 	defer ticker.Stop()
-	pinging := make(chan struct{}, 1)
 	for {
 		select {
 		case <-s.stop:
 			return
 		case <-ticker.C:
-			select {
-			case pinging <- struct{}{}:
-				go func() {
-					defer func() { <-pinging }()
-					c.write(s, frame.Frame{Kind: frame.Ping, JSON: []byte("{}")})
-				}()
-			default:
-				// The last ping still waits to be written.
-			}
+			c.write(s, frame.Frame{Kind: frame.Ping, JSON: []byte("{}")})
 			if time.Since(time.Unix(0, s.lastSeen.Load())) > c.timing.silence {
 				c.teardown(s, lost("pi-env connection timed out"))
 				return
@@ -730,6 +750,9 @@ func (c *Connection) teardown(s *session, err error) {
 	pending := s.pending
 	s.pending = map[uint32]*call{}
 	c.mu.Unlock()
+	// Closing stdin ends a write in progress; the frames still queued are
+	// not written.
+	s.writes.clear()
 	_ = s.stdin.Close()
 	killProcess(s.process)
 	for _, call := range pending {
@@ -915,33 +938,75 @@ func (c *call) push(it item) {
 func (c *call) finish(reply Reply, err error) { c.push(item{reply: reply, err: err}) }
 
 // wait delivers the call's events to onEvent and returns its result. Ending
-// ctx sends cancel once and keeps waiting for the daemon's answer.
+// ctx sends cancel once and waits for the daemon's answer for the abort
+// grace; unanswered by then, the call settles with code aborted and a late
+// answer is dropped.
 func (c *call) wait(ctx context.Context) (Reply, error) {
 	done := ctx.Done()
-	if ctx.Err() != nil {
+	var grace *time.Timer
+	var graceEnded <-chan time.Time
+	defer func() {
+		if grace != nil {
+			grace.Stop()
+		}
+	}()
+	abort := func() {
 		c.cancel()
 		done = nil
+		grace = time.NewTimer(c.connection.timing.abortGrace)
+		graceEnded = grace.C
+	}
+	if ctx.Err() != nil {
+		abort()
 	}
 	for {
-		c.mu.Lock()
-		items := c.items
-		c.items = nil
-		c.mu.Unlock()
-		for _, it := range items {
-			if !it.event {
-				return it.reply, it.err
-			}
-			if c.onEvent != nil {
-				c.onEvent(it.json, it.payload)
-			}
+		if reply, err, ok := c.deliver(); ok {
+			return reply, err
 		}
 		select {
 		case <-c.signal:
 		case <-done:
-			c.cancel()
-			done = nil
+			abort()
+		case <-graceEnded:
+			graceEnded = nil
+			if c.drop() {
+				// Events that came before the grace ended still reach onEvent.
+				c.deliver()
+				return Reply{}, abortedError()
+			}
+			// The answer came meanwhile; the next delivery has it.
 		}
 	}
+}
+
+// deliver passes the queued events to onEvent and returns the result, if it
+// came.
+func (c *call) deliver() (Reply, error, bool) {
+	c.mu.Lock()
+	items := c.items
+	c.items = nil
+	c.mu.Unlock()
+	for _, it := range items {
+		if !it.event {
+			return it.reply, it.err, true
+		}
+		if c.onEvent != nil {
+			c.onEvent(it.json, it.payload)
+		}
+	}
+	return Reply{}, nil, false
+}
+
+// drop removes the call from its session's pending requests, unless it was
+// answered or failed already.
+func (c *call) drop() bool {
+	c.connection.mu.Lock()
+	defer c.connection.mu.Unlock()
+	if c.session.pending[c.id] != c {
+		return false
+	}
+	delete(c.session.pending, c.id)
+	return true
 }
 
 func (c *call) cancel() {

@@ -440,9 +440,9 @@ func TestResolvesPathsLikeUpstream(t *testing.T) {
 	}
 }
 
-// TestResolvesPathsWithAnAbortedContextLikeUpstream: absolutePath and
-// joinPath do not look at the context; aborted, they still wait for the
-// daemon to start and resolve.
+// TestResolvesPathsWithAnAbortedContextLikeUpstream: absolutePath stops
+// waiting for the daemon to start when aborted; joinPath does not look at the
+// context and still waits and joins.
 func TestResolvesPathsWithAnAbortedContextLikeUpstream(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("fakedaemon.sh needs a POSIX shell")
@@ -472,9 +472,10 @@ func TestResolvesPathsWithAnAbortedContextLikeUpstream(t *testing.T) {
 }
 
 // TestFailsRequestsLikeUpstreamWhenTheConnectionIsLost: a request larger than
-// a frame loses the connection (the daemon refuses it and exits), and so does
-// a daemon that stops reading and pinging, even while a write to it is
-// blocked and the request's context has ended.
+// a frame loses the connection (the daemon refuses it and exits). A request to
+// a daemon that stops reading and pinging, while a write to it is blocked,
+// settles as aborted once its context has ended and the grace after its
+// cancel is over, before the silence limit loses the connection.
 func TestFailsRequestsLikeUpstreamWhenTheConnectionIsLost(t *testing.T) {
 	golden := loadStarts(t)
 	script, err := filepath.Abs("testdata/connection/fakedaemon.sh")
@@ -546,7 +547,7 @@ func TestFailsRequestsLikeUpstreamWhenTheConnectionIsLost(t *testing.T) {
 				}
 				connection := NewConnection(ConnectionOptions{Command: []string{"sh", script, "silent"}})
 				t.Cleanup(connection.Close)
-				connection.timing = timing{ping: 50 * time.Millisecond, silence: 500 * time.Millisecond}
+				connection.timing = timing{ping: 50 * time.Millisecond, silence: 500 * time.Millisecond, abortGrace: 200 * time.Millisecond}
 				_, err := connection.Info(background())
 				mustDo(t, err)
 				ctx, cancel := context.WithTimeout(background(), 100*time.Millisecond)
