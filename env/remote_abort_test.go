@@ -1,9 +1,11 @@
 package env
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"testing"
@@ -231,5 +233,53 @@ func TestFileOperationsWaitingForTheConnectionEndWhenAborted(t *testing.T) {
 				t.Fatalf("took %v", elapsed)
 			}
 		})
+	}
+}
+
+// An ended context fails the wait at once but still starts the daemon, as
+// upstream's untilAborted(this.#connect(), signal) evaluates #connect() first.
+func TestAnEndedContextStillStartsTheConnection(t *testing.T) {
+	started := make(chan struct{}, 1)
+	connection := NewConnection(ConnectionOptions{CommandFunc: func(context.Context) ([]string, error) {
+		started <- struct{}{}
+		return []string{os.Args[0], scriptedDaemonArg, "never"}, nil
+	}})
+	t.Cleanup(connection.Close)
+	_, err := connection.Info(abortedContext())
+	var remote *RemoteError
+	if !errors.As(err, &remote) || remote.Code != "aborted" {
+		t.Fatalf("err %v, want code aborted", err)
+	}
+	select {
+	case <-started:
+	case <-time.After(3 * time.Second):
+		t.Fatal("the daemon was never started")
+	}
+}
+
+// A process write is queued, not written before Write returns; the bytes
+// sent must be the ones passed, however the caller reuses its buffer after,
+// as upstream's frame() copies them with Buffer.concat.
+func TestProcessWriteDoesNotShareTheCallersBuffer(t *testing.T) {
+	stdout := &collector{}
+	process, err := OpenProcess(background(), newConnection(t), ProcessOptions{
+		Cwd: processDir(t), Argv: program(t, "echo"), OnStdout: stdout.onData,
+	})
+	mustDo(t, err)
+	buf := make([]byte, 64)
+	var want []byte
+	for i := range 200 {
+		line := []byte(fmt.Sprintf("%063d\n", i))
+		copy(buf, line)
+		process.Write(buf)
+		want = append(want, line...)
+	}
+	for i := range buf {
+		buf[i] = 'X'
+	}
+	process.CloseStdin()
+	expectExit(t, process, 7)
+	if got := stdout.bytes(); !bytes.Equal(got, want) {
+		t.Fatalf("stdout differs from what was written (%d bytes, want %d)", len(got), len(want))
 	}
 }

@@ -384,21 +384,23 @@ func (c *Connection) Kill(id uint32, session int) {
 // wait with code aborted at once, already ended before it, and leaves the
 // start going on for others (upstream's untilAborted).
 func (c *Connection) connect(ctx context.Context) (*starting, error) {
-	if ctx.Err() != nil {
-		return nil, abortedError()
-	}
 	c.mu.Lock()
-	if c.closed {
-		c.mu.Unlock()
-		return nil, closedError()
-	}
+	closed := c.closed
 	st := c.ready
-	if st == nil {
+	if !closed && st == nil {
 		st = &starting{done: make(chan struct{})}
 		c.ready = st
 		go c.start(st)
 	}
 	c.mu.Unlock()
+	// As upstream's untilAborted(this.#connect(), signal): the start begins
+	// first, then an ended ctx fails the wait.
+	if ctx.Err() != nil {
+		return nil, abortedError()
+	}
+	if closed {
+		return nil, closedError()
+	}
 	// A daemon already started answers; select alone would pick between the
 	// two at random.
 	select {
@@ -678,7 +680,9 @@ func (c *Connection) send(s *session, body []byte, options *RequestOptions) (*ca
 	if options.OnStart != nil {
 		options.OnStart(id, s.id)
 	}
-	c.write(s, frame.Frame{Kind: frame.Request, ID: id, JSON: body, Payload: options.Payload})
+	// The write is queued: like upstream's frame(), it must not share the
+	// caller's buffer, which the caller may reuse once this returns.
+	c.write(s, frame.Frame{Kind: frame.Request, ID: id, JSON: body, Payload: bytes.Clone(options.Payload)})
 	return call, nil
 }
 
