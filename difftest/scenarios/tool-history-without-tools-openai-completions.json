@@ -1,0 +1,90 @@
+{
+  "name": "tool-history-without-tools-openai-completions",
+  "note": "Upstream 7a6bd5a97 (#11843): a conversation with tool history and no tools omits `tools` instead of sending []. src until the first release that ships 7a6bd5a97, then flip to dist (README rule).",
+  "backend": "src",
+  "api": "openai-completions",
+  "entry": "streamSimple",
+  "model": {
+    "id": "gpt-4o-mini",
+    "name": "GPT-4o mini",
+    "api": "openai-completions",
+    "provider": "openai",
+    "baseUrl": "https://api.openai.com/v1",
+    "reasoning": false,
+    "input": [
+      "text"
+    ],
+    "cost": {
+      "input": 0.15,
+      "output": 0.6,
+      "cacheRead": 0,
+      "cacheWrite": 0
+    },
+    "contextWindow": 128000,
+    "maxTokens": 16384
+  },
+  "context": {
+    "systemPrompt": "You are a helpful assistant.",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Read a.txt",
+        "timestamp": 1
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "toolCall",
+            "id": "call_1",
+            "name": "read",
+            "arguments": {
+              "path": "a.txt"
+            }
+          }
+        ],
+        "api": "openai-completions",
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "usage": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "totalTokens": 2,
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 0
+          }
+        },
+        "stopReason": "toolUse",
+        "timestamp": 2
+      },
+      {
+        "role": "toolResult",
+        "toolCallId": "call_1",
+        "toolName": "read",
+        "content": [
+          {
+            "type": "text",
+            "text": "hi"
+          }
+        ],
+        "isError": false,
+        "timestamp": 3
+      },
+      {
+        "role": "user",
+        "content": "Summarize.",
+        "timestamp": 4
+      }
+    ]
+  },
+  "options": {
+    "apiKey": "test-key",
+    "maxTokens": 1024
+  }
+}
