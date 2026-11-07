@@ -260,9 +260,9 @@ func applyReplacementsToOriginal(originalContent string, replacements []matchedE
 // getLineEndingAt). A lone CR only counts in files without any LF (classic Mac
 // line endings); elsewhere it is more likely a control character inside a line.
 func lineEndingAt(content string, offset int) string {
-	lineFeed := -1
-	if i := strings.IndexByte(content[offset:], '\n'); i != -1 {
-		lineFeed = offset + i
+	lineFeed := strings.IndexByte(content[offset:], '\n')
+	if lineFeed != -1 {
+		lineFeed += offset
 	} else {
 		// JS lastIndexOf("\n", offset) also finds an LF at offset itself.
 		lineFeed = strings.LastIndexByte(content[:min(offset+1, len(content))], '\n')

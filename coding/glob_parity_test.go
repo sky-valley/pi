@@ -4,9 +4,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"reflect"
 	"runtime"
-	"sort"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -515,8 +514,8 @@ func TestGrepGlobRelativeToPath(t *testing.T) {
 				t.Fatal(err)
 			}
 			got := strings.Split(resultText(r), "\n")
-			sort.Strings(got)
-			if !reflect.DeepEqual(got, c.want) {
+			slices.Sort(got)
+			if !slices.Equal(got, c.want) {
 				t.Errorf("path %s, glob %q: got %q, want %q", searchPath, c.glob, got, c.want)
 			}
 		}
@@ -546,6 +545,12 @@ func TestGrepNegatedGlob(t *testing.T) {
 		{"!././src/a.ts", []string{"d.ts", "other/c.ts", "src/deep/b.ts", "src/e.js"}},
 		{"././src/*.ts", []string{"src/a.ts"}},
 		{".//src/*.ts", []string{"src/a.ts"}},
+		// A glob that strips to empty is pi's `--glob ""`, which rg ignores; a
+		// bare negation matches nothing (rg exits 1).
+		{"./", []string{"d.ts", "other/c.ts", "src/a.ts", "src/deep/b.ts", "src/e.js"}},
+		{"././", []string{"d.ts", "other/c.ts", "src/a.ts", "src/deep/b.ts", "src/e.js"}},
+		{"!", nil},
+		{"!./", nil},
 		{"./*.ts", []string{"d.ts", "other/c.ts", "src/a.ts", "src/deep/b.ts"}},
 	}
 	for _, c := range cases {
@@ -559,8 +564,8 @@ func TestGrepNegatedGlob(t *testing.T) {
 				got = append(got, file)
 			}
 		}
-		sort.Strings(got)
-		if !reflect.DeepEqual(got, c.want) {
+		slices.Sort(got)
+		if !slices.Equal(got, c.want) {
 			t.Errorf("glob %q: got %q, want %q", c.glob, got, c.want)
 		}
 	}

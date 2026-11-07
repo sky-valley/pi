@@ -2006,8 +2006,7 @@ func grepToolOps(cwd string, custom *GrepOperations) agent.AgentTool {
 			if p := argStr(params, "path"); p != "" {
 				root = resolveToCwd(p, cwd)
 			}
-			globPat := argStr(params, "glob")
-			glob := parseRgGlob(globPat)
+			glob := parseRgGlob(argStr(params, "glob"))
 			limit := argLimit(params, grepDefaultLimit)
 			ctxLines := grepContextLines(params)
 
@@ -2184,7 +2183,7 @@ func grepToolOps(cwd string, custom *GrepOperations) agent.AgentTool {
 						}
 						return nil
 					}
-					if globPat != "" && glob.skips(rel, d.IsDir()) {
+					if glob.skips(rel, d.IsDir()) {
 						if d.IsDir() {
 							return filepath.SkipDir
 						}

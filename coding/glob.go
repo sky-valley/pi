@@ -193,7 +193,14 @@ func parseRgGlob(glob string) rgGlob {
 // glob that matches a directory, or the directory with a trailing "/", prunes
 // it only when negated: rg descends into every directory a whitelist leaves
 // unmatched, and applies the whitelist to the files inside.
+//
+// A pattern that strips to empty is pi's `--glob ""`, which rg ignores, so
+// nothing is skipped; a bare "!" (or "!./") matches nothing in rg, so every
+// file is.
 func (g rgGlob) skips(rel string, isDir bool) bool {
+	if g.pattern == "" {
+		return g.negated && !isDir
+	}
 	if isDir {
 		if !g.negated {
 			return false
