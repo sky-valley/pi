@@ -4,6 +4,13 @@
 //
 //   node capture.mjs <pi npm dir> <out.json>
 //   e.g. node capture.mjs <npm>/1.3.0 toolschemas-1.3.0.json
+//   node --experimental-strip-types capture.mjs <src extraction named by sha> <out.json>
+//   e.g. ... capture.mjs <dir>/6bf2ab9bb toolschemas-6bf2ab9bb.json
+//
+// toolschemas-6bf2ab9bb.json is a src capture over the 1.5.0 build's
+// node_modules: 6bf2ab9bb rewrites grep's `glob` description. Control: the
+// 1.5.0 build, and src at 6bf2ab9bb^1, both write toolschemas-1.3.0.json's rows.
+// Re-verify against the first build that ships 6bf2ab9bb.
 //
 // Each row is createToolDefinition(name, cwd) from the published build, with
 // its parameters, and its outputSchema when it declares one, serialized by
@@ -18,9 +25,16 @@ if (!npmDir || !outFile) {
 	console.error("usage: node capture.mjs <pi npm dir> <out.json>");
 	process.exit(2);
 }
+// A src extraction (`git archive <sha> packages/coding-agent`, with the npm
+// build's node_modules beside it) is read from its .ts files under
+// `node --experimental-strip-types`, labelled "src <dir name>".
+const src = fs.existsSync(path.join(npmDir, "packages/coding-agent/src/core/tools/index.ts"));
 const pkg = path.join(npmDir, "node_modules/@earendil-works/pi-coding-agent");
-const version = JSON.parse(fs.readFileSync(path.join(pkg, "package.json"), "utf8")).version;
-const { createToolDefinition } = await import(pathToFileURL(path.join(pkg, "dist/core/tools/index.js")).href);
+const version = src
+	? `src ${path.basename(npmDir)}`
+	: JSON.parse(fs.readFileSync(path.join(pkg, "package.json"), "utf8")).version;
+const tools = src ? path.join(npmDir, "packages/coding-agent/src/core/tools/index.ts") : path.join(pkg, "dist/core/tools/index.js");
+const { createToolDefinition } = await import(pathToFileURL(tools).href);
 
 const names = ["read", "bash", "edit", "write", "grep", "find", "ls", "powershell"];
 const rows = names.map((name) => {

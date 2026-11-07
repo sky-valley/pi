@@ -2013,7 +2013,7 @@ func grepToolOps(cwd string, custom *GrepOperations) agent.AgentTool {
 		Parameters: ai.Object(
 			ai.Prop("pattern", ai.String("Search pattern (regex or literal string)")),
 			ai.Opt("path", ai.String("Directory or file to search (default: current directory)")),
-			ai.Opt("glob", ai.String("Filter files by glob pattern, e.g. '*.ts' or '**/*.spec.ts'")),
+			ai.Opt("glob", ai.String("Filter files by glob pattern, relative to path, e.g. '*.ts', 'src/**/*.ts' or '**/*.spec.ts'. A pattern without '/' matches file names at any depth")),
 			ai.Opt("ignoreCase", ai.Boolean("Case-insensitive search (default: false)")),
 			ai.Opt("literal", ai.Boolean("Treat pattern as literal string instead of regex (default: false)")),
 			ai.Opt("context", ai.Number("Number of lines to show before and after each match (default: 0)")),
@@ -2026,6 +2026,7 @@ func grepToolOps(cwd string, custom *GrepOperations) agent.AgentTool {
 				root = resolveToCwd(p, cwd)
 			}
 			globPat := argStr(params, "glob")
+			glob := parseRgGlob(globPat)
 			limit := argLimit(params, grepDefaultLimit)
 			ctxLines := grepContextLines(params)
 
@@ -2182,7 +2183,13 @@ func grepToolOps(cwd string, custom *GrepOperations) agent.AgentTool {
 			} else {
 				// rg semantics: gitignore applies only inside a git repository.
 				ig := newIgnoreStack(root, true, false)
-				err = filepath.WalkDir(root, func(p string, d os.DirEntry, walkErr error) error {
+				// rg follows a symlinked search root; WalkDir lstats its root, so
+				// a trailing separator makes it resolve the link.
+				walkRoot := root
+				if !strings.HasSuffix(walkRoot, string(filepath.Separator)) {
+					walkRoot += string(filepath.Separator)
+				}
+				err = filepath.WalkDir(walkRoot, func(p string, d os.DirEntry, walkErr error) error {
 					if walkErr != nil {
 						return nil
 					}
@@ -2196,10 +2203,13 @@ func grepToolOps(cwd string, custom *GrepOperations) agent.AgentTool {
 						}
 						return nil
 					}
-					if d.IsDir() {
+					if globPat != "" && glob.skips(rel, d.IsDir()) {
+						if d.IsDir() {
+							return filepath.SkipDir
+						}
 						return nil
 					}
-					if globPat != "" && !matchRgGlob(globPat, rel) {
+					if d.IsDir() {
 						return nil
 					}
 					if !searchFile(p, rel, true) {

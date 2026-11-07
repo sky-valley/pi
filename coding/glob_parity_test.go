@@ -4,7 +4,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"runtime"
+	"sort"
 	"strings"
 	"testing"
 )
@@ -478,6 +480,88 @@ func TestGrepGlobAnchoring(t *testing.T) {
 	for _, want := range []string{"f.spec.ts:1:", "x/f.spec.ts:1:", "sub/x/f.spec.ts:1:"} {
 		if !strings.Contains(text, want) {
 			t.Fatalf("basename glob should match %s: %q", want, text)
+		}
+	}
+}
+
+// Mirrors pi's "should resolve folder globs relative to path" (tools.test.ts,
+// upstream 6bf2ab9bb, #11807), on the real path and on a symlink to it.
+func TestGrepGlobRelativeToPath(t *testing.T) {
+	base := t.TempDir()
+	repo := filepath.Join(base, "repo")
+	writeFiles(t, repo, map[string]string{
+		"migrations/main/a.js":        "hello\n",
+		"nested/migrations/main/b.js": "hello\n",
+	})
+	link := filepath.Join(base, "repo-link")
+	if err := os.Symlink(repo, link); err != nil {
+		t.Skipf("symlink: %v", err)
+	}
+	cases := []struct {
+		glob string
+		want []string
+	}{
+		// The decoy under nested/ stays out: the glob is anchored at path.
+		{"migrations/main/*.js", []string{"migrations/main/a.js:1: hello"}},
+		{"**/migrations/main/*.js", []string{"migrations/main/a.js:1: hello", "nested/migrations/main/b.js:1: hello"}},
+		// rg matches nothing for a leading "./", so the tool drops it.
+		{"./migrations/main/*.js", []string{"migrations/main/a.js:1: hello"}},
+		{"!./migrations/**", []string{"nested/migrations/main/b.js:1: hello"}},
+	}
+	for _, searchPath := range []string{repo, link} {
+		for _, c := range cases {
+			r, err := run(t, grepTool(base), map[string]any{"pattern": "hello", "path": searchPath, "glob": c.glob})
+			if err != nil {
+				t.Fatal(err)
+			}
+			got := strings.Split(resultText(r), "\n")
+			sort.Strings(got)
+			if !reflect.DeepEqual(got, c.want) {
+				t.Errorf("path %s, glob %q: got %q, want %q", searchPath, c.glob, got, c.want)
+			}
+		}
+	}
+}
+
+// TestGrepNegatedGlob pins rg 14's answers for negated globs, recorded with
+// `rg --no-config -l --glob <g> hit .` over this tree: a negated glob drops the
+// files it matches, and prunes a directory it matches, with or without a
+// trailing "/".
+func TestGrepNegatedGlob(t *testing.T) {
+	dir := t.TempDir()
+	writeFiles(t, dir, map[string]string{
+		"src/a.ts": "hit\n", "src/deep/b.ts": "hit\n", "other/c.ts": "hit\n", "d.ts": "hit\n", "src/e.js": "hit\n",
+	})
+	cases := []struct {
+		glob string
+		want []string
+	}{
+		{"!*.ts", []string{"src/e.js"}},
+		{"!d.ts", []string{"other/c.ts", "src/a.ts", "src/deep/b.ts", "src/e.js"}},
+		{"!src", []string{"d.ts", "other/c.ts"}},
+		{"!src/", []string{"d.ts", "other/c.ts"}},
+		{"!deep", []string{"d.ts", "other/c.ts", "src/a.ts", "src/e.js"}},
+		{"!src/deep", []string{"d.ts", "other/c.ts", "src/a.ts", "src/e.js"}},
+		{"!src/**", []string{"d.ts", "other/c.ts"}},
+		{"!././src/a.ts", []string{"d.ts", "other/c.ts", "src/deep/b.ts", "src/e.js"}},
+		{"././src/*.ts", []string{"src/a.ts"}},
+		{".//src/*.ts", []string{"src/a.ts"}},
+		{"./*.ts", []string{"d.ts", "other/c.ts", "src/a.ts", "src/deep/b.ts"}},
+	}
+	for _, c := range cases {
+		r, err := run(t, grepTool(dir), map[string]any{"pattern": "hit", "glob": c.glob})
+		if err != nil {
+			t.Fatal(err)
+		}
+		var got []string
+		for _, line := range strings.Split(resultText(r), "\n") {
+			if file, _, ok := strings.Cut(line, ":"); ok {
+				got = append(got, file)
+			}
+		}
+		sort.Strings(got)
+		if !reflect.DeepEqual(got, c.want) {
+			t.Errorf("glob %q: got %q, want %q", c.glob, got, c.want)
 		}
 	}
 }

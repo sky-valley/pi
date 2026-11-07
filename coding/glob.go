@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"unicode"
 )
@@ -168,6 +169,38 @@ func matchRgGlob(pattern, rel string) bool {
 		return globMatchPath(pattern, filepath.Base(rel), false)
 	}
 	return globMatchPath(strings.TrimPrefix(pattern, "/"), rel, false)
+}
+
+// rgGlob is grep's `glob` argument as pi passes it to rg --glob (upstream
+// 6bf2ab9bb): a leading "./" is dropped, as rg never matches one, and "!"
+// negates.
+type rgGlob struct {
+	pattern string
+	negated bool
+}
+
+var rgGlobDotSlash = regexp.MustCompile(`^(!?)(?:\./)+`)
+
+func parseRgGlob(glob string) rgGlob {
+	glob = rgGlobDotSlash.ReplaceAllString(glob, "$1")
+	if rest, ok := strings.CutPrefix(glob, "!"); ok {
+		return rgGlob{pattern: rest, negated: true}
+	}
+	return rgGlob{pattern: glob}
+}
+
+// skips reports whether the glob drops a root-relative entry from rg's walk. A
+// glob that matches a directory, or the directory with a trailing "/", prunes
+// it only when negated: rg descends into every directory a whitelist leaves
+// unmatched, and applies the whitelist to the files inside.
+func (g rgGlob) skips(rel string, isDir bool) bool {
+	if isDir {
+		if !g.negated {
+			return false
+		}
+		return matchRgGlob(g.pattern, rel) || matchRgGlob(strings.TrimSuffix(g.pattern, "/"), rel)
+	}
+	return matchRgGlob(g.pattern, rel) == g.negated
 }
 
 // ---------------------------------------------------------------------------

@@ -1,5 +1,5 @@
 {
-	"piCodingAgentVersion": "1.3.0",
+	"piCodingAgentVersion": "src 6bf2ab9bb",
 	"rows": [
 		{
 			"name": "read",
@@ -177,7 +177,7 @@
 					},
 					"glob": {
 						"type": "string",
-						"description": "Filter files by glob pattern, e.g. '*.ts' or '**/*.spec.ts'"
+						"description": "Filter files by glob pattern, relative to path, e.g. '*.ts', 'src/**/*.ts' or '**/*.spec.ts'. A pattern without '/' matches file names at any depth"
 					},
 					"ignoreCase": {
 						"type": "boolean",
