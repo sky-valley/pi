@@ -11,9 +11,12 @@ import (
 )
 
 // crossModelThinkingCaptureFile is what testdata/cross-model-thinking/
-// capture.mjs recorded from pi-ai 1.3.0 (src at 911309429 records the same
-// file; at 911309429^ every row with another model's thinking moves).
-const crossModelThinkingCaptureFile = "testdata/cross-model-thinking/cross-model-thinking-1.3.0.json"
+// capture.mjs recorded from src at 7a6bd5a97 over the 1.5.0 build's
+// node_modules. At 7a6bd5a97^1 it records cross-model-thinking-1.3.0.json's
+// rows (the 1.3.0 and 1.5.0 builds do too); 7a6bd5a97 drops `"tools": []` from
+// the openai-completions request, which has tool history and no tools. Re-verify
+// against the first build that ships 7a6bd5a97.
+const crossModelThinkingCaptureFile = "testdata/cross-model-thinking/cross-model-thinking-7a6bd5a97.json"
 
 type crossModelThinkingCapture struct {
 	TransformRows []struct {

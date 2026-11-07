@@ -1,5 +1,5 @@
 {
-	"source": "pi-ai 1.3.0",
+	"source": "src 7a6bd5a97",
 	"transformRows": [
 		{
 			"name": "upstream/readable thinking from another model",
@@ -1232,8 +1232,7 @@
 					"include_usage": true
 				},
 				"store": false,
-				"max_completion_tokens": 32768,
-				"tools": []
+				"max_completion_tokens": 32768
 			}
 		},
 		{

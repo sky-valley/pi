@@ -3,7 +3,7 @@
 // transcript_completions_native_test.go in this package.
 //
 //   node --experimental-strip-types capture-completions-native.mts <extraction> <out.json> <sha>
-//   e.g. ... capture-completions-native.mts <dir> completions-native-caa6967b6.json caa6967b6
+//   e.g. ... capture-completions-native.mts <dir> completions-native-7a6bd5a97.json 7a6bd5a97
 //
 // <extraction> holds packages/ai at <sha> (`git archive <sha> packages/ai` from
 // the upstream clone) and a node_modules resolving pi-ai's dependencies (the npm
@@ -24,6 +24,14 @@
 // top-level tools to the state after the last removal or redeclaration and
 // anchors the loads after it; the kimi-k3-redeclared-after-removal,
 // kimi-k3-aborted-first-assistant and kimi-k3-history-<step> cases pin that.
+//
+// Re-captured at 7a6bd5a97 (2026-11-07) with the 1.5.0 build's node_modules
+// (its pi-telemetry included). Control: this script on src at the parent
+// 7a6bd5a97^1 wrote completions-native-caa6967b6.json byte for byte. 7a6bd5a97
+// omits `"tools": []` for a conversation with tool history and no tools unless
+// compat.requiresToolsWithToolHistory is set: the three grammar-call bodies
+// lose it, and nothing else moves. The 1.5.0 build predates 7a6bd5a97, so
+// re-verify against the first build that ships it.
 //
 // Each case records its model and its raw context next to the body. The two
 // Kimi cases are packages/ai/test/transcript-tool-changes.test.ts's

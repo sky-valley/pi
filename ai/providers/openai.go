@@ -1066,9 +1066,7 @@ func buildOpenAIParams(model *ai.Model, req ai.TranscriptContext, opts *OpenAIOp
 		if compat.ZaiToolStream {
 			params["tool_stream"] = true
 		}
-	} else if hasToolHistory(req.Messages) {
-		// Anthropic (via LiteLLM/proxy) requires a tools param when the conversation
-		// already contains tool_calls / tool results — send an empty array.
+	} else if compat.RequiresToolsWithToolHistory && hasToolHistory(req.Messages) {
 		params["tools"] = []map[string]any{}
 	}
 
@@ -1236,8 +1234,8 @@ func convertOpenAITools(tools []ai.Tool, compat openAICompletionsCompat) ([]map[
 }
 
 // hasToolHistory reports whether the conversation already contains tool calls or
-// tool results (port of pi's hasToolHistory). Anthropic via proxy requires the
-// `tools` param to be present in that case.
+// tool results (port of pi's hasToolHistory). A proxy that needs the `tools`
+// param in that case sets compat.RequiresToolsWithToolHistory.
 func hasToolHistory(messages []ai.Message) bool {
 	for _, m := range messages {
 		if _, ok := asToolResultMsg(m); ok {

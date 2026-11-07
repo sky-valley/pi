@@ -73,8 +73,14 @@ type openAICompletionsCompat struct {
 	// null content (pi compat.requiresNonNullAssistantContent, upstream
 	// 14b804d80). Default: false; detectCompat never sets it.
 	RequiresNonNullAssistantContent bool
-	RequiresThinkingAsText          bool
-	ZaiToolStream                   bool
+	// RequiresToolsWithToolHistory reports whether a request without tools
+	// must send "tools": [] when the conversation contains tool calls or tool
+	// results, as some proxies in front of Anthropic (older LiteLLM versions)
+	// need (pi compat.requiresToolsWithToolHistory, upstream 7a6bd5a97).
+	// Default: false, the field is omitted; detectCompat never sets it.
+	RequiresToolsWithToolHistory bool
+	RequiresThinkingAsText       bool
+	ZaiToolStream                bool
 	// ThinkingTokenBudgetField is the top-level request field used to cap
 	// reasoning tokens from the caller's ThinkingBudgets (pi types.ts:596-606,
 	// upstream b23741269). Reasoning and the answer share max_tokens on these
@@ -234,6 +240,7 @@ func detectOpenAICompat(model *ai.Model) openAICompletionsCompat {
 		RequiresToolResultName:                      false,
 		RequiresAssistantAfterToolResult:            false,
 		RequiresNonNullAssistantContent:             false,
+		RequiresToolsWithToolHistory:                false,
 		RequiresThinkingAsText:                      false,
 		ZaiToolStream:                               false,
 		ThinkingTokenBudgetField:                    "",
@@ -269,6 +276,7 @@ func getOpenAICompat(model *ai.Model) openAICompletionsCompat {
 	applyCompat(o, "requiresToolResultName", &c.RequiresToolResultName)
 	applyCompat(o, "requiresAssistantAfterToolResult", &c.RequiresAssistantAfterToolResult)
 	applyCompat(o, "requiresNonNullAssistantContent", &c.RequiresNonNullAssistantContent)
+	applyCompat(o, "requiresToolsWithToolHistory", &c.RequiresToolsWithToolHistory)
 	applyCompat(o, "requiresThinkingAsText", &c.RequiresThinkingAsText)
 	applyCompat(o, "zaiToolStream", &c.ZaiToolStream)
 	applyCompat(o, "thinkingTokenBudgetField", &c.ThinkingTokenBudgetField)

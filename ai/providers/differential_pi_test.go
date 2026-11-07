@@ -848,9 +848,9 @@ func TestDiffOpenAIOffTriState(t *testing.T) {
 
 // ---- New behaviors (pi openai-completions.ts:538-626, 884-942) ----
 
-func TestDiffEmptyToolsWithToolHistory(t *testing.T) {
-	// hasToolHistory: when the conversation already has tool calls/results and no
-	// tools are supplied, pi sends tools:[] (breaks Anthropic-via-proxy otherwise).
+// toolHistoryReq is pi's toolHistoryContext (openai-completions-empty-tools.test.ts,
+// upstream 7a6bd5a97): a tool call and its result, and no tools.
+func toolHistoryReq() ai.Context {
 	req := baseReq()
 	req.Messages = append(req.Messages,
 		ai.AssistantMessage{
@@ -861,13 +861,41 @@ func TestDiffEmptyToolsWithToolHistory(t *testing.T) {
 		},
 		ai.ToolResultMessage{ToolCallID: "c1", ToolName: "f", Content: ai.ContentList{ai.TextContent{Text: "ok"}}},
 	)
-	body := mustBuildOpenAIParams(t, openAIModel(nil), req, &OpenAIOptions{})
-	tools, ok := body["tools"].([]map[string]any)
-	if !ok {
-		t.Fatalf("tools should be present (empty array) when conversation has tool history, got %T %v", body["tools"], body["tools"])
+	return req
+}
+
+// Mirrors pi's "tool history without tools" (upstream 7a6bd5a97, #11843): a
+// conversation with tool history and no tools omits `tools` by default, and
+// sends the empty array only when compat.requiresToolsWithToolHistory is set.
+func TestDiffEmptyToolsWithToolHistory(t *testing.T) {
+	tests := []struct {
+		name      string
+		compat    string
+		wantEmpty bool
+	}{
+		{"omits tools by default", "", false},
+		{"explicit false omits tools", `{"requiresToolsWithToolHistory":false}`, false},
+		{"sends tools: [] when compat.requiresToolsWithToolHistory is set", `{"requiresToolsWithToolHistory":true}`, true},
 	}
-	if len(tools) != 0 {
-		t.Fatalf("tools should be an empty array, got %v", tools)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			model := openAIModel(func(m *ai.Model) {
+				if tc.compat != "" {
+					m.Compat = json.RawMessage(tc.compat)
+				}
+			})
+			body := mustBuildOpenAIParams(t, model, toolHistoryReq(), &OpenAIOptions{})
+			if !tc.wantEmpty {
+				if has(body, "tools") {
+					t.Fatalf("tools must be omitted, got %v", body["tools"])
+				}
+				return
+			}
+			tools, ok := body["tools"].([]map[string]any)
+			if !ok || len(tools) != 0 {
+				t.Fatalf("tools should be the empty array, got %T %v", body["tools"], body["tools"])
+			}
+		})
 	}
 }
 
@@ -913,19 +941,11 @@ func TestDiffSendsToolChoiceWithoutTools(t *testing.T) {
 		t.Errorf("tool_choice = %v, want none with no tools at all", body["tool_choice"])
 	}
 
-	// Tool history with no tools: `tools` is the empty array a proxied Anthropic
-	// model needs, and tool_choice rides along with it.
-	req := baseReq()
-	req.Messages = append(req.Messages,
-		ai.AssistantMessage{
-			Content:    ai.ContentList{ai.ToolCall{ID: "c1", Name: "f", Arguments: map[string]any{}}},
-			Provider:   "openai",
-			Api:        ai.APIOpenAICompletions,
-			StopReason: ai.StopToolUse,
-		},
-		ai.ToolResultMessage{ToolCallID: "c1", ToolName: "f", Content: ai.ContentList{ai.TextContent{Text: "ok"}}},
-	)
-	body2 := mustBuildOpenAIParams(t, openAIModel(nil), req, &OpenAIOptions{ToolChoice: "none"})
+	// Tool history with no tools under compat.requiresToolsWithToolHistory:
+	// `tools` is the empty array such a proxy needs, and tool_choice rides
+	// along with it.
+	proxied := openAIModel(func(m *ai.Model) { m.Compat = json.RawMessage(`{"requiresToolsWithToolHistory":true}`) })
+	body2 := mustBuildOpenAIParams(t, proxied, toolHistoryReq(), &OpenAIOptions{ToolChoice: "none"})
 	tools, ok := body2["tools"].([]map[string]any)
 	if !ok || len(tools) != 0 {
 		t.Fatalf("tools should still be the empty array, got %T %v", body2["tools"], body2["tools"])
