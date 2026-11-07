@@ -3,18 +3,19 @@
 // in package ai.
 //
 //   node --experimental-strip-types capture.mts <extraction> <out.json> <sha>
-//   e.g. ... capture.mts <dir> classify-c719d5b08.json c719d5b08
+//   e.g. ... capture.mts <dir> classify-566344046.json 566344046
 //
 // <extraction> holds packages/ai at <sha> (`git archive <sha> packages/ai` from
 // the upstream clone) and a node_modules resolving pi-ai's dependencies (the npm
 // build's). It is a src capture, checked against the build when a release
-// ships the source it read (the BUILD wins): classify-c719d5b08.json was
-// captured from src at c719d5b08 with the 1.4.0 build's node_modules. The 1.4.0
-// build predates c719d5b08's Zhipu 1308 alternative, so re-verify it against
-// the first build that ships it. Control: this script at c719d5b08^1, with the
-// same node_modules, answers the 19 rows the 1308 alternative decides
-// differently (limitPattern false) and every older row as
-// classify-6e491cfa9.json did.
+// ships the source it read (the BUILD wins): classify-566344046.json was
+// captured from src at 566344046 with the 1.5.0 build's node_modules. The 1.5.0
+// build predates 566344046's "cut short after the reply had begun" alternative,
+// so re-verify it against the first build that ships it. Control: this script
+// at 566344046^1, with the same node_modules, answers the 2 rows that
+// alternative decides differently (retryable false) and every other row as
+// classify-566344046.json does; without those 2 rows it reproduces
+// classify-c719d5b08.json (1.5.0-confirmed) byte for byte.
 //
 // Every row records three answers: isRetryableAssistantError on the message
 // retry.test.ts would build (fauxAssistantMessage), and RegExp.prototype.test of
@@ -143,6 +144,11 @@ const rows: Row[] = [
 		"pi: Codex CLI disconnect relayed by a proxy (#11057)",
 		"stream disconnected before completion: stream closed before response.completed",
 	),
+	// retry.test.ts regression for #11879 (566344046): gateway wording for a stream cut short mid-reply.
+	error(
+		"pi: stream cut short mid-reply (#11879)",
+		"Claude Code's stream from Anthropic was cut short after the reply had begun",
+	),
 
 	// isRetryableAssistantError's guard: only stopReason "error" with error text.
 	{ covers: "guard: stop", stopReason: "stop", errorMessage: "overloaded" },
@@ -207,6 +213,7 @@ const rows: Row[] = [
 	error("stream ended before message_stop", "Anthropic stream ended before message_stop"),
 	error("http2 request did not get a response", "http2 request did not get a response"),
 	error("stream disconnected before completion", "Stream Disconnected Before Completion"),
+	error("cut short after the reply had begun", "Cut Short After The Reply Had Begun"),
 	error("pending stream has been canceled", "PENDING STREAM HAS BEEN CANCELED"),
 	error("retry delay", "Retry delay 120000ms exceeds maxRetryDelayMs"),
 	error("you can retry your request", "the model is busy; you can retry your request"),
