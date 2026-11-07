@@ -49,6 +49,8 @@ func TestSplitAndStripBOM(t *testing.T) {
 // plus core/tools/edit-diff.ts extracted at 1355cd36e and executed in node
 // through edit.ts's exact sequence (splitBom \u2192 detectLineEnding \u2192 normalizeToLF
 // \u2192 applyEditsToNormalizedContent \u2192 bom + restoreLineEndings).
+// Upstream d448c51e2 replaced restoreLineEndings with a splice into the
+// original text; neither file holds a CR, so both values stand.
 func TestEditToolPreservesLeadingBOM(t *testing.T) {
 	cases := []struct {
 		name    string

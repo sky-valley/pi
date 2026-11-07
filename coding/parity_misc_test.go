@@ -13,47 +13,6 @@ import (
 )
 
 // ---------------------------------------------------------------------------
-// edit: detectLineEnding (CRLF only if first CRLF precedes first bare LF)
-// ---------------------------------------------------------------------------
-
-func TestDetectLineEndingMixed(t *testing.T) {
-	// "a\nb\r\nc": first bare LF (idx 1) precedes first CRLF (idx 3) → LF.
-	if got := detectLineEnding("a\nb\r\nc"); got != "\n" {
-		t.Fatalf("mixed EOL with bare LF first should stay LF, got %q", got)
-	}
-	// CRLF first → CRLF.
-	if got := detectLineEnding("a\r\nb\nc"); got != "\r\n" {
-		t.Fatalf("CRLF first should detect CRLF, got %q", got)
-	}
-	// Pure CRLF.
-	if got := detectLineEnding("a\r\nb\r\n"); got != "\r\n" {
-		t.Fatalf("pure CRLF, got %q", got)
-	}
-	// No newline.
-	if got := detectLineEnding("abc"); got != "\n" {
-		t.Fatalf("no newline → LF, got %q", got)
-	}
-}
-
-// A file whose first line ends LF but later has CRLF keeps LF on write.
-func TestEditMixedEOLStaysLF(t *testing.T) {
-	dir := t.TempDir()
-	os.WriteFile(filepath.Join(dir, "f.txt"), []byte("a\nTARGET\r\nc"), 0o644)
-	_, err := run(t, editTool(dir), map[string]any{
-		"path":  "f.txt",
-		"edits": []any{map[string]any{"oldText": "TARGET", "newText": "X"}},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	data, _ := os.ReadFile(filepath.Join(dir, "f.txt"))
-	// detected ending is LF, so the surviving CRLF before "c" becomes LF.
-	if strings.Contains(string(data), "\r\n") {
-		t.Fatalf("LF-detected file should not gain CRLF: %q", data)
-	}
-}
-
-// ---------------------------------------------------------------------------
 // edit: prepareArguments — stringified edits + legacy oldText/newText.
 // Like pi, the shim runs as the harness's pre-validation PrepareArguments hook
 // (loop.go), not inside Execute, so these go through the same

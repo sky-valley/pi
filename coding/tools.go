@@ -746,14 +746,19 @@ func editToolOps(cwd string, custom *EditOperations) agent.AgentTool {
 				}
 				// Strip a leading BOM before matching (the model won't include it).
 				bom, raw := splitBOM(string(data))
-				ending := detectLineEnding(raw)
 				normalized := normalizeToLF(raw)
 
-				_, newContent, err := applyEditsToNormalizedContent(normalized, edits, path)
+				_, newContent, replacements, err := applyEditsToNormalizedContent(normalized, edits, path)
 				if err != nil {
 					return agent.AgentToolResult{}, err
 				}
-				final := bom + restoreLineEndings(newContent, ending)
+				// Splice into the original text, so untouched lines keep their line
+				// endings. Without any CR the original is the normalized text, and the
+				// normalized result is already final (upstream d448c51e2).
+				final := bom + newContent
+				if raw != normalized {
+					final = bom + applyReplacementsToOriginal(raw, replacements)
+				}
 				if err := ops.WriteFile(ctx, abs, final); err != nil {
 					return agent.AgentToolResult{}, err
 				}
@@ -839,30 +844,6 @@ func isSingleEditInput(value any) bool {
 func normalizeToLF(s string) string {
 	s = strings.ReplaceAll(s, "\r\n", "\n")
 	return strings.ReplaceAll(s, "\r", "\n")
-}
-
-// detectLineEnding returns CRLF only if the first CRLF precedes the first bare
-// LF (port of edit-diff.ts detectLineEnding).
-func detectLineEnding(s string) string {
-	crlfIdx := strings.Index(s, "\r\n")
-	lfIdx := strings.Index(s, "\n")
-	if lfIdx == -1 {
-		return "\n"
-	}
-	if crlfIdx == -1 {
-		return "\n"
-	}
-	if crlfIdx < lfIdx {
-		return "\r\n"
-	}
-	return "\n"
-}
-
-func restoreLineEndings(s, ending string) string {
-	if ending == "\r\n" {
-		return strings.ReplaceAll(s, "\n", "\r\n")
-	}
-	return s
 }
 
 // ---------------------------------------------------------------------------
