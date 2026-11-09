@@ -166,7 +166,10 @@ func TestCacheWarmingReplayableReadsCompatExactly(t *testing.T) {
 // prints the shortest text that round-trips a double).
 func sameCacheWarmingDecision(t *testing.T, got CacheWarmingDecision, pi json.RawMessage) bool {
 	t.Helper()
-	data, _ := json.Marshal(got)
+	data, err := json.Marshal(got)
+	if err != nil {
+		t.Fatal(err)
+	}
 	var g, p map[string]any
 	if err := json.Unmarshal(data, &g); err != nil {
 		t.Fatal(err)

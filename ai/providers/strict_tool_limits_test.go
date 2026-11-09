@@ -36,8 +36,7 @@ func TestStrictToolLimitSessionsRememberUntilCleanup(t *testing.T) {
 }
 
 func TestStrictToolLimitSessionsDropTheOldestPastTheCap(t *testing.T) {
-	t.Cleanup(func() { _ = ai.CleanupSessionResources("") })
-	s := strictToolLimitSessions
+	s := newStrictToolLimitSessionSet(maxSessionsOverStrictToolLimits)
 	for i := 0; i <= maxSessionsOverStrictToolLimits; i++ {
 		s.mark(fmt.Sprintf("session-%d", i))
 	}

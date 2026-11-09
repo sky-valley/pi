@@ -52,8 +52,8 @@ type strictToolLimitSessionSet struct {
 	ids   map[string]*list.Element
 }
 
-func newStrictToolLimitSessionSet(max int) *strictToolLimitSessionSet {
-	return &strictToolLimitSessionSet{max: max, order: list.New(), ids: map[string]*list.Element{}}
+func newStrictToolLimitSessionSet(limit int) *strictToolLimitSessionSet {
+	return &strictToolLimitSessionSet{max: limit, order: list.New(), ids: map[string]*list.Element{}}
 }
 
 // strictToolLimitSessions is the process-wide set, as pi's module-level Set
