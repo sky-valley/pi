@@ -16,6 +16,12 @@
 // request body, how often onPayload and onResponse ran, the stream's event
 // types, and the reply's stopReason, errorMessage and diagnostics (timestamps
 // written as 0).
+//
+// Since 45344bd3a a session whose strict tools were rejected for the limits
+// sends its prefer tools non-strict from then on, until its resources are
+// cleaned up. Rows with sessionIds run each stream with that session, and every
+// row ends with cleanupSessionResources(), as the upstream test's afterEach
+// does, so no row sees another's sessions.
 import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -30,6 +36,7 @@ const load = (file) =>
 	import(pathToFileURL(dist ? path.join(dir, "dist", `${file}.js`) : path.join(dir, "packages/ai/src", `${file}.ts`)).href);
 const anthropic = await load("api/anthropic-messages");
 const { normalizeContext } = await load("utils/transcript");
+const { cleanupSessionResources } = await load("session-resources");
 const source = dist
 	? `pi-ai ${JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8")).version}`
 	: `src ${path.basename(dir)}`;
@@ -95,7 +102,9 @@ const rows = [];
 // opts: apiKey, cacheRetention, onPayload ("inferenceGeo": spread the params,
 // add inference_geo "us" and stream false), abortOnRequest (abort the signal
 // inside fetch on that request), streams (run the row's stream that many times
-// in turn).
+// in turn), sessionIds (stream i runs with sessionId sessionIds[i]),
+// cleanupBefore (before stream i, cleanupSessionResources(cleanupBefore[i])
+// when that key is set).
 async function row(name, m, messages, responses, opts = {}) {
 	const payloads = [];
 	const controller = new AbortController();
@@ -123,7 +132,13 @@ async function row(name, m, messages, responses, opts = {}) {
 	};
 	const results = [];
 	for (let i = 0; i < (opts.streams ?? 1); i++) {
-		const s = anthropic.stream(m, normalizeContext({ messages }), options);
+		if (opts.cleanupBefore && i in opts.cleanupBefore) cleanupSessionResources(opts.cleanupBefore[i]);
+		const sessionId = opts.sessionIds?.[i];
+		const s = anthropic.stream(
+			m,
+			normalizeContext({ messages }),
+			sessionId === undefined ? options : { ...options, sessionId },
+		);
 		const events = [];
 		for await (const event of s) events.push(event.type);
 		const message = await s.result();
@@ -134,6 +149,7 @@ async function row(name, m, messages, responses, opts = {}) {
 			diagnostics: message.diagnostics?.map((d) => ({ ...d, timestamp: 0 })) ?? null,
 		});
 	}
+	cleanupSessionResources();
 	rows.push({ name, model: m, messages, responses, options: opts, payloads, onPayloadCalls, onResponseCalls, results });
 }
 
@@ -187,9 +203,34 @@ await row("cancellation before the fallback attempt", model, [system([tool("look
 	abortOnRequest: 1,
 });
 await row("no retry of an SSE error after the headers", model, [system([tool("lookup", "prefer")]), user], [sseError]);
-await row("later requests stay strict", model, [system([tool("lookup", "prefer")]), user], [errorResponse(), success, success], {
-	streams: 2,
-});
+await row(
+	"later requests stay strict without a session",
+	model,
+	[system([tool("lookup", "prefer")]), user],
+	[errorResponse(), success, success],
+	{ streams: 2 },
+);
+await row(
+	"a rejected session sends prefer non-strict on later requests",
+	model,
+	[system([tool("lookup", "prefer"), tool("required", "require")]), user],
+	[errorResponse(), success],
+	{ streams: 3, sessionIds: ["rejected", "rejected", "other"] },
+);
+await row(
+	"strict again after the session's cleanup",
+	model,
+	[system([tool("lookup", "prefer")]), user],
+	[errorResponse(), success],
+	{ streams: 2, sessionIds: ["cleaned", "cleaned"], cleanupBefore: { 1: "cleaned" } },
+);
+await row(
+	"a remembered session's required rejection surfaces",
+	model,
+	[system([tool("lookup", "prefer"), tool("required", "require")]), user],
+	[errorResponse(), success, errorResponse()],
+	{ streams: 2, sessionIds: ["required", "required"] },
+);
 
 fs.writeFileSync(outFile, `${JSON.stringify({ source, rows }, null, "\t")}\n`);
 console.log(`wrote ${outFile}: ${rows.length} rows`);

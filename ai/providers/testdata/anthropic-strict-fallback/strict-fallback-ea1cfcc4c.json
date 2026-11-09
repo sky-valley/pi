@@ -1,5 +1,5 @@
 {
-	"source": "pi-ai 1.3.0",
+	"source": "src ea1cfcc4c",
 	"rows": [
 		{
 			"name": "retries compiled grammar with prefer non-strict",
@@ -2809,7 +2809,7 @@
 			]
 		},
 		{
-			"name": "later requests stay strict",
+			"name": "later requests stay strict without a session",
 			"model": {
 				"id": "claude-haiku-4-5",
 				"name": "Test Claude",
@@ -3069,6 +3069,1095 @@
 					],
 					"stopReason": "stop",
 					"errorMessage": null,
+					"diagnostics": null
+				}
+			]
+		},
+		{
+			"name": "a rejected session sends prefer non-strict on later requests",
+			"model": {
+				"id": "claude-haiku-4-5",
+				"name": "Test Claude",
+				"api": "anthropic-messages",
+				"provider": "anthropic",
+				"baseUrl": "https://anthropic.example",
+				"reasoning": false,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 200000,
+				"maxTokens": 100,
+				"compat": {
+					"supportsStrictTools": true
+				}
+			},
+			"messages": [
+				{
+					"role": "system",
+					"content": "",
+					"toolsAdded": [
+						{
+							"name": "lookup",
+							"description": "Look up a value",
+							"parameters": {
+								"type": "object",
+								"properties": {
+									"value": {
+										"type": "string"
+									},
+									"optional": {
+										"type": "number"
+									}
+								},
+								"required": [
+									"value"
+								]
+							},
+							"constrainedSampling": {
+								"type": "json_schema",
+								"strict": "prefer"
+							}
+						},
+						{
+							"name": "required",
+							"description": "Look up a value",
+							"parameters": {
+								"type": "object",
+								"properties": {
+									"value": {
+										"type": "string"
+									},
+									"optional": {
+										"type": "number"
+									}
+								},
+								"required": [
+									"value"
+								]
+							},
+							"constrainedSampling": {
+								"type": "json_schema",
+								"strict": "require"
+							}
+						}
+					],
+					"timestamp": 0
+				},
+				{
+					"role": "user",
+					"content": "Hello",
+					"timestamp": 1
+				}
+			],
+			"responses": [
+				{
+					"status": 400,
+					"contentType": "application/json",
+					"body": "{\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The compiled grammar is too large, which would cause performance issues. Simplify your tool schemas or reduce the number of strict tools.\"}}"
+				},
+				{
+					"status": 200,
+					"contentType": "text/event-stream",
+					"body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_test\",\"model\":\"claude-haiku-4-5\",\"usage\":{\"input_tokens\":10,\"output_tokens\":0}}}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\"},\"usage\":{\"output_tokens\":1}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n"
+				}
+			],
+			"options": {
+				"streams": 3,
+				"sessionIds": [
+					"rejected",
+					"rejected",
+					"other"
+				]
+			},
+			"payloads": [
+				{
+					"model": "claude-haiku-4-5",
+					"messages": [
+						{
+							"role": "user",
+							"content": [
+								{
+									"type": "text",
+									"text": "Hello",
+									"cache_control": {
+										"type": "ephemeral"
+									}
+								}
+							]
+						}
+					],
+					"max_tokens": 100,
+					"stream": true,
+					"tools": [
+						{
+							"name": "lookup",
+							"description": "Look up a value",
+							"eager_input_streaming": true,
+							"strict": true,
+							"input_schema": {
+								"type": "object",
+								"properties": {
+									"value": {
+										"type": "string"
+									},
+									"optional": {
+										"anyOf": [
+											{
+												"type": "number"
+											},
+											{
+												"type": "null"
+											}
+										]
+									}
+								},
+								"required": [
+									"value",
+									"optional"
+								],
+								"additionalProperties": false
+							}
+						},
+						{
+							"name": "required",
+							"description": "Look up a value",
+							"eager_input_streaming": true,
+							"strict": true,
+							"input_schema": {
+								"type": "object",
+								"properties": {
+									"value": {
+										"type": "string"
+									},
+									"optional": {
+										"anyOf": [
+											{
+												"type": "number"
+											},
+											{
+												"type": "null"
+											}
+										]
+									}
+								},
+								"required": [
+									"value",
+									"optional"
+								],
+								"additionalProperties": false
+							},
+							"cache_control": {
+								"type": "ephemeral"
+							}
+						}
+					]
+				},
+				{
+					"model": "claude-haiku-4-5",
+					"messages": [
+						{
+							"role": "user",
+							"content": [
+								{
+									"type": "text",
+									"text": "Hello",
+									"cache_control": {
+										"type": "ephemeral"
+									}
+								}
+							]
+						}
+					],
+					"max_tokens": 100,
+					"stream": true,
+					"tools": [
+						{
+							"name": "lookup",
+							"description": "Look up a value",
+							"eager_input_streaming": true,
+							"input_schema": {
+								"type": "object",
+								"properties": {
+									"value": {
+										"type": "string"
+									},
+									"optional": {
+										"type": "number"
+									}
+								},
+								"required": [
+									"value"
+								]
+							}
+						},
+						{
+							"name": "required",
+							"description": "Look up a value",
+							"eager_input_streaming": true,
+							"strict": true,
+							"input_schema": {
+								"type": "object",
+								"properties": {
+									"value": {
+										"type": "string"
+									},
+									"optional": {
+										"anyOf": [
+											{
+												"type": "number"
+											},
+											{
+												"type": "null"
+											}
+										]
+									}
+								},
+								"required": [
+									"value",
+									"optional"
+								],
+								"additionalProperties": false
+							},
+							"cache_control": {
+								"type": "ephemeral"
+							}
+						}
+					]
+				},
+				{
+					"model": "claude-haiku-4-5",
+					"messages": [
+						{
+							"role": "user",
+							"content": [
+								{
+									"type": "text",
+									"text": "Hello",
+									"cache_control": {
+										"type": "ephemeral"
+									}
+								}
+							]
+						}
+					],
+					"max_tokens": 100,
+					"stream": true,
+					"tools": [
+						{
+							"name": "lookup",
+							"description": "Look up a value",
+							"eager_input_streaming": true,
+							"input_schema": {
+								"type": "object",
+								"properties": {
+									"value": {
+										"type": "string"
+									},
+									"optional": {
+										"type": "number"
+									}
+								},
+								"required": [
+									"value"
+								]
+							}
+						},
+						{
+							"name": "required",
+							"description": "Look up a value",
+							"eager_input_streaming": true,
+							"strict": true,
+							"input_schema": {
+								"type": "object",
+								"properties": {
+									"value": {
+										"type": "string"
+									},
+									"optional": {
+										"anyOf": [
+											{
+												"type": "number"
+											},
+											{
+												"type": "null"
+											}
+										]
+									}
+								},
+								"required": [
+									"value",
+									"optional"
+								],
+								"additionalProperties": false
+							},
+							"cache_control": {
+								"type": "ephemeral"
+							}
+						}
+					]
+				},
+				{
+					"model": "claude-haiku-4-5",
+					"messages": [
+						{
+							"role": "user",
+							"content": [
+								{
+									"type": "text",
+									"text": "Hello",
+									"cache_control": {
+										"type": "ephemeral"
+									}
+								}
+							]
+						}
+					],
+					"max_tokens": 100,
+					"stream": true,
+					"tools": [
+						{
+							"name": "lookup",
+							"description": "Look up a value",
+							"eager_input_streaming": true,
+							"strict": true,
+							"input_schema": {
+								"type": "object",
+								"properties": {
+									"value": {
+										"type": "string"
+									},
+									"optional": {
+										"anyOf": [
+											{
+												"type": "number"
+											},
+											{
+												"type": "null"
+											}
+										]
+									}
+								},
+								"required": [
+									"value",
+									"optional"
+								],
+								"additionalProperties": false
+							}
+						},
+						{
+							"name": "required",
+							"description": "Look up a value",
+							"eager_input_streaming": true,
+							"strict": true,
+							"input_schema": {
+								"type": "object",
+								"properties": {
+									"value": {
+										"type": "string"
+									},
+									"optional": {
+										"anyOf": [
+											{
+												"type": "number"
+											},
+											{
+												"type": "null"
+											}
+										]
+									}
+								},
+								"required": [
+									"value",
+									"optional"
+								],
+								"additionalProperties": false
+							},
+							"cache_control": {
+								"type": "ephemeral"
+							}
+						}
+					]
+				}
+			],
+			"onPayloadCalls": 4,
+			"onResponseCalls": 3,
+			"results": [
+				{
+					"events": [
+						"start",
+						"done"
+					],
+					"stopReason": "stop",
+					"errorMessage": null,
+					"diagnostics": [
+						{
+							"type": "anthropic_strict_tools_fallback",
+							"timestamp": 0,
+							"error": {
+								"message": "400 {\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The compiled grammar is too large, which would cause performance issues. Simplify your tool schemas or reduce the number of strict tools.\"}}"
+							},
+							"details": {
+								"reason": "strict_tool_limits_exceeded"
+							}
+						}
+					]
+				},
+				{
+					"events": [
+						"start",
+						"done"
+					],
+					"stopReason": "stop",
+					"errorMessage": null,
+					"diagnostics": null
+				},
+				{
+					"events": [
+						"start",
+						"done"
+					],
+					"stopReason": "stop",
+					"errorMessage": null,
+					"diagnostics": null
+				}
+			]
+		},
+		{
+			"name": "strict again after the session's cleanup",
+			"model": {
+				"id": "claude-haiku-4-5",
+				"name": "Test Claude",
+				"api": "anthropic-messages",
+				"provider": "anthropic",
+				"baseUrl": "https://anthropic.example",
+				"reasoning": false,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 200000,
+				"maxTokens": 100,
+				"compat": {
+					"supportsStrictTools": true
+				}
+			},
+			"messages": [
+				{
+					"role": "system",
+					"content": "",
+					"toolsAdded": [
+						{
+							"name": "lookup",
+							"description": "Look up a value",
+							"parameters": {
+								"type": "object",
+								"properties": {
+									"value": {
+										"type": "string"
+									},
+									"optional": {
+										"type": "number"
+									}
+								},
+								"required": [
+									"value"
+								]
+							},
+							"constrainedSampling": {
+								"type": "json_schema",
+								"strict": "prefer"
+							}
+						}
+					],
+					"timestamp": 0
+				},
+				{
+					"role": "user",
+					"content": "Hello",
+					"timestamp": 1
+				}
+			],
+			"responses": [
+				{
+					"status": 400,
+					"contentType": "application/json",
+					"body": "{\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The compiled grammar is too large, which would cause performance issues. Simplify your tool schemas or reduce the number of strict tools.\"}}"
+				},
+				{
+					"status": 200,
+					"contentType": "text/event-stream",
+					"body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_test\",\"model\":\"claude-haiku-4-5\",\"usage\":{\"input_tokens\":10,\"output_tokens\":0}}}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\"},\"usage\":{\"output_tokens\":1}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n"
+				}
+			],
+			"options": {
+				"streams": 2,
+				"sessionIds": [
+					"cleaned",
+					"cleaned"
+				],
+				"cleanupBefore": {
+					"1": "cleaned"
+				}
+			},
+			"payloads": [
+				{
+					"model": "claude-haiku-4-5",
+					"messages": [
+						{
+							"role": "user",
+							"content": [
+								{
+									"type": "text",
+									"text": "Hello",
+									"cache_control": {
+										"type": "ephemeral"
+									}
+								}
+							]
+						}
+					],
+					"max_tokens": 100,
+					"stream": true,
+					"tools": [
+						{
+							"name": "lookup",
+							"description": "Look up a value",
+							"eager_input_streaming": true,
+							"strict": true,
+							"input_schema": {
+								"type": "object",
+								"properties": {
+									"value": {
+										"type": "string"
+									},
+									"optional": {
+										"anyOf": [
+											{
+												"type": "number"
+											},
+											{
+												"type": "null"
+											}
+										]
+									}
+								},
+								"required": [
+									"value",
+									"optional"
+								],
+								"additionalProperties": false
+							},
+							"cache_control": {
+								"type": "ephemeral"
+							}
+						}
+					]
+				},
+				{
+					"model": "claude-haiku-4-5",
+					"messages": [
+						{
+							"role": "user",
+							"content": [
+								{
+									"type": "text",
+									"text": "Hello",
+									"cache_control": {
+										"type": "ephemeral"
+									}
+								}
+							]
+						}
+					],
+					"max_tokens": 100,
+					"stream": true,
+					"tools": [
+						{
+							"name": "lookup",
+							"description": "Look up a value",
+							"eager_input_streaming": true,
+							"input_schema": {
+								"type": "object",
+								"properties": {
+									"value": {
+										"type": "string"
+									},
+									"optional": {
+										"type": "number"
+									}
+								},
+								"required": [
+									"value"
+								]
+							},
+							"cache_control": {
+								"type": "ephemeral"
+							}
+						}
+					]
+				},
+				{
+					"model": "claude-haiku-4-5",
+					"messages": [
+						{
+							"role": "user",
+							"content": [
+								{
+									"type": "text",
+									"text": "Hello",
+									"cache_control": {
+										"type": "ephemeral"
+									}
+								}
+							]
+						}
+					],
+					"max_tokens": 100,
+					"stream": true,
+					"tools": [
+						{
+							"name": "lookup",
+							"description": "Look up a value",
+							"eager_input_streaming": true,
+							"strict": true,
+							"input_schema": {
+								"type": "object",
+								"properties": {
+									"value": {
+										"type": "string"
+									},
+									"optional": {
+										"anyOf": [
+											{
+												"type": "number"
+											},
+											{
+												"type": "null"
+											}
+										]
+									}
+								},
+								"required": [
+									"value",
+									"optional"
+								],
+								"additionalProperties": false
+							},
+							"cache_control": {
+								"type": "ephemeral"
+							}
+						}
+					]
+				}
+			],
+			"onPayloadCalls": 3,
+			"onResponseCalls": 2,
+			"results": [
+				{
+					"events": [
+						"start",
+						"done"
+					],
+					"stopReason": "stop",
+					"errorMessage": null,
+					"diagnostics": [
+						{
+							"type": "anthropic_strict_tools_fallback",
+							"timestamp": 0,
+							"error": {
+								"message": "400 {\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The compiled grammar is too large, which would cause performance issues. Simplify your tool schemas or reduce the number of strict tools.\"}}"
+							},
+							"details": {
+								"reason": "strict_tool_limits_exceeded"
+							}
+						}
+					]
+				},
+				{
+					"events": [
+						"start",
+						"done"
+					],
+					"stopReason": "stop",
+					"errorMessage": null,
+					"diagnostics": null
+				}
+			]
+		},
+		{
+			"name": "a remembered session's required rejection surfaces",
+			"model": {
+				"id": "claude-haiku-4-5",
+				"name": "Test Claude",
+				"api": "anthropic-messages",
+				"provider": "anthropic",
+				"baseUrl": "https://anthropic.example",
+				"reasoning": false,
+				"input": [
+					"text"
+				],
+				"cost": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0
+				},
+				"contextWindow": 200000,
+				"maxTokens": 100,
+				"compat": {
+					"supportsStrictTools": true
+				}
+			},
+			"messages": [
+				{
+					"role": "system",
+					"content": "",
+					"toolsAdded": [
+						{
+							"name": "lookup",
+							"description": "Look up a value",
+							"parameters": {
+								"type": "object",
+								"properties": {
+									"value": {
+										"type": "string"
+									},
+									"optional": {
+										"type": "number"
+									}
+								},
+								"required": [
+									"value"
+								]
+							},
+							"constrainedSampling": {
+								"type": "json_schema",
+								"strict": "prefer"
+							}
+						},
+						{
+							"name": "required",
+							"description": "Look up a value",
+							"parameters": {
+								"type": "object",
+								"properties": {
+									"value": {
+										"type": "string"
+									},
+									"optional": {
+										"type": "number"
+									}
+								},
+								"required": [
+									"value"
+								]
+							},
+							"constrainedSampling": {
+								"type": "json_schema",
+								"strict": "require"
+							}
+						}
+					],
+					"timestamp": 0
+				},
+				{
+					"role": "user",
+					"content": "Hello",
+					"timestamp": 1
+				}
+			],
+			"responses": [
+				{
+					"status": 400,
+					"contentType": "application/json",
+					"body": "{\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The compiled grammar is too large, which would cause performance issues. Simplify your tool schemas or reduce the number of strict tools.\"}}"
+				},
+				{
+					"status": 200,
+					"contentType": "text/event-stream",
+					"body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_test\",\"model\":\"claude-haiku-4-5\",\"usage\":{\"input_tokens\":10,\"output_tokens\":0}}}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\"},\"usage\":{\"output_tokens\":1}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n"
+				},
+				{
+					"status": 400,
+					"contentType": "application/json",
+					"body": "{\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The compiled grammar is too large, which would cause performance issues. Simplify your tool schemas or reduce the number of strict tools.\"}}"
+				}
+			],
+			"options": {
+				"streams": 2,
+				"sessionIds": [
+					"required",
+					"required"
+				]
+			},
+			"payloads": [
+				{
+					"model": "claude-haiku-4-5",
+					"messages": [
+						{
+							"role": "user",
+							"content": [
+								{
+									"type": "text",
+									"text": "Hello",
+									"cache_control": {
+										"type": "ephemeral"
+									}
+								}
+							]
+						}
+					],
+					"max_tokens": 100,
+					"stream": true,
+					"tools": [
+						{
+							"name": "lookup",
+							"description": "Look up a value",
+							"eager_input_streaming": true,
+							"strict": true,
+							"input_schema": {
+								"type": "object",
+								"properties": {
+									"value": {
+										"type": "string"
+									},
+									"optional": {
+										"anyOf": [
+											{
+												"type": "number"
+											},
+											{
+												"type": "null"
+											}
+										]
+									}
+								},
+								"required": [
+									"value",
+									"optional"
+								],
+								"additionalProperties": false
+							}
+						},
+						{
+							"name": "required",
+							"description": "Look up a value",
+							"eager_input_streaming": true,
+							"strict": true,
+							"input_schema": {
+								"type": "object",
+								"properties": {
+									"value": {
+										"type": "string"
+									},
+									"optional": {
+										"anyOf": [
+											{
+												"type": "number"
+											},
+											{
+												"type": "null"
+											}
+										]
+									}
+								},
+								"required": [
+									"value",
+									"optional"
+								],
+								"additionalProperties": false
+							},
+							"cache_control": {
+								"type": "ephemeral"
+							}
+						}
+					]
+				},
+				{
+					"model": "claude-haiku-4-5",
+					"messages": [
+						{
+							"role": "user",
+							"content": [
+								{
+									"type": "text",
+									"text": "Hello",
+									"cache_control": {
+										"type": "ephemeral"
+									}
+								}
+							]
+						}
+					],
+					"max_tokens": 100,
+					"stream": true,
+					"tools": [
+						{
+							"name": "lookup",
+							"description": "Look up a value",
+							"eager_input_streaming": true,
+							"input_schema": {
+								"type": "object",
+								"properties": {
+									"value": {
+										"type": "string"
+									},
+									"optional": {
+										"type": "number"
+									}
+								},
+								"required": [
+									"value"
+								]
+							}
+						},
+						{
+							"name": "required",
+							"description": "Look up a value",
+							"eager_input_streaming": true,
+							"strict": true,
+							"input_schema": {
+								"type": "object",
+								"properties": {
+									"value": {
+										"type": "string"
+									},
+									"optional": {
+										"anyOf": [
+											{
+												"type": "number"
+											},
+											{
+												"type": "null"
+											}
+										]
+									}
+								},
+								"required": [
+									"value",
+									"optional"
+								],
+								"additionalProperties": false
+							},
+							"cache_control": {
+								"type": "ephemeral"
+							}
+						}
+					]
+				},
+				{
+					"model": "claude-haiku-4-5",
+					"messages": [
+						{
+							"role": "user",
+							"content": [
+								{
+									"type": "text",
+									"text": "Hello",
+									"cache_control": {
+										"type": "ephemeral"
+									}
+								}
+							]
+						}
+					],
+					"max_tokens": 100,
+					"stream": true,
+					"tools": [
+						{
+							"name": "lookup",
+							"description": "Look up a value",
+							"eager_input_streaming": true,
+							"input_schema": {
+								"type": "object",
+								"properties": {
+									"value": {
+										"type": "string"
+									},
+									"optional": {
+										"type": "number"
+									}
+								},
+								"required": [
+									"value"
+								]
+							}
+						},
+						{
+							"name": "required",
+							"description": "Look up a value",
+							"eager_input_streaming": true,
+							"strict": true,
+							"input_schema": {
+								"type": "object",
+								"properties": {
+									"value": {
+										"type": "string"
+									},
+									"optional": {
+										"anyOf": [
+											{
+												"type": "number"
+											},
+											{
+												"type": "null"
+											}
+										]
+									}
+								},
+								"required": [
+									"value",
+									"optional"
+								],
+								"additionalProperties": false
+							},
+							"cache_control": {
+								"type": "ephemeral"
+							}
+						}
+					]
+				}
+			],
+			"onPayloadCalls": 3,
+			"onResponseCalls": 1,
+			"results": [
+				{
+					"events": [
+						"start",
+						"done"
+					],
+					"stopReason": "stop",
+					"errorMessage": null,
+					"diagnostics": [
+						{
+							"type": "anthropic_strict_tools_fallback",
+							"timestamp": 0,
+							"error": {
+								"message": "400 {\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The compiled grammar is too large, which would cause performance issues. Simplify your tool schemas or reduce the number of strict tools.\"}}"
+							},
+							"details": {
+								"reason": "strict_tool_limits_exceeded"
+							}
+						}
+					]
+				},
+				{
+					"events": [
+						"error"
+					],
+					"stopReason": "error",
+					"errorMessage": "400 {\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The compiled grammar is too large, which would cause performance issues. Simplify your tool schemas or reduce the number of strict tools.\"}}",
 					"diagnostics": null
 				}
 			]

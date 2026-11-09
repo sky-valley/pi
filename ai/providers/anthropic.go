@@ -708,7 +708,11 @@ func StreamAnthropic(ctx context.Context, model *ai.Model, req ai.TranscriptCont
 			fail(errOperationAborted)
 			return
 		}
-		params, hasPreferredStrictTools, err := prepare(false)
+		// A session whose strict tools Claude already rejected for its limits
+		// sends its strict:"prefer" tools non-strict from the start (upstream
+		// 45344bd3a); a request without a session tries strict every time.
+		disablePreferredStrictTools := strictToolLimitSessions.exceeded(opts.SessionID)
+		params, hasPreferredStrictTools, err := prepare(disablePreferredStrictTools)
 		if err != nil {
 			fail(err)
 			return
@@ -818,8 +822,8 @@ func StreamAnthropic(ctx context.Context, model *ai.Model, req ai.TranscriptCont
 
 		// A rejection of strict tools for Anthropic's own limits is retried once
 		// with the preferred ones non-strict (upstream d4d53612b): only a
-		// rejected request, never a started stream, and never a second time.
-		disablePreferredStrictTools := false
+		// rejected request, never a started stream, and never a second time,
+		// nor at all once the session's preferred tools already went non-strict.
 		var resp *http.Response
 		// thread is the thread request that produced resp; nil when no
 		// `thread` was sent.
@@ -850,6 +854,7 @@ func StreamAnthropic(ctx context.Context, model *ai.Model, req ai.TranscriptCont
 				return
 			}
 			disablePreferredStrictTools = true
+			strictToolLimitSessions.mark(opts.SessionID)
 			output.Diagnostics = append(output.Diagnostics, ai.Diagnostic{
 				Type:      "anthropic_strict_tools_fallback",
 				Timestamp: nowMillis(),

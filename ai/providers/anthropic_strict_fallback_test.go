@@ -6,16 +6,18 @@ import (
 	"maps"
 	"os"
 	"slices"
+	"strconv"
 	"testing"
 
 	"github.com/sky-valley/pi/ai"
 )
 
 // anthropicStrictFallbackCaptureFile is what testdata/anthropic-strict-fallback/
-// capture.mjs recorded from pi-ai 1.3.0's anthropic-messages stream, replaying
-// upstream's anthropic-strict-tool-fallback.test.ts (src at d4d53612b records the
-// same file).
-const anthropicStrictFallbackCaptureFile = "testdata/anthropic-strict-fallback/strict-fallback-1.3.0.json"
+// capture.mjs recorded from pi's anthropic-messages stream at src ea1cfcc4c,
+// replaying upstream's anthropic-strict-tool-fallback.test.ts. The session rows
+// are upstream 45344bd3a's; at its parent, and in the pi-ai 1.5.0 build, every
+// other row reproduces the file this one supersedes (strict-fallback-1.3.0.json).
+const anthropicStrictFallbackCaptureFile = "testdata/anthropic-strict-fallback/strict-fallback-ea1cfcc4c.json"
 
 // When Anthropic rejects strict tools for its own limits — a 400
 // invalid_request_error saying the compiled grammar is too large, or there are
@@ -25,7 +27,10 @@ const anthropicStrictFallbackCaptureFile = "testdata/anthropic-strict-fallback/s
 // them to onPayload again, retries once, and records an
 // anthropic_strict_tools_fallback diagnostic carrying the SDK's error message
 // (upstream d4d53612b). Any other rejection, a second one, an abort, or an
-// error event after the response started is surfaced as before.
+// error event after the response started is surfaced as before. Since
+// upstream 45344bd3a the rejection is remembered per session: that session's
+// later requests send their prefer tools non-strict from the start, and never
+// fall back again, until ai.CleanupSessionResources forgets it.
 func TestAnthropicStrictToolFallbackMatchesPi(t *testing.T) {
 	data, err := os.ReadFile(anthropicStrictFallbackCaptureFile)
 	if err != nil {
@@ -48,11 +53,13 @@ func TestAnthropicStrictToolFallbackMatchesPi(t *testing.T) {
 				Body        string `json:"body"`
 			} `json:"responses"`
 			Options struct {
-				APIKey         string `json:"apiKey"`
-				CacheRetention string `json:"cacheRetention"`
-				OnPayload      string `json:"onPayload"`
-				AbortOnRequest int    `json:"abortOnRequest"`
-				Streams        int    `json:"streams"`
+				APIKey         string            `json:"apiKey"`
+				CacheRetention string            `json:"cacheRetention"`
+				OnPayload      string            `json:"onPayload"`
+				AbortOnRequest int               `json:"abortOnRequest"`
+				Streams        int               `json:"streams"`
+				SessionIDs     []string          `json:"sessionIds"`
+				CleanupBefore  map[string]string `json:"cleanupBefore"`
 			} `json:"options"`
 			Payloads        []json.RawMessage `json:"payloads"`
 			OnPayloadCalls  int               `json:"onPayloadCalls"`
@@ -106,7 +113,22 @@ func TestAnthropicStrictToolFallbackMatchesPi(t *testing.T) {
 			}}
 			model := row.Model
 			var results []result
-			for range max(row.Options.Streams, 1) {
+			// Each row starts and ends with no remembered session, as the
+			// capture's cleanupSessionResources() after every row does.
+			if err := ai.CleanupSessionResources(""); err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() { _ = ai.CleanupSessionResources("") })
+			for i := range max(row.Options.Streams, 1) {
+				if sessionID, ok := row.Options.CleanupBefore[strconv.Itoa(i)]; ok {
+					if err := ai.CleanupSessionResources(sessionID); err != nil {
+						t.Fatal(err)
+					}
+				}
+				opts.SessionID = ""
+				if i < len(row.Options.SessionIDs) {
+					opts.SessionID = row.Options.SessionIDs[i]
+				}
 				stream := StreamAnthropic(ctx, &model, ai.NormalizeContext(ai.Context{Messages: messages}), opts)
 				var events []string
 				for ev := range stream.Events() {
