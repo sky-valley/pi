@@ -1,0 +1,2987 @@
+{
+	"source": "src ea1cfcc4c",
+	"constants": {
+		"maxAgeMs": 3600000,
+		"maxIdleAgeMs": 1800000,
+		"minimumExpectedSavings": 0.05,
+		"idleContinuationProbability": 0.15
+	},
+	"models": {
+		"sonnet": {
+			"id": "sonnet",
+			"name": "M",
+			"api": "anthropic-messages",
+			"provider": "anthropic",
+			"baseUrl": "https://example.invalid",
+			"reasoning": true,
+			"input": [
+				"text"
+			],
+			"contextWindow": 200000,
+			"maxTokens": 64000,
+			"cost": {
+				"input": 3,
+				"output": 15,
+				"cacheRead": 0.3,
+				"cacheWrite": 3.75
+			},
+			"promptCache": {
+				"short": 300,
+				"long": 3600
+			}
+		},
+		"opus": {
+			"id": "opus",
+			"name": "M",
+			"api": "anthropic-messages",
+			"provider": "anthropic",
+			"baseUrl": "https://example.invalid",
+			"reasoning": true,
+			"input": [
+				"text"
+			],
+			"contextWindow": 200000,
+			"maxTokens": 64000,
+			"cost": {
+				"input": 15,
+				"output": 75,
+				"cacheRead": 1.5,
+				"cacheWrite": 18.75
+			},
+			"promptCache": {
+				"short": 300
+			}
+		},
+		"adaptive": {
+			"id": "adaptive",
+			"name": "M",
+			"api": "anthropic-messages",
+			"provider": "anthropic",
+			"baseUrl": "https://example.invalid",
+			"reasoning": true,
+			"input": [
+				"text"
+			],
+			"contextWindow": 200000,
+			"maxTokens": 64000,
+			"cost": {
+				"input": 5,
+				"output": 25,
+				"cacheRead": 0.5,
+				"cacheWrite": 6.25
+			},
+			"promptCache": {
+				"short": 300,
+				"long": 3600
+			},
+			"compat": {
+				"forceAdaptiveThinking": true
+			}
+		},
+		"adaptiveOff": {
+			"id": "adaptive-off",
+			"name": "M",
+			"api": "anthropic-messages",
+			"provider": "anthropic",
+			"baseUrl": "https://example.invalid",
+			"reasoning": true,
+			"input": [
+				"text"
+			],
+			"contextWindow": 200000,
+			"maxTokens": 64000,
+			"cost": {
+				"input": 5,
+				"output": 25,
+				"cacheRead": 0.5,
+				"cacheWrite": 6.25
+			},
+			"compat": {
+				"forceAdaptiveThinking": false
+			}
+		},
+		"noWrite": {
+			"id": "no-write",
+			"name": "M",
+			"api": "openai-responses",
+			"provider": "openai",
+			"baseUrl": "https://example.invalid",
+			"reasoning": true,
+			"input": [
+				"text"
+			],
+			"contextWindow": 200000,
+			"maxTokens": 64000,
+			"cost": {
+				"input": 1.25,
+				"output": 10,
+				"cacheRead": 0.125,
+				"cacheWrite": 0
+			},
+			"promptCache": {
+				"short": 600.5
+			}
+		},
+		"tiered": {
+			"id": "tiered",
+			"name": "M",
+			"api": "openai-responses",
+			"provider": "openai",
+			"baseUrl": "https://example.invalid",
+			"reasoning": true,
+			"input": [
+				"text"
+			],
+			"contextWindow": 200000,
+			"maxTokens": 64000,
+			"cost": {
+				"input": 2.5,
+				"output": 15,
+				"cacheRead": 0.25,
+				"cacheWrite": 0,
+				"tiers": [
+					{
+						"inputTokensAbove": 272000,
+						"input": 5,
+						"output": 22.5,
+						"cacheRead": 0.5,
+						"cacheWrite": 0
+					}
+				]
+			},
+			"promptCache": {
+				"long": 86400
+			}
+		},
+		"free": {
+			"id": "free",
+			"name": "M",
+			"api": "anthropic-messages",
+			"provider": "anthropic",
+			"baseUrl": "https://example.invalid",
+			"reasoning": true,
+			"input": [
+				"text"
+			],
+			"contextWindow": 200000,
+			"maxTokens": 64000,
+			"cost": {
+				"input": 0,
+				"output": 0,
+				"cacheRead": 0,
+				"cacheWrite": 0
+			}
+		},
+		"google": {
+			"id": "google",
+			"name": "M",
+			"api": "google-generative-ai",
+			"provider": "google",
+			"baseUrl": "https://example.invalid",
+			"reasoning": true,
+			"input": [
+				"text"
+			],
+			"contextWindow": 200000,
+			"maxTokens": 64000,
+			"cost": {
+				"input": 0.3,
+				"output": 2.5,
+				"cacheRead": 0.075,
+				"cacheWrite": 0
+			},
+			"promptCache": {
+				"short": 10
+			}
+		}
+	},
+	"decisions": [
+		{
+			"model": "sonnet",
+			"promptTokens": 0,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.000015,
+				"missCost": 0,
+				"continuationProbability": 1,
+				"expectedSavings": -0.000015,
+				"economicsAvailable": false,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "sonnet",
+			"promptTokens": 0,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.000015,
+				"missCost": 0,
+				"continuationProbability": 0.15,
+				"expectedSavings": -0.000015,
+				"economicsAvailable": false,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "sonnet",
+			"promptTokens": 1,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.0000153,
+				"missCost": 0.00000345,
+				"continuationProbability": 1,
+				"expectedSavings": -0.00001185,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "sonnet",
+			"promptTokens": 1,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.0000153,
+				"missCost": 0.00000345,
+				"continuationProbability": 0.15,
+				"expectedSavings": -0.0000147825,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "sonnet",
+			"promptTokens": 1024,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.00032219999999999997,
+				"missCost": 0.0035328,
+				"continuationProbability": 1,
+				"expectedSavings": 0.0032106,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "sonnet",
+			"promptTokens": 1024,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.00032219999999999997,
+				"missCost": 0.0035328,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.00020772000000000005,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "sonnet",
+			"promptTokens": 8000,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.0024149999999999996,
+				"missCost": 0.0276,
+				"continuationProbability": 1,
+				"expectedSavings": 0.025185,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "sonnet",
+			"promptTokens": 8000,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.0024149999999999996,
+				"missCost": 0.0276,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.001725,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "sonnet",
+			"promptTokens": 31337,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.009416099999999998,
+				"missCost": 0.10811265,
+				"continuationProbability": 1,
+				"expectedSavings": 0.09869655000000001,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "sonnet",
+			"promptTokens": 31337,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.009416099999999998,
+				"missCost": 0.10811265,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.006800797500000002,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "sonnet",
+			"promptTokens": 120000,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.036015,
+				"missCost": 0.41400000000000003,
+				"continuationProbability": 1,
+				"expectedSavings": 0.377985,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "sonnet",
+			"promptTokens": 120000,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.036015,
+				"missCost": 0.41400000000000003,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.026085000000000004,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "sonnet",
+			"promptTokens": 272000,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.081615,
+				"missCost": 0.9384,
+				"continuationProbability": 1,
+				"expectedSavings": 0.856785,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "sonnet",
+			"promptTokens": 272000,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.081615,
+				"missCost": 0.9384,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.059145,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "sonnet",
+			"promptTokens": 272001,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.0816153,
+				"missCost": 0.9384034500000001,
+				"continuationProbability": 1,
+				"expectedSavings": 0.8567881500000001,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "sonnet",
+			"promptTokens": 272001,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.0816153,
+				"missCost": 0.9384034500000001,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.059145217500000014,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "sonnet",
+			"promptTokens": 950000,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.28501499999999996,
+				"missCost": 3.2775,
+				"continuationProbability": 1,
+				"expectedSavings": 2.992485,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "sonnet",
+			"promptTokens": 950000,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.28501499999999996,
+				"missCost": 3.2775,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.20661000000000002,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "opus",
+			"promptTokens": 0,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.000075,
+				"missCost": 0,
+				"continuationProbability": 1,
+				"expectedSavings": -0.000075,
+				"economicsAvailable": false,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "opus",
+			"promptTokens": 0,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.000075,
+				"missCost": 0,
+				"continuationProbability": 0.15,
+				"expectedSavings": -0.000075,
+				"economicsAvailable": false,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "opus",
+			"promptTokens": 1,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.00007649999999999999,
+				"missCost": 0.00001725,
+				"continuationProbability": 1,
+				"expectedSavings": -0.00005924999999999999,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "opus",
+			"promptTokens": 1,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.00007649999999999999,
+				"missCost": 0.00001725,
+				"continuationProbability": 0.15,
+				"expectedSavings": -0.00007391249999999999,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "opus",
+			"promptTokens": 1024,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.001611,
+				"missCost": 0.017664,
+				"continuationProbability": 1,
+				"expectedSavings": 0.016052999999999998,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "opus",
+			"promptTokens": 1024,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.001611,
+				"missCost": 0.017664,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.0010385999999999998,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "opus",
+			"promptTokens": 8000,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.012075,
+				"missCost": 0.13799999999999998,
+				"continuationProbability": 1,
+				"expectedSavings": 0.12592499999999998,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "opus",
+			"promptTokens": 8000,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.012075,
+				"missCost": 0.13799999999999998,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.008624999999999996,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "opus",
+			"promptTokens": 31337,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.0470805,
+				"missCost": 0.5405632499999999,
+				"continuationProbability": 1,
+				"expectedSavings": 0.49348274999999997,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "opus",
+			"promptTokens": 31337,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.0470805,
+				"missCost": 0.5405632499999999,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.034003987499999985,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "opus",
+			"promptTokens": 120000,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.18007499999999999,
+				"missCost": 2.07,
+				"continuationProbability": 1,
+				"expectedSavings": 1.8899249999999999,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "opus",
+			"promptTokens": 120000,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.18007499999999999,
+				"missCost": 2.07,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.13042499999999996,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "opus",
+			"promptTokens": 272000,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.408075,
+				"missCost": 4.691999999999999,
+				"continuationProbability": 1,
+				"expectedSavings": 4.283924999999999,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "opus",
+			"promptTokens": 272000,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.408075,
+				"missCost": 4.691999999999999,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.29572499999999985,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "opus",
+			"promptTokens": 272001,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.4080765,
+				"missCost": 4.69201725,
+				"continuationProbability": 1,
+				"expectedSavings": 4.28394075,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "opus",
+			"promptTokens": 272001,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.4080765,
+				"missCost": 4.69201725,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.2957260875,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "opus",
+			"promptTokens": 950000,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 1.425075,
+				"missCost": 16.3875,
+				"continuationProbability": 1,
+				"expectedSavings": 14.962425,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "opus",
+			"promptTokens": 950000,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 1.425075,
+				"missCost": 16.3875,
+				"continuationProbability": 0.15,
+				"expectedSavings": 1.0330499999999998,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "adaptive",
+			"promptTokens": 0,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.000025,
+				"missCost": 0,
+				"continuationProbability": 1,
+				"expectedSavings": -0.000025,
+				"economicsAvailable": false,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "adaptive",
+			"promptTokens": 0,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.000025,
+				"missCost": 0,
+				"continuationProbability": 0.15,
+				"expectedSavings": -0.000025,
+				"economicsAvailable": false,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "adaptive",
+			"promptTokens": 1,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.0000255,
+				"missCost": 0.00000575,
+				"continuationProbability": 1,
+				"expectedSavings": -0.00001975,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "adaptive",
+			"promptTokens": 1,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.0000255,
+				"missCost": 0.00000575,
+				"continuationProbability": 0.15,
+				"expectedSavings": -0.0000246375,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "adaptive",
+			"promptTokens": 1024,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.0005369999999999999,
+				"missCost": 0.005888,
+				"continuationProbability": 1,
+				"expectedSavings": 0.005351,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "adaptive",
+			"promptTokens": 1024,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.0005369999999999999,
+				"missCost": 0.005888,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.00034620000000000007,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "adaptive",
+			"promptTokens": 8000,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.004025,
+				"missCost": 0.046,
+				"continuationProbability": 1,
+				"expectedSavings": 0.041975,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "adaptive",
+			"promptTokens": 8000,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.004025,
+				"missCost": 0.046,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.002875,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "adaptive",
+			"promptTokens": 31337,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.0156935,
+				"missCost": 0.18018775,
+				"continuationProbability": 1,
+				"expectedSavings": 0.16449425,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "adaptive",
+			"promptTokens": 31337,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.0156935,
+				"missCost": 0.18018775,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.011334662500000002,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "adaptive",
+			"promptTokens": 120000,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.060024999999999995,
+				"missCost": 0.69,
+				"continuationProbability": 1,
+				"expectedSavings": 0.629975,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "adaptive",
+			"promptTokens": 120000,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.060024999999999995,
+				"missCost": 0.69,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.043475,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "adaptive",
+			"promptTokens": 272000,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.13602499999999998,
+				"missCost": 1.564,
+				"continuationProbability": 1,
+				"expectedSavings": 1.427975,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "adaptive",
+			"promptTokens": 272000,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.13602499999999998,
+				"missCost": 1.564,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.09857500000000002,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "adaptive",
+			"promptTokens": 272001,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.1360255,
+				"missCost": 1.56400575,
+				"continuationProbability": 1,
+				"expectedSavings": 1.42798025,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "adaptive",
+			"promptTokens": 272001,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.1360255,
+				"missCost": 1.56400575,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.09857536249999999,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "adaptive",
+			"promptTokens": 950000,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.475025,
+				"missCost": 5.4625,
+				"continuationProbability": 1,
+				"expectedSavings": 4.987475000000001,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "adaptive",
+			"promptTokens": 950000,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.475025,
+				"missCost": 5.4625,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.3443500000000001,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "adaptiveOff",
+			"promptTokens": 0,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.000025,
+				"missCost": 0,
+				"continuationProbability": 1,
+				"expectedSavings": -0.000025,
+				"economicsAvailable": false,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "adaptiveOff",
+			"promptTokens": 0,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.000025,
+				"missCost": 0,
+				"continuationProbability": 0.15,
+				"expectedSavings": -0.000025,
+				"economicsAvailable": false,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "adaptiveOff",
+			"promptTokens": 1,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.0000255,
+				"missCost": 0.00000575,
+				"continuationProbability": 1,
+				"expectedSavings": -0.00001975,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "adaptiveOff",
+			"promptTokens": 1,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.0000255,
+				"missCost": 0.00000575,
+				"continuationProbability": 0.15,
+				"expectedSavings": -0.0000246375,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "adaptiveOff",
+			"promptTokens": 1024,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.0005369999999999999,
+				"missCost": 0.005888,
+				"continuationProbability": 1,
+				"expectedSavings": 0.005351,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "adaptiveOff",
+			"promptTokens": 1024,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.0005369999999999999,
+				"missCost": 0.005888,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.00034620000000000007,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "adaptiveOff",
+			"promptTokens": 8000,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.004025,
+				"missCost": 0.046,
+				"continuationProbability": 1,
+				"expectedSavings": 0.041975,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "adaptiveOff",
+			"promptTokens": 8000,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.004025,
+				"missCost": 0.046,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.002875,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "adaptiveOff",
+			"promptTokens": 31337,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.0156935,
+				"missCost": 0.18018775,
+				"continuationProbability": 1,
+				"expectedSavings": 0.16449425,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "adaptiveOff",
+			"promptTokens": 31337,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.0156935,
+				"missCost": 0.18018775,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.011334662500000002,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "adaptiveOff",
+			"promptTokens": 120000,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.060024999999999995,
+				"missCost": 0.69,
+				"continuationProbability": 1,
+				"expectedSavings": 0.629975,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "adaptiveOff",
+			"promptTokens": 120000,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.060024999999999995,
+				"missCost": 0.69,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.043475,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "adaptiveOff",
+			"promptTokens": 272000,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.13602499999999998,
+				"missCost": 1.564,
+				"continuationProbability": 1,
+				"expectedSavings": 1.427975,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "adaptiveOff",
+			"promptTokens": 272000,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.13602499999999998,
+				"missCost": 1.564,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.09857500000000002,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "adaptiveOff",
+			"promptTokens": 272001,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.1360255,
+				"missCost": 1.56400575,
+				"continuationProbability": 1,
+				"expectedSavings": 1.42798025,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "adaptiveOff",
+			"promptTokens": 272001,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.1360255,
+				"missCost": 1.56400575,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.09857536249999999,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "adaptiveOff",
+			"promptTokens": 950000,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.475025,
+				"missCost": 5.4625,
+				"continuationProbability": 1,
+				"expectedSavings": 4.987475000000001,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "adaptiveOff",
+			"promptTokens": 950000,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.475025,
+				"missCost": 5.4625,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.3443500000000001,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "noWrite",
+			"promptTokens": 0,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.00001,
+				"missCost": 0,
+				"continuationProbability": 1,
+				"expectedSavings": -0.00001,
+				"economicsAvailable": false,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "noWrite",
+			"promptTokens": 0,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.00001,
+				"missCost": 0,
+				"continuationProbability": 0.15,
+				"expectedSavings": -0.00001,
+				"economicsAvailable": false,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "noWrite",
+			"promptTokens": 1,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.000010125,
+				"missCost": 0.000001125,
+				"continuationProbability": 1,
+				"expectedSavings": -0.000009,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "noWrite",
+			"promptTokens": 1,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.000010125,
+				"missCost": 0.000001125,
+				"continuationProbability": 0.15,
+				"expectedSavings": -0.00000995625,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "noWrite",
+			"promptTokens": 1024,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.000138,
+				"missCost": 0.001152,
+				"continuationProbability": 1,
+				"expectedSavings": 0.0010140000000000001,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "noWrite",
+			"promptTokens": 1024,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.000138,
+				"missCost": 0.001152,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.000034800000000000006,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "noWrite",
+			"promptTokens": 8000,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.00101,
+				"missCost": 0.009000000000000001,
+				"continuationProbability": 1,
+				"expectedSavings": 0.00799,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "noWrite",
+			"promptTokens": 8000,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.00101,
+				"missCost": 0.009000000000000001,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.00034,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "noWrite",
+			"promptTokens": 31337,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.003927124999999999,
+				"missCost": 0.035254125000000004,
+				"continuationProbability": 1,
+				"expectedSavings": 0.03132700000000001,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "noWrite",
+			"promptTokens": 31337,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.003927124999999999,
+				"missCost": 0.035254125000000004,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.001360993750000001,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "noWrite",
+			"promptTokens": 120000,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.015009999999999999,
+				"missCost": 0.135,
+				"continuationProbability": 1,
+				"expectedSavings": 0.11999000000000001,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "noWrite",
+			"promptTokens": 120000,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.015009999999999999,
+				"missCost": 0.135,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.005240000000000002,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "noWrite",
+			"promptTokens": 272000,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.03401,
+				"missCost": 0.30600000000000005,
+				"continuationProbability": 1,
+				"expectedSavings": 0.27199000000000007,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "noWrite",
+			"promptTokens": 272000,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.03401,
+				"missCost": 0.30600000000000005,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.011890000000000005,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "noWrite",
+			"promptTokens": 272001,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.034010125,
+				"missCost": 0.30600112500000004,
+				"continuationProbability": 1,
+				"expectedSavings": 0.27199100000000004,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "noWrite",
+			"promptTokens": 272001,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.034010125,
+				"missCost": 0.30600112500000004,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.011890043750000003,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "noWrite",
+			"promptTokens": 950000,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.11875999999999999,
+				"missCost": 1.06875,
+				"continuationProbability": 1,
+				"expectedSavings": 0.9499900000000001,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "noWrite",
+			"promptTokens": 950000,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.11875999999999999,
+				"missCost": 1.06875,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.041552500000000006,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "tiered",
+			"promptTokens": 0,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.000015,
+				"missCost": 0,
+				"continuationProbability": 1,
+				"expectedSavings": -0.000015,
+				"economicsAvailable": false,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "tiered",
+			"promptTokens": 0,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.000015,
+				"missCost": 0,
+				"continuationProbability": 0.15,
+				"expectedSavings": -0.000015,
+				"economicsAvailable": false,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "tiered",
+			"promptTokens": 1,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.00001525,
+				"missCost": 0.00000225,
+				"continuationProbability": 1,
+				"expectedSavings": -0.000013,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "tiered",
+			"promptTokens": 1,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.00001525,
+				"missCost": 0.00000225,
+				"continuationProbability": 0.15,
+				"expectedSavings": -0.0000149125,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "tiered",
+			"promptTokens": 1024,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.000271,
+				"missCost": 0.002304,
+				"continuationProbability": 1,
+				"expectedSavings": 0.002033,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "tiered",
+			"promptTokens": 1024,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.000271,
+				"missCost": 0.002304,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.00007460000000000002,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "tiered",
+			"promptTokens": 8000,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.002015,
+				"missCost": 0.018000000000000002,
+				"continuationProbability": 1,
+				"expectedSavings": 0.015985000000000003,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "tiered",
+			"promptTokens": 8000,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.002015,
+				"missCost": 0.018000000000000002,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.0006850000000000003,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "tiered",
+			"promptTokens": 31337,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.007849249999999999,
+				"missCost": 0.07050825000000001,
+				"continuationProbability": 1,
+				"expectedSavings": 0.062659,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "tiered",
+			"promptTokens": 31337,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.007849249999999999,
+				"missCost": 0.07050825000000001,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.0027269875000000016,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "tiered",
+			"promptTokens": 120000,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.030015,
+				"missCost": 0.27,
+				"continuationProbability": 1,
+				"expectedSavings": 0.239985,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "tiered",
+			"promptTokens": 120000,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.030015,
+				"missCost": 0.27,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.010485000000000001,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "tiered",
+			"promptTokens": 272000,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.06801499999999999,
+				"missCost": 0.6120000000000001,
+				"continuationProbability": 1,
+				"expectedSavings": 0.5439850000000002,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "tiered",
+			"promptTokens": 272000,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.06801499999999999,
+				"missCost": 0.6120000000000001,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.023785000000000014,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "tiered",
+			"promptTokens": 272001,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.136023,
+				"missCost": 1.2240045000000002,
+				"continuationProbability": 1,
+				"expectedSavings": 1.0879815000000002,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "tiered",
+			"promptTokens": 272001,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.136023,
+				"missCost": 1.2240045000000002,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.047577675000000014,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "tiered",
+			"promptTokens": 950000,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.47502249999999996,
+				"missCost": 4.275,
+				"continuationProbability": 1,
+				"expectedSavings": 3.7999775000000002,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "tiered",
+			"promptTokens": 950000,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.47502249999999996,
+				"missCost": 4.275,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0.16622750000000003,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "free",
+			"promptTokens": 0,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0,
+				"missCost": 0,
+				"continuationProbability": 1,
+				"expectedSavings": 0,
+				"economicsAvailable": false,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "free",
+			"promptTokens": 0,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0,
+				"missCost": 0,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0,
+				"economicsAvailable": false,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "free",
+			"promptTokens": 1,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0,
+				"missCost": 0,
+				"continuationProbability": 1,
+				"expectedSavings": 0,
+				"economicsAvailable": false,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "free",
+			"promptTokens": 1,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0,
+				"missCost": 0,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0,
+				"economicsAvailable": false,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "free",
+			"promptTokens": 1024,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0,
+				"missCost": 0,
+				"continuationProbability": 1,
+				"expectedSavings": 0,
+				"economicsAvailable": false,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "free",
+			"promptTokens": 1024,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0,
+				"missCost": 0,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0,
+				"economicsAvailable": false,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "free",
+			"promptTokens": 8000,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0,
+				"missCost": 0,
+				"continuationProbability": 1,
+				"expectedSavings": 0,
+				"economicsAvailable": false,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "free",
+			"promptTokens": 8000,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0,
+				"missCost": 0,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0,
+				"economicsAvailable": false,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "free",
+			"promptTokens": 31337,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0,
+				"missCost": 0,
+				"continuationProbability": 1,
+				"expectedSavings": 0,
+				"economicsAvailable": false,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "free",
+			"promptTokens": 31337,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0,
+				"missCost": 0,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0,
+				"economicsAvailable": false,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "free",
+			"promptTokens": 120000,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0,
+				"missCost": 0,
+				"continuationProbability": 1,
+				"expectedSavings": 0,
+				"economicsAvailable": false,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "free",
+			"promptTokens": 120000,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0,
+				"missCost": 0,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0,
+				"economicsAvailable": false,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "free",
+			"promptTokens": 272000,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0,
+				"missCost": 0,
+				"continuationProbability": 1,
+				"expectedSavings": 0,
+				"economicsAvailable": false,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "free",
+			"promptTokens": 272000,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0,
+				"missCost": 0,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0,
+				"economicsAvailable": false,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "free",
+			"promptTokens": 272001,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0,
+				"missCost": 0,
+				"continuationProbability": 1,
+				"expectedSavings": 0,
+				"economicsAvailable": false,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "free",
+			"promptTokens": 272001,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0,
+				"missCost": 0,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0,
+				"economicsAvailable": false,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "free",
+			"promptTokens": 950000,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0,
+				"missCost": 0,
+				"continuationProbability": 1,
+				"expectedSavings": 0,
+				"economicsAvailable": false,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "free",
+			"promptTokens": 950000,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0,
+				"missCost": 0,
+				"continuationProbability": 0.15,
+				"expectedSavings": 0,
+				"economicsAvailable": false,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "google",
+			"promptTokens": 0,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.0000025,
+				"missCost": 0,
+				"continuationProbability": 1,
+				"expectedSavings": -0.0000025,
+				"economicsAvailable": false,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "google",
+			"promptTokens": 0,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.0000025,
+				"missCost": 0,
+				"continuationProbability": 0.15,
+				"expectedSavings": -0.0000025,
+				"economicsAvailable": false,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "google",
+			"promptTokens": 1,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.0000025750000000000003,
+				"missCost": 2.25e-7,
+				"continuationProbability": 1,
+				"expectedSavings": -0.0000023500000000000004,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "google",
+			"promptTokens": 1,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.0000025750000000000003,
+				"missCost": 2.25e-7,
+				"continuationProbability": 0.15,
+				"expectedSavings": -0.0000025412500000000004,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "google",
+			"promptTokens": 1024,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.0000793,
+				"missCost": 0.0002304,
+				"continuationProbability": 1,
+				"expectedSavings": 0.0001511,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "google",
+			"promptTokens": 1024,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.0000793,
+				"missCost": 0.0002304,
+				"continuationProbability": 0.15,
+				"expectedSavings": -0.00004474000000000001,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "google",
+			"promptTokens": 8000,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.0006025,
+				"missCost": 0.0018,
+				"continuationProbability": 1,
+				"expectedSavings": 0.0011975,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "google",
+			"promptTokens": 8000,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.0006025,
+				"missCost": 0.0018,
+				"continuationProbability": 0.15,
+				"expectedSavings": -0.00033249999999999995,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "google",
+			"promptTokens": 31337,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.0023527749999999997,
+				"missCost": 0.007050824999999999,
+				"continuationProbability": 1,
+				"expectedSavings": 0.00469805,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "google",
+			"promptTokens": 31337,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.0023527749999999997,
+				"missCost": 0.007050824999999999,
+				"continuationProbability": 0.15,
+				"expectedSavings": -0.00129515125,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "google",
+			"promptTokens": 120000,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.0090025,
+				"missCost": 0.026999999999999996,
+				"continuationProbability": 1,
+				"expectedSavings": 0.017997499999999996,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "google",
+			"promptTokens": 120000,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.0090025,
+				"missCost": 0.026999999999999996,
+				"continuationProbability": 0.15,
+				"expectedSavings": -0.004952500000000001,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "google",
+			"promptTokens": 272000,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.020402499999999997,
+				"missCost": 0.06119999999999999,
+				"continuationProbability": 1,
+				"expectedSavings": 0.040797499999999993,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "google",
+			"promptTokens": 272000,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.020402499999999997,
+				"missCost": 0.06119999999999999,
+				"continuationProbability": 0.15,
+				"expectedSavings": -0.011222499999999998,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "google",
+			"promptTokens": 272001,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.020402575,
+				"missCost": 0.061200225,
+				"continuationProbability": 1,
+				"expectedSavings": 0.04079765,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "google",
+			"promptTokens": 272001,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.020402575,
+				"missCost": 0.061200225,
+				"continuationProbability": 0.15,
+				"expectedSavings": -0.01122254125,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		},
+		{
+			"model": "google",
+			"promptTokens": 950000,
+			"phase": "streaming",
+			"decision": {
+				"phase": "streaming",
+				"warmCost": 0.0712525,
+				"missCost": 0.21375,
+				"continuationProbability": 1,
+				"expectedSavings": 0.1424975,
+				"economicsAvailable": true,
+				"action": "warm"
+			}
+		},
+		{
+			"model": "google",
+			"promptTokens": 950000,
+			"phase": "idle",
+			"decision": {
+				"phase": "idle",
+				"warmCost": 0.0712525,
+				"missCost": 0.21375,
+				"continuationProbability": 0.15,
+				"expectedSavings": -0.039189999999999996,
+				"economicsAvailable": true,
+				"action": "stop"
+			}
+		}
+	],
+	"delays": [
+		{
+			"ttlMs": 0,
+			"delayMs": null
+		},
+		{
+			"ttlMs": 1,
+			"delayMs": null
+		},
+		{
+			"ttlMs": 9999,
+			"delayMs": null
+		},
+		{
+			"ttlMs": 10000,
+			"delayMs": null
+		},
+		{
+			"ttlMs": 10001,
+			"delayMs": 1
+		},
+		{
+			"ttlMs": 10500,
+			"delayMs": 500
+		},
+		{
+			"ttlMs": 50000,
+			"delayMs": 40000
+		},
+		{
+			"ttlMs": 99999,
+			"delayMs": 89999
+		},
+		{
+			"ttlMs": 100000,
+			"delayMs": 90000
+		},
+		{
+			"ttlMs": 100001,
+			"delayMs": 90000
+		},
+		{
+			"ttlMs": 300000,
+			"delayMs": 270000
+		},
+		{
+			"ttlMs": 600500,
+			"delayMs": 540450
+		},
+		{
+			"ttlMs": 3600000,
+			"delayMs": 3240000
+		},
+		{
+			"ttlMs": 86400000,
+			"delayMs": 77760000
+		},
+		{
+			"ttlMs": 12345.6,
+			"delayMs": 2345
+		}
+	],
+	"ttls": [
+		{
+			"model": "sonnet",
+			"label": "none",
+			"cacheRetention": "",
+			"env": null,
+			"ttlMs": 300000
+		},
+		{
+			"model": "sonnet",
+			"label": "empty",
+			"cacheRetention": "",
+			"env": null,
+			"ttlMs": 300000
+		},
+		{
+			"model": "sonnet",
+			"label": "short",
+			"cacheRetention": "short",
+			"env": null,
+			"ttlMs": 300000
+		},
+		{
+			"model": "sonnet",
+			"label": "long",
+			"cacheRetention": "long",
+			"env": null,
+			"ttlMs": 3600000
+		},
+		{
+			"model": "sonnet",
+			"label": "off",
+			"cacheRetention": "none",
+			"env": null,
+			"ttlMs": null
+		},
+		{
+			"model": "sonnet",
+			"label": "env long",
+			"cacheRetention": "",
+			"env": {
+				"PI_CACHE_RETENTION": "long"
+			},
+			"ttlMs": 3600000
+		},
+		{
+			"model": "sonnet",
+			"label": "env other",
+			"cacheRetention": "",
+			"env": {
+				"PI_CACHE_RETENTION": "short"
+			},
+			"ttlMs": 300000
+		},
+		{
+			"model": "sonnet",
+			"label": "explicit short over env long",
+			"cacheRetention": "short",
+			"env": {
+				"PI_CACHE_RETENTION": "long"
+			},
+			"ttlMs": 300000
+		},
+		{
+			"model": "opus",
+			"label": "none",
+			"cacheRetention": "",
+			"env": null,
+			"ttlMs": 300000
+		},
+		{
+			"model": "opus",
+			"label": "empty",
+			"cacheRetention": "",
+			"env": null,
+			"ttlMs": 300000
+		},
+		{
+			"model": "opus",
+			"label": "short",
+			"cacheRetention": "short",
+			"env": null,
+			"ttlMs": 300000
+		},
+		{
+			"model": "opus",
+			"label": "long",
+			"cacheRetention": "long",
+			"env": null,
+			"ttlMs": null
+		},
+		{
+			"model": "opus",
+			"label": "off",
+			"cacheRetention": "none",
+			"env": null,
+			"ttlMs": null
+		},
+		{
+			"model": "opus",
+			"label": "env long",
+			"cacheRetention": "",
+			"env": {
+				"PI_CACHE_RETENTION": "long"
+			},
+			"ttlMs": null
+		},
+		{
+			"model": "opus",
+			"label": "env other",
+			"cacheRetention": "",
+			"env": {
+				"PI_CACHE_RETENTION": "short"
+			},
+			"ttlMs": 300000
+		},
+		{
+			"model": "opus",
+			"label": "explicit short over env long",
+			"cacheRetention": "short",
+			"env": {
+				"PI_CACHE_RETENTION": "long"
+			},
+			"ttlMs": 300000
+		},
+		{
+			"model": "adaptive",
+			"label": "none",
+			"cacheRetention": "",
+			"env": null,
+			"ttlMs": 300000
+		},
+		{
+			"model": "adaptive",
+			"label": "empty",
+			"cacheRetention": "",
+			"env": null,
+			"ttlMs": 300000
+		},
+		{
+			"model": "adaptive",
+			"label": "short",
+			"cacheRetention": "short",
+			"env": null,
+			"ttlMs": 300000
+		},
+		{
+			"model": "adaptive",
+			"label": "long",
+			"cacheRetention": "long",
+			"env": null,
+			"ttlMs": 3600000
+		},
+		{
+			"model": "adaptive",
+			"label": "off",
+			"cacheRetention": "none",
+			"env": null,
+			"ttlMs": null
+		},
+		{
+			"model": "adaptive",
+			"label": "env long",
+			"cacheRetention": "",
+			"env": {
+				"PI_CACHE_RETENTION": "long"
+			},
+			"ttlMs": 3600000
+		},
+		{
+			"model": "adaptive",
+			"label": "env other",
+			"cacheRetention": "",
+			"env": {
+				"PI_CACHE_RETENTION": "short"
+			},
+			"ttlMs": 300000
+		},
+		{
+			"model": "adaptive",
+			"label": "explicit short over env long",
+			"cacheRetention": "short",
+			"env": {
+				"PI_CACHE_RETENTION": "long"
+			},
+			"ttlMs": 300000
+		},
+		{
+			"model": "adaptiveOff",
+			"label": "none",
+			"cacheRetention": "",
+			"env": null,
+			"ttlMs": null
+		},
+		{
+			"model": "adaptiveOff",
+			"label": "empty",
+			"cacheRetention": "",
+			"env": null,
+			"ttlMs": null
+		},
+		{
+			"model": "adaptiveOff",
+			"label": "short",
+			"cacheRetention": "short",
+			"env": null,
+			"ttlMs": null
+		},
+		{
+			"model": "adaptiveOff",
+			"label": "long",
+			"cacheRetention": "long",
+			"env": null,
+			"ttlMs": null
+		},
+		{
+			"model": "adaptiveOff",
+			"label": "off",
+			"cacheRetention": "none",
+			"env": null,
+			"ttlMs": null
+		},
+		{
+			"model": "adaptiveOff",
+			"label": "env long",
+			"cacheRetention": "",
+			"env": {
+				"PI_CACHE_RETENTION": "long"
+			},
+			"ttlMs": null
+		},
+		{
+			"model": "adaptiveOff",
+			"label": "env other",
+			"cacheRetention": "",
+			"env": {
+				"PI_CACHE_RETENTION": "short"
+			},
+			"ttlMs": null
+		},
+		{
+			"model": "adaptiveOff",
+			"label": "explicit short over env long",
+			"cacheRetention": "short",
+			"env": {
+				"PI_CACHE_RETENTION": "long"
+			},
+			"ttlMs": null
+		},
+		{
+			"model": "noWrite",
+			"label": "none",
+			"cacheRetention": "",
+			"env": null,
+			"ttlMs": 600500
+		},
+		{
+			"model": "noWrite",
+			"label": "empty",
+			"cacheRetention": "",
+			"env": null,
+			"ttlMs": 600500
+		},
+		{
+			"model": "noWrite",
+			"label": "short",
+			"cacheRetention": "short",
+			"env": null,
+			"ttlMs": 600500
+		},
+		{
+			"model": "noWrite",
+			"label": "long",
+			"cacheRetention": "long",
+			"env": null,
+			"ttlMs": null
+		},
+		{
+			"model": "noWrite",
+			"label": "off",
+			"cacheRetention": "none",
+			"env": null,
+			"ttlMs": null
+		},
+		{
+			"model": "noWrite",
+			"label": "env long",
+			"cacheRetention": "",
+			"env": {
+				"PI_CACHE_RETENTION": "long"
+			},
+			"ttlMs": null
+		},
+		{
+			"model": "noWrite",
+			"label": "env other",
+			"cacheRetention": "",
+			"env": {
+				"PI_CACHE_RETENTION": "short"
+			},
+			"ttlMs": 600500
+		},
+		{
+			"model": "noWrite",
+			"label": "explicit short over env long",
+			"cacheRetention": "short",
+			"env": {
+				"PI_CACHE_RETENTION": "long"
+			},
+			"ttlMs": 600500
+		},
+		{
+			"model": "tiered",
+			"label": "none",
+			"cacheRetention": "",
+			"env": null,
+			"ttlMs": null
+		},
+		{
+			"model": "tiered",
+			"label": "empty",
+			"cacheRetention": "",
+			"env": null,
+			"ttlMs": null
+		},
+		{
+			"model": "tiered",
+			"label": "short",
+			"cacheRetention": "short",
+			"env": null,
+			"ttlMs": null
+		},
+		{
+			"model": "tiered",
+			"label": "long",
+			"cacheRetention": "long",
+			"env": null,
+			"ttlMs": 86400000
+		},
+		{
+			"model": "tiered",
+			"label": "off",
+			"cacheRetention": "none",
+			"env": null,
+			"ttlMs": null
+		},
+		{
+			"model": "tiered",
+			"label": "env long",
+			"cacheRetention": "",
+			"env": {
+				"PI_CACHE_RETENTION": "long"
+			},
+			"ttlMs": 86400000
+		},
+		{
+			"model": "tiered",
+			"label": "env other",
+			"cacheRetention": "",
+			"env": {
+				"PI_CACHE_RETENTION": "short"
+			},
+			"ttlMs": null
+		},
+		{
+			"model": "tiered",
+			"label": "explicit short over env long",
+			"cacheRetention": "short",
+			"env": {
+				"PI_CACHE_RETENTION": "long"
+			},
+			"ttlMs": null
+		},
+		{
+			"model": "free",
+			"label": "none",
+			"cacheRetention": "",
+			"env": null,
+			"ttlMs": null
+		},
+		{
+			"model": "free",
+			"label": "empty",
+			"cacheRetention": "",
+			"env": null,
+			"ttlMs": null
+		},
+		{
+			"model": "free",
+			"label": "short",
+			"cacheRetention": "short",
+			"env": null,
+			"ttlMs": null
+		},
+		{
+			"model": "free",
+			"label": "long",
+			"cacheRetention": "long",
+			"env": null,
+			"ttlMs": null
+		},
+		{
+			"model": "free",
+			"label": "off",
+			"cacheRetention": "none",
+			"env": null,
+			"ttlMs": null
+		},
+		{
+			"model": "free",
+			"label": "env long",
+			"cacheRetention": "",
+			"env": {
+				"PI_CACHE_RETENTION": "long"
+			},
+			"ttlMs": null
+		},
+		{
+			"model": "free",
+			"label": "env other",
+			"cacheRetention": "",
+			"env": {
+				"PI_CACHE_RETENTION": "short"
+			},
+			"ttlMs": null
+		},
+		{
+			"model": "free",
+			"label": "explicit short over env long",
+			"cacheRetention": "short",
+			"env": {
+				"PI_CACHE_RETENTION": "long"
+			},
+			"ttlMs": null
+		},
+		{
+			"model": "google",
+			"label": "none",
+			"cacheRetention": "",
+			"env": null,
+			"ttlMs": 10000
+		},
+		{
+			"model": "google",
+			"label": "empty",
+			"cacheRetention": "",
+			"env": null,
+			"ttlMs": 10000
+		},
+		{
+			"model": "google",
+			"label": "short",
+			"cacheRetention": "short",
+			"env": null,
+			"ttlMs": 10000
+		},
+		{
+			"model": "google",
+			"label": "long",
+			"cacheRetention": "long",
+			"env": null,
+			"ttlMs": null
+		},
+		{
+			"model": "google",
+			"label": "off",
+			"cacheRetention": "none",
+			"env": null,
+			"ttlMs": null
+		},
+		{
+			"model": "google",
+			"label": "env long",
+			"cacheRetention": "",
+			"env": {
+				"PI_CACHE_RETENTION": "long"
+			},
+			"ttlMs": null
+		},
+		{
+			"model": "google",
+			"label": "env other",
+			"cacheRetention": "",
+			"env": {
+				"PI_CACHE_RETENTION": "short"
+			},
+			"ttlMs": 10000
+		},
+		{
+			"model": "google",
+			"label": "explicit short over env long",
+			"cacheRetention": "short",
+			"env": {
+				"PI_CACHE_RETENTION": "long"
+			},
+			"ttlMs": 10000
+		}
+	],
+	"replayable": [
+		{
+			"model": "sonnet",
+			"reasoning": "",
+			"replayable": true
+		},
+		{
+			"model": "sonnet",
+			"reasoning": "minimal",
+			"replayable": false
+		},
+		{
+			"model": "sonnet",
+			"reasoning": "high",
+			"replayable": false
+		},
+		{
+			"model": "sonnet",
+			"reasoning": "xhigh",
+			"replayable": false
+		},
+		{
+			"model": "sonnet",
+			"reasoning": null,
+			"replayable": true
+		},
+		{
+			"model": "opus",
+			"reasoning": "",
+			"replayable": true
+		},
+		{
+			"model": "opus",
+			"reasoning": "minimal",
+			"replayable": false
+		},
+		{
+			"model": "opus",
+			"reasoning": "high",
+			"replayable": false
+		},
+		{
+			"model": "opus",
+			"reasoning": "xhigh",
+			"replayable": false
+		},
+		{
+			"model": "opus",
+			"reasoning": null,
+			"replayable": true
+		},
+		{
+			"model": "adaptive",
+			"reasoning": "",
+			"replayable": true
+		},
+		{
+			"model": "adaptive",
+			"reasoning": "minimal",
+			"replayable": true
+		},
+		{
+			"model": "adaptive",
+			"reasoning": "high",
+			"replayable": true
+		},
+		{
+			"model": "adaptive",
+			"reasoning": "xhigh",
+			"replayable": true
+		},
+		{
+			"model": "adaptive",
+			"reasoning": null,
+			"replayable": true
+		},
+		{
+			"model": "adaptiveOff",
+			"reasoning": "",
+			"replayable": true
+		},
+		{
+			"model": "adaptiveOff",
+			"reasoning": "minimal",
+			"replayable": false
+		},
+		{
+			"model": "adaptiveOff",
+			"reasoning": "high",
+			"replayable": false
+		},
+		{
+			"model": "adaptiveOff",
+			"reasoning": "xhigh",
+			"replayable": false
+		},
+		{
+			"model": "adaptiveOff",
+			"reasoning": null,
+			"replayable": true
+		},
+		{
+			"model": "noWrite",
+			"reasoning": "",
+			"replayable": true
+		},
+		{
+			"model": "noWrite",
+			"reasoning": "minimal",
+			"replayable": true
+		},
+		{
+			"model": "noWrite",
+			"reasoning": "high",
+			"replayable": true
+		},
+		{
+			"model": "noWrite",
+			"reasoning": "xhigh",
+			"replayable": true
+		},
+		{
+			"model": "noWrite",
+			"reasoning": null,
+			"replayable": true
+		},
+		{
+			"model": "tiered",
+			"reasoning": "",
+			"replayable": true
+		},
+		{
+			"model": "tiered",
+			"reasoning": "minimal",
+			"replayable": true
+		},
+		{
+			"model": "tiered",
+			"reasoning": "high",
+			"replayable": true
+		},
+		{
+			"model": "tiered",
+			"reasoning": "xhigh",
+			"replayable": true
+		},
+		{
+			"model": "tiered",
+			"reasoning": null,
+			"replayable": true
+		},
+		{
+			"model": "free",
+			"reasoning": "",
+			"replayable": true
+		},
+		{
+			"model": "free",
+			"reasoning": "minimal",
+			"replayable": false
+		},
+		{
+			"model": "free",
+			"reasoning": "high",
+			"replayable": false
+		},
+		{
+			"model": "free",
+			"reasoning": "xhigh",
+			"replayable": false
+		},
+		{
+			"model": "free",
+			"reasoning": null,
+			"replayable": true
+		},
+		{
+			"model": "google",
+			"reasoning": "",
+			"replayable": true
+		},
+		{
+			"model": "google",
+			"reasoning": "minimal",
+			"replayable": true
+		},
+		{
+			"model": "google",
+			"reasoning": "high",
+			"replayable": true
+		},
+		{
+			"model": "google",
+			"reasoning": "xhigh",
+			"replayable": true
+		},
+		{
+			"model": "google",
+			"reasoning": null,
+			"replayable": true
+		}
+	],
+	"requestOptions": {
+		"maxTokens": 1,
+		"maxRetries": 0,
+		"disableContinuation": true,
+		"cacheRetention": "long",
+		"sessionId": "s",
+		"reasoning": "high",
+		"signalIsCallers": true
+	}
+}
