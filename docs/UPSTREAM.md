@@ -3023,6 +3023,15 @@ occurrences" in pi and 9 here, and `"a\t"` with `{"\t" → ""}` succeeds in pi
 since `08c8ef5`). Found by the `d448c51e2` parity review: 1,500 generated
 mixed-ending edits, written bytes identical wherever both succeed.
 
+**K51 — an empty session id is not remembered for strict tool limits.** pi's
+`markStrictToolLimitsExceeded` keys any defined `sessionId`, `""` included, so
+a second `sessionId: ""` request after a strict-limit rejection sends its
+prefer tools non-strict from the start; the port treats `SessionID == ""` as
+no session (`ai/providers/strict_tool_limits.go`), so it tries strict again and
+pays one more rejection. Same root as D113(1) and K48: a Go string cannot tell
+`""` from unset, and pi's hosts never pass `""`. Found by the `45344bd3a`
+parity review.
+
 ## Conventions
 
 Standing procedure with no other home. Rules whose authority is a skill file
