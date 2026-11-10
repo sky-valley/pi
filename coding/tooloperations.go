@@ -32,11 +32,12 @@ import (
 // Every tool keeps its existing env-free constructor, which uses the local
 // defaults, so none of this changes behavior until a host injects something.
 //
-// ONE RECORDED DIVERGENCE, in GrepOperations.ReadFile. pi has no such member:
-// it matches with the local ripgrep, which also sends the context lines, so
-// pi's GrepOperations is the directory check alone and a remote search
-// overrides the tool's execute() (upstream 8da141c2a removed readFile, which
-// only fetched context lines). This port has no ripgrep dependency — it walks
+// ONE RECORDED DIVERGENCE, in GrepOperations.ReadFile. pi never calls its
+// member of that name: it matches with the local ripgrep, which also sends the
+// context lines, so pi's GrepOperations is the directory check plus an optional
+// readFile kept only so old integrations compile (upstream 8da141c2a removed
+// it, 244e5f5db restored it deprecated and ignored), and a remote search
+// overrides the tool's execute(). This port has no ripgrep dependency — it walks
 // and matches in Go — so it needs a read, and ReadFile is it: the one read of
 // each file, from which matches and context both come. A custom
 // implementation therefore decides what grep can see at all. That is a
@@ -333,10 +334,13 @@ type GrepOperations struct {
 	// IsDirectory reports whether a path is a directory, erroring if it does
 	// not exist.
 	IsDirectory func(ctx context.Context, absolutePath string) (bool, error)
-	// ReadFile reads a file's contents. NOTE the divergence recorded at the top
-	// of this file: pi has no such member, because it searches with ripgrep;
-	// the port matches in Go and reads each file once, here. Whatever this
-	// returns is what grep matches and prints, context lines included.
+	// ReadFile reads a file's contents. Optional: nil reads the local
+	// filesystem, as pi's ripgrep does for operations without its readFile
+	// (upstream 244e5f5db). NOTE the divergence recorded at the top of this
+	// file: pi keeps readFile only as a deprecated, ignored member, because it
+	// searches with ripgrep; the port matches in Go and reads each file once,
+	// here. Whatever this returns is what grep matches and prints, context
+	// lines included.
 	ReadFile func(ctx context.Context, absolutePath string) ([]byte, error)
 }
 
@@ -358,7 +362,11 @@ func resolveGrepOperations(ops *GrepOperations) GrepOperations {
 	if ops == nil {
 		return DefaultGrepOperations()
 	}
-	return *ops
+	resolved := *ops
+	if resolved.ReadFile == nil {
+		resolved.ReadFile = DefaultGrepOperations().ReadFile
+	}
+	return resolved
 }
 
 // EnvGrepOperations backs the grep tool with an ExecutionEnv.

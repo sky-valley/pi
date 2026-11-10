@@ -284,6 +284,28 @@ func TestGrepToolUsesInjectedOperations(t *testing.T) {
 	}
 }
 
+// TestGrepOperationsWithoutReadFile ports grep-operations.test.ts "allows
+// custom operations without a readFile hook" (upstream 244e5f5db): a custom
+// GrepOperations with no ReadFile searches the local files, as pi's ripgrep
+// does. (Its companion, "accepts a deprecated readFile hook without calling
+// it", is the divergence recorded on GrepOperations: the port's ReadFile is
+// its only read.)
+func TestGrepOperationsWithoutReadFile(t *testing.T) {
+	cwd := t.TempDir()
+	if err := os.WriteFile(filepath.Join(cwd, "file.txt"), []byte("before\nneedle\nafter\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	ops := GrepOperations{IsDirectory: func(context.Context, string) (bool, error) { return true, nil }}
+	res, err := grepToolOps(cwd, &ops).Execute(context.Background(), "grep",
+		map[string]any{"pattern": "needle", "context": 1}, nil)
+	if err != nil {
+		t.Fatalf("execute: %v", err)
+	}
+	if got, want := resultText(res), "file.txt-1- before\nfile.txt:2: needle\nfile.txt-3- after"; got != want {
+		t.Fatalf("got %q, want pi's %q", got, want)
+	}
+}
+
 // LocalBashOperations must still be the real thing: this runs a command.
 func TestLocalBashOperationsRunsAndReportsExit(t *testing.T) {
 	if _, err := GetShellConfig(""); err != nil {
