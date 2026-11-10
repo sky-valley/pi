@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/fsnotify/fsnotify v1.10.1
-	github.com/sky-valley/pi v1.5.29
+	github.com/sky-valley/pi v1.5.30
 	golang.org/x/sys v0.48.0
 )
 
