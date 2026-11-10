@@ -140,9 +140,12 @@ func patternHasUpper(pattern string) bool {
 //   - a pattern with "/" puts fd in --full-path mode: it matches against the
 //     absolute candidate path, and fd prepends "**/" unless the pattern starts
 //     with "/", "**/", or is exactly "**";
-//   - on Windows fd sees native separators in the full path, so pi rewrites
-//     the pattern's "/" to the class [/\\] (pi d4eaf052b); this port instead
-//     normalizes the candidate with filepath.ToSlash — same accept set;
+//   - on Windows `\` in the pattern is a path separator: pi normalizes it to
+//     "/" (upstream 463b8f893, #9262) and so does filepath.ToSlash here (a
+//     no-op on POSIX, where `\` stays an escape); candidates are normalized
+//     the same way. pi then matches Windows path patterns with minimatch,
+//     which also expands {1..2}, accepts [[:alpha:]] and lets a trailing "/"
+//     match directories; the port keeps fd's glob there (decided, D114);
 //   - smart-case: an all-lowercase pattern matches case-insensitively;
 //   - {a,b} alternation and [!x] classes are supported (globset).
 func matchFdGlob(pattern, rel, abs string) bool {

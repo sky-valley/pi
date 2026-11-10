@@ -1825,8 +1825,8 @@ func findToolOps(cwd string, custom *FindOperations) agent.AgentTool {
 			// pi branches on the CUSTOM operations' glob, not the resolved one.
 			if custom != nil && custom.Glob != nil {
 				// pi checks its signal before and after the glob (find.ts at
-				// 676af1d77); the fd branch below has no such checks in the
-				// port.
+				// 676af1d77); the fd branch below checks it only before the
+				// walk (a07f25129; K43).
 				if ctx.Err() != nil {
 					return agent.AgentToolResult{}, errFindAborted
 				}
