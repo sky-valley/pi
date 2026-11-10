@@ -1177,8 +1177,8 @@ func (m *modelsImpl) resolveNetworkRefresh(
 	stored *Credential,
 ) (credential *Credential, configured bool, err error) {
 	if a, ok := p.(RefreshModelsAuther); ok && a.RefreshModelsAuth() == RefreshModelsAuthConfigured {
-		check, err := m.checkProviderAuth(ctx, p, stored)
-		return nil, check != nil, err
+		check, checkErr := m.checkProviderAuth(ctx, p, stored)
+		return nil, check != nil, checkErr
 	}
 	credential, err = m.resolveRefreshCredential(ctx, p, stored)
 	return credential, credential != nil, err
