@@ -1858,6 +1858,11 @@ func findToolOps(cwd string, custom *FindOperations) agent.AgentTool {
 			// default git-aware traversal stops parent .gitignore rules at nested
 			// repository boundaries (upstream 756a4e8f), so request that here.
 			ig := newIgnoreStack(root, false, true)
+			// pi does not start fd once its signal aborted during the .git
+			// lookup above (upstream a07f25129); here the walk is fd.
+			if ctx.Err() != nil {
+				return agent.AgentToolResult{}, errFindAborted
+			}
 			var results []string
 			err := filepath.WalkDir(root, func(p string, d os.DirEntry, walkErr error) error {
 				if walkErr != nil {

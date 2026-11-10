@@ -1,6 +1,7 @@
 package coding
 
 import (
+	"context"
 	"runtime"
 	"slices"
 	"strings"
@@ -125,3 +126,15 @@ func TestFindPathGlobBackslash(t *testing.T) {
 	}
 }
 
+// TestFindDoesNotWalkAfterAbort ports find-abort-before-spawn.test.ts
+// (upstream a07f25129): once the call is aborted before fd would start, find
+// rejects with "Operation aborted" and searches nothing.
+func TestFindDoesNotWalkAfterAbort(t *testing.T) {
+	root := pathGlobTree(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	res, err := findTool(root).Execute(ctx, "call-1", map[string]any{"pattern": "*.ts"}, nil)
+	if err == nil || err.Error() != "Operation aborted" {
+		t.Fatalf("find after abort = %q, %v; want pi's \"Operation aborted\"", resultText(res), err)
+	}
+}
