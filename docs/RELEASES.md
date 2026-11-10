@@ -27,6 +27,7 @@ captured from. The commit-by-commit triage/port ledger lives in
 
 | Version | Date | Commit | Upstream pin | npm catalog | Headline |
 |---|---|---|---|---|---|
+| [`v1.5.30`](#v1530) | 2026-11-10 | `205509e` | `a05e3a077` | pi-ai 1.5.1 | Release v1.5.1 crossed — catalog 935,772→967,098 B, 1592→1639 models, 42→43 providers (+66/−19, 103 changed; Claude Fable 5.2, Qwen Token Plan Individual CN, Azure long-context tiers), draining the catalog-only queue 8→0; **the read tool streams files** instead of loading them whole and **grep takes context the way ripgrep does**; **prompt cache warming policy** (`ai.EvaluateCacheWarming`) and **Anthropic strict-tool limits remembered per session**; Anthropic message threads; **Windows PowerShell 5.1 reports native exit codes**; streams cut short after the reply began are retried; connection errors keep their cause; model refresh skips OAuth for catalogs served elsewhere (`ai.RefreshModelsAuther`); pi-schema bigint/undefined; Claude Code 2.1.322; env daemon reports pi-env 1.5.1 (`env/v1.5.30`); difftest 71/71 PASS |
 | [`v1.5.29`](#v1529) | 2026-11-03 | `0d0b33f` | `90b42bca6` | pi-ai 1.5.0 | Release v1.5.0 crossed — catalog 931,909→935,772 B, 1599→1592 models across 42 providers (+50/−57, 460 changed), draining the catalog-only queue 7→0 (gpt-6.1-terra, Kimi K3.1 Pro, OpenCode protocol-path URLs, OpenRouter's `~anthropic` aliases on Anthropic Messages); **Anthropic tools keep their root `$defs`/`definitions`** so `$ref`s resolve (common in MCP tool schemas); **max tokens leave a 15% margin for OpenRouter's input overcount** (#10497); **pi-env runs long-lived programs over plain pipes** (`env.OpenProcess`, the daemon's `process` operation; for stdio protocols such as MCP); env daemon reports pi-env 1.5.0 (`env/v1.5.29`); difftest 66/66 PASS |
 | [`v1.4.28`](#v1428) | 2026-10-23 | `10b2596` | `9ffd27cfa` | pi-ai 1.4.0 | Release v1.4.0 crossed — catalog 939,772→931,909 B, 1614→1599 models across 42 providers (+43/−58, 158 changed), draining the catalog-only queue 4→0; **client identity follows pi into pi-ai**: `ai.ClientIdentity` chooses the User-Agent (`pi/<version> (<platform>; go/<version>; <arch>)` by default) and the provider attribution, which a bare `ai` request no longer sends, the agent loop sends for pi and a coding session sends while install telemetry is on; **OpenRouter usage reports the billed cost** (`totalFromProvider`); status codes inside request ids no longer retry; Anthropic system updates held past dropped replies and a fixed `low` top-level effort; pi-messages `responseModel`; macOS stops a shell group before killing it; env daemon reports pi-env 1.4.0 (`env/v1.4.28`); difftest 66/66 PASS, all against the published build |
 | [`v1.3.27`](#v1327) | 2026-10-19 | `eadfcb7` | `d2e7d8b7c` | pi-ai 1.3.0 | Eight releases crossed (v1.0.0 → v1.3.0), regenerated once from 1.3.0 — catalog 867,163→939,772 B, 1529→1614 models across 42 providers (+140/−55, 366 changed), `azure-openai-responses` renamed `azure`, draining the catalog-only queue 20→1; **pi-env ported whole, daemon included**, as the new `env` submodule (first tag `env/v1.3.27`): remote execution over SSH with Go daemons for eight platforms embedded; **following upstream's deletions** of the protocol, client and server packages, chord's service runtime and the harness; Azure Chat Completions deployments, Gemini 4 `thinkingLevel`, Anthropic inline mid-conversation tools (SDK 0.129.0) and strict-tool fallback; `pi.ai.request` telemetry; response and tool durations; `*` patterns and `+name/-name` in `ToolNames`; Cloudflare auth and endpoints resolved as pi resolves them; `telemetry/telemetrytest`, pi's adapter conformance suite; **a Cloudflare model reaches the account the environment names from an SDK session too** (the README's pattern sent `{CLOUDFLARE_ACCOUNT_ID}` literally); **Breaking:** `coding.NewSession` returns an error, `coding.DefaultCompactionSettings` is a function, `SessionOptions.APIKey` is removed and `SetModel` takes no key, as in pi — a key goes on the session's `Models` (`coding.RuntimeCredentials`); `ai.BuiltinModels` takes `*CreateModelsOptions`, `ProviderRequestOptions.TelemetryContext` is `Telemetry`, telemetry adapters implement `Metrics()`/`Propagation()`/`AddLink`, and the `protocol`, `client` and `server` packages are removed; difftest 66/66 PASS, all against the published build |
@@ -60,6 +61,52 @@ captured from. The commit-by-commit triage/port ledger lives in
 | [`v0.1.0`](#v010) | 2026-06-10 | `1210b0a` | — | — | Initial tagged baseline |
 
 ## Notes
+
+### v1.5.30
+Upstream sync `90b42bca6 → a05e3a077` (pi 1.5.1), over six cycles (pins
+`ee962fb4d`, `7a52c2108`, `4ffe32c6f`, `085c84e98`, `e49b14950`,
+`ea1cfcc4c`, then `a05e3a077`). The last cycle: 56 changes on the union range,
+the same first-parent, 13 port, 43 n/a, 0 decide. **Release v1.5.1
+crossed**, confirmed by an explicit tag fetch and by `packages/ai/package.json`.
+The env submodule tags alongside: `env/v1.5.30` requires root `v1.5.30`.
+
+Catalog: regenerated by executing `JSON.stringify(MODELS)` against the 1.5.1
+build, after first reproducing the outgoing 1.5.0 catalog byte for byte.
+1,592 → **1,639 models** (+66, −19, 103 changed in place), 42 → **43
+providers** (`qwen-token-plan-individual-cn`), 935,772 → 967,098 B. It drains
+the catalog-only queue **8 → 0**: Claude Fable 5.2 (falling back to Opus 5),
+Azure's OpenAI models keeping OpenAI's long-context price tiers, Azure
+Foundry's GPT-6 models at 1,050,000 tokens, Claude Sonnet 5 without
+temperature, OpenCode's Claude models with per-message effort, and the new
+Qwen provider's models.
+
+Since v1.5.29:
+- **The read tool streams files** instead of loading them whole (upstream
+  `3a7bb6f48`), and **grep takes its context lines the way ripgrep does**
+  (`8da141c2a`), matching globs relative to its path (`6bf2ab9bb`).
+- **Prompt cache warming policy** in pi-ai (`c9552c7d8`):
+  `ai.EvaluateCacheWarming`, `CacheWarmingDelayMs`, `PromptCacheTTLMs`.
+- **Anthropic remembers strict-tool limit rejections per session**
+  (`45344bd3a`) and keeps message threads (`a758f3ae4`).
+- **Windows PowerShell 5.1 reports native exit codes** (`c9dd2c530`, #8842):
+  `git push 2>&1 | Select-Object -Last 3` no longer fails when git succeeded.
+- Streams cut short after the reply had begun are retried (`566344046`);
+  connection errors keep their underlying cause (`4c992154d`); bash reports
+  the shell's own exit code when it times out after the shell exited
+  (`06aa6563e`); find stops before walking once aborted (`a07f25129`).
+- Model refresh can skip OAuth for catalogs served from elsewhere
+  (`6382d8706`, `ai.RefreshModelsAuther`); OpenAI Responses sends
+  `session-id`; `compat.promptCacheKeyMode`; the default Anthropic model is
+  Claude Opus 5.5; pi-schema's TypeBox bigint and undefined; telemetry spans
+  at microsecond resolution; pi-env's Stop and timeouts end remote calls at
+  once while the host is down.
+- `ai.PiAIVersion` and the env daemon's version are 1.5.1; Anthropic OAuth
+  reports Claude Code 2.1.322. Every src capture earlier cycles asked to
+  re-verify is confirmed by the 1.5.1 build.
+
+Gate: race tests green on root and env (environment-only failures as before),
+windows and linux/386 builds; difftest re-pinned to npm 1.5.1 / src
+`a05e3a077`, 71 PASS / 0 KNOWN / 0 FAIL.
 
 ### v1.5.29
 Upstream sync `d0fe21308 → 90b42bca6` (pi 1.5.0). 68 changes on the union
