@@ -63,7 +63,7 @@ captured from. The commit-by-commit triage/port ledger lives in
 ## Notes
 
 ### v1.5.30
-Upstream sync `90b42bca6 → a05e3a077` (pi 1.5.1), over six cycles (pins
+Upstream sync `90b42bca6 → a05e3a077` (pi 1.5.1), over seven cycles (pins
 `ee962fb4d`, `7a52c2108`, `4ffe32c6f`, `085c84e98`, `e49b14950`,
 `ea1cfcc4c`, then `a05e3a077`). The last cycle: 56 changes on the union range,
 the same first-parent, 13 port, 43 n/a, 0 decide. **Release v1.5.1
