@@ -35,7 +35,7 @@ const (
 	// mid-conversation-tool-changes-2026-07-01, whose additions only
 	// referenced tools by name).
 	inlineToolsBeta         = "inline-tools-2026-09-15"
-	claudeCodeVersion       = "2.1.280"
+	claudeCodeVersion       = "2.1.322"
 	anthropicDefaultBaseURL = "https://api.anthropic.com"
 )
 

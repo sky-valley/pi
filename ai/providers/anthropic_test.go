@@ -338,8 +338,8 @@ func TestAnthropicOAuthHeadersAndStealth(t *testing.T) {
 
 // The Claude Code identity version is a byte-golden wire value, not an internal
 // detail: it must equal upstream's `claudeCodeVersion` literal
-// (packages/ai/src/api/anthropic-messages.ts, "2.1.280" as of upstream
-// 3a624b82d). Every other assertion in the port spells this header through the
+// (packages/ai/src/api/anthropic-messages.ts, "2.1.322" as of upstream
+// a05e3a077). Every other assertion in the port spells this header through the
 // constant, so this is the one place that pins the literal — without it a stale
 // constant would keep the whole suite green while every OAuth request went out
 // impersonating a retired Claude Code build.
@@ -347,7 +347,7 @@ func TestAnthropicClaudeCodeUserAgentPinnedToUpstream(t *testing.T) {
 	h := captureAnthropicHeaders(t, anthropicUAModel(), anthropicUAOptions(ai.ProviderRequestOptions{
 		APIKey: "sk-ant-oat-secret",
 	}))
-	wantUserAgent(t, h, "claude-cli/2.1.280")
+	wantUserAgent(t, h, "claude-cli/2.1.322")
 }
 
 // --- Job A.2: cache_control 1h beta on long retention ---

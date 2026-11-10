@@ -1,5 +1,5 @@
 {
-	"sha": "dd30101cf",
+	"sha": "a05e3a077",
 	"runtime": "node/v22.23.4",
 	"piAttribution": {
 		"name": "pi",
@@ -3420,7 +3420,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "claude-cli/2.1.280",
+				"user-agent": "claude-cli/2.1.322",
 				"x-app": "cli"
 			}
 		},
@@ -3440,7 +3440,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "claude-cli/2.1.280",
+				"user-agent": "claude-cli/2.1.322",
 				"x-app": "cli"
 			}
 		},
@@ -3612,7 +3612,7 @@
 				"ANTHROPIC_CUSTOM_HEADERS": "user-agent: env"
 			},
 			"sent": {
-				"user-agent": "claude-cli/2.1.280",
+				"user-agent": "claude-cli/2.1.322",
 				"x-app": "cli"
 			}
 		},
@@ -3635,7 +3635,7 @@
 				"ANTHROPIC_CUSTOM_HEADERS": "User-Agent: env"
 			},
 			"sent": {
-				"user-agent": "claude-cli/2.1.280",
+				"user-agent": "claude-cli/2.1.322",
 				"x-app": "cli"
 			}
 		},
