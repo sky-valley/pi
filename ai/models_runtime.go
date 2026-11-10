@@ -134,6 +134,28 @@ type Provider interface {
 	StreamSimple(ctx context.Context, model *Model, req TranscriptContext, opts *SimpleStreamOptions) *AssistantMessageEventStream
 }
 
+// RefreshModelsAuth is what a provider's network refresh phase needs (pi
+// Provider.refreshModelsAuth, upstream 6382d8706).
+type RefreshModelsAuth string
+
+const (
+	// RefreshModelsAuthCredential, the default, hands the network phase the
+	// effective credential, so an expired OAuth token is refreshed first.
+	RefreshModelsAuthCredential RefreshModelsAuth = "credential"
+	// RefreshModelsAuthConfigured is for catalogs served by a source other
+	// than the provider, such as pi.dev: the network phase still runs only
+	// when the provider is configured, but OAuth is never refreshed for it
+	// and RefreshModelsContext.Credential is nil.
+	RefreshModelsAuthConfigured RefreshModelsAuth = "configured"
+)
+
+// RefreshModelsAuther is the optional Provider capability of declaring what
+// its model refresh needs (pi's optional Provider.refreshModelsAuth). A
+// provider without it gets RefreshModelsAuthCredential.
+type RefreshModelsAuther interface {
+	RefreshModelsAuth() RefreshModelsAuth
+}
+
 // deferredUnsupportedHint tells the caller how to proceed when a provider has
 // no deferred (background-mode) support, rather than only naming what is
 // missing.
@@ -1135,14 +1157,31 @@ func (m *modelsImpl) refreshProvider(
 		return nil
 	}
 
-	credential, err := m.resolveRefreshCredential(ctx, p, stored)
+	credential, configured, err := m.resolveNetworkRefresh(ctx, p, stored)
 	if err != nil {
 		return err
 	}
-	if credential == nil {
+	if !configured {
 		return nil // unconfigured: skip
 	}
 	return m.runProviderRefreshPhase(ctx, p, credential, true, force, generation)
+}
+
+// resolveNetworkRefresh is the credential for the network refresh phase, and
+// whether the provider is configured at all (pi resolveNetworkRefresh). A
+// provider whose refresh needs only configured auth is checked without
+// refreshing its OAuth and gets no credential.
+func (m *modelsImpl) resolveNetworkRefresh(
+	ctx context.Context,
+	p Provider,
+	stored *Credential,
+) (credential *Credential, configured bool, err error) {
+	if a, ok := p.(RefreshModelsAuther); ok && a.RefreshModelsAuth() == RefreshModelsAuthConfigured {
+		check, err := m.checkProviderAuth(ctx, p, stored)
+		return nil, check != nil, err
+	}
+	credential, err = m.resolveRefreshCredential(ctx, p, stored)
+	return credential, credential != nil, err
 }
 
 // resolveRefreshCredential resolves the effective credential for a model

@@ -1384,6 +1384,73 @@ func TestModelsGetAuthPersistsOAuthRefreshStartedBeforeCancel(t *testing.T) {
 	waitForStoredRefresh(t, creds, "p1", "new-refresh")
 }
 
+// configuredAuthProvider is pi's test spread `{...testProvider(...),
+// refreshModelsAuth: "configured"}`.
+type configuredAuthProvider struct{ Provider }
+
+func (configuredAuthProvider) RefreshModelsAuth() RefreshModelsAuth {
+	return RefreshModelsAuthConfigured
+}
+
+// TestModelsRefreshConfiguredAuthSkipsOAuthRefresh mirrors pi "refreshes
+// catalogs that need only configured auth without refreshing OAuth"
+// (upstream 6382d8706): a provider declaring RefreshModelsAuthConfigured runs
+// its network phase with no credential and without refreshing an expired
+// OAuth token, and an unconfigured one is still skipped.
+func TestModelsRefreshConfiguredAuthSkipsOAuthRefresh(t *testing.T) {
+	creds := NewInMemoryCredentialStore()
+	if _, err := creds.Modify(context.Background(), "catalog-oauth", func(*Credential) (*Credential, error) {
+		return &Credential{Type: CredentialOAuth, Access: "expired", Refresh: "revoked", Expires: 0}, nil
+	}); err != nil {
+		t.Fatalf("seed: %v", err)
+	}
+	oauthRefreshes := 0
+	var networkCredentials []*Credential
+	unconfiguredRefreshes := 0
+	m := modelsWithEnv(nil, &CreateModelsOptions{Credentials: creds})
+	m.SetProvider(configuredAuthProvider{CreateProvider(CreateProviderOptions{
+		ID: "catalog-oauth",
+		Auth: ProviderAuth{OAuth: &OAuthAuth{
+			Name: "catalog-oauth",
+			Refresh: func(context.Context, OAuthCredentials) (OAuthCredentials, error) {
+				oauthRefreshes++
+				return OAuthCredentials{}, errors.New("invalid_grant")
+			},
+			ToAuth: func(c OAuthCredentials) (ModelAuth, error) { return ModelAuth{APIKey: c.Access}, nil },
+		}},
+		FetchModels: func(_ context.Context, req RefreshModelsContext) ([]*Model, error) {
+			networkCredentials = append(networkCredentials, req.Credential)
+			return nil, nil
+		},
+		API: stubAPI(),
+	})})
+	m.SetProvider(configuredAuthProvider{CreateProvider(CreateProviderOptions{
+		ID:   "catalog-unconfigured",
+		Auth: envKeyAuth("CATALOG_UNCONFIGURED_KEY"),
+		FetchModels: func(context.Context, RefreshModelsContext) ([]*Model, error) {
+			unconfiguredRefreshes++
+			return nil, nil
+		},
+		API: stubAPI(),
+	})})
+
+	if res := m.Refresh(context.Background(), nil); len(res.Errors) != 0 {
+		t.Fatalf("refresh errors: %v", res.Errors)
+	}
+	if oauthRefreshes != 0 {
+		t.Fatalf("OAuth must not be refreshed for a configured-auth catalog, refreshed %d times", oauthRefreshes)
+	}
+	if len(networkCredentials) != 1 || networkCredentials[0] != nil {
+		t.Fatalf("network phase credentials = %v, want one nil", networkCredentials)
+	}
+	if unconfiguredRefreshes != 0 {
+		t.Fatalf("an unconfigured provider must be skipped, fetched %d times", unconfiguredRefreshes)
+	}
+	if stored, _ := creds.Read(context.Background(), "catalog-oauth"); stored == nil || stored.Access != "expired" || stored.Refresh != "revoked" {
+		t.Fatalf("stored credential must be untouched: %+v", stored)
+	}
+}
+
 // TestModelsRefreshPersistsOAuthRefreshStartedBeforeCancel mirrors pi
 // "persists an OAuth refresh that started before the model refresh was
 // cancelled" (upstream bde882c74): model-list refresh shares the request path's
