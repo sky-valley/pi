@@ -488,16 +488,21 @@ func TestAnthropicUsageModelLeavesCatalogModelAlone(t *testing.T) {
 // file passes.
 //
 // The 0.85.1 regen dropped claude-opus-5's chain (it was the sole fallback to
-// claude-opus-4-8); claude-fable-5 keeps both of its entries. The exact set is
-// deliberately hard-coded: the point is to notice when a regen changes it.
+// claude-opus-4-8); claude-fable-5 keeps both of its entries. The 1.5.1 regen
+// adds claude-fable-5-2 (0d1793c2b) with claude-opus-5 alone: its generator
+// lists claude-opus-4-8 too, but a model with per-message effort keeps only
+// fallbacks that support it, and Opus 4.8 does not. The
+// exact set is deliberately hard-coded: the point is to notice when a regen
+// changes it.
 func TestAnthropicCatalogFallbacksAreLive(t *testing.T) {
 	ai.LoadBuiltinModels()
 	models := ai.BuiltinModels(nil).GetModels("anthropic")
 
-	// Exactly the models the 0.85.1 catalog gives fallbacks to, and the order of
+	// Exactly the models the 1.5.1 catalog gives fallbacks to, and the order of
 	// each one's list, which is the order Anthropic receives.
 	want := map[string][]string{
-		"claude-fable-5": {"claude-opus-4-8", "claude-opus-5"},
+		"claude-fable-5":   {"claude-opus-4-8", "claude-opus-5"},
+		"claude-fable-5-2": {"claude-opus-5"},
 	}
 
 	got := map[string]*ai.Model{}

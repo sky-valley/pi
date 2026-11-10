@@ -1,5 +1,5 @@
 {
-	"version": "1.5.0",
+	"version": "1.5.1",
 	"providers": [
 		{
 			"id": "amazon-bedrock",
@@ -345,6 +345,17 @@
 				{
 					"type": "secret",
 					"message": "Enter Qwen Token Plan Individual API key"
+				}
+			],
+			"loginError": null
+		},
+		{
+			"id": "qwen-token-plan-individual-cn",
+			"apiKeyName": "Qwen Token Plan Individual CN API key",
+			"prompts": [
+				{
+					"type": "secret",
+					"message": "Enter Qwen Token Plan Individual CN API key"
 				}
 			],
 			"loginError": null

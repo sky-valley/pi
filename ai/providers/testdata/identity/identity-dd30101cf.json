@@ -1,5 +1,5 @@
 {
-	"sha": "f9a263655",
+	"sha": "dd30101cf",
 	"runtime": "node/v22.23.4",
 	"piAttribution": {
 		"name": "pi",
@@ -1382,7 +1382,7 @@
 			"provider": "plain",
 			"baseUrl": "https://api.example.test/v1",
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -1393,7 +1393,7 @@
 			"baseUrl": "https://api.example.test/v1",
 			"identity": {},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -1446,7 +1446,7 @@
 			"provider": "openrouter",
 			"baseUrl": "https://openrouter.ai/api/v1",
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -1466,7 +1466,7 @@
 			},
 			"sent": {
 				"http-referer": "https://pi.dev",
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-openrouter-categories": "cli-agent",
 				"x-openrouter-title": "pi"
 			}
@@ -1485,7 +1485,7 @@
 			},
 			"sent": {
 				"http-referer": "https://acme.example",
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-openrouter-title": "acme"
 			}
 		},
@@ -1504,7 +1504,7 @@
 			},
 			"sent": {
 				"http-referer": "https://acme.example",
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-openrouter-title": "acme"
 			}
 		},
@@ -1526,7 +1526,7 @@
 			},
 			"sent": {
 				"http-referer": "https://acme.example",
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-openrouter-categories": "cli-agent,cloud-agent",
 				"x-openrouter-title": "acme"
 			}
@@ -1541,7 +1541,7 @@
 				"attribution": null
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -1560,7 +1560,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-billing-invoke-origin": "Pi"
 			}
 		},
@@ -1577,7 +1577,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-billing-invoke-origin": "SSeta"
 			}
 		},
@@ -1594,7 +1594,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-billing-invoke-origin": "Über"
 			}
 		},
@@ -1614,7 +1614,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-opencode-client": "pi"
 			}
 		},
@@ -1634,7 +1634,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -1653,7 +1653,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -1694,7 +1694,7 @@
 			},
 			"sent": {
 				"http-referer": "https://pi.dev",
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-openrouter-categories": "cli-agent",
 				"x-openrouter-title": "model-title"
 			}
@@ -1768,7 +1768,7 @@
 			"provider": "plain",
 			"baseUrl": "https://api.example.test/v1",
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -1779,7 +1779,7 @@
 			"baseUrl": "https://api.example.test/v1",
 			"identity": {},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -1832,7 +1832,7 @@
 			"provider": "openrouter",
 			"baseUrl": "https://openrouter.ai/api/v1",
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -1852,7 +1852,7 @@
 			},
 			"sent": {
 				"http-referer": "https://pi.dev",
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-openrouter-categories": "cli-agent",
 				"x-openrouter-title": "pi"
 			}
@@ -1871,7 +1871,7 @@
 			},
 			"sent": {
 				"http-referer": "https://acme.example",
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-openrouter-title": "acme"
 			}
 		},
@@ -1890,7 +1890,7 @@
 			},
 			"sent": {
 				"http-referer": "https://acme.example",
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-openrouter-title": "acme"
 			}
 		},
@@ -1912,7 +1912,7 @@
 			},
 			"sent": {
 				"http-referer": "https://acme.example",
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-openrouter-categories": "cli-agent,cloud-agent",
 				"x-openrouter-title": "acme"
 			}
@@ -1927,7 +1927,7 @@
 				"attribution": null
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -1946,7 +1946,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-billing-invoke-origin": "Pi"
 			}
 		},
@@ -1963,7 +1963,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-billing-invoke-origin": "SSeta"
 			}
 		},
@@ -1980,7 +1980,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-billing-invoke-origin": "Über"
 			}
 		},
@@ -2000,7 +2000,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-opencode-client": "pi"
 			}
 		},
@@ -2020,7 +2020,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -2039,7 +2039,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -2080,7 +2080,7 @@
 			},
 			"sent": {
 				"http-referer": "https://pi.dev",
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-openrouter-categories": "cli-agent",
 				"x-openrouter-title": "model-title"
 			}
@@ -2154,7 +2154,7 @@
 			"provider": "plain",
 			"baseUrl": "https://api.example.test/v1",
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -2165,7 +2165,7 @@
 			"baseUrl": "https://api.example.test/v1",
 			"identity": {},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -2218,7 +2218,7 @@
 			"provider": "openrouter",
 			"baseUrl": "https://openrouter.ai/api/v1",
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -2238,7 +2238,7 @@
 			},
 			"sent": {
 				"http-referer": "https://pi.dev",
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-openrouter-categories": "cli-agent",
 				"x-openrouter-title": "pi"
 			}
@@ -2257,7 +2257,7 @@
 			},
 			"sent": {
 				"http-referer": "https://acme.example",
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-openrouter-title": "acme"
 			}
 		},
@@ -2276,7 +2276,7 @@
 			},
 			"sent": {
 				"http-referer": "https://acme.example",
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-openrouter-title": "acme"
 			}
 		},
@@ -2298,7 +2298,7 @@
 			},
 			"sent": {
 				"http-referer": "https://acme.example",
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-openrouter-categories": "cli-agent,cloud-agent",
 				"x-openrouter-title": "acme"
 			}
@@ -2313,7 +2313,7 @@
 				"attribution": null
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -2332,7 +2332,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-billing-invoke-origin": "Pi"
 			}
 		},
@@ -2349,7 +2349,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-billing-invoke-origin": "SSeta"
 			}
 		},
@@ -2366,7 +2366,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-billing-invoke-origin": "Über"
 			}
 		},
@@ -2386,7 +2386,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-opencode-client": "pi"
 			}
 		},
@@ -2406,7 +2406,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -2425,7 +2425,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -2466,7 +2466,7 @@
 			},
 			"sent": {
 				"http-referer": "https://pi.dev",
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-openrouter-categories": "cli-agent",
 				"x-openrouter-title": "model-title"
 			}
@@ -2540,7 +2540,7 @@
 			"provider": "plain",
 			"baseUrl": "https://api.example.test/v1",
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -2551,7 +2551,7 @@
 			"baseUrl": "https://api.example.test/v1",
 			"identity": {},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -2604,7 +2604,7 @@
 			"provider": "openrouter",
 			"baseUrl": "https://openrouter.ai/api/v1",
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -2624,7 +2624,7 @@
 			},
 			"sent": {
 				"http-referer": "https://pi.dev",
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-openrouter-categories": "cli-agent",
 				"x-openrouter-title": "pi"
 			}
@@ -2643,7 +2643,7 @@
 			},
 			"sent": {
 				"http-referer": "https://acme.example",
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-openrouter-title": "acme"
 			}
 		},
@@ -2662,7 +2662,7 @@
 			},
 			"sent": {
 				"http-referer": "https://acme.example",
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-openrouter-title": "acme"
 			}
 		},
@@ -2684,7 +2684,7 @@
 			},
 			"sent": {
 				"http-referer": "https://acme.example",
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-openrouter-categories": "cli-agent,cloud-agent",
 				"x-openrouter-title": "acme"
 			}
@@ -2699,7 +2699,7 @@
 				"attribution": null
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -2718,7 +2718,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-billing-invoke-origin": "Pi"
 			}
 		},
@@ -2735,7 +2735,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-billing-invoke-origin": "SSeta"
 			}
 		},
@@ -2752,7 +2752,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-billing-invoke-origin": "Über"
 			}
 		},
@@ -2772,7 +2772,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-opencode-client": "pi"
 			}
 		},
@@ -2792,7 +2792,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -2811,7 +2811,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -2852,7 +2852,7 @@
 			},
 			"sent": {
 				"http-referer": "https://pi.dev",
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-openrouter-categories": "cli-agent",
 				"x-openrouter-title": "pi"
 			}
@@ -2926,7 +2926,7 @@
 			"provider": "plain",
 			"baseUrl": "http://127.0.0.1:9",
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -2937,7 +2937,7 @@
 			"baseUrl": "http://127.0.0.1:9",
 			"identity": {},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -2990,7 +2990,7 @@
 			"provider": "openrouter",
 			"baseUrl": "http://127.0.0.1:9",
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -3010,7 +3010,7 @@
 			},
 			"sent": {
 				"http-referer": "https://pi.dev",
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-openrouter-categories": "cli-agent",
 				"x-openrouter-title": "pi"
 			}
@@ -3029,7 +3029,7 @@
 			},
 			"sent": {
 				"http-referer": "https://acme.example",
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-openrouter-title": "acme"
 			}
 		},
@@ -3048,7 +3048,7 @@
 			},
 			"sent": {
 				"http-referer": "https://acme.example",
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-openrouter-title": "acme"
 			}
 		},
@@ -3070,7 +3070,7 @@
 			},
 			"sent": {
 				"http-referer": "https://acme.example",
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-openrouter-categories": "cli-agent,cloud-agent",
 				"x-openrouter-title": "acme"
 			}
@@ -3085,7 +3085,7 @@
 				"attribution": null
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -3104,7 +3104,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-billing-invoke-origin": "Pi"
 			}
 		},
@@ -3121,7 +3121,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-billing-invoke-origin": "SSeta"
 			}
 		},
@@ -3138,7 +3138,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-billing-invoke-origin": "Über"
 			}
 		},
@@ -3158,7 +3158,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-opencode-client": "pi"
 			}
 		},
@@ -3178,7 +3178,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -3197,7 +3197,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -3238,7 +3238,7 @@
 			},
 			"sent": {
 				"http-referer": "https://pi.dev",
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-openrouter-categories": "cli-agent",
 				"x-openrouter-title": "model-title"
 			}
@@ -3324,7 +3324,7 @@
 			},
 			"sent": {
 				"http-referer": "https://pi.dev",
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-openrouter-categories": "cli-agent",
 				"x-openrouter-title": "pi"
 			}
@@ -3342,7 +3342,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-billing-invoke-origin": "Acme"
 			}
 		},
@@ -3359,7 +3359,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-opencode-client": "acme"
 			}
 		},
@@ -3379,7 +3379,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -3398,7 +3398,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -3563,7 +3563,7 @@
 			},
 			"sent": {
 				"http-referer": "https://pi.dev",
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-openrouter-categories": "cli-agent",
 				"x-openrouter-title": "pi"
 			}
@@ -3588,7 +3588,7 @@
 			},
 			"sent": {
 				"http-referer": "https://pi.dev",
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-openrouter-categories": "cli-agent",
 				"x-openrouter-title": "pi"
 			}
@@ -3659,7 +3659,7 @@
 			},
 			"sent": {
 				"http-referer": "https://pi.dev",
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-openrouter-categories": "cli-agent",
 				"x-openrouter-title": "pi"
 			}
@@ -3746,7 +3746,7 @@
 			},
 			"sent": {
 				"http-referer": "https://pi.dev",
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-openrouter-categories": "cli-agent",
 				"x-openrouter-title": "M"
 			}
@@ -3847,7 +3847,7 @@
 			},
 			"sent": {
 				"http-referer": "https://pi.dev",
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-openrouter-categories": "cli-agent",
 				"x-openrouter-title": "M"
 			}
@@ -3948,7 +3948,7 @@
 			},
 			"sent": {
 				"http-referer": "https://pi.dev",
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-openrouter-categories": "cli-agent",
 				"x-openrouter-title": "M"
 			}
@@ -4049,7 +4049,7 @@
 			},
 			"sent": {
 				"http-referer": "https://pi.dev",
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-openrouter-categories": "cli-agent",
 				"x-openrouter-title": "O"
 			}
@@ -4148,7 +4148,7 @@
 			},
 			"sent": {
 				"http-referer": "https://pi.dev",
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-openrouter-categories": "cli-agent",
 				"x-openrouter-title": "O"
 			}
@@ -4177,7 +4177,7 @@
 				"accept": null
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -4197,7 +4197,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-opencode-client": "pi"
 			}
 		},
@@ -4209,7 +4209,7 @@
 			"apiKey": "key",
 			"via": "models",
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -4312,7 +4312,7 @@
 			"via": "models",
 			"sessionId": "session-1",
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-opencode-session": "session-1"
 			}
 		},
@@ -4325,7 +4325,7 @@
 			"via": "models",
 			"sessionId": "session-1",
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-opencode-session": "session-1"
 			}
 		},
@@ -4341,7 +4341,7 @@
 				"X-OpenCode-Session": "model"
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-opencode-session": "model"
 			}
 		},
@@ -4357,7 +4357,7 @@
 				"X-OpenCode-Session": "request"
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-opencode-session": "request"
 			}
 		},
@@ -4373,7 +4373,7 @@
 				"x-opencode-session": null
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -4385,7 +4385,7 @@
 			"via": "models",
 			"sessionId": "session-1",
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -4406,7 +4406,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-opencode-client": "pi",
 				"x-opencode-session": "session-1"
 			}
@@ -4419,7 +4419,7 @@
 			"apiKey": "sk-ant-api-test",
 			"via": "models",
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -4522,7 +4522,7 @@
 			"via": "models",
 			"sessionId": "session-1",
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-opencode-session": "session-1"
 			}
 		},
@@ -4535,7 +4535,7 @@
 			"via": "models",
 			"sessionId": "session-1",
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-opencode-session": "session-1"
 			}
 		},
@@ -4551,7 +4551,7 @@
 				"X-OpenCode-Session": "model"
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-opencode-session": "model"
 			}
 		},
@@ -4567,7 +4567,7 @@
 				"X-OpenCode-Session": "request"
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-opencode-session": "request"
 			}
 		},
@@ -4583,7 +4583,7 @@
 				"x-opencode-session": null
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -4595,7 +4595,7 @@
 			"via": "models",
 			"sessionId": "session-1",
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -4616,7 +4616,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-opencode-client": "pi",
 				"x-opencode-session": "session-1"
 			}
@@ -4629,7 +4629,7 @@
 			"apiKey": "key",
 			"via": "models",
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -4732,7 +4732,7 @@
 			"via": "models",
 			"sessionId": "session-1",
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -4744,7 +4744,7 @@
 			"via": "models",
 			"sessionId": "session-1",
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-opencode-session": "session-1"
 			}
 		},
@@ -4760,7 +4760,7 @@
 				"X-OpenCode-Session": "model"
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-opencode-session": "model"
 			}
 		},
@@ -4776,7 +4776,7 @@
 				"X-OpenCode-Session": "request"
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-opencode-session": "request"
 			}
 		},
@@ -4792,7 +4792,7 @@
 				"x-opencode-session": null
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -4804,7 +4804,7 @@
 			"via": "models",
 			"sessionId": "session-1",
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -4825,7 +4825,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-opencode-client": "pi",
 				"x-opencode-session": "session-1"
 			}
@@ -4838,7 +4838,7 @@
 			"apiKey": "key",
 			"via": "models",
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -4941,7 +4941,7 @@
 			"via": "models",
 			"sessionId": "session-1",
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-opencode-session": "session-1"
 			}
 		},
@@ -4954,7 +4954,7 @@
 			"via": "models",
 			"sessionId": "session-1",
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-opencode-session": "session-1"
 			}
 		},
@@ -4970,7 +4970,7 @@
 				"X-OpenCode-Session": "model"
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-opencode-session": "model"
 			}
 		},
@@ -4986,7 +4986,7 @@
 				"X-OpenCode-Session": "request"
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-opencode-session": "request"
 			}
 		},
@@ -5002,7 +5002,7 @@
 				"x-opencode-session": null
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -5014,7 +5014,7 @@
 			"via": "models",
 			"sessionId": "session-1",
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)"
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)"
 			}
 		},
 		{
@@ -5035,7 +5035,7 @@
 				}
 			},
 			"sent": {
-				"user-agent": "pi/1.5.0 (linux; node/v22.23.4; x64)",
+				"user-agent": "pi/1.5.1 (linux; node/v22.23.4; x64)",
 				"x-opencode-client": "pi",
 				"x-opencode-session": "session-1"
 			}
