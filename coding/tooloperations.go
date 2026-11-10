@@ -153,20 +153,61 @@ func LocalBashOperations(options LocalBashOptions) BashOperations {
 // LocalPowerShellOperations runs commands on the local machine through
 // PowerShell, porting pi's createLocalPowerShellOperations (powershell.ts):
 // GetPowerShellConfig per command, every command prefixed with
-// UTF8_OUTPUT_PREFIX.
+// UTF8_OUTPUT_PREFIX and, under Windows PowerShell 5.1, followed by
+// windowsPowerShellExitSuffix.
 func LocalPowerShellOperations() PowerShellOperations {
-	return withUTF8OutputPrefix(localShellOperations("PowerShell", GetPowerShellConfig))
+	return powerShellOperations(GetPowerShellConfig, func(shellConfig ShellConfig) BashOperations {
+		return localShellOperations("PowerShell", func() (ShellConfig, error) { return shellConfig, nil })
+	})
 }
 
-// withUTF8OutputPrefix is createLocalPowerShellOperations' wrapper: the
-// prefix belongs to the local operations, so custom PowerShell operations and
-// the spawn hook see the command as the tool built it.
-func withUTF8OutputPrefix(operations BashOperations) BashOperations {
+// windowsPowerShellExitSuffix is powershell.ts WINDOWS_POWERSHELL_EXIT_SUFFIX
+// (upstream c9dd2c530), byte-exact. Windows PowerShell 5.1 turns redirected
+// native stderr into error records and sets $? to false, so `git push 2>&1 |
+// Select-Object -Last 3` exits 1 although git exited 0 (#8842); PowerShell 7
+// does not. The suffix exits 0 when the last failure is only such a record and
+// the native command exited 0, and otherwise keeps -Command's rule: 0 when the
+// last statement succeeded, 1 when it failed. The lone `;` keeps an unfinished
+// last statement, such as `Get-ChildItem |`, a parse error instead of
+// continuing into the suffix and running.
+const windowsPowerShellExitSuffix = "\n;\nif ($?) { exit 0 }\nif (($LASTEXITCODE -eq 0) -and (\"$($Error[0].FullyQualifiedErrorId)\" -like \"NativeCommandError*\")) { exit 0 }\nexit 1"
+
+// powerShellOperations is createLocalPowerShellOperations' exec: it resolves
+// the shell once per command, decides the command text from it, and runs that
+// text through the operations run builds for that shell. The prefix and suffix
+// belong to the local operations, so custom PowerShell operations and the
+// spawn hook see the command as the tool built it.
+func powerShellOperations(resolveShellConfig func() (ShellConfig, error), run func(ShellConfig) BashOperations) BashOperations {
 	return BashOperations{
 		Exec: func(ctx context.Context, command, cwd string, options BashExecOptions) (*int, error) {
-			return operations.Exec(ctx, utf8OutputPrefix+command, cwd, options)
+			shellConfig, err := resolveShellConfig()
+			if err != nil {
+				return nil, err
+			}
+			// A final backtick would continue the user's last line into the
+			// suffix, so such commands are left unchanged.
+			suffix := ""
+			if strings.ToLower(win32Basename(shellConfig.Shell)) == "powershell.exe" && !strings.HasSuffix(command, "`") {
+				suffix = windowsPowerShellExitSuffix
+			}
+			return run(shellConfig).Exec(ctx, utf8OutputPrefix+command+suffix, cwd, options)
 		},
 	}
+}
+
+// win32Basename is node's path.win32.basename: the last component of a path
+// whose separators are `/` or `\`, after a drive letter and trailing
+// separators are dropped. pi reads it on every platform, so it does not follow
+// the host's filepath rules.
+func win32Basename(p string) string {
+	if len(p) >= 2 && p[1] == ':' && ('a' <= p[0]|0x20 && p[0]|0x20 <= 'z') {
+		p = p[2:]
+	}
+	p = strings.TrimRight(p, `/\`)
+	if i := strings.LastIndexAny(p, `/\`); i >= 0 {
+		p = p[i+1:]
+	}
+	return p
 }
 
 // validateShellTimeout ports pi's resolveTimeoutMs (bash.ts): a non-positive

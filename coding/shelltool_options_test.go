@@ -225,15 +225,78 @@ func TestLocalShellOperationsAbortedBeforeResolving(t *testing.T) {
 	}
 }
 
+// recordingPowerShellOperations is createLocalPowerShellOperations with the
+// shell pinned to shellPath and the process replaced by a recorder.
+func recordingPowerShellOperations(shellPath string, calls *[]recordedExec) BashOperations {
+	return powerShellOperations(
+		func() (ShellConfig, error) {
+			return ShellConfig{Shell: shellPath, Args: slices.Clone(powershellArgs)}, nil
+		},
+		func(ShellConfig) BashOperations { return *recordingShellOps(calls) },
+	)
+}
+
 // TestLocalPowerShellOperationsPrefix ports createLocalPowerShellOperations:
 // it prepends UTF8_OUTPUT_PREFIX to every command it runs.
 func TestLocalPowerShellOperationsPrefix(t *testing.T) {
 	var calls []recordedExec
-	ops := withUTF8OutputPrefix(*recordingShellOps(&calls))
+	ops := recordingPowerShellOperations(`C:\Program Files\PowerShell\7\pwsh.exe`, &calls)
 	if _, err := ops.Exec(context.Background(), "Write-Output hi", "/work", BashExecOptions{}); err != nil {
 		t.Fatal(err)
 	}
 	if want := utf8OutputPrefix + "Write-Output hi"; calls[0].command != want {
 		t.Fatalf("ran %q, want %q", calls[0].command, want)
+	}
+}
+
+// TestLocalPowerShellOperationsWindowsPowerShellExitSuffix ports
+// createLocalPowerShellOperations' Windows PowerShell 5.1 rule (upstream
+// c9dd2c530, #8842): powershell.exe, matched by its win32 basename in any
+// case, gets WINDOWS_POWERSHELL_EXIT_SUFFIX after the command; pwsh does not,
+// and neither does a command ending in a line-continuation backtick. The
+// exit codes this buys are pinned on Windows by
+// TestLocalPowerShellOperationsExitCodes.
+func TestLocalPowerShellOperationsWindowsPowerShellExitSuffix(t *testing.T) {
+	const command = "git push 2>&1 | Select-Object -Last 3"
+	cases := []struct {
+		shell, command, want string
+	}{
+		{`C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe`, command, utf8OutputPrefix + command + windowsPowerShellExitSuffix},
+		{`C:\Windows\System32\WindowsPowerShell\v1.0\PowerShell.EXE`, command, utf8OutputPrefix + command + windowsPowerShellExitSuffix},
+		{"powershell.exe", command, utf8OutputPrefix + command + windowsPowerShellExitSuffix},
+		{`C:/tools/powershell.exe`, command, utf8OutputPrefix + command + windowsPowerShellExitSuffix},
+		{`C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe`, "Write-Output done `", utf8OutputPrefix + "Write-Output done `"},
+		{`C:\Program Files\PowerShell\7\pwsh.exe`, command, utf8OutputPrefix + command},
+		{`C:\shells\powershell.exe.bak`, command, utf8OutputPrefix + command},
+	}
+	for _, c := range cases {
+		var calls []recordedExec
+		if _, err := recordingPowerShellOperations(c.shell, &calls).Exec(context.Background(), c.command, "/work", BashExecOptions{}); err != nil {
+			t.Fatal(err)
+		}
+		if calls[0].command != c.want {
+			t.Errorf("%s: ran %q, want %q", c.shell, calls[0].command, c.want)
+		}
+	}
+	// Byte-exact from powershell.ts at c9dd2c530.
+	const want = "\n;\nif ($?) { exit 0 }\nif (($LASTEXITCODE -eq 0) -and (\"$($Error[0].FullyQualifiedErrorId)\" -like \"NativeCommandError*\")) { exit 0 }\nexit 1"
+	if windowsPowerShellExitSuffix != want {
+		t.Fatalf("suffix = %q, want pi's %q", windowsPowerShellExitSuffix, want)
+	}
+}
+
+// TestWin32Basename pins node's path.win32.basename for the shells pi reads.
+func TestWin32Basename(t *testing.T) {
+	for in, want := range map[string]string{
+		`C:\Windows\powershell.exe`: "powershell.exe",
+		`C:/x/pwsh.exe`:             "pwsh.exe",
+		`C:\x\powershell.exe\`:      "powershell.exe",
+		`C:powershell.exe`:          "powershell.exe",
+		"powershell.exe":            "powershell.exe",
+		"":                          "",
+	} {
+		if got := win32Basename(in); got != want {
+			t.Errorf("win32Basename(%q) = %q, want %q", in, got, want)
+		}
 	}
 }
