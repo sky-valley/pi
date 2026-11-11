@@ -288,6 +288,95 @@ func TestReadStreamStopsWhenAborted(t *testing.T) {
 	}
 }
 
+// Characterization of upstream ef9361ab7 (#11956), which stopped handing the
+// abort signal to the local file stream so that an abort while the file is
+// opened no longer crashes Node with an unhandled stream 'error'. The port's
+// local stream never took a context: the read loop checks ctx before every
+// chunk. These pin the two outcomes upstream's tests assert, through the real
+// local operations.
+
+// An abort while the local file is opened fails the read with "Operation
+// aborted", reads nothing and closes the file.
+func TestReadLocalFileAbortedWhileOpening(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "abort-on-open.txt")
+	if err := os.WriteFile(path, []byte("line\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	ops := DefaultReadOperations()
+	var stream *countingReadCloser
+	open := ops.CreateReadStream
+	ops.CreateReadStream = func(ctx context.Context, p string) (io.ReadCloser, error) {
+		cancel()
+		rc, err := open(ctx, p)
+		if err != nil {
+			return nil, err
+		}
+		stream = &countingReadCloser{ReadCloser: rc}
+		return stream, nil
+	}
+	_, err := readToolOps(filepath.Dir(path), &ops, nil).Execute(ctx, "call", map[string]any{"path": path}, func(agent.AgentToolResult) {})
+	if err == nil || err.Error() != "Operation aborted" {
+		t.Fatalf("err = %v, want Operation aborted", err)
+	}
+	if stream == nil || stream.reads != 0 || !stream.closed {
+		t.Errorf("stream %+v: want opened, never read, closed", stream)
+	}
+}
+
+// An abort mid-read of a local file stops after the chunk in hand: a 1 MB
+// file is many 64 KB chunks, and only the first is read.
+func TestReadLocalFileStopsWhenAbortedMidRead(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "abort-mid-read.txt")
+	if err := os.WriteFile(path, bytes.Repeat([]byte("x"), 1024*1024), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	ops := DefaultReadOperations()
+	var stream *countingReadCloser
+	open := ops.CreateReadStream
+	ops.CreateReadStream = func(ctx context.Context, p string) (io.ReadCloser, error) {
+		rc, err := open(ctx, p)
+		if err != nil {
+			return nil, err
+		}
+		stream = &countingReadCloser{ReadCloser: rc, onRead: cancel}
+		return stream, nil
+	}
+	_, err := readToolOps(filepath.Dir(path), &ops, nil).Execute(ctx, "call", map[string]any{"path": path}, func(agent.AgentToolResult) {})
+	if err == nil || err.Error() != "Operation aborted" {
+		t.Fatalf("err = %v, want Operation aborted", err)
+	}
+	if stream == nil || stream.reads != 1 || !stream.closed {
+		t.Errorf("stream %+v: want one read, then closed", stream)
+	}
+}
+
+// countingReadCloser counts the reads of a stream, calls onRead after each,
+// and records its close.
+type countingReadCloser struct {
+	io.ReadCloser
+	onRead func()
+	reads  int
+	closed bool
+}
+
+func (c *countingReadCloser) Read(p []byte) (int, error) {
+	n, err := c.ReadCloser.Read(p)
+	c.reads++
+	if c.onRead != nil {
+		c.onRead()
+	}
+	return n, err
+}
+
+func (c *countingReadCloser) Close() error {
+	c.closed = true
+	return c.ReadCloser.Close()
+}
+
 // abortingStream cancels its read on the third Read. Close may come from the
 // abort's own goroutine, hence the lock.
 type abortingStream struct {
