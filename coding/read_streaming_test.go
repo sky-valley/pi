@@ -325,11 +325,12 @@ func TestReadLocalFileAbortedWhileOpening(t *testing.T) {
 	}
 }
 
-// An abort mid-read of a local file stops after the chunk in hand: a 1 MB
-// file is many 64 KB chunks, and only the first is read.
+// An abort mid-read of a local file stops after the chunk in hand: the file
+// is 16 chunks (1 MB at today's 64 KB, upstream's size), and only the first
+// is read.
 func TestReadLocalFileStopsWhenAbortedMidRead(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "abort-mid-read.txt")
-	if err := os.WriteFile(path, bytes.Repeat([]byte("x"), 1024*1024), 0o644); err != nil {
+	if err := os.WriteFile(path, bytes.Repeat([]byte("x"), 16*streamChunkSize), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	ctx, cancel := context.WithCancel(context.Background())
@@ -355,7 +356,10 @@ func TestReadLocalFileStopsWhenAbortedMidRead(t *testing.T) {
 }
 
 // countingReadCloser counts the reads of a stream, calls onRead after each,
-// and records its close.
+// and records its close. It needs no lock although an abort closes the
+// stream from context.AfterFunc's goroutine: no Read follows the cancel (the
+// read loop checks ctx first), and Execute waits for that Close before it
+// returns, so the test's reads of the fields happen after it.
 type countingReadCloser struct {
 	io.ReadCloser
 	onRead func()
