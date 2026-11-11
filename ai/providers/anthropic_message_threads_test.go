@@ -819,6 +819,34 @@ func TestAnthropicThreadNotUsedWithCacheRetentionNone(t *testing.T) {
 	}
 }
 
+// #11987: a provider aliasing Anthropic's own endpoint uses threads; another
+// endpoint does not (upstream 49fe0a237).
+func TestAnthropicThreadUsedForAnyProviderOnAnthropicEndpoint(t *testing.T) {
+	alias := newThreadHarness(t)
+	aliasModel := threadBaseModel()
+	aliasModel.Provider = "anthropic-1-api"
+	aliasMessages := []ai.Message{threadUser("first")}
+	alias.say(t, &aliasMessages, threadTurn{model: &aliasModel})
+	aliasMessages = append(aliasMessages, threadUser("second"))
+	alias.say(t, &aliasMessages, threadTurn{model: &aliasModel})
+	requests := alias.sent()
+	wantThread(t, "alias create", requests[0], threadCreate)
+	wantThread(t, "alias next", requests[1], threadContinue("msg_1"))
+
+	gateway := newThreadHarness(t)
+	gatewayModel := threadBaseModel()
+	gatewayModel.BaseURL = "https://gateway.example.com"
+	gatewayMessages := []ai.Message{threadUser("first")}
+	gateway.say(t, &gatewayMessages, threadTurn{model: &gatewayModel})
+	first := gateway.sent()[0]
+	if _, ok := first.body["thread"]; ok {
+		t.Errorf("gateway request carries thread: %v", first.body["thread"])
+	}
+	if strings.Contains(strings.Join(first.betas, ","), threadsBeta) {
+		t.Errorf("gateway betas %v contain %s", first.betas, threadsBeta)
+	}
+}
+
 func TestAnthropicThreadMatchesClaudeCodeToolNamesWithOAuth(t *testing.T) {
 	h := newThreadHarness(t)
 	h.push(func(r threadWireRequest) *http.Response {
@@ -872,8 +900,9 @@ func TestAnthropicThreadDisableContinuationKeepsConversationThread(t *testing.T)
 
 // Go-side additions beyond the upstream file.
 
-// The default is on only for the anthropic provider on api.anthropic.com, and
-// compat.supportsMessageThreads overrides it either way.
+// The default is on for any provider whose baseUrl is on api.anthropic.com
+// (upstream 49fe0a237), and compat.supportsMessageThreads overrides it either
+// way.
 func TestAnthropicThreadCompatDefault(t *testing.T) {
 	for _, tc := range []struct {
 		name, provider, baseURL, compat string
@@ -881,7 +910,7 @@ func TestAnthropicThreadCompatDefault(t *testing.T) {
 	}{
 		{"anthropic on api.anthropic.com", "anthropic", "https://api.anthropic.com", "", true},
 		{"anthropic elsewhere", "anthropic", "https://gateway.example.com", "", false},
-		{"other provider on api.anthropic.com", "proxy", "https://api.anthropic.com", "", false},
+		{"other provider on api.anthropic.com", "proxy", "https://api.anthropic.com", "", true},
 		{"opted in", "proxy", "https://gateway.example.com", `{"supportsMessageThreads":true}`, true},
 		{"opted out", "anthropic", "https://api.anthropic.com", `{"supportsMessageThreads":false}`, false},
 	} {

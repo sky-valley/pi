@@ -167,10 +167,10 @@ type anthropicCompat struct {
 	// message threads, so a request with a session id can send only the new
 	// messages and continue from the previous reply (pi
 	// AnthropicMessagesCompat.supportsMessageThreads, upstream a758f3ae4).
-	// Default: true for provider anthropic with a baseUrl on api.anthropic.com,
-	// false otherwise: a gateway that drops the unknown `thread` field would
-	// silently turn a `continue` into a request without the earlier
-	// conversation.
+	// Default: true for a baseUrl on api.anthropic.com, whatever the provider
+	// id (upstream 49fe0a237), false otherwise: a gateway that drops the
+	// unknown `thread` field would silently turn a `continue` into a request
+	// without the earlier conversation.
 	supportsMessageThreads bool
 	// allowedFallbackModels are the catalog's permitted server-side fallback
 	// models: what the request's `fallbacks` field lists, what turns the fallback
@@ -223,7 +223,7 @@ func getAnthropicCompat(model *ai.Model) anthropicCompat {
 		sendSessionAffinityHeaders:      isOpenRouter,
 		supportsCacheControlOnTools:     true,
 		supportsTemperature:             true,
-		supportsMessageThreads:          model.Provider == "anthropic" && strings.Contains(model.BaseURL, "api.anthropic.com"),
+		supportsMessageThreads:          strings.Contains(model.BaseURL, "api.anthropic.com"),
 	}
 	// pi's `?? (isOpenRouter ? "openrouter" : undefined)`: off OpenRouter the
 	// format stays unset, which is why sessionAffinityFormatFor is not reused —
