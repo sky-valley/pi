@@ -498,8 +498,9 @@ func TestAnthropicCatalogFallbacksAreLive(t *testing.T) {
 	ai.LoadBuiltinModels()
 	models := ai.BuiltinModels(nil).GetModels("anthropic")
 
-	// Exactly the models the 1.5.1 catalog gives fallbacks to, and the order of
-	// each one's list, which is the order Anthropic receives.
+	// Exactly the models the 1.5.2 catalog gives fallbacks to (unchanged since
+	// 1.5.1), and the order of each one's list, which is the order Anthropic
+	// receives.
 	want := map[string][]string{
 		"claude-fable-5":   {"claude-opus-4-8", "claude-opus-5"},
 		"claude-fable-5-2": {"claude-opus-5"},
