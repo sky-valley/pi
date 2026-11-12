@@ -1,38 +1,38 @@
 {
 	"go": "go1.26.0",
-	"source": "95003d1107b173c7ffaf0575e8751da63f7a95fb6ef8fabd7b883ef42e318df1",
+	"source": "5af32bcb79e008e861450f7e4d686a9e9da765ca82bf652596c4f5b2a1fbbbd4",
 	"daemons": {
 		"pi-env-android-arm64": {
-			"sha256": "31291c4d6cd64567efa141d1e0f771393856848e117ef8f3059b2b00977e632b",
+			"sha256": "3956b05877d84c0733cf398c388d6d958ba4c44e504590a4113da135e9e900df",
 			"size": 3408132
 		},
 		"pi-env-android-x64": {
-			"sha256": "d544367d90b4d017eacedadd46b4737c1cbcd9fbbf665e4709b0148da482c8a1",
+			"sha256": "f7847c38ae6eb064e9308cdbf98be1f60d180dbe2260d9c6f1c3cf6e78cf3d77",
 			"size": 3199102
 		},
 		"pi-env-darwin-arm64": {
-			"sha256": "2817e2c4ff57ed91a27c5c3f2923b83afc83836e38bc497c26df1a87dfbb628f",
-			"size": 3022450
+			"sha256": "b999879fa7d55aeb7e1aa14bc1e1fea84ba8863d830c46bbfdcadb6e2b1c129b",
+			"size": 3022514
 		},
 		"pi-env-darwin-x64": {
-			"sha256": "0cb29db4fc5a76b90d7faa2b7f72396b1a9e06e5794be4b7becc9afd41e21a2b",
-			"size": 3175072
+			"sha256": "f1b314b5d1e5fddff08d6c56cb786e9a80b6f270782bb881313b8bc3649ab715",
+			"size": 3179232
 		},
 		"pi-env-linux-arm64": {
-			"sha256": "22e26daf213d886e3c2f29669d482ad5389086d167b847a4e5d9b3850fa279d6",
+			"sha256": "e0cad560004d18b5338ef6faa0050f1c076ce4c4f12f857d85b8852b09a4bd18",
 			"size": 3145854
 		},
 		"pi-env-linux-x64": {
-			"sha256": "b8aacda9864853cfea2e21cc7be1ed8d935bd306838e98c53df2d84fe50a54a9",
-			"size": 3199102
+			"sha256": "70b6659bcb562660811105f8562fb7c45c663035e61665c36e6b6003792ae00a",
+			"size": 3203198
 		},
 		"pi-env-windows-arm64": {
-			"sha256": "812127491443aa8deb936dd9a34eeb5f1488a19e86e81f055d1736b73442c7df",
-			"size": 3332096
+			"sha256": "51bf036ef0531b462d691f93ad63ab59e90686ae2934cff65378eb0ccbcd223b",
+			"size": 3334656
 		},
 		"pi-env-windows-x64": {
-			"sha256": "30d9955ebfbcddc27146bbaa3f34aad8fef819373d860deb35f04a4810a47e0a",
-			"size": 3593728
+			"sha256": "19e294bc4216c935f844ae7492765b4997806d7eb1c19c5fd07d96148bf17c67",
+			"size": 3596800
 		}
 	}
 }

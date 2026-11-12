@@ -105,9 +105,10 @@ func runProcess(id uint32, request processRequest, out *output, ctl *control, ru
 	stop := new(atomic.Bool)
 	done := make(chan struct{})
 	messages := make(chan commandMessage, 64)
+	// Like a full pipe: a program that writes faster than the link waits.
+	readers := newGate(out)
 	for stream, pipe := range command.output {
-		// Like a full pipe: a program that writes faster than the link waits.
-		go readPipe(stream, pipe, messages, done, stop, out)
+		go readPipe(stream, pipe, messages, done, stop, readers)
 	}
 	// Closing stdin interrupts a write the program does not read, also when a
 	// descendant holds the pipe.
@@ -162,9 +163,14 @@ func runProcess(id uint32, request processRequest, out *output, ctl *control, ru
 		if !idleUntil.IsZero() {
 			now := time.Now()
 			if !now.Before(idleUntil) {
-				// A descendant may hold the pipes open after the program
-				// exited; stop waiting for it.
-				break
+				if !readers.isHeld() {
+					// A descendant may hold the pipes open after the
+					// program exited; stop waiting for it.
+					break
+				}
+				// Silence while the link holds a reader up is not the end
+				// of the output: the pipe may hold more.
+				idleUntil = now.Add(exitStdioGrace)
 			}
 			wait = idleUntil.Sub(now)
 		}

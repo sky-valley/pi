@@ -326,21 +326,24 @@ type commandMessage struct {
 	err    error
 }
 
-// readPipe reads pipe until it ends or fails, sending each chunk; without an
-// output window, reading waits while too much output is unsent. It stops when
-// done closes.
-func readPipe(stream int, pipe *os.File, messages chan<- commandMessage, done <-chan struct{}, stop *atomic.Bool, gate *output) {
+// readPipe reads pipe until it ends or fails, sending each chunk; with a
+// gate (no output window), reading waits while too much output is unsent.
+// It stops when done closes.
+func readPipe(stream int, pipe *os.File, messages chan<- commandMessage, done <-chan struct{}, stop *atomic.Bool, g *gate) {
 	buf := make([]byte, readChunk)
 	for !stop.Load() {
 		n, err := pipe.Read(buf)
 		if n > 0 {
-			select {
-			case messages <- commandMessage{stream: stream, data: append([]byte(nil), buf[:n]...)}:
-			case <-done:
-				return
+			deliver := func() bool {
+				select {
+				case messages <- commandMessage{stream: stream, data: append([]byte(nil), buf[:n]...)}:
+					return true
+				case <-done:
+					return false
+				}
 			}
-			if gate != nil {
-				gate.waitForRoom(stop)
+			if !g.pass(stop, deliver) {
+				return
 			}
 		}
 		if err != nil {
@@ -461,12 +464,12 @@ func runExec(id uint32, request execRequest, tmpdir string, out *output, ctl *co
 	messages := make(chan commandMessage, 64)
 	// Without a window, output is not coalesced; reading then waits for the
 	// link.
-	var gate *output
+	var readers *gate
 	if request.window == nil {
-		gate = out
+		readers = newGate(out)
 	}
 	for stream, pipe := range command.output {
-		go readPipe(stream, pipe, messages, done, stop, gate)
+		go readPipe(stream, pipe, messages, done, stop, readers)
 	}
 	waitInBackground(command.process, nil, messages, done)
 
@@ -531,9 +534,14 @@ func runExec(id uint32, request execRequest, tmpdir string, out *output, ctl *co
 			break
 		}
 		if !idleUntil.IsZero() && !now.Before(idleUntil) {
-			// A descendant may hold the pipes open after the process exited;
-			// stop waiting for it.
-			break
+			if !readers.isHeld() {
+				// A descendant may hold the pipes open after the process
+				// exited; stop waiting for it.
+				break
+			}
+			// Silence while the link holds a reader up is not the end of
+			// the output: the pipe may hold more.
+			idleUntil = now.Add(exitStdioGrace)
 		}
 		if held != nil && !held.isEmpty() && !now.Before(held.nextSend) && unsent.Load() == 0 {
 			deliver()

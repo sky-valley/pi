@@ -202,18 +202,19 @@ func runPty(id uint32, request ptyRequest, out *output, ctl *control, running *g
 	done := make(chan struct{})
 	messages := make(chan commandMessage, 64)
 	readerDone := make(chan struct{})
+	// Like a full pipe: a program that writes faster than the link waits.
+	reader := newGate(out)
 	go func() {
 		defer close(readerDone)
 		term.read(stop, func(b []byte) bool {
-			select {
-			case messages <- commandMessage{data: b}:
-			case <-done:
-				return false
-			}
-			// Like a full pipe: a program that writes faster than the link
-			// waits.
-			out.waitForRoom(stop)
-			return true
+			return reader.pass(stop, func() bool {
+				select {
+				case messages <- commandMessage{data: b}:
+					return true
+				case <-done:
+					return false
+				}
+			})
 		})
 		select {
 		case messages <- commandMessage{ended: true}:
@@ -261,9 +262,14 @@ loop:
 		if !idleUntil.IsZero() {
 			now := time.Now()
 			if !now.Before(idleUntil) {
-				// A background job may keep the terminal open after the program
-				// exited.
-				break
+				if !reader.isHeld() {
+					// A background job may keep the terminal open after the
+					// program exited.
+					break
+				}
+				// Silence while the link holds the reader up is not the end
+				// of the output: the terminal may hold more.
+				idleUntil = now.Add(ptyExitGrace)
 			}
 			wait = idleUntil.Sub(now)
 		}
