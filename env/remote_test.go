@@ -261,8 +261,14 @@ func TestListsDirectoriesInNodesOrder(t *testing.T) {
 		if got := names(infos); !reflect.DeepEqual(got, c.want) || infos[0].Path != c.first {
 			t.Errorf("%s: ListDir %v (%s), want %v", c.system, got, infos[0].Path, c.want)
 		}
-		if _, err := env.ListDir(background(), "vanishing"); errorCode(err) != "not_found" {
-			t.Errorf("%s: ListDir with a vanished entry: %v", c.system, err)
+		// An entry removed between enumeration and lstat is left out;
+		// any other entry error fails the listing (upstream 75ca6e7d0).
+		if infos, err := env.ListDir(background(), "vanishing"); err != nil || !reflect.DeepEqual(names(infos), []string{"x", "y"}) {
+			t.Errorf("%s: ListDir with a vanished entry: %v %v", c.system, names(infos), err)
+		}
+		var denied *FileError
+		if _, err := env.ListDir(background(), "denied"); !errors.As(err, &denied) || denied.Code != "permission_denied" || !strings.HasSuffix(denied.Path, "secret") {
+			t.Errorf("%s: ListDir with an unreadable entry: %#v", c.system, err)
 		}
 		reader, err := env.OpenDirReader(background(), "vanishing")
 		mustDo(t, err)

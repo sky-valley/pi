@@ -1024,9 +1024,11 @@ func (e *RemoteExecutionEnv) ListDir(ctx context.Context, path string) ([]coding
 			done = page.Done
 		}
 		h.close()
-		// Node's readdir fails on any entry it cannot lstat. libuv sorts
-		// names by their bytes on POSIX; on Windows it keeps the file
-		// system's order, which the daemon reports.
+		// Like NodeExecutionEnv.listDir, leave out entries removed between
+		// enumeration and lstat; any other entry error fails the listing
+		// (upstream 75ca6e7d0). libuv sorts names by their bytes on POSIX;
+		// on Windows it keeps the file system's order, which the daemon
+		// reports.
 		paths, err := remotePath(e.connection)
 		if err != nil {
 			return nil, err
@@ -1047,6 +1049,9 @@ func (e *RemoteExecutionEnv) ListDir(ctx context.Context, path string) ([]coding
 			}
 			entryPath := paths.Resolve(resolved, entry.Name)
 			if entry.Error != nil {
+				if entry.Error["code"] == "ENOENT" {
+					continue
+				}
 				return nil, toFileError(newRemoteError(entry.Error), entryPath)
 			}
 			if entry.Info == nil {
