@@ -126,6 +126,24 @@ func TestFindPathGlobBackslash(t *testing.T) {
 	}
 }
 
+// Port of "should ignore a leading ./ in the pattern" (tools.test.ts,
+// upstream bbfc6c7ce, #12020): fd matches nothing for a leading "./", so the
+// tool drops it.
+func TestFindIgnoresLeadingDotSlash(t *testing.T) {
+	root := t.TempDir()
+	writeFiles(t, root, map[string]string{"src/a.ts": "a", "package.json": "{}"})
+	for _, pattern := range []string{"./src/*.ts", "./src/**/*.ts", "././src/*.ts"} {
+		if got, want := runPathGlobFind(t, root, pattern), []string{"src/a.ts"}; !slices.Equal(got, want) {
+			t.Errorf("find %q = %v, want %v", pattern, got, want)
+		}
+	}
+	// Without a "/" left, "./*.json" matches basenames at any depth, like "*.json".
+	writeFiles(t, root, map[string]string{"src/b.json": "{}"})
+	if got, want := runPathGlobFind(t, root, "./*.json"), []string{"package.json", "src/b.json"}; !slices.Equal(got, want) {
+		t.Errorf("find ./*.json = %v, want %v", got, want)
+	}
+}
+
 // TestFindDoesNotWalkAfterAbort ports find-abort-before-spawn.test.ts
 // (upstream a07f25129): once the call is aborted before fd would start, find
 // rejects with "Operation aborted" and searches nothing.

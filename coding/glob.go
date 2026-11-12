@@ -146,10 +146,16 @@ func patternHasUpper(pattern string) bool {
 //     the same way. pi then matches Windows path patterns with minimatch,
 //     which also expands {1..2}, accepts [[:alpha:]] and lets a trailing "/"
 //     match directories; the port keeps fd's glob there (decided, D114);
+//   - fd's full paths never contain "/./", so pi drops any leading "./"
+//     after that normalization (upstream bbfc6c7ce, #12020): "./src/*.ts"
+//     is "src/*.ts", and "./*.json", with no "/" left, matches basenames;
 //   - smart-case: an all-lowercase pattern matches case-insensitively;
 //   - {a,b} alternation and [!x] classes are supported (globset).
 func matchFdGlob(pattern, rel, abs string) bool {
 	pattern = filepath.ToSlash(pattern)
+	for strings.HasPrefix(pattern, "./") {
+		pattern = pattern[len("./"):]
+	}
 	fold := !patternHasUpper(pattern)
 	if !strings.Contains(pattern, "/") {
 		return globMatchPath(pattern, filepath.Base(filepath.ToSlash(rel)), fold)
