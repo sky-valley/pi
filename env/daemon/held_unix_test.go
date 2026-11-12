@@ -6,6 +6,8 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
@@ -29,17 +31,26 @@ func TestCommandsReadOnWhileTheLinkHoldsTheirReaderUp(t *testing.T) {
 	// Small enough to fit in a pipe and in a pty's line buffer, so the
 	// program exits with it unread.
 	const rest = 2048
-	script := "printf a; sleep 0.3; head -c " + strconv.Itoa(rest) + " /dev/zero"
-	argv, _ := json.Marshal([]string{"sh", "-c", script})
 	for _, op := range []string{"process", "exec", "pty"} {
 		t.Run(op, func(t *testing.T) {
+			// The program marks its end in a file, so the link is drained
+			// only once it has exited and the exit grace has passed: the
+			// output must outlast that grace to arrive at all.
+			exited := filepath.Join(t.TempDir(), "exited")
+			script := "printf a; sleep 0.3; head -c " + strconv.Itoa(rest) + " /dev/zero; touch " + exited
+			argv, _ := json.Marshal([]string{"sh", "-c", script})
 			out := newOutput()
 			out.sendBulk(frame.Frame{Kind: frame.Event, ID: 99, Payload: make([]byte, bulkLimit+1)}, nil)
 			var written bytes.Buffer
 			drained := make(chan struct{})
 			go func() {
 				defer close(drained)
-				time.Sleep(time.Second)
+				for deadline := time.Now().Add(10 * time.Second); time.Now().Before(deadline); time.Sleep(10 * time.Millisecond) {
+					if _, err := os.Stat(exited); err == nil {
+						break
+					}
+				}
+				time.Sleep(5 * exitStdioGrace)
 				out.run(bufio.NewWriter(&written))
 			}()
 
