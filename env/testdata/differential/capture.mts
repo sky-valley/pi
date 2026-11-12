@@ -8,7 +8,11 @@
 //
 //	node capture.mts > <GOOS>.json
 //
-// (Node 22.18+ runs TypeScript directly.) Results are normalized as upstream
+// (Node 22.18+ runs TypeScript directly.) Between releases, capture from
+// pi-durable's source at the pin instead: extract `packages/durable/src` at
+// the sha, point the two pi-durable imports below at its
+// `src/env/{index,node}.ts`, and let `@earendil-works/chord` resolve through
+// a published build's node_modules (linux.json: src 406e719a6 over npm 1.5.2). Results are normalized as upstream
 // normalizes them: the root as <root>, failures as their code, mtimes elided.
 // compact then keeps the file small: bytes (Buffer or Uint8Array) become hex,
 // and a string longer than 256 characters its SHA-256 and UTF-8 length;

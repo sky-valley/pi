@@ -379,8 +379,10 @@ func TestReadsDevicesFIFOsAndDirectoriesLikeNode(t *testing.T) {
 }
 
 // TestListsNamesThatAreNotUTF8LikeNode: names that are not UTF-8 are decoded
-// with replacement characters and lstat'ed under that name, so listDir fails
-// and a directory reader skips them. The pages' split depends on the order
+// with replacement characters and lstat'ed under that name, which reports
+// them missing, so listDir and a directory reader both leave them out
+// (listDir since upstream 75ca6e7d0; linux.json's names re-captured from
+// pi-durable's src at 406e719a6). The pages' split depends on the order
 // the file system returns, which differs between file systems, so the pages
 // are compared by size and contents, not order.
 func TestListsNamesThatAreNotUTF8LikeNode(t *testing.T) {
