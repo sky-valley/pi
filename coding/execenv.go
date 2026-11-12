@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -309,9 +310,13 @@ func (e *LocalEnv) ListDir(ctx context.Context, path string) ([]FileInfo, error)
 	for _, entry := range entries {
 		st, err := entry.Info()
 		if err != nil {
-			// A child that vanished between the read and the stat is not a
-			// failure of the listing; skip it, as a directory walk would.
-			continue
+			// Removed between the read and the stat: not part of the
+			// listing any more. Any other error fails it, as in pi
+			// (NodeExecutionEnv.listDir, upstream 75ca6e7d0).
+			if errors.Is(err, fs.ErrNotExist) {
+				continue
+			}
+			return nil, err
 		}
 		out = append(out, fileInfoFrom(filepath.Join(abs, entry.Name()), st))
 	}
