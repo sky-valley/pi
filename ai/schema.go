@@ -348,12 +348,10 @@ func (s *Schema) UnmarshalJSON(data []byte) error {
 		switch key {
 		case "type":
 			var single string
+			var multi []string
 			if err := json.Unmarshal(raw, &single); err == nil {
 				s.Type = single
-				break
-			}
-			var multi []string
-			if err := json.Unmarshal(raw, &multi); err == nil {
+			} else if err := json.Unmarshal(raw, &multi); err == nil {
 				for _, t := range multi {
 					if t == "null" {
 						s.Nullable = true
@@ -361,6 +359,9 @@ func (s *Schema) UnmarshalJSON(data []byte) error {
 						s.Type = t
 					}
 				}
+			}
+			if s.Type == "" && !s.Nullable {
+				keep(key, raw) // "", [], null or not a type name: still present, as in pi
 			}
 		case "description":
 			_ = json.Unmarshal(raw, &s.Description)

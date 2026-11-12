@@ -564,3 +564,19 @@ func TestStrictSamplingKeepsEnumOnlySchemas(t *testing.T) {
 		t.Fatalf("an enum-only node must stay strict: %#v", converted[0])
 	}
 }
+
+// pi tests whether the type keyword is present (schema.type === undefined),
+// not whether it names a type: a node whose type the typed field cannot hold
+// is not "without a type".
+func TestStrictSamplingCountsAnyTypeKeywordAsTyped(t *testing.T) {
+	for _, value := range []string{`""`, `[]`, `null`, `5`} {
+		parameters := decodeSchema(t, `{"type":"object","properties":{"v":{"type":`+value+`}},"required":["v"]}`)
+		if _, err := makeStrictJSONSchema(parameters, nil); err != nil && err.Error() == "schemas without a type are unsupported" {
+			t.Errorf("type %s: %v", value, err)
+		}
+		wire, _ := json.Marshal(parameters.Properties["v"])
+		if string(wire) != `{"type":`+value+`}` {
+			t.Errorf("type %s reaches the wire as %s", value, wire)
+		}
+	}
+}
