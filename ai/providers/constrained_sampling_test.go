@@ -196,6 +196,25 @@ func TestMakeStrictJSONSchemaUnsupported(t *testing.T) {
 			&refSchema,
 			"$ref schemas are unsupported",
 		},
+		// upstream 406e719a6 (#12049): OpenAI strict mode rejects schema
+		// nodes without a type.
+		{
+			"untyped array items",
+			// Type.Object({ commandArguments: Type.Optional(Type.Array(Type.Unknown())) })
+			decodeSchema(t, `{"type":"object","properties":{"commandArguments":{"type":"array","items":{}}}}`),
+			"schemas without a type are unsupported",
+		},
+		{
+			"any property",
+			// Type.Object({ value: Type.Any({ description: "Any JSON value" }) })
+			decodeSchema(t, `{"type":"object","properties":{"value":{"description":"Any JSON value"}},"required":["value"]}`),
+			"schemas without a type are unsupported",
+		},
+		{
+			"bare const",
+			decodeSchema(t, `{"type":"object","properties":{"mode":{"const":"fast"}},"required":["mode"]}`),
+			"schemas without a type are unsupported",
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			tool := ai.Tool{
@@ -510,5 +529,38 @@ func TestStrictSamplingHelpersCharacterization(t *testing.T) {
 		if got := isStrictToolLimitErrorMessage(tc.message); got != tc.want {
 			t.Errorf("isStrictToolLimitErrorMessage(%q) = %v, want %v", tc.message, got, tc.want)
 		}
+	}
+}
+
+func decodeSchema(t *testing.T, text string) *ai.Schema {
+	t.Helper()
+	var schema ai.Schema
+	if err := json.Unmarshal([]byte(text), &schema); err != nil {
+		t.Fatal(err)
+	}
+	return &schema
+}
+
+// Port of "keeps strict mode for enum-only schemas" (upstream 406e719a6,
+// #12049): OpenAI and Anthropic strict mode accept an enum without a type, so
+// such a node does not trip the untyped-node fallback.
+func TestStrictSamplingKeepsEnumOnlySchemas(t *testing.T) {
+	// Type.Object({ level: Type.Enum({ Low: "low", High: "high" }) })
+	parameters := decodeSchema(t, `{"type":"object","properties":{"level":{"enum":["low","high"]}},"required":["level"]}`)
+	if parameters.Properties["level"].Type != "" {
+		t.Fatalf("level must carry no type: %#v", parameters.Properties["level"])
+	}
+	tool := ai.Tool{
+		Name: "level", Description: "d", Parameters: parameters,
+		ConstrainedSampling: &ai.ConstrainedSamplingConfig{
+			Type: ai.ConstrainedSamplingJSONSchema, Strict: ai.ConstrainedSamplingPrefer,
+		},
+	}
+	converted, err := convertResponsesTools([]ai.Tool{tool}, responsesCompat{SupportsStrictMode: true}, false)
+	if err != nil {
+		t.Fatalf("convertResponsesTools: %v", err)
+	}
+	if converted[0]["strict"] != true {
+		t.Fatalf("an enum-only node must stay strict: %#v", converted[0])
 	}
 }

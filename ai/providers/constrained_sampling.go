@@ -80,6 +80,18 @@ func schemaAllowsNull(schema *ai.Schema) bool {
 	return false
 }
 
+// schemaHasType reports whether pi would see a "type" keyword on the node.
+func schemaHasType(schema *ai.Schema) bool {
+	_, other := schema.Extra["type"]
+	return schema.Type != "" || schema.Nullable || other
+}
+
+// schemaHasEnum reports whether pi would see an "enum" keyword on the node.
+func schemaHasEnum(schema *ai.Schema) bool {
+	_, other := schema.Extra["enum"]
+	return schema.Enum != nil || other
+}
+
 // unsupportedStrictSchemaKeywordCheck reports whether a provider's strict mode
 // rejects this schema keyword with this value (port of
 // UnsupportedStrictSchemaKeywordCheck). A nil check accepts every keyword.
@@ -121,6 +133,14 @@ func makeJSONSchemaNodeStrict(schema *ai.Schema, isUnsupportedKeyword unsupporte
 				return &unsupportedStrictJSONSchemaError{key + ": " + rendered + " is unsupported"}
 			}
 		}
+	}
+
+	// OpenAI strict mode rejects nodes without a type; a bare enum counts as
+	// typed, a bare const does not (upstream 406e719a6). ai.Schema splits a
+	// JSON type across Type and Nullable (["null"] is Nullable alone), and
+	// keeps an enum its typed field cannot hold ([], null) in Extra.
+	if !schemaHasType(schema) && schema.AnyOf == nil && !schemaHasEnum(schema) {
+		return &unsupportedStrictJSONSchemaError{"schemas without a type are unsupported"}
 	}
 
 	if schema.AnyOf != nil {
