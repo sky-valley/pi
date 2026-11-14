@@ -72,10 +72,9 @@ func StreamSimpleGoogle(ctx context.Context, model *ai.Model, req ai.TranscriptC
 	// under G3 (ai/stream.go:90) the port renders that as the stream's single
 	// terminal error event. What carries over is the PRECEDENCE: an eager throw
 	// preempts every other setup failure on this path — the thinking-level
-	// mapping below, and inside StreamGoogle the custom-fetch guard that
-	// deliberately precedes its own in-stream key check. That in-stream ordering
-	// is pi's for the full Stream path, which 8b5899dce did not touch, so it
-	// stays exactly as it is.
+	// mapping below. (A custom-fetch guard inside StreamGoogle used to precede
+	// its in-stream key check; upstream f72f799a4 removed it, so the full Stream
+	// path now reports a missing key from that check.)
 	if g.APIKey == "" {
 		return ai.ErrorStreamContext(ctx, model, fmt.Errorf("No API key for provider: %s", model.Provider))
 	}
@@ -363,14 +362,12 @@ func StreamGoogle(ctx context.Context, model *ai.Model, req ai.TranscriptContext
 			stream.End()
 		}
 
-		// pi guards `options.fetch && options.fetch !== globalThis.fetch`: the
-		// @google/genai client cannot take a custom fetch, so only the default
-		// one is accepted. http.DefaultClient is the Go stand-in for that
-		// default. The check precedes the api-key check, as it does in pi.
-		if _, custom := customHTTPClient(opts.HTTPClient); custom {
-			fail(errors.New("Custom fetch is not supported by the Google Generative AI adapter"))
-			return
-		}
+		// pi hands @google/genai `httpOptions.fetch: options.fetch ??
+		// globalThis.fetch` (upstream f72f799a4), so a custom HTTPClient sends
+		// the request. The port's own client stands for undici's fetch, and
+		// what is undici's (the codings it asks for and undoes, its "fetch
+		// failed" rejection, its "terminated" body) applies only to that.
+		_, custom := customHTTPClient(opts.HTTPClient)
 
 		if opts.APIKey == "" {
 			fail(fmt.Errorf("No API key for provider: %s", model.Provider))
@@ -471,7 +468,7 @@ func StreamGoogle(ctx context.Context, model *ai.Model, req ai.TranscriptContext
 			// the header also keeps net/http from undoing gzip behind the
 			// header record's back (it would drop Content-Encoding and
 			// Content-Length).
-			if _, named := r.Header["Accept-Encoding"]; !named {
+			if _, named := r.Header["Accept-Encoding"]; !named && !custom {
 				r.Header.Set("Accept-Encoding", "gzip, deflate")
 			}
 			return r, nil
@@ -484,19 +481,27 @@ func StreamGoogle(ctx context.Context, model *ai.Model, req ai.TranscriptContext
 		cfg.timeoutMs = undiciHeadersTimeoutMs
 		resp, err := sendWithRetry(ctx, build, cfg)
 		if err != nil {
-			// Neither @google/genai nor pi's catch adds to fetch's rejection.
-			fail(undiciFetchError(err))
+			// Neither @google/genai nor pi's catch adds to fetch's rejection;
+			// a custom fetch rejects with its own error.
+			if rejected := (*fetchRejection)(nil); custom && errors.As(err, &rejected) {
+				err = rejected.cause()
+			} else {
+				err = undiciFetchError(err)
+			}
+			fail(err)
 			return
 		}
-		defer resp.Body.Close()
 		// fetch hands a 204 or 205 response over with a null body, whatever
 		// the server sent (nullBodyStatus): undici neither reads nor decodes
 		// one (its codings limit included), and @google/genai's
 		// processStreamResponse throws "Response body is empty" on the first
-		// iteration, after pi has pushed start.
-		nullBody := nullBodyStatus(resp.StatusCode)
-		var respBody io.Reader
-		if !nullBody {
+		// iteration, after pi has pushed start. A custom HTTPClient's nil
+		// Body is a custom fetch's null body (nullResponseBody).
+		nullBody := nullResponseBody(resp)
+		defer resp.Body.Close()
+		var respBody io.Reader = resp.Body
+		if !nullBody && !custom {
+			// A custom fetch's body is what it made of the response.
 			if respBody, err = googleResponseBody(resp); err != nil {
 				fail(err)
 				return
@@ -507,7 +512,7 @@ func StreamGoogle(ctx context.Context, model *ai.Model, req ai.TranscriptContext
 		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 			// Read through fetch, so a connection that drops mid-body fails
 			// the stream "terminated", as @google/genai's rejected read does.
-			data, err := readFetchErrorBody(ctx, fetchBody{ctx, respBody})
+			data, err := readFetchErrorBody(ctx, googleFetchBody(ctx, respBody, custom))
 			if err != nil {
 				fail(err)
 				return
@@ -585,7 +590,7 @@ func StreamGoogle(ctx context.Context, model *ai.Model, req ai.TranscriptContext
 		// testdata/google-stream-events tags those cases as divergences.
 		responseIDTruthy := false
 		toolCallIDs := map[int]any{} // builder index -> the id pi compares with ===
-		err = iterateGoogleSSE(fetchBody{ctx, respBody}, observe, func(payload any) error {
+		err = iterateGoogleSSE(googleFetchBody(ctx, respBody, custom), observe, func(payload any) error {
 			chunk := googleGenerateContentResponse(payload, nil)
 			// output.responseId ||= chunk.responseId
 			if !responseIDTruthy {
@@ -1259,7 +1264,10 @@ func mapGoogleStopReason(reason string) (ai.StopReason, error) {
 	switch reason {
 	case "STOP":
 		return ai.StopStop, nil
-	case "MAX_TOKENS":
+	case "MAX_TOKENS",
+		// Per-request token limit reached before generation completed; pi
+		// does not resume with the continuation token (upstream f72f799a4).
+		"CONTINUATION":
 		return ai.StopLength, nil
 	case "BLOCKLIST",
 		"PROHIBITED_CONTENT",
@@ -1281,6 +1289,16 @@ func mapGoogleStopReason(reason string) (ai.StopReason, error) {
 	default:
 		return ai.StopError, fmt.Errorf("Unhandled stop reason: %s", reason)
 	}
+}
+
+// googleFetchBody is the response body as @google/genai reads it: undici's
+// (fetchBody), which fails "terminated" when its connection drops mid-body,
+// unless a custom fetch made the response.
+func googleFetchBody(ctx context.Context, body io.Reader, custom bool) io.Reader {
+	if custom {
+		return body
+	}
+	return fetchBody{ctx, body}
 }
 
 // googleBareJSONError is the check @google/genai 2.21.0 runs on every body

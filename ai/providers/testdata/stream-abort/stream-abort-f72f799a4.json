@@ -1,5 +1,5 @@
 {
-	"source": "upstream 71023aec1 packages/ai/src/api, @anthropic-ai/sdk 0.129.0 sha512-MH7LB20kNpGLUpPTe2OG5XvL/KhX8HUO9XyBaFjgFk6TLS4Xjt0VPIuMKywe7POKKPslX+QxSlVok9e+8kG5Nw==, openai 7.19.0 sha512-MX2s3u2L5racTO0CC/SWpCOasJQBCJrqLKXK+l82cAhdeF8mPMBEe/gxMm0ZFa2xpKpOFLRjxv5afYEZbBXmbQ==, @google/genai 2.21.0 sha512-+PDtco2/Z0ONdzCGekCoCT+O1VJS9xJQNN4XzQpXG/t3El/SWWMkCWlFRO1KmivOHPa4Q0VjUYu1HBKCZ/v33Q==, node v26.4.0 (undici 8.5.0)",
+	"source": "upstream 71023aec1 packages/ai/src/api, @anthropic-ai/sdk 0.129.0 sha512-MH7LB20kNpGLUpPTe2OG5XvL/KhX8HUO9XyBaFjgFk6TLS4Xjt0VPIuMKywe7POKKPslX+QxSlVok9e+8kG5Nw==, openai 7.19.0 sha512-MX2s3u2L5racTO0CC/SWpCOasJQBCJrqLKXK+l82cAhdeF8mPMBEe/gxMm0ZFa2xpKpOFLRjxv5afYEZbBXmbQ==, @google/genai 2.21.0 sha512-+PDtco2/Z0ONdzCGekCoCT+O1VJS9xJQNN4XzQpXG/t3El/SWWMkCWlFRO1KmivOHPa4Q0VjUYu1HBKCZ/v33Q==, node v26.4.0 (undici 8.5.0); rows 104-105 (google-generative-ai, a custom fetch rejects / with a timeout) from upstream f72f799a4, @google/genai 2.32.0 sha512-60c79uXpR0a47bmGqDxbXEBuQUalNmwo5mx5kqb91jIW4FoqpsLSt86DeVhRhtH5+s/16Wqxt3sXzFQn2U1OHQ==, node v24.22.1: node v24.22.1 reproduces every google-generative-ai row of this file at 71023aec1 byte for byte, and between f72f799a4^1 and f72f799a4 only these two rows move",
 	"runs": [
 		{
 			"api": "anthropic-messages",
@@ -1863,7 +1863,7 @@
 				"error"
 			],
 			"stopReason": "error",
-			"errorMessage": "Custom fetch is not supported by the Google Generative AI adapter",
+			"errorMessage": "the custom fetch failed",
 			"content": "[]",
 			"diagnostics": []
 		},
@@ -1876,7 +1876,7 @@
 				"error"
 			],
 			"stopReason": "error",
-			"errorMessage": "Custom fetch is not supported by the Google Generative AI adapter",
+			"errorMessage": "the custom fetch timed out",
 			"content": "[]",
 			"diagnostics": []
 		}
