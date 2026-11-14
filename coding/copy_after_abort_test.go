@@ -47,7 +47,11 @@ func TestLastAssistantText12119AfterAbortDuringToolCall(t *testing.T) {
 		defer close(done)
 		_, _ = sess.Run(context.Background(), "run the blocking tool")
 	}()
-	<-toolStarted
+	select {
+	case <-toolStarted:
+	case <-done:
+		t.Fatal("run ended before the blocking tool started")
+	}
 	sess.Abort()
 	<-done
 
