@@ -540,28 +540,28 @@ func readFile(cwd string, ops ReadOperations, model toolModelFn) func(ctx contex
 			// pi's processImage). The note text matches pi's read tool exactly
 			// (utils/image-process.ts).
 			requestModel := model.get()
-			nonVisionNote := nonVisionImageNote(requestModel)
 			processed := processImage(data, mime, true, imageResizeOptionsOf(requestModel))
 			if !processed.Ok {
 				text := fmt.Sprintf("Read image file [%s]\n%s", mime, processed.Message)
-				if nonVisionNote != "" {
-					text += "\n" + nonVisionNote
-				}
 				return agent.AgentToolResult{Content: ai.ContentList{ai.TextContent{Text: text}}}, nil
 			}
 			note := fmt.Sprintf("Read image file [%s]", processed.MimeType)
 			if len(processed.Hints) > 0 {
 				note += "\n" + strings.Join(processed.Hints, "\n")
 			}
-			if nonVisionNote != "" {
-				note += "\n" + nonVisionNote
-			}
-			// pi's read never assigns `details` on the image branches
-			// (read.ts:108-131), so it stays undefined and off the wire.
-			return agent.AgentToolResult{Content: ai.ContentList{
+			res := agent.AgentToolResult{Content: ai.ContentList{
 				ai.TextContent{Text: note},
 				ai.ImageContent{Data: encodeBase64(processed.Data), MimeType: processed.MimeType},
-			}}, nil
+			}}
+			// The result is replayed after a switch to a vision model, so the
+			// text says nothing about this model; the provider replaces the
+			// image with a placeholder per request instead, and the details
+			// tell the user (upstream 4be4cb4f5, #12131). Otherwise pi leaves
+			// `details` undefined on the image branches, off the wire.
+			if requestModel != nil && !slices.Contains(requestModel.Input, "image") {
+				res.Details = map[string]any{"imageUnsupportedByModel": requestModel.ID}
+			}
+			return res, nil
 		}
 
 		// Convert offset from 1-indexed input to 0-indexed line access.
@@ -867,7 +867,8 @@ type sessionEnvFn func() map[string]string
 // read it straight off the execution context (ctx?.model): the read tool takes
 // its image resize profile from it (`ctx?.model?.inputLimits?.images?.resize`,
 // read.ts), falling back to a construction-time option when the context
-// carries no model, and its non-vision note (getNonVisionImageNote). The
+// carries no model, and the details that tell the user the model has no
+// image input (imageUnsupportedByModel). The
 // port's AgentTool.Execute has no model, so this getter — installed by
 // NewSession, the same shape as sessionEnvFn — is that seam, and reading it
 // per call keeps a mid-session SetModel from leaving a stale model behind.
@@ -880,17 +881,6 @@ func (f toolModelFn) get() *ai.Model {
 		return nil
 	}
 	return f()
-}
-
-// nonVisionImageNote is pi's getNonVisionImageNote (upstream 2f4f283cc): the
-// line the read tool adds to an image's text when the request's model does
-// not take images, whose image block the provider then leaves out. No model
-// adds nothing.
-func nonVisionImageNote(m *ai.Model) string {
-	if m == nil || slices.Contains(m.Input, "image") {
-		return ""
-	}
-	return "[Current model does not support images. The image will be omitted from this request.]"
 }
 
 // imageResizeOptionsOf is a model's image resize profile

@@ -4,12 +4,24 @@
 //
 //   node capture.mjs <pi npm dir> <out.json>
 //   e.g. node capture.mjs <npm>/1.3.0 readimagenote-1.3.0.json
+//   node --experimental-strip-types capture.mjs <src extraction named by sha> <out.json>
+//   e.g. ... capture.mjs <dir>/4be4cb4f5 readimagenote-4be4cb4f5.json
+//
+// A src extraction is `git archive <sha> packages/coding-agent` with an npm
+// build's node_modules beside it, read from its .ts files and labelled
+// "src <dir name>".
+//
+// readimagenote-4be4cb4f5.json is a src capture over the 1.5.2 build's
+// node_modules: 4be4cb4f5 drops the non-vision note from the text and sets
+// details.imageUnsupportedByModel instead. Control: src at 4be4cb4f5^1 writes
+// readimagenote-1.3.0.json's rows, each with "details": null.
 //
 // createReadToolDefinition(cwd).execute runs with an execution context whose
 // model accepts images, accepts only text, or is absent, over a decodable PNG
 // and a PNG header with no image data. Each row records the text block, the
-// content block types and the structured content without its image data
-// (the encoder's bytes are not what this pins).
+// content block types, the structured content without its image data (the
+// encoder's bytes are not what this pins) and the details (null when pi
+// leaves them undefined).
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -20,9 +32,15 @@ if (!npmDir || !outFile) {
 	console.error("usage: node capture.mjs <pi npm dir> <out.json>");
 	process.exit(2);
 }
+const srcRead = path.join(npmDir, "packages/coding-agent/src/core/tools/read.ts");
+const src = fs.existsSync(srcRead);
 const pkg = path.join(npmDir, "node_modules/@earendil-works/pi-coding-agent");
-const version = JSON.parse(fs.readFileSync(path.join(pkg, "package.json"), "utf8")).version;
-const { createReadToolDefinition } = await import(pathToFileURL(path.join(pkg, "dist/core/tools/read.js")).href);
+const version = src
+	? `src ${path.basename(npmDir)}`
+	: JSON.parse(fs.readFileSync(path.join(pkg, "package.json"), "utf8")).version;
+const { createReadToolDefinition } = await import(
+	pathToFileURL(src ? srcRead : path.join(pkg, "dist/core/tools/read.js")).href
+);
 
 // coding/imagedetect_test.go minimalPNG, and its first 33 bytes.
 const minimalPNG = Buffer.from([
@@ -53,6 +71,7 @@ for (const file of ["pixel.png", "broken.png"]) {
 			text: result.content.find((block) => block.type === "text")?.text ?? null,
 			blocks: result.content.map((block) => block.type),
 			structured: typeof structured === "string" ? structured : { ...structured, data: typeof structured.data },
+			details: result.details ?? null,
 		});
 	}
 }

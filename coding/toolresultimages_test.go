@@ -629,13 +629,16 @@ func TestImageResizeProfileIsRaceFreeAcrossSetModel(t *testing.T) {
 	<-done
 }
 
-// TestReadImageNoteFollowsTheModel replays testdata/readimagenote
-// (pi-coding-agent 1.3.0's read tool): when the request's model does not take
-// images, the text that goes with an image — processed or not — ends with
-// getNonVisionImageNote's line, and the structured content's note carries it
-// too. A vision model, or no model at all, adds nothing.
+// TestReadImageNoteFollowsTheModel replays testdata/readimagenote (pi's read
+// tool on src at 4be4cb4f5): the text that goes with an image, and the
+// structured content's note, are the same whatever the request's model takes.
+// The result is replayed after a switch to a vision model, so it keeps no note
+// saying the model cannot see the image; when the model has no image input
+// and the image was processed, details.imageUnsupportedByModel names it for
+// the user instead (#12131). A vision model, no model at all, or an image
+// that could not be processed leaves the details undefined.
 func TestReadImageNoteFollowsTheModel(t *testing.T) {
-	data, err := os.ReadFile("testdata/readimagenote/readimagenote-1.3.0.json")
+	data, err := os.ReadFile("testdata/readimagenote/readimagenote-4be4cb4f5.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -647,6 +650,7 @@ func TestReadImageNoteFollowsTheModel(t *testing.T) {
 			Text       string          `json:"text"`
 			Blocks     []string        `json:"blocks"`
 			Structured json.RawMessage `json:"structured"`
+			Details    json.RawMessage `json:"details"`
 		} `json:"rows"`
 	}
 	if err := json.Unmarshal(data, &capture); err != nil {
@@ -698,6 +702,54 @@ func TestReadImageNoteFollowsTheModel(t *testing.T) {
 			if string(got) != want.String() {
 				t.Fatalf("structured content %s, pi %s", got, want.String())
 			}
+			// pi's undefined details are the capture's null and the port's nil.
+			gotDetails, err := json.Marshal(res.Details)
+			if err != nil {
+				t.Fatal(err)
+			}
+			want.Reset()
+			if err := json.Compact(&want, row.Details); err != nil {
+				t.Fatal(err)
+			}
+			if string(gotDetails) != want.String() {
+				t.Fatalf("details %s, pi %s", gotDetails, want.String())
+			}
 		})
+	}
+}
+
+// pi 4be4cb4f5 (#12131) tools.test.ts 'should keep a text-only model's image
+// warning out of what the model gets'. The TUI half — the warning rendered
+// collapsed and expanded — is host and not ported; the details it renders from
+// are.
+func TestReadKeepsTextOnlyModelImageWarningOutOfModelContent(t *testing.T) {
+	const png1x1Base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYGD4DwABBAEAX+XDSwAAAABJRU5ErkJggg=="
+	dir := t.TempDir()
+	data, err := base64.StdEncoding.DecodeString(png1x1Base64)
+	if err != nil {
+		t.Fatal(err)
+	}
+	testFile := filepath.Join(dir, "text-model.png")
+	if err := os.WriteFile(testFile, data, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	model := &ai.Model{ID: "text-only", Input: []string{"text"}}
+	res, err := readToolOps(dir, nil, func() *ai.Model { return model }).Execute(context.Background(), "test-call-img-text-model", map[string]any{"path": testFile}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// The result is replayed after a switch to a vision model, so it keeps the
+	// image and no note saying the model cannot see it; the provider replaces
+	// the image per request instead.
+	if got := resultText(res); got != "Read image file [image/png]" {
+		t.Fatalf("text = %q, want only the read note", got)
+	}
+	if !slices.ContainsFunc(res.Content, func(c ai.Content) bool { _, ok := c.(ai.ImageContent); return ok }) {
+		t.Fatalf("content %v lacks the image", res.Content)
+	}
+	details, _ := res.Details.(map[string]any)
+	if details["imageUnsupportedByModel"] != "text-only" {
+		t.Fatalf("details = %v, want imageUnsupportedByModel text-only", res.Details)
 	}
 }
