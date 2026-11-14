@@ -855,33 +855,38 @@ func TestGoogleEmptyStringTextPartIsPresent(t *testing.T) {
 
 // --- F3: mid-stream error chunks + truncated streams ---
 
-// TestGoogleSSEErrorEventDoesNotFailStream: @google/genai 2.21.0 checks for an
-// {"error":...} payload only when a whole body read is bare JSON
-// (processStreamResponse); a data: event is parsed and converted by
-// generateContentResponseFromMldev, which keeps no "error" field, so pi sees an
-// empty chunk and reads on. Measured by testdata/google-stream-events
-// (scenarios "an SSE-framed error event ..."). parity-sweep-2 F3 had recorded
-// the opposite as SDK behaviour.
-func TestGoogleSSEErrorEventDoesNotFailStream(t *testing.T) {
+// TestGoogleSSEErrorEventFailsStream: @google/genai 2.32.0 checks every data:
+// payload for an {"error":...} object with a number code in 400..599
+// (throwIfStreamErrorChunk), as it checks every whole body read, and throws
+// before the event is yielded; 2.21.0 checked only whole reads, so pi read
+// on. Measured by testdata/google-stream-events (scenarios "an SSE-framed
+// error event ...").
+func TestGoogleSSEErrorEventFailsStream(t *testing.T) {
 	errEvent := "data: {\"error\":{\"code\":429,\"message\":\"quota exceeded\",\"status\":\"RESOURCE_EXHAUSTED\"}}\n\n"
+	const want = `got status: RESOURCE_EXHAUSTED. {"error":{"code":429,"message":"quota exceeded","status":"RESOURCE_EXHAUSTED"}}`
 	text := func(s string) string {
 		return "data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"" + s + "\"}]}}]}\n\n"
 	}
 	stop := "data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"!\"}]},\"finishReason\":\"STOP\"}]}\n\n"
 
-	t.Run("the stream reads on", func(t *testing.T) {
-		final := googleServe(t, "gemini-2.5-flash", text("before ")+errEvent+text("after")+stop).Result()
+	for name, body := range map[string]string{
+		"mid-stream":      text("before ") + errEvent + text("after") + stop,
+		"as the last one": text("before ") + errEvent,
+	} {
+		t.Run(name, func(t *testing.T) {
+			final := googleServe(t, "gemini-2.5-flash", body).Result()
+			if final.StopReason != ai.StopError || final.ErrorMessage != want {
+				t.Fatalf("got %s %q, want error %q", final.StopReason, final.ErrorMessage, want)
+			}
+			if got := final.Content[0].(ai.TextContent).Text; got != "before " {
+				t.Fatalf("text %q, want %q", got, "before ")
+			}
+		})
+	}
+	t.Run("a string code reads on", func(t *testing.T) {
+		final := googleServe(t, "gemini-2.5-flash", text("before ")+`data: {"error":{"code":"429"}}`+"\n\n"+text("after")+stop).Result()
 		if final.StopReason != ai.StopStop {
 			t.Fatalf("stop reason %s (%s), want stop", final.StopReason, final.ErrorMessage)
-		}
-		if got := final.Content[0].(ai.TextContent).Text; got != "before after!" {
-			t.Fatalf("text %q, want %q", got, "before after!")
-		}
-	})
-	t.Run("as the last event", func(t *testing.T) {
-		final := googleServe(t, "gemini-2.5-flash", text("partial")+errEvent).Result()
-		if final.StopReason != ai.StopError || final.ErrorMessage != "Google stream ended without a finish reason" {
-			t.Fatalf("got %s %q, want error %q", final.StopReason, final.ErrorMessage, "Google stream ended without a finish reason")
 		}
 	})
 }

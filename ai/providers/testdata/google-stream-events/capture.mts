@@ -4,7 +4,7 @@
 // this package.
 //
 //   node --experimental-strip-types capture.mts <extraction> <out.json> <sha>
-//   e.g. ... capture.mts <dir> google-stream-events-49681e1b7.json 49681e1b7
+//   e.g. ... capture.mts <dir> google-stream-events-f72f799a4.json f72f799a4
 //
 // <extraction> holds `git archive <sha> packages/ai package-lock.json` from the
 // upstream clone, plus a node_modules resolving pi-ai's dependencies (the npm
@@ -178,8 +178,8 @@ const scenarios: Scenario[] = [
 		segments: [sse("null", "5", '"s"', "true", "false", '[{"candidates":[]}]', "{}", stop)],
 	},
 	{
-		name: "an SSE-framed error event is observed and the stream continues",
-		note: "parity-sweep-2 F3 once recorded that this throws; @google/genai only checks whole body reads that are bare JSON",
+		name: "an SSE-framed error event throws",
+		note: "@google/genai 2.32.0 checks each data: payload as it checks a whole read (throwIfStreamErrorChunk), before the event is yielded; 2.21.0 checked only whole reads, and the stream went on",
 		framing: "close",
 		headers: eventStream,
 		segments: [
@@ -187,8 +187,8 @@ const scenarios: Scenario[] = [
 		],
 	},
 	{
-		name: "an SSE-framed error event as the last event",
-		note: "an error event with nothing after it: no throw, so the stream ends without a finish reason",
+		name: "an SSE-framed error event as the last event throws",
+		note: "the throw precedes the event, so the open text block is never ended",
 		framing: "close",
 		headers: eventStream,
 		segments: [
@@ -959,8 +959,8 @@ const scenarios: Scenario[] = [
 		segments: ['{\n  "error": {\n    "code": 503,\n    "message": "over\\u006coaded",\n    "status": "UNAVAILABLE"\n  },\n  "extra": [1.50, 1e2]\n}\n'],
 	},
 	{
-		name: "a bare JSON error with a string code throws",
-		note: "code >= 400 && code < 600 coerces the string",
+		name: "a bare JSON error with a string code does not throw",
+		note: "throwIfStreamErrorChunk takes only a number code (typeof code === 'number'); the read is then an incomplete segment",
 		framing: "close",
 		headers: eventStream,
 		segments: [sse(text("x")), '{"error":{"code":"500","status":"INTERNAL"}}'],
@@ -972,7 +972,7 @@ const scenarios: Scenario[] = [
 		segments: [sse(text("x")), '{"error":{"code":404}}'],
 	},
 	{
-		name: "a bare JSON error with a non-string status",
+		name: "a bare JSON error with an array code does not throw",
 		framing: "close",
 		headers: eventStream,
 		segments: [sse(text("x")), '{"error":{"code":[429],"status":{"s":1}}}'],
@@ -991,14 +991,14 @@ const scenarios: Scenario[] = [
 		segments: [sse(text("x")), '{"error":{"code":500,"status":"S"},"z":1e400,"a":[-1e400,1e-400]}'],
 	},
 	{
-		name: "a bare JSON error reads its status after a JSON round trip",
-		note: "status comes from JSON.parse(JSON.stringify(chunkJson.error)), where Infinity is already null",
+		name: "a bare JSON error reads its status as parsed",
+		note: "no JSON round trip since @google/genai 2.32.0: a status past float64's range reads Infinity, where the quoted chunk spells it null",
 		framing: "close",
 		headers: eventStream,
 		segments: [sse(text("x")), '{"error":{"code":500,"status":1e400}}'],
 	},
 	{
-		name: "a bare JSON error reads an array status after a JSON round trip",
+		name: "a bare JSON error with a string code and an array status does not throw",
 		framing: "close",
 		headers: eventStream,
 		segments: [sse(text("x")), '{"error":{"code":"503","status":[1e400,"s",2]}}'],
@@ -1333,6 +1333,42 @@ const scenarios: Scenario[] = [
 				'{"candidates":[{"content":{"parts":[{"functionCall":{"id":7,"name":5,"args":[1,{"b":2}]},"thoughtSignature":7},{"functionCall":{"id":"c2","name":"f","args":"s"}},{"functionCall":{"id":"c3","name":"","args":null}}]},"finishReason":"STOP"}]}',
 			),
 		],
+	},
+	// @google/genai 2.32.0's throwIfStreamErrorChunk, which runs on each read
+	// and on each data: payload: it throws only for an object "error" whose
+	// code is a number in 400..599, and quotes the status as parsed.
+	{
+		name: "a bare JSON error with a non-string status",
+		framing: "close",
+		headers: eventStream,
+		segments: [sse(text("x")), '{"error":{"code":429,"status":{"s":1}}}'],
+	},
+	{
+		name: "a bare JSON error reads an array status as parsed",
+		framing: "close",
+		headers: eventStream,
+		segments: [sse(text("x")), '{"error":{"code":503,"status":[1e400,"s",[2,null]]}}'],
+	},
+	{
+		name: "an SSE-framed error event with a string code does not throw",
+		note: "the payload reaches pi as an empty chunk, and the stream goes on",
+		framing: "close",
+		headers: eventStream,
+		segments: [sse(text("before "), '{"error":{"code":"500","status":"INTERNAL"}}', text("after"), stop)],
+	},
+	{
+		name: "an SSE-framed error event split across reads throws",
+		note: "neither read is JSON; the data: payload is",
+		framing: "close",
+		headers: eventStream,
+		segments: [sse(text("x")) + 'data: {"error":{"code":5', '03,"status":"UNAVAILABLE"}}\n\n', sse(stop)],
+	},
+	{
+		name: "an SSE-framed error event whose status has no string form does not throw",
+		note: "String(status) throws a TypeError, which the check swallows",
+		framing: "close",
+		headers: eventStream,
+		segments: [sse(text("x"), '{"error":{"code":500,"status":{"toString":1}}}', stop)],
 	},
 ];
 

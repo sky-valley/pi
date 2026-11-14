@@ -1,5 +1,5 @@
 {
-	"source": "upstream 49681e1b7 packages/ai/src/api/google-generative-ai.ts (onProviderStreamEvent, 002fc8385), @google/genai 2.21.0 sha512-+PDtco2/Z0ONdzCGekCoCT+O1VJS9xJQNN4XzQpXG/t3El/SWWMkCWlFRO1KmivOHPa4Q0VjUYu1HBKCZ/v33Q==, node v26.4.0",
+	"source": "upstream 49681e1b7 packages/ai/src/api/google-generative-ai.ts (onProviderStreamEvent, 002fc8385), @google/genai 2.21.0 sha512-+PDtco2/Z0ONdzCGekCoCT+O1VJS9xJQNN4XzQpXG/t3El/SWWMkCWlFRO1KmivOHPa4Q0VjUYu1HBKCZ/v33Q==, node v26.4.0; rows 4, 5, 81, 83, 86, 87 and 133-137 (@google/genai 2.32.0's throwIfStreamErrorChunk) from upstream f72f799a4, @google/genai 2.32.0 sha512-60c79uXpR0a47bmGqDxbXEBuQUalNmwo5mx5kqb91jIW4FoqpsLSt86DeVhRhtH5+s/16Wqxt3sXzFQn2U1OHQ==, node v24.22.1: node v24.22.1 reproduces rows 4, 5, 81, 83, 86 and 87 of this file at 49681e1b7, and between f72f799a4^1 and f72f799a4 only these rows move",
 	"scenarios": [
 		{
 			"name": "upstream two chunks",
@@ -261,8 +261,8 @@
 			}
 		},
 		{
-			"name": "an SSE-framed error event is observed and the stream continues",
-			"note": "parity-sweep-2 F3 once recorded that this throws; @google/genai only checks whole body reads that are bare JSON",
+			"name": "an SSE-framed error event throws",
+			"note": "@google/genai 2.32.0 checks each data: payload as it checks a whole read (throwIfStreamErrorChunk), before the event is yielded; 2.21.0 checked only whole reads, and the stream went on",
 			"framing": "close",
 			"headers": [
 				[
@@ -277,10 +277,7 @@
 			"pi": {
 				"acceptEncoding": "gzip, deflate",
 				"events": [
-					"{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"before \"}],\"role\":\"model\"}}],\"sdkHttpResponse\":{\"headers\":{\"content-type\":\"text/event-stream\"}}}",
-					"{\"sdkHttpResponse\":{\"headers\":{\"content-type\":\"text/event-stream\"}}}",
-					"{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"after\"}],\"role\":\"model\"}}],\"sdkHttpResponse\":{\"headers\":{\"content-type\":\"text/event-stream\"}}}",
-					"{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"!\"}],\"role\":\"model\"},\"finishReason\":\"STOP\"}],\"sdkHttpResponse\":{\"headers\":{\"content-type\":\"text/event-stream\"}}}"
+					"{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"before \"}],\"role\":\"model\"}}],\"sdkHttpResponse\":{\"headers\":{\"content-type\":\"text/event-stream\"}}}"
 				],
 				"sameModel": true,
 				"stream": [
@@ -295,22 +292,12 @@
 						"delta": "before "
 					},
 					{
-						"type": "text_delta",
-						"delta": "after"
-					},
-					{
-						"type": "text_delta",
-						"delta": "!"
-					},
-					{
-						"type": "text_end"
-					},
-					{
-						"type": "done"
+						"type": "error"
 					}
 				],
-				"stopReason": "stop",
-				"content": "[{\"type\":\"text\",\"text\":\"before after!\"}]",
+				"stopReason": "error",
+				"errorMessage": "got status: RESOURCE_EXHAUSTED. {\"error\":{\"code\":429,\"message\":\"quota exceeded\",\"status\":\"RESOURCE_EXHAUSTED\"}}",
+				"content": "[{\"type\":\"text\",\"text\":\"before \"}]",
 				"usage": {
 					"input": 0,
 					"output": 0,
@@ -328,8 +315,8 @@
 			}
 		},
 		{
-			"name": "an SSE-framed error event as the last event",
-			"note": "an error event with nothing after it: no throw, so the stream ends without a finish reason",
+			"name": "an SSE-framed error event as the last event throws",
+			"note": "the throw precedes the event, so the open text block is never ended",
 			"framing": "close",
 			"headers": [
 				[
@@ -344,8 +331,7 @@
 			"pi": {
 				"acceptEncoding": "gzip, deflate",
 				"events": [
-					"{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"partial\"}],\"role\":\"model\"}}],\"sdkHttpResponse\":{\"headers\":{\"content-type\":\"text/event-stream\"}}}",
-					"{\"sdkHttpResponse\":{\"headers\":{\"content-type\":\"text/event-stream\"}}}"
+					"{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"partial\"}],\"role\":\"model\"}}],\"sdkHttpResponse\":{\"headers\":{\"content-type\":\"text/event-stream\"}}}"
 				],
 				"sameModel": true,
 				"stream": [
@@ -360,14 +346,11 @@
 						"delta": "partial"
 					},
 					{
-						"type": "text_end"
-					},
-					{
 						"type": "error"
 					}
 				],
 				"stopReason": "error",
-				"errorMessage": "Google stream ended without a finish reason",
+				"errorMessage": "got status: RESOURCE_EXHAUSTED. {\"error\":{\"code\":429,\"message\":\"quota exceeded\",\"status\":\"RESOURCE_EXHAUSTED\"}}",
 				"content": "[{\"type\":\"text\",\"text\":\"partial\"}]",
 				"usage": {
 					"input": 0,
@@ -4875,8 +4858,8 @@
 			}
 		},
 		{
-			"name": "a bare JSON error with a string code throws",
-			"note": "code >= 400 && code < 600 coerces the string",
+			"name": "a bare JSON error with a string code does not throw",
+			"note": "throwIfStreamErrorChunk takes only a number code (typeof code === 'number'); the read is then an incomplete segment",
 			"framing": "close",
 			"headers": [
 				[
@@ -4888,7 +4871,7 @@
 				"data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"x\"}],\"role\":\"model\"}}]}\n\n",
 				"{\"error\":{\"code\":\"500\",\"status\":\"INTERNAL\"}}"
 			],
-			"readBoundariesMatter": true,
+			"readBoundariesMatter": false,
 			"pi": {
 				"acceptEncoding": "gzip, deflate",
 				"events": [
@@ -4911,7 +4894,7 @@
 					}
 				],
 				"stopReason": "error",
-				"errorMessage": "got status: INTERNAL. {\"error\":{\"code\":\"500\",\"status\":\"INTERNAL\"}}",
+				"errorMessage": "Incomplete JSON segment at the end",
 				"content": "[{\"type\":\"text\",\"text\":\"x\"}]",
 				"usage": {
 					"input": 0,
@@ -4984,7 +4967,7 @@
 			}
 		},
 		{
-			"name": "a bare JSON error with a non-string status",
+			"name": "a bare JSON error with an array code does not throw",
 			"framing": "close",
 			"headers": [
 				[
@@ -4996,7 +4979,7 @@
 				"data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"x\"}],\"role\":\"model\"}}]}\n\n",
 				"{\"error\":{\"code\":[429],\"status\":{\"s\":1}}}"
 			],
-			"readBoundariesMatter": true,
+			"readBoundariesMatter": false,
 			"pi": {
 				"acceptEncoding": "gzip, deflate",
 				"events": [
@@ -5019,7 +5002,7 @@
 					}
 				],
 				"stopReason": "error",
-				"errorMessage": "got status: [object Object]. {\"error\":{\"code\":[429],\"status\":{\"s\":1}}}",
+				"errorMessage": "Incomplete JSON segment at the end",
 				"content": "[{\"type\":\"text\",\"text\":\"x\"}]",
 				"usage": {
 					"input": 0,
@@ -5147,8 +5130,8 @@
 			}
 		},
 		{
-			"name": "a bare JSON error reads its status after a JSON round trip",
-			"note": "status comes from JSON.parse(JSON.stringify(chunkJson.error)), where Infinity is already null",
+			"name": "a bare JSON error reads its status as parsed",
+			"note": "no JSON round trip since @google/genai 2.32.0: a status past float64's range reads Infinity, where the quoted chunk spells it null",
 			"framing": "close",
 			"headers": [
 				[
@@ -5183,7 +5166,7 @@
 					}
 				],
 				"stopReason": "error",
-				"errorMessage": "got status: null. {\"error\":{\"code\":500,\"status\":null}}",
+				"errorMessage": "got status: Infinity. {\"error\":{\"code\":500,\"status\":null}}",
 				"content": "[{\"type\":\"text\",\"text\":\"x\"}]",
 				"usage": {
 					"input": 0,
@@ -5202,7 +5185,7 @@
 			}
 		},
 		{
-			"name": "a bare JSON error reads an array status after a JSON round trip",
+			"name": "a bare JSON error with a string code and an array status does not throw",
 			"framing": "close",
 			"headers": [
 				[
@@ -5214,7 +5197,7 @@
 				"data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"x\"}],\"role\":\"model\"}}]}\n\n",
 				"{\"error\":{\"code\":\"503\",\"status\":[1e400,\"s\",2]}}"
 			],
-			"readBoundariesMatter": true,
+			"readBoundariesMatter": false,
 			"pi": {
 				"acceptEncoding": "gzip, deflate",
 				"events": [
@@ -5237,7 +5220,7 @@
 					}
 				],
 				"stopReason": "error",
-				"errorMessage": "got status: ,s,2. {\"error\":{\"code\":\"503\",\"status\":[null,\"s\",2]}}",
+				"errorMessage": "Incomplete JSON segment at the end",
 				"content": "[{\"type\":\"text\",\"text\":\"x\"}]",
 				"usage": {
 					"input": 0,
@@ -7763,6 +7746,299 @@
 				],
 				"stopReason": "toolUse",
 				"content": "[{\"type\":\"toolCall\",\"id\":7,\"name\":5,\"arguments\":[1,{\"b\":2}],\"thoughtSignature\":7},{\"type\":\"toolCall\",\"id\":\"c2\",\"name\":\"f\",\"arguments\":\"s\"},{\"type\":\"toolCall\",\"id\":\"c3\",\"name\":\"\",\"arguments\":{}}]",
+				"usage": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"totalTokens": 0,
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0
+					}
+				}
+			}
+		},
+		{
+			"name": "a bare JSON error with a non-string status",
+			"framing": "close",
+			"headers": [
+				[
+					"Content-Type",
+					"text/event-stream"
+				]
+			],
+			"segments": [
+				"data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"x\"}],\"role\":\"model\"}}]}\n\n",
+				"{\"error\":{\"code\":429,\"status\":{\"s\":1}}}"
+			],
+			"readBoundariesMatter": true,
+			"pi": {
+				"acceptEncoding": "gzip, deflate",
+				"events": [
+					"{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"x\"}],\"role\":\"model\"}}],\"sdkHttpResponse\":{\"headers\":{\"content-type\":\"text/event-stream\"}}}"
+				],
+				"sameModel": true,
+				"stream": [
+					{
+						"type": "start"
+					},
+					{
+						"type": "text_start"
+					},
+					{
+						"type": "text_delta",
+						"delta": "x"
+					},
+					{
+						"type": "error"
+					}
+				],
+				"stopReason": "error",
+				"errorMessage": "got status: [object Object]. {\"error\":{\"code\":429,\"status\":{\"s\":1}}}",
+				"content": "[{\"type\":\"text\",\"text\":\"x\"}]",
+				"usage": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"totalTokens": 0,
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0
+					}
+				}
+			}
+		},
+		{
+			"name": "a bare JSON error reads an array status as parsed",
+			"framing": "close",
+			"headers": [
+				[
+					"Content-Type",
+					"text/event-stream"
+				]
+			],
+			"segments": [
+				"data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"x\"}],\"role\":\"model\"}}]}\n\n",
+				"{\"error\":{\"code\":503,\"status\":[1e400,\"s\",[2,null]]}}"
+			],
+			"readBoundariesMatter": true,
+			"pi": {
+				"acceptEncoding": "gzip, deflate",
+				"events": [
+					"{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"x\"}],\"role\":\"model\"}}],\"sdkHttpResponse\":{\"headers\":{\"content-type\":\"text/event-stream\"}}}"
+				],
+				"sameModel": true,
+				"stream": [
+					{
+						"type": "start"
+					},
+					{
+						"type": "text_start"
+					},
+					{
+						"type": "text_delta",
+						"delta": "x"
+					},
+					{
+						"type": "error"
+					}
+				],
+				"stopReason": "error",
+				"errorMessage": "got status: Infinity,s,2,. {\"error\":{\"code\":503,\"status\":[null,\"s\",[2,null]]}}",
+				"content": "[{\"type\":\"text\",\"text\":\"x\"}]",
+				"usage": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"totalTokens": 0,
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0
+					}
+				}
+			}
+		},
+		{
+			"name": "an SSE-framed error event with a string code does not throw",
+			"note": "the payload reaches pi as an empty chunk, and the stream goes on",
+			"framing": "close",
+			"headers": [
+				[
+					"Content-Type",
+					"text/event-stream"
+				]
+			],
+			"segments": [
+				"data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"before \"}],\"role\":\"model\"}}]}\n\ndata: {\"error\":{\"code\":\"500\",\"status\":\"INTERNAL\"}}\n\ndata: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"after\"}],\"role\":\"model\"}}]}\n\ndata: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"!\"}],\"role\":\"model\"},\"finishReason\":\"STOP\"}]}\n\n"
+			],
+			"readBoundariesMatter": false,
+			"pi": {
+				"acceptEncoding": "gzip, deflate",
+				"events": [
+					"{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"before \"}],\"role\":\"model\"}}],\"sdkHttpResponse\":{\"headers\":{\"content-type\":\"text/event-stream\"}}}",
+					"{\"sdkHttpResponse\":{\"headers\":{\"content-type\":\"text/event-stream\"}}}",
+					"{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"after\"}],\"role\":\"model\"}}],\"sdkHttpResponse\":{\"headers\":{\"content-type\":\"text/event-stream\"}}}",
+					"{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"!\"}],\"role\":\"model\"},\"finishReason\":\"STOP\"}],\"sdkHttpResponse\":{\"headers\":{\"content-type\":\"text/event-stream\"}}}"
+				],
+				"sameModel": true,
+				"stream": [
+					{
+						"type": "start"
+					},
+					{
+						"type": "text_start"
+					},
+					{
+						"type": "text_delta",
+						"delta": "before "
+					},
+					{
+						"type": "text_delta",
+						"delta": "after"
+					},
+					{
+						"type": "text_delta",
+						"delta": "!"
+					},
+					{
+						"type": "text_end"
+					},
+					{
+						"type": "done"
+					}
+				],
+				"stopReason": "stop",
+				"content": "[{\"type\":\"text\",\"text\":\"before after!\"}]",
+				"usage": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"totalTokens": 0,
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0
+					}
+				}
+			}
+		},
+		{
+			"name": "an SSE-framed error event split across reads throws",
+			"note": "neither read is JSON; the data: payload is",
+			"framing": "close",
+			"headers": [
+				[
+					"Content-Type",
+					"text/event-stream"
+				]
+			],
+			"segments": [
+				"data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"x\"}],\"role\":\"model\"}}]}\n\ndata: {\"error\":{\"code\":5",
+				"03,\"status\":\"UNAVAILABLE\"}}\n\n",
+				"data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"!\"}],\"role\":\"model\"},\"finishReason\":\"STOP\"}]}\n\n"
+			],
+			"readBoundariesMatter": false,
+			"pi": {
+				"acceptEncoding": "gzip, deflate",
+				"events": [
+					"{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"x\"}],\"role\":\"model\"}}],\"sdkHttpResponse\":{\"headers\":{\"content-type\":\"text/event-stream\"}}}"
+				],
+				"sameModel": true,
+				"stream": [
+					{
+						"type": "start"
+					},
+					{
+						"type": "text_start"
+					},
+					{
+						"type": "text_delta",
+						"delta": "x"
+					},
+					{
+						"type": "error"
+					}
+				],
+				"stopReason": "error",
+				"errorMessage": "got status: UNAVAILABLE. {\"error\":{\"code\":503,\"status\":\"UNAVAILABLE\"}}",
+				"content": "[{\"type\":\"text\",\"text\":\"x\"}]",
+				"usage": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"totalTokens": 0,
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0
+					}
+				}
+			}
+		},
+		{
+			"name": "an SSE-framed error event whose status has no string form does not throw",
+			"note": "String(status) throws a TypeError, which the check swallows",
+			"framing": "close",
+			"headers": [
+				[
+					"Content-Type",
+					"text/event-stream"
+				]
+			],
+			"segments": [
+				"data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"x\"}],\"role\":\"model\"}}]}\n\ndata: {\"error\":{\"code\":500,\"status\":{\"toString\":1}}}\n\ndata: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"!\"}],\"role\":\"model\"},\"finishReason\":\"STOP\"}]}\n\n"
+			],
+			"readBoundariesMatter": false,
+			"pi": {
+				"acceptEncoding": "gzip, deflate",
+				"events": [
+					"{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"x\"}],\"role\":\"model\"}}],\"sdkHttpResponse\":{\"headers\":{\"content-type\":\"text/event-stream\"}}}",
+					"{\"sdkHttpResponse\":{\"headers\":{\"content-type\":\"text/event-stream\"}}}",
+					"{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"!\"}],\"role\":\"model\"},\"finishReason\":\"STOP\"}],\"sdkHttpResponse\":{\"headers\":{\"content-type\":\"text/event-stream\"}}}"
+				],
+				"sameModel": true,
+				"stream": [
+					{
+						"type": "start"
+					},
+					{
+						"type": "text_start"
+					},
+					{
+						"type": "text_delta",
+						"delta": "x"
+					},
+					{
+						"type": "text_delta",
+						"delta": "!"
+					},
+					{
+						"type": "text_end"
+					},
+					{
+						"type": "done"
+					}
+				],
+				"stopReason": "stop",
+				"content": "[{\"type\":\"text\",\"text\":\"x!\"}]",
 				"usage": {
 					"input": 0,
 					"output": 0,

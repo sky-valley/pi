@@ -431,7 +431,8 @@ func StreamGoogle(ctx context.Context, model *ai.Model, req ai.TranscriptContext
 			// ({"User-Agent", "x-goog-api-client", "Content-Type"}) and builds
 			// the request with Headers.append, so a record entry spelled exactly
 			// like a default replaces it and one spelled differently arrives
-			// comma-joined with it. Measured against genai 2.21.0: record
+			// comma-joined with it. Measured against genai 2.21.0, and 2.32.0
+			// builds its headers the same way (getHeadersInternal): record
 			// {"content-type": "text/plain"} sends `application/json, text/plain`,
 			// {"Content-Type": "text/plain"} sends `text/plain`. Content-Type is
 			// the one default this adapter sends, so it is the literal passed
@@ -1301,35 +1302,32 @@ func googleFetchBody(ctx context.Context, body io.Reader, custom bool) io.Reader
 	return fetchBody{ctx, body}
 }
 
-// googleBareJSONError is the check @google/genai 2.21.0 runs on every body
-// read before buffering it (processStreamResponse): when the whole read
-// parses as JSON holding an "error" key, it reads status and code from
-// JSON.parse(JSON.stringify(chunkJson.error)), computes
+// googleStreamErrorChunk is @google/genai 2.32.0's throwIfStreamErrorChunk,
+// which processStreamResponse runs on every body read before buffering it
+// and on every data: payload before yielding it: when the text parses as a
+// JSON object whose "error" is a non-null object, it computes
 //
 //	`got status: ${status}. ${JSON.stringify(chunkJson)}`
 //
-// and throws that as an ApiError when code >= 400 && code < 600, with
-// JavaScript's coercions ("500" and [429] qualify; an absent status reads
-// "undefined"; a number past float64's range is null by then). Anything else
-// thrown inside the check — a property read on a primitive or null, a value
-// with no primitive form — is swallowed by the SDK's catch, which rethrows
-// only ApiErrors; so is a read that is not JSON.
-func googleBareJSONError(read string) error {
-	parsed, err := jstext.Parse([]byte(read))
+// from that object's status as parsed (an absent one reads "undefined", one
+// past float64's range "Infinity"), and throws it as an ApiError when code is
+// a number with code >= 400 && code < 600 — a string or an array code no
+// longer qualifies. Anything else thrown inside the check — String() of a
+// value with no primitive form — is swallowed by the SDK's catch, which
+// rethrows only ApiErrors; so is text that is not JSON.
+func googleStreamErrorChunk(text string) error {
+	parsed, err := jstext.Parse([]byte(text))
 	if err != nil {
 		return nil
 	}
 	chunk, ok := parsed.(map[string]any)
 	if !ok {
-		return nil // `'error' in` a primitive throws; an array has no "error"
+		return nil // a primitive or null fails the object test; an array has no "error"
 	}
-	e, ok := chunk["error"]
+	// An array "error" is an object too, but reads status and code undefined.
+	fields, ok := chunk["error"].(map[string]any)
 	if !ok {
 		return nil
-	}
-	fields, ok := jstext.Reparse(e).(map[string]any)
-	if !ok {
-		return nil // null throws reading .status; any other value reads undefined twice
 	}
 	status := "undefined"
 	if v, present := fields["status"]; present {
@@ -1337,27 +1335,25 @@ func googleBareJSONError(read string) error {
 			return nil
 		}
 	}
-	code, present := fields["code"]
-	if !present {
-		return nil
-	}
-	if n, ok := jstext.ToNumber(code); !ok || !(n >= 400 && n < 600) {
+	code, ok := fields["code"].(json.Number)
+	if n := jstext.Number(code); !ok || !(n >= 400 && n < 600) {
 		return nil
 	}
 	// JSON.stringify(chunkJson): the parsed object's own-property order
 	// (array-index keys first), a repeated key once, JavaScript's number
 	// spelling and Infinity as null.
-	text, _ := jsStringify([]byte(read))
-	return fmt.Errorf("got status: %s. %s", status, text)
+	quoted, _ := jsStringify([]byte(text))
+	return fmt.Errorf("got status: %s. %s", status, quoted)
 }
 
 // iterateGoogleSSE consumes the alt=sse stream the way the @google/genai SDK
 // does (processStreamResponse): each body read is decoded by a TextDecoder in
 // stream mode (jstext.TextDecoder: the stream's byte-order mark dropped,
 // invalid UTF-8 as U+FFFD per maximal subpart, a sequence the read leaves
-// incomplete held for the next), then checked whole for a bare JSON error
-// payload (googleBareJSONError), then buffered; events are split on \n\n,
-// \r\r, or \r\n\r\n; only "data:"-prefixed events are decoded; and a trailing
+// incomplete held for the next), then checked whole for a JSON error payload
+// (googleStreamErrorChunk), then buffered; events are split on \n\n, \r\r,
+// or \r\n\r\n; only "data:"-prefixed events are decoded, each payload
+// checked the same way before it is yielded; and a trailing
 // unconsumed segment fails with the SDK's "Incomplete JSON segment at the
 // end". The SDK never flushes its decoder, so bytes it still holds when the
 // body ends are dropped.
@@ -1393,6 +1389,9 @@ func iterateGoogleSSE(body io.Reader, observe func(payload any) error, handle fu
 			return nil
 		}
 		data := jstext.Trim(strings.TrimPrefix(trimmed, "data:"))
+		if err := googleStreamErrorChunk(data); err != nil {
+			return err
+		}
 		// The SDK yields every data: payload, and pi's loop reads it with
 		// Response.json() — JSON.parse, whose SyntaxError fails the stream: an
 		// empty payload, one that is not JSON, one that JSON.parse would need
@@ -1426,9 +1425,8 @@ func iterateGoogleSSE(body io.Reader, observe func(payload any) error, handle fu
 		if err != nil {
 			return err
 		}
-		// No error check here: the SDK checks only whole reads that are bare
-		// JSON, and generateContentResponseFromMldev keeps no "error" field, so
-		// a data: event carrying one reaches pi as an empty chunk.
+		// A payload whose "error" the check let through reaches pi as an
+		// empty chunk: generateContentResponseFromMldev keeps no "error" field.
 		return handle(value)
 	}
 
@@ -1437,7 +1435,7 @@ func iterateGoogleSSE(body io.Reader, observe func(payload any) error, handle fu
 		n, readErr := body.Read(buf)
 		if n > 0 {
 			read := decoder.Decode(buf[:n])
-			if err := googleBareJSONError(read); err != nil {
+			if err := googleStreamErrorChunk(read); err != nil {
 				return err
 			}
 			pending += read
@@ -1473,11 +1471,11 @@ func iterateGoogleSSE(body io.Reader, observe func(payload any) error, handle fu
 	return nil
 }
 
-// googleGenerateContentResponse is the chunk @google/genai 2.21.0 yields for
+// googleGenerateContentResponse is the chunk @google/genai 2.32.0 yields for
 // one parsed data: payload, which pi hands to onProviderStreamEvent:
-// generateContentResponseFromMldev(payload) (index.cjs:10916) with
+// generateContentResponseFromMldev(payload) (index.cjs:20647) with
 // sdkHttpResponse = {headers} set on the result (generateContentStreamInternal,
-// ~15850). The converter copies only the fields it knows, in its own order,
+// ~25276). The converter copies only the fields it knows, in its own order,
 // and only when they are not null or undefined (`!= null`); everything else
 // the payload carries — unknown fields, "error" — never reaches pi. A payload
 // that is not an object (null, a scalar, an array) yields no fields at all.
@@ -1647,7 +1645,7 @@ func googleTokenCount(v any) int {
 	return int(f)
 }
 
-// googleSDKResponseHeaders is the header record @google/genai 2.21.0 puts on
+// googleSDKResponseHeaders is the header record @google/genai 2.32.0 puts on
 // every chunk as sdkHttpResponse.headers. processStreamResponse wraps each
 // data: payload in `new Response(payload, {headers: response.headers})`, and
 // HttpResponse copies that Response's headers.entries() into a plain object:

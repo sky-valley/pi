@@ -549,8 +549,9 @@ func (o *headerObject) record() []recordEntry {
 // this replays both steps: a record entry whose name matches a literal EXACTLY
 // replaces its value in place (JS spread), while one that matches only
 // case-insensitively is a second key there, and Headers.append joins the two
-// with ", " in slot order — literal first. Measured through genai 2.21.0:
-// record {"content-type": "text/plain"} sends `application/json, text/plain`.
+// with ", " in slot order — literal first. Measured through genai 2.21.0
+// (2.32.0's getHeadersInternal is unchanged): record
+// {"content-type": "text/plain"} sends `application/json, text/plain`.
 //
 // It never deletes from h: a marker is not part of the record, so it cannot
 // remove a literal. Nor does it touch a header the adapter sets on h after

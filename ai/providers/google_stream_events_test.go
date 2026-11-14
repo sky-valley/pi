@@ -159,7 +159,7 @@ func sameGoogleResponseID(got string, pi any) bool {
 
 func loadGoogleStreamCapture(t *testing.T) googleStreamCapture {
 	t.Helper()
-	raw, err := os.ReadFile("testdata/google-stream-events/google-stream-events-49681e1b7.json")
+	raw, err := os.ReadFile("testdata/google-stream-events/google-stream-events-f72f799a4.json")
 	if err != nil {
 		t.Fatal(err)
 	}
