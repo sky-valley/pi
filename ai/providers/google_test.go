@@ -12,7 +12,6 @@ import (
 	"reflect"
 	"slices"
 	"strings"
-	"sync/atomic"
 	"testing"
 	"time"
 
@@ -492,15 +491,13 @@ func googleStreamWithFinishAndToolCall(t *testing.T, finish string) *ai.Assistan
 // @google/genai 2.32.0 adds FinishReason.CONTINUATION, which ends the turn as
 // "length" like MAX_TOKENS. pi turns the SDK's automatic continuation off
 // (config.automaticContinuation: false, which the SDK keeps out of the
-// request body), so one request is sent and the continuation token is not
-// followed.
+// request body), so the continuation token is not followed; the port has no
+// continuation to turn off.
 func TestGoogleContinuationMapsToLength(t *testing.T) {
 	if got, err := mapGoogleStopReason("CONTINUATION"); got != ai.StopLength || err != nil {
 		t.Fatalf("mapGoogleStopReason(CONTINUATION) = %s, %v; pi: length", got, err)
 	}
-	var requests atomic.Int64
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		requests.Add(1)
 		w.Header().Set("content-type", "text/event-stream")
 		io.WriteString(w, `data: {"candidates":[{"content":{"role":"model","parts":[{"text":"partial"}]},"finishReason":"CONTINUATION","continuationToken":"token-1"}]}`+"\n\n")
 	}))
@@ -510,9 +507,6 @@ func TestGoogleContinuationMapsToLength(t *testing.T) {
 	final := StreamGoogle(context.Background(), model, ai.NormalizeContext(req), &GoogleOptions{StreamOptions: ai.StreamOptions{ProviderRequestOptions: ai.ProviderRequestOptions{APIKey: "test-key"}}}).Result()
 	if final.StopReason != ai.StopLength {
 		t.Fatalf("stopReason = %s (%q); pi: length", final.StopReason, final.ErrorMessage)
-	}
-	if n := requests.Load(); n != 1 {
-		t.Fatalf("server saw %d requests; pi sends 1", n)
 	}
 }
 

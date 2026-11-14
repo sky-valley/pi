@@ -487,7 +487,8 @@ func StreamGoogle(ctx context.Context, model *ai.Model, req ai.TranscriptContext
 		if err != nil {
 			// Neither @google/genai nor pi's catch adds to fetch's rejection;
 			// a custom fetch rejects with its own error.
-			if rejected := (*fetchRejection)(nil); custom && errors.As(err, &rejected) {
+			var rejected *fetchRejection
+			if custom && errors.As(err, &rejected) {
 				err = rejected.cause()
 			} else {
 				err = undiciFetchError(err)
@@ -1370,11 +1371,11 @@ func googleStreamErrorChunk(text string) error {
 // capture's "divergence: HTTP chunks that arrive in one read" measures it.
 //
 // The SDK's loop never checks the signal, and neither does this: an abort
-// reaches it through the body, which StreamGoogle reads through its own
-// client only (pi's adapter refuses a custom fetch) and so through fetchBody —
-// the read the abort cuts short, or the next one, rejects with undici's
-// AbortError, the end included; any other failed read is undici's
-// "terminated". (pi's own "Request was aborted" is thrown only once the
+// reaches it through the body. Through the port's own client that is
+// fetchBody — the read the abort cuts short, or the next one, rejects with
+// undici's AbortError, the end included; any other failed read is undici's
+// "terminated" — and through a custom HTTPClient it is whatever that
+// client's body does. (pi's own "Request was aborted" is thrown only once the
 // stream has run out, which StreamGoogle checks after the loop.)
 //
 // observe, when set, receives each data: payload's parsed value before handle

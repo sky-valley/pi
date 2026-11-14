@@ -39,9 +39,9 @@ type wireAdapter struct {
 	// key's leading space survives inside "Bearer  k").
 	auth   string
 	bearer bool
-	// http1 marks google: pi refuses a custom fetch there, so the port refuses
-	// a custom client, and the default one cannot reach a self-signed HTTP/2
-	// test server. Its requests go over HTTP/1.1, where only the CR and LF rows
+	// http1 marks google, which runs on its default client here (pi refused
+	// a custom fetch there before f72f799a4), and the default one cannot
+	// reach a self-signed HTTP/2 test server. Its requests go over HTTP/1.1, where only the CR and LF rows
 	// are observable.
 	http1 bool
 	// run sends one request; client is nil for an http1 adapter.
