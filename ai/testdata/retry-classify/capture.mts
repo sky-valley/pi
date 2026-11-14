@@ -3,19 +3,20 @@
 // in package ai.
 //
 //   node --experimental-strip-types capture.mts <extraction> <out.json> <sha>
-//   e.g. ... capture.mts <dir> classify-566344046.json 566344046
+//   e.g. ... capture.mts <dir> classify-9b88b94e2.json 9b88b94e2
 //
 // <extraction> holds packages/ai at <sha> (`git archive <sha> packages/ai` from
 // the upstream clone) and a node_modules resolving pi-ai's dependencies (the npm
 // build's). It is a src capture, checked against the build when a release
-// ships the source it read (the BUILD wins): classify-566344046.json was
-// captured from src at 566344046 with the 1.5.0 build's node_modules. The 1.5.0
-// build predates 566344046's "cut short after the reply had begun" alternative,
-// so re-verify it against the first build that ships it. Control: this script
-// at 566344046^1, with the same node_modules, answers the 2 rows that
-// alternative decides differently (retryable false) and every other row as
-// classify-566344046.json does; without those 2 rows it reproduces
-// classify-c719d5b08.json (1.5.0-confirmed) byte for byte.
+// ships the source it read (the BUILD wins): classify-9b88b94e2.json was
+// captured from src at 9b88b94e2 with the 1.5.2 build's node_modules. The 1.5.2
+// build predates 566344046's "cut short after the reply had begun" and
+// 9b88b94e2's "connection.?closed" alternatives, so re-verify it against the
+// first build that ships them. Control: this script at 9b88b94e2^1, with the
+// same node_modules, answers the 3 rows "connection.?closed" decides
+// differently (retryable false) and every other row as classify-9b88b94e2.json
+// does; this script at 566344046 reproduced classify-566344046.json byte for
+// byte before 9b88b94e2's rows were added.
 //
 // Every row records three answers: isRetryableAssistantError on the message
 // retry.test.ts would build (fauxAssistantMessage), and RegExp.prototype.test of
@@ -149,6 +150,11 @@ const rows: Row[] = [
 		"pi: stream cut short mid-reply (#11879)",
 		"Claude Code's stream from Anthropic was cut short after the reply had begun",
 	),
+	// retry.test.ts regression for #12064 (9b88b94e2): gateway wording for a closed connection.
+	error(
+		"pi: gateway closed connection (#12064)",
+		'{"type":"error","error":{"type":"api_error","message":"Connection closed."}}',
+	),
 
 	// isRetryableAssistantError's guard: only stopReason "error" with error text.
 	{ covers: "guard: stop", stopReason: "stop", errorMessage: "overloaded" },
@@ -192,6 +198,8 @@ const rows: Row[] = [
 	error("connection.?error", "Connection error."),
 	error("connection.?refused", "connection refused"),
 	error("connection.?lost", "Connection lost"),
+	error("connection.?closed", "connection_closed"),
+	error("connection.?closed", "ConnectionClosed"),
 	error("other side closed", "SocketError: other side closed"),
 	error("fetch failed", "TypeError: fetch failed"),
 	error("request to \\S+ failed, reason:", "FetchError: Request to https://x failed, reason: socket hang"),
@@ -295,6 +303,7 @@ const rows: Row[] = [
 	error("near-miss", "service was temporarily unavailable"),
 	error("near-miss", "service temporarily is unavailable"),
 	error("near-miss", "server busy"),
+	error("near-miss", "connection is closed"),
 	error("near-miss", "server is currently busy"),
 	error("near-miss", "model at capacity"),
 	error("near-miss", "unable to forward downstream"),
