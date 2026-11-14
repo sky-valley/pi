@@ -5,12 +5,13 @@
 //   node capture.mjs <pi npm dir> <out.json>
 //   e.g. node capture.mjs <npm>/1.3.0 toolschemas-1.3.0.json
 //   node --experimental-strip-types capture.mjs <src extraction named by sha> <out.json>
-//   e.g. ... capture.mjs <dir>/6bf2ab9bb toolschemas-6bf2ab9bb.json
+//   e.g. ... capture.mjs <dir>/282b01c80 toolschemas-282b01c80.json
 //
-// toolschemas-6bf2ab9bb.json is a src capture over the 1.5.0 build's
-// node_modules: 6bf2ab9bb rewrites grep's `glob` description. Control: the
-// 1.5.0 build, and src at 6bf2ab9bb^1, both write toolschemas-1.3.0.json's rows.
-// Re-verify against the first build that ships 6bf2ab9bb.
+// toolschemas-282b01c80.json is a src capture over the 1.5.2 build's
+// node_modules: 282b01c80 rewrites find's `pattern` and grep's `glob`
+// descriptions. Control: src at 282b01c80^1 writes the previous capture's
+// (toolschemas-6bf2ab9bb.json) rows byte for byte. Re-verify against the first
+// build that ships 282b01c80.
 //
 // Each row is createToolDefinition(name, cwd) from the published build, with
 // its parameters, and its outputSchema when it declares one, serialized by

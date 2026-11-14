@@ -1,5 +1,5 @@
 {
-	"piCodingAgentVersion": "src 6bf2ab9bb",
+	"piCodingAgentVersion": "src 282b01c80",
 	"rows": [
 		{
 			"name": "read",
@@ -177,7 +177,7 @@
 					},
 					"glob": {
 						"type": "string",
-						"description": "Filter files by glob pattern, relative to path, e.g. '*.ts', 'src/**/*.ts' or '**/*.spec.ts'. A pattern without '/' matches file names at any depth"
+						"description": "Filter files by glob pattern relative to path, e.g. 'src/**/*.ts'. Without '/', e.g. '*.ts', it matches file names at any depth"
 					},
 					"ignoreCase": {
 						"type": "boolean",
@@ -208,7 +208,7 @@
 				"properties": {
 					"pattern": {
 						"type": "string",
-						"description": "Glob pattern to match files, e.g. '*.ts', '**/*.json', or 'src/**/*.spec.ts'"
+						"description": "Glob pattern relative to the search directory, e.g. 'src/**/*.ts'. Without '/', e.g. '*.ts', it matches file names at any depth"
 					},
 					"path": {
 						"type": "string",

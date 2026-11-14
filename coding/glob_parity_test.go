@@ -70,7 +70,7 @@ func TestMatchFdGlobTable(t *testing.T) {
 		{"Readme.MD", "README.md", "/r/README.md", false},
 		{"README*", "readme.md", "/r/readme.md", false},
 		{"README*", "README.md", "/r/README.md", true},
-		// slash patterns are matched against the full (absolute) path with **/
+		// relative slash patterns are anchored at the search path (282b01c80)
 		{"src/**/*.spec.ts", "src/a/t.spec.ts", "/r/src/a/t.spec.ts", true},
 		{"src/**/*.spec.ts", "other/t.spec.ts", "/r/other/t.spec.ts", false},
 		// leading "/" anchors to the absolute path (fd --full-path, no **/)
@@ -78,8 +78,13 @@ func TestMatchFdGlobTable(t *testing.T) {
 		{"/x/src/*.go", "src/main.go", "/r/src/main.go", false},
 		// "**" matches everything
 		{"**", "any/depth/file.txt", "/r/any/depth/file.txt", true},
-		// "**/" already prefixed: not double-prepended
+		// a leading "**/" matches at any depth
 		{"**/x.ts", "deep/x.ts", "/r/deep/x.ts", true},
+		// ...but no other pattern matches through a folder above the search
+		// path (#12066): the root here is /src/app
+		{"src/*.ts", "pkg/src/d.ts", "/src/app/pkg/src/d.ts", false},
+		{"src/**/*.ts", "lib/b.ts", "/src/app/lib/b.ts", false},
+		{"**/src/*.ts", "pkg/src/d.ts", "/src/app/pkg/src/d.ts", true},
 	}
 	for _, c := range cases {
 		if got := matchFdGlob(c.pattern, c.rel, c.abs); got != c.want {
@@ -105,12 +110,12 @@ func TestMatchFdGlobWindowsSeparators(t *testing.T) {
 		abs     string
 		want    bool
 	}{
-		// the #6817 shape: a path-containing glob against a drive-absolute
-		// candidate gets the "**/" prepend and matches across "C:/proj"
+		// the #6817 shape: a path-containing glob matches below a
+		// drive-absolute search path
 		{"src/**/*.spec.ts", "src/a/t.spec.ts", "C:/proj/src/a/t.spec.ts", true},
 		{"src/**/*.spec.ts", "other/t.spec.ts", "C:/proj/other/t.spec.ts", false},
 		{"src/*.go", "src/main.go", "C:/proj/src/main.go", true},
-		// already "**/"-prefixed: no double prepend, still crosses the drive prefix
+		// a leading "**/" matches at any depth below it
 		{"**/x.ts", "deep/x.ts", "C:/proj/deep/x.ts", true},
 		// a leading "/" anchors to the start of the full path, which on
 		// Windows is the drive letter — no match on either side (fd anchors

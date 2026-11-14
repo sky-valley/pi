@@ -2,6 +2,8 @@ package coding
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"runtime"
 	"slices"
 	"strings"
@@ -154,5 +156,96 @@ func TestFindDoesNotWalkAfterAbort(t *testing.T) {
 	res, err := findTool(root).Execute(ctx, "call-1", map[string]any{"pattern": "*.ts"}, nil)
 	if err == nil || err.Error() != "Operation aborted" {
 		t.Fatalf("find after abort = %q, %v; want pi's \"Operation aborted\"", resultText(res), err)
+	}
+}
+
+// The suite below ports test/suite/regressions/12066-find-ancestor-glob.test.ts
+// (upstream 282b01c80): fd matches --full-path globs against the absolute path
+// and find put "**/" in front of path patterns, so a pattern could match
+// through folders above the search path — with the project in ".../src/app",
+// "src/**/*.ts" returned every .ts file. Path patterns are now anchored at the
+// search path, like grep's glob.
+
+func ancestorGlobRoot(t *testing.T) string {
+	t.Helper()
+	root, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	return root
+}
+
+func createAncestorGlobProject(t *testing.T, root string) {
+	t.Helper()
+	writeFiles(t, root, map[string]string{"src/a.ts": "", "lib/b.ts": "", "test/c.ts": "", "pkg/src/d.ts": ""})
+}
+
+func TestFindAncestorGlob12066NoMatchThroughAncestor(t *testing.T) {
+	project := filepath.Join(ancestorGlobRoot(t), "src", "app")
+	createAncestorGlobProject(t, project)
+	if got, want := runPathGlobFind(t, project, "src/**/*.ts"), []string{"src/a.ts"}; !slices.Equal(got, want) {
+		t.Errorf("find src/**/*.ts = %v, want %v", got, want)
+	}
+	if got := runPathGlobFind(t, project, "app/**/*.ts"); len(got) != 0 {
+		t.Errorf("find app/**/*.ts = %v, want none", got)
+	}
+}
+
+func TestFindAncestorGlob12066AnchorsPathPatterns(t *testing.T) {
+	project := filepath.Join(ancestorGlobRoot(t), "src", "app")
+	createAncestorGlobProject(t, project)
+	for _, c := range []struct {
+		pattern string
+		want    []string
+	}{
+		{"src/*.ts", []string{"src/a.ts"}},
+		{"./src/*.ts", []string{"src/a.ts"}},
+		{"pkg/src/*.ts", []string{"pkg/src/d.ts"}},
+		{"**/src/*.ts", []string{"pkg/src/d.ts", "src/a.ts"}},
+		{"**/src/**/*.ts", []string{"pkg/src/d.ts", "src/a.ts"}},
+		// Basename and absolute patterns are unchanged.
+		{"*.ts", []string{"lib/b.ts", "pkg/src/d.ts", "src/a.ts", "test/c.ts"}},
+		{filepath.ToSlash(project) + "/lib/*.ts", []string{"lib/b.ts"}},
+	} {
+		if got := runPathGlobFind(t, project, c.pattern); !slices.Equal(got, c.want) {
+			t.Errorf("find %q = %v, want %v", c.pattern, got, c.want)
+		}
+	}
+}
+
+func TestFindAncestorGlob12066GlobCharactersInSearchPath(t *testing.T) {
+	// `*` and `?` are not allowed in Windows file names.
+	name := "w*?[1]{x,y}"
+	if runtime.GOOS == "windows" {
+		name = "w[1]{x,y}"
+	}
+	project := filepath.Join(ancestorGlobRoot(t), name, "src")
+	createAncestorGlobProject(t, project)
+	if got, want := runPathGlobFind(t, project, "src/*.ts"), []string{"src/a.ts"}; !slices.Equal(got, want) {
+		t.Errorf("find src/*.ts = %v, want %v", got, want)
+	}
+}
+
+func TestFindAncestorGlob12066SmartCaseWithUpperCaseSearchPath(t *testing.T) {
+	project := filepath.Join(ancestorGlobRoot(t), "Upper")
+	writeFiles(t, project, map[string]string{"src/A.ts": "", "src/b.ts": ""})
+	if got, want := runPathGlobFind(t, project, "src/a.ts"), []string{"src/A.ts"}; !slices.Equal(got, want) {
+		t.Errorf("find src/a.ts = %v, want %v", got, want)
+	}
+	if got := runPathGlobFind(t, project, "src/B.ts"); len(got) != 0 {
+		t.Errorf("find src/B.ts = %v, want none", got)
+	}
+}
+
+func TestFindAncestorGlob12066SymlinkedSearchPath(t *testing.T) {
+	tempRoot := ancestorGlobRoot(t)
+	project := filepath.Join(tempRoot, "src", "app")
+	createAncestorGlobProject(t, project)
+	link := filepath.Join(tempRoot, "src", "link")
+	if err := os.Symlink(project, link); err != nil {
+		t.Skipf("symlink: %v", err)
+	}
+	if got, want := runPathGlobFind(t, link, "src/**/*.ts"), []string{"src/a.ts"}; !slices.Equal(got, want) {
+		t.Errorf("find src/**/*.ts = %v, want %v", got, want)
 	}
 }

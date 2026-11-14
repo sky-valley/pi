@@ -137,9 +137,13 @@ func patternHasUpper(pattern string) bool {
 // matchFdGlob reports whether a candidate matches a glob pattern using fd
 // --glob semantics (find.ts:238-246):
 //   - a pattern without "/" matches against the basename;
-//   - a pattern with "/" puts fd in --full-path mode: it matches against the
-//     absolute candidate path, and fd prepends "**/" unless the pattern starts
-//     with "/", "**/", or is exactly "**";
+//   - a pattern with "/" puts fd in --full-path mode. A relative one is
+//     anchored at the search path, like grep's glob (upstream 282b01c80,
+//     #12066): pi prefixes it with the glob-escaped search path, so
+//     "src/*.ts" finds "src/a.ts" but not "pkg/src/b.ts", and "**/src/*.ts"
+//     finds both; here it is matched against the root-relative path, which
+//     is the same thing without the escaping. An absolute pattern is matched
+//     against the absolute candidate path as given;
 //   - on Windows `\` in the pattern is a path separator: pi normalizes it to
 //     "/" (upstream 463b8f893, #9262) and so does filepath.ToSlash here (a
 //     no-op on POSIX, where `\` stays an escape); candidates are normalized
@@ -149,7 +153,8 @@ func patternHasUpper(pattern string) bool {
 //   - fd's full paths never contain "/./", so pi drops any leading "./"
 //     after that normalization (upstream bbfc6c7ce, #12020): "./src/*.ts"
 //     is "src/*.ts", and "./*.json", with no "/" left, matches basenames;
-//   - smart-case: an all-lowercase pattern matches case-insensitively;
+//   - smart-case: an all-lowercase pattern matches case-insensitively,
+//     decided by the user's pattern, not by the search path's letters;
 //   - {a,b} alternation and [!x] classes are supported (globset).
 func matchFdGlob(pattern, rel, abs string) bool {
 	pattern = filepath.ToSlash(pattern)
@@ -160,11 +165,12 @@ func matchFdGlob(pattern, rel, abs string) bool {
 	if !strings.Contains(pattern, "/") {
 		return globMatchPath(pattern, filepath.Base(filepath.ToSlash(rel)), fold)
 	}
-	effective := pattern
-	if !strings.HasPrefix(pattern, "/") && !strings.HasPrefix(pattern, "**/") && pattern != "**" {
-		effective = "**/" + pattern
+	// pi's path.isAbsolute: on Windows a leading "/" is absolute as well as
+	// "C:/...", which filepath.IsAbs alone does not cover.
+	if strings.HasPrefix(pattern, "/") || filepath.IsAbs(pattern) {
+		return globMatchPath(pattern, filepath.ToSlash(abs), fold)
 	}
-	return globMatchPath(effective, filepath.ToSlash(abs), fold)
+	return globMatchPath(pattern, filepath.ToSlash(rel), fold)
 }
 
 // matchRgGlob reports whether a root-relative path matches a glob using

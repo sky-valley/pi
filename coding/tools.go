@@ -1807,7 +1807,7 @@ func findToolOps(cwd string, custom *FindOperations) agent.AgentTool {
 		Label:       "find",
 		Description: fmt.Sprintf("Search for files by glob pattern. Returns matching file paths relative to the search directory. Respects .gitignore. Output is truncated to %d results or %dKB (whichever is hit first).", findDefaultLimit, DefaultMaxBytes/1024),
 		Parameters: ai.Object(
-			ai.Prop("pattern", ai.String("Glob pattern to match files, e.g. '*.ts', '**/*.json', or 'src/**/*.spec.ts'")),
+			ai.Prop("pattern", ai.String("Glob pattern relative to the search directory, e.g. 'src/**/*.ts'. Without '/', e.g. '*.ts', it matches file names at any depth")),
 			ai.Opt("path", ai.String("Directory to search in (default: current directory)")),
 			ai.Opt("limit", ai.Number("Maximum number of results (default: 1000)")),
 		),
@@ -1871,7 +1871,14 @@ func findToolOps(cwd string, custom *FindOperations) agent.AgentTool {
 				return agent.AgentToolResult{}, errFindAborted
 			}
 			var results []string
-			err := filepath.WalkDir(root, func(p string, d os.DirEntry, walkErr error) error {
+			// fd descends into a search path that is a symlink to a directory;
+			// WalkDir only does when the root ends in a separator, which makes
+			// its Lstat follow the link.
+			walkRoot := root
+			if !os.IsPathSeparator(walkRoot[len(walkRoot)-1]) {
+				walkRoot += string(filepath.Separator)
+			}
+			err := filepath.WalkDir(walkRoot, func(p string, d os.DirEntry, walkErr error) error {
 				if walkErr != nil {
 					return nil
 				}
@@ -2006,7 +2013,7 @@ func grepToolOps(cwd string, custom *GrepOperations) agent.AgentTool {
 		Parameters: ai.Object(
 			ai.Prop("pattern", ai.String("Search pattern (regex or literal string)")),
 			ai.Opt("path", ai.String("Directory or file to search (default: current directory)")),
-			ai.Opt("glob", ai.String("Filter files by glob pattern, relative to path, e.g. '*.ts', 'src/**/*.ts' or '**/*.spec.ts'. A pattern without '/' matches file names at any depth")),
+			ai.Opt("glob", ai.String("Filter files by glob pattern relative to path, e.g. 'src/**/*.ts'. Without '/', e.g. '*.ts', it matches file names at any depth")),
 			ai.Opt("ignoreCase", ai.Boolean("Case-insensitive search (default: false)")),
 			ai.Opt("literal", ai.Boolean("Treat pattern as literal string instead of regex (default: false)")),
 			ai.Opt("context", ai.Number("Number of lines to show before and after each match (default: 0)")),
