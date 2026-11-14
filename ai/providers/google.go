@@ -1511,8 +1511,8 @@ func googleGenerateContentResponse(payload any, headers ai.OrderedObject) ai.Ord
 	return out
 }
 
-// googleCandidateFromMldev is @google/genai's candidateFromMldev
-// (index.cjs:9635): the known candidate fields in its order, citationMetadata
+// googleCandidateFromMldev is @google/genai 2.32.0's candidateFromMldev
+// (index.cjs:19321): the known candidate fields in its order, citationMetadata
 // through citationMetadataFromMldev. A candidate that is not an object
 // converts to {}.
 func googleCandidateFromMldev(candidate any) ai.OrderedObject {
@@ -1521,6 +1521,7 @@ func googleCandidateFromMldev(candidate any) ai.OrderedObject {
 	for _, key := range []string{
 		"content", "citationMetadata", "tokenCount", "finishReason", "groundingMetadata",
 		"avgLogprobs", "index", "logprobsResult", "safetyRatings", "urlContextMetadata",
+		"continuationToken", // @google/genai 2.32.0 (upstream f72f799a4)
 	} {
 		v := googleField(src, key)
 		if v == nil {

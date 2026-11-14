@@ -1370,6 +1370,19 @@ const scenarios: Scenario[] = [
 		headers: eventStream,
 		segments: [sse(text("x"), '{"error":{"code":500,"status":{"toString":1}}}', stop)],
 	},
+	{
+		name: "converter copies a candidate's continuationToken last",
+		note: "@google/genai 2.32.0's candidateFromMldev copies continuationToken after urlContextMetadata; null dropped, empty kept; pi does not follow it (automaticContinuation: false) and CONTINUATION ends the turn as length",
+		framing: "close",
+		headers: eventStream,
+		segments: [
+			sse(
+				'{"candidates":[{"continuationToken":"tok-1","urlContextMetadata":{"u":1},"index":0,"content":{"role":"model","parts":[{"text":"a"}]}}]}',
+				'{"candidates":[{"continuationToken":"","content":{"parts":[{"text":"b"}]}}]}',
+				'{"candidates":[{"continuationToken":null,"content":{"parts":[{"text":"c"}]},"finishReason":"CONTINUATION"}]}',
+			),
+		],
+	},
 ];
 
 function serve(
