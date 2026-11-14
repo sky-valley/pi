@@ -36,8 +36,8 @@ import (
 //     code point is in the BMP, so the code units are those code points.
 //
 // RE2 also has no lookaround, which the status-code alternative uses:
-// (?<![a-z0-9]) and (?![a-z0-9]) around the codes, and Zhipu's 1308 after its
-// code (?![0-9]). A lookaround here only ever tests one neighbouring character
+// (?<![a-z0-9]) and (?![a-z0-9]) around the codes, the socket-code one
+// (?<![a-z0-9_]) and (?![a-z0-9_]), and Zhipu's 1308 after its code (?![0-9]). A lookaround here only ever tests one neighbouring character
 // against an ASCII class, and the pattern is only ever tested for a match,
 // never asked where it matched, so each is rewritten as that neighbour or the
 // edge of the text: (?:^|[^a-z0-9]) before and (?:[^a-z0-9]|$) after.
@@ -161,9 +161,10 @@ func translateProviderErrorPattern(pattern string) string {
 }
 
 // lookaroundClass returns the members of a lookaround's class, lowercased.
-// It accepts ASCII letters, digits and ranges between them only: the input
-// reaches the pattern with A-Z lowercased, so a lowercased class is the "i"
-// class, and anything else would need its JavaScript semantics worked out.
+// It accepts ASCII letters, digits, "_" and ranges between them
+// only: the input reaches the pattern with A-Z lowercased, so a lowercased
+// class is the "i" class ("_" folds to nothing else under "i" without "u"),
+// and anything else would need its JavaScript semantics worked out.
 func lookaroundClass(members string, unsupported func(string)) string {
 	if members == "" || members[0] == '^' {
 		unsupported("a negated or empty lookaround class")
@@ -174,7 +175,7 @@ func lookaroundClass(members string, unsupported func(string)) string {
 		switch {
 		case 'A' <= c && c <= 'Z':
 			b.WriteByte(c + 'a' - 'A')
-		case 'a' <= c && c <= 'z', '0' <= c && c <= '9':
+		case 'a' <= c && c <= 'z', '0' <= c && c <= '9', c == '_':
 			b.WriteByte(c)
 		case c == '-' && i > 0 && i < len(members)-1:
 			b.WriteByte(c)
@@ -293,6 +294,11 @@ var retryableProviderErrorPattern = buildProviderErrorPattern([]string{
 	`request to \S+ failed, reason:`,
 	// DNS resolution failures surface as node/libuv transport errors (#6904).
 	"getaddrinfo",
+	// Bare Node socket error codes, e.g. "read ECONNRESET", "write EPIPE", or
+	// "connect ETIMEDOUT 1.2.3.4:443" when a transport reports only the code (#12128).
+	// The codes must not be part of a longer identifier.
+	"(?<![a-z0-9_])(?:ECONNRESET|ECONNABORTED|ECONNREFUSED|ETIMEDOUT|EPIPE)(?![a-z0-9_])",
+	"connection reset by peer",
 	"ENOTFOUND",
 	"EAI_AGAIN",
 	"upstream.?connect",

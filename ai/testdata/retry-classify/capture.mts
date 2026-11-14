@@ -3,20 +3,22 @@
 // in package ai.
 //
 //   node --experimental-strip-types capture.mts <extraction> <out.json> <sha>
-//   e.g. ... capture.mts <dir> classify-9b88b94e2.json 9b88b94e2
+//   e.g. ... capture.mts <dir> classify-4699b5b26.json 4699b5b26
 //
 // <extraction> holds packages/ai at <sha> (`git archive <sha> packages/ai` from
 // the upstream clone) and a node_modules resolving pi-ai's dependencies (the npm
 // build's). It is a src capture, checked against the build when a release
-// ships the source it read (the BUILD wins): classify-9b88b94e2.json was
-// captured from src at 9b88b94e2 with the 1.5.2 build's node_modules. The 1.5.2
-// build predates 566344046's "cut short after the reply had begun" and
-// 9b88b94e2's "connection.?closed" alternatives, so re-verify it against the
-// first build that ships them. Control: this script at 9b88b94e2^1, with the
-// same node_modules, answers the 3 rows "connection.?closed" decides
-// differently (retryable false) and every other row as classify-9b88b94e2.json
-// does; this script at 566344046 reproduced classify-566344046.json byte for
-// byte before 9b88b94e2's rows were added.
+// ships the source it read (the BUILD wins): classify-4699b5b26.json was
+// captured from src at 4699b5b26 with the 1.5.2 build's node_modules. The 1.5.2
+// build predates 566344046's "cut short after the reply had begun",
+// 9b88b94e2's "connection.?closed", and 4699b5b26's socket-code and
+// "connection reset by peer" alternatives, so re-verify it against the first
+// build that ships them. Control: this script at 4699b5b26^1 (9b88b94e2's
+// retry.ts), with the same node_modules, answers the 24 rows 4699b5b26's
+// alternatives decide differently (retryable false) and every other row as
+// classify-4699b5b26.json does; at 9b88b94e2, before 4699b5b26's rows were
+// added, it reproduced classify-9b88b94e2.json, whose own control at
+// 566344046 reproduced classify-566344046.json byte for byte.
 //
 // Every row records three answers: isRetryableAssistantError on the message
 // retry.test.ts would build (fauxAssistantMessage), and RegExp.prototype.test of
@@ -92,6 +94,10 @@ const zhipuUsageLimitMessage =
 // The status-code alternative (6e491cfa9): a code must not sit inside a longer word or number.
 const STATUS = "(?<![a-z0-9])(?:429|500|502|503|504|520|524)(?![a-z0-9])";
 
+// Bare Node socket error codes (4699b5b26, #12128): a code must not be part of
+// a longer identifier, which takes in "_".
+const SOCKET = "(?<![a-z0-9_])(?:ECONNRESET|ECONNABORTED|ECONNREFUSED|ETIMEDOUT|EPIPE)(?![a-z0-9_])";
+
 const rows: Row[] = [
 	// retry.test.ts "provider retry classification" and retryAssistantCall literals.
 	error("pi: OpenAI explicit retry guidance", openAIExplicitRetryMessage),
@@ -155,6 +161,17 @@ const rows: Row[] = [
 		"pi: gateway closed connection (#12064)",
 		'{"type":"error","error":{"type":"api_error","message":"Connection closed."}}',
 	),
+	// retry.test.ts regression for #12128 (4699b5b26): bare Node socket error codes,
+	// and codes inside longer identifiers.
+	error("pi: Node socket error code (#12128)", "read ECONNRESET"),
+	error("pi: Node socket error code (#12128)", "connect ETIMEDOUT 140.82.113.3:443"),
+	error("pi: Node socket error code (#12128)", "write EPIPE"),
+	error("pi: Node socket error code (#12128)", "connect ECONNREFUSED 127.0.0.1:443"),
+	error("pi: Node socket error code (#12128)", "ECONNABORTED"),
+	error("pi: Node socket error code (#12128)", "Connection reset by peer"),
+	error("pi: socket code inside an identifier (#12128)", "Invalid value EXECONNRESET"),
+	error("pi: socket code inside an identifier (#12128)", "Unknown field ETIMEDOUTX"),
+	error("pi: socket code inside an identifier (#12128)", "Invalid key ERR_EPIPE_ID"),
 
 	// isRetryableAssistantError's guard: only stopReason "error" with error text.
 	{ covers: "guard: stop", stopReason: "stop", errorMessage: "overloaded" },
@@ -205,6 +222,12 @@ const rows: Row[] = [
 	error("request to \\S+ failed, reason:", "FetchError: Request to https://x failed, reason: socket hang"),
 	error("request to \\S+ failed, reason:", "request to x failed, reason:"),
 	error("getaddrinfo", "GETADDRINFO"),
+	error(SOCKET, "econnreset"),
+	error(SOCKET, "socket: EConnAborted"),
+	error(SOCKET, "x-ECONNREFUSED"),
+	error(SOCKET, "(ETIMEDOUT)"),
+	error(SOCKET, "EPIPE"),
+	error("connection reset by peer", "CONNECTION RESET BY PEER"),
 	error("ENOTFOUND", "enotfound"),
 	error("EAI_AGAIN", "eai_again"),
 	error("upstream.?connect", "upstream connect error"),
@@ -320,13 +343,37 @@ const rows: Row[] = [
 	error("near-miss", "server-side error"),
 	error("near-miss", "provider returned a error"),
 	error("near-miss", "provider returned  an error"),
-	error("near-miss", "ECONNREFUSED 127.0.0.1:443"),
+	error(SOCKET, "ECONNREFUSED 127.0.0.1:443"),
 	error("near-miss", "RESOURCE_EXHAUSTED"),
 	error("near-miss", "resource exhausted"),
 	error("near-miss", "timd out"),
 	error("near-miss", "timedout"),
-	error("near-miss", "ETIMEDOUT"),
+	error(SOCKET, "ETIMEDOUT"),
+	error("near-miss", "ECONNRESETTING"),
+	error("near-miss", "connection reset by  peer"),
+	error("near-miss", "connection-reset-by-peer"),
 	error("near-miss", "line1\n520 status code (no body)"),
+
+	// The socket-code boundaries: one UTF-16 code unit on each side that is not
+	// [a-z0-9_] under "i" (ASCII letters only), or the start or end of the text.
+	error("socket: underscore before", "_EPIPE"),
+	error("socket: underscore after", "ECONNRESET_X"),
+	error("socket: letter before", "XECONNRESET"),
+	error("socket: upper-case letter after", "EPIPES"),
+	error("socket: lower-case letter after", "EPIPEs"),
+	error("socket: digit before", "1ETIMEDOUT"),
+	error("socket: digit after", "ECONNABORTED2"),
+	error("socket: hyphen after", "ECONNREFUSED-1"),
+	error("socket: dot after", "EPIPE."),
+	error("socket: newline before", "x\nECONNRESET"),
+	error("socket: non-ASCII letter before", "\u00e9EPIPE"),
+	error("socket: non-ASCII letter after", "EPIPE\u00e9"),
+	error("socket: U+212A after is not k", "EPIPE\u212A"),
+	error("socket: U+017F before is not s", "\u017FEPIPE"),
+	error("socket: astral before", "\u{1F600}ETIMEDOUT"),
+	error("socket: astral after", "ETIMEDOUT\u{1F600}"),
+	error("socket: a code inside a code", "EPIPEPIPE"),
+	error("socket: the second code bounded", "ECONNRESETX EPIPE"),
 
 	// The status-code boundaries: one UTF-16 code unit on each side that is not
 	// [a-z0-9] under "i" (ASCII letters only), or the start or end of the text.
