@@ -879,9 +879,10 @@ func TestAgentAbortMidStream(t *testing.T) {
 
 // TestAgentAbortDuringToolExecution aborts a run while a tool call is being
 // prepared (via the BeforeToolCall hook). The call hit by the abort must get an
-// "Operation aborted" error result and its Execute must NOT run; the loop then
-// breaks (later calls get no result, matching pi's sequential break), emits
-// agent_end, and reaches terminal state with cleared pending tool calls.
+// "Operation aborted" error result and its Execute must NOT run; later calls
+// get the same result without reaching the hook (pi 4438c58ba, #9986). The run
+// then emits agent_end and reaches terminal state with cleared pending tool
+// calls.
 func TestAgentAbortDuringToolExecution(t *testing.T) {
 	var ag *Agent
 	var ranAny int32
@@ -940,13 +941,13 @@ func TestAgentAbortDuringToolExecution(t *testing.T) {
 	if atomic.LoadInt32(&ranAny) != 0 {
 		t.Fatalf("aborted tool Execute must not run, ran %d times", ranAny)
 	}
-	// The call hit by the abort gets "Operation aborted"; later call b never
-	// prepared (loop broke), so it has no result — matching pi.
+	// The call hit by the abort gets "Operation aborted", and so does call b,
+	// which the loop still answers after the abort.
 	if resultText["a"] != "Operation aborted" {
 		t.Fatalf("expected 'Operation aborted' for call a, got %q (all: %v)", resultText["a"], resultText)
 	}
-	if _, ok := resultText["b"]; ok {
-		t.Fatalf("expected no result for not-reached call b, got %q", resultText["b"])
+	if resultText["b"] != "Operation aborted" {
+		t.Fatalf("expected 'Operation aborted' for call b, got %q (all: %v)", resultText["b"], resultText)
 	}
 }
 

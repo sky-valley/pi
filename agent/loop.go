@@ -584,10 +584,6 @@ func executeToolCallsSequential(ctx context.Context, current *AgentContext, msg 
 		emitToolResultMessage(trm, emit)
 		finalized = append(finalized, fo)
 		messages = append(messages, trm)
-
-		if aborted(ctx) {
-			break
-		}
 	}
 
 	return executedBatch{messages: messages, terminate: shouldTerminateBatch(finalized)}
@@ -625,9 +621,6 @@ func executeToolCallsParallel(ctx context.Context, current *AgentContext, msg *a
 			fo := AgentToolCallOutcome{ToolCall: tc, Result: prep.immediate.result, IsError: prep.immediate.isError}
 			emitToolExecutionEnd(fo, safeEmit)
 			slots = append(slots, slot{immediate: &fo})
-			if aborted(ctx) {
-				break
-			}
 			continue
 		}
 		prepared := *prep.prepared
@@ -660,9 +653,6 @@ func executeToolCallsParallel(ctx context.Context, current *AgentContext, msg *a
 			}
 			return fo
 		}})
-		if aborted(ctx) {
-			break
-		}
 	}
 
 	ordered := make([]AgentToolCallOutcome, len(slots))
@@ -683,6 +673,12 @@ func executeToolCallsParallel(ctx context.Context, current *AgentContext, msg *a
 	// all. An aborted call yields "Operation aborted" and skips execute AND
 	// finalize, so AfterToolCall never runs for it; deciding here also keeps those
 	// end events in slot order, as pi's synchronous map does.
+	//
+	// pi 4438c58ba (#9986): the prepare loop above no longer stops at an abort,
+	// so every call has a slot. A call reached after the abort is answered there
+	// by prepareToolCall's abort-first check, as an immediate slot whose end was
+	// already emitted; only calls prepared before the abort are thunks, and this
+	// decision answers them.
 	batchAborted := aborted(ctx)
 	for i, s := range slots {
 		if s.immediate != nil {
@@ -762,6 +758,11 @@ type prepareResult struct {
 // model-issued call, the caller's for RunToolCall (upstream 8562bcf66) — and
 // runs argument preparation, schema validation and BeforeToolCall.
 func prepareToolCall(ctx context.Context, current *AgentContext, msg *ai.AssistantMessage, tc ai.ToolCall, hooks ToolCallHooks, tools []AgentTool) (res prepareResult) {
+	// Once aborted, skip preparation and the hooks; callers still record this
+	// result, so no call is left without one (pi 4438c58ba, #9986).
+	if aborted(ctx) {
+		return prepareResult{immediate: &immediateOutcome{result: errorToolResult("Operation aborted"), isError: true}}
+	}
 	tool, ok := findTool(tools, tc.Name)
 	if !ok {
 		return prepareResult{immediate: &immediateOutcome{result: errorToolResult("Tool " + tc.Name + " not found"), isError: true}}
@@ -816,9 +817,6 @@ func prepareToolCall(ctx context.Context, current *AgentContext, msg *ai.Assista
 			result.Terminate = before.Terminate
 			return prepareResult{immediate: &immediateOutcome{result: result, isError: true}}
 		}
-	}
-	if aborted(ctx) {
-		return prepareResult{immediate: &immediateOutcome{result: errorToolResult("Operation aborted"), isError: true}}
 	}
 	return prepareResult{prepared: &preparedToolCall{toolCall: tc, tool: tool, args: validated}}
 }
@@ -881,9 +879,11 @@ type RunToolCallOptions struct {
 // messages. A tool that calls other tools uses it so the hooks — permission
 // checks, for example — apply to those calls too.
 //
-// Tool failures never escape: an unknown tool, a validation error, a blocked
-// call and a failing tool all come back as an outcome with IsError set.
-// Cancelling ctx aborts the call as pi's signal does.
+// Tool failures never escape: a cancelled ctx, an unknown tool, a validation
+// error, a blocked call and a failing tool all come back as an outcome with
+// IsError set. Cancelling ctx aborts the call as pi's signal does; a ctx
+// already cancelled is checked first, before the tool is looked up or the
+// hooks run.
 //
 // The hooks run on the caller's goroutine. The loop runs the hook bodies of a
 // model-issued batch one at a time, as pi's single thread does, but a tool

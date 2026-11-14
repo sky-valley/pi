@@ -2,7 +2,11 @@ package agent
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"reflect"
+	"slices"
+	"sync"
 	"testing"
 	"time"
 
@@ -307,5 +311,180 @@ func TestRunToolCallReportsArgumentsErrorAfterPrepareArguments(t *testing.T) {
 	want := "Invalid arguments for tool \"echo\": Unexpected end of JSON input\n\nReceived arguments:\n{\"value\":"
 	if ran || !out.IsError || outcomeText(out) != want {
 		t.Errorf("RunToolCall = %+v (ran %v), want an error outcome %q", out, ran, want)
+	}
+}
+
+// runToolBatch runs one turn whose assistant message calls tool three times,
+// then a final turn that ends aborted (agent-loop.test.ts runToolBatch). It
+// returns the run's events and messages.
+func runToolBatch(ctx context.Context, tool AgentTool, cfg AgentLoopConfig) ([]AgentEvent, []AgentMessage) {
+	var calls ai.ContentList
+	for i, value := range []string{"first", "second", "third"} {
+		calls = append(calls, ai.ToolCall{ID: fmt.Sprintf("tool-%d", i+1), Name: tool.Name, Arguments: map[string]any{"value": value}})
+	}
+	cfg.Model = testModel
+	cfg.ConvertToLlm = identityConverter
+	var events []AgentEvent
+	messages := runAgentLoop(ctx, []AgentMessage{ai.NewUserText("run three", 0)},
+		AgentContext{Tools: []AgentTool{tool}}, cfg,
+		func(e AgentEvent) error {
+			events = append(events, e)
+			return nil
+		},
+		scriptedStream(
+			&ai.AssistantMessage{Content: calls, StopReason: ai.StopToolUse},
+			&ai.AssistantMessage{StopReason: ai.StopAborted},
+		))
+	return events, messages
+}
+
+// toolResultTexts lists each tool result message as [toolCallID, text].
+func toolResultTexts(messages []AgentMessage) [][2]string {
+	var out [][2]string
+	for _, m := range messages {
+		if trm, ok := m.(ai.ToolResultMessage); ok {
+			out = append(out, [2]string{trm.ToolCallID, textOfContent(trm.Content)})
+		}
+	}
+	return out
+}
+
+// toolEventIDs lists the tool call ids of the events of type typ, in order.
+func toolEventIDs(events []AgentEvent, typ EventType) []string {
+	var ids []string
+	for _, e := range events {
+		if e.Type == typ {
+			ids = append(ids, e.ToolCallID)
+		}
+	}
+	return ids
+}
+
+// agent-loop.test.ts "answers every tool call of a sequential batch aborted
+// mid-batch" (upstream 4438c58ba, #9986): the calls the loop had not reached
+// when the abort landed still get an "Operation aborted" result and their
+// events, without running.
+func TestLoopAnswersEveryCallOfSequentialBatchAbortedMidBatch(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	var executed []string
+	tool := AgentTool{
+		Name:          "slow",
+		Label:         "Slow",
+		Description:   "Slow tool",
+		Parameters:    ai.Object(ai.Prop("value", ai.String())),
+		ExecutionMode: ToolSequential,
+		Execute: func(_ context.Context, id string, params map[string]any, onUpdate ToolUpdateFunc) (AgentToolResult, error) {
+			executed = append(executed, params["value"].(string))
+			// The user aborts while the first call runs.
+			cancel()
+			return AgentToolResult{}, errors.New("interrupted")
+		},
+	}
+
+	events, messages := runToolBatch(ctx, tool, AgentLoopConfig{})
+
+	if want := []string{"first"}; !slices.Equal(executed, want) {
+		t.Errorf("executed = %v, want %v", executed, want)
+	}
+	want := [][2]string{{"tool-1", "interrupted"}, {"tool-2", "Operation aborted"}, {"tool-3", "Operation aborted"}}
+	if got := toolResultTexts(messages); !slices.Equal(got, want) {
+		t.Errorf("tool results = %v, want %v", got, want)
+	}
+	ids := []string{"tool-1", "tool-2", "tool-3"}
+	if got := toolEventIDs(events, EvToolExecutionStart); !slices.Equal(got, ids) {
+		t.Errorf("tool_execution_start = %v, want %v", got, ids)
+	}
+	if got := toolEventIDs(events, EvToolExecutionEnd); !slices.Equal(got, ids) {
+		t.Errorf("tool_execution_end = %v, want %v", got, ids)
+	}
+}
+
+// agent-loop.test.ts "answers every tool call of a parallel batch aborted while
+// calls are prepared" (upstream 4438c58ba, #9986): an abort raised in a hook
+// answers every call, and the hook is not asked about the calls after it.
+func TestLoopAnswersEveryCallOfParallelBatchAbortedWhilePrepared(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	var mu sync.Mutex
+	var executed []string
+	tool := AgentTool{
+		Name:        "slow",
+		Label:       "Slow",
+		Description: "Slow tool",
+		Parameters:  ai.Object(ai.Prop("value", ai.String())),
+		Execute: func(_ context.Context, id string, params map[string]any, onUpdate ToolUpdateFunc) (AgentToolResult, error) {
+			value := params["value"].(string)
+			mu.Lock()
+			executed = append(executed, value)
+			mu.Unlock()
+			return AgentToolResult{Content: ai.ContentList{ai.TextContent{Text: value}}, Details: map[string]any{"value": value}}, nil
+		},
+	}
+	// The user aborts while a hook decides about the second call, for example
+	// at a permission prompt.
+	var hookCalls []string
+	cfg := AgentLoopConfig{
+		BeforeToolCall: func(_ context.Context, c BeforeToolCallContext) *BeforeToolCallResult {
+			hookCalls = append(hookCalls, c.ToolCall.ID)
+			if c.ToolCall.ID == "tool-2" {
+				cancel()
+			}
+			return nil
+		},
+	}
+
+	events, messages := runToolBatch(ctx, tool, cfg)
+
+	if len(executed) != 0 {
+		t.Errorf("executed = %v, want none", executed)
+	}
+	// The hook is not asked about a call that will not run.
+	if want := []string{"tool-1", "tool-2"}; !slices.Equal(hookCalls, want) {
+		t.Errorf("hook calls = %v, want %v", hookCalls, want)
+	}
+	want := [][2]string{{"tool-1", "Operation aborted"}, {"tool-2", "Operation aborted"}, {"tool-3", "Operation aborted"}}
+	if got := toolResultTexts(messages); !slices.Equal(got, want) {
+		t.Errorf("tool results = %v, want %v", got, want)
+	}
+	ids := []string{"tool-1", "tool-2", "tool-3"}
+	if got := toolEventIDs(events, EvToolExecutionStart); !slices.Equal(got, ids) {
+		t.Errorf("tool_execution_start = %v, want %v", got, ids)
+	}
+	ends := toolEventIDs(events, EvToolExecutionEnd)
+	slices.Sort(ends)
+	if !slices.Equal(ends, ids) {
+		t.Errorf("tool_execution_end = %v, want %v in any order", ends, ids)
+	}
+}
+
+// pi's runToolCall checks an aborted signal first (upstream 4438c58ba): the
+// call comes back as "Operation aborted" before the tool is looked up or
+// BeforeToolCall is asked about it.
+func TestRunToolCallChecksAbortFirst(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	var hookCalls []string
+	opts := RunToolCallOptions{
+		ToolCallHooks: ToolCallHooks{
+			BeforeToolCall: func(_ context.Context, c BeforeToolCallContext) *BeforeToolCallResult {
+				hookCalls = append(hookCalls, c.ToolCall.ID)
+				return nil
+			},
+		},
+		Tools:            []AgentTool{runEcho},
+		AssistantMessage: &ai.AssistantMessage{},
+		Context:          &AgentContext{},
+	}
+	for _, call := range []ai.ToolCall{
+		runCall("a", "echo", map[string]any{"value": "a"}),
+		runCall("b", "missing", map[string]any{}),
+	} {
+		if out := RunToolCall(ctx, call, opts); !out.IsError || outcomeText(out) != "Operation aborted" {
+			t.Errorf("RunToolCall(%s) = %+v, want error outcome \"Operation aborted\"", call.ID, out)
+		}
+	}
+	if len(hookCalls) != 0 {
+		t.Errorf("BeforeToolCall asked about %v, want no calls", hookCalls)
 	}
 }
