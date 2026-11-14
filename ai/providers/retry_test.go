@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -701,6 +702,69 @@ func TestGoogleRetriesTransientStatusThenSucceeds(t *testing.T) {
 	if got := atomic.LoadInt32(&calls); got != 2 {
 		t.Fatalf("expected 2 attempts (1 retry), got %d", got)
 	}
+}
+
+// TestFetchRejectionRetriesFollowTheSDK: pi's retryProviderRequest retries
+// only an error that has both status and headers (isProviderError).
+// @anthropic-ai/sdk and openai wrap a rejected fetch in APIConnectionError,
+// whose status and headers are undefined but present, so it is retried;
+// @google/genai rethrows the rejection itself (apiCall's runFetch), which
+// has no status, so retryGoogleRequest gives up at once — whether undici's
+// "fetch failed" or a custom fetch's own error.
+func TestFetchRejectionRetriesFollowTheSDK(t *testing.T) {
+	want := map[ai.Api]int64{
+		ai.APIAnthropicMessages:  3,
+		ai.APIOpenAICompletions:  3,
+		ai.APIOpenAIResponses:    3,
+		ai.APIGoogleGenerativeAI: 1,
+	}
+	for _, p := range injectionProviders {
+		attempts, ok := want[p.api]
+		if !ok {
+			continue
+		}
+		t.Run(p.name+"/custom fetch", func(t *testing.T) {
+			t.Parallel()
+			var calls atomic.Int64
+			client := doerFunc(func(*http.Request) (*http.Response, error) {
+				calls.Add(1)
+				return nil, errors.New("the custom fetch failed")
+			})
+			final := p.run("http://127.0.0.1:1", ai.StreamOptions{ProviderRequestOptions: ai.ProviderRequestOptions{APIKey: "k", MaxRetries: 2, HTTPClient: client}})
+			if final.StopReason != ai.StopError {
+				t.Fatalf("stop reason %s, want error", final.StopReason)
+			}
+			if got := calls.Load(); got != attempts {
+				t.Fatalf("the custom fetch ran %d times under MaxRetries 2 (%q); pi: %d", got, final.ErrorMessage, attempts)
+			}
+		})
+	}
+	t.Run("google/fetch failed", func(t *testing.T) {
+		t.Parallel()
+		ln, err := net.Listen("tcp", "127.0.0.1:0")
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer ln.Close()
+		var conns atomic.Int64
+		go func() {
+			for {
+				conn, err := ln.Accept()
+				if err != nil {
+					return
+				}
+				conns.Add(1)
+				conn.Close() // no response: undici's fetch rejects "fetch failed"
+			}
+		}()
+		final := googleRetryStream(t, "http://"+ln.Addr().String(), ai.StreamOptions{ProviderRequestOptions: ai.ProviderRequestOptions{APIKey: "k", MaxRetries: 2}}).Result()
+		if final.StopReason != ai.StopError || !strings.HasPrefix(final.ErrorMessage, "fetch failed") {
+			t.Fatalf("got %s %q, want a fetch failed error", final.StopReason, final.ErrorMessage)
+		}
+		if got := conns.Load(); got != 1 {
+			t.Fatalf("the server saw %d connections under MaxRetries 2; pi sends 1", got)
+		}
+	})
 }
 
 func googleRetryStream(t *testing.T, baseURL string, opts ai.StreamOptions) *ai.AssistantMessageEventStream {

@@ -480,6 +480,9 @@ func StreamGoogle(ctx context.Context, model *ai.Model, req ai.TranscriptContext
 		// fetch's own headers timeout bounds the wait.
 		cfg := retryFromOptions(opts.StreamOptions, nil)
 		cfg.timeoutMs = undiciHeadersTimeoutMs
+		// @google/genai rethrows a rejected fetch as it is, with no status,
+		// so retryGoogleRequest never retries one.
+		cfg.rejectionIsFinal = true
 		resp, err := sendWithRetry(ctx, build, cfg)
 		if err != nil {
 			// Neither @google/genai nor pi's catch adds to fetch's rejection;

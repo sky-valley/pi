@@ -47,6 +47,13 @@ type retryConfig struct {
 	// @google/genai's ApiError carries no headers, so pi never reads a server
 	// delay there and never fails fast.
 	providerError func(status int, body []byte) string
+	// rejectionIsFinal ends the loop at a send that got no response
+	// (*fetchRejection), whatever retries remain. pi's retryProviderRequest
+	// retries only an error with status and headers (isProviderError):
+	// @anthropic-ai/sdk and openai wrap a rejected fetch in
+	// APIConnectionError, which has both (undefined), but @google/genai
+	// rethrows the rejection itself, which has neither, so google sets this.
+	rejectionIsFinal bool
 	// httpClient overrides the shared client (pi StreamOptions.fetch). Nil keeps
 	// sharedClient, whose transport carries the timeoutMs response-header cap.
 	httpClient ai.HTTPDoer
@@ -618,7 +625,8 @@ func nullResponseBody(resp *http.Response) bool {
 // wraps its SDK request in: once ctx is done, a request that fails — no
 // response, or a non-2xx one, which the SDKs throw — and a retry wait both
 // end with errRequestAborted. A send that gets no response otherwise fails
-// with a *fetchRejection holding its client's error.
+// with a *fetchRejection holding its client's error, retried unless
+// cfg.rejectionIsFinal.
 //
 // For providers whose SDK error carries the response headers
 // (cfg.providerError non-nil) a server-requested delay above
@@ -675,7 +683,7 @@ func sendWithRetry(ctx context.Context, build func() (*http.Request, error), cfg
 			headersTimeout := undiciTimesOutFirst && wrote.Load() && errors.As(err, &sent) && sent.Timeout()
 			err = &fetchRejection{err: err, custom: cfg.httpClient != nil, headersTimeout: headersTimeout}
 			lastErr = err
-			if attempt == attempts-1 {
+			if attempt == attempts-1 || cfg.rejectionIsFinal {
 				return nil, err
 			}
 			// No response, so no server-requested delay: pure backoff.
