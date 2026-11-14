@@ -614,9 +614,32 @@ func (s *Session) Reset() error {
 	return nil
 }
 
-// LastAssistantText returns the most recent assistant message text.
+// LastAssistantText returns the text of the last assistant reply, for /copy
+// (pi's getLastAssistantText). A message without text from a turn that did
+// not end normally — aborted, failed or only calling tools — is skipped
+// (upstream ede360e4d, #12119); a reply that ended normally stays the last
+// reply even without text. The text is trimmed, and "" means there is no
+// assistant message or the last reply has no text (pi's undefined).
 func (s *Session) LastAssistantText() string {
-	return lastAssistantText(s.Agent.State().Messages)
+	messages := s.Agent.State().Messages
+	for i := len(messages) - 1; i >= 0; i-- {
+		am, ok := messageAsAssistant(messages[i])
+		if !ok {
+			continue
+		}
+		if am.StopReason != ai.StopStop && !hasNonBlankText(am.Content) {
+			continue
+		}
+		return jstext.Trim(assistantText(am))
+	}
+	return ""
+}
+
+func hasNonBlankText(content ai.ContentList) bool {
+	return slices.ContainsFunc(content, func(c ai.Content) bool {
+		tc, ok := c.(ai.TextContent)
+		return ok && jstext.Trim(tc.Text) != ""
+	})
 }
 
 // NewSession builds a Session. If Tools is nil, the default coding tools are used;
@@ -1024,7 +1047,7 @@ func (s *Session) RunMessages(ctx context.Context, prompts []agent.AgentMessage)
 			result.StopReason = am.StopReason
 		}
 	}
-	result.Text = s.LastAssistantText()
+	result.Text = lastAssistantText(st.Messages)
 	result.ErrorMessage = st.ErrorMessage
 	if result.ErrorMessage != "" {
 		return result, fmt.Errorf("%s", result.ErrorMessage)
@@ -1120,24 +1143,24 @@ func compactArgs(args map[string]any) string {
 	return ""
 }
 
+// lastAssistantText is the text of the final assistant message, whatever it
+// ended with: what a run produced, not the reply /copy takes.
 func lastAssistantText(messages []agent.AgentMessage) string {
 	for i := len(messages) - 1; i >= 0; i-- {
-		var am *ai.AssistantMessage
-		switch v := messages[i].(type) {
-		case *ai.AssistantMessage:
-			am = v
-		case ai.AssistantMessage:
-			am = &v
-		default:
-			continue
+		if am, ok := messageAsAssistant(messages[i]); ok {
+			return assistantText(am)
 		}
-		var parts []string
-		for _, c := range am.Content {
-			if tc, ok := c.(ai.TextContent); ok {
-				parts = append(parts, tc.Text)
-			}
-		}
-		return strings.Join(parts, "")
 	}
 	return ""
+}
+
+// assistantText concatenates a message's text blocks.
+func assistantText(am *ai.AssistantMessage) string {
+	var b strings.Builder
+	for _, c := range am.Content {
+		if tc, ok := c.(ai.TextContent); ok {
+			b.WriteString(tc.Text)
+		}
+	}
+	return b.String()
 }
