@@ -24,8 +24,9 @@
 // the connection open. The anthropic-messages, openai-completions,
 // openai-responses and pi-messages adapters run every mode (the SDK adapters'
 // request modes are abort-before-response's); google-generative-ai runs the error-body modes but the retryable
-// drop, the no-response ones and "an abort from the callback on the last event
-// of a body already complete". Modes:
+// drop, the no-response ones, "an abort from the callback on the last event
+// of a body already complete", and (since f72f799a4 hands @google/genai the
+// custom fetch) the custom fetch's body and abort modes. Modes:
 //   - "an abort while a read is pending": the signal aborts 150ms after the
 //     first segment is written, while the adapter waits on its next read;
 //   - "an abort from the callback with events left in its read": the
@@ -75,7 +76,7 @@
 //     it timed out, and (the SDK adapters) with an AbortError of its own.
 //     pi-messages and google never hand timeoutMs to fetch and wait on
 //     undici's 300s headers timeout (D13), too long to capture;
-//   - a custom fetch and an abort (anthropic, pi-messages): "a custom fetch
+//   - a custom fetch and an abort (every adapter): "a custom fetch
 //     rejects once the signal aborts" (150ms into the call, with
 //     customFetchError); "a custom fetch's body ignores an abort from the
 //     callback" (the body delivers the whole stream, one segment per read,
@@ -287,7 +288,7 @@ const adapters = [
 		provider: "google",
 		id: "gemini-2.5-flash",
 		module: await load("api/google-generative-ai.ts"),
-		modes: [completeBody, errorBody, errorBodyDrops, retryableErrorBody, ...noResponseModes],
+		modes: [completeBody, errorBody, errorBodyDrops, retryableErrorBody, ...noResponseModes, customBody, customRetryableErrorBody, ...customAbortModes],
 		segments: [
 			dataEvent({ candidates: [{ content: { parts: [{ text: "in hand" }], role: "model" } }] }),
 			dataEvent({

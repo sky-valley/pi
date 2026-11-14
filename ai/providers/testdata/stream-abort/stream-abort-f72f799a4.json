@@ -1,5 +1,5 @@
 {
-	"source": "upstream 71023aec1 packages/ai/src/api, @anthropic-ai/sdk 0.129.0 sha512-MH7LB20kNpGLUpPTe2OG5XvL/KhX8HUO9XyBaFjgFk6TLS4Xjt0VPIuMKywe7POKKPslX+QxSlVok9e+8kG5Nw==, openai 7.19.0 sha512-MX2s3u2L5racTO0CC/SWpCOasJQBCJrqLKXK+l82cAhdeF8mPMBEe/gxMm0ZFa2xpKpOFLRjxv5afYEZbBXmbQ==, @google/genai 2.21.0 sha512-+PDtco2/Z0ONdzCGekCoCT+O1VJS9xJQNN4XzQpXG/t3El/SWWMkCWlFRO1KmivOHPa4Q0VjUYu1HBKCZ/v33Q==, node v26.4.0 (undici 8.5.0); rows 104-105 (google-generative-ai, a custom fetch rejects / with a timeout) from upstream f72f799a4, @google/genai 2.32.0 sha512-60c79uXpR0a47bmGqDxbXEBuQUalNmwo5mx5kqb91jIW4FoqpsLSt86DeVhRhtH5+s/16Wqxt3sXzFQn2U1OHQ==, node v24.22.1: node v24.22.1 reproduces every google-generative-ai row of this file at 71023aec1 byte for byte, and between f72f799a4^1 and f72f799a4 only these two rows move",
+	"source": "upstream 71023aec1 packages/ai/src/api, @anthropic-ai/sdk 0.129.0 sha512-MH7LB20kNpGLUpPTe2OG5XvL/KhX8HUO9XyBaFjgFk6TLS4Xjt0VPIuMKywe7POKKPslX+QxSlVok9e+8kG5Nw==, openai 7.19.0 sha512-MX2s3u2L5racTO0CC/SWpCOasJQBCJrqLKXK+l82cAhdeF8mPMBEe/gxMm0ZFa2xpKpOFLRjxv5afYEZbBXmbQ==, @google/genai 2.21.0 sha512-+PDtco2/Z0ONdzCGekCoCT+O1VJS9xJQNN4XzQpXG/t3El/SWWMkCWlFRO1KmivOHPa4Q0VjUYu1HBKCZ/v33Q==, node v26.4.0 (undici 8.5.0); rows 104-105 (google-generative-ai, a custom fetch rejects / with a timeout) from upstream f72f799a4, @google/genai 2.32.0 sha512-60c79uXpR0a47bmGqDxbXEBuQUalNmwo5mx5kqb91jIW4FoqpsLSt86DeVhRhtH5+s/16Wqxt3sXzFQn2U1OHQ==, node v24.22.1: node v24.22.1 reproduces every google-generative-ai row of this file at 71023aec1 byte for byte, and between f72f799a4^1 and f72f799a4 only these two rows move; rows 106-110 (google-generative-ai, a custom fetch's body and abort modes) appended from upstream f72f799a4, @google/genai 2.32.0, node v24.22.1: they involve only the custom fetch, and node v22 captures them identically",
 	"runs": [
 		{
 			"api": "anthropic-messages",
@@ -1878,6 +1878,108 @@
 			"stopReason": "error",
 			"errorMessage": "the custom fetch timed out",
 			"content": "[]",
+			"diagnostics": []
+		},
+		{
+			"api": "google-generative-ai",
+			"mode": "a custom fetch's body fails mid-body",
+			"status": 200,
+			"segments": [
+				"data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"in hand\"}],\"role\":\"model\"}}]}\n\n"
+			],
+			"customBodyError": "the custom fetch's body failed",
+			"observed": [
+				""
+			],
+			"events": [
+				"start",
+				"text_start",
+				"text_delta",
+				"error"
+			],
+			"stopReason": "error",
+			"errorMessage": "the custom fetch's body failed",
+			"content": "[{\"type\":\"text\",\"text\":\"in hand\"}]",
+			"diagnostics": []
+		},
+		{
+			"api": "google-generative-ai",
+			"mode": "a custom fetch's retryable error body fails mid-body",
+			"retryAfter": "120",
+			"maxRetries": 1,
+			"status": 429,
+			"segments": [
+				"{\"error\":{\"message\":\"cut short"
+			],
+			"customBodyError": "the custom fetch's body failed",
+			"observed": [],
+			"events": [
+				"error"
+			],
+			"stopReason": "error",
+			"errorMessage": "the custom fetch's body failed",
+			"content": "[]",
+			"diagnostics": []
+		},
+		{
+			"api": "google-generative-ai",
+			"mode": "a custom fetch rejects once the signal aborts",
+			"customFetchError": "the custom fetch failed",
+			"observed": [],
+			"events": [
+				"error"
+			],
+			"stopReason": "aborted",
+			"errorMessage": "Request aborted",
+			"content": "[]",
+			"diagnostics": []
+		},
+		{
+			"api": "google-generative-ai",
+			"mode": "a custom fetch's body ignores an abort from the callback",
+			"status": 200,
+			"segments": [
+				"data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"in hand\"}],\"role\":\"model\"}}]}\n\n",
+				"data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\" and more\"}],\"role\":\"model\"},\"finishReason\":\"STOP\"}],\"usageMetadata\":{\"promptTokenCount\":1,\"candidatesTokenCount\":2,\"totalTokenCount\":3}}\n\n",
+				""
+			],
+			"observed": [
+				"",
+				""
+			],
+			"events": [
+				"start",
+				"text_start",
+				"text_delta",
+				"text_delta",
+				"text_end",
+				"error"
+			],
+			"stopReason": "aborted",
+			"errorMessage": "Request was aborted",
+			"content": "[{\"type\":\"text\",\"text\":\"in hand and more\"}]",
+			"diagnostics": []
+		},
+		{
+			"api": "google-generative-ai",
+			"mode": "a custom fetch's body fails once the signal aborts",
+			"status": 200,
+			"segments": [
+				"data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"in hand\"}],\"role\":\"model\"}}]}\n\n"
+			],
+			"customBodyError": "the custom fetch's body failed",
+			"observed": [
+				""
+			],
+			"events": [
+				"start",
+				"text_start",
+				"text_delta",
+				"error"
+			],
+			"stopReason": "aborted",
+			"errorMessage": "the custom fetch's body failed",
+			"content": "[{\"type\":\"text\",\"text\":\"in hand\"}]",
 			"diagnostics": []
 		}
 	]
