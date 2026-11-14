@@ -1,6 +1,7 @@
 package ai
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"slices"
@@ -151,41 +152,71 @@ func TestStreamEnvReachesProvider(t *testing.T) {
 	}
 }
 
-// TestQwenTokenPlanEnvKeys locks the Qwen Token Plan built-in provider wiring
-// (upstream bbb91fa8): both providers map to their API-key env vars and register
-// as built-ins from the catalog with env-key auth.
+// TestQwenTokenPlanEnvKeys mirrors qwen-token-plan-models.test.ts at upstream
+// 139707002 (#11773): each Qwen Token Plan provider reads its per-plan
+// variable first, then the region variable both plans used to share
+// (QWEN_TOKEN_PLAN_API_KEY, QWEN_TOKEN_PLAN_CN_API_KEY), and a per-plan key
+// never reaches the other plan.
 func TestQwenTokenPlanEnvKeys(t *testing.T) {
-	want := map[string]string{
-		"qwen-token-plan":    "QWEN_TOKEN_PLAN_API_KEY",
-		"qwen-token-plan-cn": "QWEN_TOKEN_PLAN_CN_API_KEY",
-		// pi c03d78bdc: the Individual plan deliberately REUSES the base
-		// plan's env var rather than introducing its own.
-		"qwen-token-plan-individual": "QWEN_TOKEN_PLAN_API_KEY",
+	for _, tc := range []struct{ provider, planVar, sharedVar string }{
+		{"qwen-token-plan", "QWEN_TOKEN_PLAN_TEAM_API_KEY", "QWEN_TOKEN_PLAN_API_KEY"},
+		{"qwen-token-plan-cn", "QWEN_TOKEN_PLAN_TEAM_CN_API_KEY", "QWEN_TOKEN_PLAN_CN_API_KEY"},
+		{"qwen-token-plan-individual", "QWEN_TOKEN_PLAN_INDIVIDUAL_API_KEY", "QWEN_TOKEN_PLAN_API_KEY"},
+		{"qwen-token-plan-individual-cn", "QWEN_TOKEN_PLAN_INDIVIDUAL_CN_API_KEY", "QWEN_TOKEN_PLAN_CN_API_KEY"},
+	} {
+		if got := apiKeyEnvVars(tc.provider); !slices.Equal(got, []string{tc.planVar, tc.sharedVar}) {
+			t.Errorf("apiKeyEnvVars(%q) = %q, pi [%s %s]", tc.provider, got, tc.planVar, tc.sharedVar)
+		}
+		both := map[string]string{tc.planVar: "plan", tc.sharedVar: "shared"}
+		if got := GetEnvApiKey(tc.provider, both); got != "plan" {
+			t.Errorf("GetEnvApiKey(%q) with both set = %q, pi %q", tc.provider, got, "plan")
+		}
+		if got := GetEnvApiKey(tc.provider, map[string]string{tc.sharedVar: "shared"}); got != "shared" {
+			t.Errorf("GetEnvApiKey(%q) with the shared key = %q, pi %q", tc.provider, got, "shared")
+		}
 	}
-	m := BuiltinModels(nil)
-	for provider, envVar := range want {
-		vars := apiKeyEnvVars(provider)
-		if len(vars) != 1 || vars[0] != envVar {
-			t.Errorf("apiKeyEnvVars(%q) = %v, want [%s]", provider, vars, envVar)
-		}
-		if prov := m.GetProvider(provider); prov == nil || len(prov.GetModels()) == 0 {
-			t.Errorf("%q not registered as a built-in provider with models", provider)
-		}
+	if got := FindEnvKeys("qwen-token-plan", map[string]string{"QWEN_TOKEN_PLAN_INDIVIDUAL_API_KEY": "test"}); got != nil {
+		t.Errorf("FindEnvKeys(qwen-token-plan) took the Individual key: %q", got)
+	}
+	if got := FindEnvKeys("qwen-token-plan-individual-cn", map[string]string{"QWEN_TOKEN_PLAN_TEAM_CN_API_KEY": "test"}); got != nil {
+		t.Errorf("FindEnvKeys(qwen-token-plan-individual-cn) took the Team CN key: %q", got)
 	}
 }
 
-// pi 3e4f87265 adds the Qwen Token Plan Individual CN provider: it reuses the
-// CN plan's QWEN_TOKEN_PLAN_CN_API_KEY, and its key prompt names the plan. The
-// provider stays latent until the next catalog regen carries its models.
-func TestQwenTokenPlanIndividualCNEnvKey(t *testing.T) {
-	if vars := apiKeyEnvVars("qwen-token-plan-individual-cn"); len(vars) != 1 || vars[0] != "QWEN_TOKEN_PLAN_CN_API_KEY" {
-		t.Fatalf("apiKeyEnvVars(qwen-token-plan-individual-cn) = %v, want [QWEN_TOKEN_PLAN_CN_API_KEY]", vars)
-	}
-	if got := GetEnvApiKey("qwen-token-plan-individual-cn", map[string]string{"QWEN_TOKEN_PLAN_CN_API_KEY": "scoped"}); got != "scoped" {
-		t.Errorf("GetEnvApiKey(qwen-token-plan-individual-cn) = %q, want %q", got, "scoped")
-	}
-	if got := builtinAPIKeyNames["qwen-token-plan-individual-cn"]; got != "Qwen Token Plan Individual CN API key" {
-		t.Errorf("builtinAPIKeyNames[qwen-token-plan-individual-cn] = %q", got)
+// The built-in providers' auth resolves through the same list: the per-plan
+// key wins, and the shared one still works (pi's createModels half of the
+// test above). qwen-token-plan-individual-cn stays latent until the catalog
+// carries its models, so only the three catalog providers are resolved here.
+func TestQwenTokenPlanBuiltinAuthPrefersPlanKey(t *testing.T) {
+	for _, tc := range []struct{ provider, planVar, sharedVar string }{
+		{"qwen-token-plan", "QWEN_TOKEN_PLAN_TEAM_API_KEY", "QWEN_TOKEN_PLAN_API_KEY"},
+		{"qwen-token-plan-cn", "QWEN_TOKEN_PLAN_TEAM_CN_API_KEY", "QWEN_TOKEN_PLAN_CN_API_KEY"},
+		{"qwen-token-plan-individual", "QWEN_TOKEN_PLAN_INDIVIDUAL_API_KEY", "QWEN_TOKEN_PLAN_API_KEY"},
+	} {
+		t.Run(tc.provider, func(t *testing.T) {
+			for _, v := range []string{"QWEN_TOKEN_PLAN_TEAM_API_KEY", "QWEN_TOKEN_PLAN_TEAM_CN_API_KEY", "QWEN_TOKEN_PLAN_INDIVIDUAL_API_KEY", "QWEN_TOKEN_PLAN_INDIVIDUAL_CN_API_KEY", "QWEN_TOKEN_PLAN_API_KEY", "QWEN_TOKEN_PLAN_CN_API_KEY"} {
+				t.Setenv(v, "")
+			}
+			m := BuiltinModels(nil)
+			if prov := m.GetProvider(tc.provider); prov == nil || len(prov.GetModels()) == 0 {
+				t.Fatalf("%q not registered as a built-in provider with models", tc.provider)
+			}
+			resolve := func() string {
+				res, err := m.GetAuth(context.Background(), &Model{Provider: tc.provider, Api: APIOpenAICompletions, ID: "x"}, nil)
+				if err != nil || res == nil {
+					t.Fatalf("GetAuth(%q) = %+v, %v", tc.provider, res, err)
+				}
+				return res.Auth.APIKey
+			}
+			t.Setenv(tc.sharedVar, "shared")
+			if got := resolve(); got != "shared" {
+				t.Errorf("shared key only: %q, pi %q", got, "shared")
+			}
+			t.Setenv(tc.planVar, "plan")
+			if got := resolve(); got != "plan" {
+				t.Errorf("both keys: %q, pi %q", got, "plan")
+			}
+		})
 	}
 }
 
@@ -260,7 +291,7 @@ func TestTypesafeEnvKey(t *testing.T) {
 // list the same variables in the same order, and none for a provider pi has
 // none for. A provider the capture lacks means the catalog moved: re-capture.
 func TestAPIKeyEnvVarsMatchPi(t *testing.T) {
-	const file = "testdata/envkeys/env-keys-1.5.2.json"
+	const file = "testdata/envkeys/env-keys-139707002.json"
 	data, err := os.ReadFile(file)
 	if err != nil {
 		t.Fatalf("read %s: %v (regenerate it with testdata/envkeys/capture.mjs)", file, err)

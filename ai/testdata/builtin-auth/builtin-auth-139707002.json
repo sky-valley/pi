@@ -1,5 +1,6 @@
 {
-	"version": "1.5.2",
+	"sha": "139707002",
+	"catalog": "pi-ai 1.5.2",
 	"providers": [
 		{
 			"id": "amazon-bedrock",
@@ -318,22 +319,22 @@
 		},
 		{
 			"id": "qwen-token-plan",
-			"apiKeyName": "Qwen Token Plan API key",
+			"apiKeyName": "Qwen Token Plan Team API key",
 			"prompts": [
 				{
 					"type": "secret",
-					"message": "Enter Qwen Token Plan API key"
+					"message": "Enter Qwen Token Plan Team API key"
 				}
 			],
 			"loginError": null
 		},
 		{
 			"id": "qwen-token-plan-cn",
-			"apiKeyName": "Qwen Token Plan CN API key",
+			"apiKeyName": "Qwen Token Plan Team CN API key",
 			"prompts": [
 				{
 					"type": "secret",
-					"message": "Enter Qwen Token Plan CN API key"
+					"message": "Enter Qwen Token Plan Team CN API key"
 				}
 			],
 			"loginError": null

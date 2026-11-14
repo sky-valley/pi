@@ -39,54 +39,50 @@ func apiKeyEnvVars(provider string) []string {
 		// precedence over ANTHROPIC_API_KEY.
 		return []string{AnthropicAuthTokenEnv, "ANTHROPIC_OAUTH_TOKEN", "ANTHROPIC_API_KEY"}
 	}
-	envMap := map[string]string{
-		"ant-ling":           "ANT_LING_API_KEY",
-		"qwen-token-plan":    "QWEN_TOKEN_PLAN_API_KEY",
-		"qwen-token-plan-cn": "QWEN_TOKEN_PLAN_CN_API_KEY",
-		// pi c03d78bdc: the Individual plan reuses the base plan's env var
-		// (envApiKeyAuth(..., ["QWEN_TOKEN_PLAN_API_KEY"])), not a new one.
-		"qwen-token-plan-individual": "QWEN_TOKEN_PLAN_API_KEY",
-		// pi 3e4f87265: the Individual CN plan reuses the CN plan's env var.
-		"qwen-token-plan-individual-cn": "QWEN_TOKEN_PLAN_CN_API_KEY",
-		"openai":                        "OPENAI_API_KEY",
-		"azure":                         "AZURE_OPENAI_API_KEY", // pi a37306d43 renamed the provider from azure-openai-responses
-		"nvidia":                        "NVIDIA_API_KEY",
-		"deepseek":                      "DEEPSEEK_API_KEY",
-		"google":                        "GEMINI_API_KEY",
-		"google-vertex":                 "GOOGLE_CLOUD_API_KEY",
-		"groq":                          "GROQ_API_KEY",
-		"cerebras":                      "CEREBRAS_API_KEY",
-		"xai":                           "XAI_API_KEY",
-		"typesafe":                      "TYPESAFE_API_KEY", // pi a328aa89a; the classifier provider itself is queued
-		"radius":                        "RADIUS_API_KEY",
-		"openrouter":                    "OPENROUTER_API_KEY",
-		"vercel-ai-gateway":             "AI_GATEWAY_API_KEY",
-		"zai":                           "ZAI_API_KEY",
-		"zai-coding-cn":                 "ZAI_CODING_CN_API_KEY",
-		"mistral":                       "MISTRAL_API_KEY",
-		"minimax":                       "MINIMAX_API_KEY",
-		"minimax-cn":                    "MINIMAX_CN_API_KEY",
-		"moonshotai":                    "MOONSHOT_API_KEY",
-		"moonshotai-cn":                 "MOONSHOT_API_KEY",
-		"huggingface":                   "HF_TOKEN",
-		"fireworks":                     "FIREWORKS_API_KEY",
-		"together":                      "TOGETHER_API_KEY",
-		"baseten":                       "BASETEN_API_KEY",
-		"opencode":                      "OPENCODE_API_KEY",
-		"opencode-go":                   "OPENCODE_API_KEY",
-		"kimi-coding":                   "KIMI_API_KEY",
-		"meta":                          "META_API_KEY",
-		"cloudflare-workers-ai":         "CLOUDFLARE_API_KEY",
-		"cloudflare-ai-gateway":         "CLOUDFLARE_API_KEY",
-		"xiaomi":                        "XIAOMI_API_KEY",
-		"xiaomi-token-plan-cn":          "XIAOMI_TOKEN_PLAN_CN_API_KEY",
-		"xiaomi-token-plan-ams":         "XIAOMI_TOKEN_PLAN_AMS_API_KEY",
-		"xiaomi-token-plan-sgp":         "XIAOMI_TOKEN_PLAN_SGP_API_KEY",
+	envMap := map[string][]string{
+		"ant-ling": {"ANT_LING_API_KEY"},
+		// Qwen Token Plan: the per-plan variable first, then the region
+		// variable both plans used to share (upstream 139707002).
+		"qwen-token-plan":               {"QWEN_TOKEN_PLAN_TEAM_API_KEY", "QWEN_TOKEN_PLAN_API_KEY"},
+		"qwen-token-plan-cn":            {"QWEN_TOKEN_PLAN_TEAM_CN_API_KEY", "QWEN_TOKEN_PLAN_CN_API_KEY"},
+		"qwen-token-plan-individual":    {"QWEN_TOKEN_PLAN_INDIVIDUAL_API_KEY", "QWEN_TOKEN_PLAN_API_KEY"},
+		"qwen-token-plan-individual-cn": {"QWEN_TOKEN_PLAN_INDIVIDUAL_CN_API_KEY", "QWEN_TOKEN_PLAN_CN_API_KEY"},
+		"openai":                        {"OPENAI_API_KEY"},
+		"azure":                         {"AZURE_OPENAI_API_KEY"}, // pi a37306d43 renamed the provider from azure-openai-responses
+		"nvidia":                        {"NVIDIA_API_KEY"},
+		"deepseek":                      {"DEEPSEEK_API_KEY"},
+		"google":                        {"GEMINI_API_KEY"},
+		"google-vertex":                 {"GOOGLE_CLOUD_API_KEY"},
+		"groq":                          {"GROQ_API_KEY"},
+		"cerebras":                      {"CEREBRAS_API_KEY"},
+		"xai":                           {"XAI_API_KEY"},
+		"typesafe":                      {"TYPESAFE_API_KEY"}, // pi a328aa89a; the classifier provider itself is queued
+		"radius":                        {"RADIUS_API_KEY"},
+		"openrouter":                    {"OPENROUTER_API_KEY"},
+		"vercel-ai-gateway":             {"AI_GATEWAY_API_KEY"},
+		"zai":                           {"ZAI_API_KEY"},
+		"zai-coding-cn":                 {"ZAI_CODING_CN_API_KEY"},
+		"mistral":                       {"MISTRAL_API_KEY"},
+		"minimax":                       {"MINIMAX_API_KEY"},
+		"minimax-cn":                    {"MINIMAX_CN_API_KEY"},
+		"moonshotai":                    {"MOONSHOT_API_KEY"},
+		"moonshotai-cn":                 {"MOONSHOT_API_KEY"},
+		"huggingface":                   {"HF_TOKEN"},
+		"fireworks":                     {"FIREWORKS_API_KEY"},
+		"together":                      {"TOGETHER_API_KEY"},
+		"baseten":                       {"BASETEN_API_KEY"},
+		"opencode":                      {"OPENCODE_API_KEY"},
+		"opencode-go":                   {"OPENCODE_API_KEY"},
+		"kimi-coding":                   {"KIMI_API_KEY"},
+		"meta":                          {"META_API_KEY"},
+		"cloudflare-workers-ai":         {"CLOUDFLARE_API_KEY"},
+		"cloudflare-ai-gateway":         {"CLOUDFLARE_API_KEY"},
+		"xiaomi":                        {"XIAOMI_API_KEY"},
+		"xiaomi-token-plan-cn":          {"XIAOMI_TOKEN_PLAN_CN_API_KEY"},
+		"xiaomi-token-plan-ams":         {"XIAOMI_TOKEN_PLAN_AMS_API_KEY"},
+		"xiaomi-token-plan-sgp":         {"XIAOMI_TOKEN_PLAN_SGP_API_KEY"},
 	}
-	if v, ok := envMap[provider]; ok {
-		return []string{v}
-	}
-	return nil
+	return envMap[provider]
 }
 
 // FindEnvKeys returns the configured environment variable names that provide an
