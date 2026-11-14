@@ -2,9 +2,12 @@ package providers
 
 import (
 	"context"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"strings"
 	"sync/atomic"
 	"testing"
 
@@ -13,8 +16,8 @@ import (
 
 // Upstream 027a5847 makes the HTTP client injectable per request
 // (pi StreamOptions.fetch). These tests pin that each ported provider honors the
-// override, that http.DefaultClient means "unset" as globalThis.fetch does in
-// pi, and that google rejects an override with pi's byte-exact message.
+// override, and that http.DefaultClient means "unset" as globalThis.fetch does
+// in pi. google honours it too since upstream f72f799a4.
 
 // countingClient records how many requests it performed and delegates to the
 // real transport, so the stream under test still parses a live response.
@@ -35,7 +38,8 @@ data: [DONE]
 `
 
 // injectionProviders covers every ported provider that issues HTTP requests:
-// the first three share the retry loop, pi-messages calls out directly.
+// the first three and google share the retry loop, pi-messages calls out
+// directly.
 var injectionProviders = []struct {
 	name string
 	api  ai.Api
@@ -61,6 +65,13 @@ var injectionProviders = []struct {
 		run: func(baseURL string, opts ai.StreamOptions) *ai.AssistantMessage {
 			model := &ai.Model{ID: "gpt-test", Api: ai.APIOpenAIResponses, Provider: "openai", BaseURL: baseURL, MaxTokens: 4096}
 			return StreamOpenAIResponses(context.Background(), model, ai.NormalizeContext(injectionContext()), &OpenAIResponsesOptions{StreamOptions: opts}).Result()
+		},
+	},
+	{
+		name: "google-generative-ai", api: ai.APIGoogleGenerativeAI, sse: googleSSE,
+		run: func(baseURL string, opts ai.StreamOptions) *ai.AssistantMessage {
+			model := &ai.Model{ID: "gemini-2.5-flash", Api: ai.APIGoogleGenerativeAI, Provider: "google", BaseURL: baseURL, MaxTokens: 8192}
+			return StreamGoogle(context.Background(), model, ai.NormalizeContext(injectionContext()), &GoogleOptions{StreamOptions: opts}).Result()
 		},
 	},
 	{
@@ -166,51 +177,60 @@ func TestSendWithRetryFallsBackToSharedClient(t *testing.T) {
 	}
 }
 
-// pi's google adapter throws rather than silently ignoring a custom fetch,
-// because @google/genai cannot accept one. The message is byte-exact.
-func TestGoogleRejectsCustomHTTPClient(t *testing.T) {
-	var reached atomic.Bool
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		reached.Store(true)
-		w.Header().Set("content-type", "text/event-stream")
-		io.WriteString(w, googleSSE)
-	}))
-	defer server.Close()
-
+// Upstream f72f799a4 (#12097): pi hands a custom fetch to @google/genai
+// instead of refusing it. Mirrors fetch-option.test.ts "passes fetch through
+// streamSimple to the Google GenAI SDK adapters": the custom fetch is called
+// once, for the model's base URL, and its 401 reaches the error message.
+// The port's own client asks for the codings undici undoes; a custom one is
+// left to choose its own.
+func TestGoogleUsesCustomHTTPClient(t *testing.T) {
+	var calls []*http.Request
+	client := doerFunc(func(r *http.Request) (*http.Response, error) {
+		calls = append(calls, r)
+		return &http.Response{
+			StatusCode: http.StatusUnauthorized,
+			Header:     http.Header{"Content-Type": {"application/json"}},
+			Body:       io.NopCloser(strings.NewReader(`{"error":{"message":"upstream rejected request"}}`)),
+			Request:    r,
+		}, nil
+	})
 	model := &ai.Model{
 		ID: "gemini-2.5-flash", Api: ai.APIGoogleGenerativeAI, Provider: "google",
-		BaseURL: server.URL, MaxTokens: 8192,
+		BaseURL: "https://upstream.test/v1", MaxTokens: 8192,
 	}
-
 	final := StreamGoogle(context.Background(), model, ai.NormalizeContext(injectionContext()), &GoogleOptions{
-		StreamOptions: ai.StreamOptions{ProviderRequestOptions: ai.ProviderRequestOptions{APIKey: "g-key", HTTPClient: &countingClient{inner: server.Client()}}},
-	}).
-		Result()
+		StreamOptions: ai.StreamOptions{ProviderRequestOptions: ai.ProviderRequestOptions{APIKey: "test-key", HTTPClient: client}},
+	}).Result()
 
-	if final.StopReason != ai.StopError {
-		t.Fatalf("expected error stop, got %s", final.StopReason)
+	if final.StopReason != ai.StopError || !strings.Contains(final.ErrorMessage, "upstream rejected request") {
+		t.Fatalf("stream = %s %q; pi's error message contains %q", final.StopReason, final.ErrorMessage, "upstream rejected request")
 	}
-	if final.ErrorMessage != "Custom fetch is not supported by the Google Generative AI adapter" {
-		t.Fatalf("error message wrong: %q", final.ErrorMessage)
+	if len(calls) != 1 {
+		t.Fatalf("custom client performed %d requests, want 1", len(calls))
 	}
-	if reached.Load() {
-		t.Fatalf("request must not be issued when the override is rejected")
+	if url := calls[0].URL.String(); !strings.Contains(url, "https://upstream.test/v1") {
+		t.Fatalf("request URL %q does not carry the model's base URL", url)
+	}
+	if _, has := calls[0].Header["Accept-Encoding"]; has {
+		t.Fatalf("a custom client must choose its own Accept-Encoding, got %q", calls[0].Header.Get("Accept-Encoding"))
 	}
 }
 
-// The guard precedes the api-key check, as it does in pi: a request carrying
-// both faults reports the fetch error, not the missing key.
-func TestGoogleRejectsCustomHTTPClientBeforeAPIKeyCheck(t *testing.T) {
-	final := StreamGoogle(context.Background(),
-		&ai.Model{ID: "gemini-2.5-flash", Api: ai.APIGoogleGenerativeAI, Provider: "google", MaxTokens: 8192}, ai.NormalizeContext(
-
-			injectionContext()),
-
-		&GoogleOptions{StreamOptions: ai.StreamOptions{ProviderRequestOptions: ai.ProviderRequestOptions{HTTPClient: &countingClient{inner: http.DefaultClient}}}}).
-		Result()
-
-	if final.ErrorMessage != "Custom fetch is not supported by the Google Generative AI adapter" {
-		t.Fatalf("error message wrong: %q", final.ErrorMessage)
+// A custom fetch's rejection is its own error: @google/genai rethrows it and
+// pi's catch reports its message, not undici's "fetch failed". An
+// *http.Client rejects with a *url.Error, which the port's own client's
+// rejection is too.
+func TestGoogleCustomHTTPClientRejectionIsItsOwn(t *testing.T) {
+	client := doerFunc(func(r *http.Request) (*http.Response, error) {
+		return nil, &url.Error{Op: "Post", URL: r.URL.String(), Err: errors.New("proxy refused the request")}
+	})
+	model := &ai.Model{ID: "gemini-2.5-flash", Api: ai.APIGoogleGenerativeAI, Provider: "google", BaseURL: "https://upstream.test/v1", MaxTokens: 8192}
+	final := StreamGoogle(context.Background(), model, ai.NormalizeContext(injectionContext()), &GoogleOptions{
+		StreamOptions: ai.StreamOptions{ProviderRequestOptions: ai.ProviderRequestOptions{APIKey: "test-key", HTTPClient: client}},
+	}).Result()
+	want := `Post "https://upstream.test/v1/models/gemini-2.5-flash:streamGenerateContent?alt=sse": proxy refused the request`
+	if final.StopReason != ai.StopError || final.ErrorMessage != want {
+		t.Fatalf("stream = %s %q; want error %q", final.StopReason, final.ErrorMessage, want)
 	}
 }
 

@@ -3,7 +3,7 @@
 // behind TestStreamAbortMatchesPi in this package.
 //
 //   node --experimental-strip-types capture.mts <extraction> <out.json> <sha>
-//   e.g. ... capture.mts <dir> stream-abort-71023aec1.json 71023aec1
+//   e.g. ... capture.mts <dir> stream-abort-f72f799a4.json f72f799a4
 //
 // <extraction> holds `git archive <sha> packages/ai package-lock.json` from the
 // upstream clone, plus a node_modules resolving pi-ai's dependencies (the npm

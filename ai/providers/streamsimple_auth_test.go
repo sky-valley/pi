@@ -50,16 +50,14 @@ const googleNoKeyErr = "No API key for provider: test-google"
 // TestGoogleStreamSimpleMissingKeyPreemptsOtherSetupFailures pins the eager
 // api-key check upstream added at the top of google's streamSimple. Every other
 // setup failure on that path used to win because it is reached first: the
-// custom-fetch guard lives inside StreamGoogle (google.go:362) ahead of the
-// in-stream key check, and the thinking-level mapping resolves in
-// StreamSimpleGoogle before the stream is even built (google.go:94).
+// thinking-level mapping resolves in StreamSimpleGoogle before the stream is
+// even built. (Its custom-fetch case went with the guard, upstream f72f799a4.)
 //
 // Each precedence case asserts a control first — the error the SAME request
 // reports when a key IS supplied — so the precedence assertion cannot pass
 // vacuously.
 func TestGoogleStreamSimpleMissingKeyPreemptsOtherSetupFailures(t *testing.T) {
 	req := ai.Context{Messages: []ai.Message{ai.NewUserText("hi", 1)}}
-	customClient := &http.Client{}
 
 	cases := []struct {
 		name    string
@@ -75,16 +73,6 @@ func TestGoogleStreamSimpleMissingKeyPreemptsOtherSetupFailures(t *testing.T) {
 					ProviderRequestOptions: ai.ProviderRequestOptions{APIKey: apiKey},
 				}}
 			},
-		},
-		{
-			name:  "preempts the custom-fetch guard",
-			model: func() *ai.Model { return googleAuthModel(nil) },
-			opts: func(apiKey string) *ai.SimpleStreamOptions {
-				return &ai.SimpleStreamOptions{StreamOptions: ai.StreamOptions{
-					ProviderRequestOptions: ai.ProviderRequestOptions{APIKey: apiKey, HTTPClient: customClient},
-				}}
-			},
-			control: "Custom fetch is not supported by the Google Generative AI adapter",
 		},
 		{
 			name: "preempts an unmappable thinking level",
@@ -137,19 +125,18 @@ func TestGoogleStreamSimpleMissingKeyWithNilOptions(t *testing.T) {
 	}
 }
 
-// TestGoogleStreamKeepsCustomFetchPrecedence guards the OTHER half: 8b5899dce
-// touched streamSimple only, so the full Stream path must keep reporting the
-// custom-fetch guard ahead of its in-stream key check (google.go:362 before
-// :366, deliberately "as it does in pi").
-func TestGoogleStreamKeepsCustomFetchPrecedence(t *testing.T) {
+// TestGoogleStreamCustomClientReachesTheKeyCheck guards the full Stream path
+// since upstream f72f799a4 removed the custom-fetch guard: a custom client no
+// longer fails setup, so a missing key is what the stream reports, from pi's
+// in-stream check (google-generative-ai.ts `No API key for provider: …`).
+func TestGoogleStreamCustomClientReachesTheKeyCheck(t *testing.T) {
 	req := ai.Context{Messages: []ai.Message{ai.NewUserText("hi", 1)}}
 	opts := &GoogleOptions{StreamOptions: ai.StreamOptions{
 		ProviderRequestOptions: ai.ProviderRequestOptions{HTTPClient: &http.Client{}},
 	}}
 	_, final := drainSimple(StreamGoogle(context.Background(), googleAuthModel(nil), ai.NormalizeContext(req), opts))
-	const want = "Custom fetch is not supported by the Google Generative AI adapter"
-	if final.ErrorMessage != want {
-		t.Fatalf("error = %q, want %q", final.ErrorMessage, want)
+	if final.StopReason != ai.StopError || final.ErrorMessage != googleNoKeyErr {
+		t.Fatalf("final = stop %s, err %q, want stop error / %q", final.StopReason, final.ErrorMessage, googleNoKeyErr)
 	}
 }
 
