@@ -1965,9 +1965,11 @@ func convertAnthropicTools(tools []ai.Tool, oauth, eager, supportsStrictTools bo
 		props := map[string]any{}
 		var required []string
 		// Root $defs and definitions ride along with the legacy shape so a
-		// property's $ref still resolves (upstream 4a6a58eb5). Present-but-null
-		// is kept, as pi's `=== undefined` test keeps it.
-		var defs, definitions json.RawMessage
+		// property's $ref still resolves (upstream 4a6a58eb5), and root
+		// additionalProperties so the model knows whether extra arguments are
+		// allowed (upstream aa47cedce). Present-but-null is kept, as pi's
+		// `=== undefined` test keeps it.
+		var additionalProperties, defs, definitions json.RawMessage
 		if parameters != nil {
 			if raw, err := json.Marshal(parameters); err == nil {
 				if strict {
@@ -1988,14 +1990,15 @@ func convertAnthropicTools(tools []ai.Tool, oauth, eager, supportsStrictTools bo
 				if r := root["required"]; len(r) > 0 {
 					_ = json.Unmarshal(r, &required)
 				}
+				additionalProperties = root["additionalProperties"]
 				defs, definitions = root["$defs"], root["definitions"]
 			}
 		}
 		if required == nil {
 			required = []string{}
 		}
-		// The legacy {type, properties, required} shape (plus root $defs and
-		// definitions) is always sent; strict tools carry the rest of the JSON
+		// The legacy {type, properties, required} shape (plus root
+		// additionalProperties, $defs and definitions) is always sent; strict tools carry the rest of the JSON
 		// Schema underneath it (pi spreads the full parameters first, then the
 		// legacy shape over the top). Other root keywords stay out: Anthropic
 		// rejects a root anyOf/oneOf/allOf with a 400.
@@ -2005,7 +2008,9 @@ func convertAnthropicTools(tools []ai.Tool, oauth, eager, supportsStrictTools bo
 			"required":   required,
 		}
 		// Decoded like properties, so an OnPayload hook sees maps, not bytes.
-		for key, value := range map[string]json.RawMessage{"$defs": defs, "definitions": definitions} {
+		for key, value := range map[string]json.RawMessage{
+			"additionalProperties": additionalProperties, "$defs": defs, "definitions": definitions,
+		} {
 			if value != nil {
 				var v any
 				_ = json.Unmarshal(value, &v)

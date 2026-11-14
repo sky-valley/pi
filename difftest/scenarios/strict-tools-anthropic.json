@@ -1,7 +1,7 @@
 {
   "name": "strict-tools-anthropic",
-  "note": "Upstream 7915cdac6 (Go d3978d3): strict tool schema conversion. Requires PI_UPSTREAM_SHA >= 7915cdac6 (feature absent at earlier shas -> false FAIL). Anthropic wire: strict tool spreads the CONVERTED schema under the legacy {type,properties,required} overlay and carries strict:true; the inconvertible strict-prefer tool falls back to the legacy shape from its ORIGINAL parameters with no strict flag; the plain tool is untouched. conv exercises: required = every property in insertion order, anyOf-null widening of non-nullable optionals, no-rewrap of anyOf-null and type-array-null properties, nested object closing, array items conversion, zero-property object, title passthrough. Shipped in pi-ai 0.84.2; backend flipped to dist (README rule).",
-  "backend": "dist",
+  "note": "Upstream 7915cdac6 (Go d3978d3): strict tool schema conversion. Requires PI_UPSTREAM_SHA >= 7915cdac6 (feature absent at earlier shas -> false FAIL). Anthropic wire: strict tool spreads the CONVERTED schema under the legacy {type,properties,required} overlay and carries strict:true; the inconvertible strict-prefer tool falls back to the legacy shape from its ORIGINAL parameters with no strict flag; the plain tool is untouched. conv exercises: required = every property in insertion order, anyOf-null widening of non-nullable optionals, no-rewrap of anyOf-null and type-array-null properties, nested object closing, array items conversion, zero-property object, title passthrough. Shipped in pi-ai 0.84.2; backend flipped to dist (README rule). Upstream aa47cedce (#12067): a non-strict tool keeps its root additionalProperties; backend src until a release ships it (1.5.2 predates it), so this requires PI_UPSTREAM_SHA >= aa47cedce.",
+  "backend": "src",
   "api": "anthropic-messages",
   "entry": "streamSimple",
   "model": {

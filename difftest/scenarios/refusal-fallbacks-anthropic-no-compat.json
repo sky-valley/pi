@@ -1,7 +1,7 @@
 {
   "name": "refusal-fallbacks-anthropic-no-compat",
-  "note": "ed867e909: a model carrying no compat blob at all omits `fallbacks` — the control for the positive cases, proving the key is derived rather than always emitted. Shipped in pi-ai 0.84.3 (release 4e58f324f), so this scenario is backend:\"dist\" — captured against the published build, the stronger ground truth (README rule).",
-  "backend": "dist",
+  "note": "ed867e909: a model carrying no compat blob at all omits `fallbacks` — the control for the positive cases, proving the key is derived rather than always emitted. Shipped in pi-ai 0.84.3 (release 4e58f324f), so this scenario is backend:\"dist\" — captured against the published build, the stronger ground truth (README rule). Upstream aa47cedce (#12067): a non-strict tool keeps its root additionalProperties; backend src until a release ships it (1.5.2 predates it), so this requires PI_UPSTREAM_SHA >= aa47cedce.",
+  "backend": "src",
   "api": "anthropic-messages",
   "entry": "streamSimple",
   "model": {

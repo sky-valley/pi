@@ -1,7 +1,7 @@
 {
   "name": "refusal-fallbacks-anthropic-empty-list",
-  "note": "ed867e909: an EMPTY allowedFallbackModels list omits `fallbacks` entirely on both sides — Anthropic rejects the field for a model with no permitted targets. This is the arm that used to diverge: the retired Go union serialized an empty chain as \"fallbacks\": \"default\" while pi emitted []. Both sides now gate on length > 0, so neither emits the key. Shipped in pi-ai 0.84.3 (release 4e58f324f), so this scenario is backend:\"dist\" — captured against the published build, the stronger ground truth (README rule).",
-  "backend": "dist",
+  "note": "ed867e909: an EMPTY allowedFallbackModels list omits `fallbacks` entirely on both sides — Anthropic rejects the field for a model with no permitted targets. This is the arm that used to diverge: the retired Go union serialized an empty chain as \"fallbacks\": \"default\" while pi emitted []. Both sides now gate on length > 0, so neither emits the key. Shipped in pi-ai 0.84.3 (release 4e58f324f), so this scenario is backend:\"dist\" — captured against the published build, the stronger ground truth (README rule). Upstream aa47cedce (#12067): a non-strict tool keeps its root additionalProperties; backend src until a release ships it (1.5.2 predates it), so this requires PI_UPSTREAM_SHA >= aa47cedce.",
+  "backend": "src",
   "api": "anthropic-messages",
   "entry": "streamSimple",
   "model": {

@@ -1,7 +1,7 @@
 {
   "name": "simple-tool-choice-anthropic-adaptive",
-  "note": "e5dde9a76: toolChoice survives the adaptive-effort branch of streamSimple. Shipped in pi-ai 0.84.3 (release 4e58f324f), so this scenario is backend:\"dist\" — captured against the published build, the stronger ground truth (README rule).",
-  "backend": "dist",
+  "note": "e5dde9a76: toolChoice survives the adaptive-effort branch of streamSimple. Shipped in pi-ai 0.84.3 (release 4e58f324f), so this scenario is backend:\"dist\" — captured against the published build, the stronger ground truth (README rule). Upstream aa47cedce (#12067): a non-strict tool keeps its root additionalProperties; backend src until a release ships it (1.5.2 predates it), so this requires PI_UPSTREAM_SHA >= aa47cedce.",
+  "backend": "src",
   "api": "anthropic-messages",
   "entry": "streamSimple",
   "model": {

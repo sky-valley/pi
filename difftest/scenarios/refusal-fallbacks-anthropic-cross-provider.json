@@ -1,7 +1,7 @@
 {
   "name": "refusal-fallbacks-anthropic-cross-provider",
-  "note": "ed867e909 asymmetry: the provider match this commit added guards the COST lookup only. buildParams still maps EVERY permitted entry onto the wire regardless of provider, so claude-haiku-9 (provider vertex) must appear in fallbacks on both sides even though the model is an anthropic one. Shipped in pi-ai 0.84.3 (release 4e58f324f), so this scenario is backend:\"dist\" — captured against the published build, the stronger ground truth (README rule).",
-  "backend": "dist",
+  "note": "ed867e909 asymmetry: the provider match this commit added guards the COST lookup only. buildParams still maps EVERY permitted entry onto the wire regardless of provider, so claude-haiku-9 (provider vertex) must appear in fallbacks on both sides even though the model is an anthropic one. Shipped in pi-ai 0.84.3 (release 4e58f324f), so this scenario is backend:\"dist\" — captured against the published build, the stronger ground truth (README rule). Upstream aa47cedce (#12067): a non-strict tool keeps its root additionalProperties; backend src until a release ships it (1.5.2 predates it), so this requires PI_UPSTREAM_SHA >= aa47cedce.",
+  "backend": "src",
   "api": "anthropic-messages",
   "entry": "streamSimple",
   "model": {

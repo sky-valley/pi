@@ -1429,6 +1429,60 @@ func TestAnthropicNonStrictToolKeepsRootDefinitions(t *testing.T) {
 	}
 }
 
+// Upstream aa47cedce (#12067): a non-strict tool keeps its root
+// additionalProperties, so the model is told whether extra arguments are
+// allowed. Mirrors anthropic-strict-tool-schema.test.ts "only sends the full
+// input schema for strict JSON-schema tools" (the legacy half), plus a schema
+// value and an absent keyword.
+func TestAnthropicNonStrictToolKeepsRootAdditionalProperties(t *testing.T) {
+	model := &ai.Model{ID: "claude-x", Api: ai.APIAnthropicMessages, Provider: "anthropic", Input: []string{"text"}, MaxTokens: 100}
+	for _, tc := range []struct{ name, params, want string }{
+		{
+			"false",
+			`{"type":"object","properties":{"value":{"type":"string"}},"required":["value"],"additionalProperties":false,"title":"LookupInput"}`,
+			`{"type":"object","properties":{"value":{"type":"string"}},"required":["value"],"additionalProperties":false}`,
+		},
+		{
+			"schema",
+			`{"type":"object","properties":{},"additionalProperties":{"type":"string"},"$defs":{"A":{}}}`,
+			`{"type":"object","properties":{},"required":[],"additionalProperties":{"type":"string"},"$defs":{"A":{}}}`,
+		},
+		{
+			"absent",
+			`{"type":"object","properties":{"value":{"type":"string"}},"title":"LookupInput"}`,
+			`{"type":"object","properties":{"value":{"type":"string"}},"required":[]}`,
+		},
+	} {
+		var params ai.Schema
+		if err := json.Unmarshal([]byte(tc.params), &params); err != nil {
+			t.Fatal(err)
+		}
+		req := ai.Context{Messages: []ai.Message{ai.NewUserText("hi", 1)}, Tools: []ai.Tool{{Name: "lookup", Description: "d", Parameters: &params}}}
+		body := mustBuildAnthropicParams(t, model, req, false, &AnthropicOptions{})
+		tools, _ := body["tools"].([]map[string]any)
+		if len(tools) != 1 {
+			t.Fatalf("tools wrong: %#v", body["tools"])
+		}
+		if _, has := tools[0]["strict"]; has {
+			t.Fatalf("%s: strict must be absent: %#v", tc.name, tools[0])
+		}
+		got, err := json.Marshal(tools[0]["input_schema"])
+		if err != nil {
+			t.Fatal(err)
+		}
+		var gotV, wantV any
+		if err := json.Unmarshal(got, &gotV); err != nil {
+			t.Fatal(err)
+		}
+		if err := json.Unmarshal([]byte(tc.want), &wantV); err != nil {
+			t.Fatal(err)
+		}
+		if !reflect.DeepEqual(gotV, wantV) {
+			t.Errorf("%s: input_schema\n got %s\nwant %s", tc.name, got, tc.want)
+		}
+	}
+}
+
 // pi reads the root schema's properties, required, $defs and definitions by
 // exact key, so a differently cased key ("Properties", "$DEFS") is neither
 // read nor lets it overwrite the real one (review of 2185fd6).
