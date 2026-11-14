@@ -458,3 +458,38 @@ func TestClassifyShellRunPrecedence(t *testing.T) {
 		t.Fatalf("abort with a failing exit = %v, want abort", err)
 	}
 }
+
+// pi 935f0ac0c (#12062) 'should show the end of an over-long last line after a
+// short line': a short line followed by one line far past the limit returned
+// no output at all, because clipping the retained tail to a line boundary
+// dropped the only line it held.
+func TestShellToolShowsEndOfOverLongLastLine(t *testing.T) {
+	longLine := strings.Repeat("y", 219_000) + "END"
+	ops := BashOperations{
+		Exec: func(_ context.Context, _ string, _ string, o BashExecOptions) (*int, error) {
+			data := []byte("first line\n" + longLine + "\n")
+			for i := 0; i < len(data); i += 8192 {
+				o.OnData(data[i:min(i+8192, len(data))])
+			}
+			zero := 0
+			return &zero, nil
+		},
+	}
+	tool := CreateBashTool(t.TempDir(), &BashToolOptions{Operations: &ops})
+	res, err := tool.Execute(context.Background(), "test-call-long-last-line", map[string]any{"command": "grep -n x bundle.min.js"}, nil)
+	if err != nil {
+		t.Fatalf("execute: %v", err)
+	}
+	details, _ := res.Details.(map[string]any)
+	tr, _ := details["truncation"].(TruncationResult)
+	if !tr.LastLinePartial {
+		t.Fatalf("truncation.lastLinePartial = false, want true (details %+v)", details)
+	}
+	output := resultText(res)
+	if !strings.Contains(output, "yyyyEND") {
+		t.Fatalf("output lacks the end of the long line: %q", output[:min(len(output), 200)])
+	}
+	if !regexp.MustCompile(`\[Showing last 50\.0KB of line 2 `).MatchString(output) {
+		t.Fatalf("output lacks the partial-line notice: %q", output[max(0, len(output)-300):])
+	}
+}

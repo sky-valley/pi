@@ -1459,7 +1459,14 @@ func (a *outputAccumulator) snapshotText() string {
 }
 
 func (a *outputAccumulator) snapshot(persistIfTruncated bool) outputSnapshot {
-	tr := TruncateTail(a.snapshotText(), a.maxLines, a.maxBytes)
+	// Clipping drops the partial first line of the retained tail. When the
+	// tail is only the end of one over-long line, that is everything, so show
+	// the end of that line instead (pi 935f0ac0c).
+	text := a.snapshotText()
+	if text == "" {
+		text = string(a.tail)
+	}
+	tr := TruncateTail(text, a.maxLines, a.maxBytes)
 	truncated := a.totalLines > a.maxLines || a.totalDecodedBytes > a.maxBytes
 	truncatedBy := ""
 	if truncated {
