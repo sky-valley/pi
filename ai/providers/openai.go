@@ -1618,9 +1618,12 @@ func parseChunkUsage(raw any, model *ai.Model) (ai.Usage, error) {
 		Output:     jsTokenCount(outputTokens),
 		CacheRead:  jsTokenCount(cacheReadTokens),
 		CacheWrite: jsTokenCount(cacheWriteTokens),
-		// pi: `reasoning: completion_tokens_details?.reasoning_tokens || 0` —
-		// always set (0 when absent) for the completions path.
-		Reasoning:   jsTokenCount(jsOr(jsGet(jsGet(raw, "completion_tokens_details"), "reasoning_tokens"), 0.0)),
+		// pi: `reasoning: completion_tokens_details?.reasoning_tokens ||
+		// reasoning_tokens || 0` — always set (0 when absent) for the
+		// completions path; GitHub Copilot reports them at the top level
+		// (upstream 86918f9ee).
+		Reasoning: jsTokenCount(jsOr(jsGet(jsGet(raw, "completion_tokens_details"), "reasoning_tokens"),
+			jsOr(jsGet(raw, "reasoning_tokens"), 0.0))),
 		TotalTokens: jsTokenCount(total),
 	}
 	ai.CalculateCost(model, &usage)

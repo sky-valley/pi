@@ -111,6 +111,32 @@ func TestOpenAICompletionsReasoningTokens(t *testing.T) {
 	}
 }
 
+// TestOpenAICompletionsTopLevelReasoningTokens mirrors
+// openai-completions-tool-choice.test.ts "reads top-level reasoning_tokens when
+// completion_tokens_details has none" (upstream 86918f9ee, #12019: GitHub
+// Copilot reports them there). pi reads
+// `completion_tokens_details?.reasoning_tokens || reasoning_tokens || 0`, so
+// a 0 in the details falls through too, and a non-zero one wins.
+func TestOpenAICompletionsTopLevelReasoningTokens(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		usage string
+		want  int
+	}{
+		{"top level only", `"prompt_tokens":10,"completion_tokens":40,"prompt_tokens_details":{"cached_tokens":0},"reasoning_tokens":30`, 30},
+		{"details zero", `"prompt_tokens":10,"completion_tokens":40,"completion_tokens_details":{"reasoning_tokens":0},"reasoning_tokens":7`, 7},
+		{"details win", `"prompt_tokens":10,"completion_tokens":40,"completion_tokens_details":{"reasoning_tokens":12},"reasoning_tokens":7`, 12},
+	} {
+		sse := "data: {\"choices\":[{\"delta\":{\"content\":\"OK\"}}]}\n\n" +
+			"data: {\"choices\":[{\"delta\":{},\"finish_reason\":\"stop\"}],\"usage\":{" + tc.usage + "}}\n\n" +
+			"data: [DONE]\n\n"
+		final := runOpenAIStream(t, sse, nil)
+		if final.Usage.Reasoning != tc.want || final.Usage.Output != 40 {
+			t.Errorf("%s: usage %+v; pi reasoning %d, output 40", tc.name, final.Usage, tc.want)
+		}
+	}
+}
+
 // runOpenAIStream serves the given SSE body and returns the final assistant
 // message. Optional model mutator lets a test tweak the model.
 func runOpenAIStream(t *testing.T, sse string, mutate func(*ai.Model)) *ai.AssistantMessage {
