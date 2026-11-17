@@ -3,22 +3,24 @@
 // in package ai.
 //
 //   node --experimental-strip-types capture.mts <extraction> <out.json> <sha>
-//   e.g. ... capture.mts <dir> classify-4699b5b26.json 4699b5b26
+//   e.g. ... capture.mts <dir> classify-bb1a2b354.json bb1a2b354
 //
 // <extraction> holds packages/ai at <sha> (`git archive <sha> packages/ai` from
 // the upstream clone) and a node_modules resolving pi-ai's dependencies (the npm
 // build's). It is a src capture, checked against the build when a release
-// ships the source it read (the BUILD wins): classify-4699b5b26.json was
-// captured from src at 4699b5b26 with the 1.5.2 build's node_modules. The 1.5.2
+// ships the source it read (the BUILD wins): classify-bb1a2b354.json was
+// captured from src at bb1a2b354 with the 1.5.2 build's node_modules. The 1.5.2
 // build predates 566344046's "cut short after the reply had begun",
-// 9b88b94e2's "connection.?closed", and 4699b5b26's socket-code and
-// "connection reset by peer" alternatives, so re-verify it against the first
-// build that ships them. Control: this script at 4699b5b26^1 (9b88b94e2's
-// retry.ts), with the same node_modules, answers the 24 rows 4699b5b26's
-// alternatives decide differently (retryable false) and every other row as
-// classify-4699b5b26.json does; at 9b88b94e2, before 4699b5b26's rows were
-// added, it reproduced classify-9b88b94e2.json, whose own control at
-// 566344046 reproduced classify-566344046.json byte for byte.
+// 9b88b94e2's "connection.?closed", 4699b5b26's socket-code and
+// "connection reset by peer", and bb1a2b354's
+// "websocket.?connection.?limit.?reached" alternatives, so re-verify it against
+// the first build that ships them. Control: this script at bb1a2b354^1
+// (e03dca7a3, whose retry.ts is 4699b5b26's), with the same node_modules,
+// answers the rows bb1a2b354's alternative decides differently (retryable
+// false) and every other row as classify-bb1a2b354.json does; before
+// bb1a2b354's rows were added, it reproduced classify-4699b5b26.json byte for
+// byte at e03dca7a3, and that file's own controls chain back through
+// 9b88b94e2 to 566344046.
 //
 // Every row records three answers: isRetryableAssistantError on the message
 // retry.test.ts would build (fauxAssistantMessage), and RegExp.prototype.test of
@@ -83,6 +85,8 @@ const chatGPTUsageLimitMessage =
 	'OpenAI API error (429): {"code":"subscription_sharing_usage_limit_exceeded","message":"Usage limit reached."}';
 const chatGPTWorkspaceLimitMessage =
 	'OpenAI API error (429): {"code":"subscription_sharing_workplace_individual_usage_limit_exceeded","message":"Usage limit reached."}';
+const codexConnectionLimitError =
+	"Codex error: Responses websocket connection limit reached (60 minutes). Create a new websocket connection to continue.";
 const azurePeakLoadError =
 	"The system is currently experiencing high demand and cannot process your request. Your request exceeds the maximum usage size allowed during peak load. For improved capacity reliability, consider switching to Provisioned Throughput.";
 
@@ -172,6 +176,11 @@ const rows: Row[] = [
 	error("pi: socket code inside an identifier (#12128)", "Invalid value EXECONNRESET"),
 	error("pi: socket code inside an identifier (#12128)", "Unknown field ETIMEDOUTX"),
 	error("pi: socket code inside an identifier (#12128)", "Invalid key ERR_EPIPE_ID"),
+	// retry.test.ts regression for #12124 (bb1a2b354): the Codex WebSocket
+	// lifetime limit, as text and as code, and a generic connection limit.
+	error("pi: Codex websocket connection limit (#12124)", codexConnectionLimitError),
+	error("pi: Codex websocket connection limit (#12124)", "Codex error: websocket_connection_limit_reached"),
+	error("pi: generic connection limit (#12124)", "connection limit reached"),
 
 	// isRetryableAssistantError's guard: only stopReason "error" with error text.
 	{ covers: "guard: stop", stopReason: "stop", errorMessage: "overloaded" },
@@ -240,6 +249,7 @@ const rows: Row[] = [
 	error("terminated", "Terminated"),
 	error("websocket.?closed", "WebSocket closed"),
 	error("websocket.?error", "WebSocket error"),
+	error("websocket.?connection.?limit.?reached", "WebSocket-Connection-Limit-Reached"),
 	error("ended without", "stream ended without message_stop"),
 	error("stream ended before message_stop", "Anthropic stream ended before message_stop"),
 	error("http2 request did not get a response", "http2 request did not get a response"),
@@ -353,6 +363,9 @@ const rows: Row[] = [
 	error("near-miss", "connection reset by  peer"),
 	error("near-miss", "connection-reset-by-peer"),
 	error("near-miss", "line1\n520 status code (no body)"),
+	error("near-miss", "websocket connection limit"),
+	error("near-miss", "websocket  connection limit reached"),
+	error("near-miss", "websocketconnection limit exceeded"),
 
 	// The socket-code boundaries: one UTF-16 code unit on each side that is not
 	// [a-z0-9_] under "i" (ASCII letters only), or the start or end of the text.
