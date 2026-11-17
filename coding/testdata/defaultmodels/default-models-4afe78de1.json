@@ -1,5 +1,5 @@
 {
-	"sha": "9bd70ea1d",
+	"sha": "4afe78de1",
 	"defaultModelPerProvider": {
 		"amazon-bedrock": "us.anthropic.claude-opus-5-5",
 		"ant-ling": "Ring-2.6-1T",
