@@ -191,11 +191,18 @@ func storeConformance(t *testing.T, newFixture func(t *testing.T) storeFixture) 
 
 	t.Run("pages complete traces without duplicates when trace starts tie", func(t *testing.T) {
 		now := mockClock(t, &dateNow, 20_000)
+		// Go-only: the span clock is the monotonic clock anchored to dateNow,
+		// so mock it too. Every root then starts at exactly 20_000 (the tie
+		// this case is about), and each child a microsecond later, as an
+		// await does in pi. With the real clock a child could share its
+		// root's microsecond, sort first by id, and hide the trace from the
+		// name filter (about one run in four).
+		clock := mockClock(t, &performanceNow, 0)
 		f := newFixture(t)
 		for index := range 25 {
-			*now = 20_000
+			*now, *clock = 20_000, 0
 			_ = f.context.StartSpan(SpanOptions{Name: "root", Attributes: SpanAttributes{"index": index}}, func(root Span) error {
-				*now = 20_001
+				*now, *clock = 20_001, 0.001
 				return root.StartSpan(SpanOptions{Name: "child"}, func(Span) error { return nil })
 			})
 		}
