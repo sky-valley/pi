@@ -195,7 +195,9 @@ func detectOpenAICompat(model *ai.Model) openAICompletionsCompat {
 	useMaxTokens := has("chutes.ai") || isDeepSeek || isMoonshot || isCloudflareAiGateway || isTogether || isNvidia || isAntLing || isZai
 
 	isGrok := provider == "xai" || has("api.x.ai")
-	isOpenRouterDeveloperRoleModel := isOpenRouter && (strings.HasPrefix(model.ID, "anthropic/") || strings.HasPrefix(model.ID, "openai/"))
+	// The developer role is OpenAI's. Other hosts' chat templates often reject it (#10741),
+	// and every host accepts system, so only OpenAI's own API gets developer by default.
+	isOpenAI := provider == "openai" || has("api.openai.com")
 	cacheControlFormat := ""
 	if provider == "openrouter" && strings.HasPrefix(model.ID, "anthropic/") {
 		cacheControlFormat = "anthropic"
@@ -225,7 +227,7 @@ func detectOpenAICompat(model *ai.Model) openAICompletionsCompat {
 	// and the generated catalog enables it explicitly on capable models.
 	return openAICompletionsCompat{
 		SupportsStore:                               !isNonStandard,
-		SupportsDeveloperRole:                       isOpenRouterDeveloperRoleModel || (!isNonStandard && !isOpenRouter),
+		SupportsDeveloperRole:                       isOpenAI,
 		SupportsReasoningEffort:                     !isGrok && !isZai && !isMoonshot && !isTogether && !isCloudflareAiGateway && !isNvidia && !isAntLing,
 		SupportsUsageInStreaming:                    true,
 		SupportsFinishReason:                        true,

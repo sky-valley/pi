@@ -186,7 +186,7 @@ func TestOpenAICompatDeepSeekBaseURLIsCaseInsensitive(t *testing.T) {
 		t.Error("supportsStore = true, want false (DeepSeek is non-standard)")
 	}
 	if got.SupportsDeveloperRole {
-		t.Error("supportsDeveloperRole = true, want false (DeepSeek is non-standard)")
+		t.Error("supportsDeveloperRole = true, want false (only OpenAI's own API gets developer)")
 	}
 }
 

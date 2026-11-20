@@ -497,52 +497,45 @@ func TestDiffDetectCloudflareAiGateway(t *testing.T) {
 }
 
 func TestDiffDetectOpenRouterDeveloperRoleMatrix(t *testing.T) {
-	// pi: isOpenRouterDeveloperRoleModel => anthropic/ or openai/ prefixed models
-	// get supportsDeveloperRole=true; other OpenRouter models get false.
-	cases := []struct {
-		id   string
-		want bool
-	}{
-		{"openai/gpt-5", true},
-		{"anthropic/claude-x", true},
-		{"meta/llama", false},
-		{"google/gemini", false},
-	}
-	for _, tc := range cases {
+	// pi b82477b7b: OpenRouter sends system for every model; the anthropic/ and
+	// openai/ developer-role exception is gone (only OpenAI's own API keeps it).
+	for _, id := range []string{"openai/gpt-5", "anthropic/claude-x", "meta/llama", "google/gemini"} {
 		model := openAIModel(func(m *ai.Model) {
-			m.ID = tc.id
+			m.ID = id
 			m.Provider = "openrouter"
 			m.BaseURL = "https://openrouter.ai/api/v1"
 			m.Reasoning = true
 		})
-		c := getOpenAICompat(model)
-		if c.SupportsDeveloperRole != tc.want {
-			t.Fatalf("openrouter %s supportsDeveloperRole = %v, want %v", tc.id, c.SupportsDeveloperRole, tc.want)
+		if getOpenAICompat(model).SupportsDeveloperRole {
+			t.Fatalf("openrouter %s supportsDeveloperRole = true, want false", id)
 		}
 		body := mustBuildOpenAIParams(t, model, baseReq(), &OpenAIOptions{ReasoningEffort: "high"})
 		msgs, _ := body["messages"].([]map[string]any)
-		role, _ := msgs[0]["role"].(string)
-		wantRole := "system"
-		if tc.want {
-			wantRole = "developer"
-		}
-		if role != wantRole {
-			t.Fatalf("openrouter %s system role = %q, want %q", tc.id, role, wantRole)
+		if role, _ := msgs[0]["role"].(string); role != "system" {
+			t.Fatalf("openrouter %s system role = %q, want system", id, role)
 		}
 	}
 }
 
 func TestDiffDeveloperRoleMatrixDirectProviders(t *testing.T) {
-	// pi supportsDeveloperRole: !isNonStandard && !isOpenRouter (for non-prefixed).
+	// pi b82477b7b: supportsDeveloperRole = provider === "openai" ||
+	// baseUrl.includes("api.openai.com"). Every other host gets system (#10741).
 	cases := []struct {
 		provider string
 		baseURL  string
 		want     bool
 	}{
 		{"openai", "https://api.openai.com/v1", true},
-		{"deepseek", "https://api.deepseek.com/v1", false}, // nonStandard
-		{"xai", "https://api.x.ai/v1", false},              // nonStandard
-		{"together", "https://api.together.ai/v1", false},  // nonStandard
+		{"openai", "https://proxy.example.com/v1", true},  // provider alone
+		{"my-openai", "https://api.openai.com/v1", true},  // URL alone
+		{"groq", "https://api.groq.com/openai/v1", false}, // #10741
+		{"my-azure", "https://my-resource.openai.azure.com/openai/v1", false},
+		{"azure", "https://my-resource.openai.azure.com/openai/v1", false},
+		{"local", "http://localhost:8080/v1", false},
+		{"xiaomi", "https://api.xiaomimimo.com/v1", false},
+		{"deepseek", "https://api.deepseek.com/v1", false},
+		{"xai", "https://api.x.ai/v1", false},
+		{"together", "https://api.together.ai/v1", false},
 	}
 	for _, tc := range cases {
 		model := openAIModel(func(m *ai.Model) {
@@ -551,7 +544,16 @@ func TestDiffDeveloperRoleMatrixDirectProviders(t *testing.T) {
 			m.Reasoning = true
 		})
 		if got := getOpenAICompat(model).SupportsDeveloperRole; got != tc.want {
-			t.Fatalf("%s supportsDeveloperRole = %v, want %v", tc.provider, got, tc.want)
+			t.Fatalf("%s (%s) supportsDeveloperRole = %v, want %v", tc.provider, tc.baseURL, got, tc.want)
+		}
+		body := mustBuildOpenAIParams(t, model, baseReq(), &OpenAIOptions{ReasoningEffort: "high"})
+		msgs, _ := body["messages"].([]map[string]any)
+		wantRole := "system"
+		if tc.want {
+			wantRole = "developer"
+		}
+		if role, _ := msgs[0]["role"].(string); role != wantRole {
+			t.Fatalf("%s (%s) first instruction role = %q, want %q", tc.provider, tc.baseURL, role, wantRole)
 		}
 	}
 }
