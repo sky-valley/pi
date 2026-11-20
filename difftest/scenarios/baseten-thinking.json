@@ -1,7 +1,7 @@
 {
   "name": "baseten-thinking",
-  "note": "Upstream c1019d920 (Go dbc464d). thinkingFormat 'baseten' emits chat_template_args (NOT chat_template_kwargs) built from compat.chatTemplateArgs, plus reasoning_effort resolved through thinkingLevelMap. Covers $var thinking.enabled, $var thinking.effort, a literal scalar, and an omitWhenOff entry. chat_template_args is order-sensitive: it is fed to a chat template, so its key order is asserted, not just its contents. Shipped in pi-ai 0.84.2; backend flipped to dist (README rule).",
-  "backend": "dist",
+  "note": "Upstream c1019d920 (Go dbc464d). thinkingFormat 'baseten' emits chat_template_args (NOT chat_template_kwargs) built from compat.chatTemplateArgs, plus reasoning_effort resolved through thinkingLevelMap. Covers $var thinking.enabled, $var thinking.effort, a literal scalar, and an omitWhenOff entry. chat_template_args is order-sensitive: it is fed to a chat template, so its key order is asserted, not just its contents. Shipped in pi-ai 0.84.2; backend flipped to dist (README rule). src until a release ships upstream b82477b7b (system is the default instruction role off api.openai.com); 1.5.2 still sends developer.",
+  "backend": "src",
   "api": "openai-completions",
   "entry": "streamSimple",
   "orderSensitivePaths": ["$.chat_template_args"],

@@ -1,7 +1,7 @@
 {
   "name": "thinking-token-budget",
-  "note": "Upstream d07889da0 (Go 2392e66). vLLM-style server: compat.supportsThinkingTokenBudget emits top-level thinking_token_budget capping reasoning tokens, clamped to always leave MIN_ANSWER_TOKENS (1024) for the answer. No caller maxTokens, model maxTokens 16384, reasoning high -> min(16384, 16384-1024) = 15360. Also exercises the zai thinking-object interplay on the same request. Shipped in pi-ai 0.84.2; backend flipped to dist (README rule).",
-  "backend": "dist",
+  "note": "Upstream d07889da0 (Go 2392e66). vLLM-style server: compat.supportsThinkingTokenBudget emits top-level thinking_token_budget capping reasoning tokens, clamped to always leave MIN_ANSWER_TOKENS (1024) for the answer. No caller maxTokens, model maxTokens 16384, reasoning high -> min(16384, 16384-1024) = 15360. Also exercises the zai thinking-object interplay on the same request. Shipped in pi-ai 0.84.2; backend flipped to dist (README rule). src until a release ships upstream b82477b7b (system is the default instruction role off api.openai.com); 1.5.2 still sends developer.",
+  "backend": "src",
   "api": "openai-completions",
   "entry": "streamSimple",
   "model": {

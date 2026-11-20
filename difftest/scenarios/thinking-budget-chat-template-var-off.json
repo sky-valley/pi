@@ -1,7 +1,7 @@
 {
   "name": "thinking-budget-chat-template-var-off",
-  "note": "Upstream b23741269. Same chat-template model with thinking OFF: the budget resolves to pi's undefined, which DROPS the thinking_budget key entirely (never 0 and never null), leaving chat_template_kwargs = {enable_thinking: false}. backend src (post-0.84.2): REQUIRES PI_UPSTREAM_SHA >= b23741269 (at the older pin pi emits no budget key at all and this FAILs). Shipped in pi-ai 0.84.3 (release 4e58f324f); flipped to backend:\"dist\" — the published build is the stronger ground truth (README rule).",
-  "backend": "dist",
+  "note": "Upstream b23741269. Same chat-template model with thinking OFF: the budget resolves to pi's undefined, which DROPS the thinking_budget key entirely (never 0 and never null), leaving chat_template_kwargs = {enable_thinking: false}. backend src (post-0.84.2): REQUIRES PI_UPSTREAM_SHA >= b23741269 (at the older pin pi emits no budget key at all and this FAILs). Shipped in pi-ai 0.84.3 (release 4e58f324f); flipped to backend:\"dist\" — the published build is the stronger ground truth (README rule). src until a release ships upstream b82477b7b (system is the default instruction role off api.openai.com); 1.5.2 still sends developer.",
+  "backend": "src",
   "api": "openai-completions",
   "entry": "streamSimple",
   "orderSensitivePaths": [

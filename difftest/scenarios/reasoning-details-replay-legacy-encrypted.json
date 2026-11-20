@@ -1,7 +1,7 @@
 {
   "name": "reasoning-details-replay-legacy-encrypted",
-  "note": "Upstream b7bb00b93. With no thinking block carrying a sequence, the legacy path replays the tool calls' thoughtSignatures — but ONLY well-formed reasoning.encrypted details with a non-empty id and non-empty data, in tool-call order. The three other signatures here (a reasoning.text detail, an encrypted one with an empty id, and a bare JSON number) all parsed before b7bb00b93 and were replayed as reasoning_details entries; they must now be dropped. Post-0.84.2 surface, so backend is src: REQUIRES PI_UPSTREAM_SHA >= b7bb00b93 (at an older pin pi still replays the pre-b7bb00b93 shape and this FAILs). Shipped in pi-ai 0.84.3 (release 4e58f324f); flipped to backend:\"dist\" — the published build is the stronger ground truth (README rule).",
-  "backend": "dist",
+  "note": "Upstream b7bb00b93. With no thinking block carrying a sequence, the legacy path replays the tool calls' thoughtSignatures — but ONLY well-formed reasoning.encrypted details with a non-empty id and non-empty data, in tool-call order. The three other signatures here (a reasoning.text detail, an encrypted one with an empty id, and a bare JSON number) all parsed before b7bb00b93 and were replayed as reasoning_details entries; they must now be dropped. Post-0.84.2 surface, so backend is src: REQUIRES PI_UPSTREAM_SHA >= b7bb00b93 (at an older pin pi still replays the pre-b7bb00b93 shape and this FAILs). Shipped in pi-ai 0.84.3 (release 4e58f324f); flipped to backend:\"dist\" — the published build is the stronger ground truth (README rule). src until a release ships upstream b82477b7b (system is the default instruction role off api.openai.com); 1.5.2 still sends developer.",
+  "backend": "src",
   "api": "openai-completions",
   "entry": "streamSimple",
   "model": {

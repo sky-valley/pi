@@ -1,7 +1,7 @@
 {
   "name": "reasoning-details-replay-suppresses-raw-reasoning",
-  "note": "Upstream b7bb00b93. reasoning_details is the structured ALTERNATIVE to a raw reasoning field: turn 1 carries visible thinking AND a stored sequence, so reasoning_details is emitted and no reasoning/reasoning_content/reasoning_text key is written at all. Turn 2 has the same visible thinking with an ordinary 'reasoning_text' field-name signature and no sequence, so the raw field IS written there — the two turns must differ in exactly that way on both sides. Post-0.84.2 surface, so backend is src: REQUIRES PI_UPSTREAM_SHA >= b7bb00b93 (at an older pin pi still replays the pre-b7bb00b93 shape and this FAILs). Shipped in pi-ai 0.84.3 (release 4e58f324f); flipped to backend:\"dist\" — the published build is the stronger ground truth (README rule).",
-  "backend": "dist",
+  "note": "Upstream b7bb00b93. reasoning_details is the structured ALTERNATIVE to a raw reasoning field: turn 1 carries visible thinking AND a stored sequence, so reasoning_details is emitted and no reasoning/reasoning_content/reasoning_text key is written at all. Turn 2 has the same visible thinking with an ordinary 'reasoning_text' field-name signature and no sequence, so the raw field IS written there — the two turns must differ in exactly that way on both sides. Post-0.84.2 surface, so backend is src: REQUIRES PI_UPSTREAM_SHA >= b7bb00b93 (at an older pin pi still replays the pre-b7bb00b93 shape and this FAILs). Shipped in pi-ai 0.84.3 (release 4e58f324f); flipped to backend:\"dist\" — the published build is the stronger ground truth (README rule). src until a release ships upstream b82477b7b (system is the default instruction role off api.openai.com); 1.5.2 still sends developer.",
+  "backend": "src",
   "api": "openai-completions",
   "entry": "streamSimple",
   "model": {

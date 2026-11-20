@@ -1,7 +1,7 @@
 {
   "name": "baseten-thinking-off",
-  "note": "Upstream c1019d920 (Go dbc464d), thinking OFF. With no reasoning level, $var thinking.enabled becomes false, omitWhenOff entries drop out, and $var thinking.effort resolves via thinkingLevelMap.off (null here => key omitted). reasoning_effort must be absent. chat_template_args key order is asserted. Shipped in pi-ai 0.84.2; backend flipped to dist (README rule).",
-  "backend": "dist",
+  "note": "Upstream c1019d920 (Go dbc464d), thinking OFF. With no reasoning level, $var thinking.enabled becomes false, omitWhenOff entries drop out, and $var thinking.effort resolves via thinkingLevelMap.off (null here => key omitted). reasoning_effort must be absent. chat_template_args key order is asserted. Shipped in pi-ai 0.84.2; backend flipped to dist (README rule). src until a release ships upstream b82477b7b (system is the default instruction role off api.openai.com); 1.5.2 still sends developer.",
+  "backend": "src",
   "api": "openai-completions",
   "entry": "streamSimple",
   "orderSensitivePaths": [

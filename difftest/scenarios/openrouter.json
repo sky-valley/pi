@@ -1,7 +1,7 @@
 {
   "name": "openrouter",
-  "note": "thinkingFormat 'openrouter' (reasoning object) + cacheControlFormat 'anthropic' (cache_control breakpoints injected into an OpenAI-shaped body).",
-  "backend": "dist",
+  "note": "thinkingFormat 'openrouter' (reasoning object) + cacheControlFormat 'anthropic' (cache_control breakpoints injected into an OpenAI-shaped body). src until a release ships upstream b82477b7b (system is the default instruction role off api.openai.com); 1.5.2 still sends developer.",
+  "backend": "src",
   "api": "openai-completions",
   "entry": "streamSimple",
   "model": {
