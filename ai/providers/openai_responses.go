@@ -703,6 +703,7 @@ func StreamOpenAIResponses(ctx context.Context, model *ai.Model, req ai.Transcri
 			if err := backfillReasoningSignatures(jsGet(response, "output")); err != nil {
 				return err
 			}
+			appendResponsesReasoningRemovals(output, jsGet(response, "input_transformations"))
 			// pi rewrites the block in place, so whatever ends the stream —
 			// done, or an error such as a content-filtered incomplete — carries
 			// the backfilled signature.
@@ -2029,4 +2030,50 @@ func openAIResponsesApiProvider() ai.ApiProvider {
 		},
 		StreamSimple: StreamSimpleOpenAIResponses,
 	}
+}
+
+// appendResponsesReasoningRemovals records the replayed reasoning items the API
+// withheld from the model, with the reason for each (pi's appendReasoningRemovals,
+// upstream 03de604b8). From GPT-6.2 on, OpenAI removes reasoning that follows an
+// edit of earlier input (prefix_mismatch) and reasoning created under another
+// organization, end user or model, and reports it in input_transformations.
+//
+// turn_boundary removals are left out: models before GPT-5.6 report every
+// earlier turn's reasoning item that way on every request, and storing it
+// would grow the session quadratically with the conversation.
+//
+// It reads the wire value as pi does: anything but an array is ignored
+// (older servers and proxies omit the field), an entry counts when
+// `transformation?.type === "reasoning" && .action === "removed" &&
+// .reason !== "turn_boundary"`, and each kept entry is pi's destructured
+// `{ type, id, action, reason }` — in that order, an absent member omitted
+// (undefined) and a present one kept whatever it holds, null included.
+func appendResponsesReasoningRemovals(output *ai.AssistantMessage, transformations any) {
+	list, ok := transformations.([]any)
+	if !ok {
+		return
+	}
+	var removals []any
+	for _, transformation := range list {
+		if !jsStrictEqual(jsGet(transformation, "type"), "reasoning") ||
+			!jsStrictEqual(jsGet(transformation, "action"), "removed") ||
+			jsStrictEqual(jsGet(transformation, "reason"), "turn_boundary") {
+			continue
+		}
+		entry := ai.OrderedObject{}
+		for _, key := range []string{"type", "id", "action", "reason"} {
+			if v := jsGet(transformation, key); v != jsUndefined {
+				entry = append(entry, ai.OrderedField{Key: key, Value: v})
+			}
+		}
+		removals = append(removals, entry)
+	}
+	if len(removals) == 0 {
+		return
+	}
+	output.Diagnostics = append(output.Diagnostics, ai.Diagnostic{
+		Type:      "openai_input_transformations",
+		Timestamp: nowMillis(),
+		Details:   ai.OrderedObject{{Key: "transformations", Value: removals}},
+	})
 }
