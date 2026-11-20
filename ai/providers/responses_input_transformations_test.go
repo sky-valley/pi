@@ -26,23 +26,6 @@ func runResponsesTerminal(t *testing.T, inputTransformations, status string) *ai
 	return runResponsesSSE(t, reasoningModel(), ai.Context{Messages: []ai.Message{ai.NewUserText("hi", 1)}}, sse)
 }
 
-func diagnosticsJSON(t *testing.T, msg *ai.AssistantMessage) []map[string]any {
-	t.Helper()
-	var out []map[string]any
-	for _, d := range msg.Diagnostics {
-		raw, err := json.Marshal(d)
-		if err != nil {
-			t.Fatal(err)
-		}
-		var m map[string]any
-		if err := json.Unmarshal(raw, &m); err != nil {
-			t.Fatal(err)
-		}
-		out = append(out, m)
-	}
-	return out
-}
-
 const (
 	prefixMismatchJSON       = `{"type":"reasoning","id":"rs_edited","action":"removed","reason":"prefix_mismatch"}`
 	organizationMismatchJSON = `{"type":"reasoning","id":"rs_org","action":"removed","reason":"organization_mismatch"}`
@@ -79,9 +62,8 @@ func TestResponsesRecordsReasoningRemovalsOnIncomplete(t *testing.T) {
 	if msg.StopReason != ai.StopLength {
 		t.Fatalf("stopReason = %q", msg.StopReason)
 	}
-	got := diagnosticsJSON(t, msg)
-	if len(got) != 1 || got[0]["type"] != "openai_input_transformations" {
-		t.Fatalf("diagnostics = %v", got)
+	if len(msg.Diagnostics) != 1 || msg.Diagnostics[0].Type != "openai_input_transformations" {
+		t.Fatalf("diagnostics = %+v", msg.Diagnostics)
 	}
 }
 
@@ -93,7 +75,10 @@ func TestResponsesReasoningRemovalEntryShape(t *testing.T) {
 	if len(msg.Diagnostics) != 1 {
 		t.Fatalf("diagnostics = %+v", msg.Diagnostics)
 	}
-	details, _ := json.Marshal(msg.Diagnostics[0].Details)
+	details, err := json.Marshal(msg.Diagnostics[0].Details)
+	if err != nil {
+		t.Fatal(err)
+	}
 	want := `{"transformations":[{"type":"reasoning","id":null,"action":"removed","reason":"future_reason"},{"type":"reasoning","id":7,"action":"removed"}]}`
 	if string(details) != want {
 		t.Fatalf("details =\n%s\nwant\n%s", details, want)
