@@ -3,24 +3,23 @@
 // in package ai.
 //
 //   node --experimental-strip-types capture.mts <extraction> <out.json> <sha>
-//   e.g. ... capture.mts <dir> classify-bb1a2b354.json bb1a2b354
+//   e.g. ... capture.mts <dir> classify-fb62c069b.json fb62c069b
 //
 // <extraction> holds packages/ai at <sha> (`git archive <sha> packages/ai` from
 // the upstream clone) and a node_modules resolving pi-ai's dependencies (the npm
 // build's). It is a src capture, checked against the build when a release
-// ships the source it read (the BUILD wins): classify-bb1a2b354.json was
-// captured from src at bb1a2b354 with the 1.5.2 build's node_modules. The 1.5.2
-// build predates 566344046's "cut short after the reply had begun",
-// 9b88b94e2's "connection.?closed", 4699b5b26's socket-code and
-// "connection reset by peer", and bb1a2b354's
-// "websocket.?connection.?limit.?reached" alternatives, so re-verify it against
-// the first build that ships them. Control: this script at bb1a2b354^1
-// (e03dca7a3, whose retry.ts is 4699b5b26's), with the same node_modules,
-// answers the rows bb1a2b354's alternative decides differently (retryable
-// false) and every other row as classify-bb1a2b354.json does; before
-// bb1a2b354's rows were added, it reproduced classify-4699b5b26.json byte for
-// byte at e03dca7a3, and that file's own controls chain back through
-// 9b88b94e2 to 566344046.
+// ships the source it read (the BUILD wins): classify-fb62c069b.json was
+// captured from src at fb62c069b with the 1.6.0 build's node_modules. The 1.6.0
+// build (released at faac58588) ships every alternative through bb1a2b354: its
+// dist/utils/retry.js gives classify-bb1a2b354.json's two pattern sources and
+// all 315 of its rows' answers. It predates fb62c069b's 525 in the status-code
+// alternative, so re-verify it against the first build that ships it. Control:
+// this script at fb62c069b^1 (30a3e0b1f, whose retry.ts patterns are
+// bb1a2b354's), with the same node_modules, differs from
+// classify-fb62c069b.json only in the retryable source and in the two 525 rows
+// (retryable false); before fb62c069b's rows were added, it reproduced
+// classify-bb1a2b354.json byte for byte but for the sha, and that file's own
+// controls chain back through 4699b5b26 and 9b88b94e2 to 566344046.
 //
 // Every row records three answers: isRetryableAssistantError on the message
 // retry.test.ts would build (fauxAssistantMessage), and RegExp.prototype.test of
@@ -96,7 +95,8 @@ const zhipuUsageLimitMessage =
 	'429 {"error":{"code":"1308","message":"Usage limit reached for 5 hour. Your limit will reset at 2026-10-29 18:00:00"}}';
 
 // The status-code alternative (6e491cfa9): a code must not sit inside a longer word or number.
-const STATUS = "(?<![a-z0-9])(?:429|500|502|503|504|520|524)(?![a-z0-9])";
+// fb62c069b added Cloudflare's 525.
+const STATUS = "(?<![a-z0-9])(?:429|500|502|503|504|520|524|525)(?![a-z0-9])";
 
 // Bare Node socket error codes (4699b5b26, #12128): a code must not be part of
 // a longer identifier, which takes in "_".
@@ -119,6 +119,7 @@ const rows: Row[] = [
 	error("pi: Cloudflare 520 (#9627)", "520 status code (no body)"),
 	error("pi: Azure peak load (#9669)", azurePeakLoadError),
 	error("pi: Cloudflare 524", "524 status code (no body)"),
+	error("pi: Cloudflare 525", "525 <!DOCTYPE html><title>SSL handshake failed</title>"),
 	{ covers: "pi: not an error", content: "not an error" },
 	error("pi: retryAssistantCall non-retryable", "insufficient_quota"),
 	error("pi: retryAssistantCall transient", "terminated"),
@@ -205,6 +206,7 @@ const rows: Row[] = [
 	error(STATUS, "status 504"),
 	error(STATUS, "status 520"),
 	error(STATUS, "status 524"),
+	error(STATUS, "status 525"),
 	error("service.?(?:is.?)?(?:temporarily.?)?unavailable", "Service Unavailable"),
 	error("service.?(?:is.?)?(?:temporarily.?)?unavailable", "service is unavailable"),
 	error("service.?(?:is.?)?(?:temporarily.?)?unavailable", "Service-Temporarily-Unavailable"),
@@ -328,6 +330,7 @@ const rows: Row[] = [
 	error("near-miss", "status 501"),
 	error("near-miss", "status 505"),
 	error("near-miss", "status 521"),
+	error("near-miss", "status 526"),
 	error("near-miss", "42 9"),
 	error("near-miss", "status 5200"),
 	error("near-miss", "too many request"),
