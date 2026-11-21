@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -2001,4 +2002,38 @@ type refreshRecorder struct {
 func (r refreshRecorder) RefreshModels(ctx context.Context, req RefreshModelsContext) error {
 	*r.seen = append(*r.seen, req.BaseURL)
 	return r.Provider.RefreshModels(ctx, req)
+}
+
+// TestCreateProviderFiltersGetTheirOwnList: since upstream 073b0bae8 a
+// provider's catalog is cached and shared across reads, so a filter policy
+// written the usual Go way, filtering its input in place, must not reach the
+// cache. pi's filters return a new array (Array.prototype.filter); the port
+// hands each Go filter its own copy.
+func TestCreateProviderFiltersGetTheirOwnList(t *testing.T) {
+	inPlace := func(models []*Model, _ *Credential) []*Model {
+		return slices.DeleteFunc(models, func(m *Model) bool { return m.ID != "keep" })
+	}
+	for _, tc := range []struct {
+		name string
+		opts CreateProviderOptions
+	}{
+		{"FilterModels", CreateProviderOptions{FilterModels: inPlace}},
+		{"FilterAllModels", CreateProviderOptions{FilterAllModels: inPlace}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			opts := tc.opts
+			opts.ID, opts.Auth, opts.API = "filtered", ProviderAuth{APIKey: EnvAPIKeyAuth("filtered", "K")}, stubAPI()
+			opts.Models = []*Model{{Provider: "filtered", ID: "drop"}, {Provider: "filtered", ID: "keep"}}
+			p := CreateProvider(opts)
+			if tc.opts.FilterModels != nil {
+				p.FilterModels(p.GetModels(), nil)
+			}
+			p.(AllModelsFilterer).FilterAllModels(p.(AllModelsLister).GetAllModels(), nil)
+			for what, got := range map[string][]*Model{"GetModels": p.GetModels(), "GetAllModels": p.(AllModelsLister).GetAllModels()} {
+				if len(got) != 2 || got[0] == nil || got[0].ID != "drop" || got[1] == nil || got[1].ID != "keep" {
+					t.Fatalf("%s after an in-place filter = %v, want [drop keep]", what, got)
+				}
+			}
+		})
+	}
 }

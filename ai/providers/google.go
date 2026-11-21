@@ -310,9 +310,15 @@ func getGeminiMajorVersion(modelID string) (int, bool) {
 	if m == nil {
 		return 0, false
 	}
+	// pi's Number.parseInt never wraps (a long run is a huge number or
+	// Infinity, so always a later major); saturate rather than overflow.
 	n := 0
 	for _, c := range m[1] {
-		n = n*10 + int(c-'0')
+		d := int(c - '0')
+		if n > (math.MaxInt-d)/10 {
+			return math.MaxInt, true
+		}
+		n = n*10 + d
 	}
 	return n, true
 }

@@ -225,10 +225,13 @@ type CreateProviderOptions struct {
 	// transactionally.
 	FetchModels func(ctx context.Context, req RefreshModelsContext) ([]*Model, error)
 	// FilterModels is the optional credential-specific chat model availability
-	// policy (see Provider.FilterModels).
+	// policy (see Provider.FilterModels). It receives its own copy of the
+	// list, since the provider's catalog is cached and shared across reads
+	// (upstream 073b0bae8), so it may filter in place.
 	FilterModels func(models []*Model, credential *Credential) []*Model
 	// FilterAllModels is the optional credential-specific availability policy
-	// across every model type (see AllModelsFilterer).
+	// across every model type (see AllModelsFilterer). Like FilterModels, it
+	// receives its own copy of the list.
 	FilterAllModels func(models []*Model, credential *Credential) []*Model
 	// API is the single chat implementation for all chat models. One whose
 	// functions are all nil is no implementation, as pi's `api: {}` is none.
@@ -392,7 +395,7 @@ func (p *providerImpl) FilterModels(models []*Model, credential *Credential) []*
 	if p.filterFn == nil {
 		return models
 	}
-	return p.filterFn(models, credential)
+	return p.filterFn(slices.Clone(models), credential)
 }
 
 // FilterAllModels applies the provider's all-type availability policy. Without
@@ -401,12 +404,12 @@ func (p *providerImpl) FilterModels(models []*Model, credential *Credential) []*
 // non-chat model plus the chat models the filter keeps from GetModels.
 func (p *providerImpl) FilterAllModels(models []*Model, credential *Credential) []*Model {
 	if p.filterAllFn != nil {
-		return p.filterAllFn(models, credential)
+		return p.filterAllFn(slices.Clone(models), credential)
 	}
 	if p.filterFn == nil {
 		return models
 	}
-	return keepAvailableChatModels(models, p.filterFn(p.GetModels(), credential))
+	return keepAvailableChatModels(models, p.filterFn(slices.Clone(p.GetModels()), credential))
 }
 
 // keepAvailableChatModels keeps every non-chat model, and the chat models whose
@@ -639,7 +642,8 @@ type Models interface {
 
 	// GetModels returns last-known chat models for one provider, or for all
 	// when provider is "" (pi getModels(provider?)). Best-effort. It reads
-	// each provider's GetModels and never its GetAllModels.
+	// each provider's GetModels and never its GetAllModels. The returned slice may be shared with the provider's cached catalog;
+	// callers must not modify it.
 	GetModels(provider string) []*Model
 	// GetModel looks up a chat model by id (pi getModel).
 	GetModel(provider, id string) *Model
@@ -651,7 +655,8 @@ type Models interface {
 	GetModelOfType(t ModelType, provider, id string) *Model
 	// GetAllModels returns last-known models of every type for one provider,
 	// or for all when provider is "" (pi getAllModels). A provider that does
-	// not implement AllModelsLister is read through GetModels.
+	// not implement AllModelsLister is read through GetModels. The returned slice may be shared with the provider's cached catalog;
+	// callers must not modify it.
 	GetAllModels(provider string) []*Model
 
 	// Refresh refreshes the selected configured dynamic providers concurrently,
@@ -667,7 +672,8 @@ type Models interface {
 
 	// GetAvailable returns chat models whose providers have complete auth
 	// configuration, for one provider or all when providerID is "" (pi
-	// getAvailable(providerId?)).
+	// getAvailable(providerId?)). The returned slice may be shared with the provider's cached catalog;
+	// callers must not modify it.
 	GetAvailable(ctx context.Context, providerID string) ([]*Model, error)
 
 	// GetAvailableOfType returns models of one type whose providers have
@@ -677,7 +683,8 @@ type Models interface {
 	// GetAllAvailable returns models of every type whose providers have
 	// complete auth configuration (pi getAllAvailable). Each provider's
 	// AllModelsFilterer decides; without one, FilterModels decides the chat
-	// models and every other model is kept.
+	// models and every other model is kept. The returned slice may be shared with the provider's cached catalog;
+	// callers must not modify it.
 	GetAllAvailable(ctx context.Context, providerID string) ([]*Model, error)
 
 	// GetAuth resolves request auth for a model: provider auth plus the

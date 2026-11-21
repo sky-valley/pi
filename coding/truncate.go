@@ -26,17 +26,20 @@ const (
 // field names match pi's TruncationResult shape (truncate.ts) so it can be
 // embedded in tool details payloads.
 type TruncationResult struct {
-	Content               string `json:"content"`
-	Truncated             bool   `json:"truncated"`
-	TruncatedBy           string `json:"truncatedBy"` // "lines" | "bytes" | "" (pi: null)
-	TotalLines            int    `json:"totalLines"`
-	TotalBytes            int    `json:"totalBytes"`
-	OutputLines           int    `json:"outputLines"`
-	OutputBytes           int    `json:"outputBytes"`
-	LastLinePartial       bool   `json:"lastLinePartial"`
-	FirstLineExceedsLimit bool   `json:"firstLineExceedsLimit"`
-	MaxLines              int    `json:"maxLines"`
-	MaxBytes              int    `json:"maxBytes"`
+	Content     string `json:"content"`
+	Truncated   bool   `json:"truncated"`
+	TruncatedBy string `json:"truncatedBy"` // "lines" | "bytes" | "" (pi: null)
+	TotalLines  int    `json:"totalLines"`
+	TotalBytes  int    `json:"totalBytes"`
+	OutputLines int    `json:"outputLines"`
+	OutputBytes int    `json:"outputBytes"`
+	// LastLinePartial: the first output line was partially truncated — an
+	// over-long line at the end, possibly followed by blank lines (tail
+	// truncation only; upstream 9e9609216).
+	LastLinePartial       bool `json:"lastLinePartial"`
+	FirstLineExceedsLimit bool `json:"firstLineExceedsLimit"`
+	MaxLines              int  `json:"maxLines"`
+	MaxBytes              int  `json:"maxBytes"`
 }
 
 // FormatSize renders a byte count as a human-readable size.

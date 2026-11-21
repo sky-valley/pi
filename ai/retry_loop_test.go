@@ -133,6 +133,18 @@ func TestRetryAssistantCall(t *testing.T) {
 	// Regression for #10506 (upstream 51ba3ab5b).
 	t.Run("stops retrying once a call succeeds and removes backoff abort listeners", func(t *testing.T) {
 		ctx := newListenerCountingContext()
+		// The probe must see a registration, or the zero below is vacuous: a
+		// derived context and an AfterFunc each register through it.
+		_, cancel := context.WithCancel(ctx)
+		stop := context.AfterFunc(ctx, func() {})
+		if got := ctx.listeners(); got != 2 {
+			t.Fatalf("probe: %d listeners after WithCancel and AfterFunc, want 2", got)
+		}
+		cancel()
+		stop()
+		if got := ctx.listeners(); got != 0 {
+			t.Fatalf("probe: %d listeners after cancel and stop, want 0", got)
+		}
 		n := 0
 		var rec retryRecorder
 		res := RetryAssistantCall(ctx, func() *AssistantMessage {

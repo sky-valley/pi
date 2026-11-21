@@ -151,9 +151,32 @@ func TestGoogleThinkingLevelGemini4ViaMajorVersion(t *testing.T) {
 		{"gemini-12-pro", true},
 		{"gemini-2.5-pro", false},
 		{"vendor-gemini-2.5-pro", false},
+		// pi's Number.parseInt does not wrap: 1e19, 1.8446744073709552e19 and
+		// Infinity are all later majors. Go saturates instead of overflowing.
+		{"gemini-10000000000000000000-pro", true},
+		{"gemini-18446744073709551619-pro", true},
+		{"gemini-" + strings.Repeat("9", 400) + "-pro", true},
 	} {
 		if got := usesGoogleThinkingLevel(&ai.Model{ID: tc.id}); got != tc.want {
 			t.Errorf("usesGoogleThinkingLevel(%q) = %v, want %v", tc.id, got, tc.want)
 		}
+	}
+}
+
+// TestGeminiMajorVersionSaturatesLikeParseInt: a digit run too long for an int
+// is a huge number in pi (Number.parseInt), never a wrapped small or negative
+// one, so the Gemini 3+ checks hold for it.
+func TestGeminiMajorVersionSaturatesLikeParseInt(t *testing.T) {
+	for _, id := range []string{"gemini-10000000000000000000-pro", "gemini-18446744073709551619-pro", "gemini-9999999999999999999-pro"} {
+		major, ok := getGeminiMajorVersion(id)
+		if !ok || major < 4 {
+			t.Errorf("getGeminiMajorVersion(%q) = %d, %v; want a saturated major >= 4", id, major, ok)
+		}
+		if !supportsGoogleStrictToolSampling(&ai.Model{ID: id}) {
+			t.Errorf("supportsGoogleStrictToolSampling(%q) = false, want true", id)
+		}
+	}
+	if major, _ := getGeminiMajorVersion("gemini-0004-pro"); major != 4 {
+		t.Errorf("leading zeros: major = %d, want 4", major)
 	}
 }
