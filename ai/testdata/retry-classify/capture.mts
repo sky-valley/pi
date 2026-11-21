@@ -3,23 +3,26 @@
 // in package ai.
 //
 //   node --experimental-strip-types capture.mts <extraction> <out.json> <sha>
-//   e.g. ... capture.mts <dir> classify-fb62c069b.json fb62c069b
+//   e.g. ... capture.mts <dir> classify-25190b72c.json 25190b72c
 //
 // <extraction> holds packages/ai at <sha> (`git archive <sha> packages/ai` from
 // the upstream clone) and a node_modules resolving pi-ai's dependencies (the npm
 // build's). It is a src capture, checked against the build when a release
-// ships the source it read (the BUILD wins): classify-fb62c069b.json was
-// captured from src at fb62c069b with the 1.6.0 build's node_modules. The 1.6.0
+// ships the source it read (the BUILD wins): classify-25190b72c.json was
+// captured from src at 25190b72c with the 1.6.0 build's node_modules. The 1.6.0
 // build (released at faac58588) ships every alternative through bb1a2b354: its
 // dist/utils/retry.js gives classify-bb1a2b354.json's two pattern sources and
 // all 315 of its rows' answers. It predates fb62c069b's 525 in the status-code
-// alternative, so re-verify it against the first build that ships it. Control:
-// this script at fb62c069b^1 (30a3e0b1f, whose retry.ts patterns are
-// bb1a2b354's), with the same node_modules, differs from
-// classify-fb62c069b.json only in the retryable source and in the two 525 rows
-// (retryable false); before fb62c069b's rows were added, it reproduced
-// classify-bb1a2b354.json byte for byte but for the sha, and that file's own
-// controls chain back through 4699b5b26 and 9b88b94e2 to 566344046.
+// alternative and 25190b72c's "provider.?(?:is.?)?temporarily.?unavailable",
+// "ended the response before it was complete", "connection to the provider was
+// reset" and "reported a failure while generating the response", so re-verify
+// it against the first build that ships them. Control: this script at
+// 25190b72c^1 (fb62c069b), with the same node_modules, differs from
+// classify-25190b72c.json only in the retryable source and in the 11 rows
+// 25190b72c's alternatives decide (retryable false); before 25190b72c's rows
+// were added, it reproduced classify-fb62c069b.json byte for byte at
+// fb62c069b, and that file's own controls chain back through 30a3e0b1f
+// (whose patterns are bb1a2b354's), 4699b5b26 and 9b88b94e2 to 566344046.
 //
 // Every row records three answers: isRetryableAssistantError on the message
 // retry.test.ts would build (fauxAssistantMessage), and RegExp.prototype.test of
@@ -182,6 +185,16 @@ const rows: Row[] = [
 	error("pi: Codex websocket connection limit (#12124)", codexConnectionLimitError),
 	error("pi: Codex websocket connection limit (#12124)", "Codex error: websocket_connection_limit_reached"),
 	error("pi: generic connection limit (#12124)", "connection limit reached"),
+	// retry.test.ts regression for #12227 (25190b72c): gateway mid-stream
+	// `event: error` frames without a status code, and lasting "provider
+	// unavailable" wording that must not retry.
+	error("pi: gateway provider failure (#12227)", "The provider is temporarily unavailable. Retry shortly."),
+	error("pi: gateway provider failure (#12227)", "The upstream provider is temporarily unavailable. Try again shortly."),
+	error("pi: gateway provider failure (#12227)", "The provider ended the response before it was complete."),
+	error("pi: gateway provider failure (#12227)", "The connection to the provider was reset. Retry shortly."),
+	error("pi: gateway provider failure (#12227)", "The provider reported a failure while generating the response."),
+	error("pi: lasting provider unavailable (#12227)", "Provider unavailable for this model"),
+	error("pi: lasting provider unavailable (#12227)", "The provider is unavailable in your region"),
 
 	// isRetryableAssistantError's guard: only stopReason "error" with error text.
 	{ covers: "guard: stop", stopReason: "stop", errorMessage: "overloaded" },
@@ -211,6 +224,9 @@ const rows: Row[] = [
 	error("service.?(?:is.?)?(?:temporarily.?)?unavailable", "service is unavailable"),
 	error("service.?(?:is.?)?(?:temporarily.?)?unavailable", "Service-Temporarily-Unavailable"),
 	error("service.?(?:is.?)?(?:temporarily.?)?unavailable", "serviceistemporarilyunavailable"),
+	error("provider.?(?:is.?)?temporarily.?unavailable", "Provider Temporarily Unavailable"),
+	error("provider.?(?:is.?)?temporarily.?unavailable", "provider_is_temporarily_unavailable"),
+	error("provider.?(?:is.?)?temporarily.?unavailable", "providertemporarilyunavailable"),
 	error("server.?error", "server_error"),
 	error("internal.?error", "InternalError"),
 	error("provider.?returned.?(?:an.?)?error", "Provider returned error"),
@@ -257,6 +273,9 @@ const rows: Row[] = [
 	error("http2 request did not get a response", "http2 request did not get a response"),
 	error("stream disconnected before completion", "Stream Disconnected Before Completion"),
 	error("cut short after the reply had begun", "Cut Short After The Reply Had Begun"),
+	error("ended the response before it was complete", "ENDED THE RESPONSE BEFORE IT WAS COMPLETE"),
+	error("connection to the provider was reset", "Connection To The Provider Was Reset"),
+	error("reported a failure while generating the response", "Reported A Failure While Generating The Response"),
 	error("pending stream has been canceled", "PENDING STREAM HAS BEEN CANCELED"),
 	error("retry delay", "Retry delay 120000ms exceeds maxRetryDelayMs"),
 	error("you can retry your request", "the model is busy; you can retry your request"),
@@ -369,6 +388,12 @@ const rows: Row[] = [
 	error("near-miss", "websocket connection limit"),
 	error("near-miss", "websocket  connection limit reached"),
 	error("near-miss", "websocketconnection limit exceeded"),
+	error("near-miss", "provider was temporarily unavailable"),
+	error("near-miss", "provider is temporarily  unavailable"),
+	error("near-miss", "provider temporarily is unavailable"),
+	error("near-miss", "ended the response before it completed"),
+	error("near-miss", "connection to a provider was reset"),
+	error("near-miss", "reported a failure while streaming the response"),
 
 	// The socket-code boundaries: one UTF-16 code unit on each side that is not
 	// [a-z0-9_] under "i" (ASCII letters only), or the start or end of the text.
@@ -440,6 +465,8 @@ const rows: Row[] = [
 	error("dot: JS excludes CR", "service\ris temporarily unavailable"),
 	error("dot: in a group", "service\u00e9is\u00e9temporarily\u00e9unavailable"),
 	error("dot: in a group", "provider returned an\uFEFFerror"),
+	error("dot: JS excludes U+2028", "provider is temporarily\u2028unavailable"),
+	error("dot: astral is two code units", "provider\u{1F600}temporarily unavailable"),
 
 	// \S is one UTF-16 code unit that is not JavaScript whitespace: an astral
 	// character is two such units, and \v, U+00A0, U+1680, U+2000-U+200A, U+202F,
