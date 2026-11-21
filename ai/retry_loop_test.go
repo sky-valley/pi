@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"sync"
 	"testing"
 )
 
@@ -129,12 +130,14 @@ func TestRetryAssistantCall(t *testing.T) {
 		}
 	})
 
-	t.Run("stops retrying once a call succeeds", func(t *testing.T) {
+	// Regression for #10506 (upstream 51ba3ab5b).
+	t.Run("stops retrying once a call succeeds and removes backoff abort listeners", func(t *testing.T) {
+		ctx := newListenerCountingContext()
 		n := 0
 		var rec retryRecorder
-		res := RetryAssistantCall(context.Background(), func() *AssistantMessage {
+		res := RetryAssistantCall(ctx, func() *AssistantMessage {
 			n++
-			if n < 3 {
+			if n < 4 {
 				return errResp("terminated")
 			}
 			return textResp("recovered")
@@ -142,10 +145,13 @@ func TestRetryAssistantCall(t *testing.T) {
 		if want := (ContentList{TextContent{Text: "recovered"}}); !reflect.DeepEqual(res.Content, want) {
 			t.Fatalf("content = %+v, want %+v", res.Content, want)
 		}
-		if n != 3 {
-			t.Fatalf("produce calls = %d, want 3", n)
+		if n != 4 {
+			t.Fatalf("produce calls = %d, want 4", n)
 		}
-		rec.finishedWith(t, retryFinishedCall{true, 2, ""})
+		rec.finishedWith(t, retryFinishedCall{true, 3, ""})
+		if live := ctx.listeners(); live != 0 {
+			t.Fatalf("%d abort listeners still registered on the context, want 0", live)
+		}
 	})
 
 	t.Run("reports an aborted retried call as unsuccessful", func(t *testing.T) {
@@ -260,6 +266,48 @@ func TestRetryAssistantCall(t *testing.T) {
 		}
 		rec.finishedWith(t, retryFinishedCall{false, 1, "terminated"})
 	})
+}
+
+// listenerCountingContext stands in for pi's getEventListeners(signal,
+// "abort"). context.AfterFunc, and every context derived with WithCancel,
+// WithTimeout or WithDeadline, registers on a parent that is not one of the
+// context package's own through the parent's AfterFunc method, so the
+// registrations not yet stopped are the abort handling still attached to it.
+// It is never cancelled: the test only counts what is registered.
+type listenerCountingContext struct {
+	context.Context
+	done chan struct{}
+	mu   sync.Mutex
+	live int
+}
+
+func newListenerCountingContext() *listenerCountingContext {
+	return &listenerCountingContext{Context: context.Background(), done: make(chan struct{})}
+}
+
+func (c *listenerCountingContext) Done() <-chan struct{} { return c.done }
+
+func (c *listenerCountingContext) AfterFunc(func()) (stop func() bool) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.live++
+	stopped := false
+	return func() bool {
+		c.mu.Lock()
+		defer c.mu.Unlock()
+		if stopped {
+			return false
+		}
+		stopped = true
+		c.live--
+		return true
+	}
+}
+
+func (c *listenerCountingContext) listeners() int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.live
 }
 
 // marshalField serializes msg and returns one top-level field of the result,
