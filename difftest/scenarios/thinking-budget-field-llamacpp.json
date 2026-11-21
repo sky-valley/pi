@@ -1,7 +1,7 @@
 {
   "name": "thinking-budget-field-llamacpp",
-  "note": "Upstream b23741269. compat.thinkingTokenBudgetField selects the top-level budget key: thinking_budget_tokens (llama.cpp). No caller maxTokens, model maxTokens 16384, reasoning high -> min(16384, 16384-1024) = 15360. vLLM's thinking_token_budget must be ABSENT on both sides. Post-0.84.2 surface, so backend is src: REQUIRES PI_UPSTREAM_SHA >= b23741269 (at the older pin pi emits no budget key at all and this FAILs). Shipped in pi-ai 0.84.3 (release 4e58f324f); flipped to backend:\"dist\" — the published build is the stronger ground truth (README rule). src until a release ships upstream b82477b7b (system is the default instruction role off api.openai.com); 1.5.2 still sends developer.",
-  "backend": "src",
+  "note": "Upstream b23741269. compat.thinkingTokenBudgetField selects the top-level budget key: thinking_budget_tokens (llama.cpp). No caller maxTokens, model maxTokens 16384, reasoning high -> min(16384, 16384-1024) = 15360. vLLM's thinking_token_budget must be ABSENT on both sides. Post-0.84.2 surface, so backend is src: REQUIRES PI_UPSTREAM_SHA >= b23741269 (at the older pin pi emits no budget key at all and this FAILs). Shipped in pi-ai 0.84.3 (release 4e58f324f); flipped to backend:\"dist\" — the published build is the stronger ground truth (README rule). src until a release ships upstream b82477b7b (system is the default instruction role off api.openai.com); 1.5.2 still sends developer. Flipped back to dist at the 1.6.0 re-pin: release faac58588 ships the change this scenario waited for, and it passes against the published build (README rule).",
+  "backend": "dist",
   "api": "openai-completions",
   "entry": "streamSimple",
   "model": {

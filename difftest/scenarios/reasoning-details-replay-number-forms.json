@@ -1,7 +1,7 @@
 {
   "name": "reasoning-details-replay-number-forms",
-  "note": "Upstream 4ca636c5e+b7bb00b93. pi does not replay the provider's BYTES: it replays the object JSON.parse produced, re-serialized by the SDK, so a redundant number form is renormalized on the wire (1.0 -> 1, 1e2 -> 100, -0 -> 0) and a magnitude float64 cannot hold survives validation as Infinity and is written as null. Python-stack providers reached through OpenRouter emit 1.0-style float literals routinely, so this is the reachable half. Post-0.84.2 surface, so backend is src: REQUIRES PI_UPSTREAM_SHA >= b7bb00b93. Shipped in pi-ai 0.84.3 (release 4e58f324f); flipped to backend:\"dist\" — the published build is the stronger ground truth (README rule). src until a release ships upstream b82477b7b (system is the default instruction role off api.openai.com); 1.5.2 still sends developer.",
-  "backend": "src",
+  "note": "Upstream 4ca636c5e+b7bb00b93. pi does not replay the provider's BYTES: it replays the object JSON.parse produced, re-serialized by the SDK, so a redundant number form is renormalized on the wire (1.0 -> 1, 1e2 -> 100, -0 -> 0) and a magnitude float64 cannot hold survives validation as Infinity and is written as null. Python-stack providers reached through OpenRouter emit 1.0-style float literals routinely, so this is the reachable half. Post-0.84.2 surface, so backend is src: REQUIRES PI_UPSTREAM_SHA >= b7bb00b93. Shipped in pi-ai 0.84.3 (release 4e58f324f); flipped to backend:\"dist\" — the published build is the stronger ground truth (README rule). src until a release ships upstream b82477b7b (system is the default instruction role off api.openai.com); 1.5.2 still sends developer. Flipped back to dist at the 1.6.0 re-pin: release faac58588 ships the change this scenario waited for, and it passes against the published build (README rule).",
+  "backend": "dist",
   "api": "openai-completions",
   "entry": "streamSimple",
   "model": {

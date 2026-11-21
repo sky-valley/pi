@@ -1,7 +1,7 @@
 {
   "name": "thinking-budget-baseten-args-var",
-  "note": "Upstream b23741269. The budget is threaded into BOTH buildChatTemplateValues call sites; this covers the baseten one (chat_template_args), which upstream's own suite does not test. reasoning high -> thinking_budget 15360. backend src (post-0.84.2): REQUIRES PI_UPSTREAM_SHA >= b23741269 (at the older pin pi emits no budget key at all and this FAILs). Shipped in pi-ai 0.84.3 (release 4e58f324f); flipped to backend:\"dist\" — the published build is the stronger ground truth (README rule). src until a release ships upstream b82477b7b (system is the default instruction role off api.openai.com); 1.5.2 still sends developer.",
-  "backend": "src",
+  "note": "Upstream b23741269. The budget is threaded into BOTH buildChatTemplateValues call sites; this covers the baseten one (chat_template_args), which upstream's own suite does not test. reasoning high -> thinking_budget 15360. backend src (post-0.84.2): REQUIRES PI_UPSTREAM_SHA >= b23741269 (at the older pin pi emits no budget key at all and this FAILs). Shipped in pi-ai 0.84.3 (release 4e58f324f); flipped to backend:\"dist\" — the published build is the stronger ground truth (README rule). src until a release ships upstream b82477b7b (system is the default instruction role off api.openai.com); 1.5.2 still sends developer. Flipped back to dist at the 1.6.0 re-pin: release faac58588 ships the change this scenario waited for, and it passes against the published build (README rule).",
+  "backend": "dist",
   "api": "openai-completions",
   "entry": "streamSimple",
   "orderSensitivePaths": [

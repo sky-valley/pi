@@ -1,7 +1,7 @@
 {
   "name": "tool-history-without-tools-requires-tools-openai-completions",
-  "note": "Upstream 7a6bd5a97: compat.requiresToolsWithToolHistory restores `\"tools\": []` for a conversation with tool history and no tools. src until the first release that ships 7a6bd5a97, then flip to dist (README rule).",
-  "backend": "src",
+  "note": "Upstream 7a6bd5a97: compat.requiresToolsWithToolHistory restores `\"tools\": []` for a conversation with tool history and no tools. src until the first release that ships 7a6bd5a97, then flip to dist (README rule). Flipped back to dist at the 1.6.0 re-pin: release faac58588 ships the change this scenario waited for, and it passes against the published build (README rule).",
+  "backend": "dist",
   "api": "openai-completions",
   "entry": "streamSimple",
   "model": {

@@ -1,7 +1,7 @@
 {
   "name": "prompt-cache-key-mode-enabled-proxy",
-  "note": "Upstream 0f4d5e960: compat.promptCacheKeyMode \"enabled\" sends prompt_cache_key through an OpenAI-compatible proxy whenever caching is active, without prompt_cache_retention (supportsLongCacheRetention false). src until the first release that ships 0f4d5e960, then flip to dist (README rule).",
-  "backend": "src",
+  "note": "Upstream 0f4d5e960: compat.promptCacheKeyMode \"enabled\" sends prompt_cache_key through an OpenAI-compatible proxy whenever caching is active, without prompt_cache_retention (supportsLongCacheRetention false). src until the first release that ships 0f4d5e960, then flip to dist (README rule). Flipped back to dist at the 1.6.0 re-pin: release faac58588 ships the change this scenario waited for, and it passes against the published build (README rule).",
+  "backend": "dist",
   "api": "openai-completions",
   "entry": "stream",
   "model": {
