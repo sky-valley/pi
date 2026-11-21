@@ -3,15 +3,19 @@
 // the oracle behind TestGoogleThinkingConfigMatchesPi in this package.
 //
 //   node --experimental-strip-types capture-thinking-config.mts <extraction> <out.json> <sha>
-//   e.g. ... capture-thinking-config.mts <dir> thinking-config-1692bba63.json 1692bba63
+//   e.g. ... capture-thinking-config.mts <dir> thinking-config-fe8a6f5dc.json fe8a6f5dc
 //
 // <extraction> holds packages/ai at <sha> (`git archive <sha> packages/ai` from
 // the upstream clone) and a node_modules resolving pi-ai's dependencies (the npm
 // build's: at 1692bba63 the lockfile's @google/genai 2.21.0 and typebox 1.3.27
-// are the npm 1.3.0 build's, integrity for integrity). <extraction> may instead
-// be a published @earendil-works/pi-ai package directory, whose dist is loaded:
-// the BUILD wins where the two disagree. 1.3.0's dist and 1692bba63's src
-// record the same file.
+// are the npm 1.3.0 build's, integrity for integrity; at fe8a6f5dc its
+// @google/genai 2.32.0 and typebox 1.3.27 are the npm 1.6.0 build's).
+// <extraction> may instead be a published @earendil-works/pi-ai package
+// directory, whose dist is loaded: the BUILD wins where the two disagree.
+// 1.3.0's dist and 1692bba63's src record the same file. fe8a6f5dc (#12321)
+// moved only the zero-padded "gemini 04" case, from a budget to a level (its
+// parent recorded the 1692bba63 file unchanged); the port added the
+// gemini-live-4 and vendor-gemini-2.5 cases when it ported fe8a6f5dc.
 //
 // Models are packages/ai/test/google-thinking-level-map.test.ts's googleModel
 // (synthetic, catalog-independent: each case carries its own thinkingLevelMap,
@@ -173,8 +177,9 @@ const cases: Case[] = [
 	{ name: "id/gemini 4 pro uses levels", id: "gemini-4-pro", reasoning: "low" },
 	{ name: "id/gemma 4 inside a longer name uses levels", id: "codegemma4", reasoning: "low" },
 
-	// Gemini 4 and later use levels (1692bba63, #10890): a major version of 4 to
-	// 9, or two digits not starting with 0, anywhere in the id.
+	// Gemini 4 and later use levels (1692bba63, #10890). Since fe8a6f5dc (#12321)
+	// that is a Gemini major version of 4 or more read anywhere in the id
+	// (/gemini(?:-live)?-(\d+)/ then parseInt), so "04" and gemini-live-4 count.
 	// google-thinking-level-map.test.ts @1692bba63, google adapter.
 	{ name: "upstream/gemini 4 uses thinking levels", id: "gemini-4-argon", thinkingLevelMap: {}, reasoning: "medium" },
 	// The shipped catalog's gemini-4-argon map, at every level.
@@ -192,7 +197,9 @@ const cases: Case[] = [
 	{ name: "id/gemini 40 uses levels", id: "gemini-40", reasoning: "low" },
 	{ name: "id/gemini 4 after a path prefix uses levels", id: "models/gemini-4-argon", reasoning: "low" },
 	{ name: "id/mixed-case gemini 4 uses levels", id: "Gemini-4-Argon", reasoning: "low" },
-	{ name: "id/gemini 04 uses budgets", id: "gemini-04-pro", reasoning: "low" },
+	{ name: "id/gemini 04 uses levels", id: "gemini-04-pro", reasoning: "low" },
+	{ name: "id/gemini live 4 uses levels", id: "gemini-live-4-flash", reasoning: "low" },
+	{ name: "id/prefixed gemini 2.5 uses budgets", id: "vendor-gemini-2.5-pro", reasoning: "low" },
 	{ name: "id/gemini 1 uses budgets", id: "gemini-1-pro", reasoning: "low" },
 	{ name: "id/gemini 2.5 uses budgets", id: "gemini-2.5-pro", reasoning: "low" },
 	{ name: "id/gemini 3 lite uses budgets", id: "gemini-3-lite", reasoning: "low" },

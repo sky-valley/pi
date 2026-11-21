@@ -1,5 +1,5 @@
 {
-	"sha": "1692bba63",
+	"sha": "fe8a6f5dc",
 	"cases": [
 		{
 			"name": "upstream/omitted uses the lowest supported level",
@@ -698,12 +698,30 @@
 			}
 		},
 		{
-			"name": "id/gemini 04 uses budgets",
+			"name": "id/gemini 04 uses levels",
 			"id": "gemini-04-pro",
 			"reasoning": "low",
 			"thinkingConfig": {
 				"includeThoughts": true,
-				"thinkingBudget": -1
+				"thinkingLevel": "LOW"
+			}
+		},
+		{
+			"name": "id/gemini live 4 uses levels",
+			"id": "gemini-live-4-flash",
+			"reasoning": "low",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingLevel": "LOW"
+			}
+		},
+		{
+			"name": "id/prefixed gemini 2.5 uses budgets",
+			"id": "vendor-gemini-2.5-pro",
+			"reasoning": "low",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingBudget": 2048
 			}
 		},
 		{

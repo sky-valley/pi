@@ -174,7 +174,7 @@ func firstFunctionResponse(contents []any) map[string]any {
 // without includeThoughts. The maps below are the shipped catalog's shapes for
 // each family (inlined, so the test does not follow a catalog regen); the same
 // ids without a map keep "off" supported and disable with a budget. pi's values:
-// testdata/google-thinking/thinking-config-1692bba63.json "disabled/*".
+// testdata/google-thinking/thinking-config-fe8a6f5dc.json "disabled/*".
 func TestGoogleDisabledThinkingPerFamily(t *testing.T) {
 	proMap := ai.ThinkingLevelMap{"off": nil, "minimal": nil, "low": strPtr("LOW"), "medium": nil, "high": strPtr("HIGH")}
 	flashMap := ai.ThinkingLevelMap{"off": nil}
@@ -344,7 +344,7 @@ func TestGoogleConvertToolsAlwaysUsesJsonSchema(t *testing.T) {
 		if useParameters(modelID) {
 			t.Fatalf("useParameters(%q) must be false to match pi (always parametersJsonSchema)", modelID)
 		}
-		tools, err := googleTools([]ai.Tool{{Name: "t", Description: "d", Parameters: schema}}, useParameters(modelID), supportsGoogleStrictToolSampling(modelID))
+		tools, err := googleTools([]ai.Tool{{Name: "t", Description: "d", Parameters: schema}}, useParameters(modelID), supportsGoogleStrictToolSampling(&ai.Model{ID: modelID}))
 		if err != nil {
 			t.Fatalf("googleTools: %v", err)
 		}
@@ -1383,6 +1383,8 @@ func TestGoogleRequiresToolCallID(t *testing.T) {
 		{"gemini-30-pro", true},
 		{"GEMINI-3-PRO", true}, // getGeminiMajorVersion lowercases first
 		{"gemini3-pro", false},
+		{"randomprefix-gemini-4-argon", true}, // pi fe8a6f5dc (#12321)
+		{"vendor-gemini-2.5-flash", false},
 		{"claude-sonnet-4-5", true},
 		{"gpt-oss-120b", true},
 		{"other-model", false},

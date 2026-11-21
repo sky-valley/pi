@@ -127,8 +127,6 @@ var (
 	// Gemini 3 Pro/Flash ids with or without a minor version, such as
 	// gemini-3-flash-preview, gemini-3.1-pro-preview and gemini-3.8-flash.
 	gemini3LevelRe = regexp.MustCompile(`gemini-3(?:\.\d+)?-(?:pro|flash)`)
-	// Gemini 4 and later, such as gemini-4-argon (upstream 1692bba63, #10890).
-	gemini4PlusRe = regexp.MustCompile(`gemini-(?:[4-9]|[1-9]\d)`)
 	// Both hosted Gemma 4 naming forms: gemma-4-* and gemma4-*.
 	gemma4Re = regexp.MustCompile(`gemma-?4`)
 )
@@ -139,8 +137,11 @@ var (
 // format: the levels the model supports come from its thinkingLevelMap.
 func usesGoogleThinkingLevel(model *ai.Model) bool {
 	id := strings.ToLower(model.ID)
+	// Gemini 4 and later, such as gemini-4-argon (upstream 1692bba63, #10890),
+	// read off the major version since fe8a6f5dc; no version reads as 0.
+	major, _ := getGeminiMajorVersion(id)
 	return gemini3LevelRe.MatchString(id) ||
-		gemini4PlusRe.MatchString(id) ||
+		major >= 4 ||
 		id == "gemini-flash-latest" ||
 		id == "gemini-flash-lite-latest" ||
 		gemma4Re.MatchString(id)
@@ -302,7 +303,8 @@ func resolveThoughtSignature(isSameProviderAndModel bool, sig string) string {
 	return ""
 }
 
-// getGeminiMajorVersion extracts the leading Gemini major version (pi google-shared).
+// getGeminiMajorVersion extracts the first Gemini major version in the ID,
+// wherever it sits (pi google-shared).
 func getGeminiMajorVersion(modelID string) (int, bool) {
 	m := geminiMajorRe.FindStringSubmatch(strings.ToLower(modelID))
 	if m == nil {
@@ -325,7 +327,9 @@ func supportsMultimodalFunctionResponse(modelID string) bool {
 	return true
 }
 
-var geminiMajorRe = regexp.MustCompile(`^gemini(?:-live)?-(\d+)`)
+// geminiMajorRe is unanchored like usesGoogleThinkingLevel: some hosts prefix
+// the ID, e.g. randomprefix-gemini-4-argon (upstream fe8a6f5dc, #12321).
+var geminiMajorRe = regexp.MustCompile(`gemini(?:-live)?-(\d+)`)
 
 func modelSupportsImageInput(model *ai.Model) bool {
 	for _, in := range model.Input {
@@ -826,7 +830,7 @@ func buildGoogleParams(model *ai.Model, req ai.TranscriptContext, opts *GoogleOp
 		}
 	}
 	if len(currentTools) > 0 {
-		supportsStrictMode := supportsGoogleStrictToolSampling(model.ID)
+		supportsStrictMode := supportsGoogleStrictToolSampling(model)
 		tools, err := googleTools(currentTools, useParameters(model.ID), supportsStrictMode)
 		if err != nil {
 			return nil, err
@@ -866,9 +870,14 @@ func buildGoogleParams(model *ai.Model, req ai.TranscriptContext, opts *GoogleOp
 
 // supportsGoogleStrictToolSampling reports whether the model enforces required
 // function parameters in validated tool-calling modes — Gemini 3 and newer.
-func supportsGoogleStrictToolSampling(modelID string) bool {
-	major, ok := getGeminiMajorVersion(modelID)
-	return ok && major >= 3
+// compat.supportsStrictMode (pi GoogleCompat, upstream fe8a6f5dc) overrides
+// the model ID detection, e.g. for Gemini models served under IDs without the
+// version.
+func supportsGoogleStrictToolSampling(model *ai.Model) bool {
+	major, ok := getGeminiMajorVersion(model.ID)
+	supports := ok && major >= 3
+	applyCompat(newCompatOverrides(model.Compat), "supportsStrictMode", &supports)
+	return supports
 }
 
 // resolveGoogleFunctionCallingMode picks the functionCallingConfig mode, or ""
