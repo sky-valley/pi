@@ -11,10 +11,12 @@
 // build's node_modules beside it, read from its .ts files and labelled
 // "src <dir name>".
 //
-// readimagenote-4be4cb4f5.json is a src capture over the 1.5.2 build's
-// node_modules: 4be4cb4f5 drops the non-vision note from the text and sets
-// details.imageUnsupportedByModel instead. Control: src at 4be4cb4f5^1 writes
-// readimagenote-1.3.0.json's rows, each with "details": null.
+// readimagenote-1.6.0.json is the 1.6.0 build's capture, the first build that
+// ships 4be4cb4f5 (the non-vision note leaves the text and
+// details.imageUnsupportedByModel is set instead). It matches the earlier src
+// capture at 4be4cb4f5 but for the version label; that capture's control, src
+// at 4be4cb4f5^1, wrote readimagenote-1.3.0.json's rows, each with
+// "details": null.
 //
 // createReadToolDefinition(cwd).execute runs with an execution context whose
 // model accepts images, accepts only text, or is absent, over a decodable PNG

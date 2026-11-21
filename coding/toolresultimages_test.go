@@ -638,7 +638,7 @@ func TestImageResizeProfileIsRaceFreeAcrossSetModel(t *testing.T) {
 // the user instead (#12131). A vision model, no model at all, or an image
 // that could not be processed leaves the details undefined.
 func TestReadImageNoteFollowsTheModel(t *testing.T) {
-	data, err := os.ReadFile("testdata/readimagenote/readimagenote-4be4cb4f5.json")
+	data, err := os.ReadFile("testdata/readimagenote/readimagenote-1.6.0.json")
 	if err != nil {
 		t.Fatal(err)
 	}
