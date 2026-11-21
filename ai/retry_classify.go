@@ -252,6 +252,9 @@ var retryableProviderErrorPattern = buildProviderErrorPattern([]string{
 	// message, not an account limit.
 	"currently experiencing high demand",
 	"model is at capacity",
+	// A request that waited too long in the provider's queue, e.g. sference's "waited 73.4s in
+	// queue, reaching this model's admission ceiling of 60s; retry after the hinted delay".
+	"admission ceiling",
 	"rate.?limit",
 	"too many requests",
 	// Status codes must not be part of a longer word or number, e.g. a request id
@@ -271,6 +274,11 @@ var retryableProviderErrorPattern = buildProviderErrorPattern([]string{
 	// "Provider returned error" responses (#2264) and gateway wording such as
 	// "The upstream provider returned an error" (#10842).
 	"provider.?returned.?(?:an.?)?error",
+	// Anthropic's internal error, which it sends as HTTP 500 before streaming and as an event
+	// without a status once the stream has started, e.g. {"type":"error","error":{"type":
+	// "api_error","message":"Unable to complete this request right now. Please try again."}}.
+	// Gateways that copy Anthropic's format use it for their own upstream failures as well.
+	`"type"\s*:\s*"api_error"`,
 	"exceeded request buffer limit while retrying upstream",
 	// Gateway failure relaying the upstream response stream, sent as an OpenAI
 	// Responses `response.failed` event without an error code (#10920).
@@ -288,8 +296,7 @@ var retryableProviderErrorPattern = buildProviderErrorPattern([]string{
 	"connection.?error",
 	"connection.?refused",
 	"connection.?lost",
-	// Gateway mid-stream drop relayed as an Anthropic-style `api_error` event,
-	// e.g. {"type":"error","error":{"type":"api_error","message":"Connection closed."}} (#12064).
+	// A gateway's mid-stream drop, e.g. "Connection closed." (#12064).
 	"connection.?closed",
 	"other side closed",
 	"fetch failed",
@@ -327,6 +334,13 @@ var retryableProviderErrorPattern = buildProviderErrorPattern([]string{
 	"stream ended before message_stop",
 	"stream ended before a terminal response event",
 	"http2 request did not get a response",
+	// An OpenAI-compatible stream that ended with `finish_reason: "error"`, which OpenRouter
+	// sends when its provider fails mid-stream; see `mapStopReason` in openai-completions.ts.
+	"provider finish_reason: error",
+	// OpenRouter: "Provider returned an empty response", and its wrapper for a provider that
+	// gave up, e.g. "Upstream error from Relace: The model stopped before completing the response."
+	"returned an empty response",
+	"stopped before completing the response",
 	// Codex CLI mid-stream disconnect, relayed by proxies that wrap the Codex CLI,
 	// e.g. "stream disconnected before completion: stream closed before response.completed" (#11057).
 	"stream disconnected before completion",
@@ -351,6 +365,8 @@ var retryableProviderErrorPattern = buildProviderErrorPattern([]string{
 	"you can retry your request",
 	"try your request again",
 	"please retry your request",
+	// recursive: "Unable to process request. Repeat the request later."
+	"repeat the request later",
 
 	// gRPC based providers (e.g. NVIDIA NIM) surface transient throttles as a
 	// ResourceExhausted status (#6449).

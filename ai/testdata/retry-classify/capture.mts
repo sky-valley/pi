@@ -3,26 +3,31 @@
 // in package ai.
 //
 //   node --experimental-strip-types capture.mts <extraction> <out.json> <sha>
-//   e.g. ... capture.mts <dir> classify-25190b72c.json 25190b72c
+//   e.g. ... capture.mts <dir> classify-a00a5048d.json a00a5048d
 //
 // <extraction> holds packages/ai at <sha> (`git archive <sha> packages/ai` from
 // the upstream clone) and a node_modules resolving pi-ai's dependencies (the npm
 // build's). It is a src capture, checked against the build when a release
-// ships the source it read (the BUILD wins): classify-25190b72c.json was
-// captured from src at 25190b72c with the 1.6.0 build's node_modules. The 1.6.0
+// ships the source it read (the BUILD wins): classify-a00a5048d.json was
+// captured from src at a00a5048d with the 1.6.0 build's node_modules. The 1.6.0
 // build (released at faac58588) ships every alternative through bb1a2b354: its
 // dist/utils/retry.js gives classify-bb1a2b354.json's two pattern sources and
 // all 315 of its rows' answers. It predates fb62c069b's 525 in the status-code
-// alternative and 25190b72c's "provider.?(?:is.?)?temporarily.?unavailable",
+// alternative; 25190b72c's "provider.?(?:is.?)?temporarily.?unavailable",
 // "ended the response before it was complete", "connection to the provider was
-// reset" and "reported a failure while generating the response", so re-verify
-// it against the first build that ships them. Control: this script at
-// 25190b72c^1 (fb62c069b), with the same node_modules, differs from
-// classify-25190b72c.json only in the retryable source and in the 11 rows
-// 25190b72c's alternatives decide (retryable false); before 25190b72c's rows
-// were added, it reproduced classify-fb62c069b.json byte for byte at
-// fb62c069b, and that file's own controls chain back through 30a3e0b1f
-// (whose patterns are bb1a2b354's), 4699b5b26 and 9b88b94e2 to 566344046.
+// reset" and "reported a failure while generating the response"; and
+// a00a5048d's "admission ceiling", "type"\s*:\s*"api_error", "provider
+// finish_reason: error", "returned an empty response", "stopped before
+// completing the response" and "repeat the request later", so re-verify it
+// against the first build that ships them. Control: this script at
+// a00a5048d^1 (25190b72c), with the same node_modules, differs from
+// classify-a00a5048d.json only in the retryable source and in the 20 rows
+// a00a5048d's alternatives decide: 19 retryable false, and the quota-vetoed
+// api_error row with its retryable-pattern answer false; before a00a5048d's
+// rows were added, it reproduced classify-25190b72c.json byte for byte at
+// 25190b72c, and that file's own controls chain back through fb62c069b,
+// 30a3e0b1f (whose patterns are bb1a2b354's), 4699b5b26 and 9b88b94e2 to
+// 566344046.
 //
 // Every row records three answers: isRetryableAssistantError on the message
 // retry.test.ts would build (fauxAssistantMessage), and RegExp.prototype.test of
@@ -104,6 +109,9 @@ const STATUS = "(?<![a-z0-9])(?:429|500|502|503|504|520|524|525)(?![a-z0-9])";
 // Bare Node socket error codes (4699b5b26, #12128): a code must not be part of
 // a longer identifier, which takes in "_".
 const SOCKET = "(?<![a-z0-9_])(?:ECONNRESET|ECONNABORTED|ECONNREFUSED|ETIMEDOUT|EPIPE)(?![a-z0-9_])";
+
+// Anthropic's internal error by its type (a00a5048d), with JavaScript \s around the colon.
+const API_ERROR = '"type"\\s*:\\s*"api_error"';
 
 const rows: Row[] = [
 	// retry.test.ts "provider retry classification" and retryAssistantCall literals.
@@ -195,6 +203,27 @@ const rows: Row[] = [
 	error("pi: gateway provider failure (#12227)", "The provider reported a failure while generating the response."),
 	error("pi: lasting provider unavailable (#12227)", "Provider unavailable for this model"),
 	error("pi: lasting provider unavailable (#12227)", "The provider is unavailable in your region"),
+	// retry.test.ts rows of a00a5048d: temporary provider failures, and what
+	// must still not retry.
+	error("pi: temporary provider failure", "Unable to process request. Repeat the request later."),
+	error(
+		"pi: temporary provider failure",
+		"waited 73.4s in queue, reaching this model's admission ceiling of 60s; retry after the hinted delay",
+	),
+	error(
+		"pi: temporary provider failure",
+		'{"type":"error","error":{"details":null,"type":"api_error","message":"Unable to complete this request right now. Please try again."},"request_id":"req_011CgfE1bTgPTDsor4TsApFv"}',
+	),
+	error("pi: temporary provider failure", "Provider finish_reason: error"),
+	error("pi: temporary provider failure", "Provider returned an empty response"),
+	error("pi: temporary provider failure", "Upstream error from Relace: The model stopped before completing the response."),
+	error("pi: does not retry", "The operation was aborted"),
+	error(
+		"pi: does not retry",
+		'{"type":"error","error":{"type":"invalid_request_error","message":"messages: at least one message is required"}}',
+	),
+	error("pi: does not retry", "Provider finish_reason: content_filter"),
+	error("pi: does not retry", '{"type":"error","error":{"type":"api_error","message":"Monthly quota exceeded"}}'),
 
 	// isRetryableAssistantError's guard: only stopReason "error" with error text.
 	{ covers: "guard: stop", stopReason: "stop", errorMessage: "overloaded" },
@@ -210,6 +239,7 @@ const rows: Row[] = [
 	error("servers are currently busy", "The Servers Are Currently Busy"),
 	error("currently experiencing high demand", "Currently Experiencing High Demand"),
 	error("model is at capacity", "Model Is At Capacity"),
+	error("admission ceiling", "Admission Ceiling"),
 	error("rate.?limit", "rate_limit_error"),
 	error("too many requests", "Too Many Requests"),
 	error(STATUS, "HTTP 429"),
@@ -232,6 +262,9 @@ const rows: Row[] = [
 	error("provider.?returned.?(?:an.?)?error", "Provider returned error"),
 	error("provider.?returned.?(?:an.?)?error", "provider_returned_an_error"),
 	error("provider.?returned.?(?:an.?)?error", "provider returned anerror"),
+	error(API_ERROR, '"TYPE":"API_ERROR"'),
+	error(API_ERROR, '"type" : "api_error"'),
+	error(API_ERROR, '"type"\t:\n"api_error"'),
 	error("unable to forward upstream", "UNABLE TO FORWARD UPSTREAM"),
 	error("upstream.?request.?failed", "upstream_request_failed"),
 	error("upstream_stream_read_error", "Upstream_Stream_Read_Error"),
@@ -271,6 +304,9 @@ const rows: Row[] = [
 	error("ended without", "stream ended without message_stop"),
 	error("stream ended before message_stop", "Anthropic stream ended before message_stop"),
 	error("http2 request did not get a response", "http2 request did not get a response"),
+	error("provider finish_reason: error", "PROVIDER FINISH_REASON: ERROR"),
+	error("returned an empty response", "Returned An Empty Response"),
+	error("stopped before completing the response", "Stopped Before Completing The Response"),
 	error("stream disconnected before completion", "Stream Disconnected Before Completion"),
 	error("cut short after the reply had begun", "Cut Short After The Reply Had Begun"),
 	error("ended the response before it was complete", "ENDED THE RESPONSE BEFORE IT WAS COMPLETE"),
@@ -281,6 +317,7 @@ const rows: Row[] = [
 	error("you can retry your request", "the model is busy; you can retry your request"),
 	error("try your request again", "please try your request again shortly"),
 	error("please retry your request", "transient failure, please retry your request"),
+	error("repeat the request later", "REPEAT THE REQUEST LATER"),
 	error("ResourceExhausted", "resourceexhausted"),
 	error("subscription_sharing_usage_unavailable", "SUBSCRIPTION_SHARING_USAGE_UNAVAILABLE"),
 	error("subscription_sharing_user_unavailable", "Subscription_Sharing_User_Unavailable"),
@@ -325,6 +362,17 @@ const rows: Row[] = [
 	error("1308: U+180E is not \\s", '"code":\u180e1308 429'),
 	error("1308: U+0085 is not \\s", '"code"\u0085:1308 429'),
 	error("1308: an astral character is not \\s", '"code":\u{1F600}1308 429'),
+
+	// The api_error alternative (a00a5048d): JavaScript \s around the colon.
+	error("api_error: \\s takes \\v", '"type"\v:"api_error"'),
+	error("api_error: \\s takes U+00A0", '"type":\u00a0"api_error"'),
+	error("api_error: \\s takes U+2028", '"type"\u2028:"api_error"'),
+	error("api_error: \\s takes U+3000", '"type":\u3000"api_error"'),
+	error("api_error: \\s takes U+FEFF", '"type"\ufeff:"api_error"'),
+	error("api_error: U+200B is not \\s", '"type"\u200b:"api_error"'),
+	error("api_error: U+0085 is not \\s", '"type":\u0085"api_error"'),
+	error("api_error: an astral character is not \\s", '"type":\u{1F600}"api_error"'),
+	error("api_error: U+0131 is not i", '"type":"ap\u0131_error"'),
 
 	// Limit near-misses: the retryable status stands.
 	error("near-miss limit", "GoUsageLimit 429"),
@@ -394,6 +442,16 @@ const rows: Row[] = [
 	error("near-miss", "ended the response before it completed"),
 	error("near-miss", "connection to a provider was reset"),
 	error("near-miss", "reported a failure while streaming the response"),
+	error("near-miss", "admission-ceiling"),
+	error("near-miss", '"type":"api error"'),
+	error("near-miss", '"type"::"api_error"'),
+	error("near-miss", "type: api_error"),
+	error("near-miss", '"error_type":api_error'),
+	error("near-miss", "provider finish_reason:error"),
+	error("near-miss", "finish_reason: error"),
+	error("near-miss", "returned empty response"),
+	error("near-miss", "stopped before completing a response"),
+	error("near-miss", "repeat the request soon"),
 
 	// The socket-code boundaries: one UTF-16 code unit on each side that is not
 	// [a-z0-9_] under "i" (ASCII letters only), or the start or end of the text.
