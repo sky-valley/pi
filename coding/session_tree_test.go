@@ -1,6 +1,7 @@
 package coding
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -244,6 +245,44 @@ func TestLoadSessionTreeSkipsAFusedLineAsPiDoes(t *testing.T) {
 	}
 	if got := userTexts(tree.BuildContext().Messages); !eq(got, []string{"U:c"}) {
 		t.Fatalf("context after a dropped fused line: want [U:c], got %v", got)
+	}
+}
+
+// pi cb1205e46 (#12360) 'handles more entries after compaction than fit in the
+// call stack'. A characterization test: pi's buildContextEntries spread the
+// post-compaction tail into one push call and overflowed JS's argument limit;
+// Go's append has no such limit, so the port never failed here and the test
+// was never red. It locks that a very long tail stays whole.
+func TestBuildContextWithVeryManyEntriesAfterCompaction(t *testing.T) {
+	const bulk = 200_000
+	tree := &SessionTree{byID: map[string]*SessionEntry{}, children: map[string][]*SessionEntry{}}
+	add := func(e *SessionEntry) {
+		tree.Entries = append(tree.Entries, e)
+		tree.byID[e.ID] = e
+		tree.children[e.ParentID] = append(tree.children[e.ParentID], e)
+		tree.LeafID = e.ID
+	}
+	userEntry := func(id, parentID, text string) *SessionEntry {
+		return &SessionEntry{ID: id, ParentID: parentID, Type: "message", Timestamp: "2026-01-01T00:00:01.000Z",
+			Message: ai.UserMessage{Content: ai.ContentList{ai.TextContent{Text: text}}, Timestamp: 1}}
+	}
+	add(userEntry("1", "", "first"))
+	add(&SessionEntry{ID: "2", ParentID: "1", Type: "compaction", Timestamp: "2026-01-01T00:00:02.000Z",
+		Summary: "Summary", FirstKeptEntryID: "1"})
+	parentID := "2"
+	for i := range bulk {
+		id := fmt.Sprintf("c%d", i)
+		add(&SessionEntry{ID: id, ParentID: parentID, Type: "custom", Timestamp: "2026-01-01T00:00:03.000Z", CustomType: "bulk"})
+		parentID = id
+	}
+	add(userEntry("last", parentID, "last"))
+
+	if got := len(contextEntries(tree.Branch())); got != bulk+3 {
+		t.Fatalf("context entries = %d, want %d", got, bulk+3)
+	}
+	got := userTexts(tree.BuildContext().Messages)
+	if len(got) != 3 || !strings.Contains(got[0], "Summary") || !eq(got[1:], []string{"U:first", "U:last"}) {
+		t.Fatalf("messages = %v, want [compaction summary, U:first, U:last]", got)
 	}
 }
 
