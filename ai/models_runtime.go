@@ -105,7 +105,9 @@ type Provider interface {
 	Auth() ProviderAuth
 
 	// GetModels returns the current known chat models: the static baseline
-	// plus the last-known dynamic overlay. Must not panic.
+	// plus the last-known dynamic overlay. Must not panic. The slice may be
+	// shared between reads (pi returns a readonly array, built once per
+	// publish), so callers must not modify it.
 	GetModels() []*Model
 
 	// DynamicModels reports whether the provider has a dynamic model source
@@ -251,9 +253,16 @@ type providerImpl struct {
 	filterFn          func(models []*Model, credential *Credential) []*Model
 	filterAllFn       func(models []*Model, credential *Credential) []*Model
 
-	mu       sync.Mutex
 	baseline []*Model
-	dynamic  []*Model
+
+	// all and chat are the merged catalog and its chat models, built once
+	// per publish rather than per read (pi createProvider allModels and
+	// chatModels, upstream 073b0bae8, #12311): GetModels is on hot paths
+	// such as Models.GetModel. Both are clipped, so a caller's append
+	// reallocates instead of writing into them.
+	mu   sync.Mutex
+	all  []*Model
+	chat []*Model
 }
 
 // CreateProvider builds a Provider from parts (pi createProvider). Built-in
@@ -290,6 +299,7 @@ func CreateProvider(input CreateProviderOptions) Provider {
 		filterAllFn: input.FilterAllModels,
 		baseline:    input.Models,
 	}
+	p.setDynamic(nil)
 
 	// The deferred capabilities are announced only when some underlying api
 	// implements them, so a type assertion answers the question pi answers by
@@ -342,44 +352,41 @@ func (p *providerImpl) Headers() ProviderHeaders { return p.headers }
 func (p *providerImpl) Auth() ProviderAuth       { return p.auth }
 func (p *providerImpl) DynamicModels() bool      { return p.fetchFn != nil }
 
-// allModels merges the static baseline with the dynamic overlay, as a new
-// slice: a dynamic model replaces the baseline entry of the same type and id,
-// otherwise it is appended (pi createProvider currentModels). Matching on the
-// type too keeps a chat model and an image model that share an id apart.
-func (p *providerImpl) allModels() []*Model {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	merged := make([]*Model, len(p.baseline), len(p.baseline)+len(p.dynamic))
-	copy(merged, p.baseline)
-	for _, model := range p.dynamic {
-		i := slices.IndexFunc(merged, func(entry *Model) bool {
-			return GetModelType(entry) == GetModelType(model) && entry.ID == model.ID
-		})
-		if i >= 0 {
-			merged[i] = model
-		} else {
-			merged = append(merged, model)
-		}
-	}
-	return merged
-}
-
-// GetModels returns the chat models of the merged catalog (pi createProvider
-// getModels).
-func (p *providerImpl) GetModels() []*Model {
-	all := p.allModels()
-	chat := make([]*Model, 0, len(all))
-	for _, model := range all {
+// chatModelsOf returns models' chat models as a new, clipped slice (pi
+// createProvider chatModelsOf).
+func chatModelsOf(models []*Model) []*Model {
+	chat := make([]*Model, 0, len(models))
+	for _, model := range models {
 		if IsModelType(model, ModelTypeChat) {
 			chat = append(chat, model)
 		}
 	}
-	return chat
+	return slices.Clip(chat)
+}
+
+// modelKey identifies a model within a provider: its type and id. Matching on
+// the type too keeps a chat model and an image model that share an id apart.
+type modelKey struct {
+	typ ModelType
+	id  string
+}
+
+// GetModels returns the chat models of the merged catalog (pi createProvider
+// getModels). The list is shared by every read until the next publish.
+func (p *providerImpl) GetModels() []*Model {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return p.chat
 }
 
 // GetAllModels returns the merged catalog, every type included (pi
-// createProvider getAllModels).
-func (p *providerImpl) GetAllModels() []*Model { return p.allModels() }
+// createProvider getAllModels). The list is shared by every read until the
+// next publish.
+func (p *providerImpl) GetAllModels() []*Model {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return p.all
+}
 
 func (p *providerImpl) FilterModels(models []*Model, credential *Credential) []*Model {
 	if p.filterFn == nil {
@@ -418,11 +425,34 @@ func keepAvailableChatModels(models, availableChat []*Model) []*Model {
 	return out
 }
 
-// setDynamic replaces the dynamic overlay.
+// setDynamic replaces the dynamic overlay and rebuilds the merged catalog from
+// it (pi createProvider setDynamicModels): a dynamic model replaces the first
+// baseline entry of the same type and id, otherwise it is appended, and a
+// later dynamic model with the key of an earlier one replaces that one.
 func (p *providerImpl) setDynamic(models []*Model) {
+	merged := make([]*Model, len(p.baseline), len(p.baseline)+len(models))
+	copy(merged, p.baseline)
+	indexByKey := make(map[modelKey]int, len(merged)+len(models))
+	for i, model := range merged {
+		key := modelKey{GetModelType(model), model.ID}
+		if _, ok := indexByKey[key]; !ok {
+			indexByKey[key] = i
+		}
+	}
+	for _, model := range models {
+		key := modelKey{GetModelType(model), model.ID}
+		if i, ok := indexByKey[key]; ok {
+			merged[i] = model
+		} else {
+			indexByKey[key] = len(merged)
+			merged = append(merged, model)
+		}
+	}
+	chat := chatModelsOf(merged)
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	p.dynamic = models
+	p.all = slices.Clip(merged)
+	p.chat = chat
 }
 
 // RefreshModels restores the stored dynamic overlay and, when the network is

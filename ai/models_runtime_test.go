@@ -837,6 +837,45 @@ func TestCreateProviderDynamicOverlay(t *testing.T) {
 	}
 }
 
+// pi 073b0bae8 (#12311/#12366) 'merges fetched models over the baseline once
+// per publish': the merged catalog is built when a refresh publishes, not on
+// every read, so repeated reads hand back the same list. pi asserts identity
+// with toBe; the Go reads must share one backing array.
+func TestCreateProviderMergesOncePerPublish(t *testing.T) {
+	baseline := []*Model{{Provider: "dynamic", ID: "a"}, {Provider: "dynamic", ID: "b"}}
+	fetchedB := &Model{Provider: "dynamic", ID: "b", Name: "fetched b"}
+	fetchedC := &Model{Provider: "dynamic", ID: "c"}
+	p := CreateProvider(CreateProviderOptions{
+		ID:     "dynamic",
+		Auth:   ProviderAuth{APIKey: EnvAPIKeyAuth("dynamic", "K")},
+		Models: baseline,
+		FetchModels: func(_ context.Context, _ RefreshModelsContext) ([]*Model, error) {
+			return []*Model{fetchedC, fetchedB}, nil
+		},
+		API: stubAPI(),
+	})
+	sameList := func(what string, a, b []*Model) {
+		t.Helper()
+		if len(a) == 0 || len(a) != len(b) || &a[0] != &b[0] {
+			t.Fatalf("%s: two reads returned different lists (%p, %p)", what, a, b)
+		}
+	}
+	m := modelsWithEnv(map[string]string{"K": "key"}, nil)
+	m.SetProvider(p)
+	sameList("GetModels before refresh", p.GetModels(), p.GetModels())
+
+	if res := m.Refresh(context.Background(), nil); len(res.Errors) != 0 {
+		t.Fatalf("refresh: %v", res.Errors)
+	}
+
+	if got, want := p.GetModels(), []*Model{baseline[0], fetchedB, fetchedC}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("merged models = %v, want %v", got, want)
+	}
+	sameList("GetModels after refresh", p.GetModels(), p.GetModels())
+	lister := p.(AllModelsLister)
+	sameList("GetAllModels after refresh", lister.GetAllModels(), lister.GetAllModels())
+}
+
 func ptrStreams(s ProviderStreams) *ProviderStreams { return &s }
 
 // TestModelsRefreshForce locks pi 97f9978f: ModelsRefreshOptions.Force threads
