@@ -135,10 +135,18 @@ func TruncateTail(content string, maxLines, maxBytes int) TruncationResult {
 		}
 		if outBytes+lineBytes > maxBytes {
 			truncatedBy = "bytes"
-			if len(out) == 0 {
-				truncated := truncateStringToBytesFromEnd(lines[i], maxBytes)
+			// Edge case: if this line exceeds the limit and nothing or only
+			// blank lines come after it, take the end of the line (partial)
+			// so the output is not just the blank lines (pi 9e9609216).
+			remainingBytes := maxBytes - outBytes
+			if len(out) > 0 {
+				remainingBytes--
+			}
+			if len(out) == 0 ||
+				(!isBlankLine(lines[i]) && allBlankLines(out) && remainingBytes > 0) {
+				truncated := truncateStringToBytesFromEnd(lines[i], remainingBytes)
 				out = append([]string{truncated}, out...)
-				outBytes = len(truncated)
+				outBytes += lineBytes - len(lines[i]) + len(truncated)
 				lastLinePartial = true
 			}
 			break
@@ -153,6 +161,19 @@ func TruncateTail(content string, maxLines, maxBytes int) TruncationResult {
 	return TruncationResult{Content: outputContent, Truncated: true, TruncatedBy: truncatedBy,
 		TotalLines: totalLines, TotalBytes: totalBytes, OutputLines: len(out), OutputBytes: len(outputContent),
 		LastLinePartial: lastLinePartial, MaxLines: maxLines, MaxBytes: maxBytes}
+}
+
+// isBlankLine reports whether line is empty or only JS whitespace (pi's
+// `line.trim().length === 0`).
+func isBlankLine(line string) bool { return jstext.Trim(line) == "" }
+
+func allBlankLines(lines []string) bool {
+	for _, l := range lines {
+		if !isBlankLine(l) {
+			return false
+		}
+	}
+	return true
 }
 
 func truncateStringToBytesFromEnd(s string, maxBytes int) string {

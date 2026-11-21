@@ -3,6 +3,7 @@ package coding
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -491,5 +492,51 @@ func TestShellToolShowsEndOfOverLongLastLine(t *testing.T) {
 	}
 	if !regexp.MustCompile(`\[Showing last 50\.0KB of line 2 `).MatchString(output) {
 		t.Fatalf("output lacks the partial-line notice: %q", output[max(0, len(output)-300):])
+	}
+}
+
+// pi 9e9609216 (#12355) 'should show the end of an over-long line followed by
+// a blank line': the blank line after the long line was all the tail kept, so
+// the call returned only that blank line (or "(no output)"), and the notice
+// named the blank line's number instead of the long line's.
+func TestShellToolShowsEndOfOverLongLineFollowedByBlankLine(t *testing.T) {
+	for _, tc := range []struct {
+		length int
+		eol    string
+	}{
+		{60_000, "\n"},
+		{219_000, "\n"},
+		{219_000, "\r\n"},
+	} {
+		t.Run(fmt.Sprintf("%d %q", tc.length, tc.eol), func(t *testing.T) {
+			longLine := strings.Repeat("y", tc.length) + "END"
+			ops := BashOperations{
+				Exec: func(_ context.Context, _ string, _ string, o BashExecOptions) (*int, error) {
+					data := []byte("first line" + tc.eol + longLine + tc.eol + tc.eol)
+					for i := 0; i < len(data); i += 8192 {
+						o.OnData(data[i:min(i+8192, len(data))])
+					}
+					zero := 0
+					return &zero, nil
+				},
+			}
+			tool := CreateBashTool(t.TempDir(), &BashToolOptions{Operations: &ops})
+			res, err := tool.Execute(context.Background(), "test-call-long-line-blank-line", map[string]any{"command": "long-line"}, nil)
+			if err != nil {
+				t.Fatalf("execute: %v", err)
+			}
+			details, _ := res.Details.(map[string]any)
+			tr, _ := details["truncation"].(TruncationResult)
+			if !tr.LastLinePartial {
+				t.Fatalf("truncation.lastLinePartial = false, want true (details %+v)", details)
+			}
+			output := resultText(res)
+			if !regexp.MustCompile(`^y+END\r?\n`).MatchString(output) {
+				t.Fatalf("output does not start with the end of the long line: %q", output[:min(len(output), 200)])
+			}
+			if !regexp.MustCompile(`\[Showing last 50\.0KB of line 2 `).MatchString(output) {
+				t.Fatalf("output lacks the partial-line notice: %q", output[max(0, len(output)-300):])
+			}
+		})
 	}
 }

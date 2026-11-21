@@ -1065,7 +1065,7 @@ func createShellTool(cwd string, config shellToolConfig, options *BashToolOption
 					if tr.LastLinePartial {
 						lastLineSize := FormatSize(u.acc.getLastLineBytes())
 						text += fmt.Sprintf("\n\n[Showing last %s of line %d (line is %s). Full output: %s]",
-							FormatSize(tr.OutputBytes), endLine, lastLineSize, snap.fullOutputPath)
+							FormatSize(tr.OutputBytes), startLine, lastLineSize, snap.fullOutputPath)
 					} else if tr.TruncatedBy == "lines" {
 						text += fmt.Sprintf("\n\n[Showing lines %d-%d of %d. Full output: %s]", startLine, endLine, tr.TotalLines, snap.fullOutputPath)
 					} else {
@@ -1450,10 +1450,10 @@ func (a *outputAccumulator) snapshotText() string {
 
 func (a *outputAccumulator) snapshot(persistIfTruncated bool) outputSnapshot {
 	// Clipping drops the partial first line of the retained tail. When the
-	// tail is only the end of one over-long line, that is everything, so show
-	// the end of that line instead (pi 935f0ac0c).
+	// tail is only the end of one over-long line (plus blank lines), nothing
+	// is left, so show the end of that line instead (pi 935f0ac0c, 9e9609216).
 	text := a.snapshotText()
-	if text == "" {
+	if jstext.Trim(text) == "" {
 		text = string(a.tail)
 	}
 	tr := TruncateTail(text, a.maxLines, a.maxBytes)
