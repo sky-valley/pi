@@ -772,10 +772,12 @@ func TestDiffQwenReasoningEffort(t *testing.T) {
 //     which did not exist in the 0.83.0 catalog; the shape is unchanged
 //     (`{"minimal":null,"low":"low","medium":"medium","high":null,
 //     "xhigh":"xhigh","max":null}`), only the id it hangs on.
-//   - deepseek-v3.2 / kimi-k2.5: supportsReasoningEffort:false, so no
+//   - kimi-k2.5 / kimi-k2.6: supportsReasoningEffort:false, so no
 //     reasoning_effort is emitted at all — these are exactly the models
 //     4c1a0b92 was written to exclude. enable_thinking is still set, because
-//     pi assigns it before the supportsReasoningEffort guard.
+//     pi assigns it before the supportsReasoningEffort guard. (deepseek-v3.2
+//     held this row until the 1.6.0 catalog: 139707002's skipDeprecated
+//     retired it from both plans.)
 func TestQwenTokenPlanReasoningEffortLive(t *testing.T) {
 	cases := []struct {
 		id            string
@@ -786,8 +788,8 @@ func TestQwenTokenPlanReasoningEffortLive(t *testing.T) {
 		{"glm-5.1", "high", true},
 		{"glm-5.2", "high", true},
 		{"qwen3.8-max", "high", true},
-		{"deepseek-v3.2", "", false},
 		{"kimi-k2.5", "", false},
+		{"kimi-k2.6", "", false},
 	}
 	for _, provider := range []string{"qwen-token-plan", "qwen-token-plan-cn"} {
 		for _, tt := range cases {

@@ -1,6 +1,5 @@
 {
-	"sha": "139707002",
-	"catalog": "pi-ai 1.5.2",
+	"version": "1.6.0",
 	"providers": [
 		{
 			"id": "amazon-bedrock",
