@@ -59,6 +59,21 @@ func jsIndex0(v any) any {
 	return jsUndefined
 }
 
+// jsLengthTruthy is Boolean(v?.length): an array or a string when non-empty,
+// an object by its own "length" member's truthiness, anything else (whose
+// length is undefined) false.
+func jsLengthTruthy(v any) bool {
+	switch t := v.(type) {
+	case []any:
+		return len(t) > 0
+	case string:
+		return t != ""
+	case ai.OrderedObject:
+		return jsTruthy(jsGet(t, "length"))
+	}
+	return false
+}
+
 // jsTruthy is Boolean(v) for a JSON-decoded value (objects and arrays are
 // always truthy) or undefined.
 func jsTruthy(v any) bool {

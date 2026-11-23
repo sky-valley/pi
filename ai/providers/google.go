@@ -19,7 +19,6 @@ import (
 	"slices"
 	"strings"
 	"sync"
-	"unicode/utf16"
 
 	"github.com/sky-valley/pi/ai"
 	"github.com/sky-valley/pi/internal/jstext"
@@ -609,16 +608,16 @@ func StreamGoogle(ctx context.Context, model *ai.Model, req ai.TranscriptContext
 		// pi (upstream 117eac3a0): count every chunk, and keep the first
 		// prompt block's report for a stream that ends with no finish reason.
 		receivedChunks := 0
-		promptBlockError := ""
+		var promptBlockErr error
 		err = iterateGoogleSSE(googleFetchBody(ctx, respBody, custom), observe, func(payload any) error {
 			chunk := googleGenerateContentResponse(payload, nil)
 			receivedChunks++
-			if feedback := jsGet(chunk, "promptFeedback"); promptBlockError == "" && jsTruthy(jsGet(feedback, "blockReason")) {
+			if feedback := jsGet(chunk, "promptFeedback"); promptBlockErr == nil && jsTruthy(jsGet(feedback, "blockReason")) {
 				report, err := googlePromptBlockError("Google", feedback)
 				if err != nil {
 					return err
 				}
-				promptBlockError = report
+				promptBlockErr = errors.New(report)
 			}
 			// output.responseId ||= chunk.responseId
 			if !responseIDTruthy {
@@ -788,8 +787,8 @@ func StreamGoogle(ctx context.Context, model *ai.Model, req ai.TranscriptContext
 		// carried, else with how many chunks it received — retry treats the
 		// second ("ended without") as transient, the first not.
 		if output.StopReason == ai.StopPending {
-			if promptBlockError != "" {
-				fail(errors.New(promptBlockError))
+			if promptBlockErr != nil {
+				fail(promptBlockErr)
 				return
 			}
 			unit := "chunks"
@@ -2041,7 +2040,7 @@ func googlePromptBlockError(providerName string, feedback any) (string, error) {
 		details = append(details, text)
 	}
 	ratings := jsGet(feedback, "safetyRatings")
-	if jsTruthy(googleJSLength(ratings)) {
+	if jsLengthTruthy(ratings) {
 		list, ok := ratings.([]any)
 		if !ok {
 			return "", errors.New("feedback.safetyRatings.flatMap is not a function")
@@ -2077,18 +2076,4 @@ func googlePromptBlockError(providerName string, feedback any) (string, error) {
 		}
 	}
 	return strings.Join(details, ". "), nil
-}
-
-// googleJSLength is `v?.length`: an array's or a string's length (in UTF-16
-// code units), an object's own "length" member, else undefined.
-func googleJSLength(v any) any {
-	switch t := v.(type) {
-	case []any:
-		return float64(len(t))
-	case string:
-		return float64(len(utf16.Encode([]rune(t))))
-	case ai.OrderedObject:
-		return jsGet(t, "length")
-	}
-	return jsUndefined
 }
