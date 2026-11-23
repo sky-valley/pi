@@ -1,6 +1,6 @@
 {
-	"sha": "911309429",
-	"source": "upstream 911309429 packages/ai/src, @anthropic-ai/sdk 0.129.0 sha512-MH7LB20kNpGLUpPTe2OG5XvL/KhX8HUO9XyBaFjgFk6TLS4Xjt0VPIuMKywe7POKKPslX+QxSlVok9e+8kG5Nw==, openai 7.19.0 sha512-MX2s3u2L5racTO0CC/SWpCOasJQBCJrqLKXK+l82cAhdeF8mPMBEe/gxMm0ZFa2xpKpOFLRjxv5afYEZbBXmbQ==, @google/genai 2.21.0 sha512-+PDtco2/Z0ONdzCGekCoCT+O1VJS9xJQNN4XzQpXG/t3El/SWWMkCWlFRO1KmivOHPa4Q0VjUYu1HBKCZ/v33Q==, node v26.4.0",
+	"sha": "117eac3a0",
+	"source": "upstream 117eac3a0 packages/ai/src, @anthropic-ai/sdk 0.129.0 sha512-MH7LB20kNpGLUpPTe2OG5XvL/KhX8HUO9XyBaFjgFk6TLS4Xjt0VPIuMKywe7POKKPslX+QxSlVok9e+8kG5Nw==, openai 7.59.0 sha512-wPYKJkLPFEdNJ2tThSg4jE1Ptsv4X3u8g8LIvu0Qz/UIhsKeCzl73rl48PtQsDVrJL/ku0liXOsbyd2TsRsPJw==, @google/genai 2.32.0 sha512-60c79uXpR0a47bmGqDxbXEBuQUalNmwo5mx5kqb91jIW4FoqpsLSt86DeVhRhtH5+s/16Wqxt3sXzFQn2U1OHQ==, node v22.23.5",
 	"bodies": {
 		"anthropic": {
 			"payload": {
@@ -291,7 +291,7 @@
 			"nelBeforeData": {
 				"sse": "data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"hi\"}],\"role\":\"model\"},\"finishReason\":\"STOP\"}]}\n\n",
 				"stopReason": "error",
-				"errorMessage": "Google stream ended without a finish reason",
+				"errorMessage": "Google stream ended without a finish reason after receiving 0 chunks",
 				"text": ""
 			},
 			"bomAfterColon": {

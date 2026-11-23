@@ -4,7 +4,7 @@
 // jstrim_test.go in this package.
 //
 //   node --experimental-strip-types capture-jstrim.mts <extraction> <out.json> <sha>
-//   e.g. ... capture-jstrim.mts <dir> jstrim-911309429.json 911309429
+//   e.g. ... capture-jstrim.mts <dir> jstrim-117eac3a0.json 117eac3a0
 //
 // <extraction> holds `git archive <sha> packages/ai package-lock.json` from the
 // upstream clone and a node_modules resolving pi-ai's dependencies (the npm

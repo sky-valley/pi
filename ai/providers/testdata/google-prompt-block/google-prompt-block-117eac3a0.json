@@ -1,0 +1,159 @@
+{
+	"sha": "117eac3a0",
+	"rows": [
+		{
+			"name": "blocked prompt",
+			"sse": "data: {\"promptFeedback\":{\"blockReason\":\"PROHIBITED_CONTENT\",\"safetyRatings\":[{\"category\":\"HARM_CATEGORY_SEXUALLY_EXPLICIT\",\"probability\":\"HIGH\"}]}}\n\n",
+			"stopReason": "error",
+			"errorMessage": "Google prompt blocked: PROHIBITED_CONTENT. Safety rating: HARM_CATEGORY_SEXUALLY_EXPLICIT (HIGH)",
+			"retryable": false
+		},
+		{
+			"name": "empty stream",
+			"sse": "",
+			"stopReason": "error",
+			"errorMessage": "Google stream ended without a finish reason after receiving 0 chunks",
+			"retryable": true
+		},
+		{
+			"name": "one chunk, no finish reason",
+			"sse": "data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"hi\"}]}}]}\n\n",
+			"stopReason": "error",
+			"errorMessage": "Google stream ended without a finish reason after receiving 1 chunk",
+			"retryable": true
+		},
+		{
+			"name": "two chunks, no finish reason",
+			"sse": "data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"hi\"}]}}]}\n\ndata: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\" there\"}]}}]}\n\n",
+			"stopReason": "error",
+			"errorMessage": "Google stream ended without a finish reason after receiving 2 chunks",
+			"retryable": true
+		},
+		{
+			"name": "message, several ratings, some without a category or probability",
+			"sse": "data: {\"promptFeedback\":{\"blockReason\":\"SAFETY\",\"blockReasonMessage\":\"Blocked by policy\",\"safetyRatings\":[{\"category\":\"HARM_CATEGORY_HATE_SPEECH\",\"probability\":\"LOW\"},{\"probability\":\"HIGH\"},{\"category\":\"HARM_CATEGORY_HARASSMENT\"},\"x\",7]}}\n\n",
+			"stopReason": "error",
+			"errorMessage": "Google prompt blocked: SAFETY. Blocked by policy. Safety ratings: HARM_CATEGORY_HATE_SPEECH (LOW), HARM_CATEGORY_HARASSMENT",
+			"retryable": false
+		},
+		{
+			"name": "empty ratings and an empty message",
+			"sse": "data: {\"promptFeedback\":{\"blockReason\":\"OTHER\",\"blockReasonMessage\":\"\",\"safetyRatings\":[]}}\n\n",
+			"stopReason": "error",
+			"errorMessage": "Google prompt blocked: OTHER",
+			"retryable": false
+		},
+		{
+			"name": "no rating with a category",
+			"sse": "data: {\"promptFeedback\":{\"blockReason\":\"OTHER\",\"safetyRatings\":[{\"probability\":\"HIGH\"}]}}\n\n",
+			"stopReason": "error",
+			"errorMessage": "Google prompt blocked: OTHER",
+			"retryable": false
+		},
+		{
+			"name": "mistyped values",
+			"sse": "data: {\"promptFeedback\":{\"blockReason\":3,\"blockReasonMessage\":true,\"safetyRatings\":[{\"category\":[\"a\",\"b\"],\"probability\":0}]}}\n\n",
+			"stopReason": "error",
+			"errorMessage": "Google prompt blocked: 3. true. Safety rating: a,b",
+			"retryable": false
+		},
+		{
+			"name": "two blocks",
+			"sse": "data: {\"promptFeedback\":{\"blockReason\":\"FIRST\"}}\n\ndata: {\"promptFeedback\":{\"blockReason\":\"SECOND\"}}\n\n",
+			"stopReason": "error",
+			"errorMessage": "Google prompt blocked: FIRST",
+			"retryable": false
+		},
+		{
+			"name": "falsy blockReason",
+			"sse": "data: {\"promptFeedback\":{\"blockReason\":\"\",\"safetyRatings\":[{\"category\":\"C\"}]}}\n\n",
+			"stopReason": "error",
+			"errorMessage": "Google stream ended without a finish reason after receiving 1 chunk",
+			"retryable": true
+		},
+		{
+			"name": "null promptFeedback",
+			"sse": "data: {\"promptFeedback\":null}\n\n",
+			"stopReason": "error",
+			"errorMessage": "Google stream ended without a finish reason after receiving 1 chunk",
+			"retryable": true
+		},
+		{
+			"name": "block, then a finish reason",
+			"sse": "data: {\"promptFeedback\":{\"blockReason\":\"SAFETY\"}}\n\ndata: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"ok\"}]},\"finishReason\":\"STOP\"}]}\n\n",
+			"stopReason": "stop",
+			"errorMessage": null,
+			"retryable": false
+		},
+		{
+			"name": "block among text chunks",
+			"sse": "data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"a\"}]}}]}\n\ndata: {\"promptFeedback\":{\"blockReason\":\"SAFETY\"}}\n\ndata: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"b\"}]}}]}\n\n",
+			"stopReason": "error",
+			"errorMessage": "Google prompt blocked: SAFETY",
+			"retryable": false
+		},
+		{
+			"name": "null rating",
+			"sse": "data: {\"promptFeedback\":{\"blockReason\":\"SAFETY\",\"safetyRatings\":[null]}}\n\n",
+			"stopReason": "error",
+			"errorMessage": "Cannot read properties of null (reading 'category')",
+			"retryable": false
+		},
+		{
+			"name": "string ratings",
+			"sse": "data: {\"promptFeedback\":{\"blockReason\":\"SAFETY\",\"safetyRatings\":\"HIGH\"}}\n\n",
+			"stopReason": "error",
+			"errorMessage": "feedback.safetyRatings.flatMap is not a function",
+			"retryable": false
+		},
+		{
+			"name": "object ratings without a length",
+			"sse": "data: {\"promptFeedback\":{\"blockReason\":\"SAFETY\",\"safetyRatings\":{\"category\":\"C\"}}}\n\n",
+			"stopReason": "error",
+			"errorMessage": "Google prompt blocked: SAFETY",
+			"retryable": false
+		},
+		{
+			"name": "object ratings with a length",
+			"sse": "data: {\"promptFeedback\":{\"blockReason\":\"SAFETY\",\"safetyRatings\":{\"length\":1}}}\n\n",
+			"stopReason": "error",
+			"errorMessage": "feedback.safetyRatings.flatMap is not a function",
+			"retryable": false
+		},
+		{
+			"name": "object blockReason",
+			"sse": "data: {\"promptFeedback\":{\"blockReason\":{\"a\":1}}}\n\n",
+			"stopReason": "error",
+			"errorMessage": "Google prompt blocked: [object Object]",
+			"retryable": false
+		},
+		{
+			"name": "object message",
+			"sse": "data: {\"promptFeedback\":{\"blockReason\":\"SAFETY\",\"blockReasonMessage\":{\"a\":1}}}\n\n",
+			"stopReason": "error",
+			"errorMessage": "Google prompt blocked: SAFETY. [object Object]",
+			"retryable": false
+		},
+		{
+			"name": "array message",
+			"sse": "data: {\"promptFeedback\":{\"blockReason\":\"SAFETY\",\"blockReasonMessage\":[1,null,\"x\"]}}\n\n",
+			"stopReason": "error",
+			"errorMessage": "Google prompt blocked: SAFETY. 1,,x",
+			"retryable": false
+		},
+		{
+			"name": "unstringifiable category",
+			"sse": "data: {\"promptFeedback\":{\"blockReason\":\"SAFETY\",\"safetyRatings\":[{\"category\":{\"toString\":1}}]}}\n\n",
+			"stopReason": "error",
+			"errorMessage": "Cannot convert object to primitive value",
+			"retryable": false
+		},
+		{
+			"name": "unstringifiable message",
+			"sse": "data: {\"promptFeedback\":{\"blockReason\":\"SAFETY\",\"blockReasonMessage\":{\"toString\":1}}}\n\n",
+			"stopReason": "error",
+			"errorMessage": "Cannot convert object to primitive value",
+			"retryable": false
+		}
+	]
+}

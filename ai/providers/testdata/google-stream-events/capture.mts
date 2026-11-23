@@ -4,7 +4,7 @@
 // this package.
 //
 //   node --experimental-strip-types capture.mts <extraction> <out.json> <sha>
-//   e.g. ... capture.mts <dir> google-stream-events-f72f799a4.json f72f799a4
+//   e.g. ... capture.mts <dir> google-stream-events-117eac3a0.json 117eac3a0
 //
 // <extraction> holds `git archive <sha> packages/ai package-lock.json` from the
 // upstream clone, plus a node_modules resolving pi-ai's dependencies (the npm

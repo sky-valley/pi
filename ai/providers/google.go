@@ -19,6 +19,7 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"unicode/utf16"
 
 	"github.com/sky-valley/pi/ai"
 	"github.com/sky-valley/pi/internal/jstext"
@@ -605,8 +606,20 @@ func StreamGoogle(ctx context.Context, model *ai.Model, req ai.TranscriptContext
 		// testdata/google-stream-events tags those cases as divergences.
 		responseIDTruthy := false
 		toolCallIDs := map[int]any{} // builder index -> the id pi compares with ===
+		// pi (upstream 117eac3a0): count every chunk, and keep the first
+		// prompt block's report for a stream that ends with no finish reason.
+		receivedChunks := 0
+		promptBlockError := ""
 		err = iterateGoogleSSE(googleFetchBody(ctx, respBody, custom), observe, func(payload any) error {
 			chunk := googleGenerateContentResponse(payload, nil)
+			receivedChunks++
+			if feedback := jsGet(chunk, "promptFeedback"); promptBlockError == "" && jsTruthy(jsGet(feedback, "blockReason")) {
+				report, err := googlePromptBlockError("Google", feedback)
+				if err != nil {
+					return err
+				}
+				promptBlockError = report
+			}
 			// output.responseId ||= chunk.responseId
 			if !responseIDTruthy {
 				id := jsGet(chunk, "responseId")
@@ -770,10 +783,20 @@ func StreamGoogle(ctx context.Context, model *ai.Model, req ai.TranscriptContext
 			fail(errRequestWasAborted)
 			return
 		}
-		// pi (upstream f9a49869): a stream that ended without resolving the
-		// pending stop reason fails with this exact message.
+		// pi (upstream f9a49869, 117eac3a0): a stream that ended without
+		// resolving the pending stop reason fails with the prompt block it
+		// carried, else with how many chunks it received — retry treats the
+		// second ("ended without") as transient, the first not.
 		if output.StopReason == ai.StopPending {
-			fail(fmt.Errorf("Google stream ended without a finish reason"))
+			if promptBlockError != "" {
+				fail(errors.New(promptBlockError))
+				return
+			}
+			unit := "chunks"
+			if receivedChunks == 1 {
+				unit = "chunk"
+			}
+			fail(fmt.Errorf("Google stream ended without a finish reason after receiving %d %s", receivedChunks, unit))
 			return
 		}
 		// pi: a terminal error/aborted stopReason surfaces as a thrown error. Since
@@ -1995,4 +2018,77 @@ func googleApiProvider() ai.ApiProvider {
 		},
 		StreamSimple: StreamSimpleGoogle,
 	}
+}
+
+// googlePromptBlockError is pi's formatGooglePromptBlockError (upstream
+// 117eac3a0): the report for the promptFeedback Google returns instead of
+// candidates, read as JavaScript reads it. Each value goes through String()
+// (V8's TypeError where an object has no primitive); safetyRatings is read only
+// when its length is truthy and is then flatMapped, so anything but an array
+// throws; a null rating throws on its category, and a rating counts only with
+// a truthy category, its probability only when truthy.
+func googlePromptBlockError(providerName string, feedback any) (string, error) {
+	reason, err := jsToString(jsNullish(jsGet(feedback, "blockReason"), "unknown reason"))
+	if err != nil {
+		return "", err
+	}
+	details := []string{providerName + " prompt blocked: " + reason}
+	if message := jsGet(feedback, "blockReasonMessage"); jsTruthy(message) {
+		text, err := jsToString(message)
+		if err != nil {
+			return "", err
+		}
+		details = append(details, text)
+	}
+	ratings := jsGet(feedback, "safetyRatings")
+	if jsTruthy(googleJSLength(ratings)) {
+		list, ok := ratings.([]any)
+		if !ok {
+			return "", errors.New("feedback.safetyRatings.flatMap is not a function")
+		}
+		var texts []string
+		for _, rating := range list {
+			if rating == nil {
+				return "", jsReadError(rating, "category")
+			}
+			category := jsGet(rating, "category")
+			if !jsTruthy(category) {
+				continue
+			}
+			text, err := jsToString(category)
+			if err != nil {
+				return "", err
+			}
+			if probability := jsGet(rating, "probability"); jsTruthy(probability) {
+				p, err := jsToString(probability)
+				if err != nil {
+					return "", err
+				}
+				text += " (" + p + ")"
+			}
+			texts = append(texts, text)
+		}
+		if len(texts) > 0 {
+			label := "Safety ratings: "
+			if len(texts) == 1 {
+				label = "Safety rating: "
+			}
+			details = append(details, label+strings.Join(texts, ", "))
+		}
+	}
+	return strings.Join(details, ". "), nil
+}
+
+// googleJSLength is `v?.length`: an array's or a string's length (in UTF-16
+// code units), an object's own "length" member, else undefined.
+func googleJSLength(v any) any {
+	switch t := v.(type) {
+	case []any:
+		return float64(len(t))
+	case string:
+		return float64(len(utf16.Encode([]rune(t))))
+	case ai.OrderedObject:
+		return jsGet(t, "length")
+	}
+	return jsUndefined
 }

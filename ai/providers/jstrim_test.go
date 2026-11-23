@@ -22,8 +22,12 @@ import (
 // keeps U+0085 — the reverse of strings.TrimSpace. Every expectation here is
 // pi's own, captured under node at 911309429 (openai 7.19.0) by
 // testdata/jstrim/capture-jstrim.mts; the contexts below are that script's.
+// Re-captured at 117eac3a0 over the 1.6.0 build's node_modules: at the parent
+// 69a699348 it reproduces the 911309429 file but for its label, and
+// 117eac3a0 moves only google's no-finish-reason message, which now names
+// the chunks received.
 
-const jstrimCaptureFile = "testdata/jstrim/jstrim-911309429.json"
+const jstrimCaptureFile = "testdata/jstrim/jstrim-117eac3a0.json"
 
 const (
 	jsBOM = "\ufeff" // blank to JavaScript, not to strings.TrimSpace
