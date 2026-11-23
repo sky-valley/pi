@@ -345,7 +345,7 @@ func TestKeepsTheOpenAIToolSearchPrefixAcrossLoadsAfterARemoval(t *testing.T) {
 	}
 }
 
-const responsesMidConvoCaptureFile = "testdata/transcript/responses-midconvo-530015d93.json"
+const responsesMidConvoCaptureFile = "testdata/transcript/responses-midconvo-69a699348.json"
 
 // responsesMidConvoCapture is what capture-responses-midconvo.mts records.
 type responsesMidConvoCapture struct {

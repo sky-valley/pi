@@ -1,5 +1,5 @@
 {
-	"source": "src 7a6bd5a97",
+	"source": "src 69a699348",
 	"transformRows": [
 		{
 			"name": "upstream/readable thinking from another model",
@@ -1358,6 +1358,7 @@
 						"type": "function_call",
 						"call_id": "toolu_01",
 						"name": "lookup",
+						"status": "completed",
 						"arguments": "{\"q\":\"x\"}"
 					},
 					{
@@ -1528,6 +1529,7 @@
 				],
 				"config": {
 					"maxOutputTokens": 32768,
+					"automaticContinuation": false,
 					"thinkingConfig": {
 						"thinkingBudget": 0
 					}

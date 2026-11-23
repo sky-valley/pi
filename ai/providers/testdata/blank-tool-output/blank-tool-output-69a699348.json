@@ -1,5 +1,5 @@
 {
-	"sha": "4dd2b149d",
+	"sha": "69a699348",
 	"rows": [
 		{
 			"api": "openai-completions",
@@ -793,7 +793,7 @@
 					"text": ""
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"(no tool output)\"}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"(no tool output)\"}]"
 		},
 		{
 			"api": "openai-responses",
@@ -807,7 +807,7 @@
 					"text": "\r\n"
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"(no tool output)\"}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"(no tool output)\"}]"
 		},
 		{
 			"api": "openai-responses",
@@ -821,7 +821,7 @@
 					"text": " \n\t"
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"(no tool output)\"}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"(no tool output)\"}]"
 		},
 		{
 			"api": "openai-responses",
@@ -835,7 +835,7 @@
 					"text": " "
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"(no tool output)\"}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"(no tool output)\"}]"
 		},
 		{
 			"api": "openai-responses",
@@ -849,7 +849,7 @@
 					"text": "﻿  　 \u000b\f"
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"(no tool output)\"}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"(no tool output)\"}]"
 		},
 		{
 			"api": "openai-responses",
@@ -863,7 +863,7 @@
 					"text": "​"
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"​\"}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"​\"}]"
 		},
 		{
 			"api": "openai-responses",
@@ -877,7 +877,7 @@
 					"text": ""
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"\"}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"\"}]"
 		},
 		{
 			"api": "openai-responses",
@@ -895,7 +895,7 @@
 					"text": " "
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"(no tool output)\"}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"(no tool output)\"}]"
 		},
 		{
 			"api": "openai-responses",
@@ -913,7 +913,7 @@
 					"text": "x"
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\" \\nx\"}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\" \\nx\"}]"
 		},
 		{
 			"api": "openai-responses",
@@ -927,7 +927,7 @@
 					"text": "x"
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"x\"}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"x\"}]"
 		},
 		{
 			"api": "openai-responses",
@@ -941,7 +941,7 @@
 					"text": " x "
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\" x \"}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\" x \"}]"
 		},
 		{
 			"api": "openai-responses",
@@ -960,7 +960,7 @@
 					"mimeType": "image/png"
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"\\n(tool image omitted: model does not support images)\"}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"\\n(tool image omitted: model does not support images)\"}]"
 		},
 		{
 			"api": "openai-responses",
@@ -979,7 +979,7 @@
 					"mimeType": "image/png"
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"\\r\\n\\n(tool image omitted: model does not support images)\"}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"\\r\\n\\n(tool image omitted: model does not support images)\"}]"
 		},
 		{
 			"api": "openai-responses",
@@ -998,7 +998,7 @@
 					"mimeType": "image/png"
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\" \\n\\t\\n(tool image omitted: model does not support images)\"}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\" \\n\\t\\n(tool image omitted: model does not support images)\"}]"
 		},
 		{
 			"api": "openai-responses",
@@ -1017,7 +1017,7 @@
 					"mimeType": "image/png"
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\" \\n(tool image omitted: model does not support images)\"}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\" \\n(tool image omitted: model does not support images)\"}]"
 		},
 		{
 			"api": "openai-responses",
@@ -1036,7 +1036,7 @@
 					"mimeType": "image/png"
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"﻿  　 \\u000b\\f\\n(tool image omitted: model does not support images)\"}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"﻿  　 \\u000b\\f\\n(tool image omitted: model does not support images)\"}]"
 		},
 		{
 			"api": "openai-responses",
@@ -1055,7 +1055,7 @@
 					"mimeType": "image/png"
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"​\\n(tool image omitted: model does not support images)\"}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"​\\n(tool image omitted: model does not support images)\"}]"
 		},
 		{
 			"api": "openai-responses",
@@ -1074,7 +1074,7 @@
 					"mimeType": "image/png"
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"\\n(tool image omitted: model does not support images)\"}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"\\n(tool image omitted: model does not support images)\"}]"
 		},
 		{
 			"api": "openai-responses",
@@ -1097,7 +1097,7 @@
 					"mimeType": "image/png"
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\" \\n \\n(tool image omitted: model does not support images)\"}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\" \\n \\n(tool image omitted: model does not support images)\"}]"
 		},
 		{
 			"api": "openai-responses",
@@ -1120,7 +1120,7 @@
 					"mimeType": "image/png"
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\" \\nx\\n(tool image omitted: model does not support images)\"}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\" \\nx\\n(tool image omitted: model does not support images)\"}]"
 		},
 		{
 			"api": "openai-responses",
@@ -1139,7 +1139,7 @@
 					"mimeType": "image/png"
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"x\\n(tool image omitted: model does not support images)\"}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"x\\n(tool image omitted: model does not support images)\"}]"
 		},
 		{
 			"api": "openai-responses",
@@ -1158,7 +1158,7 @@
 					"mimeType": "image/png"
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\" x \\n(tool image omitted: model does not support images)\"}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\" x \\n(tool image omitted: model does not support images)\"}]"
 		},
 		{
 			"api": "openai-responses",
@@ -1173,7 +1173,7 @@
 					"text": ""
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"(no tool output)\"}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"(no tool output)\"}]"
 		},
 		{
 			"api": "openai-responses",
@@ -1188,7 +1188,7 @@
 					"text": "\r\n"
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"(no tool output)\"}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"(no tool output)\"}]"
 		},
 		{
 			"api": "openai-responses",
@@ -1203,7 +1203,7 @@
 					"text": " \n\t"
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"(no tool output)\"}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"(no tool output)\"}]"
 		},
 		{
 			"api": "openai-responses",
@@ -1218,7 +1218,7 @@
 					"text": " "
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"(no tool output)\"}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"(no tool output)\"}]"
 		},
 		{
 			"api": "openai-responses",
@@ -1233,7 +1233,7 @@
 					"text": "﻿  　 \u000b\f"
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"(no tool output)\"}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"(no tool output)\"}]"
 		},
 		{
 			"api": "openai-responses",
@@ -1248,7 +1248,7 @@
 					"text": "​"
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"​\"}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"​\"}]"
 		},
 		{
 			"api": "openai-responses",
@@ -1263,7 +1263,7 @@
 					"text": ""
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"\"}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"\"}]"
 		},
 		{
 			"api": "openai-responses",
@@ -1282,7 +1282,7 @@
 					"text": " "
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"(no tool output)\"}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"(no tool output)\"}]"
 		},
 		{
 			"api": "openai-responses",
@@ -1301,7 +1301,7 @@
 					"text": "x"
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\" \\nx\"}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\" \\nx\"}]"
 		},
 		{
 			"api": "openai-responses",
@@ -1316,7 +1316,7 @@
 					"text": "x"
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"x\"}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\"x\"}]"
 		},
 		{
 			"api": "openai-responses",
@@ -1331,7 +1331,7 @@
 					"text": " x "
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\" x \"}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":\" x \"}]"
 		},
 		{
 			"api": "openai-responses",
@@ -1351,7 +1351,7 @@
 					"mimeType": "image/png"
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":[{\"type\":\"input_image\",\"detail\":\"auto\",\"image_url\":\"data:image/png;base64,aW1n\"}]}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":[{\"type\":\"input_image\",\"detail\":\"auto\",\"image_url\":\"data:image/png;base64,aW1n\"}]}]"
 		},
 		{
 			"api": "openai-responses",
@@ -1371,7 +1371,7 @@
 					"mimeType": "image/png"
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":[{\"type\":\"input_image\",\"detail\":\"auto\",\"image_url\":\"data:image/png;base64,aW1n\"}]}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":[{\"type\":\"input_image\",\"detail\":\"auto\",\"image_url\":\"data:image/png;base64,aW1n\"}]}]"
 		},
 		{
 			"api": "openai-responses",
@@ -1391,7 +1391,7 @@
 					"mimeType": "image/png"
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":[{\"type\":\"input_image\",\"detail\":\"auto\",\"image_url\":\"data:image/png;base64,aW1n\"}]}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":[{\"type\":\"input_image\",\"detail\":\"auto\",\"image_url\":\"data:image/png;base64,aW1n\"}]}]"
 		},
 		{
 			"api": "openai-responses",
@@ -1411,7 +1411,7 @@
 					"mimeType": "image/png"
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":[{\"type\":\"input_image\",\"detail\":\"auto\",\"image_url\":\"data:image/png;base64,aW1n\"}]}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":[{\"type\":\"input_image\",\"detail\":\"auto\",\"image_url\":\"data:image/png;base64,aW1n\"}]}]"
 		},
 		{
 			"api": "openai-responses",
@@ -1431,7 +1431,7 @@
 					"mimeType": "image/png"
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":[{\"type\":\"input_image\",\"detail\":\"auto\",\"image_url\":\"data:image/png;base64,aW1n\"}]}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":[{\"type\":\"input_image\",\"detail\":\"auto\",\"image_url\":\"data:image/png;base64,aW1n\"}]}]"
 		},
 		{
 			"api": "openai-responses",
@@ -1451,7 +1451,7 @@
 					"mimeType": "image/png"
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":[{\"type\":\"input_text\",\"text\":\"​\"},{\"type\":\"input_image\",\"detail\":\"auto\",\"image_url\":\"data:image/png;base64,aW1n\"}]}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":[{\"type\":\"input_text\",\"text\":\"​\"},{\"type\":\"input_image\",\"detail\":\"auto\",\"image_url\":\"data:image/png;base64,aW1n\"}]}]"
 		},
 		{
 			"api": "openai-responses",
@@ -1471,7 +1471,7 @@
 					"mimeType": "image/png"
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":[{\"type\":\"input_text\",\"text\":\"\"},{\"type\":\"input_image\",\"detail\":\"auto\",\"image_url\":\"data:image/png;base64,aW1n\"}]}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":[{\"type\":\"input_text\",\"text\":\"\"},{\"type\":\"input_image\",\"detail\":\"auto\",\"image_url\":\"data:image/png;base64,aW1n\"}]}]"
 		},
 		{
 			"api": "openai-responses",
@@ -1495,7 +1495,7 @@
 					"mimeType": "image/png"
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":[{\"type\":\"input_image\",\"detail\":\"auto\",\"image_url\":\"data:image/png;base64,aW1n\"}]}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":[{\"type\":\"input_image\",\"detail\":\"auto\",\"image_url\":\"data:image/png;base64,aW1n\"}]}]"
 		},
 		{
 			"api": "openai-responses",
@@ -1519,7 +1519,7 @@
 					"mimeType": "image/png"
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":[{\"type\":\"input_text\",\"text\":\" \\nx\"},{\"type\":\"input_image\",\"detail\":\"auto\",\"image_url\":\"data:image/png;base64,aW1n\"}]}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":[{\"type\":\"input_text\",\"text\":\" \\nx\"},{\"type\":\"input_image\",\"detail\":\"auto\",\"image_url\":\"data:image/png;base64,aW1n\"}]}]"
 		},
 		{
 			"api": "openai-responses",
@@ -1539,7 +1539,7 @@
 					"mimeType": "image/png"
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":[{\"type\":\"input_text\",\"text\":\"x\"},{\"type\":\"input_image\",\"detail\":\"auto\",\"image_url\":\"data:image/png;base64,aW1n\"}]}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":[{\"type\":\"input_text\",\"text\":\"x\"},{\"type\":\"input_image\",\"detail\":\"auto\",\"image_url\":\"data:image/png;base64,aW1n\"}]}]"
 		},
 		{
 			"api": "openai-responses",
@@ -1559,7 +1559,7 @@
 					"mimeType": "image/png"
 				}
 			],
-			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":[{\"type\":\"input_text\",\"text\":\" x \"},{\"type\":\"input_image\",\"detail\":\"auto\",\"image_url\":\"data:image/png;base64,aW1n\"}]}]"
+			"request": "[{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"run\"}]},{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"bash\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"true\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_1\",\"output\":[{\"type\":\"input_text\",\"text\":\" x \"},{\"type\":\"input_image\",\"detail\":\"auto\",\"image_url\":\"data:image/png;base64,aW1n\"}]}]"
 		},
 		{
 			"api": "google-generative-ai",

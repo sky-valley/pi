@@ -3,7 +3,7 @@
 // openai_responses_midconvo_test.go.
 //
 //   node --experimental-strip-types capture-responses-midconvo.mts <extraction> <out.json> <sha>
-//   e.g. ... capture-responses-midconvo.mts <dir> responses-midconvo-530015d93.json 530015d93
+//   e.g. ... capture-responses-midconvo.mts <dir> responses-midconvo-69a699348.json 69a699348
 //
 // <extraction> holds packages/ai at <sha> (`git archive <sha> packages/ai` from
 // the upstream clone) and a node_modules resolving pi-ai's dependencies (the npm
@@ -28,6 +28,11 @@
 // "additional-tools-multi-removal" was added at 530015d93 after review, to pin
 // the JS Set order of the "Still unavailable" list (control: the script
 // without it rewrote the golden byte for byte first).
+//
+// Re-captured at 69a699348 (2026-11-23) over the 1.6.0 build's node_modules.
+// Control: at the parent fb248c7fc it wrote responses-midconvo-530015d93.json
+// but for the sha; 69a699348 adds only `"status": "completed"` to the three
+// replayed function_call items.
 //
 // Each "bodies" case records its model, its context and the body pi hands
 // onPayload, so the Go test decodes the very inputs pi saw. compat.ts

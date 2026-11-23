@@ -1470,6 +1470,14 @@ func responsesInput(model *ai.Model, req ai.TranscriptContext, updateEffort stri
 							"arguments": args,
 						}
 					}
+					// OpenAI returns tool calls with status "completed", so they
+					// replay with it: a Codex WebSocket continuation keeps the API's
+					// own copy, and once the connection expires and the full history
+					// is resent, a call without the status no longer matches and
+					// GPT-6.2 drops the reasoning after it (prefix_mismatch, upstream
+					// 69a699348). A stream that ends mid-call fails, and failed
+					// messages are not replayed, so it is always "completed".
+					item["status"] = "completed"
 					if v.Namespace != "" && isSameModel {
 						// A namespace only replays for a call the current model made
 						// itself (upstream 02bd2d1c6, narrowed back to the same model

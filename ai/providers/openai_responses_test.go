@@ -2591,9 +2591,10 @@ func TestResponsesGrammarToolSerialization(t *testing.T) {
 	}
 }
 
-// pi 0.82.0 replay of a grammar tool call + its result:
+// pi 0.82.0 replay of a grammar tool call + its result, with the
+// status "completed" upstream 69a699348 adds to every replayed call:
 //
-//	{"type":"custom_tool_call","id":"ctc_item","call_id":"ctc_abc","name":"gram","input":"SELECT 1"}
+//	{"type":"custom_tool_call","id":"ctc_item","call_id":"ctc_abc","name":"gram","status":"completed","input":"SELECT 1"}
 //	{"type":"custom_tool_call_output","call_id":"ctc_abc","output":"ok"}
 func TestResponsesGrammarToolCallReplay(t *testing.T) {
 	model := grammarResponsesModel(`{"supportsOpenAIGrammarTools":true}`)
@@ -2612,12 +2613,45 @@ func TestResponsesGrammarToolCallReplay(t *testing.T) {
 	}
 	in := mustResponsesInput(t, model, req)
 	call := findResponsesItem(in, "custom_tool_call")
-	if got := mustJSON(t, call); got != `{"call_id":"ctc_abc","id":"ctc_item","input":"SELECT 1","name":"gram","type":"custom_tool_call"}` {
+	if got := mustJSON(t, call); got != `{"call_id":"ctc_abc","id":"ctc_item","input":"SELECT 1","name":"gram","status":"completed","type":"custom_tool_call"}` {
 		t.Fatalf("custom_tool_call: %s", got)
 	}
 	out := findResponsesItem(in, "custom_tool_call_output")
 	if got := mustJSON(t, out); got != `{"call_id":"ctc_abc","output":"ok","type":"custom_tool_call_output"}` {
 		t.Fatalf("custom_tool_call_output: %s", got)
+	}
+}
+
+// Upstream 69a699348 (#12367): OpenAI returns tool calls with status
+// "completed", and a replay without it no longer matches the copy the Codex
+// WebSocket kept, so GPT-6.2 drops the reasoning after it as prefix_mismatch.
+// Both replayed call types carry the status (openai-responses-tool-call-replay
+// .test.ts).
+func TestResponsesToolCallReplayCarriesCompletedStatus(t *testing.T) {
+	model := grammarResponsesModel(`{"supportsOpenAIGrammarTools":true}`)
+	req := ai.Context{
+		Messages: []ai.Message{
+			ai.NewUserText("Use the tools.", 1),
+			ai.AssistantMessage{
+				Content: ai.ContentList{
+					ai.ToolCall{ID: "call_1|fc_1", Name: "read", Arguments: map[string]any{"path": "calc.py"}},
+					ai.ToolCall{ID: "call_2|ctc_2", Name: "gram", Arguments: map[string]any{"query": "text(1)"}},
+				},
+				Model: model.ID, Provider: model.Provider, Api: model.Api, StopReason: ai.StopToolUse,
+			},
+			ai.ToolResultMessage{ToolCallID: "call_1|fc_1", ToolName: "read", Content: ai.ContentList{ai.TextContent{Text: "ok"}}},
+			ai.ToolResultMessage{ToolCallID: "call_2|ctc_2", ToolName: "gram", Content: ai.ContentList{ai.TextContent{Text: "ok"}}},
+		},
+		Tools: []ai.Tool{grammarSamplingTool()},
+	}
+	in := mustResponsesInput(t, model, req)
+	fc := findResponsesItem(in, "function_call")
+	if got := mustJSON(t, fc); got != `{"arguments":"{\"path\":\"calc.py\"}","call_id":"call_1","id":"fc_1","name":"read","status":"completed","type":"function_call"}` {
+		t.Fatalf("function_call: %s", got)
+	}
+	ctc := findResponsesItem(in, "custom_tool_call")
+	if got := mustJSON(t, ctc); got != `{"call_id":"call_2","id":"ctc_2","input":"text(1)","name":"gram","status":"completed","type":"custom_tool_call"}` {
+		t.Fatalf("custom_tool_call: %s", got)
 	}
 }
 

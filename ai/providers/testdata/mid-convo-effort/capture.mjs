@@ -8,6 +8,11 @@
 //   node capture.mjs <pi-ai package dir> <out.json>
 //   e.g. node capture.mjs .../npm-1.3.0/node_modules/@earendil-works/pi-ai mid-convo-effort-1.3.0.json
 //
+// Re-captured from src at 69a699348 (2026-11-23) through a shim package whose
+// dist/*.js re-export src/*.ts, run with --experimental-strip-types, over the
+// 1.6.0 build's node_modules: mid-convo-effort-69a699348.json. Control: at the
+// parent fb248c7fc it matches the 1.6.0 build's capture but for the label.
+//
 // The package is the published npm build. The runs replay upstream's
 // openai-responses-mid-convo-effort.test.ts: its model, its fake response
 // bodies (served through options.fetch) and its conversations, each run's reply

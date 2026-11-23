@@ -7,6 +7,11 @@
 //   node capture.mjs <pi-ai package dir> <out.json>
 //   e.g. node capture.mjs .../npm-1.3.0/node_modules/@earendil-works/pi-ai item-ids-1.3.0.json
 //
+// Re-captured from src at 69a699348 (2026-11-23) through a shim package whose
+// dist/*.js re-export src/*.ts, run with --experimental-strip-types, over the
+// 1.6.0 build's node_modules: item-ids-69a699348.json. Control: at the parent
+// fb248c7fc it matches the 1.6.0 build's capture but for the label.
+//
 // The package is the published npm build; compat.js's streamSimple builds the
 // request and onPayload records its `input` and stops it. Rows cross the
 // replayed call's id (fc_, ctc_, another prefix, no item id) with grammar tool

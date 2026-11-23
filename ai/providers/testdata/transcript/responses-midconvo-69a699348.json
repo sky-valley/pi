@@ -1,5 +1,5 @@
 {
-	"sha": "530015d93",
+	"sha": "69a699348",
 	"bodies": {
 		"anchors-additional-tools": {
 			"model": {
@@ -1079,6 +1079,7 @@
 						"id": "ctc_g",
 						"call_id": "call_g",
 						"name": "grammar_tool",
+						"status": "completed",
 						"input": "abc"
 					},
 					{
@@ -1492,6 +1493,7 @@
 						"id": "ctc_g",
 						"call_id": "call_g",
 						"name": "grammar_tool",
+						"status": "completed",
 						"input": "abc"
 					},
 					{
@@ -1837,6 +1839,7 @@
 						"id": "ctc_g",
 						"call_id": "call_g",
 						"name": "grammar_tool",
+						"status": "completed",
 						"input": "abc"
 					},
 					{

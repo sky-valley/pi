@@ -11,11 +11,13 @@ import (
 )
 
 // blankToolOutputCaptureFile is what testdata/blank-tool-output/capture.mts
-// recorded from pi's source at 4dd2b149d: the messages / input / contents the
+// recorded from pi's source at 69a699348 (at the parent fb248c7fc it records
+// the 4dd2b149d rows; 69a699348 adds only `"status": "completed"` to the
+// replayed openai-responses function_call): the messages / input / contents the
 // openai-completions, openai-responses and google-generative-ai adapters
 // build for a tool result whose text blocks are blank, whitespace or text,
 // with and without an image, for text-only and image models.
-const blankToolOutputCaptureFile = "testdata/blank-tool-output/blank-tool-output-4dd2b149d.json"
+const blankToolOutputCaptureFile = "testdata/blank-tool-output/blank-tool-output-69a699348.json"
 
 // A tool result's text counts only when it is not blank by JS trim (upstream
 // 4dd2b149d, #8720): a bare "\r\n" from bash gets the empty-output

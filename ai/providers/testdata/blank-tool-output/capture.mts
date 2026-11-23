@@ -5,7 +5,7 @@
 // the oracle behind TestBlankToolOutputMatchesPi.
 //
 //   node --experimental-strip-types capture.mts <extraction> <out.json> <sha>
-//   e.g. ... capture.mts <dir> blank-tool-output-4dd2b149d.json 4dd2b149d
+//   e.g. ... capture.mts <dir> blank-tool-output-69a699348.json 69a699348
 //
 // <extraction> holds packages/ai at <sha> (`git archive <sha> packages/ai`)
 // and a node_modules resolving its dependencies: the npm 1.3.0 build's, whose

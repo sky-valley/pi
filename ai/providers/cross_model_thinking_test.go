@@ -11,12 +11,13 @@ import (
 )
 
 // crossModelThinkingCaptureFile is what testdata/cross-model-thinking/
-// capture.mjs recorded from src at 7a6bd5a97 over the 1.5.0 build's
-// node_modules. At 7a6bd5a97^1 it records cross-model-thinking-1.3.0.json's
-// rows (the 1.3.0 and 1.5.0 builds do too); 7a6bd5a97 drops `"tools": []` from
-// the openai-completions request, which has tool history and no tools. Re-verify
-// against the first build that ships 7a6bd5a97.
-const crossModelThinkingCaptureFile = "testdata/cross-model-thinking/cross-model-thinking-7a6bd5a97.json"
+// capture.mjs recorded from src at 69a699348 over the 1.6.0 build's
+// node_modules. At the parent fb248c7fc it records what the 1.6.0 build does
+// (1.6.0 ships 7a6bd5a97, which dropped `"tools": []` from the
+// openai-completions request); 69a699348 adds only `"status": "completed"` to
+// the replayed openai-responses function_call. Re-verify against the first
+// build that ships 69a699348.
+const crossModelThinkingCaptureFile = "testdata/cross-model-thinking/cross-model-thinking-69a699348.json"
 
 type crossModelThinkingCapture struct {
 	TransformRows []struct {
