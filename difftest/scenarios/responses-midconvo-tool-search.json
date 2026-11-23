@@ -1,7 +1,7 @@
 {
   "name": "responses-midconvo-tool-search",
   "note": "Native variant of responses-deferred-tool-search (upstream 9e05370b2): compat.supportsMidConvoSystemMessages keeps the mid-transcript system message in place, and it carries content, so its rendered update is sent as a developer message where it sits (after the first tool result; transformMessages holds it behind the pending call until the next assistant message, which does not move it). With supportsToolSearch, late_tool is loaded by a completed client tool_search_call/tool_search_output pair (defer_loading on the returned definition) whose call_id is pi_tool_load_<shortHash(\"system:3:late_tool\")>: msgIndex 3, because the leading system message does not advance it ('maps system-message additions into synthetic tool search'). npm 0.85.1 predated the transcript model; it shipped in pi-ai 0.86.1, and the backend flipped to dist at the 0.87.1 re-pin (README rule).",
-  "backend": "dist",
+  "backend": "src",
   "api": "openai-responses",
   "entry": "streamSimple",
   "model": {

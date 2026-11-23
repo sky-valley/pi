@@ -1,7 +1,7 @@
 {
   "name": "responses-midconvo-off",
   "note": "Native variant of responses-deferred-off (upstream 9e05370b2): compat.supportsMidConvoSystemMessages keeps the mid-transcript system message in place, and it carries content, so its rendered update is sent as a developer message where it sits (after the first tool result; transformMessages holds it behind the pending call until the next assistant message, which does not move it). With neither supportsAdditionalTools nor supportsToolSearch nothing can anchor additions, so body.tools carries base_tool and late_tool and no tool-loading item is sent; namespace replay follows isSameModel. npm 0.85.1 predated the transcript model; it shipped in pi-ai 0.86.1, and the backend flipped to dist at the 0.87.1 re-pin (README rule).",
-  "backend": "dist",
+  "backend": "src",
   "api": "openai-responses",
   "entry": "streamSimple",
   "model": {
