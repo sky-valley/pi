@@ -45,39 +45,39 @@ func (c ShellConfig) commandFromStdin() bool {
 }
 
 // shellHost is what pi's shell.ts reads from the process it runs in: the
-// platform, the environment, the filesystem existence check and the PATH
-// search. The resolvers take it as a value so their Windows branches are
-// testable on every host, as pi's tests stub process.platform, process.env,
-// accessSync and spawnSync.
+// platform, the environment, the filesystem existence check and the
+// processes it spawns. The resolvers take it as a value so their Windows
+// branches are testable on every host, as pi's tests stub process.platform,
+// process.env, accessSync and spawnSync.
 type shellHost struct {
 	windows bool
 	getenv  func(string) string
 	// exists is pi's shellPathExists.
 	exists func(string) bool
-	// searchPath runs pi's PATH search command (`where` on Windows, `which`
-	// elsewhere) for an executable and reports its stdout and whether it
+	// spawnSync runs a command (the PATH search, `where` on Windows and
+	// `which` elsewhere, or git) and reports its stdout and whether it
 	// exited 0.
-	searchPath func(command, executable string) (stdout string, ok bool)
+	spawnSync func(command string, args ...string) (stdout string, ok bool)
 }
 
 var localShellHost = shellHost{
-	windows:    runtime.GOOS == "windows",
-	getenv:     os.Getenv,
-	exists:     shellPathExists,
-	searchPath: spawnPathSearch,
+	windows:   runtime.GOOS == "windows",
+	getenv:    os.Getenv,
+	exists:    shellPathExists,
+	spawnSync: spawnSync,
 }
 
-// pathSearchTimeout is pi's spawnSync timeout for `where` / `which`.
-const pathSearchTimeout = 5 * time.Second
+// spawnSyncTimeout is pi's spawnSync timeout for `where`, `which` and git.
+const spawnSyncTimeout = 5 * time.Second
 
-// spawnPathSearch is pi's spawnSync(command, [executable], {timeout: 5000}):
-// the search command runs from PATH as Node would spawn it, a relative PATH
-// entry included (os/exec reports that as exec.ErrDot, which is cleared), and
-// only a zero exit counts.
-func spawnPathSearch(command, executable string) (string, bool) {
-	ctx, cancel := context.WithTimeout(context.Background(), pathSearchTimeout)
+// spawnSync is pi's spawnSync(command, args, {timeout: 5000}): the command
+// runs from PATH as Node would spawn it, a relative PATH entry included
+// (os/exec reports that as exec.ErrDot, which is cleared), and only a zero
+// exit counts.
+func spawnSync(command string, args ...string) (string, bool) {
+	ctx, cancel := context.WithTimeout(context.Background(), spawnSyncTimeout)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, command, executable)
+	cmd := exec.CommandContext(ctx, command, args...)
 	if errors.Is(cmd.Err, exec.ErrDot) {
 		cmd.Err = nil
 	}
@@ -150,7 +150,7 @@ func (h shellHost) findExecutableOnPath(executable string) string {
 	if h.windows {
 		command = "where"
 	}
-	stdout, ok := h.searchPath(command, executable)
+	stdout, ok := h.spawnSync(command, executable)
 	if !ok || stdout == "" {
 		return ""
 	}
@@ -164,12 +164,46 @@ func (h shellHost) findExecutableOnPath(executable string) string {
 	return firstMatch
 }
 
+// gitForWindowsShellSuffix is where Git for Windows reports its POSIX shell:
+// <root>/usr/bin/sh.exe (pi GIT_FOR_WINDOWS_SHELL_SUFFIX).
+var gitForWindowsShellSuffix = nodepath.Win32.Join("usr", "bin", "sh.exe")
+
+// findGitBashOfGitOnPath ports pi's findGitBashOfGitOnPath (upstream
+// e8ee38887): Git Bash of the Git for Windows installation whose git.exe is on
+// PATH. Git reports where it is installed (`git var GIT_SHELL_PATH`, Git
+// 2.47+), so this works for any install directory and PATH layout (`cmd`,
+// `bin`, `mingw64\bin`, `ucrt64\bin`, package-manager shims). It returns
+// <root>\bin\bash.exe, not the shell Git reports: that launcher sets up
+// MSYSTEM and PATH, without which usr\bin\bash.exe cannot find tools like
+// `ls`. "" when there is no git, it is older, or the layout differs.
+func (h shellHost) findGitBashOfGitOnPath() string {
+	git := h.findExecutableOnPath("git.exe")
+	if git == "" {
+		return ""
+	}
+	stdout, ok := h.spawnSync(git, "var", "GIT_SHELL_PATH")
+	if !ok {
+		return ""
+	}
+	gitShell := nodepath.Win32.Normalize(jstext.Trim(stdout))
+	// The suffix is ASCII, so it ends the path in the same bytes it ends the
+	// lowercased path in.
+	if !strings.HasSuffix(jstext.ToLower(gitShell), `\`+gitForWindowsShellSuffix) {
+		return ""
+	}
+	bash := nodepath.Win32.Join(gitShell[:len(gitShell)-len(gitForWindowsShellSuffix)], "bin", "bash.exe")
+	if !h.exists(bash) {
+		return ""
+	}
+	return bash
+}
+
 // GetShellConfig ports pi's getShellConfig (shell.ts), root-exported upstream.
 // pi never uses $SHELL or cmd: Unix resolves /bin/bash, then bash on PATH,
-// then sh; Windows resolves Git Bash in known locations, then bash.exe on
-// PATH, else errors. A non-empty customShellPath is pi's explicit shellPath:
-// it wins over every platform default, and a missing one is an error, not a
-// fallback.
+// then sh; Windows resolves Git Bash in known locations, then Git Bash of git
+// on PATH, then bash.exe on PATH, else errors. A non-empty customShellPath is
+// pi's explicit shellPath: it wins over every platform default, and a missing
+// one is an error, not a fallback.
 func GetShellConfig(customShellPath string) (ShellConfig, error) {
 	return localShellHost.shellConfig(customShellPath)
 }
@@ -194,6 +228,12 @@ func (h shellHost) shellConfig(customShellPath string) (ShellConfig, error) {
 				return h.bashShellConfig(p), nil
 			}
 		}
+		// Git Bash installed elsewhere, found through git on PATH. This must
+		// precede the generic bash.exe lookup, which usually finds the WSL
+		// launcher in System32 first.
+		if p := h.findGitBashOfGitOnPath(); p != "" {
+			return h.bashShellConfig(p), nil
+		}
 		if p := h.findExecutableOnPath("bash.exe"); p != "" {
 			return h.bashShellConfig(p), nil
 		}
@@ -209,6 +249,7 @@ func (h shellHost) shellConfig(customShellPath string) (ShellConfig, error) {
 			}
 			b.WriteString("  " + p)
 		}
+		b.WriteString("\n  the Git for Windows installation of git.exe on PATH")
 		return ShellConfig{}, errors.New(b.String())
 	}
 
