@@ -3,31 +3,30 @@
 // in package ai.
 //
 //   node --experimental-strip-types capture.mts <extraction> <out.json> <sha>
-//   e.g. ... capture.mts <dir> classify-a00a5048d.json a00a5048d
+//   e.g. ... capture.mts <dir> classify-0888fd79a.json 0888fd79a
 //
 // <extraction> holds packages/ai at <sha> (`git archive <sha> packages/ai` from
 // the upstream clone) and a node_modules resolving pi-ai's dependencies (the npm
 // build's). It is a src capture, checked against the build when a release
-// ships the source it read (the BUILD wins): classify-a00a5048d.json was
-// captured from src at a00a5048d with the 1.6.0 build's node_modules. The 1.6.0
+// ships the source it read (the BUILD wins): classify-0888fd79a.json was
+// captured from src at 0888fd79a with the 1.6.0 build's node_modules. The 1.6.0
 // build (released at faac58588) ships every alternative through bb1a2b354: its
 // dist/utils/retry.js gives classify-bb1a2b354.json's two pattern sources and
 // all 315 of its rows' answers. It predates fb62c069b's 525 in the status-code
 // alternative; 25190b72c's "provider.?(?:is.?)?temporarily.?unavailable",
 // "ended the response before it was complete", "connection to the provider was
-// reset" and "reported a failure while generating the response"; and
-// a00a5048d's "admission ceiling", "type"\s*:\s*"api_error", "provider
-// finish_reason: error", "returned an empty response", "stopped before
-// completing the response" and "repeat the request later", so re-verify it
-// against the first build that ships them. Control: this script at
-// a00a5048d^1 (25190b72c), with the same node_modules, differs from
-// classify-a00a5048d.json only in the retryable source and in the 20 rows
-// a00a5048d's alternatives decide: 19 retryable false, and the quota-vetoed
-// api_error row with its retryable-pattern answer false; before a00a5048d's
-// rows were added, it reproduced classify-25190b72c.json byte for byte at
-// 25190b72c, and that file's own controls chain back through fb62c069b,
-// 30a3e0b1f (whose patterns are bb1a2b354's), 4699b5b26 and 9b88b94e2 to
-// 566344046.
+// reset" and "reported a failure while generating the response"; a00a5048d's
+// "admission ceiling", "type"\s*:\s*"api_error", "provider finish_reason:
+// error", "returned an empty response", "stopped before completing the
+// response" and "repeat the request later"; and 0888fd79a's "rate increased
+// too quickly", so re-verify it against the first build that ships them.
+// Control: this script at 0888fd79a^1 (8433532f9), with the same
+// node_modules, differs from classify-0888fd79a.json only in the retryable
+// source and in the 3 rows 0888fd79a's alternative decides (retryable false);
+// before 0888fd79a's rows were added, it reproduced classify-a00a5048d.json at
+// 8433532f9 byte for byte but the sha label, and that file's own controls
+// chain back through 25190b72c, fb62c069b, 30a3e0b1f (whose patterns are
+// bb1a2b354's), 4699b5b26 and 9b88b94e2 to 566344046.
 //
 // Every row records three answers: isRetryableAssistantError on the message
 // retry.test.ts would build (fauxAssistantMessage), and RegExp.prototype.test of
@@ -224,6 +223,13 @@ const rows: Row[] = [
 	),
 	error("pi: does not retry", "Provider finish_reason: content_filter"),
 	error("pi: does not retry", '{"type":"error","error":{"type":"api_error","message":"Monthly quota exceeded"}}'),
+	// retry.test.ts regression for #12240 and #2952 (0888fd79a): the request-rate
+	// throttle wording of OpenAI's 429 `slow_down` (Codex) and Alibaba Qwen.
+	error("pi: request-rate throttle (#12240)", "Your request rate increased too quickly"),
+	error(
+		"pi: request-rate throttle (#2952)",
+		"Request rate increased too quickly. To ensure system stability, please adjust your client logic to scale requests more smoothly over time.",
+	),
 
 	// isRetryableAssistantError's guard: only stopReason "error" with error text.
 	{ covers: "guard: stop", stopReason: "stop", errorMessage: "overloaded" },
@@ -242,6 +248,7 @@ const rows: Row[] = [
 	error("admission ceiling", "Admission Ceiling"),
 	error("rate.?limit", "rate_limit_error"),
 	error("too many requests", "Too Many Requests"),
+	error("rate increased too quickly", "RATE INCREASED TOO QUICKLY"),
 	error(STATUS, "HTTP 429"),
 	error(STATUS, "status 500"),
 	error(STATUS, "status 502"),
@@ -452,6 +459,9 @@ const rows: Row[] = [
 	error("near-miss", "returned empty response"),
 	error("near-miss", "stopped before completing a response"),
 	error("near-miss", "repeat the request soon"),
+	error("near-miss", "rate increased quickly"),
+	error("near-miss", "rate increased  too quickly"),
+	error("near-miss", "rate-increased-too-quickly"),
 
 	// The socket-code boundaries: one UTF-16 code unit on each side that is not
 	// [a-z0-9_] under "i" (ASCII letters only), or the start or end of the text.

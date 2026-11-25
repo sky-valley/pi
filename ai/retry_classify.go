@@ -257,6 +257,8 @@ var retryableProviderErrorPattern = buildProviderErrorPattern([]string{
 	"admission ceiling",
 	"rate.?limit",
 	"too many requests",
+	// OpenAI 429 `slow_down` (Codex) and Alibaba Qwen throttle wording (#12240, #2952).
+	"rate increased too quickly",
 	// Status codes must not be part of a longer word or number, e.g. a request id
 	// or byte count (#11057).
 	// 520, 524 and 525 are Cloudflare's: an unknown error (#9627), a timeout (#6239), and a failed TLS
