@@ -1483,6 +1483,74 @@ func TestAnthropicNonStrictToolKeepsRootAdditionalProperties(t *testing.T) {
 	}
 }
 
+// Upstream 4245b07b4 (#12212): a non-strict tool keeps its declared root
+// $schema, so a Draft 7 tuple's array-form items is read in its own dialect
+// instead of failing the request with a 400. Replays
+// testdata/anthropic-legacy-schema, captured from pi src at 4245b07b4: its
+// first row is upstream's anthropic-strict-tool-schema.test.ts "preserves the
+// declared dialect and tuple syntax in non-strict schemas"; the rest probe
+// what `=== undefined` keeps (null, a number, an empty string) and the strict
+// path. Values are compared parsed: Go writes input_schema's keys sorted
+// where pi writes the legacy shape's order (K31's class).
+func TestAnthropicToolInputSchemaMatchesPi(t *testing.T) {
+	raw, err := os.ReadFile("testdata/anthropic-legacy-schema/legacy-schema-4245b07b4.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var capture struct {
+		Rows []struct {
+			Name        string          `json:"name"`
+			Strict      string          `json:"strict"`
+			Parameters  json.RawMessage `json:"parameters"`
+			SentStrict  bool            `json:"sentStrict"`
+			InputSchema string          `json:"inputSchema"`
+		} `json:"rows"`
+	}
+	if err := json.Unmarshal(raw, &capture); err != nil {
+		t.Fatal(err)
+	}
+	if len(capture.Rows) == 0 {
+		t.Fatal("empty capture")
+	}
+	model := &ai.Model{ID: "claude-x", Api: ai.APIAnthropicMessages, Provider: "test-anthropic", Input: []string{"text"}, MaxTokens: 100,
+		Compat: json.RawMessage(`{"supportsStrictTools":true}`)}
+	for _, row := range capture.Rows {
+		var params ai.Schema
+		if err := json.Unmarshal(row.Parameters, &params); err != nil {
+			t.Fatal(err)
+		}
+		tool := ai.Tool{Name: "lookup", Description: "d", Parameters: &params}
+		if row.Strict != "" {
+			tool.ConstrainedSampling = &ai.ConstrainedSamplingConfig{
+				Type: ai.ConstrainedSamplingJSONSchema, Strict: ai.ConstrainedSamplingStrictness(row.Strict),
+			}
+		}
+		req := ai.Context{Messages: []ai.Message{ai.NewUserText("hi", 1)}, Tools: []ai.Tool{tool}}
+		body := mustBuildAnthropicParams(t, model, req, false, &AnthropicOptions{})
+		tools, ok := body["tools"].([]map[string]any)
+		if !ok || len(tools) != 1 {
+			t.Fatalf("%s: tools wrong: %#v", row.Name, body["tools"])
+		}
+		if got := tools[0]["strict"] == true; got != row.SentStrict {
+			t.Errorf("%s: strict = %v, pi = %v", row.Name, got, row.SentStrict)
+		}
+		got, err := json.Marshal(tools[0]["input_schema"])
+		if err != nil {
+			t.Fatal(err)
+		}
+		var gotV, wantV any
+		if err := json.Unmarshal(got, &gotV); err != nil {
+			t.Fatal(err)
+		}
+		if err := json.Unmarshal([]byte(row.InputSchema), &wantV); err != nil {
+			t.Fatal(err)
+		}
+		if !reflect.DeepEqual(gotV, wantV) {
+			t.Errorf("%s: input_schema\n got %s\n  pi %s", row.Name, got, row.InputSchema)
+		}
+	}
+}
+
 // pi reads the root schema's properties, required, $defs and definitions by
 // exact key, so a differently cased key ("Properties", "$DEFS") is neither
 // read nor lets it overwrite the real one (review of 2185fd6).

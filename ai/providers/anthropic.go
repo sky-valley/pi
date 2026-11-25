@@ -1965,11 +1965,13 @@ func convertAnthropicTools(tools []ai.Tool, oauth, eager, supportsStrictTools bo
 		props := map[string]any{}
 		var required []string
 		// Root $defs and definitions ride along with the legacy shape so a
-		// property's $ref still resolves (upstream 4a6a58eb5), and root
+		// property's $ref still resolves (upstream 4a6a58eb5), root
 		// additionalProperties so the model knows whether extra arguments are
-		// allowed (upstream aa47cedce). Present-but-null is kept, as pi's
+		// allowed (upstream aa47cedce), and the declared root $schema so nested
+		// keywords such as Draft 7 tuple items are read in their own dialect
+		// (upstream 4245b07b4). Present-but-null is kept, as pi's
 		// `=== undefined` test keeps it.
-		var additionalProperties, defs, definitions json.RawMessage
+		var additionalProperties, dialect, defs, definitions json.RawMessage
 		if parameters != nil {
 			if raw, err := json.Marshal(parameters); err == nil {
 				if strict {
@@ -1990,7 +1992,7 @@ func convertAnthropicTools(tools []ai.Tool, oauth, eager, supportsStrictTools bo
 				if r := root["required"]; len(r) > 0 {
 					_ = json.Unmarshal(r, &required)
 				}
-				additionalProperties = root["additionalProperties"]
+				additionalProperties, dialect = root["additionalProperties"], root["$schema"]
 				defs, definitions = root["$defs"], root["definitions"]
 			}
 		}
@@ -1998,10 +2000,11 @@ func convertAnthropicTools(tools []ai.Tool, oauth, eager, supportsStrictTools bo
 			required = []string{}
 		}
 		// The legacy {type, properties, required} shape (plus root
-		// additionalProperties, $defs and definitions) is always sent; strict tools carry the rest of the JSON
-		// Schema underneath it (pi spreads the full parameters first, then the
-		// legacy shape over the top). Other root keywords stay out: Anthropic
-		// rejects a root anyOf/oneOf/allOf with a 400.
+		// additionalProperties, $schema, $defs and definitions) is always
+		// sent; strict tools carry the rest of the JSON Schema underneath it
+		// (pi spreads the full parameters first, then the legacy shape over
+		// the top). Other root keywords stay out: Anthropic rejects a root
+		// anyOf/oneOf/allOf with a 400.
 		inputSchema := map[string]any{
 			"type":       "object",
 			"properties": props,
@@ -2009,7 +2012,7 @@ func convertAnthropicTools(tools []ai.Tool, oauth, eager, supportsStrictTools bo
 		}
 		// Decoded like properties, so an OnPayload hook sees maps, not bytes.
 		for key, value := range map[string]json.RawMessage{
-			"additionalProperties": additionalProperties, "$defs": defs, "definitions": definitions,
+			"additionalProperties": additionalProperties, "$schema": dialect, "$defs": defs, "definitions": definitions,
 		} {
 			if value != nil {
 				var v any

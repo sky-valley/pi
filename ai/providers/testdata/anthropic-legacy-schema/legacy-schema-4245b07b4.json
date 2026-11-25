@@ -1,0 +1,128 @@
+{
+	"source": "pi src 4245b07b4",
+	"rows": [
+		{
+			"name": "draft 7 tuple",
+			"parameters": {
+				"$schema": "http://json-schema.org/draft-07/schema#",
+				"type": "object",
+				"properties": {
+					"pair": {
+						"type": "array",
+						"items": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "string"
+							}
+						],
+						"minItems": 2,
+						"maxItems": 2
+					}
+				},
+				"required": [
+					"pair"
+				]
+			},
+			"sentStrict": false,
+			"inputSchema": "{\"type\":\"object\",\"properties\":{\"pair\":{\"type\":\"array\",\"items\":[{\"type\":\"string\"},{\"type\":\"string\"}],\"minItems\":2,\"maxItems\":2}},\"required\":[\"pair\"],\"$schema\":\"http://json-schema.org/draft-07/schema#\"}"
+		},
+		{
+			"name": "$schema last, with every kept keyword",
+			"parameters": {
+				"definitions": {
+					"D": {}
+				},
+				"$defs": {
+					"A": {}
+				},
+				"additionalProperties": false,
+				"required": [
+					"a"
+				],
+				"properties": {
+					"a": {
+						"type": "string"
+					}
+				},
+				"type": "object",
+				"title": "T",
+				"$schema": "https://json-schema.org/draft/2020-12/schema"
+			},
+			"sentStrict": false,
+			"inputSchema": "{\"type\":\"object\",\"properties\":{\"a\":{\"type\":\"string\"}},\"required\":[\"a\"],\"additionalProperties\":false,\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"$defs\":{\"A\":{}},\"definitions\":{\"D\":{}}}"
+		},
+		{
+			"name": "$schema null",
+			"parameters": {
+				"$schema": null,
+				"type": "object",
+				"properties": {}
+			},
+			"sentStrict": false,
+			"inputSchema": "{\"type\":\"object\",\"properties\":{},\"required\":[],\"$schema\":null}"
+		},
+		{
+			"name": "$schema number",
+			"parameters": {
+				"$schema": 7,
+				"type": "object",
+				"properties": {}
+			},
+			"sentStrict": false,
+			"inputSchema": "{\"type\":\"object\",\"properties\":{},\"required\":[],\"$schema\":7}"
+		},
+		{
+			"name": "$schema empty",
+			"parameters": {
+				"$schema": "",
+				"type": "object",
+				"properties": {}
+			},
+			"sentStrict": false,
+			"inputSchema": "{\"type\":\"object\",\"properties\":{},\"required\":[],\"$schema\":\"\"}"
+		},
+		{
+			"name": "$schema absent",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"a": {
+						"type": "string"
+					}
+				}
+			},
+			"sentStrict": false,
+			"inputSchema": "{\"type\":\"object\",\"properties\":{\"a\":{\"type\":\"string\"}},\"required\":[]}"
+		},
+		{
+			"name": "$SCHEMA cased",
+			"parameters": {
+				"$SCHEMA": "http://json-schema.org/draft-07/schema#",
+				"type": "object",
+				"properties": {}
+			},
+			"sentStrict": false,
+			"inputSchema": "{\"type\":\"object\",\"properties\":{},\"required\":[]}"
+		},
+		{
+			"name": "strict prefer with $schema",
+			"strict": "prefer",
+			"parameters": {
+				"$schema": "http://json-schema.org/draft-07/schema#",
+				"type": "object",
+				"properties": {
+					"a": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"a"
+				]
+			},
+			"sentStrict": true,
+			"inputSchema": "{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"a\":{\"type\":\"string\"}},\"required\":[\"a\"],\"additionalProperties\":false}"
+		}
+	]
+}
