@@ -1040,17 +1040,10 @@ func createShellTool(cwd string, config shellToolConfig, options *BashToolOption
 				Env:            spawnContext.Env,
 			})
 
-			snap, err := u.finish()
-			if err != nil {
-				// D90: pi's finishOutput awaits closeTempFile before it looks at
-				// the command's fate, so a temp file that failed replaces an
-				// abort or a timeout too. pi fails the call only when the error
-				// comes after closeTempFile attached its listener; before that,
-				// its write stream's unhandled error crashes the process or leaves
-				// the call waiting. The port always fails the call, with the cause
-				// and how to fix it.
-				return agent.AgentToolResult{}, fmt.Errorf("could not save the full command output: %w; point TMPDIR (TMP on Windows) at a writable directory with free space", err)
-			}
+			// A temp file that could not be saved no longer fails the call
+			// (upstream 943a99e3c): the result keeps the in-memory tail and
+			// says why the full output is missing.
+			snap := u.finish()
 			formatOutput := func(emptyText string) (string, map[string]any) {
 				text := snap.content
 				if text == "" {
@@ -1058,18 +1051,27 @@ func createShellTool(cwd string, config shellToolConfig, options *BashToolOption
 				}
 				var details map[string]any
 				if snap.truncation.Truncated {
-					details = map[string]any{"truncation": snap.truncation, "fullOutputPath": snap.fullOutputPath}
+					details = map[string]any{"truncation": snap.truncation}
+					if path := snap.savedPath(); path != "" {
+						details["fullOutputPath"] = path
+					}
+					var fullOutput string
+					if file := snap.fullOutputFile; file != nil && !file.saved() {
+						fullOutput = "Could not save the full output: " + file.err.Error()
+					} else {
+						fullOutput = "Full output: " + snap.savedPath()
+					}
 					tr := snap.truncation
 					startLine := tr.TotalLines - tr.OutputLines + 1
 					endLine := tr.TotalLines
 					if tr.LastLinePartial {
 						lastLineSize := FormatSize(u.acc.getLastLineBytes())
-						text += fmt.Sprintf("\n\n[Showing last %s of line %d (line is %s). Full output: %s]",
-							FormatSize(tr.OutputBytes), startLine, lastLineSize, snap.fullOutputPath)
+						text += fmt.Sprintf("\n\n[Showing last %s of line %d (line is %s). %s]",
+							FormatSize(tr.OutputBytes), startLine, lastLineSize, fullOutput)
 					} else if tr.TruncatedBy == "lines" {
-						text += fmt.Sprintf("\n\n[Showing lines %d-%d of %d. Full output: %s]", startLine, endLine, tr.TotalLines, snap.fullOutputPath)
+						text += fmt.Sprintf("\n\n[Showing lines %d-%d of %d. %s]", startLine, endLine, tr.TotalLines, fullOutput)
 					} else {
-						text += fmt.Sprintf("\n\n[Showing lines %d-%d of %d (%s limit). Full output: %s]", startLine, endLine, tr.TotalLines, FormatSize(DefaultMaxBytes), snap.fullOutputPath)
+						text += fmt.Sprintf("\n\n[Showing lines %d-%d of %d (%s limit). %s]", startLine, endLine, tr.TotalLines, FormatSize(DefaultMaxBytes), fullOutput)
 					}
 				}
 				return text, details
@@ -1127,8 +1129,12 @@ func createShellTool(cwd string, config shellToolConfig, options *BashToolOption
 				ExitCode:        *exitCode,
 				WallTimeSeconds: wallTimeSeconds,
 			}
-			if fullTruncated {
-				structured.FullOutputPath = snap.fullOutputPath
+			if file := snap.fullOutputFile; fullTruncated && file != nil {
+				if file.saved() {
+					structured.FullOutputPath = file.path
+				} else {
+					structured.FullOutputError = file.err.Error()
+				}
 			}
 			// Upstream 8562bcf66: a non-zero exit is an error result, not a
 			// thrown error, so it keeps its details and structured content. pi's
@@ -1161,7 +1167,11 @@ type BashToolOutput struct {
 	Truncated bool `json:"truncated"`
 	// FullOutputPath is the temp file with the full output, set only when
 	// Output is truncated.
-	FullOutputPath  string  `json:"full_output_path,omitempty"`
+	FullOutputPath string `json:"full_output_path,omitempty"`
+	// FullOutputError is why the full output could not be saved to a temp
+	// file, set only when Output is truncated and saving failed; Output then
+	// holds only the retained tail (upstream 943a99e3c).
+	FullOutputError string  `json:"full_output_error,omitempty"`
 	ExitCode        int     `json:"exit_code"`
 	WallTimeSeconds float64 `json:"wall_time_seconds"`
 }
@@ -1179,6 +1189,7 @@ func bashOutputSchema() *ai.Schema {
 		ai.Prop("output", ai.String("Combined stdout and stderr, possibly truncated")),
 		ai.Prop("truncated", ai.Boolean()),
 		ai.Opt("full_output_path", ai.String("Full output, when truncated")),
+		ai.Opt("full_output_error", ai.String("Why the full output could not be saved, when truncated and saving failed")),
 		ai.Prop("exit_code", ai.Number()),
 		ai.Prop("wall_time_seconds", ai.Number()),
 	)
@@ -1313,9 +1324,20 @@ func argFloat(params map[string]any, key string) (float64, bool) {
 // ---------------------------------------------------------------------------
 
 type outputSnapshot struct {
-	content        string
-	truncation     TruncationResult
-	fullOutputPath string
+	content    string
+	truncation TruncationResult
+	// fullOutputFile is set once the full output goes to a file. While output
+	// streams in, saved means the file is being written.
+	fullOutputFile *outputFileResult
+}
+
+// savedPath is the snapshot's full output file, unless it could not be saved
+// (pi savedPath).
+func (s outputSnapshot) savedPath() string {
+	if s.fullOutputFile != nil && s.fullOutputFile.saved() {
+		return s.fullOutputFile.path
+	}
+	return ""
 }
 
 // outputAccumulator incrementally tracks streaming output with bounded memory:
@@ -1340,11 +1362,7 @@ type outputAccumulator struct {
 	hasOpenLine           bool
 	finished              bool
 
-	tempFilePath string
-	tempFile     *os.File
-	// tempFileErr is the first error creating, writing or closing the temp
-	// file. Nothing is written after it, and closeTempFile returns it.
-	tempFileErr error
+	tempFile *outputFileStream
 }
 
 func newOutputAccumulator(maxLines, maxBytes int, prefix string) *outputAccumulator {
@@ -1377,8 +1395,7 @@ func (a *outputAccumulator) append(data []byte) {
 	a.totalRawBytes += len(data)
 	a.appendDecodedText(a.decoder.Decode(data))
 	if a.tempFile != nil || a.shouldUseTempFile() {
-		a.ensureTempFile()
-		a.writeTempFile(data)
+		a.ensureTempFile().write(data)
 	} else {
 		// Copy: os/exec reuses the write buffer.
 		a.rawChunks = append(a.rawChunks, append([]byte(nil), data...))
@@ -1479,20 +1496,23 @@ func (a *outputAccumulator) snapshot(persistIfTruncated bool) outputSnapshot {
 	if persistIfTruncated && truncated {
 		a.ensureTempFile()
 	}
-	return outputSnapshot{content: tr.Content, truncation: tr, fullOutputPath: a.tempFilePath}
+	return outputSnapshot{content: tr.Content, truncation: tr, fullOutputFile: a.fullOutputFile()}
 }
 
-// closeTempFile closes the temp file and returns the first error creating,
-// writing or closing it, as pi's closeTempFile rejects with its write stream's
-// error.
-func (a *outputAccumulator) closeTempFile() error {
-	if a.tempFile != nil {
-		if err := a.tempFile.Close(); err != nil && a.tempFileErr == nil {
-			a.tempFileErr = err
-		}
-		a.tempFile = nil
+func (a *outputAccumulator) fullOutputFile() *outputFileResult {
+	if a.tempFile == nil {
+		return nil
 	}
-	return a.tempFileErr
+	r := a.tempFile.result()
+	return &r
+}
+
+// closeTempFile flushes and closes the temp file. A failed file shows up as
+// failed in later snapshots (upstream 943a99e3c).
+func (a *outputAccumulator) closeTempFile() {
+	if a.tempFile != nil {
+		a.tempFile.close()
+	}
 }
 
 // readFullOutput is the complete output, for callers that can take more than
@@ -1501,12 +1521,18 @@ func (a *outputAccumulator) closeTempFile() error {
 // first and last maxBytes/2 bytes around an omission marker. Each part is
 // decoded as pi's TextDecoder decodes it: the head in stream mode, so a
 // character the cut splits is dropped, and the tail after the continuation
-// bytes the cut left at its start.
+// bytes the cut left at its start. When the temp file could not be saved, only
+// the retained tail is left, behind the same marker.
 func (a *outputAccumulator) readFullOutput(maxBytes int) (content string, truncated bool, err error) {
-	if a.tempFilePath == "" {
+	file := a.fullOutputFile()
+	if file == nil {
 		return jstext.DecodeText(bytes.Join(a.rawChunks, nil)), false, nil
 	}
-	f, err := os.Open(a.tempFilePath)
+	if !file.saved() {
+		tail := a.snapshotText()
+		return fmt.Sprintf("[... %d bytes omitted ...]\n\n%s", a.totalDecodedBytes-len(tail), tail), true, nil
+	}
+	f, err := os.Open(file.path)
 	if err != nil {
 		return "", false, err
 	}
@@ -1549,31 +1575,16 @@ func (a *outputAccumulator) shouldUseTempFile() bool {
 	return a.totalRawBytes > a.maxBytes || a.totalDecodedBytes > a.maxBytes || a.totalLines > a.maxLines
 }
 
-func (a *outputAccumulator) ensureTempFile() {
-	if a.tempFilePath != "" {
-		return
+func (a *outputAccumulator) ensureTempFile() *outputFileStream {
+	if a.tempFile != nil {
+		return a.tempFile
 	}
-	path, f, err := createOutputFile(a.prefix, ".log")
-	a.tempFilePath = path
-	if err != nil {
-		a.tempFileErr = err
-		return
-	}
-	a.tempFile = f
+	a.tempFile = createOutputFileStream(a.prefix, ".log")
 	for _, chunk := range a.rawChunks {
-		a.writeTempFile(chunk)
+		a.tempFile.write(chunk)
 	}
 	a.rawChunks = nil
-}
-
-// writeTempFile writes data to the temp file until a write fails.
-func (a *outputAccumulator) writeTempFile(data []byte) {
-	if a.tempFile == nil || a.tempFileErr != nil {
-		return
-	}
-	if _, err := a.tempFile.Write(data); err != nil {
-		a.tempFileErr = err
-	}
+	return a.tempFile
 }
 
 // bashUpdater throttles partial onUpdate emits (leading + trailing edge) and
@@ -1611,8 +1622,8 @@ func (u *bashUpdater) emitLocked() {
 	if snap.truncation.Truncated {
 		details["truncation"] = snap.truncation
 	}
-	if snap.fullOutputPath != "" {
-		details["fullOutputPath"] = snap.fullOutputPath
+	if path := snap.savedPath(); path != "" {
+		details["fullOutputPath"] = path
 	}
 	u.onUpdate(agent.AgentToolResult{Content: ai.ContentList{ai.TextContent{Text: snap.content}}, Details: details})
 }
@@ -1646,16 +1657,16 @@ func (u *bashUpdater) clearTimerLocked() {
 }
 
 // finish flushes the trailing-edge update, finalizes the accumulator, and
-// returns the final snapshot (port of bash.ts finishOutput).
-func (u *bashUpdater) finish() (outputSnapshot, error) {
+// returns the final snapshot (port of bash.ts finishOutput). The snapshot is
+// taken after the temp file is closed: closing it can still fail.
+func (u *bashUpdater) finish() outputSnapshot {
 	u.mu.Lock()
 	defer u.mu.Unlock()
 	u.acc.finish()
 	u.clearTimerLocked()
 	u.emitLocked()
-	snap := u.acc.snapshot(true)
-	err := u.acc.closeTempFile()
-	return snap, err
+	u.acc.closeTempFile()
+	return u.acc.snapshot(true)
 }
 
 // ---------------------------------------------------------------------------

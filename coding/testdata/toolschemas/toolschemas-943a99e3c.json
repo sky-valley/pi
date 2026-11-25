@@ -1,5 +1,5 @@
 {
-	"piCodingAgentVersion": "1.6.0",
+	"piCodingAgentVersion": "src 943a99e3c",
 	"rows": [
 		{
 			"name": "read",
@@ -92,6 +92,10 @@
 					"full_output_path": {
 						"type": "string",
 						"description": "Full output, when truncated"
+					},
+					"full_output_error": {
+						"type": "string",
+						"description": "Why the full output could not be saved, when truncated and saving failed"
 					},
 					"exit_code": {
 						"type": "number"
@@ -274,6 +278,10 @@
 					"full_output_path": {
 						"type": "string",
 						"description": "Full output, when truncated"
+					},
+					"full_output_error": {
+						"type": "string",
+						"description": "Why the full output could not be saved, when truncated and saving failed"
 					},
 					"exit_code": {
 						"type": "number"

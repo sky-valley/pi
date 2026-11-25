@@ -7,11 +7,12 @@
 //   node --experimental-strip-types capture.mjs <src extraction named by sha> <out.json>
 //   e.g. ... capture.mjs <dir>/282b01c80 toolschemas-282b01c80.json
 //
-// toolschemas-1.6.0.json is the 1.6.0 build's capture, the first build that
-// ships 282b01c80 (find's `pattern` and grep's `glob` descriptions). It
-// matches the earlier src capture at 282b01c80 (over the 1.5.2 build's
-// node_modules) but for the version label; that capture's control, src at
-// 282b01c80^1, wrote toolschemas-6bf2ab9bb.json's rows byte for byte.
+// toolschemas-943a99e3c.json is a src capture at 943a99e3c over the 1.6.0
+// build's node_modules: bash's and powershell's output schemas gain
+// `full_output_error`. Its control, src at the parent 713563870, wrote the
+// 1.6.0 build's capture (toolschemas-1.6.0.json, the first build that ships
+// 282b01c80's find `pattern` and grep `glob` descriptions) but for the
+// version label. Re-verify against the first build that ships 943a99e3c.
 //
 // Each row is createToolDefinition(name, cwd) from the published build, with
 // its parameters, and its outputSchema when it declares one, serialized by

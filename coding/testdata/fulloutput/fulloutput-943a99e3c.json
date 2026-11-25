@@ -1,6 +1,6 @@
 {
-	"sha": "3dd803d7e",
-	"node": "v26.4.0",
+	"sha": "943a99e3c",
+	"node": "v22.23.5",
 	"rows": [
 		{
 			"name": "small output, no temp file",
@@ -21,6 +21,7 @@
 				"tempFile": false,
 				"tempFileBeforeFinish": false
 			},
+			"file": null,
 			"full": {
 				"content": "hello\nworld",
 				"truncated": false
@@ -42,6 +43,7 @@
 				"tempFile": false,
 				"tempFileBeforeFinish": false
 			},
+			"file": null,
 			"full": {
 				"content": "",
 				"truncated": false
@@ -65,6 +67,7 @@
 				"tempFile": false,
 				"tempFileBeforeFinish": false
 			},
+			"file": null,
 			"full": {
 				"content": "a\n",
 				"truncated": false
@@ -88,6 +91,7 @@
 				"tempFile": false,
 				"tempFileBeforeFinish": false
 			},
+			"file": null,
 			"full": {
 				"content": "a�b�",
 				"truncated": false
@@ -112,6 +116,7 @@
 				"tempFile": false,
 				"tempFileBeforeFinish": false
 			},
+			"file": null,
 			"full": {
 				"content": "a€b",
 				"truncated": false
@@ -137,6 +142,7 @@
 				"tempFile": true,
 				"tempFileBeforeFinish": true
 			},
+			"file": "saved",
 			"full": {
 				"content": "1\n2\n3\n",
 				"truncated": false
@@ -162,6 +168,7 @@
 				"tempFile": true,
 				"tempFileBeforeFinish": true
 			},
+			"file": "saved",
 			"full": {
 				"content": "01234\n\n[... 10 bytes omitted ...]\n\nFGHIJ",
 				"truncated": true
@@ -187,6 +194,7 @@
 				"tempFile": true,
 				"tempFileBeforeFinish": true
 			},
+			"file": "saved",
 			"full": {
 				"content": "abcd\n\n[... 13 bytes omitted ...]\n\n1234",
 				"truncated": true
@@ -211,6 +219,7 @@
 				"tempFile": true,
 				"tempFileBeforeFinish": true
 			},
+			"file": "saved",
 			"full": {
 				"content": "he\n\n[... 10 bytes omitted ...]\n\ntail!",
 				"truncated": true
@@ -235,6 +244,7 @@
 				"tempFile": true,
 				"tempFileBeforeFinish": true
 			},
+			"file": "saved",
 			"full": {
 				"content": "AAAAA\n\n[... 5 bytes omitted ...]\n\nzz",
 				"truncated": true
@@ -259,6 +269,7 @@
 				"tempFile": true,
 				"tempFileBeforeFinish": true
 			},
+			"file": "saved",
 			"full": {
 				"content": "abc��\n\n[... 5 bytes omitted ...]\n\nxxxxx",
 				"truncated": true
@@ -283,6 +294,7 @@
 				"tempFile": true,
 				"tempFileBeforeFinish": true
 			},
+			"file": "saved",
 			"full": {
 				"content": "yyyyy\n\n[... 5 bytes omitted ...]\n\nabc�",
 				"truncated": true
@@ -307,6 +319,7 @@
 				"tempFile": true,
 				"tempFileBeforeFinish": true
 			},
+			"file": "saved",
 			"full": {
 				"content": "abcde\n\n[... 10 bytes omitted ...]\n\npqrstu",
 				"truncated": true
@@ -331,6 +344,7 @@
 				"tempFile": true,
 				"tempFileBeforeFinish": true
 			},
+			"file": "saved",
 			"full": {
 				"content": "01234\n\n[... 5 bytes omitted ...]\n\n",
 				"truncated": true
@@ -355,6 +369,7 @@
 				"tempFile": false,
 				"tempFileBeforeFinish": false
 			},
+			"file": null,
 			"full": {
 				"content": "a�b�",
 				"truncated": false
@@ -378,6 +393,7 @@
 				"tempFile": false,
 				"tempFileBeforeFinish": false
 			},
+			"file": null,
 			"full": {
 				"content": "hi\n",
 				"truncated": false
@@ -402,6 +418,7 @@
 				"tempFile": true,
 				"tempFileBeforeFinish": true
 			},
+			"file": "saved",
 			"full": {
 				"content": "���",
 				"truncated": false
@@ -426,9 +443,141 @@
 				"tempFile": true,
 				"tempFileBeforeFinish": true
 			},
+			"file": "saved",
 			"full": {
 				"content": "abcde",
 				"truncated": false
+			}
+		},
+		{
+			"name": "unsaved: all output still in memory",
+			"chunks": [
+				"310a320a330a"
+			],
+			"maxLines": 2,
+			"maxBytes": 1000,
+			"readMax": 1000,
+			"unsaved": true,
+			"snapshot": {
+				"content": "2\n3",
+				"truncated": true,
+				"truncatedBy": "lines",
+				"totalLines": 3,
+				"totalBytes": 6,
+				"outputLines": 2,
+				"outputBytes": 3,
+				"lastLinePartial": false,
+				"tempFile": true,
+				"tempFileBeforeFinish": true
+			},
+			"file": "failed",
+			"full": {
+				"content": "[... 0 bytes omitted ...]\n\n1\n2\n3\n",
+				"truncated": true
+			}
+		},
+		{
+			"name": "unsaved: output past the rolling tail",
+			"chunks": [
+				"6c696e65310a6c696e65320a6c696e65330a6c696e65340a6c696e65350a6c696e65360a"
+			],
+			"maxBytes": 5,
+			"readMax": 1048576,
+			"unsaved": true,
+			"snapshot": {
+				"content": "line6",
+				"truncated": true,
+				"truncatedBy": "lines",
+				"totalLines": 6,
+				"totalBytes": 36,
+				"outputLines": 1,
+				"outputBytes": 5,
+				"lastLinePartial": false,
+				"tempFile": true,
+				"tempFileBeforeFinish": true
+			},
+			"file": "failed",
+			"full": {
+				"content": "[... 30 bytes omitted ...]\n\nline6\n",
+				"truncated": true
+			}
+		},
+		{
+			"name": "unsaved: one over-long line",
+			"chunks": [
+				"787878787878787878787878787878787878787878787878787878787878787878787878787878780a"
+			],
+			"maxBytes": 5,
+			"readMax": 1048576,
+			"unsaved": true,
+			"snapshot": {
+				"content": "xxxxx",
+				"truncated": true,
+				"truncatedBy": "bytes",
+				"totalLines": 1,
+				"totalBytes": 41,
+				"outputLines": 1,
+				"outputBytes": 5,
+				"lastLinePartial": true,
+				"tempFile": true,
+				"tempFileBeforeFinish": true
+			},
+			"file": "failed",
+			"full": {
+				"content": "[... 41 bytes omitted ...]\n\n",
+				"truncated": true
+			}
+		},
+		{
+			"name": "unsaved: readMax cuts a character",
+			"chunks": [
+				"303132333435363738390ae282ace282ace282ac0a"
+			],
+			"maxBytes": 8,
+			"readMax": 5,
+			"unsaved": true,
+			"snapshot": {
+				"content": "€€",
+				"truncated": true,
+				"truncatedBy": "bytes",
+				"totalLines": 2,
+				"totalBytes": 21,
+				"outputLines": 1,
+				"outputBytes": 6,
+				"lastLinePartial": true,
+				"tempFile": true,
+				"tempFileBeforeFinish": true
+			},
+			"file": "failed",
+			"full": {
+				"content": "[... 0 bytes omitted ...]\n\n0123456789\n€€€\n",
+				"truncated": true
+			}
+		},
+		{
+			"name": "unsaved: invalid bytes",
+			"chunks": [
+				"ffffffffffffffffffff"
+			],
+			"maxBytes": 5,
+			"readMax": 1048576,
+			"unsaved": true,
+			"snapshot": {
+				"content": "�",
+				"truncated": true,
+				"truncatedBy": "bytes",
+				"totalLines": 1,
+				"totalBytes": 30,
+				"outputLines": 1,
+				"outputBytes": 3,
+				"lastLinePartial": true,
+				"tempFile": true,
+				"tempFileBeforeFinish": true
+			},
+			"file": "failed",
+			"full": {
+				"content": "[... 21 bytes omitted ...]\n\n���",
+				"truncated": true
 			}
 		}
 	]

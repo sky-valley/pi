@@ -494,24 +494,14 @@ func unmarshalSessionMessage(raw json.RawMessage) (ai.Message, bool) {
 	}
 	switch head.Role {
 	case "bashExecution":
-		var m struct {
-			Command            string `json:"command"`
-			Output             string `json:"output"`
-			ExitCode           *int   `json:"exitCode"`
-			Cancelled          bool   `json:"cancelled"`
-			Truncated          bool   `json:"truncated"`
-			FullOutputPath     string `json:"fullOutputPath"`
-			Timestamp          int64  `json:"timestamp"`
-			ExcludeFromContext bool   `json:"excludeFromContext"`
-		}
+		var m bashExecutionMessage
 		if json.Unmarshal(raw, &m) != nil {
 			return nil, false
 		}
 		if m.ExcludeFromContext {
 			return nil, false
 		}
-		text := bashExecutionToText(m.Command, m.Output, m.ExitCode, m.Cancelled, m.Truncated, m.FullOutputPath)
-		return ai.UserMessage{Content: ai.ContentList{ai.TextContent{Text: text}}, Timestamp: m.Timestamp}, true
+		return ai.UserMessage{Content: ai.ContentList{ai.TextContent{Text: bashExecutionToText(m)}}, Timestamp: m.Timestamp}, true
 	case "custom":
 		var m struct {
 			Content   json.RawMessage `json:"content"`
@@ -548,24 +538,52 @@ func unmarshalSessionMessage(raw json.RawMessage) (ai.Message, bool) {
 	}
 }
 
-// bashExecutionToText ports pi's bashExecutionToText (messages.ts:148-167):
-// the user-facing text a bashExecution message renders to in LLM context.
-func bashExecutionToText(command, output string, exitCode *int, cancelled, truncated bool, fullOutputPath string) string {
-	text := "Ran `" + command + "`\n"
-	if output != "" {
-		text += "```\n" + output + "\n```"
+// bashExecutionMessage is pi's BashExecutionMessage (messages.ts): a user "!"
+// command recorded in the session.
+type bashExecutionMessage struct {
+	Command        string `json:"command"`
+	Output         string `json:"output"`
+	ExitCode       *int   `json:"exitCode"`
+	Cancelled      bool   `json:"cancelled"`
+	Truncated      bool   `json:"truncated"`
+	FullOutputPath string `json:"fullOutputPath"`
+	// FullOutputError is why the full output could not be saved, when it was
+	// truncated (upstream 943a99e3c).
+	FullOutputError    string `json:"fullOutputError"`
+	Timestamp          int64  `json:"timestamp"`
+	ExcludeFromContext bool   `json:"excludeFromContext"`
+}
+
+// bashExecutionToText ports pi's bashExecutionToText (messages.ts): the
+// user-facing text a bashExecution message renders to in LLM context.
+func bashExecutionToText(m bashExecutionMessage) string {
+	text := "Ran `" + m.Command + "`\n"
+	if m.Output != "" {
+		text += "```\n" + m.Output + "\n```"
 	} else {
 		text += "(no output)"
 	}
-	if cancelled {
+	if m.Cancelled {
 		text += "\n\n(command cancelled)"
-	} else if exitCode != nil && *exitCode != 0 {
-		text += fmt.Sprintf("\n\nCommand exited with code %d", *exitCode)
+	} else if m.ExitCode != nil && *m.ExitCode != 0 {
+		text += fmt.Sprintf("\n\nCommand exited with code %d", *m.ExitCode)
 	}
-	if truncated && fullOutputPath != "" {
-		text += "\n\n[Output truncated. Full output: " + fullOutputPath + "]"
+	if m.Truncated {
+		text += "\n\n[" + bashTruncationNote(m) + "]"
 	}
 	return text
+}
+
+// bashTruncationNote is what a truncated bash execution says about its full
+// output: where it is, or why it could not be saved (upstream 943a99e3c).
+func bashTruncationNote(m bashExecutionMessage) string {
+	if m.FullOutputPath != "" {
+		return "Output truncated. Full output: " + m.FullOutputPath
+	}
+	if m.FullOutputError != "" {
+		return "Output truncated. Could not save the full output: " + m.FullOutputError
+	}
+	return "Output truncated"
 }
 
 // parseCustomContent decodes a custom_message content field (string or block array).

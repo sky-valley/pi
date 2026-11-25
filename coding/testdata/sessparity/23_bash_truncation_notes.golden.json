@@ -1,0 +1,40 @@
+{
+  "thinkingLevel": "off",
+  "model": null,
+  "messages": [
+    {
+      "role": "user",
+      "text": "Ran `seq 3000`\n```\n2999\n3000\n```\n\n[Output truncated. Full output: /tmp/pi-bash-abc.log]"
+    },
+    {
+      "role": "user",
+      "text": "Ran `seq 3000`\n```\n2999\n3000\n```\n\n[Output truncated. Could not save the full output: ENOSPC: no space left on device, write]"
+    },
+    {
+      "role": "user",
+      "text": "Ran `x`\n```\ntail\n```\n\n[Output truncated]"
+    },
+    {
+      "role": "user",
+      "text": "Ran `y`\n```\nshort\n```\n\nCommand exited with code 1"
+    }
+  ],
+  "entries": [
+    {
+      "id": "t1",
+      "messages": 1
+    },
+    {
+      "id": "t2",
+      "messages": 1
+    },
+    {
+      "id": "t3",
+      "messages": 1
+    },
+    {
+      "id": "t4",
+      "messages": 1
+    }
+  ]
+}

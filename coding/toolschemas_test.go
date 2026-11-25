@@ -9,13 +9,13 @@ import (
 
 // TestBuiltinToolSchemasMatchPi compares every built-in tool's parameter and
 // output schemas with pi's, byte for byte (testdata/toolschemas, captured from
-// createToolDefinition on src at 282b01c80; the 1.5.2 build writes the same
-// rows but find's older `pattern` and grep's older `glob` descriptions). The
+// createToolDefinition on src at 943a99e3c; the 1.6.0 build writes the same
+// rows but the shells' `full_output_error`). The
 // parameters reach every request's tool declarations, so key order and types are model-visible; the
 // output schema describes the structured content programmatic callers such as
 // codemode scripts get, and a tool without one declares none.
 func TestBuiltinToolSchemasMatchPi(t *testing.T) {
-	raw, err := os.ReadFile("testdata/toolschemas/toolschemas-1.6.0.json")
+	raw, err := os.ReadFile("testdata/toolschemas/toolschemas-943a99e3c.json")
 	if err != nil {
 		t.Fatal(err)
 	}

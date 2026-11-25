@@ -2,6 +2,7 @@ package coding
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -408,34 +409,59 @@ func TestBashStructuredContentUpTo1MiB(t *testing.T) {
 	}
 }
 
-// When the full output cannot be saved, the shell tool fails the call with the
-// cause and how to fix it, and that error comes first: pi's finishOutput
-// awaits closeTempFile before it looks at an abort or a timeout (D90).
-func TestBashFailsWhenTheFullOutputCannotBeSaved(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip("uses seq")
-	}
+// pi 943a99e3c (#10585) output-file-failures.test.ts 'bash tool › keeps the
+// output tail when the temp file open fails': a temp file that cannot be saved
+// does not fail the call. The result keeps the in-memory tail, its truncation
+// note says why the full output is missing, there is no full_output_path, and
+// full_output_error carries the cause. A timeout still reports the timeout.
+func TestBashKeepsTheOutputTailWhenTheFullOutputCannotBeSaved(t *testing.T) {
 	t.Setenv("TMPDIR", filepath.Join(t.TempDir(), "missing"))
 	dir := t.TempDir()
-	for _, tc := range []struct{ name, command string }{
-		{"the command succeeds", "seq 1 3000"},
-		{"the command times out", "seq 1 3000; sleep 5"},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			params := map[string]any{"command": tc.command}
-			if strings.Contains(tc.command, "sleep") {
-				params["timeout"] = 1
-			}
-			_, err := run(t, bashTool(dir, nil), params)
-			if err == nil {
-				t.Fatal("the call succeeded; it should fail when the full output cannot be saved")
-			}
-			for _, want := range []string{"could not save the full command output", "no such file or directory", "point TMPDIR"} {
-				if !strings.Contains(err.Error(), want) {
-					t.Errorf("error %q does not say %q", err, want)
-				}
-			}
-		})
+	ops := BashOperations{Exec: func(ctx context.Context, command, cwd string, opts BashExecOptions) (*int, error) {
+		for i := 1; i <= 3000; i++ {
+			opts.OnData([]byte(intToStr(i) + "\n"))
+		}
+		if command == "timeout" {
+			return nil, &ShellTimeoutError{Seconds: 1}
+		}
+		code := 0
+		return &code, nil
+	}}
+	tool := createShellTool(dir, bashToolConfig, &BashToolOptions{Operations: &ops}, nil)
+
+	res, err := run(t, tool, map[string]any{"command": "seq 3000"})
+	if err != nil {
+		t.Fatalf("the call failed: %v", err)
+	}
+	text := res.Content[0].(ai.TextContent).Text
+	if !strings.Contains(text, "\n2999\n3000\n") {
+		t.Errorf("the tail is missing: %q", text[max(0, len(text)-200):])
+	}
+	if !regexp.MustCompile(`\[Showing lines \d+-3000 of 3000\. Could not save the full output: .*no such file or directory\]$`).MatchString(text) {
+		t.Errorf("truncation note = %q", text[max(0, len(text)-200):])
+	}
+	details := res.Details.(map[string]any)
+	if _, ok := details["fullOutputPath"]; ok {
+		t.Errorf("details.fullOutputPath = %v, want none", details["fullOutputPath"])
+	}
+	raw, _ := json.Marshal(res.StructuredContent)
+	var structured map[string]any
+	json.Unmarshal(raw, &structured)
+	if structured["truncated"] != true || structured["full_output_path"] != nil {
+		t.Errorf("structured = truncated %v, full_output_path %v", structured["truncated"], structured["full_output_path"])
+	}
+	if e, _ := structured["full_output_error"].(string); !strings.Contains(e, "no such file or directory") {
+		t.Errorf("full_output_error = %q", e)
+	}
+	output, _ := structured["output"].(string)
+	if !regexp.MustCompile(`^\[\.\.\. \d+ bytes omitted \.\.\.\]\n\n`).MatchString(output) || !strings.HasSuffix(output, "2999\n3000\n") {
+		t.Errorf("structured output = %q...", output[:min(80, len(output))])
+	}
+
+	_, err = run(t, tool, map[string]any{"command": "timeout"})
+	if err == nil || !strings.Contains(err.Error(), ". Could not save the full output: ") ||
+		!strings.HasSuffix(err.Error(), "]\n\nCommand timed out after 1 seconds") {
+		t.Errorf("timeout error = %v", err)
 	}
 }
 
@@ -658,17 +684,17 @@ func TestOutputAccumulatorBoundedMemory(t *testing.T) {
 		t.Fatalf("snapshot missing final line %d: %q", line, snap.content)
 	}
 	// Temp file holds the complete stream.
-	data, err := os.ReadFile(snap.fullOutputPath)
+	data, err := os.ReadFile(snap.savedPath())
 	if err != nil {
 		t.Fatal(err)
 	}
 	if string(data) != written.String() {
 		t.Fatalf("temp file does not hold full output: %d vs %d bytes", len(data), written.Len())
 	}
-	if !strings.HasPrefix(filepath.Base(snap.fullOutputPath), "pi-test-") {
-		t.Fatalf("temp file prefix wrong: %q", snap.fullOutputPath)
+	if !strings.HasPrefix(filepath.Base(snap.savedPath()), "pi-test-") {
+		t.Fatalf("temp file prefix wrong: %q", snap.savedPath())
 	}
-	os.Remove(snap.fullOutputPath)
+	os.Remove(snap.savedPath())
 }
 
 func TestOutputAccumulatorSmallOutputUnchanged(t *testing.T) {
@@ -683,8 +709,8 @@ func TestOutputAccumulatorSmallOutputUnchanged(t *testing.T) {
 	if snap.content != "hello world\n" {
 		t.Fatalf("content: %q", snap.content)
 	}
-	if snap.fullOutputPath != "" {
-		t.Fatalf("no temp file expected for small output, got %q", snap.fullOutputPath)
+	if snap.savedPath() != "" {
+		t.Fatalf("no temp file expected for small output, got %q", snap.savedPath())
 	}
 	if acc.getLastLineBytes() != 0 {
 		t.Fatalf("closed last line should be 0 bytes open, got %d", acc.getLastLineBytes())
