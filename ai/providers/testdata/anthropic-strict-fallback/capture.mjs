@@ -13,7 +13,8 @@
 // The rows replay upstream's anthropic-strict-tool-fallback.test.ts: its model,
 // tools and responses (served through options.fetch, one per request, the last
 // repeating), with maxRetries 0. Each row records what it ran with, every
-// request body, how often onPayload and onResponse ran, the stream's event
+// request body, how often onPayload ran, the status of every onResponse call
+// (each attempt's, error responses included, since 8a57d42a5), the stream's event
 // types, and the reply's stopReason, errorMessage and diagnostics (timestamps
 // written as 0).
 //
@@ -115,14 +116,14 @@ async function row(name, m, messages, responses, opts = {}) {
 		return new Response(r.body, { status: r.status, headers: { "content-type": r.contentType } });
 	};
 	let onPayloadCalls = 0;
-	let onResponseCalls = 0;
+	const onResponseStatuses = [];
 	const options = {
 		apiKey: opts.apiKey ?? "test-key",
 		fetch,
 		maxRetries: 0,
 		signal: controller.signal,
-		onResponse: () => {
-			onResponseCalls++;
+		onResponse: (response) => {
+			onResponseStatuses.push(response.status);
 		},
 		onPayload: (payload) => {
 			onPayloadCalls++;
@@ -150,7 +151,7 @@ async function row(name, m, messages, responses, opts = {}) {
 		});
 	}
 	cleanupSessionResources();
-	rows.push({ name, model: m, messages, responses, options: opts, payloads, onPayloadCalls, onResponseCalls, results });
+	rows.push({ name, model: m, messages, responses, options: opts, payloads, onPayloadCalls, onResponseStatuses, results });
 }
 
 const system = (tools) => ({ role: "system", content: "", toolsAdded: tools, timestamp: 0 });

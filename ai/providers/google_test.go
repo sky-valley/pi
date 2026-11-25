@@ -986,19 +986,24 @@ func TestGoogleOnPayloadErrorFailsStream(t *testing.T) {
 	}
 }
 
-// TestGoogleNeverCallsOnResponse: pi's google-generative-ai adapter hands the
-// request to the @google/genai client and never calls onResponse (no call in
-// google-generative-ai.ts at 8676a0dcd), so a hook that would fail the stream
-// is never reached, on success or on an HTTP error.
-func TestGoogleNeverCallsOnResponse(t *testing.T) {
+// TestGoogleReportsOnlyFailedAttemptsToOnResponse: pi's google-generative-ai
+// adapter hands the request to the @google/genai client and never reports a
+// successful response, but since upstream 8a57d42a5 retryGoogleRequest hands
+// each failed attempt to onResponse with its status and no headers
+// (@google/genai's ApiError has none), and a throw from it fails the stream
+// with its message.
+func TestGoogleReportsOnlyFailedAttemptsToOnResponse(t *testing.T) {
 	for _, tc := range []struct {
-		name   string
-		status int
-		body   string
-		want   ai.StopReason
+		name    string
+		status  int
+		body    string
+		want    ai.StopReason
+		calls   []ai.ProviderResponse
+		message string
 	}{
-		{"success", http.StatusOK, googleSSE, ai.StopToolUse},
-		{"http error", http.StatusBadRequest, `{"error":{"code":400,"message":"bad","status":"INVALID_ARGUMENT"}}`, ai.StopError},
+		{"success", http.StatusOK, googleSSE, ai.StopToolUse, nil, ""},
+		{"http error", http.StatusBadRequest, `{"error":{"code":400,"message":"bad","status":"INVALID_ARGUMENT"}}`, ai.StopError,
+			[]ai.ProviderResponse{{Status: http.StatusBadRequest, Headers: map[string]string{}}}, "response veto"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1008,21 +1013,24 @@ func TestGoogleNeverCallsOnResponse(t *testing.T) {
 			}))
 			defer server.Close()
 			model := &ai.Model{ID: "gemini-2.5-flash", Api: ai.APIGoogleGenerativeAI, Provider: "google", BaseURL: server.URL}
-			calls := 0
+			var calls []ai.ProviderResponse
 			opts := &GoogleOptions{StreamOptions: ai.StreamOptions{ProviderRequestOptions: ai.ProviderRequestOptions{
 				APIKey: "k",
-				OnResponse: func(ai.ProviderResponse, *ai.Model) error {
-					calls++
+				OnResponse: func(resp ai.ProviderResponse, _ *ai.Model) error {
+					calls = append(calls, resp)
 					return errors.New("response veto")
 				},
 			}}}
 			req := ai.Context{Messages: []ai.Message{ai.NewUserText("hi", 1)}}
 			final := StreamGoogle(context.Background(), model, ai.NormalizeContext(req), opts).Result()
-			if calls != 0 {
-				t.Fatalf("OnResponse called %d times; pi's google adapter never calls it", calls)
+			if !reflect.DeepEqual(calls, tc.calls) {
+				t.Fatalf("OnResponse got %+v, pi %+v", calls, tc.calls)
 			}
 			if final.StopReason != tc.want {
 				t.Fatalf("stop reason %s (%s), want %s", final.StopReason, final.ErrorMessage, tc.want)
+			}
+			if tc.message != "" && final.ErrorMessage != tc.message {
+				t.Fatalf("errorMessage %q, want %q", final.ErrorMessage, tc.message)
 			}
 		})
 	}

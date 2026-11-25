@@ -17,7 +17,7 @@ import (
 // replaying upstream's anthropic-strict-tool-fallback.test.ts. The session rows
 // are upstream 45344bd3a's; at its parent, and in the pi-ai 1.5.0 build, every
 // other row reproduces the file this one supersedes (strict-fallback-1.3.0.json).
-const anthropicStrictFallbackCaptureFile = "testdata/anthropic-strict-fallback/strict-fallback-ea1cfcc4c.json"
+const anthropicStrictFallbackCaptureFile = "testdata/anthropic-strict-fallback/strict-fallback-8a57d42a5.json"
 
 // When Anthropic rejects strict tools for its own limits — a 400
 // invalid_request_error saying the compiled grammar is too large, or there are
@@ -61,10 +61,10 @@ func TestAnthropicStrictToolFallbackMatchesPi(t *testing.T) {
 				SessionIDs     []string          `json:"sessionIds"`
 				CleanupBefore  map[string]string `json:"cleanupBefore"`
 			} `json:"options"`
-			Payloads        []json.RawMessage `json:"payloads"`
-			OnPayloadCalls  int               `json:"onPayloadCalls"`
-			OnResponseCalls int               `json:"onResponseCalls"`
-			Results         []result          `json:"results"`
+			Payloads           []json.RawMessage `json:"payloads"`
+			OnPayloadCalls     int               `json:"onPayloadCalls"`
+			OnResponseStatuses []int             `json:"onResponseStatuses"`
+			Results            []result          `json:"results"`
 		} `json:"rows"`
 	}
 	if err := json.Unmarshal(data, &capture); err != nil {
@@ -86,7 +86,7 @@ func TestAnthropicStrictToolFallbackMatchesPi(t *testing.T) {
 			for _, r := range row.Responses {
 				doer.responses = append(doer.responses, wireResponse{status: r.Status, body: r.Body, contentType: r.ContentType})
 			}
-			onPayloadCalls, onResponseCalls := 0, 0
+			onPayloadCalls, onResponseStatuses := 0, []int{}
 			apiKey := row.Options.APIKey
 			if apiKey == "" {
 				apiKey = "test-key"
@@ -96,8 +96,8 @@ func TestAnthropicStrictToolFallbackMatchesPi(t *testing.T) {
 				ProviderRequestOptions: ai.ProviderRequestOptions{
 					APIKey:     apiKey,
 					HTTPClient: doer,
-					OnResponse: func(ai.ProviderResponse, *ai.Model) error {
-						onResponseCalls++
+					OnResponse: func(resp ai.ProviderResponse, _ *ai.Model) error {
+						onResponseStatuses = append(onResponseStatuses, resp.Status)
 						return nil
 					},
 					OnPayload: func(payload any, _ *ai.Model) (any, error) {
@@ -157,9 +157,11 @@ func TestAnthropicStrictToolFallbackMatchesPi(t *testing.T) {
 					t.Errorf("request %d\n%s\npi\n%s", i+1, sent.body, compactJSON(row.Payloads[i]))
 				}
 			}
-			if onPayloadCalls != row.OnPayloadCalls || onResponseCalls != row.OnResponseCalls {
-				t.Errorf("onPayload ran %d times and onResponse %d, pi %d and %d",
-					onPayloadCalls, onResponseCalls, row.OnPayloadCalls, row.OnResponseCalls)
+			// Each attempt's response reaches onResponse, the rejected one
+			// included (upstream 8a57d42a5).
+			if onPayloadCalls != row.OnPayloadCalls || !slices.Equal(onResponseStatuses, row.OnResponseStatuses) {
+				t.Errorf("onPayload ran %d times and onResponse got %v, pi %d and %v",
+					onPayloadCalls, onResponseStatuses, row.OnPayloadCalls, row.OnResponseStatuses)
 			}
 			got, _ := json.Marshal(results)
 			want, _ := json.Marshal(row.Results)

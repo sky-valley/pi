@@ -254,7 +254,10 @@ func streamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Transc
 			}
 			return r, nil
 		}
-		resp, err := sendWithRetry(ctx, build, retryFromOptions(opts.StreamOptions, openaiSDKErrorMessage))
+		retry := retryFromOptions(opts.StreamOptions, openaiSDKErrorMessage)
+		// Each failed attempt reaches onResponse (upstream 8a57d42a5).
+		retry.onErrorResponse = errorResponseReporter(opts.OnResponse, model, flattenResponseHeaders)
+		resp, err := sendWithRetry(ctx, build, retry)
 		if err != nil {
 			fail(openaiFetchError(err))
 			return
@@ -268,12 +271,17 @@ func streamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Transc
 				fail(err)
 				return
 			}
+			if err := retry.reportErrorResponse(resp); err != nil {
+				fail(err)
+				return
+			}
 			fail(formatCompletionsHTTPError(resp.StatusCode, data))
 			return
 		}
-		// pi awaits onResponse once the SDK has a 2xx response — for any other
-		// status the SDK throws before withResponse resolves, so the hook never
-		// runs — and a throw from it fails the stream.
+		// pi awaits onResponse once the SDK has a 2xx response — any other
+		// status the SDK throws on before withResponse resolves, and
+		// retryProviderRequest reports that, as above — and a throw from it
+		// fails the stream.
 		if opts.OnResponse != nil {
 			if err := opts.OnResponse(ai.ProviderResponse{Status: resp.StatusCode, Headers: flattenHeaders(resp.Header)}, model); err != nil {
 				fail(err)

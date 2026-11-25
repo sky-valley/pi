@@ -2,17 +2,19 @@
 // a throw from it does — the oracle behind TestAnthropicOnResponseMatchesPi.
 //
 //   node --experimental-strip-types capture-anthropic-on-response.mts <extraction> <pi npm dir> <out.json> <sha>
-//   e.g. ... capture-anthropic-on-response.mts <dir> ~/.cache/pi-npm/0.87.1 anthropic-on-response-8676a0dcd.json 8676a0dcd
+//   e.g. ... capture-anthropic-on-response.mts <dir> <npm 1.6.0 dir> anthropic-on-response-8a57d42a5.json 8a57d42a5
 //
 // <extraction> holds packages/ai at <sha> (`git archive <sha> packages/ai |
 // tar -x -C <dir>` from the upstream clone), with packages/ai/node_modules
 // resolving pi-ai's dependencies. The npm build's node_modules serves once its
-// copies match what <sha>'s package-lock.json locks; at 8676a0dcd that is
-// @anthropic-ai/sdk 0.124.0, integrity-identical to ~/.cache/pi-npm/0.87.1's.
+// copies match what <sha>'s package-lock.json locks; at 8a57d42a5 that is
+// @anthropic-ai/sdk 0.129.0, the npm 1.6.0 build's.
 // No fake client here: the adapter builds its real SDK client, whose fetch
 // reads a loopback server that writes each row's exact bytes, because it is
-// the SDK that decides whether a non-2xx response ever reaches onResponse (it
-// throws first). The model is the npm build's anthropic/claude-haiku-4-5.
+// the SDK that decides how a non-2xx response reaches onResponse (it throws,
+// and since 8a57d42a5 pi's retryProviderRequest reports the thrown error's
+// status and headers). The model is the npm build's
+// anthropic/claude-haiku-4-5.
 //
 // Each row records the raw response, every onResponse call (status and
 // headers), the type of every pushed event and the final stopReason and
@@ -59,13 +61,14 @@ type Case = { name: string; response: string; throws?: boolean; abortFirst?: boo
 const cases: Case[] = [
 	// A 2xx response reaches onResponse, with pi's headersToRecord record.
 	{ name: "okResponseIsReported", response: ok },
-	// The SDK throws on a non-2xx status before pi can call onResponse.
+	// The SDK throws on a non-2xx status, and since 8a57d42a5 pi's
+	// retryProviderRequest reports the thrown error's status and headers.
 	{
-		name: "clientErrorIsNotReported",
+		name: "clientErrorIsReported",
 		response: response("400 Bad Request", ["Content-Type: application/json", "Request-Id: req_2"], errorBody),
 	},
 	{
-		name: "serverErrorIsNotReported",
+		name: "serverErrorIsReported",
 		response: response("500 Internal Server Error", ["Content-Type: application/json"], errorBody),
 	},
 	// pi awaits onResponse before pushing start: a throw fails the stream with

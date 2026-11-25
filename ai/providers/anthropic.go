@@ -735,6 +735,9 @@ func StreamAnthropic(ctx context.Context, model *ai.Model, req ai.TranscriptCont
 		// environment then (see anthropicClientHeaders).
 		headers := anthropicClientHeaders(model, opts, oauth, apiKey, authToken, normalized.Messages)
 		retry := retryFromOptions(opts.StreamOptions, anthropicSDKErrorMessage)
+		// Each failed attempt reaches onResponse (upstream 8a57d42a5): the
+		// rejection a strict-tools or thread fallback answers included.
+		retry.onErrorResponse = errorResponseReporter(opts.OnResponse, model, responseHeadersRecord)
 		// pi's federation client: one per base URL, config and fetch, so its
 		// token cache outlives the request (anthropicFederationTokens).
 		var tokens *anthropicTokenCache
@@ -816,6 +819,9 @@ func StreamAnthropic(ctx context.Context, model *ai.Model, req ai.TranscriptCont
 			if err != nil {
 				return nil, err
 			}
+			if err := retry.reportErrorResponse(resp); err != nil {
+				return nil, err
+			}
 			// pi surfaces the SDK's APIError message as is.
 			return nil, &anthropicAPIError{status: resp.StatusCode, body: data, message: anthropicSDKErrorMessage(resp.StatusCode, data)}
 		}
@@ -874,9 +880,9 @@ func StreamAnthropic(ctx context.Context, model *ai.Model, req ai.TranscriptCont
 		defer resp.Body.Close()
 		respBody := sdkResponseBody(ctx, resp, opts.HTTPClient)
 
-		// pi awaits onResponse once the SDK has returned the response — the SDK
-		// throws on a non-2xx status first, so an error response never reaches
-		// it — and before pushing start; a throw fails the stream.
+		// pi awaits onResponse once the SDK has returned the response — a
+		// non-2xx one the SDK throws on was reported by send — and before
+		// pushing start; a throw fails the stream.
 		if opts.OnResponse != nil {
 			if err := opts.OnResponse(ai.ProviderResponse{Status: resp.StatusCode, Headers: responseHeadersRecord(resp)}, model); err != nil {
 				fail(err)
@@ -2920,6 +2926,12 @@ func flattenHeaders(h http.Header) map[string]string {
 		}
 	}
 	return out
+}
+
+// flattenResponseHeaders is flattenHeaders of resp's header map, the record
+// the openai adapters hand onResponse.
+func flattenResponseHeaders(resp *http.Response) map[string]string {
+	return flattenHeaders(resp.Header)
 }
 
 // RegisterAnthropic registers the anthropic-messages api provider.

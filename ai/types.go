@@ -1464,7 +1464,11 @@ type ProviderRequestOptions struct {
 	// OnPayload inspects or replaces a provider payload before it is sent.
 	// Returning a nil payload keeps it unchanged.
 	OnPayload func(payload any, model *Model) (any, error)
-	// OnResponse is invoked after an HTTP response is received.
+	// OnResponse is invoked after each HTTP response is received, including
+	// error responses and responses to retried attempts. A streaming request
+	// reports a successful response before its body stream is consumed.
+	// Coverage depends on provider and transport: some report empty headers
+	// or only some responses.
 	OnResponse func(resp ProviderResponse, model *Model) error
 	// Headers are custom HTTP headers merged into the provider request, with
 	// caller values overriding provider defaults. A nil value suppresses a

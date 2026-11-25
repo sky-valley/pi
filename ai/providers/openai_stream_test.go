@@ -146,6 +146,20 @@ func loadOpenAIStreamCapture(t *testing.T) openaiStreamCapture {
 	if c.OpenAI != "7.19.0" {
 		t.Fatalf("%s was captured with openai %s; 87f9a3641's package-lock.json locks 7.19.0 for pi-ai", openaiStreamCaptureFile, c.OpenAI)
 	}
+	// Since upstream 8a57d42a5 a non-2xx response reaches onResponse. The
+	// hooks rows it changes are re-captured at that sha in
+	// providerErrorResponseCaptureFile (this capture's self-checks no longer
+	// pass over the lockfile's openai 7.59.0), and their outcome is that one.
+	for key, h := range loadProviderErrorResponseCapture(t).Hooks {
+		row, ok := c.Hooks[key]
+		if !ok {
+			t.Fatalf("%s re-captures hooks row %s, which %s lacks", providerErrorResponseCaptureFile, key, openaiStreamCaptureFile)
+		}
+		row.Outcome.OnResponseCalls = len(h.OnResponseStatuses)
+		row.Outcome.StopReason = string(h.StopReason)
+		row.Outcome.ErrorMessage = h.ErrorMessage
+		c.Hooks[key] = row
+	}
 	return c
 }
 
@@ -703,8 +717,9 @@ func TestOpenAIStreamDoneEndsTheReadingLikePi(t *testing.T) {
 	}
 }
 
-// pi awaits onResponse only once the SDK has a 2xx response, and a throw from it
-// fails the stream in both adapters.
+// pi awaits onResponse once the SDK has a 2xx response and, since upstream
+// 8a57d42a5, for a non-2xx one the SDK throws on; a throw from it fails the
+// stream in both adapters.
 func TestOpenAIStreamOnResponseLikePi(t *testing.T) {
 	c := loadOpenAIStreamCapture(t)
 	for _, name := range []string{"on-response-throws", "http-400", "http-400-on-response-throws"} {
@@ -749,10 +764,11 @@ func TestOpenAIStreamNullBodyLikePi(t *testing.T) {
 				}
 				compareOpenAIStreamObserved(t, got, want)
 				compareOpenAIStreamEnding(t, got, want)
-				// pi pushes start right after onResponse, and a response that
-				// never reaches onResponse fails with its error alone.
+				// pi pushes start right after a 2xx response's onResponse; a
+				// non-2xx response, which reaches onResponse from the retry
+				// loop since upstream 8a57d42a5, fails with its error alone.
 				wantEvents := []ai.EventType{ai.EventStart, ai.EventError}
-				if want.OnResponseCalls == 0 {
+				if row.Status < 200 || row.Status >= 300 {
 					wantEvents = []ai.EventType{ai.EventError}
 				}
 				if !slices.Equal(got.events, wantEvents) {

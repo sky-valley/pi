@@ -795,3 +795,123 @@ func TestSDKErrorTextQuotesAFailedRead(t *testing.T) {
 		})
 	}
 }
+
+// errorResponseServer answers request n (1-based) with statuses[n-1], the last
+// repeating, each with retry-after-ms 0; a 200 carries an empty body.
+func errorResponseServer(t *testing.T, statuses ...int) (*httptest.Server, *atomic.Int32) {
+	t.Helper()
+	var requests atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		n := int(requests.Add(1))
+		w.Header().Set("retry-after-ms", "0")
+		w.WriteHeader(statuses[min(n, len(statuses))-1])
+	}))
+	t.Cleanup(server.Close)
+	return server, &requests
+}
+
+// The unit half of upstream 8a57d42a5's provider-retry.test.ts: each attempt
+// sendWithRetry retries reaches onErrorResponse, with its status and headers,
+// before the next request is sent; the response it ends with is the caller's
+// to report, so it is not reported here.
+func TestSendWithRetryReportsEachRetriedAttempt(t *testing.T) {
+	server, requests := errorResponseServer(t, 429, 503, 200)
+	var reported []int
+	cfg := retryConfig{maxRetries: 2, maxRetryDelayMs: defaultMaxRetryDelayMs, timeoutMs: defaultTimeoutMs,
+		onErrorResponse: func(resp *http.Response) error {
+			if int(requests.Load()) != len(reported)+1 {
+				t.Errorf("attempt %d reported after %d requests", len(reported)+1, requests.Load())
+			}
+			if got := resp.Header.Get("retry-after-ms"); got != "0" {
+				t.Errorf("reported headers lack retry-after-ms: %q", got)
+			}
+			reported = append(reported, resp.StatusCode)
+			return nil
+		}}
+	build := func() (*http.Request, error) { return http.NewRequest("GET", server.URL, nil) }
+	resp, err := sendWithRetry(context.Background(), build, cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusOK || fmt.Sprint(reported) != "[429 503]" {
+		t.Fatalf("ended %d having reported %v; pi reports [429 503] and succeeds", resp.StatusCode, reported)
+	}
+
+	// A failure that is not retried — the last attempt's, or a non-retryable
+	// status — is returned unreported: the adapter reports it once it has read
+	// the body.
+	for _, tc := range []struct {
+		status     int
+		maxRetries int
+		reported   string
+	}{{429, 1, "[429]"}, {400, 2, "[]"}} {
+		server, _ := errorResponseServer(t, tc.status)
+		reported = []int{}
+		cfg.maxRetries = tc.maxRetries
+		cfg.onErrorResponse = func(resp *http.Response) error {
+			reported = append(reported, resp.StatusCode)
+			return nil
+		}
+		build := func() (*http.Request, error) { return http.NewRequest("GET", server.URL, nil) }
+		resp, err := sendWithRetry(context.Background(), build, cfg)
+		if err != nil {
+			t.Fatal(err)
+		}
+		resp.Body.Close()
+		if resp.StatusCode != tc.status || fmt.Sprint(reported) != tc.reported {
+			t.Errorf("%d: ended %d having reported %v, want %s", tc.status, resp.StatusCode, reported, tc.reported)
+		}
+	}
+}
+
+// An error from onErrorResponse fails the request with that error, with no
+// retry (pi: "fails the request with the callback's error").
+func TestSendWithRetryOnErrorResponseErrorFailsTheRequest(t *testing.T) {
+	server, requests := errorResponseServer(t, 429)
+	veto := errors.New("callback failed")
+	cfg := retryConfig{maxRetries: 2, maxRetryDelayMs: defaultMaxRetryDelayMs, timeoutMs: defaultTimeoutMs,
+		onErrorResponse: func(*http.Response) error { return veto }}
+	build := func() (*http.Request, error) { return http.NewRequest("GET", server.URL, nil) }
+	if _, err := sendWithRetry(context.Background(), build, cfg); !errors.Is(err, veto) {
+		t.Fatalf("err = %v, want the callback's", err)
+	}
+	if n := requests.Load(); n != 1 {
+		t.Fatalf("%d requests; the callback's error must end the loop", n)
+	}
+}
+
+// A failure without an HTTP status (no response) and a failure once the
+// request was aborted are not reported.
+func TestSendWithRetryDoesNotReportStatuslessOrAbortedFailures(t *testing.T) {
+	calls := 0
+	report := func(*http.Response) error { calls++; return nil }
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	closed := "http://" + ln.Addr().String()
+	ln.Close()
+	build := func() (*http.Request, error) { return http.NewRequest("GET", closed, nil) }
+	cfg := retryConfig{maxRetryDelayMs: defaultMaxRetryDelayMs, timeoutMs: defaultTimeoutMs, onErrorResponse: report}
+	if _, err := sendWithRetry(context.Background(), build, cfg); err == nil {
+		t.Fatal("a closed port answered")
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cancel()
+		w.Header().Set("retry-after-ms", "0")
+		w.WriteHeader(http.StatusTooManyRequests)
+	}))
+	defer server.Close()
+	build = func() (*http.Request, error) { return http.NewRequestWithContext(ctx, "GET", server.URL, nil) }
+	cfg.maxRetries = 2
+	if _, err := sendWithRetry(ctx, build, cfg); !errors.Is(err, errRequestAborted) {
+		t.Fatalf("err = %v, want %v", err, errRequestAborted)
+	}
+	if calls != 0 {
+		t.Fatalf("onErrorResponse ran %d times", calls)
+	}
+}

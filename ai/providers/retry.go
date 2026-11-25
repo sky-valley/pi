@@ -62,6 +62,38 @@ type retryConfig struct {
 	// shouldRetry, which runs on each one whatever retries remain, invalidates
 	// its token cache on a 401 (see StreamAnthropic's federation arm).
 	onErrorStatus func(status int)
+	// onErrorResponse is pi's onErrorResponse (upstream 8a57d42a5), which
+	// every SDK adapter wires to its onResponse: each attempt that failed with
+	// an HTTP status reaches it once, before the retry decision, and an error
+	// from it fails the request. pi calls it from retryProviderRequest's
+	// catch, so only once the SDK has read the body and thrown, and not when
+	// the request was aborted by then. sendWithRetry reports the attempts it
+	// retries; the adapter reports the response it fails with
+	// (reportErrorResponse), once it has read that body. Nil reports nothing.
+	onErrorResponse func(resp *http.Response) error
+}
+
+// reportErrorResponse hands a failed attempt's response to onErrorResponse.
+func (c retryConfig) reportErrorResponse(resp *http.Response) error {
+	if c.onErrorResponse == nil {
+		return nil
+	}
+	return c.onErrorResponse(resp)
+}
+
+// errorResponseReporter is the onErrorResponse an adapter hands
+// sendWithRetry: pi's `(errorResponse) => options?.onResponse?.(errorResponse,
+// model)`, the headers recorded by record, which builds the record that
+// adapter's successful responses get. Nil without an onResponse.
+func errorResponseReporter(onResponse func(ai.ProviderResponse, *ai.Model) error, model *ai.Model,
+	record func(*http.Response) map[string]string,
+) func(*http.Response) error {
+	if onResponse == nil {
+		return nil
+	}
+	return func(resp *http.Response) error {
+		return onResponse(ai.ProviderResponse{Status: resp.StatusCode, Headers: record(resp)}, model)
+	}
 }
 
 // retryFromOptions mirrors pi's `maxRetries: options?.maxRetries ?? 0` passed
@@ -628,6 +660,10 @@ func nullResponseBody(resp *http.Response) bool {
 // with a *fetchRejection holding its client's error, retried unless
 // cfg.rejectionIsFinal.
 //
+// A failed attempt it retries reaches cfg.onErrorResponse before the retry
+// delay is worked out; the response it ends with, 2xx or not, is the
+// caller's, which reports a non-2xx one (reportErrorResponse) as it fails.
+//
 // For providers whose SDK error carries the response headers
 // (cfg.providerError non-nil) a server-requested delay above
 // cfg.maxRetryDelayMs terminates the loop with the fail-fast error from
@@ -708,6 +744,9 @@ func sendWithRetry(ctx context.Context, build func() (*http.Request, error), cfg
 			// checks the signal before it reads a retry delay.
 			if aborted() {
 				return nil, errRequestAborted
+			}
+			if err := cfg.reportErrorResponse(resp); err != nil {
+				return nil, err
 			}
 			if cfg.providerError != nil {
 				providerMsg = cfg.providerError(resp.StatusCode, body)

@@ -501,6 +501,10 @@ func StreamGoogle(ctx context.Context, model *ai.Model, req ai.TranscriptContext
 		// @google/genai rethrows a rejected fetch as it is, with no status,
 		// so retryGoogleRequest never retries one.
 		cfg.rejectionIsFinal = true
+		// retryGoogleRequest hands each failed attempt to onResponse (upstream
+		// 8a57d42a5) with no headers: @google/genai's ApiError carries none.
+		cfg.onErrorResponse = errorResponseReporter(opts.OnResponse, model,
+			func(*http.Response) map[string]string { return map[string]string{} })
 		resp, err := sendWithRetry(ctx, build, cfg)
 		if err != nil {
 			// Neither @google/genai nor pi's catch adds to fetch's rejection;
@@ -530,13 +534,19 @@ func StreamGoogle(ctx context.Context, model *ai.Model, req ai.TranscriptContext
 				return
 			}
 		}
-		// No OnResponse: pi hands the request to the @google/genai client,
-		// which owns the fetch, and its google adapter never calls onResponse.
+		// No OnResponse for a 2xx response: pi hands the request to the
+		// @google/genai client, which owns the fetch, and its google adapter
+		// never reports one; a failed one reaches it from retryGoogleRequest.
 		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 			// Read through fetch, so a connection that drops mid-body fails
-			// the stream "terminated", as @google/genai's rejected read does.
+			// the stream "terminated", as @google/genai's rejected read does
+			// — with no status, so unreported.
 			data, err := readFetchErrorBody(ctx, googleFetchBody(ctx, respBody, custom))
 			if err != nil {
+				fail(err)
+				return
+			}
+			if err := cfg.reportErrorResponse(resp); err != nil {
 				fail(err)
 				return
 			}

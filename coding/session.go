@@ -96,7 +96,8 @@ type SessionOptions struct {
 	Headers ai.ProviderHeaders
 	// OnPayload can inspect/replace the provider request body before sending.
 	OnPayload func(payload any, model *ai.Model) (any, error)
-	// OnResponse is invoked after the HTTP response is received.
+	// OnResponse is invoked after each HTTP response is received, error
+	// responses and retried attempts included (see ai.ProviderRequestOptions).
 	OnResponse func(resp ai.ProviderResponse, model *ai.Model) error
 	// OnProviderStreamEvent observes each parsed provider stream event before
 	// it is normalized, for adapters that support it (see

@@ -43,7 +43,9 @@ func TestNullBodyAnthropicAndPiMessagesLikePi(t *testing.T) {
 		{"anthropic/204", ai.APIAnthropicMessages, 204, "", false, []int{204}, []ai.EventType{start, fail}, anthropicNoBody},
 		{"anthropic/205 with a whole stream", ai.APIAnthropicMessages, 205, anthropicWholeSSE, false, []int{205}, []ai.EventType{start, fail}, anthropicNoBody},
 		{"anthropic/custom null body", ai.APIAnthropicMessages, 200, "", true, []int{200}, []ai.EventType{start, fail}, anthropicNoBody},
-		{"anthropic/custom null body at 500", ai.APIAnthropicMessages, 500, "", true, nil, []ai.EventType{fail}, "500 status code (no body)"},
+		// Since upstream 8a57d42a5 the SDK's error reaches onResponse (measured
+		// at 8a57d42a5: [500], {} headers; [] at its parent).
+		{"anthropic/custom null body at 500", ai.APIAnthropicMessages, 500, "", true, []int{500}, []ai.EventType{fail}, "500 status code (no body)"},
 		{"pi-messages/204", ai.APIPiMessages, 204, "", false, []int{204}, []ai.EventType{fail}, piMessagesNoBody},
 		{"pi-messages/205 with a whole stream", ai.APIPiMessages, 205, piMessagesSSE(`{"type":"start"}`, `{"type":"done","reason":"stop","usage":`+piMessagesUsageJSON+`}`), false, []int{205}, []ai.EventType{fail}, piMessagesNoBody},
 		{"pi-messages/custom null body", ai.APIPiMessages, 200, "", true, []int{200}, []ai.EventType{fail}, piMessagesNoBody},

@@ -1,5 +1,5 @@
 {
-	"source": "src ea1cfcc4c",
+	"source": "src 8a57d42a5",
 	"rows": [
 		{
 			"name": "retries compiled grammar with prefer non-strict",
@@ -318,7 +318,10 @@
 				}
 			],
 			"onPayloadCalls": 2,
-			"onResponseCalls": 1,
+			"onResponseStatuses": [
+				400,
+				200
+			],
 			"results": [
 				{
 					"events": [
@@ -659,7 +662,10 @@
 				}
 			],
 			"onPayloadCalls": 2,
-			"onResponseCalls": 1,
+			"onResponseStatuses": [
+				400,
+				200
+			],
 			"results": [
 				{
 					"events": [
@@ -1000,7 +1006,10 @@
 				}
 			],
 			"onPayloadCalls": 2,
-			"onResponseCalls": 1,
+			"onResponseStatuses": [
+				400,
+				200
+			],
 			"results": [
 				{
 					"events": [
@@ -1446,7 +1455,10 @@
 				}
 			],
 			"onPayloadCalls": 2,
-			"onResponseCalls": 1,
+			"onResponseStatuses": [
+				400,
+				200
+			],
 			"results": [
 				{
 					"events": [
@@ -1594,7 +1606,9 @@
 				}
 			],
 			"onPayloadCalls": 1,
-			"onResponseCalls": 0,
+			"onResponseStatuses": [
+				400
+			],
 			"results": [
 				{
 					"events": [
@@ -1716,7 +1730,9 @@
 				}
 			],
 			"onPayloadCalls": 1,
-			"onResponseCalls": 0,
+			"onResponseStatuses": [
+				400
+			],
 			"results": [
 				{
 					"events": [
@@ -1838,7 +1854,9 @@
 				}
 			],
 			"onPayloadCalls": 1,
-			"onResponseCalls": 0,
+			"onResponseStatuses": [
+				400
+			],
 			"results": [
 				{
 					"events": [
@@ -1974,7 +1992,9 @@
 				}
 			],
 			"onPayloadCalls": 1,
-			"onResponseCalls": 0,
+			"onResponseStatuses": [
+				400
+			],
 			"results": [
 				{
 					"events": [
@@ -2110,7 +2130,9 @@
 				}
 			],
 			"onPayloadCalls": 1,
-			"onResponseCalls": 0,
+			"onResponseStatuses": [
+				400
+			],
 			"results": [
 				{
 					"events": [
@@ -2246,7 +2268,9 @@
 				}
 			],
 			"onPayloadCalls": 1,
-			"onResponseCalls": 0,
+			"onResponseStatuses": [
+				500
+			],
 			"results": [
 				{
 					"events": [
@@ -2510,7 +2534,10 @@
 				}
 			],
 			"onPayloadCalls": 2,
-			"onResponseCalls": 0,
+			"onResponseStatuses": [
+				400,
+				400
+			],
 			"results": [
 				{
 					"events": [
@@ -2659,7 +2686,7 @@
 				}
 			],
 			"onPayloadCalls": 1,
-			"onResponseCalls": 0,
+			"onResponseStatuses": [],
 			"results": [
 				{
 					"events": [
@@ -2795,7 +2822,9 @@
 				}
 			],
 			"onPayloadCalls": 1,
-			"onResponseCalls": 1,
+			"onResponseStatuses": [
+				200
+			],
 			"results": [
 				{
 					"events": [
@@ -3040,7 +3069,11 @@
 				}
 			],
 			"onPayloadCalls": 3,
-			"onResponseCalls": 2,
+			"onResponseStatuses": [
+				400,
+				200,
+				200
+			],
 			"results": [
 				{
 					"events": [
@@ -3486,7 +3519,12 @@
 				}
 			],
 			"onPayloadCalls": 4,
-			"onResponseCalls": 3,
+			"onResponseStatuses": [
+				400,
+				200,
+				200,
+				200
+			],
 			"results": [
 				{
 					"events": [
@@ -3762,7 +3800,11 @@
 				}
 			],
 			"onPayloadCalls": 3,
-			"onResponseCalls": 2,
+			"onResponseStatuses": [
+				400,
+				200,
+				200
+			],
 			"results": [
 				{
 					"events": [
@@ -4130,7 +4172,11 @@
 				}
 			],
 			"onPayloadCalls": 3,
-			"onResponseCalls": 1,
+			"onResponseStatuses": [
+				400,
+				200,
+				400
+			],
 			"results": [
 				{
 					"events": [

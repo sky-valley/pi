@@ -15,13 +15,14 @@ import (
 // testdata/anthropic-on-response/capture-anthropic-on-response.mts, which
 // streams pi's anthropic-messages adapter, with its real SDK client, from
 // source at the named sha.
-const anthropicOnResponseCaptureFile = "testdata/anthropic-on-response/anthropic-on-response-8676a0dcd.json"
+const anthropicOnResponseCaptureFile = "testdata/anthropic-on-response/anthropic-on-response-8a57d42a5.json"
 
 // TestAnthropicOnResponseMatchesPi serves each captured raw response and
-// requires pi's onResponse calls, pushed events and outcome: only a 2xx
-// response is reported (the SDK throws on any other status first), with pi's
-// header record, and an OnResponse error fails the stream with its message
-// before anything is pushed — aborted when the request was cancelled.
+// requires pi's onResponse calls, pushed events and outcome: every response
+// is reported with pi's header record — a non-2xx one too since upstream
+// 8a57d42a5, from the error the SDK throws — and an OnResponse error on a 2xx
+// response fails the stream with its message before anything is pushed —
+// aborted when the request was cancelled.
 func TestAnthropicOnResponseMatchesPi(t *testing.T) {
 	data, err := os.ReadFile(anthropicOnResponseCaptureFile)
 	if err != nil {
