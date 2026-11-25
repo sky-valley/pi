@@ -156,10 +156,11 @@ func TestResolveModelCustomIDFallbackThinkingSuffix(t *testing.T) {
 
 // pi 1fc80f4f (#5552): a requested thinking level on a custom-id fallback must
 // set reasoning:true even when the provider's template model is non-reasoning,
-// so the level is honored. mistral's fallback template is non-reasoning, so the
-// flip is observable here.
+// so the level is honored. The template is injected non-reasoning so the flip
+// stays observable: every built-in default is a reasoning model since mistral's
+// moved to mistral-medium-latest (upstream 4d6a37d08).
 func TestResolveModelCustomIDFallbackThinkingSuffixSetsReasoning(t *testing.T) {
-	r, err := ResolveModelPattern("mistral/my-custom-model-id:high")
+	r, err := resolveNonReasoningFallback("mistral/my-custom-model-id:high")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -174,7 +175,7 @@ func TestResolveModelCustomIDFallbackThinkingSuffixSetsReasoning(t *testing.T) {
 // The :off level is not a request to think: reasoning must stay false on a
 // non-reasoning fallback template (pi gates on requestedThinking !== "off").
 func TestResolveModelCustomIDFallbackThinkingOffKeepsReasoningFalse(t *testing.T) {
-	r, err := ResolveModelPattern("mistral/my-custom-model-id:off")
+	r, err := resolveNonReasoningFallback("mistral/my-custom-model-id:off")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -184,6 +185,13 @@ func TestResolveModelCustomIDFallbackThinkingOffKeepsReasoningFalse(t *testing.T
 	if r.Model.Reasoning {
 		t.Fatalf(":off must not enable reasoning on a non-reasoning fallback template")
 	}
+}
+
+// resolveNonReasoningFallback resolves spec against a catalog holding only a
+// non-reasoning mistral model, the template any mistral custom id is cloned from.
+func resolveNonReasoningFallback(spec string) (ResolvedModel, error) {
+	template := &ai.Model{Provider: "mistral", ID: "codestral-latest", Name: "Codestral"}
+	return resolveCliModel(cliModelOptions{model: spec, models: []*ai.Model{template}, hasConfiguredAuth: func(string) bool { return false }})
 }
 
 // All valid thinking levels work in the fallback path (upstream test parity).
@@ -256,7 +264,7 @@ func TestResolveModelCustomIDFallbackInvalidSuffix(t *testing.T) {
 // still has passes TestDefaultModelsExistInCatalog. Re-capture at every
 // re-pin, and point file at the capture for the new pin.
 func TestDefaultModelPerProviderMatchesPi(t *testing.T) {
-	const file = "testdata/defaultmodels/default-models-1.6.0.json"
+	const file = "testdata/defaultmodels/default-models-4d6a37d08.json"
 	data, err := os.ReadFile(file)
 	if err != nil {
 		t.Fatalf("read %s: %v (regenerate it with testdata/defaultmodels/capture.mjs)", file, err)
