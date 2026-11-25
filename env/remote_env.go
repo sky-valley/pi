@@ -505,7 +505,7 @@ type remoteTextLineReader struct {
 	mu       sync.Mutex
 	decoder  jstext.TextDecoder
 	offset   int64
-	buffered string
+	buffered []byte // decoded text not yet returned as lines
 	ended    bool
 	closed   bool
 }
@@ -520,20 +520,8 @@ func (r *remoteTextLineReader) ReadLine(ctx context.Context) (coding.TextLine, e
 	if r.closed {
 		return coding.TextLine{}, &FileError{Code: FileInvalid, Message: "Text line reader is closed", Path: path}
 	}
-	for {
-		if newline := strings.IndexByte(r.buffered, '\n'); newline != -1 {
-			text := r.buffered[:newline]
-			r.buffered = r.buffered[newline+1:]
-			return coding.TextLine{Text: text, Terminated: true}, nil
-		}
-		if r.ended {
-			if r.buffered == "" {
-				return coding.TextLine{}, io.EOF
-			}
-			text := r.buffered
-			r.buffered = ""
-			return coding.TextLine{Text: text}, nil
-		}
+	newline := bytes.IndexByte(r.buffered, '\n')
+	for newline == -1 && !r.ended {
 		data, err := r.handle.pread(r.offset, lineChunk)
 		if err != nil {
 			return coding.TextLine{}, toFileError(err, path)
@@ -542,13 +530,32 @@ func (r *remoteTextLineReader) ReadLine(ctx context.Context) (coding.TextLine, e
 			return coding.TextLine{}, failure
 		}
 		r.offset += int64(len(data))
-		if len(data) == 0 {
-			r.buffered += r.decoder.Flush()
-			r.ended = true
+		r.ended = len(data) == 0
+		var text string
+		if r.ended {
+			text = r.decoder.Flush()
 		} else {
-			r.buffered += r.decoder.Decode(data)
+			text = r.decoder.Decode(data)
 		}
+		// Only the new text is scanned, and appended without copying what is
+		// pending, so a line longer than one read costs time linear in its
+		// length (upstream da7e26cc8).
+		if found := strings.IndexByte(text, '\n'); found != -1 {
+			newline = len(r.buffered) + found
+		}
+		r.buffered = append(r.buffered, text...)
 	}
+	if newline != -1 {
+		text := string(r.buffered[:newline])
+		r.buffered = r.buffered[newline+1:]
+		return coding.TextLine{Text: text, Terminated: true}, nil
+	}
+	if len(r.buffered) == 0 {
+		return coding.TextLine{}, io.EOF
+	}
+	text := string(r.buffered)
+	r.buffered = nil
+	return coding.TextLine{Text: text}, nil
 }
 
 func (r *remoteTextLineReader) Close() error {
@@ -558,7 +565,7 @@ func (r *remoteTextLineReader) Close() error {
 		return nil
 	}
 	r.closed = true
-	r.buffered = ""
+	r.buffered = nil
 	r.mu.Unlock()
 	r.handle.close()
 	return nil

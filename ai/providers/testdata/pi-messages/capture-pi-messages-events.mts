@@ -132,10 +132,25 @@ const cases: Case[] = [
 	{ name: "truthyInfinityFrameFails", sse: framed(start) + frame("-1e400") + framed(done) },
 	{ name: "truthyStringFrameFails", sse: framed(start) + frame('"x \\"y\\" \\u00e9"') + framed(done) },
 	{ name: "truthyTrueFrameFails", sse: framed(start) + frame("true") + framed(done) },
-	// Only a frame's FIRST data line is read, trimmed as String.prototype.trim.
+	// A frame's data lines are joined with "\n" (SseDecoder, upstream
+	// da7e26cc8), then trimmed as String.prototype.trim: two whole events in one
+	// frame are not JSON...
 	{
-		name: "firstDataLineOnly",
-		sse: `data: ${JSON.stringify(start)}\ndata: ${JSON.stringify(textStart)}\n\n` + framed(textStart, textDelta, textEnd) + `data: \t${JSON.stringify(done)}  \n\n`,
+		name: "dataLinesAreJoined",
+		sse: `data: ${JSON.stringify(start)}\ndata: ${JSON.stringify(textStart)}\n\n` + framed(textStart, textDelta, textEnd, done),
+		v8Error: `${JSON.stringify(start)}\n${JSON.stringify(textStart)}`,
+	},
+	// ...while one event split over data lines is one, and an empty data line,
+	// a bare `data` field (no colon), comments and other fields count as SSE
+	// lines do: only the one space after the colon is stripped before the trim.
+	{
+		name: "multiLineDataIsOneEvent",
+		sse:
+			`data: {"type":\ndata:"start"}\n\n` +
+			`data:\n: comment\nid: 1\ndata: ${JSON.stringify(textStart)}\n\n` +
+			`data\ndata: ${JSON.stringify(textDelta)}\n\n` +
+			framed(textEnd) +
+			`data: \t${JSON.stringify(done)}  \n\n`,
 	},
 	// CRLF framing is normalized, and a trailing frame with no blank line after
 	// it is still read.
@@ -143,6 +158,11 @@ const cases: Case[] = [
 		name: "crlfAndTrailingFrame",
 		sse: framed(start, textStart, textDelta, textEnd).replaceAll("\n", "\r\n") + `data: ${JSON.stringify(done)}`,
 	},
+	// A lone CR ends a line too, and a blank line ends the frame (upstream
+	// da7e26cc8; before it only "\n\n" did, after CRLF became "\n").
+	{ name: "loneCRFraming", sse: framed(start, textStart, textDelta, textEnd, done).replaceAll("\n", "\r") },
+	// An `event:` field alone is no frame, and carries into none.
+	{ name: "eventFieldAloneIsNoFrame", sse: "event: ping\n\nevent:\n\n" + framed(...wireEvents) },
 	// JSON.parse throws on a frame that is not JSON: the stream fails with V8's
 	// SyntaxError text.
 	{ name: "unparseableFrameFails", sse: framed(start, textStart) + frame("{oops") + framed(textEnd, done), v8Error: "{oops" },

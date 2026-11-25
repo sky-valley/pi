@@ -18,7 +18,7 @@ import (
 // anthropicSSEEventsCaptureFile is written by
 // testdata/anthropic-sse/capture-anthropic-sse-events.mts, which streams pi's
 // anthropic-messages adapter from source at the named sha.
-const anthropicSSEEventsCaptureFile = "testdata/anthropic-sse/anthropic-sse-events-f715a15c1.json"
+const anthropicSSEEventsCaptureFile = "testdata/anthropic-sse/anthropic-sse-events-da7e26cc8.json"
 
 type anthropicSSEEventsRow struct {
 	Name string `json:"name"`
@@ -299,13 +299,11 @@ func TestAnthropicSSEEventsMatchPi(t *testing.T) {
 				t.Errorf("pushed = %q, want %q", pushed, row.Pushed)
 			}
 			assertAnthropicMessageMatchesPi(t, row, row.anthropicSSEOutcome, final)
-			// pi's pushed events and message do not depend on observing. How
-			// the body arrives is another matter: pi splits lines per read, so
-			// a "\r" that ends a read ends its line, and a "\r\n" split across
-			// two reads is two line breaks — read one byte per read, a body
-			// with CRLF line endings fails where the whole body in one read
-			// does not (the row's oneByte outcome). A byte-order mark or a
-			// multi-byte character split across reads changes nothing.
+			// pi's pushed events and message do not depend on observing, nor
+			// (since upstream da7e26cc8's SseDecoder) on how the body arrives:
+			// read one byte per read, a "\r\n", a byte-order mark or a
+			// multi-byte character split across reads changes nothing. A row
+			// may still carry a oneByte outcome should a later pi differ.
 			if row.ThrowAt == nil {
 				whole := ai.StreamOptions{ProviderRequestOptions: ai.ProviderRequestOptions{HTTPClient: cannedDoer{status: http.StatusOK, body: row.body()}}}
 				_, pushed, final := streamAnthropicSSEEvents(t, context.Background(), row.body(), row.OAuth, whole)

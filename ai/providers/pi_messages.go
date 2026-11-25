@@ -23,7 +23,6 @@ import (
 	"strconv"
 	"strings"
 	"unicode/utf16"
-	"unicode/utf8"
 
 	"github.com/sky-valley/pi/ai"
 	"github.com/sky-valley/pi/internal/jstext"
@@ -652,20 +651,7 @@ func (c *piMessagesConverter) convert(ev piMessagesEvent) (ai.AssistantMessageEv
 	return ai.AssistantMessageEvent{Type: ai.EventType(ev.Type), Partial: c.partial.Clone()}, nil
 }
 
-// piMessagesFrameData is pi parsePiMessagesEvent's text: the first `data:`
-// line of a frame, JS-trimmed. ok is false when the frame has none, or when it
-// is empty or `[DONE]`, which pi passes over without parsing.
-func piMessagesFrameData(frame string) (string, bool) {
-	for _, line := range strings.Split(frame, "\n") {
-		if strings.HasPrefix(line, "data:") {
-			data := jstext.Trim(line[5:])
-			return data, data != "" && data != "[DONE]"
-		}
-	}
-	return "", false
-}
-
-// decodePiMessagesEvent is pi's JSON.parse of a frame's data plus
+// decodePiMessagesEvent is pi's JSON.parse of an event's data plus
 // readPiMessagesEvents' `if (event)`: yielded is false for a JS-falsy value
 // (null, false, 0, -0, "" — and 1e-400, which parses to 0). An object's members
 // are read into the typed event; an array converts as an event with no type,
@@ -695,14 +681,13 @@ func decodePiMessagesEvent(data string) (ev piMessagesEvent, yielded bool, err e
 	return piMessagesEvent{primitive: json.RawMessage(data)}, rawTruthy(json.RawMessage(data)), nil
 }
 
-// readPiMessagesEvents consumes the SSE body: frames are separated by "\n\n",
-// CRLF is normalized to "\n", and a trailing non-terminal buffer is flushed.
-// The body is text as pi's TextDecoder makes it: one byte-order mark at the
-// very start is dropped, and invalid UTF-8 becomes U+FFFD per maximal subpart
-// (jstext.DecodeUTF8); a frame ends at a line break, which never belongs to a
-// multi-byte sequence, so decoding each frame is decoding the body.
+// readPiMessagesEvents consumes the SSE body, which sseDecoder decodes into
+// events as pi's SseDecoder does (upstream da7e26cc8): lines end at LF, CRLF
+// or CR, a blank line ends an event, an event's data lines are joined with
+// "\n", and a last event the body ends without a blank line is still read.
+// An event's data, JS-trimmed, is parsed unless it is empty or `[DONE]`.
 // handle returns false to stop early (a terminal event was seen), and its
-// error ends the read. A frame that is not JSON fails the read, as pi's
+// error ends the read. Data that is not JSON fails the read, as pi's
 // JSON.parse throw does. Port of readPiMessagesEvents.
 //
 // pi never checks its signal here, and neither does this: an abort reaches
@@ -710,9 +695,9 @@ func decodePiMessagesEvent(data string) (ev piMessagesEvent, yielded bool, err e
 // the read the abort cuts short, or the next one, as undici's fetch does
 // (fetchBody), even the one that would report a body already complete; a
 // custom client's body goes on as it goes on. What an earlier read
-// delivered is still framed and handled first.
+// delivered is still decoded and handled first.
 //
-// onEvent, when non-nil, observes every yielded frame's parsed value — objects
+// onEvent, when non-nil, observes every yielded event's parsed value — objects
 // as ai.OrderedObject, unknown fields and the terminal done/error included —
 // before it is converted (pi's onProviderStreamEvent, upstream 002fc8385); its
 // error ends the read. The value is a decode of its own, made only when
@@ -721,91 +706,55 @@ func decodePiMessagesEvent(data string) (ev piMessagesEvent, yielded bool, err e
 // fails with the port's guard (progressReader).
 func readPiMessagesEvents(body io.Reader, onEvent func(any) error, handle func(piMessagesEvent) (bool, error)) error {
 	body = &progressReader{r: body, provider: "pi-messages"}
-	// emit handles one frame and reports whether to keep reading.
-	emit := func(frame string) (bool, error) {
-		if !utf8.ValidString(frame) {
-			frame = jstext.DecodeUTF8([]byte(frame))
-		}
-		data, ok := piMessagesFrameData(frame)
-		if !ok {
-			return true, nil
+	emit := func(sse serverSentEvent) error {
+		data := jstext.Trim(sse.data)
+		if data == "" || data == "[DONE]" {
+			return nil
 		}
 		ev, yielded, err := decodePiMessagesEvent(data)
-		if err != nil {
-			return false, err
-		}
-		if !yielded {
-			return true, nil
+		if err != nil || !yielded {
+			return err
 		}
 		if onEvent != nil {
 			value, err := ai.DecodeOrderedValue([]byte(data))
 			if err != nil {
-				return false, err // unreachable: data parsed above
+				return err // unreachable: data parsed above
 			}
 			if err := onEvent(value); err != nil {
-				return false, err
+				return err
 			}
 		}
-		return handle(ev)
+		more, err := handle(ev)
+		if err == nil && !more {
+			err = errPiMessagesStop
+		}
+		return err
 	}
+	var sse sseDecoder
 	buf := make([]byte, 32*1024)
-	var pending string
-	// atStart is whether pending still holds the body's first bytes, which
-	// may be the byte-order mark the decoder drops.
-	atStart := true
-	for {
-		n, readErr := body.Read(buf)
-		chunk := string(buf[:n])
-		if atStart {
-			switch head := pending + chunk; {
-			case strings.HasPrefix(head, piMessagesBOM):
-				pending, chunk, atStart = "", head[len(piMessagesBOM):], false
-			case readErr != nil || !strings.HasPrefix(piMessagesBOM, head):
-				pending, chunk, atStart = "", head, false
-			default:
-				pending = head
-				continue // too few bytes yet to tell
+	err := func() error {
+		for {
+			n, readErr := body.Read(buf)
+			if err := sse.push(buf[:n], emit); err != nil {
+				return err
+			}
+			if readErr == io.EOF {
+				return sse.end(emit)
+			}
+			if readErr != nil {
+				return readErr
 			}
 		}
-		if chunk != "" {
-			// Normalize the whole accumulated buffer (pi: buffer.replace(/\r\n/g,
-			// "\n") each read), so a "\r\n" split across two reads still collapses.
-			// pending holds only an unframed remainder, so the re-scan stays cheap.
-			pending = strings.ReplaceAll(pending+chunk, "\r\n", "\n")
-			for {
-				split := strings.Index(pending, "\n\n")
-				if split == -1 {
-					break
-				}
-				frame := pending[:split]
-				pending = pending[split+2:]
-				more, err := emit(frame)
-				if err != nil {
-					return err
-				}
-				if !more {
-					return nil
-				}
-			}
-		}
-		if readErr == io.EOF {
-			break
-		}
-		if readErr != nil {
-			return readErr
-		}
+	}()
+	if err == errPiMessagesStop {
+		return nil
 	}
-	if jstext.Trim(jstext.DecodeUTF8([]byte(pending))) != "" {
-		if _, err := emit(pending); err != nil {
-			return err
-		}
-	}
-	return nil
+	return err
 }
 
-// piMessagesBOM is the UTF-8 byte-order mark a TextDecoder drops from the start
-// of what it decodes.
-const piMessagesBOM = "\xEF\xBB\xBF"
+// errPiMessagesStop ends readPiMessagesEvents' decoding once handle has seen
+// a terminal event; the read then returns nil.
+var errPiMessagesStop = errors.New("pi-messages: terminal event seen")
 
 // createPiMessagesErrorEvent builds the terminal error event for a thrown
 // failure, attaching the response-failure diagnostic for non-aborted

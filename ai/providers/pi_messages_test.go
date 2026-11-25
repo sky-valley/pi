@@ -460,10 +460,9 @@ func (c *chunkedReader) Read(p []byte) (int, error) {
 	return n, nil
 }
 
-// A "\r\n" split across two reads must still collapse to "\n" so the frame
-// boundary is found — the whole-buffer normalization, matching pi. With the
-// buggy per-chunk normalization the seam "\r"+"\n" survives, the first frame
-// boundary is missed, and the terminal done event is lost.
+// A "\r\n" split across two reads is still one line break, so the frame
+// boundary is found where pi's SseDecoder finds it: neither a missed boundary
+// (the terminal done event lost) nor an extra one.
 func TestPiMessagesCRLFSeamAcrossReads(t *testing.T) {
 	// Frame separator is CRLF-CRLF; the boundary between the two frames is split
 	// mid-"\r\n" across the chunk seam.

@@ -39,9 +39,9 @@
 //              hold: that member is not compared;
 //   oneByte    what pi made of the same body read one byte per read, when
 //              that differs from the whole body in one read (observed, pushed,
-//              message and v8Cause as above): pi's reader splits lines per
-//              read, so a "\r" that ends a read ends its line, and a "\r\n"
-//              split across two reads is two line breaks.
+//              message and v8Cause as above). Before upstream da7e26cc8 a
+//              "\r\n" split across two reads was two line breaks; since its
+//              SseDecoder it is one, so no row has a oneByte outcome.
 // A row may make the observer throw ("observer boom") on the observed event at
 // index throwAt, after aborting the request when abortFirst is set.
 import fs from "node:fs";
@@ -205,11 +205,12 @@ const cases: Case[] = [
 	{ name: "nullMessageStartFails", sse: frames(ev("message_start", "null")) },
 	{ name: "nullAfterStartFails", sse: frames(messageStart, blockStart, ev("content_block_delta", "null"), blockStop) },
 	// raw= lists every non-empty line of the event, comments included. A block
-	// with neither an event name nor data is not flushed, so its lines stay in
-	// the buffer and lead the next event's raw...
+	// with neither an event name nor data is dropped with its lines, and an
+	// empty `event:` names no event (upstream da7e26cc8; before it such a
+	// block's lines led the next event's raw)...
 	{
-		name: "rawKeepsUnflushedLines",
-		sse: ": keepalive\n\nid: 3\nretry: 5\n\n" + frames(ev("message_start", "null")),
+		name: "rawDropsLinesOfBlocksWithoutData",
+		sse: ": keepalive\n\nid: 3\nretry: 5\n\nevent:\n\n" + frames(ev("message_start", "null")),
 	},
 	// ...while a flushed event, even one that is then skipped, resets it.
 	{
@@ -218,10 +219,9 @@ const cases: Case[] = [
 	},
 	// Lines split on a lone CR too.
 	{ name: "rawSplitsOnCR", sse: "event: message_start\rdata: null\r\r" },
-	// A "\r\n" is one line break within a read. Read one byte per read, each
-	// "\r" ends its line at the end of its read and the "\n" that starts the
-	// next read ends an empty one, which flushes the event before its data
-	// line: its oneByte outcome is a parse failure of empty data.
+	// A "\r\n" is one line break, also when it is split across two reads (one
+	// byte per read; upstream da7e26cc8 — before it the "\n" that started the
+	// next read ended an empty line, which flushed the event before its data).
 	{ name: "crlfLineEndings", sse: frames(...minimal).replaceAll("\n", "\r\n") },
 	// A JSON syntax error: the message embeds V8's JSON.parse text, then data=
 	// (the data lines joined with a newline) and raw= (the lines joined with a

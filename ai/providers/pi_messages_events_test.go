@@ -21,7 +21,7 @@ import (
 // piMessagesEventsCaptureFile is written by
 // testdata/pi-messages/capture-pi-messages-events.mts, which streams pi's
 // pi-messages adapter from source at the named sha.
-const piMessagesEventsCaptureFile = "testdata/pi-messages/pi-messages-events-89c921d8b.json"
+const piMessagesEventsCaptureFile = "testdata/pi-messages/pi-messages-events-da7e26cc8.json"
 
 type piMessagesEventsRow struct {
 	Name string `json:"name"`

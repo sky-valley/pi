@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -230,6 +231,45 @@ func TestWritesAndReadsFilesLargerThanOneTransferChunkInOrder(t *testing.T) {
 	reader.Close()
 	if !bytes.Equal(part, read[1_000_003:3_000_003]) {
 		t.Fatal("the range differs")
+	}
+}
+
+// TestReadsATextLineOfManyReadsInLinearTime: a line spanning many 64 KiB reads
+// comes back whole, a multi-byte character split across reads included, and
+// in time and memory linear in its length (upstream da7e26cc8): each read's
+// text is scanned for the newline once, and the pending line is not copied
+// again after every read. That copying cost 1.3 s and about 2 GiB of
+// allocations for this 16 MiB line; what the reading allocates is bounded at
+// a small multiple of the line, the transfer's own buffers included.
+func TestReadsATextLineOfManyReadsInLinearTime(t *testing.T) {
+	env, _ := environment(t)
+	long := strings.Repeat("é", 8<<20) // 16 MiB, 256 reads
+	mustDo(t, env.WriteFile(background(), "long.txt", []byte("a\n"+long+"\nz")))
+	lines, err := env.OpenTextLineReader(background(), "long.txt")
+	mustDo(t, err)
+	defer lines.Close()
+	var before, after runtime.MemStats
+	runtime.ReadMemStats(&before)
+	start := time.Now()
+	var got []coding.TextLine
+	for {
+		line, err := lines.ReadLine(background())
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		mustDo(t, err)
+		got = append(got, line)
+	}
+	elapsed := time.Since(start)
+	runtime.ReadMemStats(&after)
+	want := []coding.TextLine{{Text: "a", Terminated: true}, {Text: long, Terminated: true}, {Text: "z"}}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("read %d lines, not a, the 16 MiB line and an unterminated z", len(got))
+	}
+	allocated := after.TotalAlloc - before.TotalAlloc
+	t.Logf("read in %v, allocating %d MiB", elapsed, allocated>>20)
+	if limit := uint64(16 * len(long)); allocated > limit {
+		t.Fatalf("reading the %d MiB line allocated %d MiB, want at most %d MiB: the pending line is copied per read", len(long)>>20, allocated>>20, limit>>20)
 	}
 }
 
