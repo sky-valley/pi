@@ -410,6 +410,9 @@ func streamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Transc
 		}
 
 		hasFinishReason := false
+		isOpenRouter := isOpenRouterModel(model)
+		// Kept across chunks so a trailing chunk that repeats finish_reason without it does not drop it.
+		var nativeFinishReason string
 		// responseID is pi's output.responseId, the value `||=` tests: the
 		// message stores it as a string (jsStringField), whose emptiness is not
 		// the value's falsiness (0 is "0").
@@ -460,6 +463,12 @@ func streamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Transc
 				output.Usage = parsed
 			}
 
+			if isOpenRouter {
+				if native, ok := readOpenRouterNativeFinishReason(choice); ok {
+					nativeFinishReason = native
+				}
+			}
+
 			if finishReason := jsGet(choice, "finish_reason"); jsTruthy(finishReason) {
 				output.RawStopReason = jsStringField(finishReason)
 				stopReason, errMsg, err := mapOpenAIFinishReasonValue(finishReason)
@@ -469,6 +478,9 @@ func streamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Transc
 				output.StopReason = stopReason
 				if errMsg != "" {
 					output.ErrorMessage = errMsg
+				}
+				if nativeFinishReason != "" {
+					applyOpenRouterNativeFinishReason(output, finishReason, nativeFinishReason)
 				}
 				hasFinishReason = true
 			}
