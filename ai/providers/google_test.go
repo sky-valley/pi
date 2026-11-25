@@ -1000,14 +1000,30 @@ func TestGoogleReportsOnlyFailedAttemptsToOnResponse(t *testing.T) {
 		want    ai.StopReason
 		calls   []ai.ProviderResponse
 		message string
+		// contentType defaults to text/event-stream.
+		contentType string
 	}{
-		{"success", http.StatusOK, googleSSE, ai.StopToolUse, nil, ""},
+		{"success", http.StatusOK, googleSSE, ai.StopToolUse, nil, "", ""},
 		{"http error", http.StatusBadRequest, `{"error":{"code":400,"message":"bad","status":"INVALID_ARGUMENT"}}`, ai.StopError,
-			[]ai.ProviderResponse{{Status: http.StatusBadRequest, Headers: map[string]string{}}}, "response veto"},
+			[]ai.ProviderResponse{{Status: http.StatusBadRequest, Headers: map[string]string{}}}, "response veto", ""},
+		// @google/genai 3.6.1's throwErrorIfNotOK builds the ApiError that
+		// retryGoogleRequest reports only for a 400-599 status, and under a
+		// JSON content type only once response.json() parsed the body; any
+		// other failure is a plain Error or a SyntaxError, never reported.
+		// Probed against pi at 8a57d42a5.
+		{"json-typed error body", http.StatusBadRequest, `{"error":{"code":400,"message":"bad","status":"INVALID_ARGUMENT"}}`, ai.StopError,
+			[]ai.ProviderResponse{{Status: http.StatusBadRequest, Headers: map[string]string{}}}, "response veto", "application/json; charset=utf-8"},
+		{"json-typed body that is not JSON", http.StatusBadRequest, `not json`, ai.StopError, nil, "", "application/json"},
+		{"status below 400", 399, `{}`, ai.StopError, nil, "", "application/json"},
+		{"not modified", http.StatusNotModified, ``, ai.StopError, nil, "", "text/plain"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.Header().Set("content-type", "text/event-stream")
+				contentType := tc.contentType
+				if contentType == "" {
+					contentType = "text/event-stream"
+				}
+				w.Header().Set("content-type", contentType)
 				w.WriteHeader(tc.status)
 				io.WriteString(w, tc.body)
 			}))

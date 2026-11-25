@@ -746,7 +746,7 @@ func readPiMessagesEvents(body io.Reader, onEvent func(any) error, handle func(p
 			}
 		}
 	}()
-	if err == errPiMessagesStop {
+	if errors.Is(err, errPiMessagesStop) {
 		return nil
 	}
 	return err

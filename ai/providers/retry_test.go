@@ -829,7 +829,7 @@ func TestSendWithRetryReportsEachRetriedAttempt(t *testing.T) {
 			return nil
 		}}
 	build := func() (*http.Request, error) { return http.NewRequest("GET", server.URL, nil) }
-	resp, err := sendWithRetry(context.Background(), build, cfg)
+	resp, err := sendWithRetry(t.Context(), build, cfg)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -854,7 +854,7 @@ func TestSendWithRetryReportsEachRetriedAttempt(t *testing.T) {
 			return nil
 		}
 		build := func() (*http.Request, error) { return http.NewRequest("GET", server.URL, nil) }
-		resp, err := sendWithRetry(context.Background(), build, cfg)
+		resp, err := sendWithRetry(t.Context(), build, cfg)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -873,7 +873,7 @@ func TestSendWithRetryOnErrorResponseErrorFailsTheRequest(t *testing.T) {
 	cfg := retryConfig{maxRetries: 2, maxRetryDelayMs: defaultMaxRetryDelayMs, timeoutMs: defaultTimeoutMs,
 		onErrorResponse: func(*http.Response) error { return veto }}
 	build := func() (*http.Request, error) { return http.NewRequest("GET", server.URL, nil) }
-	if _, err := sendWithRetry(context.Background(), build, cfg); !errors.Is(err, veto) {
+	if _, err := sendWithRetry(t.Context(), build, cfg); !errors.Is(err, veto) {
 		t.Fatalf("err = %v, want the callback's", err)
 	}
 	if n := requests.Load(); n != 1 {
@@ -894,11 +894,11 @@ func TestSendWithRetryDoesNotReportStatuslessOrAbortedFailures(t *testing.T) {
 	ln.Close()
 	build := func() (*http.Request, error) { return http.NewRequest("GET", closed, nil) }
 	cfg := retryConfig{maxRetryDelayMs: defaultMaxRetryDelayMs, timeoutMs: defaultTimeoutMs, onErrorResponse: report}
-	if _, err := sendWithRetry(context.Background(), build, cfg); err == nil {
+	if _, err := sendWithRetry(t.Context(), build, cfg); err == nil {
 		t.Fatal("a closed port answered")
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cancel()

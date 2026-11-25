@@ -420,9 +420,15 @@ func TestBashKeepsTheOutputTailWhenTheFullOutputCannotBeSaved(t *testing.T) {
 	t.Setenv("TMPDIR", filepath.Join(t.TempDir(), "missing"))
 	tool := createShellTool(t.TempDir(), bashToolConfig, &BashToolOptions{Operations: printingLines(300000)}, nil)
 
-	res, err := run(t, tool, map[string]any{"command": "seq 300000"})
+	var update agent.AgentToolResult
+	res, err := tool.Execute(context.Background(), "id", map[string]any{"command": "seq 300000"}, func(r agent.AgentToolResult) { update = r })
 	if err != nil {
 		t.Fatalf("the call failed: %v", err)
+	}
+	// Streamed updates carry the cause as well (pi bash.ts onUpdate's
+	// outputFileDetails).
+	if d, _ := update.Details.(map[string]any); !strings.Contains(fmt.Sprint(d["fullOutputError"]), "no such file or directory") || d["fullOutputPath"] != nil {
+		t.Errorf("last update details = %v, want fullOutputError and no fullOutputPath", d)
 	}
 	text := res.Content[0].(ai.TextContent).Text
 	if !strings.Contains(text, "\n299999\n300000\n") {

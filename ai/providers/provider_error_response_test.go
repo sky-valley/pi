@@ -1,7 +1,6 @@
 package providers
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -121,13 +120,13 @@ func TestProviderErrorResponsesReachOnResponseLikePi(t *testing.T) {
 			var stream *ai.AssistantMessageEventStream
 			switch row.API {
 			case ai.APIAnthropicMessages:
-				stream = StreamAnthropic(context.Background(), model, req, &AnthropicOptions{StreamOptions: so})
+				stream = StreamAnthropic(t.Context(), model, req, &AnthropicOptions{StreamOptions: so})
 			case ai.APIOpenAICompletions:
-				stream = StreamOpenAICompletions(context.Background(), model, req, &OpenAIOptions{StreamOptions: so})
+				stream = StreamOpenAICompletions(t.Context(), model, req, &OpenAIOptions{StreamOptions: so})
 			case ai.APIOpenAIResponses:
-				stream = StreamOpenAIResponses(context.Background(), model, req, &OpenAIResponsesOptions{StreamOptions: so})
+				stream = StreamOpenAIResponses(t.Context(), model, req, &OpenAIResponsesOptions{StreamOptions: so})
 			case ai.APIGoogleGenerativeAI:
-				stream = StreamGoogle(context.Background(), model, req, &GoogleOptions{StreamOptions: so})
+				stream = StreamGoogle(t.Context(), model, req, &GoogleOptions{StreamOptions: so})
 			default:
 				t.Fatalf("no Go adapter for %s", row.API)
 			}

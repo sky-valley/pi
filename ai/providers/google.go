@@ -546,9 +546,11 @@ func StreamGoogle(ctx context.Context, model *ai.Model, req ai.TranscriptContext
 				fail(err)
 				return
 			}
-			if err := cfg.reportErrorResponse(resp); err != nil {
-				fail(err)
-				return
+			if googleThrowsAPIError(resp, data) {
+				if err := cfg.reportErrorResponse(resp); err != nil {
+					fail(err)
+					return
+				}
 			}
 			// Not pi's message: pi surfaces @google/genai's ApiError message,
 			// JSON.stringify of the error body, whole and without the status;
@@ -2100,4 +2102,20 @@ func googlePromptBlockError(providerName string, feedback any) (string, error) {
 		}
 	}
 	return strings.Join(details, ". "), nil
+}
+
+// googleThrowsAPIError is whether @google/genai's throwErrorIfNotOK throws an
+// ApiError, the error with a status that retryGoogleRequest reports, for a
+// non-2xx response whose body it read as data: only for a 400-599 status, and
+// only once a body under a content type containing "application/json" has
+// parsed (response.json()). Otherwise it throws a plain Error (or JSON.parse's
+// SyntaxError), which is never reported.
+func googleThrowsAPIError(resp *http.Response, data []byte) bool {
+	if resp.StatusCode < 400 || resp.StatusCode >= 600 {
+		return false
+	}
+	if !strings.Contains(strings.Join(resp.Header.Values("Content-Type"), ", "), "application/json") {
+		return true
+	}
+	return jstext.JSONSyntaxError(jstext.DecodeUTF8(stripBOM(data))) == nil
 }
