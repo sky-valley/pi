@@ -4,11 +4,14 @@
 // TestOutputAccumulatorReadFullOutputMatchesPi in package coding.
 //
 //   node --experimental-strip-types capture.mts <extraction> <out.json> <sha>
-//   e.g. ... capture.mts <dir> fulloutput-943a99e3c.json 943a99e3c
+//   e.g. ... capture.mts <dir> fulloutput-8209929fb.json 8209929fb
 //
-// fulloutput-943a99e3c.json is src at 943a99e3c. Its first 18 rows are the
-// earlier fulloutput-3dd803d7e.json's but for `file`; the script at the parent
-// 713563870 writes those rows byte for byte (and no unsaved rows).
+// fulloutput-8209929fb.json is src at 8209929fb: three unsaved rows' `full`
+// move (readFullOutput's fallback keeps the retained text within readMax and
+// marks only missing bytes). The script at the parent 943a99e3c writes the
+// earlier fulloutput-943a99e3c.json byte for byte, whose first 18 rows are
+// fulloutput-3dd803d7e.json's but for `file`; at 713563870 the script writes
+// those 18 rows byte for byte (and no unsaved rows).
 //
 // <extraction> holds packages/coding-agent at <sha> (`git archive <sha>
 // packages/coding-agent/src/core/tools`); output-accumulator.ts imports only

@@ -1052,14 +1052,12 @@ func createShellTool(cwd string, config shellToolConfig, options *BashToolOption
 				var details map[string]any
 				if snap.truncation.Truncated {
 					details = map[string]any{"truncation": snap.truncation}
-					if path := snap.savedPath(); path != "" {
-						details["fullOutputPath"] = path
-					}
+					snap.addOutputFileDetails(details)
 					var fullOutput string
 					if file := snap.fullOutputFile; file != nil && !file.saved() {
 						fullOutput = "Could not save the full output: " + file.err.Error()
-					} else {
-						fullOutput = "Full output: " + snap.savedPath()
+					} else if file != nil {
+						fullOutput = "Full output: " + file.path
 					}
 					tr := snap.truncation
 					startLine := tr.TotalLines - tr.OutputLines + 1
@@ -1331,13 +1329,17 @@ type outputSnapshot struct {
 	fullOutputFile *outputFileResult
 }
 
-// savedPath is the snapshot's full output file, unless it could not be saved
-// (pi savedPath).
-func (s outputSnapshot) savedPath() string {
-	if s.fullOutputFile != nil && s.fullOutputFile.saved() {
-		return s.fullOutputFile.path
+// addOutputFileDetails records where the snapshot's full output went in a
+// shell tool's details: its file, or why it could not be saved (pi
+// outputFileDetails, upstream 8209929fb).
+func (s outputSnapshot) addOutputFileDetails(details map[string]any) {
+	switch file := s.fullOutputFile; {
+	case file == nil:
+	case file.saved():
+		details["fullOutputPath"] = file.path
+	default:
+		details["fullOutputError"] = file.err.Error()
 	}
-	return ""
 }
 
 // outputAccumulator incrementally tracks streaming output with bounded memory:
@@ -1465,15 +1467,39 @@ func (a *outputAccumulator) snapshotText() string {
 	return string(a.tail)
 }
 
-func (a *outputAccumulator) snapshot(persistIfTruncated bool) outputSnapshot {
-	// Clipping drops the partial first line of the retained tail. When the
-	// tail is only the end of one over-long line (plus blank lines), nothing
-	// is left, so show the end of that line instead (pi 935f0ac0c, 9e9609216).
-	text := a.snapshotText()
-	if jstext.Trim(text) == "" {
-		text = string(a.tail)
+// retainedText is the retained tail, for display and as readFullOutput's
+// fallback (pi getRetainedText, upstream 8209929fb). Clipping drops the
+// partial first line of the tail. When the tail is only the end of one
+// over-long line (plus blank lines), nothing is left, so it keeps the end of
+// that line instead (pi 935f0ac0c, 9e9609216).
+func (a *outputAccumulator) retainedText() string {
+	if text := a.snapshotText(); jstext.Trim(text) != "" {
+		return text
 	}
-	tr := TruncateTail(text, a.maxLines, a.maxBytes)
+	return string(a.tail)
+}
+
+// readRetainedOutput is the retained tail within maxBytes, marked as
+// truncated only when output is missing (pi readRetainedOutput). A cut inside
+// a character starts after its continuation bytes.
+func (a *outputAccumulator) readRetainedOutput(maxBytes int) (content string, truncated bool) {
+	tail := a.retainedText()
+	if len(tail) > maxBytes {
+		start := len(tail) - maxBytes
+		for start < len(tail) && tail[start]&0xc0 == 0x80 {
+			start++
+		}
+		tail = tail[start:]
+	}
+	omitted := a.totalDecodedBytes - len(tail)
+	if omitted == 0 {
+		return tail, false
+	}
+	return fmt.Sprintf("[... %d bytes omitted ...]\n\n%s", omitted, tail), true
+}
+
+func (a *outputAccumulator) snapshot(persistIfTruncated bool) outputSnapshot {
+	tr := TruncateTail(a.retainedText(), a.maxLines, a.maxBytes)
 	truncated := a.totalLines > a.maxLines || a.totalDecodedBytes > a.maxBytes
 	truncatedBy := ""
 	if truncated {
@@ -1522,15 +1548,16 @@ func (a *outputAccumulator) closeTempFile() {
 // decoded as pi's TextDecoder decodes it: the head in stream mode, so a
 // character the cut splits is dropped, and the tail after the continuation
 // bytes the cut left at its start. When the temp file could not be saved, only
-// the retained tail is left, behind the same marker.
+// the retained tail is left: up to its last maxBytes bytes, behind the same
+// marker when output is missing (upstream 8209929fb).
 func (a *outputAccumulator) readFullOutput(maxBytes int) (content string, truncated bool, err error) {
 	file := a.fullOutputFile()
 	if file == nil {
 		return jstext.DecodeText(bytes.Join(a.rawChunks, nil)), false, nil
 	}
 	if !file.saved() {
-		tail := a.snapshotText()
-		return fmt.Sprintf("[... %d bytes omitted ...]\n\n%s", a.totalDecodedBytes-len(tail), tail), true, nil
+		content, truncated := a.readRetainedOutput(maxBytes)
+		return content, truncated, nil
 	}
 	f, err := os.Open(file.path)
 	if err != nil {
@@ -1622,9 +1649,7 @@ func (u *bashUpdater) emitLocked() {
 	if snap.truncation.Truncated {
 		details["truncation"] = snap.truncation
 	}
-	if path := snap.savedPath(); path != "" {
-		details["fullOutputPath"] = path
-	}
+	snap.addOutputFileDetails(details)
 	u.onUpdate(agent.AgentToolResult{Content: ai.ContentList{ai.TextContent{Text: snap.content}}, Details: details})
 }
 

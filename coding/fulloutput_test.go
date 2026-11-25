@@ -51,7 +51,7 @@ type fullOutputRow struct {
 
 func loadFullOutputCapture(t *testing.T) (sha string, rows []fullOutputRow) {
 	t.Helper()
-	data, err := os.ReadFile("testdata/fulloutput/fulloutput-943a99e3c.json")
+	data, err := os.ReadFile("testdata/fulloutput/fulloutput-8209929fb.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -189,6 +189,22 @@ func TestOutputFileStreamReportsFailures(t *testing.T) {
 		}
 		if _, err := os.Stat(path); !errors.Is(err, fs.ErrNotExist) {
 			t.Fatalf("the partial file is still there: %v", err)
+		}
+	})
+	// pi 8209929fb 'reports a failure while closing the file, not saved'
+	// (delayed EDQUOT on quota and network file systems); here the descriptor
+	// is closed underneath, so closing it fails.
+	t.Run("closing fails", func(t *testing.T) {
+		t.Setenv("TMPDIR", t.TempDir())
+		file := createOutputFileStream("pi-test", ".log")
+		path := file.path
+		file.write([]byte("data"))
+		file.file.Close()
+		if r := file.close(); !errors.Is(r.err, os.ErrClosed) {
+			t.Fatalf("close() = %+v, want failed with the close error", r)
+		}
+		if _, err := os.Stat(path); !errors.Is(err, fs.ErrNotExist) {
+			t.Fatalf("the unsaved file is still there: %v", err)
 		}
 	})
 	t.Run("a file it did not create stays", func(t *testing.T) {

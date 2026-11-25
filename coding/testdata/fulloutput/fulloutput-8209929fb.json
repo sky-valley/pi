@@ -1,5 +1,5 @@
 {
-	"sha": "943a99e3c",
+	"sha": "8209929fb",
 	"node": "v22.23.5",
 	"rows": [
 		{
@@ -472,8 +472,8 @@
 			},
 			"file": "failed",
 			"full": {
-				"content": "[... 0 bytes omitted ...]\n\n1\n2\n3\n",
-				"truncated": true
+				"content": "1\n2\n3\n",
+				"truncated": false
 			}
 		},
 		{
@@ -524,7 +524,7 @@
 			},
 			"file": "failed",
 			"full": {
-				"content": "[... 41 bytes omitted ...]\n\n",
+				"content": "[... 31 bytes omitted ...]\n\nxxxxxxxxx\n",
 				"truncated": true
 			}
 		},
@@ -550,7 +550,7 @@
 			},
 			"file": "failed",
 			"full": {
-				"content": "[... 0 bytes omitted ...]\n\n0123456789\n€€€\n",
+				"content": "[... 17 bytes omitted ...]\n\n€\n",
 				"truncated": true
 			}
 		},
