@@ -26,8 +26,9 @@ func asOpenRouterModel(model *ai.Model) {
 // TestOpenRouterNativeFinishReason mirrors pi's
 // openai-completions-raw-stop-reason.test.ts "OpenRouter native_finish_reason"
 // (ddf5868d2, #11931): an OpenRouter model's rawStopReason records the native
-// reason next to finish_reason, an error message gains it, and the stop reason
-// is unchanged.
+// reason next to finish_reason and an error message gains it; and (9b911b409,
+// #12407) a stop without text or tool calls whose native reason is not a clean
+// stop is a retryable empty-response error.
 func TestOpenRouterNativeFinishReason(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -40,13 +41,81 @@ func TestOpenRouterNativeFinishReason(t *testing.T) {
 		wantRetryable *bool
 	}{
 		{
-			name: "records a native reason hidden behind a successful finish_reason without changing the stop reason",
+			name: "records a native reason hidden behind a successful finish_reason without changing a turn with text",
 			chunks: []string{
+				`{"id":"gen-1","choices":[{"index":0,"delta":{"content":"Done."},"finish_reason":null}]}`,
 				`{"id":"gen-1","choices":[{"index":0,"delta":{},"finish_reason":"stop","native_finish_reason":"MALFORMED_RESPONSE"}]}`,
 			},
 			openRouter: true,
 			wantStop:   ai.StopStop,
 			wantRaw:    "stop.MALFORMED_RESPONSE",
+		},
+		{
+			name: "retries a stop after reasoning only when the native reason is not a clean stop",
+			chunks: []string{
+				`{"id":"gen-8","choices":[{"index":0,"delta":{"reasoning":"Let me think."},"finish_reason":null}]}`,
+				`{"id":"gen-8","choices":[{"index":0,"delta":{},"finish_reason":"stop","native_finish_reason":"MALFORMED_RESPONSE"}]}`,
+			},
+			openRouter:    true,
+			wantStop:      ai.StopError,
+			wantRaw:       "stop.MALFORMED_RESPONSE",
+			wantErrMsg:    "OpenRouter returned an empty response (native_finish_reason: MALFORMED_RESPONSE)",
+			wantRetryable: new(true),
+		},
+		{
+			name: "retries an empty stop whose native reason OpenRouter counts as clean but its provider documents as a failure",
+			chunks: []string{
+				`{"id":"gen-9","choices":[{"index":0,"delta":{"content":"  "},"finish_reason":null}]}`,
+				`{"id":"gen-9","choices":[{"index":0,"delta":{},"finish_reason":"stop","native_finish_reason":"OTHER"}]}`,
+			},
+			openRouter:    true,
+			wantStop:      ai.StopError,
+			wantRaw:       "stop.OTHER",
+			wantErrMsg:    "OpenRouter returned an empty response (native_finish_reason: OTHER)",
+			wantRetryable: new(true),
+		},
+		{
+			name: "keeps an empty stop whose native reason is a clean stop",
+			chunks: []string{
+				`{"id":"gen-10","choices":[{"index":0,"delta":{},"finish_reason":"stop","native_finish_reason":"end_turn"}]}`,
+			},
+			openRouter: true,
+			wantStop:   ai.StopStop,
+			wantRaw:    "stop.end_turn",
+		},
+		{
+			name: "matches clean stop reasons case-insensitively",
+			chunks: []string{
+				`{"id":"gen-11","choices":[{"index":0,"delta":{},"finish_reason":"stop","native_finish_reason":"End_Turn"}]}`,
+			},
+			openRouter: true,
+			wantStop:   ai.StopStop,
+			wantRaw:    "stop.End_Turn",
+		},
+		// JavaScript semantics of the empty-stop check: toLowerCase lowers
+		// U+0130 to "i" + U+0307, so "COMPACT\u0130ON" is not "compaction"
+		// (strings.ToLower would make it one), and trim takes U+FEFF, so text
+		// of only that is not visible output (unicode.IsSpace keeps it).
+		{
+			name: "lowers the native reason as toLowerCase does",
+			chunks: []string{
+				`{"id":"gen-12","choices":[{"index":0,"delta":{},"finish_reason":"stop","native_finish_reason":"COMPACT\u0130ON"}]}`,
+			},
+			openRouter: true,
+			wantStop:   ai.StopError,
+			wantRaw:    "stop.COMPACT\u0130ON",
+			wantErrMsg: "OpenRouter returned an empty response (native_finish_reason: COMPACT\u0130ON)",
+		},
+		{
+			name: "trims text as String.prototype.trim does",
+			chunks: []string{
+				`{"id":"gen-13","choices":[{"index":0,"delta":{"content":"\ufeff"},"finish_reason":null}]}`,
+				`{"id":"gen-13","choices":[{"index":0,"delta":{},"finish_reason":"stop","native_finish_reason":"MALFORMED_RESPONSE"}]}`,
+			},
+			openRouter: true,
+			wantStop:   ai.StopError,
+			wantRaw:    "stop.MALFORMED_RESPONSE",
+			wantErrMsg: "OpenRouter returned an empty response (native_finish_reason: MALFORMED_RESPONSE)",
 		},
 		{
 			name: "records the native reason of a tool call",

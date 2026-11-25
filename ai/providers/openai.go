@@ -411,7 +411,9 @@ func streamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Transc
 
 		hasFinishReason := false
 		isOpenRouter := isOpenRouterModel(model)
-		// Kept across chunks so a trailing chunk that repeats finish_reason without it does not drop it.
+		// OpenRouter's native_finish_reason, only ever set for OpenRouter models, so the checks on it below
+		// are OpenRouter-only. Kept across chunks so a trailing chunk that repeats finish_reason without it
+		// does not drop it.
 		var nativeFinishReason string
 		// responseID is pi's output.responseId, the value `||=` tests: the
 		// message stores it as a string (jsStringField), whose emptiness is not
@@ -702,6 +704,9 @@ func streamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Transc
 					break
 				}
 			}
+		}
+		if nativeFinishReason != "" {
+			flagOpenRouterEmptyStop(output, nativeFinishReason)
 		}
 		if output.StopReason == ai.StopError {
 			msg := output.ErrorMessage
