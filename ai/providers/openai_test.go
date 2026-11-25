@@ -1516,13 +1516,16 @@ func mustJSON(t *testing.T, v any) string {
 
 // TestOpenAICompletionsRawStopReason mirrors pi's
 // openai-completions-raw-stop-reason.test.ts (d7b02636): the wire finish_reason
-// is preserved verbatim on rawStopReason, whether it maps to a stop or an error.
+// is preserved verbatim on rawStopReason, whether it maps to a stop or an error,
+// and (4f3d2be9a, #12206) a finish_reason "error" is retried where a
+// content_filter is not.
 func TestOpenAICompletionsRawStopReason(t *testing.T) {
 	tests := []struct {
-		name         string
-		finishReason string
-		wantStop     ai.StopReason
-		wantErrMsg   string
+		name          string
+		finishReason  string
+		wantStop      ai.StopReason
+		wantErrMsg    string
+		wantRetryable bool
 	}{
 		{name: "stop", finishReason: "stop", wantStop: ai.StopStop},
 		{name: "length", finishReason: "length", wantStop: ai.StopLength},
@@ -1531,6 +1534,13 @@ func TestOpenAICompletionsRawStopReason(t *testing.T) {
 			finishReason: "content_filter",
 			wantStop:     ai.StopError,
 			wantErrMsg:   "Provider finish_reason: content_filter",
+		},
+		{
+			name:          "error",
+			finishReason:  "error",
+			wantStop:      ai.StopError,
+			wantErrMsg:    "Provider finish_reason: error",
+			wantRetryable: true,
 		},
 	}
 	for _, tt := range tests {
@@ -1558,6 +1568,9 @@ func TestOpenAICompletionsRawStopReason(t *testing.T) {
 			}
 			if final.ErrorMessage != tt.wantErrMsg {
 				t.Fatalf("errorMessage = %q, want %q", final.ErrorMessage, tt.wantErrMsg)
+			}
+			if got := ai.IsRetryableAssistantError(*final); got != tt.wantRetryable {
+				t.Fatalf("IsRetryableAssistantError = %v, want %v", got, tt.wantRetryable)
 			}
 		})
 	}

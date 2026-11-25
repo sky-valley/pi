@@ -339,6 +339,9 @@ var retryableProviderErrorPattern = buildProviderErrorPattern([]string{
 	// An OpenAI-compatible stream that ended with `finish_reason: "error"`, which OpenRouter
 	// sends when its provider fails mid-stream; see `mapStopReason` in openai-completions.ts.
 	"provider finish_reason: error",
+	// Mistral's `finish_reason: "error"` for a transient server failure; see `mapChatStopReason`
+	// in mistral-conversations.ts (#10487).
+	"provider stopped with: error",
 	// OpenRouter: "Provider returned an empty response", and its wrapper for a provider that
 	// gave up, e.g. "Upstream error from Relace: The model stopped before completing the response."
 	"returned an empty response",

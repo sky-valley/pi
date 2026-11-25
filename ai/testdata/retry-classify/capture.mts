@@ -3,13 +3,13 @@
 // in package ai.
 //
 //   node --experimental-strip-types capture.mts <extraction> <out.json> <sha>
-//   e.g. ... capture.mts <dir> classify-0888fd79a.json 0888fd79a
+//   e.g. ... capture.mts <dir> classify-4f3d2be9a.json 4f3d2be9a
 //
 // <extraction> holds packages/ai at <sha> (`git archive <sha> packages/ai` from
 // the upstream clone) and a node_modules resolving pi-ai's dependencies (the npm
 // build's). It is a src capture, checked against the build when a release
-// ships the source it read (the BUILD wins): classify-0888fd79a.json was
-// captured from src at 0888fd79a with the 1.6.0 build's node_modules. The 1.6.0
+// ships the source it read (the BUILD wins): classify-4f3d2be9a.json was
+// captured from src at 4f3d2be9a with the 1.6.0 build's node_modules. The 1.6.0
 // build (released at faac58588) ships every alternative through bb1a2b354: its
 // dist/utils/retry.js gives classify-bb1a2b354.json's two pattern sources and
 // all 315 of its rows' answers. It predates fb62c069b's 525 in the status-code
@@ -18,14 +18,15 @@
 // reset" and "reported a failure while generating the response"; a00a5048d's
 // "admission ceiling", "type"\s*:\s*"api_error", "provider finish_reason:
 // error", "returned an empty response", "stopped before completing the
-// response" and "repeat the request later"; and 0888fd79a's "rate increased
-// too quickly", so re-verify it against the first build that ships them.
-// Control: this script at 0888fd79a^1 (8433532f9), with the same
-// node_modules, differs from classify-0888fd79a.json only in the retryable
-// source and in the 3 rows 0888fd79a's alternative decides (retryable false);
-// before 0888fd79a's rows were added, it reproduced classify-a00a5048d.json at
-// 8433532f9 byte for byte but the sha label, and that file's own controls
-// chain back through 25190b72c, fb62c069b, 30a3e0b1f (whose patterns are
+// response" and "repeat the request later"; 0888fd79a's "rate increased too
+// quickly"; and 4f3d2be9a's "provider stopped with: error", so re-verify it
+// against the first build that ships them. Control: this script at
+// 4f3d2be9a^1 (e3fa711f4), with the same node_modules, differs from
+// classify-4f3d2be9a.json only in the retryable source and in the 3 rows
+// 4f3d2be9a's alternative decides (retryable false); before 4f3d2be9a's rows
+// were added, it reproduced classify-0888fd79a.json at e3fa711f4 byte for
+// byte but the sha label, and that file's own controls chain back through
+// 8433532f9, a00a5048d, 25190b72c, fb62c069b, 30a3e0b1f (whose patterns are
 // bb1a2b354's), 4699b5b26 and 9b88b94e2 to 566344046.
 //
 // Every row records three answers: isRetryableAssistantError on the message
@@ -230,6 +231,9 @@ const rows: Row[] = [
 		"pi: request-rate throttle (#2952)",
 		"Request rate increased too quickly. To ensure system stability, please adjust your client logic to scale requests more smoothly over time.",
 	),
+	// mistral-raw-stop-reason.test.ts (4f3d2be9a, #10487): Mistral's
+	// `finish_reason: "error"` now reads like every other unmapped stop reason.
+	error("pi: Mistral finish_reason error (#10487)", "Provider stopped with: error"),
 
 	// isRetryableAssistantError's guard: only stopReason "error" with error text.
 	{ covers: "guard: stop", stopReason: "stop", errorMessage: "overloaded" },
@@ -312,6 +316,8 @@ const rows: Row[] = [
 	error("stream ended before message_stop", "Anthropic stream ended before message_stop"),
 	error("http2 request did not get a response", "http2 request did not get a response"),
 	error("provider finish_reason: error", "PROVIDER FINISH_REASON: ERROR"),
+	error("provider stopped with: error", "PROVIDER STOPPED WITH: ERROR"),
+	error("provider stopped with: error", "Provider stopped with: errored"),
 	error("returned an empty response", "Returned An Empty Response"),
 	error("stopped before completing the response", "Stopped Before Completing The Response"),
 	error("stream disconnected before completion", "Stream Disconnected Before Completion"),
@@ -462,6 +468,9 @@ const rows: Row[] = [
 	error("near-miss", "rate increased quickly"),
 	error("near-miss", "rate increased  too quickly"),
 	error("near-miss", "rate-increased-too-quickly"),
+	error("near-miss", "Provider stopped with: sensitive"),
+	error("near-miss", "Provider stopped with:error"),
+	error("near-miss", "provider stopped: error"),
 
 	// The socket-code boundaries: one UTF-16 code unit on each side that is not
 	// [a-z0-9_] under "i" (ASCII letters only), or the start or end of the text.
