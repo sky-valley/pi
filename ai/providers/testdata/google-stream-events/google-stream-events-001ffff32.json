@@ -1,5 +1,5 @@
 {
-	"source": "upstream 49681e1b7 packages/ai/src/api/google-generative-ai.ts (onProviderStreamEvent, 002fc8385), @google/genai 2.21.0 sha512-+PDtco2/Z0ONdzCGekCoCT+O1VJS9xJQNN4XzQpXG/t3El/SWWMkCWlFRO1KmivOHPa4Q0VjUYu1HBKCZ/v33Q==, node v26.4.0; rows 4, 5, 81, 83, 86, 87 and 133-137 (@google/genai 2.32.0's throwIfStreamErrorChunk) from upstream f72f799a4, @google/genai 2.32.0 sha512-60c79uXpR0a47bmGqDxbXEBuQUalNmwo5mx5kqb91jIW4FoqpsLSt86DeVhRhtH5+s/16Wqxt3sXzFQn2U1OHQ==, node v24.22.1: node v24.22.1 reproduces rows 4, 5, 81, 83, 86 and 87 of this file at 49681e1b7, and between f72f799a4^1 and f72f799a4 only these rows move; row 138 (a candidate's continuationToken) from upstream f72f799a4, @google/genai 2.32.0, node v24.22.1 likewise; rows 48, 49, 50, 51, 54 (a stream with no finish reason now names the chunks it received) from upstream 117eac3a0, @google/genai as its package-lock.json locks, node v22.23.5: at the parent 69a699348 those rows reproduce this file byte for byte and between 69a699348 and 117eac3a0 only they move",
+	"source": "upstream 49681e1b7 packages/ai/src/api/google-generative-ai.ts (onProviderStreamEvent, 002fc8385), @google/genai 2.21.0 sha512-+PDtco2/Z0ONdzCGekCoCT+O1VJS9xJQNN4XzQpXG/t3El/SWWMkCWlFRO1KmivOHPa4Q0VjUYu1HBKCZ/v33Q==, node v26.4.0; rows 4, 5, 81, 83, 86, 87 and 133-137 (@google/genai 2.32.0's throwIfStreamErrorChunk) from upstream f72f799a4, @google/genai 2.32.0 sha512-60c79uXpR0a47bmGqDxbXEBuQUalNmwo5mx5kqb91jIW4FoqpsLSt86DeVhRhtH5+s/16Wqxt3sXzFQn2U1OHQ==, node v24.22.1: node v24.22.1 reproduces rows 4, 5, 81, 83, 86 and 87 of this file at 49681e1b7, and between f72f799a4^1 and f72f799a4 only these rows move; row 138 (a candidate's continuationToken) from upstream f72f799a4, @google/genai 2.32.0, node v24.22.1 likewise; rows 48, 49, 50, 51, 54 (a stream with no finish reason now names the chunks it received) from upstream 117eac3a0, @google/genai as its package-lock.json locks, node v22.23.5: at the parent 69a699348 those rows reproduce this file byte for byte and between 69a699348 and 117eac3a0 only they move; rows 139-143 (the finish reasons @google/genai 3.x adds end as errors) from upstream 001ffff32, @google/genai 3.6.1 sha512-DQIkZkl+VoZc+RUSaJ41vRuywjQDpP0t/oUf5/ddQhNW6JsPjVULW2EgHmuJ1mrr6ACtrmUdPlqtNXF1yfKySg== (installed beside the 1.6.0 build's node_modules), node v22.23.5: at the parent f8149d1ab (@google/genai 2.32.0) the same rows end in Unhandled stop reason, and between f8149d1ab and 001ffff32 only these rows move, the 2.32.0 to 3.6.1 bump included",
 	"scenarios": [
 		{
 			"name": "upstream two chunks",
@@ -8105,6 +8105,286 @@
 				],
 				"stopReason": "length",
 				"content": "[{\"type\":\"text\",\"text\":\"abc\"}]",
+				"usage": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"totalTokens": 0,
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0
+					}
+				}
+			}
+		},
+		{
+			"name": "a MISSING_THOUGHT_SIGNATURE finish reason ends as an error",
+			"framing": "close",
+			"headers": [
+				[
+					"Content-Type",
+					"text/event-stream"
+				]
+			],
+			"segments": [
+				"data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"t\"}],\"role\":\"model\"},\"finishReason\":\"MISSING_THOUGHT_SIGNATURE\"}]}\n\n"
+			],
+			"readBoundariesMatter": false,
+			"pi": {
+				"acceptEncoding": "gzip, deflate",
+				"events": [
+					"{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"t\"}],\"role\":\"model\"},\"finishReason\":\"MISSING_THOUGHT_SIGNATURE\"}],\"sdkHttpResponse\":{\"headers\":{\"content-type\":\"text/event-stream\"}}}"
+				],
+				"sameModel": true,
+				"stream": [
+					{
+						"type": "start"
+					},
+					{
+						"type": "text_start"
+					},
+					{
+						"type": "text_delta",
+						"delta": "t"
+					},
+					{
+						"type": "text_end"
+					},
+					{
+						"type": "error"
+					}
+				],
+				"stopReason": "error",
+				"errorMessage": "Provider stopped with: MISSING_THOUGHT_SIGNATURE",
+				"content": "[{\"type\":\"text\",\"text\":\"t\"}]",
+				"usage": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"totalTokens": 0,
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0
+					}
+				}
+			}
+		},
+		{
+			"name": "a MALFORMED_RESPONSE finish reason ends as an error",
+			"framing": "close",
+			"headers": [
+				[
+					"Content-Type",
+					"text/event-stream"
+				]
+			],
+			"segments": [
+				"data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"t\"}],\"role\":\"model\"},\"finishReason\":\"MALFORMED_RESPONSE\"}]}\n\n"
+			],
+			"readBoundariesMatter": false,
+			"pi": {
+				"acceptEncoding": "gzip, deflate",
+				"events": [
+					"{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"t\"}],\"role\":\"model\"},\"finishReason\":\"MALFORMED_RESPONSE\"}],\"sdkHttpResponse\":{\"headers\":{\"content-type\":\"text/event-stream\"}}}"
+				],
+				"sameModel": true,
+				"stream": [
+					{
+						"type": "start"
+					},
+					{
+						"type": "text_start"
+					},
+					{
+						"type": "text_delta",
+						"delta": "t"
+					},
+					{
+						"type": "text_end"
+					},
+					{
+						"type": "error"
+					}
+				],
+				"stopReason": "error",
+				"errorMessage": "Provider stopped with: MALFORMED_RESPONSE",
+				"content": "[{\"type\":\"text\",\"text\":\"t\"}]",
+				"usage": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"totalTokens": 0,
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0
+					}
+				}
+			}
+		},
+		{
+			"name": "a ESCALATION finish reason ends as an error",
+			"framing": "close",
+			"headers": [
+				[
+					"Content-Type",
+					"text/event-stream"
+				]
+			],
+			"segments": [
+				"data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"t\"}],\"role\":\"model\"},\"finishReason\":\"ESCALATION\"}]}\n\n"
+			],
+			"readBoundariesMatter": false,
+			"pi": {
+				"acceptEncoding": "gzip, deflate",
+				"events": [
+					"{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"t\"}],\"role\":\"model\"},\"finishReason\":\"ESCALATION\"}],\"sdkHttpResponse\":{\"headers\":{\"content-type\":\"text/event-stream\"}}}"
+				],
+				"sameModel": true,
+				"stream": [
+					{
+						"type": "start"
+					},
+					{
+						"type": "text_start"
+					},
+					{
+						"type": "text_delta",
+						"delta": "t"
+					},
+					{
+						"type": "text_end"
+					},
+					{
+						"type": "error"
+					}
+				],
+				"stopReason": "error",
+				"errorMessage": "Provider stopped with: ESCALATION",
+				"content": "[{\"type\":\"text\",\"text\":\"t\"}]",
+				"usage": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"totalTokens": 0,
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0
+					}
+				}
+			}
+		},
+		{
+			"name": "a PUP_LIMITED_DISABLED finish reason ends as an error",
+			"framing": "close",
+			"headers": [
+				[
+					"Content-Type",
+					"text/event-stream"
+				]
+			],
+			"segments": [
+				"data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"t\"}],\"role\":\"model\"},\"finishReason\":\"PUP_LIMITED_DISABLED\"}]}\n\n"
+			],
+			"readBoundariesMatter": false,
+			"pi": {
+				"acceptEncoding": "gzip, deflate",
+				"events": [
+					"{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"t\"}],\"role\":\"model\"},\"finishReason\":\"PUP_LIMITED_DISABLED\"}],\"sdkHttpResponse\":{\"headers\":{\"content-type\":\"text/event-stream\"}}}"
+				],
+				"sameModel": true,
+				"stream": [
+					{
+						"type": "start"
+					},
+					{
+						"type": "text_start"
+					},
+					{
+						"type": "text_delta",
+						"delta": "t"
+					},
+					{
+						"type": "text_end"
+					},
+					{
+						"type": "error"
+					}
+				],
+				"stopReason": "error",
+				"errorMessage": "Provider stopped with: PUP_LIMITED_DISABLED",
+				"content": "[{\"type\":\"text\",\"text\":\"t\"}]",
+				"usage": {
+					"input": 0,
+					"output": 0,
+					"cacheRead": 0,
+					"cacheWrite": 0,
+					"totalTokens": 0,
+					"cost": {
+						"input": 0,
+						"output": 0,
+						"cacheRead": 0,
+						"cacheWrite": 0,
+						"total": 0
+					}
+				}
+			}
+		},
+		{
+			"name": "a MODEL_ARMOR finish reason ends as an error",
+			"framing": "close",
+			"headers": [
+				[
+					"Content-Type",
+					"text/event-stream"
+				]
+			],
+			"segments": [
+				"data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"t\"}],\"role\":\"model\"},\"finishReason\":\"MODEL_ARMOR\"}]}\n\n"
+			],
+			"readBoundariesMatter": false,
+			"pi": {
+				"acceptEncoding": "gzip, deflate",
+				"events": [
+					"{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"t\"}],\"role\":\"model\"},\"finishReason\":\"MODEL_ARMOR\"}],\"sdkHttpResponse\":{\"headers\":{\"content-type\":\"text/event-stream\"}}}"
+				],
+				"sameModel": true,
+				"stream": [
+					{
+						"type": "start"
+					},
+					{
+						"type": "text_start"
+					},
+					{
+						"type": "text_delta",
+						"delta": "t"
+					},
+					{
+						"type": "text_end"
+					},
+					{
+						"type": "error"
+					}
+				],
+				"stopReason": "error",
+				"errorMessage": "Provider stopped with: MODEL_ARMOR",
+				"content": "[{\"type\":\"text\",\"text\":\"t\"}]",
 				"usage": {
 					"input": 0,
 					"output": 0,

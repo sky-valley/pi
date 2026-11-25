@@ -174,7 +174,7 @@ func firstFunctionResponse(contents []any) map[string]any {
 // without includeThoughts. The maps below are the shipped catalog's shapes for
 // each family (inlined, so the test does not follow a catalog regen); the same
 // ids without a map keep "off" supported and disable with a budget. pi's values:
-// testdata/google-thinking/thinking-config-fe8a6f5dc.json "disabled/*".
+// testdata/google-thinking/thinking-config-001ffff32.json "disabled/*".
 func TestGoogleDisabledThinkingPerFamily(t *testing.T) {
 	proMap := ai.ThinkingLevelMap{"off": nil, "minimal": nil, "low": strPtr("LOW"), "medium": nil, "high": strPtr("HIGH")}
 	flashMap := ai.ThinkingLevelMap{"off": nil}
@@ -945,46 +945,22 @@ func TestGoogleGenerationConfigAlwaysSent(t *testing.T) {
 	}
 }
 
-// --- F4c: an xhigh that maps to nothing Google understands is an error ---
+// --- F4c: xhigh is a Google level ---
 //
-// This used to assert the opposite: xhigh fell through both getThinkingLevel and
-// getGoogleBudget, producing thinkingConfig:{includeThoughts:true} with neither
-// key. Upstream af2c35223 resolves the level through the map first and rejects
-// anything that lands outside Google's four standard levels, so a
-// self-referential entry like xhigh -> "xhigh" now fails the request instead of
-// silently sending an under-specified thinkingConfig.
+// Before upstream af2c35223 xhigh fell through both getThinkingLevel and
+// getGoogleBudget, producing thinkingConfig:{includeThoughts:true} with
+// neither key; af2c35223 rejected a self-referential xhigh -> "xhigh" before
+// any request. Upstream 001ffff32 (#12184) makes xhigh one of Google's levels:
+// it is sent as thinkingLevel "XHIGH". Mirrors google-thinking-level-map.test.ts
+// "sends xhigh as XHIGH for Gemini 4 models that support it", google adapter.
 
-func TestGoogleXHighUnmappedIsRejected(t *testing.T) {
-	requested := false
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		requested = true
-		w.Header().Set("content-type", "text/event-stream")
-		io.WriteString(w, "data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"x\"}]},\"finishReason\":\"STOP\"}]}\n\n")
-	}))
-	defer server.Close()
-	// Model advertises xhigh (thinkingLevelMap presence makes it a supported
-	// level) so clampThinkingLevel keeps it instead of clamping to high.
-	xhigh := "xhigh"
-	model := &ai.Model{
-		ID: "gemini-3-pro-preview", Api: ai.APIGoogleGenerativeAI, Provider: "google",
-		BaseURL: server.URL, Reasoning: true,
-		ThinkingLevelMap: ai.ThinkingLevelMap{"xhigh": &xhigh},
-	}
-	req := ai.Context{Messages: []ai.Message{ai.NewUserText("hi", 1)}}
-	msg := StreamSimpleGoogle(context.Background(), model, ai.NormalizeContext(req), &ai.SimpleStreamOptions{
-		StreamOptions: ai.StreamOptions{ProviderRequestOptions: ai.ProviderRequestOptions{APIKey: "k"}}, Reasoning: ai.ThinkingXHigh,
-	}).
-		Result()
-	if msg.StopReason != ai.StopError {
-		t.Fatalf("want stopReason error, got %q", msg.StopReason)
-	}
-	want := "Unsupported Google thinking level mapping for google/gemini-3-pro-preview: xhigh -> xhigh"
-	if msg.ErrorMessage != want {
-		t.Fatalf("want %q, got %q", want, msg.ErrorMessage)
-	}
-	if requested {
-		t.Fatal("no request may be sent for an unresolvable level")
-	}
+func TestGoogleXHighIsSentAsXHigh(t *testing.T) {
+	model := googleLevelMapModel("gemini-4-hydrogen", ai.ThinkingLevelMap{
+		"off": nil, "minimal": nil, "low": strPtr("low"), "medium": strPtr("medium"), "high": strPtr("high"),
+		"xhigh": strPtr("xhigh"), "max": nil,
+	})
+	cfg := googleThinkingConfig(t, captureGoogleSimplePayload(t, model, ai.ThinkingXHigh, nil))
+	assertGoogleThinkingConfig(t, cfg, map[string]any{"includeThoughts": true, "thinkingLevel": "XHIGH"})
 }
 
 func TestGoogleOnPayloadErrorFailsStream(t *testing.T) {

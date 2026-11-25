@@ -1,5 +1,5 @@
 {
-	"sha": "fe8a6f5dc",
+	"sha": "001ffff32",
 	"cases": [
 		{
 			"name": "upstream/omitted uses the lowest supported level",
@@ -411,13 +411,16 @@
 			}
 		},
 		{
-			"name": "level/unmappable value keeps its case",
+			"name": "level/uppercase XHIGH value",
 			"id": "gemini-3.7-flash",
 			"thinkingLevelMap": {
 				"high": "XHIGH"
 			},
 			"reasoning": "high",
-			"thrown": "Unsupported Google thinking level mapping for test-google/gemini-3.7-flash: high -> XHIGH"
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingLevel": "XHIGH"
+			}
 		},
 		{
 			"name": "id/flash-latest with a suffix uses budgets",
@@ -750,6 +753,156 @@
 				"includeThoughts": true,
 				"thinkingBudget": -1
 			}
+		},
+		{
+			"name": "upstream/xhigh sends XHIGH on Gemini 4 Hydrogen",
+			"id": "gemini-4-hydrogen",
+			"thinkingLevelMap": {
+				"off": null,
+				"minimal": null,
+				"low": "low",
+				"medium": "medium",
+				"high": "high",
+				"xhigh": "xhigh",
+				"max": null
+			},
+			"reasoning": "xhigh",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingLevel": "XHIGH"
+			}
+		},
+		{
+			"name": "upstream/xhigh uses the high token budget",
+			"id": "gemini-2.5-flash",
+			"thinkingLevelMap": {
+				"xhigh": "xhigh"
+			},
+			"reasoning": "xhigh",
+			"thinkingBudgets": {
+				"high": 1234
+			},
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingBudget": 1234
+			}
+		},
+		{
+			"name": "xhigh/2.5 pro default budget",
+			"id": "gemini-2.5-pro",
+			"thinkingLevelMap": {
+				"xhigh": "xhigh"
+			},
+			"reasoning": "xhigh",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingBudget": 32768
+			}
+		},
+		{
+			"name": "xhigh/2.5 flash-lite default budget",
+			"id": "gemini-2.5-flash-lite",
+			"thinkingLevelMap": {
+				"xhigh": "xhigh"
+			},
+			"reasoning": "xhigh",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingBudget": 24576
+			}
+		},
+		{
+			"name": "xhigh/2.5 flash default budget",
+			"id": "gemini-2.5-flash",
+			"thinkingLevelMap": {
+				"xhigh": "xhigh"
+			},
+			"reasoning": "xhigh",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingBudget": 24576
+			}
+		},
+		{
+			"name": "xhigh/unknown budget family",
+			"id": "gemini-1-pro",
+			"thinkingLevelMap": {
+				"xhigh": "xhigh"
+			},
+			"reasoning": "xhigh",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingBudget": -1
+			}
+		},
+		{
+			"name": "xhigh/a custom xhigh budget is not read",
+			"id": "gemini-2.5-flash",
+			"thinkingLevelMap": {
+				"xhigh": "xhigh"
+			},
+			"reasoning": "xhigh",
+			"thinkingBudgets": {
+				"xhigh": 99
+			},
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingBudget": 24576
+			}
+		},
+		{
+			"name": "xhigh/2.5 flash-lite minimal budget",
+			"id": "gemini-2.5-flash-lite",
+			"reasoning": "minimal",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingBudget": 512
+			}
+		},
+		{
+			"name": "xhigh/mapped from max",
+			"id": "gemini-3.7-flash",
+			"thinkingLevelMap": {
+				"max": "xhigh"
+			},
+			"reasoning": "max",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingLevel": "XHIGH"
+			}
+		},
+		{
+			"name": "xhigh/no map on a level model",
+			"id": "gemini-3-pro-preview",
+			"reasoning": "xhigh",
+			"thinkingConfig": {
+				"includeThoughts": true,
+				"thinkingLevel": "HIGH"
+			}
+		},
+		{
+			"name": "xhigh/disabled fallback resolves to XHIGH",
+			"id": "gemini-3.8-flash",
+			"thinkingLevelMap": {
+				"off": null,
+				"minimal": null,
+				"low": null,
+				"medium": null,
+				"high": null,
+				"xhigh": "xhigh"
+			},
+			"thinkingConfig": {
+				"thinkingLevel": "XHIGH"
+			}
+		},
+		{
+			"name": "xhigh/max is still unmappable",
+			"id": "gemini-3.7-flash",
+			"thinkingLevelMap": {
+				"max": "max"
+			},
+			"reasoning": "max",
+			"thrown": "Unsupported Google thinking level mapping for test-google/gemini-3.7-flash: max -> max"
 		}
 	]
 }

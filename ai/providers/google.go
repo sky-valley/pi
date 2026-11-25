@@ -102,8 +102,8 @@ func StreamSimpleGoogle(ctx context.Context, model *ai.Model, req ai.TranscriptC
 	}
 	// pi resolves the clamped level through the model's thinkingLevelMap before
 	// picking a level or a budget (upstream af2c35223). A level that resolves to
-	// something outside Google's four standard levels is an error now, where it
-	// used to fall through both tables into thinkingConfig:{includeThoughts:true}
+	// something outside Google's standard levels is an error now, where it used
+	// to fall through both tables into thinkingConfig:{includeThoughts:true}
 	// with neither thinkingLevel nor thinkingBudget.
 	effort, err := resolveGoogleThinkingLevel(model, ai.ThinkingLevel(clamped))
 	if err != nil {
@@ -118,7 +118,8 @@ func StreamSimpleGoogle(ctx context.Context, model *ai.Model, req ai.TranscriptC
 		if opts != nil {
 			custom = opts.ThinkingBudgets
 		}
-		g.ThinkingBudget = googleBudget(model.ID, effort, custom)
+		budget := getGoogleBudget(model.ID, effort, custom)
+		g.ThinkingBudget = &budget
 	}
 	return StreamGoogle(ctx, model, req, g)
 }
@@ -148,8 +149,9 @@ func usesGoogleThinkingLevel(model *ai.Model) bool {
 }
 
 // toGoogleThinkingLevel maps a resolved level to Google's ThinkingLevel enum
-// value (pi toGoogleThinkingLevel). resolveGoogleThinkingLevel yields only the
-// four levels handled here; any other input returns "".
+// value (pi toGoogleThinkingLevel; XHIGH since upstream 001ffff32).
+// resolveGoogleThinkingLevel yields only the five levels handled here; any
+// other input returns "".
 func toGoogleThinkingLevel(level string) string {
 	switch level {
 	case "minimal":
@@ -160,6 +162,8 @@ func toGoogleThinkingLevel(level string) string {
 		return "MEDIUM"
 	case "high":
 		return "HIGH"
+	case "xhigh":
+		return "XHIGH"
 	}
 	return ""
 }
@@ -188,8 +192,9 @@ func getDisabledGoogleThinkingConfig(model *ai.Model) (map[string]any, error) {
 }
 
 // resolveGoogleThinkingLevel ports pi resolveGoogleThinkingLevel (google-shared.ts,
-// upstream af2c35223, 16235fd93): map a supported pi level onto one of Google's
-// four standard levels. Callers handle "off" before resolving. The model's
+// upstream af2c35223, 16235fd93, 001ffff32): map a supported pi level onto one
+// of Google's standard levels, xhigh included since 001ffff32 (#12184). Callers
+// handle "off" before resolving. The model's
 // thinkingLevelMap only participates when it holds a string for that level — pi
 // guards with `typeof mapped === "string"`, so an explicit null (the map's
 // "unsupported" marker) falls back to the level itself, exactly like an absent key.
@@ -204,7 +209,7 @@ func resolveGoogleThinkingLevel(model *ai.Model, level ai.ThinkingLevel) (string
 		resolved = strings.ToLower(*mapped)
 	}
 	switch resolved {
-	case "minimal", "low", "medium", "high":
+	case "minimal", "low", "medium", "high", "xhigh":
 		return resolved, nil
 	}
 	rendered := "undefined"
@@ -219,31 +224,34 @@ func resolveGoogleThinkingLevel(model *ai.Model, level ai.ThinkingLevel) (string
 		model.Provider, model.ID, level, rendered)
 }
 
-// googleBudget mirrors pi getGoogleBudget (google.ts:463-503). A nil return means
-// "no thinkingBudget" (pi's per-family tables have no xhigh key, so budgets[effort]
-// is undefined); the final default of -1 applies to unmatched model families for
-// ANY effort, xhigh included.
-func googleBudget(id, effort string, custom *ai.ThinkingBudgets) *int {
+// getGoogleBudget is pi's getGoogleBudget (google-shared.ts, shared by both
+// Google adapters since upstream 001ffff32): the thinkingBudget for a model on
+// token budgets, a resolved level's custom budget first, then the per-family
+// defaults, else -1 (dynamic). Budgets stop at high, so xhigh uses the high
+// budget, custom budgets included.
+func getGoogleBudget(id, level string, custom *ai.ThinkingBudgets) int {
+	if level == "xhigh" {
+		level = "high"
+	}
 	if custom != nil {
-		if b := budgetForEffort(custom, effort); b != nil {
-			return b
+		if b := budgetForLevel(custom, level); b != nil {
+			return *b
 		}
 	}
 	switch {
 	case strings.Contains(id, "2.5-pro"):
-		return pick(effort, 128, 2048, 8192, 32768)
+		return pick(level, 128, 2048, 8192, 32768)
 	case strings.Contains(id, "2.5-flash-lite"):
-		return pick(effort, 512, 2048, 8192, 24576)
+		return pick(level, 512, 2048, 8192, 24576)
 	case strings.Contains(id, "2.5-flash"):
-		return pick(effort, 128, 2048, 8192, 24576)
+		return pick(level, 128, 2048, 8192, 24576)
 	default:
-		v := -1
-		return &v
+		return -1
 	}
 }
 
-func budgetForEffort(b *ai.ThinkingBudgets, effort string) *int {
-	switch effort {
+func budgetForLevel(b *ai.ThinkingBudgets, level string) *int {
+	switch level {
 	case "minimal":
 		return b.Minimal
 	case "low":
@@ -256,18 +264,18 @@ func budgetForEffort(b *ai.ThinkingBudgets, effort string) *int {
 	return nil
 }
 
-func pick(effort string, minimal, low, medium, high int) *int {
-	switch effort {
+// pick is a family's budget table. resolveGoogleThinkingLevel and
+// getGoogleBudget's xhigh step leave only these four levels.
+func pick(level string, minimal, low, medium, high int) int {
+	switch level {
 	case "minimal":
-		return &minimal
+		return minimal
 	case "low":
-		return &low
+		return low
 	case "medium":
-		return &medium
-	case "high":
-		return &high
+		return medium
 	}
-	return nil
+	return high
 }
 
 // requiresToolCallID reports whether a model reached via the Google APIs needs
@@ -1326,7 +1334,13 @@ func mapGoogleStopReason(reason string) (ai.StopReason, error) {
 		"MALFORMED_FUNCTION_CALL",
 		"UNEXPECTED_TOOL_CALL",
 		"TOO_MANY_TOOL_CALLS",
-		"NO_IMAGE":
+		"NO_IMAGE",
+		// Added in @google/genai 3.x (upstream 001ffff32).
+		"MISSING_THOUGHT_SIGNATURE",
+		"MALFORMED_RESPONSE",
+		"ESCALATION",
+		"PUP_LIMITED_DISABLED",
+		"MODEL_ARMOR":
 		return ai.StopError, nil
 	default:
 		return ai.StopError, fmt.Errorf("Unhandled stop reason: %s", reason)

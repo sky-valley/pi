@@ -3,13 +3,19 @@
 // the oracle behind TestGoogleThinkingConfigMatchesPi in this package.
 //
 //   node --experimental-strip-types capture-thinking-config.mts <extraction> <out.json> <sha>
-//   e.g. ... capture-thinking-config.mts <dir> thinking-config-fe8a6f5dc.json fe8a6f5dc
+//   e.g. ... capture-thinking-config.mts <dir> thinking-config-001ffff32.json 001ffff32
 //
 // <extraction> holds packages/ai at <sha> (`git archive <sha> packages/ai` from
 // the upstream clone) and a node_modules resolving pi-ai's dependencies (the npm
 // build's: at 1692bba63 the lockfile's @google/genai 2.21.0 and typebox 1.3.27
 // are the npm 1.3.0 build's, integrity for integrity; at fe8a6f5dc its
-// @google/genai 2.32.0 and typebox 1.3.27 are the npm 1.6.0 build's).
+// @google/genai 2.32.0 and typebox 1.3.27 are the npm 1.6.0 build's; at
+// 001ffff32, which needs ThinkingLevel.XHIGH, the 1.6.0 build's with
+// @google/genai 3.6.1, installed beside it at the lockfile's integrity).
+// 001ffff32 (#12184) made xhigh a Google level: of the fe8a6f5dc file only
+// the "level/uppercase XHIGH value" case moves (renamed from "level/unmappable
+// value keeps its case"), and the cases after "id/gemini 3 lite" were added
+// with it; its parent f8149d1ab reproduces the fe8a6f5dc file for the rest.
 // <extraction> may instead be a published @earendil-works/pi-ai package
 // directory, whose dist is loaded: the BUILD wins where the two disagree.
 // 1.3.0's dist and 1692bba63's src record the same file. fe8a6f5dc (#12321)
@@ -153,7 +159,8 @@ const cases: Case[] = [
 	{ name: "level/flash-lite-latest no map minimal", id: "gemini-flash-lite-latest", reasoning: "minimal" },
 	{ name: "level/flash catalog map minimal", id: "gemini-3.8-flash", thinkingLevelMap: flashMap, reasoning: "minimal" },
 	{
-		name: "level/unmappable value keeps its case",
+		// An error that kept the value's case until 001ffff32 made XHIGH a level.
+		name: "level/uppercase XHIGH value",
 		id: "gemini-3.7-flash",
 		thinkingLevelMap: { high: "XHIGH" },
 		reasoning: "high",
@@ -203,6 +210,49 @@ const cases: Case[] = [
 	{ name: "id/gemini 1 uses budgets", id: "gemini-1-pro", reasoning: "low" },
 	{ name: "id/gemini 2.5 uses budgets", id: "gemini-2.5-pro", reasoning: "low" },
 	{ name: "id/gemini 3 lite uses budgets", id: "gemini-3-lite", reasoning: "low" },
+
+	// xhigh is a Google level since 001ffff32 (#12184): sent as XHIGH, and a
+	// budget model uses its high budget for it.
+	// google-thinking-level-map.test.ts @001ffff32, google adapter.
+	{
+		name: "upstream/xhigh sends XHIGH on Gemini 4 Hydrogen",
+		id: "gemini-4-hydrogen",
+		thinkingLevelMap: { ...effortMap, xhigh: "xhigh" },
+		reasoning: "xhigh",
+	},
+	{
+		name: "upstream/xhigh uses the high token budget",
+		id: "gemini-2.5-flash",
+		thinkingLevelMap: { xhigh: "xhigh" },
+		reasoning: "xhigh",
+		thinkingBudgets: { high: 1234 },
+	},
+	{ name: "xhigh/2.5 pro default budget", id: "gemini-2.5-pro", thinkingLevelMap: { xhigh: "xhigh" }, reasoning: "xhigh" },
+	{
+		name: "xhigh/2.5 flash-lite default budget",
+		id: "gemini-2.5-flash-lite",
+		thinkingLevelMap: { xhigh: "xhigh" },
+		reasoning: "xhigh",
+	},
+	{ name: "xhigh/2.5 flash default budget", id: "gemini-2.5-flash", thinkingLevelMap: { xhigh: "xhigh" }, reasoning: "xhigh" },
+	{ name: "xhigh/unknown budget family", id: "gemini-1-pro", thinkingLevelMap: { xhigh: "xhigh" }, reasoning: "xhigh" },
+	// Custom budgets are read at the high key only.
+	{
+		name: "xhigh/a custom xhigh budget is not read",
+		id: "gemini-2.5-flash",
+		thinkingLevelMap: { xhigh: "xhigh" },
+		reasoning: "xhigh",
+		thinkingBudgets: { xhigh: 99 },
+	},
+	{ name: "xhigh/2.5 flash-lite minimal budget", id: "gemini-2.5-flash-lite", reasoning: "minimal" },
+	{ name: "xhigh/mapped from max", id: "gemini-3.7-flash", thinkingLevelMap: { max: "xhigh" }, reasoning: "max" },
+	{ name: "xhigh/no map on a level model", id: "gemini-3-pro-preview", reasoning: "xhigh" },
+	{
+		name: "xhigh/disabled fallback resolves to XHIGH",
+		id: "gemini-3.8-flash",
+		thinkingLevelMap: { off: null, minimal: null, low: null, medium: null, high: null, xhigh: "xhigh" },
+	},
+	{ name: "xhigh/max is still unmappable", id: "gemini-3.7-flash", thinkingLevelMap: { max: "max" }, reasoning: "max" },
 ];
 
 function googleModel(c: Case) {

@@ -4,7 +4,7 @@
 // this package.
 //
 //   node --experimental-strip-types capture.mts <extraction> <out.json> <sha>
-//   e.g. ... capture.mts <dir> google-stream-events-117eac3a0.json 117eac3a0
+//   e.g. ... capture.mts <dir> google-stream-events-001ffff32.json 001ffff32
 //
 // <extraction> holds `git archive <sha> packages/ai package-lock.json` from the
 // upstream clone, plus a node_modules resolving pi-ai's dependencies (the npm
@@ -1383,6 +1383,16 @@ const scenarios: Scenario[] = [
 			),
 		],
 	},
+	// The finish reasons @google/genai 3.x adds end the turn as an error
+	// (upstream 001ffff32); before it they failed as unhandled.
+	...["MISSING_THOUGHT_SIGNATURE", "MALFORMED_RESPONSE", "ESCALATION", "PUP_LIMITED_DISABLED", "MODEL_ARMOR"].map(
+		(finishReason): Scenario => ({
+			name: `a ${finishReason} finish reason ends as an error`,
+			framing: "close",
+			headers: eventStream,
+			segments: [sse(text("t", { finishReason }))],
+		}),
+	),
 ];
 
 function serve(

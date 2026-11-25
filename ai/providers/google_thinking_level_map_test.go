@@ -56,6 +56,7 @@ func TestResolveGoogleThinkingLevel(t *testing.T) {
 		"low":     "low",
 		"medium":  "medium",
 		"high":    "high",
+		"xhigh":   "xhigh",
 	}
 	for level, want := range defaults {
 		t.Run(string(level), func(t *testing.T) {
@@ -70,7 +71,7 @@ func TestResolveGoogleThinkingLevel(t *testing.T) {
 	}
 
 	// A mapping value wins over the requested level, case-insensitively.
-	for _, mapped := range []string{"minimal", "low", "medium", "high", "MINIMAL", "LOW", "MEDIUM", "HIGH"} {
+	for _, mapped := range []string{"minimal", "low", "medium", "high", "xhigh", "MINIMAL", "LOW", "MEDIUM", "HIGH", "XHIGH"} {
 		want := strings.ToLower(mapped)
 		model := googleLevelMapModel("gemini-3.7-flash", levelMap(map[ai.ModelThinkingLevel]string{
 			"high": mapped, "xhigh": mapped, "max": mapped,
@@ -256,6 +257,17 @@ func TestGoogleSimpleUsesMappedLevelForTokenBudget(t *testing.T) {
 	}
 }
 
+// Upstream 001ffff32 (#12184): budgets stop at high, so xhigh uses the high
+// budget, custom budgets included.
+func TestGoogleSimpleUsesHighTokenBudgetForXHigh(t *testing.T) {
+	model := googleLevelMapModel("gemini-2.5-flash", levelMap(map[ai.ModelThinkingLevel]string{"xhigh": "xhigh"}))
+	high := 1234
+	cfg := googleThinkingConfig(t, captureGoogleSimplePayload(t, model, "xhigh", &ai.ThinkingBudgets{High: &high}))
+	if cfg["thinkingBudget"] != float64(1234) {
+		t.Fatalf("want thinkingBudget 1234, got %v", cfg)
+	}
+}
+
 func TestGoogleSimpleUnresolvableLevelFailsStream(t *testing.T) {
 	// pi throws out of streamSimple; the Go seam encodes it as a terminal error.
 	model := googleLevelMapModel("gemini-3.7-flash", levelMap(map[ai.ModelThinkingLevel]string{"xhigh": "extreme"}))
@@ -285,12 +297,13 @@ func TestGoogleSimpleUnresolvableLevelFailsStream(t *testing.T) {
 }
 
 // googleThinkingCaptureFile holds pi's thinkingConfig for a table of models and
-// reasoning levels, captured under node at upstream fe8a6f5dc by
+// reasoning levels, captured under node at upstream 001ffff32 by
 // testdata/google-thinking/capture-thinking-config.mts (first captured at
 // 1692bba63, whose file pi-ai 1.3.0's dist recorded too; fe8a6f5dc moved the
-// zero-padded gemini-04 case to a level). Each case carries its own fixture,
-// so both sides build the same model.
-const googleThinkingCaptureFile = "testdata/google-thinking/thinking-config-fe8a6f5dc.json"
+// zero-padded gemini-04 case to a level; 001ffff32 made xhigh a level, sent
+// as XHIGH or as the high budget). Each case carries its own fixture, so
+// both sides build the same model.
+const googleThinkingCaptureFile = "testdata/google-thinking/thinking-config-001ffff32.json"
 
 type googleThinkingCase struct {
 	Name               string              `json:"name"`
