@@ -303,7 +303,7 @@ func TestGoogleSimpleUnresolvableLevelFailsStream(t *testing.T) {
 // zero-padded gemini-04 case to a level; 001ffff32 made xhigh a level, sent
 // as XHIGH or as the high budget). Each case carries its own fixture, so
 // both sides build the same model.
-const googleThinkingCaptureFile = "testdata/google-thinking/thinking-config-001ffff32.json"
+const googleThinkingCaptureFile = "testdata/google-thinking/thinking-config-1.6.1.json"
 
 type googleThinkingCase struct {
 	Name               string              `json:"name"`

@@ -1,5 +1,5 @@
 {
-	"sha": "001ffff32",
+	"sha": "1.6.1",
 	"cases": [
 		{
 			"name": "upstream/omitted uses the lowest supported level",

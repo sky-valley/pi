@@ -8,7 +8,7 @@
 // TestAnthropicStrictToolFallbackMatchesPi.
 //
 //   node capture.mjs <pi-ai package dir | src extraction> <out.json>
-//   e.g. node capture.mjs .../npm-1.3.0/node_modules/@earendil-works/pi-ai strict-fallback-1.3.0.json
+//   e.g. node capture.mjs .../npm-1.6.1/node_modules/@earendil-works/pi-ai strict-fallback-1.6.1.json
 //
 // The rows replay upstream's anthropic-strict-tool-fallback.test.ts: its model,
 // tools and responses (served through options.fetch, one per request, the last

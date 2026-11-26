@@ -11,13 +11,13 @@ import (
 )
 
 // crossModelThinkingCaptureFile is what testdata/cross-model-thinking/
-// capture.mjs recorded from src at 69a699348 over the 1.6.0 build's
-// node_modules. At the parent fb248c7fc it records what the 1.6.0 build does
+// capture.mjs recorded from the pi-ai 1.6.1 build, the first build that ships
+// 69a699348; the earlier src capture at 69a699348 matches it but for the
+// label. At the parent fb248c7fc the capture records what the 1.6.0 build does
 // (1.6.0 ships 7a6bd5a97, which dropped `"tools": []` from the
 // openai-completions request); 69a699348 adds only `"status": "completed"` to
-// the replayed openai-responses function_call. Re-verify against the first
-// build that ships 69a699348.
-const crossModelThinkingCaptureFile = "testdata/cross-model-thinking/cross-model-thinking-69a699348.json"
+// the replayed openai-responses function_call.
+const crossModelThinkingCaptureFile = "testdata/cross-model-thinking/cross-model-thinking-1.6.1.json"
 
 type crossModelThinkingCapture struct {
 	TransformRows []struct {

@@ -3,7 +3,7 @@
 // the oracle behind TestGoogleThinkingConfigMatchesPi in this package.
 //
 //   node --experimental-strip-types capture-thinking-config.mts <extraction> <out.json> <sha>
-//   e.g. ... capture-thinking-config.mts <dir> thinking-config-001ffff32.json 001ffff32
+//   e.g. ... capture-thinking-config.mts <npm 1.6.1>/node_modules/@earendil-works/pi-ai thinking-config-1.6.1.json 1.6.1
 //
 // <extraction> holds packages/ai at <sha> (`git archive <sha> packages/ai` from
 // the upstream clone) and a node_modules resolving pi-ai's dependencies (the npm
@@ -18,7 +18,10 @@
 // with it; its parent f8149d1ab reproduces the fe8a6f5dc file for the rest.
 // <extraction> may instead be a published @earendil-works/pi-ai package
 // directory, whose dist is loaded: the BUILD wins where the two disagree.
-// 1.3.0's dist and 1692bba63's src record the same file. fe8a6f5dc (#12321)
+// 1.3.0's dist and 1692bba63's src record the same file.
+// thinking-config-1.6.1.json is the 1.6.1 build's capture, the first build
+// that ships 001ffff32: it matches the earlier src capture at 001ffff32 but
+// for the sha label. fe8a6f5dc (#12321)
 // moved only the zero-padded "gemini 04" case, from a budget to a level (its
 // parent recorded the 1692bba63 file unchanged); the port added the
 // gemini-live-4 and vendor-gemini-2.5 cases when it ported fe8a6f5dc.

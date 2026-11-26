@@ -13,11 +13,12 @@ import (
 )
 
 // anthropicStrictFallbackCaptureFile is what testdata/anthropic-strict-fallback/
-// capture.mjs recorded from pi's anthropic-messages stream at src ea1cfcc4c,
-// replaying upstream's anthropic-strict-tool-fallback.test.ts. The session rows
+// capture.mjs recorded from the pi-ai 1.6.1 build's anthropic-messages stream,
+// replaying upstream's anthropic-strict-tool-fallback.test.ts. It matches the
+// earlier src capture at 8a57d42a5 but for the source label. The session rows
 // are upstream 45344bd3a's; at its parent, and in the pi-ai 1.5.0 build, every
 // other row reproduces the file this one supersedes (strict-fallback-1.3.0.json).
-const anthropicStrictFallbackCaptureFile = "testdata/anthropic-strict-fallback/strict-fallback-8a57d42a5.json"
+const anthropicStrictFallbackCaptureFile = "testdata/anthropic-strict-fallback/strict-fallback-1.6.1.json"
 
 // When Anthropic rejects strict tools for its own limits — a 400
 // invalid_request_error saying the compiled grammar is too large, or there are

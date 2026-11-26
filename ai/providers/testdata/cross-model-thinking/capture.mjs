@@ -6,7 +6,7 @@
 // TestCrossModelThinkingRequestsMatchPi.
 //
 //   node capture.mjs <pi-ai package dir | src extraction> <out.json>
-//   e.g. node capture.mjs .../npm-1.3.0/node_modules/@earendil-works/pi-ai cross-model-thinking-1.3.0.json
+//   e.g. node capture.mjs .../npm-1.6.1/node_modules/@earendil-works/pi-ai cross-model-thinking-1.6.1.json
 //
 // `transformRows` record transformMessages(messages, model) with no id
 // normalizer (upstream's transform-messages-cross-model-thinking.test.ts and

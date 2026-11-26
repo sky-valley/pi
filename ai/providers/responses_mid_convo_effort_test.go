@@ -15,13 +15,14 @@ import (
 )
 
 // midConvoEffortCaptureFile is what testdata/mid-convo-effort/capture.mjs
-// recorded from pi-ai src at 69a699348's openai-responses stream over the
-// 1.6.0 build's node_modules (at the parent fb248c7fc it reproduces the 1.6.0
-// build; 69a699348 adds only the replayed call's `"status": "completed"`),
+// recorded from the pi-ai 1.6.1 build's openai-responses stream (the first
+// build that ships 69a699348, which added only the replayed call's
+// `"status": "completed"`; the earlier src capture at 69a699348 matches it but
+// for the label),
 // replaying upstream's openai-responses-mid-convo-effort.test.ts: each run's
 // model, messages, options and response body, and the request it sent and the
 // reply it built.
-const midConvoEffortCaptureFile = "testdata/mid-convo-effort/mid-convo-effort-69a699348.json"
+const midConvoEffortCaptureFile = "testdata/mid-convo-effort/mid-convo-effort-1.6.1.json"
 
 // recordingDoer serves body to every request and keeps the last request's
 // body.

@@ -15,7 +15,7 @@ import (
 // output schema describes the structured content programmatic callers such as
 // codemode scripts get, and a tool without one declares none.
 func TestBuiltinToolSchemasMatchPi(t *testing.T) {
-	raw, err := os.ReadFile("testdata/toolschemas/toolschemas-943a99e3c.json")
+	raw, err := os.ReadFile("testdata/toolschemas/toolschemas-1.6.1.json")
 	if err != nil {
 		t.Fatal(err)
 	}

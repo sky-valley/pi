@@ -10,13 +10,13 @@ import (
 )
 
 // itemIDsCaptureFile is what testdata/responses-item-ids/capture.mjs recorded
-// from pi-ai src at 69a699348 over the 1.6.0 build's node_modules (at the
-// parent fb248c7fc it reproduces the 1.6.0 build; 69a699348 adds only the
-// replayed calls' `"status": "completed"`): the openai-responses request
+// from the pi-ai 1.6.1 build, the first build that ships 69a699348 (which added
+// only the replayed calls' `"status": "completed"`; the earlier src capture at
+// 69a699348 matches it but for the label): the openai-responses request
 // input replaying a tool call whose id carries an fc_, ctc_, other or no item
 // id, with grammar tool support on and off, from the same model, another
 // model of the provider and a foreign provider's model.
-const itemIDsCaptureFile = "testdata/responses-item-ids/item-ids-69a699348.json"
+const itemIDsCaptureFile = "testdata/responses-item-ids/item-ids-1.6.1.json"
 
 // A replayed call keeps its item id only when the id's prefix matches the item
 // type it replays as — fc_ for a function_call, ctc_ for a custom_tool_call —

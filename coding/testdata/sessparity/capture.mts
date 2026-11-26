@@ -19,12 +19,13 @@
 // first build carrying context_edit entries and the newest-compaction-only
 // checkpoint (upstream 466db0fec), except 22_compaction_retained_tail, captured
 // from 1.3.0; 13 and 19 re-captured under 1.3.0 as controls came out
-// byte-identical. 23_bash_truncation_notes is a src capture at 943a99e3c over
-// the 1.6.0 build's node_modules, through an entry that re-exports the three
-// functions from core/session-manager.ts and core/messages.ts (src/index.ts
-// does not import over that build); at the parent 713563870 its second and
-// third messages lose their notes. 8_agent_message_roles captures the same at
-// both shas. Re-verify 23 against the first build that ships 943a99e3c.
+// byte-identical. 23_bash_truncation_notes was first a src capture at
+// 943a99e3c over the 1.6.0 build's node_modules, through an entry that
+// re-exports the three functions from core/session-manager.ts and
+// core/messages.ts (src/index.ts does not import over that build); at the
+// parent 713563870 its second and third messages lose their notes.
+// 8_agent_message_roles captures the same at both shas. The 1.6.1 build, the
+// first that ships 943a99e3c, re-captures 23 (and 8) byte for byte.
 //
 // Projection: role and the text of the content (a string as is; blocks joined
 // with no separator, an image as <image>, any other block as <other>), plus

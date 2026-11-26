@@ -6,12 +6,14 @@
 // oracle behind TestResponsesMidConvoEffortMatchesPi.
 //
 //   node capture.mjs <pi-ai package dir> <out.json>
-//   e.g. node capture.mjs .../npm-1.3.0/node_modules/@earendil-works/pi-ai mid-convo-effort-1.3.0.json
+//   e.g. node capture.mjs .../npm-1.6.1/node_modules/@earendil-works/pi-ai mid-convo-effort-1.6.1.json
 //
-// Re-captured from src at 69a699348 (2026-11-23) through a shim package whose
-// dist/*.js re-export src/*.ts, run with --experimental-strip-types, over the
-// 1.6.0 build's node_modules: mid-convo-effort-69a699348.json. Control: at the
-// parent fb248c7fc it matches the 1.6.0 build's capture but for the label.
+// mid-convo-effort-1.6.1.json is the 1.6.1 build's capture, the first build
+// that ships 69a699348. It matches the earlier src capture at 69a699348
+// (through a shim package whose dist/*.js re-export src/*.ts, run with
+// --experimental-strip-types, over the 1.6.0 build's node_modules) but for the
+// label; that capture's control, at the parent fb248c7fc, matched the 1.6.0
+// build's capture but for the label.
 //
 // The package is the published npm build. The runs replay upstream's
 // openai-responses-mid-convo-effort.test.ts: its model, its fake response

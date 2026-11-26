@@ -3,16 +3,17 @@
 // TestBuiltinToolSchemasMatchPi.
 //
 //   node capture.mjs <pi npm dir> <out.json>
-//   e.g. node capture.mjs <npm>/1.3.0 toolschemas-1.3.0.json
+//   e.g. node capture.mjs <npm>/1.6.1 toolschemas-1.6.1.json
 //   node --experimental-strip-types capture.mjs <src extraction named by sha> <out.json>
-//   e.g. ... capture.mjs <dir>/282b01c80 toolschemas-282b01c80.json
+//   e.g. ... capture.mjs <dir>/943a99e3c toolschemas-943a99e3c.json
 //
-// toolschemas-943a99e3c.json is a src capture at 943a99e3c over the 1.6.0
-// build's node_modules: bash's and powershell's output schemas gain
-// `full_output_error`. Its control, src at the parent 713563870, wrote the
-// 1.6.0 build's capture (toolschemas-1.6.0.json, the first build that ships
-// 282b01c80's find `pattern` and grep `glob` descriptions) but for the
-// version label. Re-verify against the first build that ships 943a99e3c.
+// toolschemas-1.6.1.json is the 1.6.1 build's capture, the first build that
+// ships 943a99e3c (bash's and powershell's output schemas gain
+// `full_output_error`). It matches the earlier src capture at 943a99e3c (over
+// the 1.6.0 build's node_modules) but for the version label; that capture's
+// control, src at the parent 713563870, wrote the 1.6.0 build's capture
+// (toolschemas-1.6.0.json, the first build that ships 282b01c80's find
+// `pattern` and grep `glob` descriptions) but for the version label.
 //
 // Each row is createToolDefinition(name, cwd) from the published build, with
 // its parameters, and its outputSchema when it declares one, serialized by
