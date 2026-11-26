@@ -14,8 +14,9 @@
 // those 18 rows byte for byte (and no unsaved rows).
 //
 // <extraction> holds packages/coding-agent at <sha> (`git archive <sha>
-// packages/coding-agent/src/core/tools`); output-accumulator.ts imports only
-// node builtins and truncate.ts, which imports nothing.
+// packages/coding-agent`); output-accumulator.ts imports node builtins,
+// truncate.ts (which imports nothing) and, since 8209929fb,
+// ../../utils/output-files.ts.
 //
 // Each row appends its chunks (hex), notes whether the accumulator has opened
 // a temp file yet, finishes, takes the bash tool's snapshot
