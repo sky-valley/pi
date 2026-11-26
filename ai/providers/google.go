@@ -1369,7 +1369,7 @@ func googleFetchBody(ctx context.Context, body io.Reader, custom bool) io.Reader
 	return fetchBody{ctx, body}
 }
 
-// googleStreamErrorChunk is @google/genai 2.32.0's throwIfStreamErrorChunk,
+// googleStreamErrorChunk is @google/genai 3.6.1's throwIfStreamErrorChunk,
 // which processStreamResponse runs on every body read before buffering it
 // and on every data: payload before yielding it: when the text parses as a
 // JSON object whose "error" is a non-null object, it computes
@@ -1538,7 +1538,7 @@ func iterateGoogleSSE(body io.Reader, observe func(payload any) error, handle fu
 	return nil
 }
 
-// googleGenerateContentResponse is the chunk @google/genai 2.32.0 yields for
+// googleGenerateContentResponse is the chunk @google/genai 3.6.1 yields for
 // one parsed data: payload, which pi hands to onProviderStreamEvent:
 // generateContentResponseFromMldev(payload) (index.cjs:20647) with
 // sdkHttpResponse = {headers} set on the result (generateContentStreamInternal,
@@ -1578,7 +1578,7 @@ func googleGenerateContentResponse(payload any, headers ai.OrderedObject) ai.Ord
 	return out
 }
 
-// googleCandidateFromMldev is @google/genai 2.32.0's candidateFromMldev
+// googleCandidateFromMldev is @google/genai 3.6.1's candidateFromMldev
 // (index.cjs:19321): the known candidate fields in its order, citationMetadata
 // through citationMetadataFromMldev. A candidate that is not an object
 // converts to {}.

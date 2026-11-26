@@ -41,13 +41,11 @@ func applyOpenRouterNativeFinishReason(message *ai.AssistantMessage, finishReaso
 }
 
 // cleanStopNativeReasons are the native reasons OpenRouter treats as a clean
-// stop. OpenRouter maps any other value to stop as well, so a failure that
-// already streamed output (e.g. Gemini reasoning followed by
-// MALFORMED_RESPONSE) arrives as stop. Two of OpenRouter's entries are left
-// out because their providers document them as failures: Gemini's "OTHER"
-// ("stopped for a reason not otherwise specified"; mapGoogleStopReason maps
-// it to an error) and DeepSeek's "insufficient_system_resource" ("interrupted
-// due to insufficient resource").
+// stop; see flagOpenRouterEmptyStop for why they matter. Two of OpenRouter's
+// entries are left out because their providers document them as failures:
+// Gemini's "OTHER" ("stopped for a reason not otherwise specified";
+// mapGoogleStopReason maps it to an error) and DeepSeek's
+// "insufficient_system_resource" ("interrupted due to insufficient resource").
 //
 // OpenRouter does not publish this list, so it can drift. It is an allowlist
 // on purpose: a missing clean reason costs a few retries of an empty turn,
@@ -67,10 +65,23 @@ var cleanStopNativeReasons = map[string]bool{
 }
 
 // flagOpenRouterEmptyStop is pi's flagOpenRouterEmptyStop (upstream
-// 9b911b409, #12407). It turns a finished stop without visible output (text or
-// tool calls; reasoning does not count) into an error when the native reason
-// is not a clean stop. The message matches the retry pattern for OpenRouter's
-// own "Provider returned an empty response", so the agent retries it. The
+// 9b911b409, #12407; documented by e2cb38ac1). It turns an OpenRouter stop
+// that is really an upstream failure into a retryable error.
+//
+// OpenRouter reports any upstream finish reason it has no failure case for as
+// finish_reason "stop", so some upstream failures arrive as stop and only
+// native_finish_reason still names them. Without this, the turn would end
+// silently, often with nothing but a thinking block. Example as of November
+// 2026: Gemini's transient MALFORMED_RESPONSE after streamed reasoning arrives
+// as stop (OpenRouter already reports it as finish_reason "error" when there
+// is no output at all).
+//
+// A legitimately empty turn also arrives as stop, e.g. Claude ending with an
+// empty end_turn after a tool result, and should still end quietly. Only the
+// native reason tells the two apart: a turn without visible output (text or
+// tool calls; reasoning does not count) is flagged unless its native reason is
+// a clean stop. The message matches the retry pattern for OpenRouter's own
+// "Provider returned an empty response". The
 // fold is toLowerCase and the emptiness test trim, with JavaScript's semantics
 // (jstext): strings.ToLower makes "COMPACTİON" a clean "compaction", and
 // strings.TrimSpace keeps U+FEFF as visible text.
