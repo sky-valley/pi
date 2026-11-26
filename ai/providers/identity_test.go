@@ -20,7 +20,7 @@ import (
 // identityCaptureFile is written by testdata/identity/capture-identity.mts,
 // which sends each request through upstream's own adapters and Models under
 // node and records the identity headers that reach fetch.
-const identityCaptureFile = "testdata/identity/identity-faac58588.json"
+const identityCaptureFile = "testdata/identity/identity-ef4a1cfcc.json"
 
 type identityTargetJSON struct {
 	Provider string `json:"provider"`
