@@ -1,7 +1,7 @@
 {
   "name": "responses-deferred-off",
-  "note": "Upstream e47b8e37a + 02bd2d1c6, rewritten for 9e05370b2 (mid-conversation system messages). Same transcript with neither compat flag: the mid-transcript system message that declares late_tool collapses into the leading developer message, body.tools carries base_tool and late_tool, and namespace replay follows isSameModel. npm 0.85.1 predated the transcript model; it shipped in pi-ai 0.86.1, and the backend flipped to dist at the 0.87.1 re-pin (README rule).",
-  "backend": "src",
+  "note": "Upstream e47b8e37a + 02bd2d1c6, rewritten for 9e05370b2 (mid-conversation system messages). Same transcript with neither compat flag: the mid-transcript system message that declares late_tool collapses into the leading developer message, body.tools carries base_tool and late_tool, and namespace replay follows isSameModel. npm 0.85.1 predated the transcript model; it shipped in pi-ai 0.86.1, and the backend flipped to dist at the 0.87.1 re-pin (README rule). The 69a699348 status field kept it on src from the 117eac3a0 re-pin; npm 1.6.1 ships it, so it flipped back to dist at the 1.6.1 re-pin.",
+  "backend": "dist",
   "api": "openai-responses",
   "entry": "streamSimple",
   "model": {
