@@ -1,37 +1,37 @@
 {
 	"go": "go1.26.0",
-	"source": "5fc67a7196b0602de1190a2f4caca418d9f21728890af925867cf0c4ed182962",
+	"source": "d21d7e53976e85d9436336a8931dcaefc00f63fdd77cf669516705250c3e188c",
 	"daemons": {
 		"pi-env-android-arm64": {
-			"sha256": "749bc1a4bdae25ba5ebeab45e789c609e9993813985b91ef6974ef355ac6fcc4",
+			"sha256": "685cd6a7866d624bdbfa84ab8766c63f81aadabd27aad1c71e641f8db9b1efaf",
 			"size": 3408132
 		},
 		"pi-env-android-x64": {
-			"sha256": "660d5d257600265c684501902783007c17a1fb45d73c763a450994e78ab15fe7",
+			"sha256": "37ebef1901c10d30182bd816e53e20e073a5f81bcf5ef02d6c40582b2a0b3981",
 			"size": 3199102
 		},
 		"pi-env-darwin-arm64": {
-			"sha256": "36d75b6e5825cc3834e6a92ef1afb093ae900c42d2c893b3fba60fd86800e451",
+			"sha256": "e88068c7a1f0b1f246007f8de83f81a2068d8b89b0241e6cd353107be7592480",
 			"size": 3022514
 		},
 		"pi-env-darwin-x64": {
-			"sha256": "70418c56ed3329f3c5e929be743ff1719d0bb39db2615c73eb25a16abb774277",
+			"sha256": "9738d696039cac7cf1a38a7f5acf66c0b778ec8b0f357a945b5559c34bb86ffa",
 			"size": 3179232
 		},
 		"pi-env-linux-arm64": {
-			"sha256": "82b4190085a30f3c8f718bb6dfd723730d09ca324a4d01bfdd7efec4a5c601fa",
+			"sha256": "392b11642eceba86b78d4fef7d86617d3c270d069597b63217ccae9ab5eb5c5d",
 			"size": 3145854
 		},
 		"pi-env-linux-x64": {
-			"sha256": "7e0afabbdc9fab6077eb5c6d2cc3a841e1ab29499806a289a4a36bc1fd58d6ad",
+			"sha256": "e8ee7229510d50463e0b672a9b6d64bc1ae89585b44f5553baaec46b764a0449",
 			"size": 3203198
 		},
 		"pi-env-windows-arm64": {
-			"sha256": "9216725eb594f74ecb02e2df919e8dae913293375bea484f739bd23ff51d318c",
+			"sha256": "b2468c580cd82255ee270ed1bd542d01626b0838ed58146d84f4549c9dd7f615",
 			"size": 3334656
 		},
 		"pi-env-windows-x64": {
-			"sha256": "139747b62286e98e7d4c0103b4206ae0d0e3c01daf83307dfb6ba04f51b07770",
+			"sha256": "4d970d5a83544ed32518d00dbd4317ee31b737bf9b8a05ef28ce4783d6e8788a",
 			"size": 3596800
 		}
 	}
