@@ -899,3 +899,50 @@ func TestSerializeAssistantWritesArgumentsAsJSONStringify(t *testing.T) {
 		t.Fatalf("serialized tool call:\n got %s\nwant %s", got, want)
 	}
 }
+
+// Characterization test for upstream e73029b8e ("do not count !! output in
+// context token estimate"): pi's estimateTokens now returns 0 for a
+// bashExecution message with excludeFromContext. The port already behaves so,
+// by a different route: it never holds a bashExecution message in memory.
+// unmarshalSessionMessage drops an excluded "!!" message when the session file
+// loads, so BuildProjection yields nothing for its entry and neither the
+// usage-anchored estimate nor findCutPoint's keepRecentTokens budget ever sees
+// it. A plain "!" message still counts. This locks that, for a fix the port
+// did not need.
+func TestExcludedBashExecutionAddsNoTokens(t *testing.T) {
+	load := func(excludeFromContext string) []agent.AgentMessage {
+		t.Helper()
+		path := writeSessionLines(t, []string{
+			`{"type":"session","version":3,"id":"0190aaaa-bbbb-7ccc-8ddd-eeeeffff0000","timestamp":"2026-01-01T00:00:00.000Z","cwd":"/p"}`,
+			`{"type":"message","id":"e1","parentId":null,"timestamp":"2026-01-01T00:00:01.000Z","message":{"role":"user","content":[{"type":"text","text":"Hello"}],"timestamp":1}}`,
+			`{"type":"message","id":"e2","parentId":"e1","timestamp":"2026-01-01T00:00:02.000Z","message":{"role":"assistant","content":[{"type":"text","text":"Hi"}],"api":"a","provider":"p","model":"m","usage":{"input":100,"output":50,"cacheRead":0,"cacheWrite":0,"totalTokens":150,"cost":{"input":0,"output":0,"cacheRead":0,"cacheWrite":0,"total":0}},"stopReason":"stop","timestamp":2}}`,
+			`{"type":"message","id":"e3","parentId":"e2","timestamp":"2026-01-01T00:00:03.000Z","message":{"role":"bashExecution","command":"git diff","output":"` +
+				strings.Repeat("x", 800) + `","exitCode":0,"cancelled":false,"truncated":false,"timestamp":3,"excludeFromContext":` + excludeFromContext + `}}`,
+		})
+		tree, err := LoadSessionTree(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return tree.BuildProjection().Messages
+	}
+
+	excluded := load("true")
+	if len(excluded) != 2 {
+		t.Fatalf("projection kept %d messages, want the excluded !! message dropped (2)", len(excluded))
+	}
+	if got := estimateContextTokensUsageAware(excluded); got != 150 {
+		t.Errorf("estimate with an excluded !! message = %d, want 150 (usage alone, 0 trailing)", got)
+	}
+	if got := estimateContextTokensUsageAware(load("false")); got <= 150 {
+		t.Errorf("estimate with a plain ! message = %d, want its output counted past 150", got)
+	}
+
+	// The cut-point budget: a small recent user message after the !! output
+	// stays under keepRecentTokens, so everything is kept. Had the 800 chars
+	// counted, the budget would be crossed at the bash message and the cut
+	// would snap forward to "next".
+	msgs := append(excluded, agent.AgentMessage(ai.NewUserText("next", 4)))
+	if cut := findCutPoint(msgs, 0, len(msgs), 20); cut.firstKeptIndex != 0 {
+		t.Errorf("findCutPoint firstKeptIndex = %d, want 0 (the !! output spends no budget)", cut.firstKeptIndex)
+	}
+}
