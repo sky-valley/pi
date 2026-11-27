@@ -121,6 +121,34 @@ func allPids() []int {
 	return pids
 }
 
+// pidfd_open and pidfd_send_signal: one number on every Linux architecture
+// (the unified table, Linux 5.1 and 5.3).
+const (
+	sysPidfdOpen       = 434
+	sysPidfdSendSignal = 424
+)
+
+// killMember kills member if it is still of session sid when the signal
+// goes: a pid found earlier may name another process since. On Linux a pidfd
+// holds the process while it is checked; without one (an older kernel,
+// Android, whose seccomp may forbid the call) the check is made right before
+// the signal, a window of a few instructions.
+func killMember(member, sid int) {
+	if !onAndroid {
+		if fd, _, errno := unix.Syscall(sysPidfdOpen, uintptr(member), 0, 0); errno == 0 {
+			// The descriptor names the process member named when it was
+			// opened: if that one exited and the pid was reused before the
+			// check, the signal goes to the gone process and does nothing.
+			if s, err := unix.Getsid(member); err == nil && s == sid {
+				_, _, _ = unix.Syscall6(sysPidfdSendSignal, fd, uintptr(unix.SIGKILL), 0, 0, 0, 0)
+			}
+			_ = unix.Close(int(fd))
+			return
+		}
+	}
+	killIfOfSession(member, sid)
+}
+
 // unreliableFileSystems are statfs magic numbers of file systems that accept
 // watches but do not report changes made elsewhere.
 var unreliableFileSystems = []uint64{

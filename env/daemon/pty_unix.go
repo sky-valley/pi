@@ -193,6 +193,17 @@ func runPty(id uint32, request ptyRequest, out *output, ctl *control, running *g
 		return nil, newFailure("spawn_error", ioErrorText(unwrapPathError(err)))
 	}
 	pid := process.pid
+	// When the shell exits, its session's jobs are killed before it is reaped
+	// (its pid, the session's id, names no other process until then), as the
+	// jobs of a terminal that closes are: a background job does not outlive
+	// it.
+	group, err := newProgramGroup(process)
+	if err != nil {
+		killTree(pid)
+		_, _ = process.wait()
+		master.Close()
+		return nil, newFailure("spawn_error", ioErrorText(err))
+	}
 	running.add(pid)
 	term := &terminal{input: newInputQueue(), master: master, pid: pid}
 	terms.add(id, term)
@@ -230,7 +241,7 @@ func runPty(id uint32, request ptyRequest, out *output, ctl *control, running *g
 			}
 		}
 	}()
-	waitInBackground(process, nil, messages, done)
+	waitInBackground(process, &ending{group: group, running: running}, messages, done)
 
 	var (
 		exited    bool
@@ -245,7 +256,9 @@ func runPty(id uint32, request ptyRequest, out *output, ctl *control, running *g
 	kill := func() {
 		if !killed {
 			killed = true
-			killTree(pid)
+			// Only while the shell is in running: the waiter removes it
+			// under its lock before reaping it.
+			running.kill(pid)
 		}
 	}
 	if ctl.killed.Load() {

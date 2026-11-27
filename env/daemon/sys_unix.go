@@ -590,7 +590,9 @@ func execFailure(path string) syscall.Errno {
 // the group is gone), then every other group in the session. Commands start
 // in a session of their own (setsid), and a shell with job control puts each
 // background job in a group of its own, so a terminal's `sleep 9 &` is
-// reached too; only what left the session (setsid) is not.
+// reached too; only what left the session (setsid) is not. Call it only
+// while pid is not reaped: until then it names no other process, and no other
+// session has its id.
 func killTree(pid int) {
 	if unix.Kill(-pid, unix.SIGKILL) != nil {
 		// Nothing to report if the process is gone too.
@@ -605,9 +607,17 @@ func killTree(pid int) {
 			return
 		}
 		for _, member := range members {
-			_ = unix.Kill(member, unix.SIGKILL)
+			killMember(member, pid)
 		}
 		last = members
+	}
+}
+
+// killIfOfSession kills member if it is of session sid right before the
+// signal: killMember without a pidfd, a window of a few instructions.
+func killIfOfSession(member, sid int) {
+	if s, err := unix.Getsid(member); err == nil && s == sid {
+		_ = unix.Kill(member, unix.SIGKILL)
 	}
 }
 

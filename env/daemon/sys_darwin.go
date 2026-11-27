@@ -361,6 +361,10 @@ func allPids() []int {
 	return pids
 }
 
+// killMember kills member if it is still of session sid when the signal
+// goes: macOS has no pidfd, so the check is made right before the signal.
+func killMember(member, sid int) { killIfOfSession(member, sid) }
+
 // anyUnreliable is Linux only: macOS watches every file system natively.
 func anyUnreliable([]watchTarget) bool { return false }
 

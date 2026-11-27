@@ -70,3 +70,10 @@ func TestClosingATerminalKillsItsBackgroundJobs(t *testing.T) {
 	job := runTerminalWithJob(t, "wait", func(ctl *control) { ctl.cancel(true) })
 	assertGone(t, job, "the job ended with its terminal")
 }
+
+// Upstream 094ba3a69: a terminal's background jobs end also when its shell
+// exits on its own.
+func TestATerminalsBackgroundJobsEndWhenItsShellExits(t *testing.T) {
+	job := runTerminalWithJob(t, "exit 0", nil)
+	assertGone(t, job, "the job ended with its shell")
+}

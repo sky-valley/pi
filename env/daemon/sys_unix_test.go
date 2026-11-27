@@ -124,6 +124,46 @@ func TestKillingASessionKillsItsJobsInGroupsOfTheirOwn(t *testing.T) {
 	assertGone(t, job, "the job ended with its session")
 }
 
+// Upstream 094ba3a69: a process found for a session is killed only if it is
+// still of that session when the signal goes: through a pidfd on Linux
+// (killMember), right before the signal elsewhere (killIfOfSession, also
+// killMember's fallback).
+func TestKillingASessionsMemberChecksItsSessionFirst(t *testing.T) {
+	for name, kill := range map[string]func(member, sid int){"killMember": killMember, "killIfOfSession": killIfOfSession} {
+		t.Run(name, func(t *testing.T) {
+			null, err := os.OpenFile(os.DevNull, os.O_RDWR, 0)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer null.Close()
+			// It leads a session of its own: its session id is its pid.
+			process, err := spawnProcess("/bin/sh", []string{"-c", "exec sleep 30"}, t.TempDir(), object{}, true, []*os.File{null, null, null})
+			if err != nil {
+				t.Fatal(err)
+			}
+			reaped := false
+			t.Cleanup(func() {
+				if !reaped {
+					process.kill()
+					_, _ = process.wait()
+				}
+			})
+			kill(process.pid, process.pid+1)
+			time.Sleep(100 * time.Millisecond)
+			var status unix.WaitStatus
+			if pid, err := unix.Wait4(process.pid, &status, unix.WNOHANG, nil); err != nil || pid != 0 {
+				t.Fatalf("a process of another session was killed: %d, %v", pid, err)
+			}
+			kill(process.pid, process.pid)
+			code, err := process.wait()
+			reaped = true
+			if err != nil || code != 128+int64(unix.SIGKILL) {
+				t.Fatalf("the member: exit %d, %v", code, err)
+			}
+		})
+	}
+}
+
 // lookBash is bash's path; the test is skipped without it.
 func lookBash(t *testing.T) string {
 	t.Helper()
