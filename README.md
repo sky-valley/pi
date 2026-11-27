@@ -68,12 +68,11 @@ generated catalog. API keys are resolved from the same environment variables pi 
 
 Matching upstream pi, every request identifies its client with a `User-Agent`,
 `pi/<version> (<platform>; go/<version>; <arch>)` by default. Requests from the
-agent loop, and from a `coding.Session` while install telemetry is on, are also
-attributed to pi on the providers that take attribution headers: OpenRouter
-(`HTTP-Referer`, `X-OpenRouter-Title`, `X-OpenRouter-Categories`), NVIDIA
-(`X-BILLING-INVOKE-ORIGIN`) and OpenCode (`x-opencode-client`). Set
-`PI_TELEMETRY=0` to turn attribution off for a session. A bare `ai` request sends
-none unless its identity asks for it.
+agent loop and from a `coding.Session` are also attributed to pi on the
+providers that take attribution headers: OpenRouter (`HTTP-Referer`,
+`X-OpenRouter-Title`, `X-OpenRouter-Categories`), NVIDIA
+(`X-BILLING-INVOKE-ORIGIN`) and OpenCode (`x-opencode-client`). A bare `ai`
+request sends none unless its identity asks for it.
 
 `ai.ClientIdentity` chooses both, on `ProviderRequestOptions.Identity`,
 `ai.CreateModelsOptions.Identity` or `agent.AgentOptions.Identity`: a
