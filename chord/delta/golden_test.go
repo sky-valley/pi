@@ -18,7 +18,8 @@ import (
 
 // The oracle: testdata/upstream_delta.json, captured from pi's own
 // packages/chord/src/delta by testdata/capture.mts (its header says how, and
-// what each section is) at the sha its "sha" field names, under node v26.4.0.
+// what each section is) at the sha its "sha" field names, under node v22.23.5
+// (which reproduces the earlier v26.4.0 capture at a92283056 byte for byte).
 // Every batch below is compared byte for byte with pi's, as encoding/json
 // writes both. A tracker's batches are pi's own, in pi's order. The one
 // normalization is DiffRevisions' order of an object's member ops, which the
@@ -413,6 +414,10 @@ func generatedDiff(t *testing.T, name string) (before, after any) {
 			after[v] = obj("k", k, "v", float64(v+1_000))
 		}
 		return before, after
+	case strings.HasPrefix(name, "shift-"):
+		if before, after, ok := shiftCase(name); ok {
+			return before, after
+		}
 	}
 	t.Fatalf("unknown generated case %q: add it to generatedDiff as capture.mts builds it", name)
 	return nil, nil

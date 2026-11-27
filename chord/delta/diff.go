@@ -238,12 +238,92 @@ func (d *differ) array(before, after []any, path Path) {
 	}
 	if len(before) == len(after) && len(before) > 1 &&
 		!sameValue(before[0], after[0]) && !sameValue(before[len(before)-1], after[len(after)-1]) {
+		// A window that moved by k items (a live query's newest rows, one
+		// added on top): about k identity comparisons to find it and the rest
+		// to confirm it, not the matching of every item with every other.
+		if d.shifted(before, after, path) {
+			return
+		}
 		if order := permutation(before, after); order != nil {
 			d.emit(Permute{Path: path, Permutation: order})
 			return
 		}
 	}
 	d.region(before, after, path, 0, len(before), 0, len(after), 0)
+}
+
+// shifted emits the two ops of after as before shifted by k items, its items
+// the same objects (===): k new ones in front and its last k gone, or its
+// first k gone and k new ones behind. It reports whether it was such a shift;
+// the ops are the ones the region diff makes for it. The items that left being
+// the ones that came (a rotation) is a permutation, left to permutation.
+func (d *differ) shifted(before, after []any, path Path) bool {
+	length := len(before)
+	if down := indexOf(after, before[0], 1); down > 0 && sameRun(before, 0, after, down, length-down) {
+		came := after[:down]
+		if sameItems(came, before[length-down:]) {
+			return false
+		}
+		d.emit(Splice{Path: path, Index: 0, Remove: 0, Items: cloneArray(came)})
+		d.emit(Splice{Path: path, Index: length, Remove: down, Items: newArray(0)})
+		return true
+	}
+	if up := indexOf(before, after[0], 1); up > 0 && sameRun(before, up, after, 0, length-up) {
+		came := after[length-up:]
+		if sameItems(came, before[:up]) {
+			return false
+		}
+		d.emit(Splice{Path: path, Index: 0, Remove: up, Items: newArray(0)})
+		d.emit(Splice{Path: path, Index: length - up, Remove: 0, Items: cloneArray(came)})
+		return true
+	}
+	return false
+}
+
+// indexOf is Array.prototype.indexOf: the first index from from at which xs
+// holds v (===), or -1.
+func indexOf(xs []any, v any, from int) int {
+	for i := from; i < len(xs); i++ {
+		if same(xs[i], v) {
+			return i
+		}
+	}
+	return -1
+}
+
+// sameItems reports whether a and b hold the same items (===), each as often,
+// in any order.
+func sameItems(a, b []any) bool {
+	if len(a) == 1 {
+		return same(a[0], b[0])
+	}
+	counts := map[valueKey]int{}
+	for _, item := range a {
+		// An item with no key (an anonymous array) is an object of its own,
+		// which nothing in b is.
+		if k, ok := keyOf(item); ok {
+			counts[k]++
+		}
+	}
+	for _, item := range b {
+		k, ok := keyOf(item)
+		if !ok || counts[k] == 0 {
+			return false
+		}
+		counts[k]--
+	}
+	return true
+}
+
+// sameRun reports whether count items of before from from are the items of
+// after from to, the same objects.
+func sameRun(before []any, from int, after []any, to, count int) bool {
+	for offset := range count {
+		if !same(before[from+offset], after[to+offset]) {
+			return false
+		}
+	}
+	return true
 }
 
 // permutation is order such that after[i] is before[order[i]], matching

@@ -688,6 +688,38 @@ function pinCosts(): Map<string, number> {
 	}
 }
 
+// A window moved by k items, found by identity (from 8bbc119b9): delta-diff.test.ts's
+// ERNDL-1176 step 4 cases, case for case, as generated inputs that
+// golden_test.go builds the same way by name.
+{
+	const rowsOf = (length: number) => Array.from({ length }, (_, id) => ({ id }));
+	const rows = rowsOf(50);
+	const came = [{ id: 100 }, { id: 101 }];
+	genCase("shift-down-50", { rows }, { rows: [...came, ...rows.slice(0, 48)] });
+	genCase("shift-up-50", { rows }, { rows: [...rows.slice(2), ...came] });
+	genCase("shift-rotation-50", { rows }, { rows: [...rows.slice(48), ...rows.slice(0, 48)] });
+	for (const length of [50, 500]) {
+		const window = rowsOf(length);
+		genCase(`shift-window-${length}`, { rows: window }, { rows: [{ id: -1 }, ...window.slice(0, -1)] });
+	}
+	// Every shift, rotation and near-shift, round by round.
+	let seed = 7;
+	const random = (below: number): number => {
+		seed = (seed * 1_103_515_245 + 12_345) % 2_147_483_648;
+		return seed % below;
+	};
+	for (let round = 0; round < 500; round++) {
+		const length = 2 + random(30);
+		const rows = rowsOf(length);
+		const k = 1 + random(length - 1);
+		const fresh = Array.from({ length: k }, (_, id) => ({ id: 1_000 + id }));
+		const came = [fresh, rows.slice(length - k), [...fresh.slice(1), { ...rows[0]! }]][random(3)]!;
+		const after = random(2) === 0 ? [...came, ...rows.slice(0, length - k)] : [...rows.slice(k), ...came];
+		if (random(4) === 0) after[random(length)] = { id: -1 };
+		genCase(`shift-random-${round}`, { rows }, { rows: after });
+	}
+}
+
 // ─── Scenarios ───────────────────────────────────────────────────────────────
 
 type Step = Record<string, unknown>;
