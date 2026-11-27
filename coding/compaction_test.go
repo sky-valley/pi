@@ -945,4 +945,10 @@ func TestExcludedBashExecutionAddsNoTokens(t *testing.T) {
 	if cut := findCutPoint(msgs, 0, len(msgs), 20); cut.firstKeptIndex != 0 {
 		t.Errorf("findCutPoint firstKeptIndex = %d, want 0 (the !! output spends no budget)", cut.firstKeptIndex)
 	}
+	// The counter-case: the same output from a plain ! command does spend
+	// it, so the cut moves past the start.
+	counted := append(load("false"), agent.AgentMessage(ai.NewUserText("next", 4)))
+	if cut := findCutPoint(counted, 0, len(counted), 20); cut.firstKeptIndex == 0 {
+		t.Errorf("findCutPoint with a plain ! message kept everything; want its output to cross the budget")
+	}
 }

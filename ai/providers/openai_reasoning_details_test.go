@@ -112,7 +112,7 @@ func TestIsOpenAIReasoningDetail(t *testing.T) {
 
 // ---- the signature <-> sequence codec ----
 
-func TestParseOpenAIReasoningDetails(t *testing.T) {
+func TestDecodeDetailsSignature(t *testing.T) {
 	detail := `{"type":"reasoning.text","text":"a"}`
 	other := `{"type":"reasoning.summary","summary":"b"}`
 
@@ -259,7 +259,7 @@ data: [DONE]
 	}
 }
 
-func TestParseLegacyEncryptedReasoningDetail(t *testing.T) {
+func TestDecodeLegacyToolCallReasoningDetail(t *testing.T) {
 	// The legacy slot is far narrower than "anything that parses", which is what
 	// the pre-b7bb00b93 code replayed out of a tool call's thoughtSignature.
 	rejected := []struct {

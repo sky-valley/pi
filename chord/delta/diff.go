@@ -2,6 +2,7 @@ package delta
 
 import (
 	"math"
+	"slices"
 	"strconv"
 	"strings"
 	"unicode/utf16"
@@ -264,13 +265,13 @@ func (d *differ) shifted(before, after []any, path Path) bool {
 	// Upstream's before.includes(after[0], length - down) is SameValueZero,
 	// which same is on a JSON value (none is NaN).
 	if down := indexOf(after, before[0], 1); down > 0 && indexOf(before, after[0], length-down) < 0 &&
-		sameRun(before, 0, after, down, length-down) {
+		slices.EqualFunc(before[:length-down], after[down:], same) {
 		d.emit(Splice{Path: path, Index: 0, Remove: 0, Items: cloneArray(after[:down])})
 		d.emit(Splice{Path: path, Index: length, Remove: down, Items: newArray(0)})
 		return true
 	}
 	if up := indexOf(before, after[0], 1); up > 0 && lastIndexOf(before, after[length-1], up-1) < 0 &&
-		sameRun(before, up, after, 0, length-up) {
+		slices.EqualFunc(before[up:], after[:length-up], same) {
 		d.emit(Splice{Path: path, Index: 0, Remove: up, Items: newArray(0)})
 		d.emit(Splice{Path: path, Index: length - up, Remove: 0, Items: cloneArray(after[length-up:])})
 		return true
@@ -298,17 +299,6 @@ func lastIndexOf(xs []any, v any, from int) int {
 		}
 	}
 	return -1
-}
-
-// sameRun reports whether count items of before from from are the items of
-// after from to, the same objects.
-func sameRun(before []any, from int, after []any, to, count int) bool {
-	for offset := range count {
-		if !same(before[from+offset], after[to+offset]) {
-			return false
-		}
-	}
-	return true
 }
 
 // permutation is order such that after[i] is before[order[i]], matching

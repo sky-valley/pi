@@ -17,9 +17,7 @@ import (
 // the text. The signature is persisted in sessions, so it is asserted byte for
 // byte.
 
-const opaqueToolCallChunk = `data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"call_1","type":"function","function":{"name":"read","arguments":"{\"path\":\"README.md\"}"}}]}}]}
-
-`
+var opaqueToolCallChunk = opaqueToolCallChunkAt("0", "call_1")
 
 func opaqueToolCallChunkAt(index, id string) string {
 	return `data: {"choices":[{"delta":{"tool_calls":[{"index":` + index + `,"id":"` + id + `","type":"function","function":{"name":"read","arguments":"{\"path\":\"README.md\"}"}}]}}]}

@@ -199,6 +199,8 @@ func runPty(id uint32, request ptyRequest, out *output, ctl *control, running *g
 	// it.
 	group, err := newProgramGroup(process)
 	if err != nil {
+		// Cannot fail on Unix (newProgramGroup only records the pid); kept for
+		// its error result, as upstream's group() returns io::Result.
 		killTree(pid)
 		_, _ = process.wait()
 		master.Close()

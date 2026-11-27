@@ -527,8 +527,9 @@ func streamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Transc
 			}
 			// pi processes delta fields in order: reasoning, then
 			// reasoning_opaque, then reasoning_details, then content, then
-			// tool_calls (upstream 63035734f, ede8bdca0): some proxies (e.g. LiteLLM) send reasoning and answer in
-			// one delta, and the thinking block must precede the text block.
+			// tool_calls (upstream 63035734f, ede8bdca0): some proxies (e.g.
+			// LiteLLM) send reasoning and answer in one delta, and the thinking
+			// block must precede the text block.
 			//
 			// Reasoning may arrive in reasoning_content (llama.cpp), reasoning, or
 			// reasoning_text. Use the first non-empty string field to avoid

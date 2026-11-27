@@ -14,8 +14,8 @@ import (
 // adc5fa9f8, 04a93bad8), which moved both out of the coding agent into pi-ai.
 // pi-ai's defaults are a detailed User-Agent with its own version and no
 // attribution; pi-agent-core attributes requests to pi (see the agent
-// package's DefaultAgentIdentity), and the coding agent sets its identity from
-// the install-telemetry setting.
+// package's DefaultAgentIdentity), and the coding agent always attributes its
+// requests to pi (upstream 484da3a86 removed the install-telemetry gate).
 
 // UserAgentMode is the User-Agent a request sends (pi UserAgentMode):
 //   - UserAgentDetailed: pi/<version> (<platform>; <runtime>/<runtime version>; <arch>)
