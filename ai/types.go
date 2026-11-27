@@ -566,9 +566,10 @@ type Usage struct {
 	// ImageOutput is the count of image output tokens, when the provider
 	// reports them. This is a subset of Output, like Reasoning; the rest of
 	// Output is text and reasoning. Left unset by providers that don't report
-	// the split (pi: Usage.imageOutput, optional, upstream a512c3fe2). As with
-	// Reasoning, omitempty drops a reported 0 from the JSON.
-	ImageOutput int           `json:"imageOutput,omitempty"`
+	// the split (pi: Usage.imageOutput, optional, upstream a512c3fe2). nil is
+	// pi's undefined: a reported 0 claims no image tokens and is kept, unlike
+	// Reasoning's 0, which omitempty drops.
+	ImageOutput *int          `json:"imageOutput,omitempty"`
 	TotalTokens int           `json:"totalTokens"`
 	Cost        CostBreakdown `json:"cost"`
 	// CacheWrite1h is the part of the cache write done with 1h retention, meant

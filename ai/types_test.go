@@ -771,4 +771,17 @@ func TestUsageImageOutputRoundTrip(t *testing.T) {
 	if strings.Contains(string(plain), "imageOutput") {
 		t.Fatalf("a usage without the split must not emit imageOutput: %s", plain)
 	}
+
+	// A reported 0 is not "unreported": pi keeps imageOutput: 0 (0 claims no
+	// image tokens, undefined claims nothing), so the round trip keeps it too.
+	zero, err := UnmarshalMessage([]byte(strings.Replace(src, `"imageOutput":1120`, `"imageOutput":0`, 1)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if raw, err = json.Marshal(zero); err != nil {
+		t.Fatal(err)
+	}
+	if want := `"reasoning":200,"imageOutput":0,"totalTokens":1510`; !strings.Contains(string(raw), want) {
+		t.Fatalf("a reported imageOutput 0 was dropped:\n got %s\nwant it to contain %s", raw, want)
+	}
 }

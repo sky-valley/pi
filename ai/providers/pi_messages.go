@@ -133,9 +133,12 @@ func piMessagesUsage(raw json.RawMessage) *ai.Usage {
 	var u ai.Usage
 	for key, dst := range map[string]*int{
 		"input": &u.Input, "output": &u.Output, "cacheRead": &u.CacheRead, "cacheWrite": &u.CacheWrite,
-		"cacheWrite1h": &u.CacheWrite1h, "reasoning": &u.Reasoning, "imageOutput": &u.ImageOutput, "totalTokens": &u.TotalTokens,
+		"cacheWrite1h": &u.CacheWrite1h, "reasoning": &u.Reasoning, "totalTokens": &u.TotalTokens,
 	} {
 		*dst, _ = rawCount(o[key])
+	}
+	if n, ok := rawCount(o["imageOutput"]); ok {
+		u.ImageOutput = &n
 	}
 	cost := rawOptional(o["cost"])
 	for key, dst := range map[string]*float64{

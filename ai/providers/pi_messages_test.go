@@ -685,4 +685,17 @@ func TestPiMessagesUsageCarriesImageOutput(t *testing.T) {
 	if !strings.Contains(string(raw), `"imageOutput":1120`) {
 		t.Fatalf("usage = %s, want imageOutput 1120 carried", raw)
 	}
+
+	// A backend that reports 0 image tokens is carried as 0, not dropped; one
+	// that does not report the split carries no key.
+	for body, want := range map[string]bool{`"imageOutput":0,`: true, ``: false} {
+		u := piMessagesUsage(json.RawMessage(`{"input":10,"output":1500,` + body + `"totalTokens":1510}`))
+		raw, err := json.Marshal(u)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := strings.Contains(string(raw), `"imageOutput":0`); got != want {
+			t.Fatalf("body %q: usage = %s, want imageOutput 0 present = %v", body, raw, want)
+		}
+	}
 }
