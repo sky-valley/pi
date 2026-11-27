@@ -672,3 +672,17 @@ func TestPiMessagesUsageCarriesTotalFromProvider(t *testing.T) {
 		}
 	}
 }
+
+// pi assigns a terminal event's usage to the message whole, so the image
+// output split a backend reports (upstream a512c3fe2) reaches the message.
+func TestPiMessagesUsageCarriesImageOutput(t *testing.T) {
+	u := piMessagesUsage(json.RawMessage(`{"input":10,"output":1500,"cacheRead":0,"cacheWrite":0,"imageOutput":1120,"totalTokens":1510,` +
+		`"cost":{"input":0,"output":0,"cacheRead":0,"cacheWrite":0,"total":0}}`))
+	raw, err := json.Marshal(u)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(raw), `"imageOutput":1120`) {
+		t.Fatalf("usage = %s, want imageOutput 1120 carried", raw)
+	}
+}

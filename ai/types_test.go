@@ -742,3 +742,33 @@ func TestDurationMsKeyPosition(t *testing.T) {
 		t.Fatalf("assistant keys = %v, want %v", got, want)
 	}
 }
+
+// upstream a512c3fe2: Usage.imageOutput is the image output tokens, a subset
+// of output like reasoning. A session that stored it keeps it through a
+// decode and re-encode, in pi's key order (after reasoning, before
+// totalTokens), and a usage without it grows no key: pi leaves imageOutput
+// undefined when the provider does not report the split.
+func TestUsageImageOutputRoundTrip(t *testing.T) {
+	const usage = `{"input":10,"output":1500,"cacheRead":0,"cacheWrite":0,"reasoning":200,"imageOutput":1120,"totalTokens":1510,` +
+		`"cost":{"input":0,"output":0,"cacheRead":0,"cacheWrite":0,"total":0}}`
+	const src = `{"role":"assistant","content":[],"api":"openrouter-images","provider":"openrouter","model":"m","usage":` + usage + `,"stopReason":"stop","timestamp":1}`
+	msg, err := UnmarshalMessage([]byte(src))
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, err := json.Marshal(msg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := `"reasoning":200,"imageOutput":1120,"totalTokens":1510`; !strings.Contains(string(raw), want) {
+		t.Fatalf("round-tripped usage lost imageOutput or its place:\n got %s\nwant it to contain %s", raw, want)
+	}
+
+	plain, err := json.Marshal(Usage{Input: 1, Output: 2, TotalTokens: 3})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(plain), "imageOutput") {
+		t.Fatalf("a usage without the split must not emit imageOutput: %s", plain)
+	}
+}

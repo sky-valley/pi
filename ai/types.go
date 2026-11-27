@@ -562,7 +562,13 @@ type Usage struct {
 	// which differs from pi emitting `reasoning: 0` for those providers. We accept
 	// this divergence to keep session goldens byte-identical when reasoning is
 	// 0/unset; the in-memory value (0) is identical either way.
-	Reasoning   int           `json:"reasoning,omitempty"`
+	Reasoning int `json:"reasoning,omitempty"`
+	// ImageOutput is the count of image output tokens, when the provider
+	// reports them. This is a subset of Output, like Reasoning; the rest of
+	// Output is text and reasoning. Left unset by providers that don't report
+	// the split (pi: Usage.imageOutput, optional, upstream a512c3fe2). As with
+	// Reasoning, omitempty drops a reported 0 from the JSON.
+	ImageOutput int           `json:"imageOutput,omitempty"`
 	TotalTokens int           `json:"totalTokens"`
 	Cost        CostBreakdown `json:"cost"`
 	// CacheWrite1h is the part of the cache write done with 1h retention, meant
