@@ -105,7 +105,7 @@ func streamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Transc
 		}
 		// The blocks accumulating out of the SSE deltas, and the two closures that
 		// publish them. They live above fail because fail reports output, the same
-		// reason pi hoists streamedReasoningDetails / applyStreamedReasoningDetails
+		// reason pi hoists streamedReasoningDetails / applyStreamedReplayData
 		// above its try (upstream 7aab6c26e). The rest of the streaming state is
 		// declared with the loop that fills it.
 		var thinkBuilder *blockBuilder
@@ -116,6 +116,12 @@ func streamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Transc
 		// 7aab6c26e, so a signature already in the slot (the reasoning field name)
 		// is replaced rather than extended.
 		var thinkingDetails []json.RawMessage
+		// reasoningField is the reasoning field the latest reasoning text came
+		// in ("" until one does), and reasoningOpaque the latest GitHub Copilot
+		// reasoning_opaque ("" until a non-empty one arrives). Copilot sends one
+		// opaque value per reasoning segment; like its VS Code client, the latest
+		// one is replayed with the concatenated text (upstream ede8bdca0).
+		var reasoningField, reasoningOpaque string
 		var order []*blockBuilder
 		materialize := func() {
 			content := make(ai.ContentList, len(order))
@@ -124,16 +130,25 @@ func streamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Transc
 			}
 			output.Content = content
 		}
-		// applyStreamedReasoningDetails serializes the sequence into the thinking
-		// block's signature. reasoning_details are replay metadata, not a visible
-		// stream delta, so pi does this exactly twice — once where the block is
-		// finalized and once on the failure path — instead of on every arrival
-		// (upstream 7aab6c26e).
-		applyStreamedReasoningDetails := func() {
-			if thinkBuilder == nil || len(thinkingDetails) == 0 {
+		// applyStreamedReplayData serializes the replay data into the thinking
+		// block's signature: the details sequence when there is one, else the
+		// opaque value with its reasoning field; with neither, the block keeps
+		// the field name it was opened with. reasoning_details and
+		// reasoning_opaque are replay metadata, not a visible stream delta, so
+		// pi does this exactly twice — once where the block is finalized and once
+		// on the failure path — instead of on every arrival (upstream 7aab6c26e).
+		applyStreamedReplayData := func() {
+			if thinkBuilder == nil {
 				return
 			}
-			thinkBuilder.thinkingSig = marshalOpenAIReasoningDetails(thinkingDetails)
+			switch {
+			case len(thinkingDetails) > 0:
+				thinkBuilder.thinkingSig = completionsThinkingSignature{kind: signatureDetails, details: thinkingDetails}.encode()
+			case reasoningOpaque != "":
+				thinkBuilder.thinkingSig = completionsThinkingSignature{kind: signatureOpaque, field: reasoningField, opaque: reasoningOpaque}.encode()
+			default:
+				return
+			}
 			// pi assigns straight onto the block inside its live output object;
 			// Go's output.Content is a snapshot of the builders, so republish.
 			materialize()
@@ -142,7 +157,7 @@ func streamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Transc
 			// pi's catch block signs any thinking block still in output.content
 			// before reporting it, which is what keeps an aborted stream's replay
 			// data intact now that nothing writes it per delta (upstream 7aab6c26e).
-			applyStreamedReasoningDetails()
+			applyStreamedReplayData()
 			if ctx != nil && ctx.Err() != nil {
 				output.StopReason = ai.StopAborted
 			} else {
@@ -318,6 +333,17 @@ func streamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Transc
 				}
 			}
 			return -1
+		}
+		// ensureThinkingBlock opens the stream's one thinking block with the
+		// given signature when there is none yet (pi ensureThinkingBlock).
+		ensureThinkingBlock := func(signature string) {
+			if thinkBuilder != nil {
+				return
+			}
+			thinkBuilder = &blockBuilder{kind: "thinking", thinkingSig: signature}
+			order = append(order, thinkBuilder)
+			materialize()
+			stream.Push(ai.AssistantMessageEvent{Type: ai.EventThinkingStart, ContentIndex: indexOf(thinkBuilder), Partial: output.Clone()})
 		}
 		// startGrammarBuffer switches a block to the custom-tool (grammar) shape.
 		// The "input" fallback should never be taken; it only gives a made-up tool
@@ -500,8 +526,8 @@ func streamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Transc
 				return nil
 			}
 			// pi processes delta fields in order: reasoning, then
-			// reasoning_details, then content, then tool_calls (upstream
-			// 63035734f): some proxies (e.g. LiteLLM) send reasoning and answer in
+			// reasoning_opaque, then reasoning_details, then content, then
+			// tool_calls (upstream 63035734f, ede8bdca0): some proxies (e.g. LiteLLM) send reasoning and answer in
 			// one delta, and the thinking block must precede the text block.
 			//
 			// Reasoning may arrive in reasoning_content (llama.cpp), reasoning, or
@@ -509,7 +535,7 @@ func streamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Transc
 			// duplication (e.g. chutes.ai returns both with the same content),
 			// and record the field name as the thinking signature.
 			var reasoningDelta, reasoningSig string
-			for _, field := range []string{"reasoning_content", "reasoning", "reasoning_text"} {
+			for _, field := range openAICompletionsReasoningFields {
 				if value, isString := jsGet(d, field).(string); isString && value != "" {
 					reasoningSig, reasoningDelta = field, value
 					break
@@ -519,15 +545,20 @@ func streamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Transc
 				if model.Provider == "opencode-go" && reasoningSig == "reasoning" {
 					reasoningSig = "reasoning_content"
 				}
-				if thinkBuilder == nil {
-					thinkBuilder = &blockBuilder{kind: "thinking", thinkingSig: reasoningSig}
-					order = append(order, thinkBuilder)
-					materialize()
-					stream.Push(ai.AssistantMessageEvent{Type: ai.EventThinkingStart, ContentIndex: indexOf(thinkBuilder), Partial: output.Clone()})
-				}
+				reasoningField = reasoningSig
+				ensureThinkingBlock(reasoningSig)
 				thinkBuilder.thinking.WriteString(reasoningDelta)
 				materialize()
 				stream.Push(ai.AssistantMessageEvent{Type: ai.EventThinkingDelta, ContentIndex: indexOf(thinkBuilder), Delta: reasoningDelta, Partial: output.Clone()})
+			}
+
+			// reasoning_opaque: GitHub Copilot's opaque reasoning state (upstream
+			// ede8bdca0), kept in memory and written into the signature with the
+			// reasoning field by applyStreamedReplayData. On its own it is
+			// enough to open a thinking block; an empty value is ignored.
+			if opaque, isString := jsGet(d, "reasoning_opaque").(string); isString && opaque != "" {
+				ensureThinkingBlock("")
+				reasoningOpaque = opaque
 			}
 
 			// reasoning_details: OpenRouter's structured reasoning replay channel
@@ -537,7 +568,7 @@ func streamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Transc
 			// order, so the slot holds the sequence rather than one detail per tool
 			// call. OpenRouter streams them as DELTAS, so appending is a merge —
 			// see appendOpenAIReasoningDetail. Nothing is written into the
-			// signature here: applyStreamedReasoningDetails does that once, at the
+			// signature here: applyStreamedReplayData does that once, at the
 			// end of the block (upstream 7aab6c26e). pi guards the field with
 			// `Array.isArray`, so anything else in it is ignored.
 			details, _ := jsGet(d, "reasoning_details").([]any)
@@ -545,14 +576,9 @@ func streamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Transc
 				if !isOpenAIReasoningDetailValue(detail) {
 					continue
 				}
-				// pi ensureThinkingBlock(""): the details alone are enough to open
-				// a thinking block, whose visible thinking stays empty.
-				if thinkBuilder == nil {
-					thinkBuilder = &blockBuilder{kind: "thinking"}
-					order = append(order, thinkBuilder)
-					materialize()
-					stream.Push(ai.AssistantMessageEvent{Type: ai.EventThinkingStart, ContentIndex: indexOf(thinkBuilder), Partial: output.Clone()})
-				}
+				// The details alone are enough to open a thinking block, whose
+				// visible thinking stays empty.
+				ensureThinkingBlock("")
 				text, err := jstext.Stringify(detail)
 				if err != nil {
 					return fmt.Errorf("writing a reasoning detail as JSON.stringify does: %w; this is a port bug, report it with the event", err)
@@ -665,7 +691,7 @@ func streamOpenAICompletions(ctx context.Context, model *ai.Model, req ai.Transc
 				// pi signs the block immediately before pushing thinking_end, so
 				// the sequence first becomes visible in THIS event's partial and
 				// not in any earlier one (upstream 7aab6c26e).
-				applyStreamedReasoningDetails()
+				applyStreamedReplayData()
 				stream.Push(ai.AssistantMessageEvent{Type: ai.EventThinkingEnd, ContentIndex: indexOf(b), Content: b.thinking.String(), Partial: output.Clone()})
 			case "toolCall":
 				if b.grammar != nil {
@@ -884,25 +910,10 @@ func buildOpenAIParams(model *ai.Model, req ai.TranscriptContext, opts *OpenAIOp
 			}
 			assistantText := strings.Join(assistantTextParts, "")
 
-			// The reasoning to replay, preferring the sequence a thinking block
-			// carries over the single encrypted detail older sessions stored on a
-			// tool call (pi :1233-1242, upstream b7bb00b93). The first thinking
-			// block whose signature parses as a sequence wins; the legacy details
-			// are only reached when no block carries one.
-			var preservedReasoningDetails []json.RawMessage
-			for _, b := range thinkingBlocks {
-				if details := parseOpenAIReasoningDetails(b.ThinkingSignature); details != nil {
-					preservedReasoningDetails = details
-					break
-				}
-			}
-			if len(preservedReasoningDetails) == 0 {
-				for _, tc := range toolCallBlocks {
-					if detail, ok := parseLegacyEncryptedReasoningDetail(tc.ThoughtSignature); ok {
-						preservedReasoningDetails = append(preservedReasoningDetails, detail)
-					}
-				}
-			}
+			// The reasoning to replay: a details sequence, a Copilot opaque value
+			// with its field, or a plain reasoning field (upstream b7bb00b93,
+			// ede8bdca0) — see resolveReasoningReplay.
+			reasoningReplay := resolveReasoningReplay(thinkingBlocks, toolCallBlocks)
 
 			if len(nonEmptyThinkingBlocks) > 0 {
 				if compat.RequiresThinkingAsText {
@@ -923,23 +934,23 @@ func buildOpenAIParams(model *ai.Model, req ai.TranscriptContext, opts *OpenAIOp
 					}
 					// reasoning_details is the structured alternative to a raw
 					// reasoning field: when there is a sequence to replay, the raw
-					// field is not written at all.
-					if len(preservedReasoningDetails) == 0 {
-						// Use the signature from the first thinking block (llama.cpp + gpt-oss).
-						signature := nonEmptyThinkingBlocks[0].ThinkingSignature
-						if model.Provider == "opencode-go" && signature == "reasoning" {
-							signature = "reasoning_content"
+					// field is not written at all. Otherwise the field is the one
+					// the replay data names — only ever one of the three reasoning
+					// fields, so a signature that is other replay data (a
+					// Responses item id, an anthropic blob) never becomes a bogus
+					// request key — and an opaque value that came without text
+					// names none.
+					if reasoningReplay.kind != signatureDetails {
+						field := reasoningReplay.field
+						if model.Provider == "opencode-go" && field == "reasoning" {
+							field = "reasoning_content"
 						}
-						// Only a signature that names one of the three reasoning
-						// fields becomes a request key; any other signature (a
-						// Responses item id, an anthropic blob) is replay data that
-						// would otherwise be sent as a bogus field name.
-						if isOpenAICompletionsReasoningField(signature) {
+						if field != "" {
 							var thoughts []string
 							for _, b := range nonEmptyThinkingBlocks {
 								thoughts = append(thoughts, b.Thinking)
 							}
-							msg[signature] = strings.Join(thoughts, "\n")
+							msg[field] = strings.Join(thoughts, "\n")
 						}
 					}
 				}
@@ -950,8 +961,11 @@ func buildOpenAIParams(model *ai.Model, req ai.TranscriptContext, opts *OpenAIOp
 			if len(toolCalls) > 0 {
 				msg["tool_calls"] = toolCalls
 			}
-			if len(preservedReasoningDetails) > 0 {
-				msg["reasoning_details"] = preservedReasoningDetails
+			switch reasoningReplay.kind {
+			case signatureDetails:
+				msg["reasoning_details"] = reasoningReplay.details
+			case signatureOpaque:
+				msg["reasoning_opaque"] = reasoningReplay.opaque
 			}
 
 			// DeepSeek-style providers reject replayed assistant turns that omit

@@ -134,15 +134,15 @@ func TestParseOpenAIReasoningDetails(t *testing.T) {
 	}
 	for _, c := range notSequences {
 		t.Run(c.name, func(t *testing.T) {
-			if got := parseOpenAIReasoningDetails(c.signature); got != nil {
-				t.Fatalf("parseOpenAIReasoningDetails(%q) = %s, want nil", c.signature, got)
+			if got := decodeDetailsSignature(c.signature); got != nil {
+				t.Fatalf("decodeDetailsSignature(%q) = %s, want nil", c.signature, got)
 			}
 		})
 	}
 
 	t.Run("round trip preserves order", func(t *testing.T) {
 		signature := "[" + detail + "," + other + "]"
-		got := parseOpenAIReasoningDetails(signature)
+		got := decodeDetailsSignature(signature)
 		if len(got) != 2 || string(got[0]) != detail || string(got[1]) != other {
 			t.Fatalf("parsed = %v, want [%s %s]", got, detail, other)
 		}
@@ -152,7 +152,7 @@ func TestParseOpenAIReasoningDetails(t *testing.T) {
 	})
 
 	t.Run("whitespace is normalized away", func(t *testing.T) {
-		got := parseOpenAIReasoningDetails(`[ { "type" : "reasoning.text" , "text" : "a" } ]`)
+		got := decodeDetailsSignature(`[ { "type" : "reasoning.text" , "text" : "a" } ]`)
 		if round := marshalOpenAIReasoningDetails(got); round != "["+detail+"]" {
 			t.Fatalf("re-serialized = %s, want %s", round, "["+detail+"]")
 		}
@@ -283,15 +283,15 @@ func TestParseLegacyEncryptedReasoningDetail(t *testing.T) {
 	}
 	for _, c := range rejected {
 		t.Run(c.name, func(t *testing.T) {
-			if got, ok := parseLegacyEncryptedReasoningDetail(c.signature); ok {
-				t.Fatalf("parseLegacyEncryptedReasoningDetail(%q) = %s, want rejected", c.signature, got)
+			if got, ok := decodeLegacyToolCallReasoningDetail(c.signature); ok {
+				t.Fatalf("decodeLegacyToolCallReasoningDetail(%q) = %s, want rejected", c.signature, got)
 			}
 		})
 	}
 
 	t.Run("accepted", func(t *testing.T) {
 		signature := `{"type":"reasoning.encrypted","id":"i","data":"d","format":"f"}`
-		got, ok := parseLegacyEncryptedReasoningDetail(signature)
+		got, ok := decodeLegacyToolCallReasoningDetail(signature)
 		if !ok || string(got) != signature {
 			t.Fatalf("got %s (ok=%v), want %s", got, ok, signature)
 		}

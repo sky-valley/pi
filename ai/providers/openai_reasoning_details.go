@@ -3,9 +3,11 @@ package providers
 import (
 	"bytes"
 	"encoding/json"
+	"slices"
 	"strings"
 
 	"github.com/sky-valley/pi/ai"
+	"github.com/sky-valley/pi/internal/jstext"
 )
 
 // openai-completions `reasoning_details` — OpenRouter's structured reasoning
@@ -170,15 +172,13 @@ func isOpenAIReasoningDetailValue(detail any) bool {
 	return false
 }
 
-// parseOpenAIReasoningDetails reads the reasoning-detail sequence serialized in
-// a thinking block's signature (pi parseOpenAIReasoningDetails). It returns nil
+// decodeDetailsSignature reads the reasoning-detail sequence serialized in a
+// thinking block's signature (pi decodeDetailsSignature). It returns nil
 // unless the signature is a JSON array that is non-empty and whose every entry
 // is a valid detail — so an ordinary opaque signature (a reasoning field name,
 // a Responses item id, a base64 blob) is simply not a sequence.
-func parseOpenAIReasoningDetails(signature string) []json.RawMessage {
-	if signature == "" {
-		return nil
-	}
+// decodeThinkingSignature only reaches it for a signature starting with `[`.
+func decodeDetailsSignature(signature string) []json.RawMessage {
 	var details []json.RawMessage
 	// `null` decodes into a slice without error but is not an array to
 	// Array.isArray; the length check below covers it along with `[]`.
@@ -194,13 +194,15 @@ func parseOpenAIReasoningDetails(signature string) []json.RawMessage {
 	return details
 }
 
-// parseLegacyEncryptedReasoningDetail reads the pre-b7bb00b93 session shape: a
+// decodeLegacyToolCallReasoningDetail reads the pre-b7bb00b93 session shape: a
 // tool call's thoughtSignature holding ONE encrypted detail (pi
-// parseLegacyEncryptedReasoningDetail). Beyond being a valid detail it must be
+// decodeLegacyToolCallReasoningDetail). Only a signature whose first byte is
+// `{` is parsed (upstream ede8bdca0), so leading whitespace JSON.parse would
+// skip makes it no detail. Beyond being a valid detail it must be
 // `reasoning.encrypted` with a non-empty id AND non-empty data, so the loose
 // "anything that parses" signatures older code stored are not replayed.
-func parseLegacyEncryptedReasoningDetail(signature string) (json.RawMessage, bool) {
-	if signature == "" {
+func decodeLegacyToolCallReasoningDetail(signature string) (json.RawMessage, bool) {
+	if !strings.HasPrefix(signature, "{") {
 		return nil, false
 	}
 	raw := json.RawMessage(signature)
@@ -474,10 +476,154 @@ func isFalsyJSMember(value string, present bool) bool {
 // data — an OpenAI Responses item id, an anthropic blob, a serialized detail
 // sequence — and must never be used as a request key.
 func isOpenAICompletionsReasoningField(field string) bool {
-	switch field {
-	case "reasoning", "reasoning_content", "reasoning_text":
-		return true
-	default:
-		return false
+	return slices.Contains(openAICompletionsReasoningFields[:], field)
+}
+
+// openAICompletionsReasoningFields are the assistant message fields that carry
+// plain reasoning text, in the order the stream prefers them (pi
+// OPENAI_COMPLETIONS_REASONING_FIELDS).
+var openAICompletionsReasoningFields = [...]string{"reasoning_content", "reasoning", "reasoning_text"}
+
+// completionsSignatureKind names the replay data a thinkingSignature holds.
+type completionsSignatureKind int
+
+const (
+	// signatureField: the signature is a reasoning field name, e.g.
+	// reasoning_content; the text is replayed in that field.
+	signatureField completionsSignatureKind = iota + 1
+	// signatureDetails: a JSON array of OpenRouter reasoning_details, replayed
+	// as is.
+	signatureDetails
+	// signatureOpaque: a JSON object {field?, reasoning_opaque} carrying GitHub
+	// Copilot's opaque reasoning state, replayed next to the text (upstream
+	// ede8bdca0). No field means the opaque value came without text.
+	signatureOpaque
+)
+
+// completionsThinkingSignature is the replay data stored in a thinking block's
+// thinkingSignature (pi CompletionsThinkingSignature). Sessions keep every
+// format ever written, so each must stay decodable.
+type completionsThinkingSignature struct {
+	kind completionsSignatureKind
+	// field is the reasoning field: always set for signatureField, optional
+	// ("" = absent) for signatureOpaque.
+	field   string
+	details []json.RawMessage
+	opaque  string
+}
+
+// decodeThinkingSignature decodes a stored thinkingSignature (pi
+// decodeThinkingSignature); ok is false when it is empty or not one of the
+// known formats. It runs for every thinking block of every request, so only a
+// signature whose first byte opens one of the JSON forms is parsed.
+func decodeThinkingSignature(signature string) (completionsThinkingSignature, bool) {
+	if signature == "" {
+		return completionsThinkingSignature{}, false
 	}
+	if isOpenAICompletionsReasoningField(signature) {
+		return completionsThinkingSignature{kind: signatureField, field: signature}, true
+	}
+	switch signature[0] {
+	case '[':
+		if details := decodeDetailsSignature(signature); details != nil {
+			return completionsThinkingSignature{kind: signatureDetails, details: details}, true
+		}
+	case '{':
+		return decodeOpaqueSignature(signature)
+	}
+	return completionsThinkingSignature{}, false
+}
+
+// decodeOpaqueSignature reads `{"field"?:…,"reasoning_opaque":…}` (pi
+// decodeOpaqueSignature). The opaque value must be a non-empty string; field
+// must be absent or one of the reasoning fields — a `null` field is neither,
+// so the whole signature is rejected. The object is read as JSON.parse reads
+// it, so a repeated key takes its last value.
+func decodeOpaqueSignature(signature string) (completionsThinkingSignature, bool) {
+	parsed, err := ai.DecodeOrderedValue([]byte(signature))
+	if err != nil {
+		return completionsThinkingSignature{}, false
+	}
+	if _, isObject := parsed.(ai.OrderedObject); !isObject {
+		return completionsThinkingSignature{}, false
+	}
+	opaque, isString := jsGet(parsed, "reasoning_opaque").(string)
+	if !isString || opaque == "" {
+		return completionsThinkingSignature{}, false
+	}
+	field := jsGet(parsed, "field")
+	if field == jsUndefined {
+		return completionsThinkingSignature{kind: signatureOpaque, opaque: opaque}, true
+	}
+	if name, isString := field.(string); isString && isOpenAICompletionsReasoningField(name) {
+		return completionsThinkingSignature{kind: signatureOpaque, field: name, opaque: opaque}, true
+	}
+	return completionsThinkingSignature{}, false
+}
+
+// encode renders the replay data in the format decodeThinkingSignature reads
+// (pi encodeThinkingSignature). The opaque form is JSON.stringify of
+// `{ field, reasoning_opaque }`: field first, and left out entirely when
+// absent, as JSON.stringify drops an undefined member.
+func (s completionsThinkingSignature) encode() string {
+	switch s.kind {
+	case signatureField:
+		return s.field
+	case signatureDetails:
+		return marshalOpenAIReasoningDetails(s.details)
+	case signatureOpaque:
+		var b strings.Builder
+		b.WriteByte('{')
+		if s.field != "" {
+			b.WriteString(`"field":`)
+			b.WriteString(jsQuote(s.field))
+			b.WriteByte(',')
+		}
+		b.WriteString(`"reasoning_opaque":`)
+		b.WriteString(jsQuote(s.opaque))
+		b.WriteByte('}')
+		return b.String()
+	}
+	return ""
+}
+
+// resolveReasoningReplay picks the reasoning replay data of one assistant
+// message (pi resolveReasoningReplay): the first reasoning_details sequence a
+// thinking block carries (or, for older sessions, the encrypted details on its
+// tool calls), else the LATEST Copilot reasoning_opaque, else the reasoning
+// field of the first thinking block with text. The zero value (no kind) means
+// there is none.
+func resolveReasoningReplay(thinkingBlocks []ai.ThinkingContent, toolCalls []ai.ToolCall) completionsThinkingSignature {
+	signatures := make([]completionsThinkingSignature, len(thinkingBlocks))
+	for i, b := range thinkingBlocks {
+		signatures[i], _ = decodeThinkingSignature(b.ThinkingSignature)
+	}
+	for _, s := range signatures {
+		if s.kind == signatureDetails {
+			return s
+		}
+	}
+	var legacy []json.RawMessage
+	for _, tc := range toolCalls {
+		if detail, ok := decodeLegacyToolCallReasoningDetail(tc.ThoughtSignature); ok {
+			legacy = append(legacy, detail)
+		}
+	}
+	if len(legacy) > 0 {
+		return completionsThinkingSignature{kind: signatureDetails, details: legacy}
+	}
+	for _, s := range slices.Backward(signatures) {
+		if s.kind == signatureOpaque {
+			return s
+		}
+	}
+	for i, b := range thinkingBlocks {
+		if jstext.Trim(b.Thinking) != "" {
+			if signatures[i].kind == signatureField {
+				return signatures[i]
+			}
+			break
+		}
+	}
+	return completionsThinkingSignature{}
 }
