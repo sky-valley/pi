@@ -104,6 +104,23 @@ func processName(pid int) (string, bool) {
 	return text, text != ""
 }
 
+// allPids is every process id this user may see: /proc on Linux and Android.
+func allPids() []int {
+	dir, err := os.Open("/proc")
+	if err != nil {
+		return nil
+	}
+	defer dir.Close()
+	names, _ := dir.Readdirnames(-1)
+	var pids []int
+	for _, name := range names {
+		if pid, err := strconv.Atoi(name); err == nil {
+			pids = append(pids, pid)
+		}
+	}
+	return pids
+}
+
 // unreliableFileSystems are statfs magic numbers of file systems that accept
 // watches but do not report changes made elsewhere.
 var unreliableFileSystems = []uint64{

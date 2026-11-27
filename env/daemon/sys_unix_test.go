@@ -3,8 +3,10 @@
 package daemon
 
 import (
+	"bufio"
 	"io"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 	"testing"
@@ -70,5 +72,76 @@ func TestEndingAGroupKillsWhatTheProgramLeftRunning(t *testing.T) {
 	}
 	if unix.Kill(sleeper, 0) == nil {
 		t.Fatalf("the sleeper %d survived the end of its group", sleeper)
+	}
+}
+
+// Ported from sys/unix.rs's test (upstream 3da8737d6).
+func TestKillingASessionKillsItsJobsInGroupsOfTheirOwn(t *testing.T) {
+	// A shell with job control, as a terminal's is: its background job gets a
+	// process group of its own (bash: a POSIX sh may not do job control
+	// without a terminal).
+	bash := lookBash(t)
+	null, err := os.OpenFile(os.DevNull, os.O_RDWR, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer null.Close()
+	read, write, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer read.Close()
+	process, err := spawnProcess(bash, []string{"-c", "set -m; sleep 30 </dev/null >/dev/null 2>&1 & echo $!; wait"}, t.TempDir(), object{}, true, []*os.File{null, write, null})
+	write.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+	reaped := false
+	t.Cleanup(func() {
+		if !reaped {
+			killTree(process.pid)
+			_, _ = process.wait()
+		}
+	})
+	if err := read.SetReadDeadline(time.Now().Add(10 * time.Second)); err != nil {
+		t.Fatal(err)
+	}
+	line, err := bufio.NewReader(read).ReadString('\n')
+	if err != nil {
+		t.Fatal(err)
+	}
+	job, err := strconv.Atoi(strings.TrimSpace(line))
+	if err != nil {
+		t.Fatalf("pid: %q", line)
+	}
+	t.Cleanup(func() { _ = unix.Kill(job, unix.SIGKILL) })
+	if group, _ := unix.Getpgid(job); group == process.pid {
+		t.Fatal("the job has no group of its own")
+	}
+	killTree(process.pid)
+	_, _ = process.wait()
+	reaped = true
+	assertGone(t, job, "the job ended with its session")
+}
+
+// lookBash is bash's path; the test is skipped without it.
+func lookBash(t *testing.T) string {
+	t.Helper()
+	bash, err := exec.LookPath("bash")
+	if err != nil {
+		t.Skip("needs bash")
+	}
+	return bash
+}
+
+// assertGone fails unless pid is gone within 5 s: a killed orphan is gone
+// once init has reaped it.
+func assertGone(t *testing.T, pid int, what string) {
+	t.Helper()
+	for deadline := time.Now().Add(5 * time.Second); unix.Kill(pid, 0) == nil && time.Now().Before(deadline); {
+		time.Sleep(20 * time.Millisecond)
+	}
+	if unix.Kill(pid, 0) == nil {
+		t.Fatalf("%s: %d still runs", what, pid)
 	}
 }

@@ -327,6 +327,40 @@ func processName(pid int) (string, bool) {
 	return decodeUTF8(name), true
 }
 
+// allPids is every process id this user may see: the kernel's list on macOS,
+// as proc_listallpids(3) asks for it (proc_info's list call, sized in bytes).
+func allPids() []int {
+	const (
+		procInfoCallListpids = 1
+		procAllPids          = 1
+	)
+	list := func(buffer []int32) int {
+		var p unsafe.Pointer
+		if len(buffer) > 0 {
+			p = unsafe.Pointer(&buffer[0])
+		}
+		n, _, errno := unix.Syscall6(unix.SYS_PROC_INFO, procInfoCallListpids, procAllPids, 0, 0,
+			uintptr(p), uintptr(len(buffer)*4))
+		if errno != 0 {
+			return 0
+		}
+		return int(n) / 4
+	}
+	// A null buffer asks for the count; then a buffer of that many (and room
+	// for a few new ones) is filled.
+	count := list(nil)
+	if count <= 0 {
+		return nil
+	}
+	buffer := make([]int32, count+64)
+	filled := min(list(buffer), len(buffer))
+	pids := make([]int, filled)
+	for i, pid := range buffer[:filled] {
+		pids[i] = int(pid)
+	}
+	return pids
+}
+
 // anyUnreliable is Linux only: macOS watches every file system natively.
 func anyUnreliable([]watchTarget) bool { return false }
 

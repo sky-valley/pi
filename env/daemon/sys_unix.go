@@ -586,13 +586,45 @@ func execFailure(path string) syscall.Errno {
 	return 0
 }
 
-// killTree kills the command's process group, or the process if the group is
-// gone.
+// killTree kills the command's session: its process group (or the process if
+// the group is gone), then every other group in the session. Commands start
+// in a session of their own (setsid), and a shell with job control puts each
+// background job in a group of its own, so a terminal's `sleep 9 &` is
+// reached too; only what left the session (setsid) is not.
 func killTree(pid int) {
 	if unix.Kill(-pid, unix.SIGKILL) != nil {
 		// Nothing to report if the process is gone too.
 		_ = unix.Kill(pid, unix.SIGKILL)
 	}
+	// A member may fork while the others are killed: again until none is
+	// found, or only the same ones (killed, not reaped yet).
+	var last []int
+	for range 8 {
+		members := sessionMembers(pid)
+		if len(members) == 0 || slices.Equal(members, last) {
+			return
+		}
+		for _, member := range members {
+			_ = unix.Kill(member, unix.SIGKILL)
+		}
+		last = members
+	}
+}
+
+// sessionMembers are the processes of session sid, by their session id, in
+// ascending order.
+func sessionMembers(sid int) []int {
+	var members []int
+	for _, pid := range allPids() {
+		// A process gone meanwhile has no session.
+		if pid > 0 {
+			if s, err := unix.Getsid(pid); err == nil && s == sid {
+				members = append(members, pid)
+			}
+		}
+	}
+	slices.Sort(members)
+	return members
 }
 
 // programGroup is the process group of a process program: what the program
