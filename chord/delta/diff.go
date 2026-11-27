@@ -254,27 +254,25 @@ func (d *differ) array(before, after []any, path Path) {
 
 // shifted emits the two ops of after as before shifted by k items, its items
 // the same objects (===): k new ones in front and its last k gone, or its
-// first k gone and k new ones behind. It reports whether it was such a shift;
-// the ops are the ones the region diff makes for it. The items that left being
-// the ones that came (a rotation) is a permutation, left to permutation.
+// first k gone and k new ones behind. It reports whether it was such a shift.
+// The ops are the ones the region diff makes when the items that came are new,
+// correct ones otherwise. The first item that came (the last, shifted up)
+// being one that left is no such shift: a rotation goes to permutation, an
+// edited one to the region diff, which keeps what it can.
 func (d *differ) shifted(before, after []any, path Path) bool {
 	length := len(before)
-	if down := indexOf(after, before[0], 1); down > 0 && sameRun(before, 0, after, down, length-down) {
-		came := after[:down]
-		if sameItems(came, before[length-down:]) {
-			return false
-		}
-		d.emit(Splice{Path: path, Index: 0, Remove: 0, Items: cloneArray(came)})
+	// Upstream's before.includes(after[0], length - down) is SameValueZero,
+	// which same is on a JSON value (none is NaN).
+	if down := indexOf(after, before[0], 1); down > 0 && indexOf(before, after[0], length-down) < 0 &&
+		sameRun(before, 0, after, down, length-down) {
+		d.emit(Splice{Path: path, Index: 0, Remove: 0, Items: cloneArray(after[:down])})
 		d.emit(Splice{Path: path, Index: length, Remove: down, Items: newArray(0)})
 		return true
 	}
-	if up := indexOf(before, after[0], 1); up > 0 && sameRun(before, up, after, 0, length-up) {
-		came := after[length-up:]
-		if sameItems(came, before[:up]) {
-			return false
-		}
+	if up := indexOf(before, after[0], 1); up > 0 && lastIndexOf(before, after[length-1], up-1) < 0 &&
+		sameRun(before, up, after, 0, length-up) {
 		d.emit(Splice{Path: path, Index: 0, Remove: up, Items: newArray(0)})
-		d.emit(Splice{Path: path, Index: length - up, Remove: 0, Items: cloneArray(came)})
+		d.emit(Splice{Path: path, Index: length - up, Remove: 0, Items: cloneArray(after[length-up:])})
 		return true
 	}
 	return false
@@ -291,28 +289,15 @@ func indexOf(xs []any, v any, from int) int {
 	return -1
 }
 
-// sameItems reports whether a and b hold the same items (===), each as often,
-// in any order.
-func sameItems(a, b []any) bool {
-	if len(a) == 1 {
-		return same(a[0], b[0])
-	}
-	counts := map[valueKey]int{}
-	for _, item := range a {
-		// An item with no key (an anonymous array) is an object of its own,
-		// which nothing in b is.
-		if k, ok := keyOf(item); ok {
-			counts[k]++
+// lastIndexOf is Array.prototype.lastIndexOf: the last index at or before
+// from at which xs holds v (===), or -1.
+func lastIndexOf(xs []any, v any, from int) int {
+	for i := min(from, len(xs)-1); i >= 0; i-- {
+		if same(xs[i], v) {
+			return i
 		}
 	}
-	for _, item := range b {
-		k, ok := keyOf(item)
-		if !ok || counts[k] == 0 {
-			return false
-		}
-		counts[k]--
-	}
-	return true
+	return -1
 }
 
 // sameRun reports whether count items of before from from are the items of

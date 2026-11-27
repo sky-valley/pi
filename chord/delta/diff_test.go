@@ -10,8 +10,8 @@ import (
 	"testing"
 )
 
-// delta-diff.test.ts's ERNDL-1176 step 4 cases (upstream 8bbc119b9): a window
-// moved by k items is found by identity. The golden pins every case's ops
+// delta-diff.test.ts's ERNDL-1176 step 4 cases (upstream 8bbc119b9 and
+// ca4badd82): a window moved by k items is found by identity. The golden pins every case's ops
 // byte for byte against pi's ("shift-" in testdata/upstream_delta.json); these
 // replay them, as upstream's expectDiff does.
 
@@ -27,45 +27,72 @@ func shiftRows(length int) []any {
 // shiftRandomRound is one round of the random shift test: before and after.
 type shiftRandomRound struct{ before, after []any }
 
-// shiftRandomRounds is upstream's random test, round by round, with its
-// linear congruential generator in float64 arithmetic as JavaScript runs it
-// (the product passes 2^53, so it rounds as V8 rounds it; the conversion
-// keeps Go from fusing the multiply and the add).
-var shiftRandomRounds = sync.OnceValue(func() []shiftRandomRound {
+// shiftRandomRounds is upstream's random test, round by round, down then up,
+// with its linear congruential generator in float64 arithmetic as JavaScript
+// runs it (the product passes 2^53, so it rounds as V8 rounds it; the
+// conversion keeps Go from fusing the multiply and the add). It reads the
+// generator's high bits: its low bits repeat with a short period.
+var shiftRandomRounds = sync.OnceValue(func() map[string][]shiftRandomRound {
 	seed := 7.0
 	random := func(below int) int {
 		seed = math.Mod(float64(seed*1_103_515_245)+12_345, 2_147_483_648)
-		return int(seed) % below
+		return int(seed) / 65_536 % below
 	}
-	rounds := make([]shiftRandomRound, 500)
-	for round := range rounds {
-		length := 2 + random(30)
-		rows := shiftRows(length)
-		k := 1 + random(length-1)
-		fresh := make([]any, k)
-		for id := range fresh {
-			fresh[id] = obj("id", float64(1_000+id))
+	out := map[string][]shiftRandomRound{}
+	for _, direction := range []string{"down", "up"} {
+		rounds := make([]shiftRandomRound, 500)
+		for round := range rounds {
+			length := 2 + random(30)
+			rows := shiftRows(length)
+			k := 1 + random(length-1)
+			fresh := make([]any, k)
+			for id := range fresh {
+				fresh[id] = obj("id", float64(1_000+id))
+			}
+			left := rows[:k]
+			if direction == "down" {
+				left = rows[length-k:]
+			}
+			// New rows, the rows that left coming back, some of each, or a
+			// copy of one (equal, not the same object).
+			came := [][]any{
+				fresh,
+				left,
+				append([]any{left[0]}, fresh[1:]...),
+				append(slices.Clone(fresh[1:]), maps.Clone(rows[0].(map[string]any))),
+			}[random(4)]
+			after := slices.Concat(rows[k:], came)
+			if direction == "down" {
+				after = slices.Concat(came, rows[:length-k])
+			}
+			if random(4) == 0 {
+				after[random(length)] = obj("id", -1.0)
+			}
+			rounds[round] = shiftRandomRound{before: rows, after: after}
 		}
-		// New rows, rows that left coming back, or one of them a copy (equal,
-		// not the same object).
-		came := [][]any{
-			fresh,
-			rows[length-k:],
-			append(slices.Clone(fresh[1:]), maps.Clone(rows[0].(map[string]any))),
-		}[random(3)]
-		var after []any
-		if random(2) == 0 {
-			after = slices.Concat(came, rows[:length-k])
-		} else {
-			after = slices.Concat(rows[k:], came)
-		}
-		if random(4) == 0 {
-			after[random(length)] = obj("id", -1.0)
-		}
-		rounds[round] = shiftRandomRound{before: rows, after: after}
+		out[direction] = rounds
 	}
-	return rounds
+	return out
 })
+
+// shiftEditedRotation is upstream's edited one-row rotation of 500 labelled
+// rows, up (the first row moved behind) or down (the last moved in front),
+// with row 250 of the result an edited copy.
+func shiftEditedRotation(direction string) (before, after []any) {
+	before = make([]any, 500)
+	for id := range before {
+		before[id] = obj("id", float64(id), "label", strings.Repeat("x", 1024))
+	}
+	if direction == "up" {
+		after = slices.Concat(before[1:], before[:1])
+	} else {
+		after = slices.Concat(before[499:], before[:499])
+	}
+	edited := maps.Clone(after[250].(map[string]any))
+	edited["id"] = 999.0
+	after[250] = edited
+	return before, after
+}
 
 // shiftCase builds a "shift-" generated case exactly as capture.mts does.
 func shiftCase(name string) (before, after any, ok bool) {
@@ -86,12 +113,16 @@ func shiftCase(name string) (before, after any, ok bool) {
 		window := shiftRows(length)
 		return obj("rows", window), obj("rows", slices.Concat([]any{obj("id", -1.0)}, window[:length-1])), true
 	case strings.HasPrefix(name, "shift-random-"):
-		round, err := strconv.Atoi(strings.TrimPrefix(name, "shift-random-"))
-		rounds := shiftRandomRounds()
+		direction, number, _ := strings.Cut(strings.TrimPrefix(name, "shift-random-"), "-")
+		rounds := shiftRandomRounds()[direction]
+		round, err := strconv.Atoi(number)
 		if err != nil || round < 0 || round >= len(rounds) {
 			return nil, nil, false
 		}
 		return obj("rows", rounds[round].before), obj("rows", rounds[round].after), true
+	case name == "shift-edited-rotation-up" || name == "shift-edited-rotation-down":
+		before, after := shiftEditedRotation(strings.TrimPrefix(name, "shift-edited-rotation-"))
+		return obj("rows", before), obj("rows", after), true
 	}
 	return nil, nil, false
 }
@@ -125,7 +156,7 @@ func TestDiffRevisionsFindsAShiftedWindowByIdentity(t *testing.T) {
 }
 
 // Upstream counts the items a shifted window's diff reads through a Proxy
-// (at most 2n + 8 of a window of n); a Go slice has no read hook, so the port
+// (at most 2n + 9 of a window of n); a Go slice has no read hook, so the port
 // keeps its shape: one splice in front and one behind.
 func TestDiffRevisionsShiftedWindowIsTwoSplices(t *testing.T) {
 	for _, length := range []int{50, 500} {
@@ -138,15 +169,38 @@ func TestDiffRevisionsShiftedWindowIsTwoSplices(t *testing.T) {
 }
 
 func TestDiffRevisionsEveryShiftReplays(t *testing.T) {
-	for round, r := range shiftRandomRounds() {
-		before, after := obj("rows", r.before), obj("rows", r.after)
+	for _, direction := range []string{"down", "up"} {
+		for round, r := range shiftRandomRounds()[direction] {
+			before, after := obj("rows", r.before), obj("rows", r.after)
+			ops := DiffRevisions(before, after)
+			replica, err := ApplyImmutable(before, ops)
+			if err != nil {
+				t.Fatalf("%s round %d: replaying %v: %v", direction, round, ops, err)
+			}
+			if g, w := jsonText(t, replica), jsonText(t, after); g != w {
+				t.Fatalf("%s round %d: ops %v give\n %s\nwant %s", direction, round, jsonText(t, ops), g, w)
+			}
+		}
+	}
+}
+
+// Upstream ca4badd82: a shift whose first incoming row (the last, shifted up)
+// is one that left is no shift, so an edited rotation is not taken from its
+// wrong end, which resent 499 of its 500 rows.
+func TestDiffRevisionsEditedRotationStaysNarrow(t *testing.T) {
+	for _, direction := range []string{"up", "down"} {
+		rows, rotated := shiftEditedRotation(direction)
+		before, after := obj("rows", rows), obj("rows", rotated)
 		ops := DiffRevisions(before, after)
 		replica, err := ApplyImmutable(before, ops)
 		if err != nil {
-			t.Fatalf("round %d: replaying %v: %v", round, ops, err)
+			t.Fatalf("%s: replaying: %v", direction, err)
 		}
-		if g, w := jsonText(t, replica), jsonText(t, after); g != w {
-			t.Fatalf("round %d: ops %v give\n %s\nwant %s", round, jsonText(t, ops), g, w)
+		wantJSON(t, replica, after)
+		// One row moved and one leaf edit: none of the other 498 rows is sent
+		// again.
+		if n := len(jsonText(t, ops)); n >= 2_000 {
+			t.Errorf("%s: the batch is %d bytes, want under 2,000", direction, n)
 		}
 	}
 }

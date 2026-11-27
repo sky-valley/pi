@@ -688,9 +688,9 @@ function pinCosts(): Map<string, number> {
 	}
 }
 
-// A window moved by k items, found by identity (from 8bbc119b9): delta-diff.test.ts's
-// ERNDL-1176 step 4 cases, case for case, as generated inputs that
-// golden_test.go builds the same way by name.
+// A window moved by k items, found by identity (from 8bbc119b9, refined by
+// ca4badd82): delta-diff.test.ts's ERNDL-1176 step 4 cases, case for case, as
+// generated inputs that golden_test.go builds the same way by name.
 {
 	const rowsOf = (length: number) => Array.from({ length }, (_, id) => ({ id }));
 	const rows = rowsOf(50);
@@ -702,21 +702,37 @@ function pinCosts(): Map<string, number> {
 		const window = rowsOf(length);
 		genCase(`shift-window-${length}`, { rows: window }, { rows: [{ id: -1 }, ...window.slice(0, -1)] });
 	}
-	// Every shift, rotation and near-shift, round by round.
+	// Every shift, rotation and near-shift, both ways, round by round (from
+	// ca4badd82).
 	let seed = 7;
+	// The high bits of a linear congruential generator: its low bits repeat with a short period.
 	const random = (below: number): number => {
 		seed = (seed * 1_103_515_245 + 12_345) % 2_147_483_648;
-		return seed % below;
+		return Math.floor(seed / 65_536) % below;
 	};
-	for (let round = 0; round < 500; round++) {
-		const length = 2 + random(30);
-		const rows = rowsOf(length);
-		const k = 1 + random(length - 1);
-		const fresh = Array.from({ length: k }, (_, id) => ({ id: 1_000 + id }));
-		const came = [fresh, rows.slice(length - k), [...fresh.slice(1), { ...rows[0]! }]][random(3)]!;
-		const after = random(2) === 0 ? [...came, ...rows.slice(0, length - k)] : [...rows.slice(k), ...came];
-		if (random(4) === 0) after[random(length)] = { id: -1 };
-		genCase(`shift-random-${round}`, { rows }, { rows: after });
+	for (const direction of ["down", "up"] as const) {
+		for (let round = 0; round < 500; round++) {
+			const length = 2 + random(30);
+			const rows = rowsOf(length);
+			const k = 1 + random(length - 1);
+			const fresh = Array.from({ length: k }, (_, id) => ({ id: 1_000 + id }));
+			const left = direction === "down" ? rows.slice(length - k) : rows.slice(0, k);
+			// New rows, the rows that left coming back, some of each, or a copy of one (equal, not the same object).
+			const came = [fresh, left, [left[0]!, ...fresh.slice(1)], [...fresh.slice(1), { ...rows[0]! }]][random(4)]!;
+			const after = direction === "down" ? [...came, ...rows.slice(0, length - k)] : [...rows.slice(k), ...came];
+			if (random(4) === 0) after[random(length)] = { id: -1 };
+			genCase(`shift-random-${direction}-${round}`, { rows }, { rows: after });
+		}
+	}
+	// An edited one-row rotation, both ways: no shift taken from the wrong end.
+	const labelled = Array.from({ length: 500 }, (_, id) => ({ id, label: "x".repeat(1024) }));
+	for (const [name, after] of [
+		["up", [...labelled.slice(1), labelled[0]!]],
+		["down", [labelled[499]!, ...labelled.slice(0, 499)]],
+	] as const) {
+		const edited = [...after];
+		edited[250] = { ...edited[250]!, id: 999 };
+		genCase(`shift-edited-rotation-${name}`, { rows: labelled }, { rows: edited });
 	}
 }
 
