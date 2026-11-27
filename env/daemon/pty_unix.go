@@ -204,7 +204,7 @@ func runPty(id uint32, request ptyRequest, out *output, ctl *control, running *g
 		master.Close()
 		return nil, newFailure("spawn_error", ioErrorText(err))
 	}
-	running.add(pid)
+	registered := running.register(pid)
 	term := &terminal{input: newInputQueue(), master: master, pid: pid}
 	terms.add(id, term)
 	out.sendControl(frame.Frame{Kind: frame.Event, ID: id, JSON: marshal(object{"kind": "started", "pid": int64(pid)})})
@@ -241,7 +241,7 @@ func runPty(id uint32, request ptyRequest, out *output, ctl *control, running *g
 			}
 		}
 	}()
-	waitInBackground(process, &ending{group: group, running: running}, messages, done)
+	waitInBackground(process, &ending{group: group, registered: registered}, messages, done)
 
 	var (
 		exited    bool
@@ -256,9 +256,9 @@ func runPty(id uint32, request ptyRequest, out *output, ctl *control, running *g
 	kill := func() {
 		if !killed {
 			killed = true
-			// Only while the shell is in running: the waiter removes it
-			// under its lock before reaping it.
-			running.kill(pid)
+			// Only while its registration stands: the waiter forgets it
+			// under the lock before reaping it.
+			registered.kill()
 		}
 	}
 	if ctl.killed.Load() {
@@ -324,7 +324,7 @@ loop:
 	// Ending the input ends the writer.
 	terms.remove(id)
 	term.input.close()
-	running.remove(pid)
+	registered.forget()
 	<-readerDone
 	master.Close()
 	if aborted {

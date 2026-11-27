@@ -86,7 +86,7 @@ func runProcess(id uint32, request processRequest, out *output, ctl *control, ru
 		return nil, fail
 	}
 	pid := command.process.pid
-	running.add(pid)
+	registered := running.register(pid)
 	// What the program starts in its group dies when it exits: a wrapper such
 	// as npx that exits does not leave the server it started running, out of
 	// reach of close() and of a lost connection.
@@ -98,7 +98,7 @@ func runProcess(id uint32, request processRequest, out *output, ctl *control, ru
 		command.process.kill()
 		// Only reaped: the request fails with the group's error either way.
 		_, _ = command.process.wait()
-		running.remove(pid)
+		registered.forget()
 		command.close()
 		return nil, newFailure("spawn_error", ioErrorText(err))
 	}
@@ -128,7 +128,7 @@ func runProcess(id uint32, request processRequest, out *output, ctl *control, ru
 			}
 		}
 	}()
-	waitInBackground(command.process, &ending{group: group, running: running}, messages, done)
+	waitInBackground(command.process, &ending{group: group, registered: registered}, messages, done)
 	// Registered before started goes out, so input sent after it always finds
 	// the program.
 	procs.add(id, p)
@@ -148,9 +148,10 @@ func runProcess(id uint32, request processRequest, out *output, ctl *control, ru
 	kill := func() {
 		if !killed {
 			killed = true
-			// Only while the program is in running: the waiter removes it
-			// under its lock before reaping it (see groups.kill for Windows).
-			running.kill(pid)
+			// Only while its registration stands: the waiter forgets it
+			// under the lock before reaping it (see registration.kill for
+			// Windows).
+			registered.kill()
 		}
 	}
 	if ctl.killed.Load() {
@@ -219,7 +220,7 @@ func runProcess(id uint32, request processRequest, out *output, ctl *control, ru
 	for _, pipe := range command.output {
 		pipe.Close()
 	}
-	running.remove(pid)
+	registered.forget()
 	if aborted {
 		return nil, newFailure("aborted", "aborted")
 	}

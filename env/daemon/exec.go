@@ -30,36 +30,63 @@ const (
 )
 
 // groups are the commands this daemon started and has not reaped, by process
-// id (which is also the process group's); killed when the connection ends.
+// id (which is also the process group's), each with the token of its
+// registration (a pid names another process once reaped, which another
+// command may register): killed when the connection ends.
 type groups struct {
 	mu   sync.Mutex
-	pids map[int]struct{}
+	pids map[int]uint64
+	// next is the next registration's token.
+	next uint64
 }
 
-func newGroups() *groups { return &groups{pids: map[int]struct{}{}} }
+func newGroups() *groups { return &groups{pids: map[int]uint64{}} }
 
-func (g *groups) add(pid int) {
-	g.mu.Lock()
-	g.pids[pid] = struct{}{}
-	g.mu.Unlock()
+// registration is one command's entry in groups: only it removes or signals
+// that entry, never a later command's with the same pid.
+type registration struct {
+	running *groups
+	pid     int
+	token   uint64
 }
 
-func (g *groups) remove(pid int) {
-	g.mu.Lock()
-	delete(g.pids, pid)
-	g.mu.Unlock()
-}
-
-// kill kills pid's group while the daemon still has it: a process program's
-// waiter removes it under this lock before reaping it, so on Unix a pid that
-// may name another process once reaped is never signalled. On Windows
-// killTree only starts taskkill, which finds the pid after the lock is
-// released and may then reach a reused one; the Rust daemon has the same gap.
-func (g *groups) kill(pid int) {
+// register registers the command pid just started.
+func (g *groups) register(pid int) registration {
 	g.mu.Lock()
 	defer g.mu.Unlock()
-	if _, ok := g.pids[pid]; ok {
-		killTree(pid)
+	g.next++
+	g.pids[pid] = g.next
+	return registration{running: g, pid: pid, token: g.next}
+}
+
+// forget removes the registration, if it still stands (a later command with
+// the same pid keeps its own).
+func (r registration) forget() {
+	r.running.mu.Lock()
+	defer r.running.mu.Unlock()
+	if r.stands() {
+		delete(r.running.pids, r.pid)
+	}
+}
+
+// stands reports whether the registration is still in groups; the caller
+// holds the lock.
+func (r registration) stands() bool {
+	token, ok := r.running.pids[r.pid]
+	return ok && token == r.token
+}
+
+// kill kills the command's group while the registration stands: a process or
+// pty program's waiter forgets it under this lock before reaping it, so on
+// Unix a pid that may name another process once reaped is never signalled.
+// On Windows killTree only starts taskkill, which finds the pid after the
+// lock is released and may then reach a reused one; the Rust daemon has the
+// same gap.
+func (r registration) kill() {
+	r.running.mu.Lock()
+	defer r.running.mu.Unlock()
+	if r.stands() {
+		killTree(r.pid)
 	}
 }
 
@@ -356,11 +383,12 @@ func readPipe(stream int, pipe *os.File, messages chan<- commandMessage, done <-
 	}
 }
 
-// ending is a process program's group, ended once the program exits, and the
-// daemon's groups, which forget the program before it is reaped.
+// ending is a process or pty program's group, ended once the program exits,
+// and its registration in the daemon's groups, forgotten before it is
+// reaped.
 type ending struct {
-	group   *programGroup
-	running *groups
+	group      *programGroup
+	registered registration
 }
 
 // waitInBackground reaps the command on a goroutine of its own, which
@@ -378,8 +406,9 @@ func waitInBackground(process child, end *ending, messages chan<- commandMessage
 			exited := end.group.waitForExit()
 			end.group.end()
 			// Forgotten before it is reaped: a kill that checks running under
-			// its lock never reaches a reused pid (on Unix; see groups.kill).
-			end.running.remove(process.pid)
+			// its lock never reaches a reused pid (on Unix; see
+			// registration.kill).
+			end.registered.forget()
 			code, err = process.wait()
 			end.group.release()
 			if exited != nil {
@@ -453,7 +482,7 @@ func runExec(id uint32, request execRequest, tmpdir string, out *output, ctl *co
 		command.stdin.Close()
 	}
 	pid := command.process.pid
-	running.add(pid)
+	registered := running.register(pid)
 	var deadline time.Time
 	if request.hasTimeout {
 		deadline = time.Now().Add(request.timeout)
@@ -604,7 +633,7 @@ func runExec(id uint32, request execRequest, tmpdir string, out *output, ctl *co
 	for _, pipe := range command.output {
 		pipe.Close()
 	}
-	running.remove(pid)
+	registered.forget()
 	emit(0, decoders[0].decode(nil, true))
 	emit(1, decoders[1].decode(nil, true))
 	if held != nil && !held.isEmpty() {
