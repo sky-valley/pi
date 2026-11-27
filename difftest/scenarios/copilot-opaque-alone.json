@@ -1,0 +1,88 @@
+{
+  "name": "copilot-opaque-alone",
+  "note": "an opaque value with no reasoning text replays reasoning_opaque alone (no field). src: upstream ede8bdca0 postdates npm 1.6.1.",
+  "backend": "src",
+  "api": "openai-completions",
+  "entry": "streamSimple",
+  "model": {
+    "id": "gemini-3.8-flash",
+    "name": "Gemini 3.8 Flash",
+    "api": "openai-completions",
+    "provider": "github-copilot",
+    "baseUrl": "https://api.individual.githubcopilot.com",
+    "reasoning": true,
+    "input": [
+      "text"
+    ],
+    "cost": {
+      "input": 0.75,
+      "output": 3.75,
+      "cacheRead": 0.075,
+      "cacheWrite": 0
+    },
+    "contextWindow": 200000,
+    "maxTokens": 64000
+  },
+  "context": {
+    "systemPrompt": "You read files.",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Read README.md",
+        "timestamp": 1
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "thinking",
+            "thinking": "",
+            "thinkingSignature": "{\"reasoning_opaque\":\"OPQ2\"}"
+          },
+          {
+            "type": "text",
+            "text": "Done."
+          }
+        ],
+        "api": "openai-completions",
+        "provider": "github-copilot",
+        "model": "gemini-3.8-flash",
+        "usage": {
+          "input": 10,
+          "output": 5,
+          "cacheRead": 0,
+          "cacheWrite": 0
+        },
+        "stopReason": "stop",
+        "timestamp": 2
+      },
+      {
+        "role": "user",
+        "content": "Next.",
+        "timestamp": 5
+      }
+    ],
+    "tools": [
+      {
+        "name": "read",
+        "description": "Read a file.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "path"
+          ],
+          "additionalProperties": false
+        }
+      }
+    ]
+  },
+  "options": {
+    "apiKey": "test-key",
+    "maxTokens": 1024
+  }
+}

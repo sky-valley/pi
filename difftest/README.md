@@ -290,6 +290,16 @@ Both sides read the same file, so neither can quietly diverge on inputs.
 | `responses-midconvo-tool-search` | dist | additive tool history with `supportsToolSearch`: body.tools keeps the leading message's tools, and `late_tool` loads through a completed client `tool_search_call`/`tool_search_output` pair, `call_id` `pi_tool_load_<shortHash("system:<msgIndex>:<names>")>` with a msgIndex the leading system message does not advance |
 | `responses-midconvo-fallback` | dist | the same model with a removal: no body.tools and no fallback to the current tool state (upstream `caa6967b6`); the update renders its section changes followed by the removal notice ("The following tools are no longer available. Do not call them:"), and the incremental tools notice before `late_tool` does not list the tool this update removes (upstream `530015d93`). `src` until a release ships both |
 | `responses-midconvo-off` | dist | native system messages without additional_tools or tool search: every current tool in body.tools, the update still sent in place |
+| `copilot-opaque-text-toolcall` | src | GitHub Copilot openai-completions: a thinking block whose signature is `{"field":"reasoning_text","reasoning_opaque":…}` replays its text as `reasoning_text` and the opaque value as `reasoning_opaque` beside the tool call (upstream `ede8bdca0`, after 1.6.1) |
+| `copilot-opaque-alone` | src | an opaque signature without a field replays `reasoning_opaque` only |
+| `copilot-opaque-latest-wins` | src | the latest block's opaque value is replayed; a whitespace-only block carries none |
+| `copilot-opaque-null-field` | src | `"field": null` rejects the signature: no replay data |
+| `copilot-opaque-bad-field-first` | src | an unusable first signature falls through to a later block's field |
+| `copilot-opaque-vs-details` | src | `reasoning_details` win over `reasoning_opaque` |
+| `copilot-opaque-ws-prefix` | src | an opaque signature with leading whitespace is not read |
+| `copilot-opaque-opencode-go` | src | opencode-go maps `reasoning` to `reasoning_content` beside the opaque value |
+| `copilot-opaque-escapes` | src | escapes and non-ASCII in the opaque value and the text replay unchanged |
+| `copilot-opaque-legacy-ws` | src | a legacy tool-call encrypted detail with leading whitespace is no longer read |
 
 The `backend` column above is a snapshot. Scenarios flip `src` -> `dist` as releases
 ship the surface they cover, so re-read `scenarios/*.json` rather than this table when
