@@ -96,9 +96,11 @@ func runProcess(id uint32, request processRequest, out *output, ctl *control, ru
 		// starts taskkill, which can fail too; the program is killed directly.
 		killTree(pid)
 		command.process.kill()
+		// Forgotten before it is reaped: then its pid may name another
+		// program, which a shutdown must not reach.
+		registered.forget()
 		// Only reaped: the request fails with the group's error either way.
 		_, _ = command.process.wait()
-		registered.forget()
 		command.close()
 		return nil, newFailure("spawn_error", ioErrorText(err))
 	}

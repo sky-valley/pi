@@ -13,9 +13,16 @@ func TestARegistrationNeverTouchesALaterOneWithTheSamePid(t *testing.T) {
 	// registers it.
 	second := running.register(pid)
 	first.forget()
-	first.kill()
+	var signalled []int
+	record := func(pid int) { signalled = append(signalled, pid) }
+	if first.killWith(record) || len(signalled) != 0 {
+		t.Fatalf("the first command signalled %v", signalled)
+	}
 	if token, ok := running.pids[pid]; !ok || token != second.token {
 		t.Fatalf("the later registration: %d, %v; want %d", token, ok, second.token)
+	}
+	if !second.killWith(record) || len(signalled) != 1 || signalled[0] != pid {
+		t.Fatalf("the later command signalled %v, want its own", signalled)
 	}
 	second.forget()
 	if len(running.pids) != 0 {

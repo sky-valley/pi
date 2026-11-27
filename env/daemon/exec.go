@@ -82,12 +82,18 @@ func (r registration) stands() bool {
 // On Windows killTree only starts taskkill, which finds the pid after the
 // lock is released and may then reach a reused one; the Rust daemon has the
 // same gap.
-func (r registration) kill() {
+func (r registration) kill() { r.killWith(killTree) }
+
+// killWith is kill with signal sending to the pid: whether the registration
+// stood (and signal was called).
+func (r registration) killWith(signal func(pid int)) bool {
 	r.running.mu.Lock()
 	defer r.running.mu.Unlock()
-	if r.stands() {
-		killTree(r.pid)
+	stands := r.stands()
+	if stands {
+		signal(r.pid)
 	}
+	return stands
 }
 
 func (g *groups) killAll() {
