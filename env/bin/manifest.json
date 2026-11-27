@@ -1,38 +1,38 @@
 {
 	"go": "go1.26.0",
-	"source": "d21d7e53976e85d9436336a8931dcaefc00f63fdd77cf669516705250c3e188c",
+	"source": "3ce9a65647b6ff3d5cb445b55377d71195b65dfeeb8348c78ffb1641387d5eba",
 	"daemons": {
 		"pi-env-android-arm64": {
-			"sha256": "685cd6a7866d624bdbfa84ab8766c63f81aadabd27aad1c71e641f8db9b1efaf",
+			"sha256": "8e5c3d782f86d259af7188b663fc3f0c07f3bba618ac8446a982f8ffa3bc25db",
 			"size": 3408132
 		},
 		"pi-env-android-x64": {
-			"sha256": "37ebef1901c10d30182bd816e53e20e073a5f81bcf5ef02d6c40582b2a0b3981",
-			"size": 3199102
+			"sha256": "69393eb31d141274f33fc2295fbcbd73da4465f7f58e9a645fac9da8a7961142",
+			"size": 3207294
 		},
 		"pi-env-darwin-arm64": {
-			"sha256": "e88068c7a1f0b1f246007f8de83f81a2068d8b89b0241e6cd353107be7592480",
-			"size": 3022514
+			"sha256": "bd37cead6de82d939da11ee0c91dddd3b6eb6ec73981622bc9fd8af1e35ec70e",
+			"size": 3022642
 		},
 		"pi-env-darwin-x64": {
-			"sha256": "9738d696039cac7cf1a38a7f5acf66c0b778ec8b0f357a945b5559c34bb86ffa",
-			"size": 3179232
+			"sha256": "0c2dfcbd604822c25a29d649f551d83c417f90ebc447a1fe8ed6426994f2dd8e",
+			"size": 3183456
 		},
 		"pi-env-linux-arm64": {
-			"sha256": "392b11642eceba86b78d4fef7d86617d3c270d069597b63217ccae9ab5eb5c5d",
+			"sha256": "8afe48df015ae3f14f0a74dc173ea35471aa16288eadaa6a9fcb425709dad145",
 			"size": 3145854
 		},
 		"pi-env-linux-x64": {
-			"sha256": "e8ee7229510d50463e0b672a9b6d64bc1ae89585b44f5553baaec46b764a0449",
-			"size": 3203198
+			"sha256": "a36984a8d41def704e85b2cae047491bd0c26d03aaaf808d952c34f9cf66ffb8",
+			"size": 3207294
 		},
 		"pi-env-windows-arm64": {
-			"sha256": "b2468c580cd82255ee270ed1bd542d01626b0838ed58146d84f4549c9dd7f615",
-			"size": 3334656
+			"sha256": "f57fa8f0cf7cb30cfd23050647b63c423ec9b7a90f2ddd6b09af5ab7d0269dee",
+			"size": 3336704
 		},
 		"pi-env-windows-x64": {
-			"sha256": "4d970d5a83544ed32518d00dbd4317ee31b737bf9b8a05ef28ce4783d6e8788a",
-			"size": 3596800
+			"sha256": "86bd89b490eefc9b1f58b6b7288cc6619f60a0fc676947dac31034fc989ecfdd",
+			"size": 3598336
 		}
 	}
 }
