@@ -58,12 +58,9 @@ it demands that everything be committed and pushed.
 - **Push only `main`, and only after §3 and §4 pass.** The proxy can create a
   remote branch but not delete one, so any backup or WIP branch pushed from here
   stays on GitHub for good (nine `sync/*` and `wip/*` branches did by 2026-11-28).
-- **Tags can't be pushed from here.** On a release-crossing cycle, do everything
-  in §5 up to the tag (the `docs/RELEASES.md` entry included) and push `main`.
-  Then hand the owner the rest as a zsh script: both tags, the env bump, and the
-  `gh release create` with the Release body embedded in a heredoc (never a
-  `--notes-file` that only exists here). Add the tweet. zsh isn't installed, so
-  check the script with `bash -n` and say it was checked that way.
+- **Tags can't be pushed from here**, which is why §5 releases by request:
+  pushing `docs/releases/vX.Y.Z.md` to `main` is all a release needs, and the
+  `release` workflow makes the tags, the env bump and the GitHub Release.
 - **Two `env/daemon` failures are cloud-only, not regressions:** `TestOracle`
   (subtests `protocol`, `not_UTF-8`, `readdir`: the stored `linux.json` oracle
   was captured on aarch64, the cloud is x86_64, and its directory order differs)
@@ -182,30 +179,43 @@ but no Go home yet" is a Scope queue row, not a `decide`.
     → `v0.80.11`; if pi later bumps to 0.81.x, the next tag is `v0.81.<n+1>`. The
     version lives in the tag (no in-source version); one tag per
     release-crossing cycle (cycles with no npm bump get no tag).
-  - Tag the **ledger/pin-advance commit** (the tip of the sync) as an
-    **annotated, unsigned** tag, tagger `Noam Y. Tenne <noam@10ne.org>`:
-    `git -c user.name="Noam Y. Tenne" -c user.email="noam@10ne.org" tag -a
-    vX.Y.Z <sha> -m "vX.Y.Z — upstream pin <sha>, npm pi-ai <ver> …"`.
-  - **Then tag the env submodule, two-step** (its go.mod requires a tagged root,
-    so the root tag must exist and be pushed first): push `vX.Y.Z`; in `env/`,
-    set the `github.com/sky-valley/pi` require to `vX.Y.Z`, run `GOWORK=off go
-    mod tidy` (it keeps `golang.org/x/image` and `golang.org/x/text` as indirect
-    requires; if the module proxy has not seen the new tag yet, use
-    `GOPROXY=direct`), check `GOWORK=off go build ./... && GOWORK=off go vet
-    ./...`, and commit (`build(env): require the root at vX.Y.Z`). Tag that
-    commit `env/vX.Y.Z` the same way (`-m "env/vX.Y.Z — pi-env <ver>, requires
-    root vX.Y.Z"`) and push it. The env tag is one commit past the root tag;
-    both carry the same version. Name both tags in the RELEASES.md Notes entry.
   - Add the row + a Notes entry to `docs/RELEASES.md` (version, date, tagged
-    commit, upstream pin, npm catalog, headline). If RELEASES.md is behind the
-    tag list, backfill the missing tags from their `git tag -n99` messages first.
-  - Push the tags: `git -c credential.helper='!gh auth git-credential' push
-    https://github.com/sky-valley/pi.git vX.Y.Z` (HTTPS, same as the branch
-    push), then the env bump commit and `env/vX.Y.Z` the same way.
-  - **Publish a GitHub Release for the tag** (since 2026-09-21 — a bare tag
-    notifies nobody; watchers and the repo's "Latest" badge only see Release
-    objects). Body = a short plain-language header, then the RELEASES.md Notes
-    entry verbatim:
+    commit, upstream pin, npm catalog, headline; name both tags, `vX.Y.Z` and
+    `env/vX.Y.Z`). If RELEASES.md is behind the tag list, backfill the missing
+    tags from their `git tag -n99` messages first.
+  - **Release by request, not by hand.** Write `docs/releases/vX.Y.Z.md`, commit
+    it with the RELEASES.md entry, and push `main`: that push is the release.
+    The `release` workflow (`.github/workflows/release.yml`, running
+    `.github/scripts/release.sh`) then does the rest on GitHub:
+    1. tags the **ledger/pin-advance commit** (the tip of the sync) `vX.Y.Z`,
+       **annotated, unsigned**, tagger `Noam Y. Tenne <noam@10ne.org>`;
+    2. sets `env/`'s `github.com/sky-valley/pi` require to `vX.Y.Z`
+       (`GOWORK=off`, `GOPROXY=direct go mod tidy`, build, vet), commits
+       `build(env): require the root at vX.Y.Z` to `main` as
+       github-actions[bot], and tags that commit `env/vX.Y.Z` the same way. The
+       env tag is one commit past the root tag; both carry the same version;
+    3. publishes the GitHub Release, marked Latest when `vX.Y.Z` is the highest
+       version tag.
+
+    Each step is skipped when it is already done, so re-running the workflow
+    (`gh workflow run release -R sky-valley/pi`, or Run workflow on its Actions
+    page) resumes a release that failed part way. `DRY_RUN=1
+    .github/scripts/release.sh` shows locally what it would do. The request:
+
+    ```
+    ---
+    version: vX.Y.Z
+    commit: <full sha of the ledger/pin-advance commit>
+    title: vX.Y.Z — tracking pi <npm-ver>
+    tag_message: vX.Y.Z — upstream pin <sha>, npm pi-ai <ver> (release <sha>): <headline>
+    env_tag_message: env/vX.Y.Z — pi-env <ver>, requires root vX.Y.Z
+    ---
+    <the Release body, below>
+    ```
+  - **The Release body.** Every tag gets a GitHub Release (since 2026-09-21: a
+    bare tag notifies nobody; watchers and the repo's "Latest" badge only see
+    Release objects). Body = a short plain-language header, then the
+    RELEASES.md Notes entry verbatim:
 
     ```
     Tracks pi **<npm-ver>** (upstream pin `<sha>`).
@@ -219,12 +229,17 @@ but no Go home yet" is a Scope queue row, not a `decide`.
     <the docs/RELEASES.md "### vX.Y.Z" Notes entry>
     ```
 
-    `gh release create vX.Y.Z -R sky-valley/pi --verify-tag --title "vX.Y.Z —
-    tracking pi <npm-ver>" --notes-file <body.md> --latest`. Create it AFTER the
-    tag is pushed (`--verify-tag` refuses otherwise). Verify with
-    `gh release list -R sky-valley/pi -L 3` that the new tag reads `Latest`.
+  - **Then confirm it shipped.** Wait for the workflow run (`gh run list -R
+    sky-valley/pi -w release -L 1`, or without gh auth `curl -s
+    'https://api.github.com/repos/sky-valley/pi/actions/workflows/release.yml/runs?per_page=1'`)
+    and check that `vX.Y.Z` is the Latest Release (`gh release list -R
+    sky-valley/pi -L 3`, or `curl -s
+    https://api.github.com/repos/sky-valley/pi/releases/latest`). If the run
+    failed, read its log, fix the cause and re-run it. `main` is now one commit
+    past you (the env bump): `git pull` before anything else.
     Every tag from `v0.85.21` on has a Release; older tags are deliberately
-    left bare — never backfill them (it would notify watchers about old news).
+    left bare — never write requests for them (it would notify watchers about
+    old news).
   - **Draft the release tweet** (we tweet on every release cut). Surface it for
     the human to post — do NOT auto-post (publishing is the owner's action).
     Owner's voice/format, verbatim shape:

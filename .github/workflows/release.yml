@@ -1,0 +1,35 @@
+name: release
+
+# Publishes the releases requested under docs/releases/ (pi-sync §5 writes one
+# file per version). The cloud sync can push main but not tags, so the tags,
+# the env/go.mod bump and the GitHub Release are made here. Re-run it by hand
+# (Run workflow) to resume a release that failed part way.
+
+on:
+  push:
+    branches: [main]
+    paths: ["docs/releases/v*.md"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: env/go.mod
+          cache: false
+      - name: Publish requested releases
+        run: .github/scripts/release.sh
+        env:
+          GH_TOKEN: ${{ github.token }}
