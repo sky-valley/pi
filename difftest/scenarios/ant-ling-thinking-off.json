@@ -1,0 +1,58 @@
+{
+  "name": "ant-ling-thinking-off",
+  "note": "Ant Ling with no reasoning requested: thinking {type: disabled} (upstream 9627ebab8). VERBATIM copy of ant-ling/Ling-3.1-flash from the pi-ai 1.7.0 catalog (catalogModel).",
+  "backend": "dist",
+  "catalogModel": "ant-ling/Ling-3.1-flash",
+  "api": "openai-completions",
+  "entry": "streamSimple",
+  "model": {
+    "id": "Ling-3.1-flash",
+    "name": "Ling 3.1 Flash",
+    "api": "openai-completions",
+    "provider": "ant-ling",
+    "baseUrl": "https://api.ant-ling.com/v1",
+    "reasoning": true,
+    "input": [
+      "text"
+    ],
+    "cost": {
+      "input": 0.3,
+      "output": 0.9,
+      "cacheRead": 0.06,
+      "cacheWrite": 0
+    },
+    "contextWindow": 1000000,
+    "maxTokens": 32768,
+    "thinkingLevelMap": {
+      "off": "off",
+      "minimal": null,
+      "low": null,
+      "medium": null,
+      "high": "high",
+      "xhigh": null,
+      "max": null
+    },
+    "compat": {
+      "supportsStore": false,
+      "supportsReasoningEffort": false,
+      "maxTokensField": "max_tokens",
+      "thinkingFormat": "deepseek",
+      "supportsStrictMode": true,
+      "supportsLongCacheRetention": false
+    },
+    "type": "chat"
+  },
+  "context": {
+    "systemPrompt": "sys",
+    "messages": [
+      {
+        "role": "user",
+        "content": "think",
+        "timestamp": 1
+      }
+    ]
+  },
+  "options": {
+    "apiKey": "test-key"
+  }
+}

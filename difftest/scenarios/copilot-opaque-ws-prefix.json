@@ -1,7 +1,7 @@
 {
   "name": "copilot-opaque-ws-prefix",
-  "note": "an opaque signature with leading whitespace is not read as JSON. src: upstream ede8bdca0 postdates npm 1.6.1.",
-  "backend": "src",
+  "note": "an opaque signature with leading whitespace is not read as JSON. dist since the 1.7.0 re-pin: the 1.7.0 build (release fb0fe8235) ships upstream ede8bdca0, which postdated 1.6.1.",
+  "backend": "dist",
   "api": "openai-completions",
   "entry": "streamSimple",
   "model": {

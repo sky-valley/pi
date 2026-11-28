@@ -1,7 +1,7 @@
 {
   "name": "copilot-opaque-vs-details",
-  "note": "reasoning_details win over reasoning_opaque. src: upstream ede8bdca0 postdates npm 1.6.1.",
-  "backend": "src",
+  "note": "reasoning_details win over reasoning_opaque. dist since the 1.7.0 re-pin: the 1.7.0 build (release fb0fe8235) ships upstream ede8bdca0, which postdated 1.6.1.",
+  "backend": "dist",
   "api": "openai-completions",
   "entry": "streamSimple",
   "model": {
