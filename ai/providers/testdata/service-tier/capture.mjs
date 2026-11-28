@@ -2,7 +2,7 @@
 // bit — the oracle behind TestResponsesServiceTierPricingMatchesPi.
 //
 //   node capture.mjs <pi npm dir> <out.json>
-//   e.g. node capture.mjs ~/.cache/pi-npm/0.87.1 service-tier-0.87.1.json
+//   e.g. node capture.mjs ~/.cache/pi-npm/1.7.0 service-tier-1.7.0.json
 //
 // Each row streams the published build's openai-responses adapter against a
 // loopback server that answers with the row's SSE body, so neither side needs a

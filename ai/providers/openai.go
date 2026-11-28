@@ -1398,9 +1398,7 @@ func resolveClampedThinkingBudget(model *ai.Model, opts *OpenAIOptions, params m
 
 // applyReasoningFormat sets reasoning fields per the provider's thinking format,
 // mirroring pi's openai-completions reasoning dispatch (:556-610). The switch
-// replicates pi's else-if chain exactly: note that "ant-ling" only matches when
-// an effort was requested, so ant-ling with no effort falls through to the
-// generic reasoning_effort branches at the bottom.
+// replicates pi's else-if chain exactly.
 func applyReasoningFormat(params map[string]any, model *ai.Model, compat openAICompletionsCompat, level string, thinkingBudget *int) {
 	enabled := level != ""
 	switch {
@@ -1487,10 +1485,6 @@ func applyReasoningFormat(params map[string]any, model *ai.Model, compat openAIC
 		} else if off, send := offEffortOrDefault(model, "none"); send {
 			params["reasoning"] = map[string]any{"effort": off}
 		}
-	case compat.ThinkingFormat == "ant-ling" && model.Reasoning && enabled:
-		if v, ok := offOrMapped(model, level); ok {
-			params["reasoning"] = map[string]any{"effort": v}
-		}
 	case compat.ThinkingFormat == "together" && model.Reasoning:
 		params["reasoning"] = map[string]any{"enabled": enabled}
 		if enabled && compat.SupportsReasoningEffort {
@@ -1510,17 +1504,6 @@ func applyReasoningFormat(params map[string]any, model *ai.Model, compat openAIC
 			params["reasoning_effort"] = off
 		}
 	}
-}
-
-// offOrMapped returns the mapped effort value only when the model defines one
-// (ant-ling sends reasoning only for non-null mapped efforts).
-func offOrMapped(model *ai.Model, level string) (string, bool) {
-	if model.ThinkingLevelMap != nil {
-		if v, ok := model.ThinkingLevelMap[ai.ModelThinkingLevel(level)]; ok && v != nil {
-			return *v, true
-		}
-	}
-	return "", false
 }
 
 // mappedEffortOrRaw ports pi's zai reasoning_effort lookup (75b0d723):

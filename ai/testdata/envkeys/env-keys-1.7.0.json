@@ -1,5 +1,5 @@
 {
-	"pi-ai": "1.6.1",
+	"pi-ai": "1.7.0",
 	"envKeys": {
 		"amazon-bedrock": null,
 		"ant-ling": [

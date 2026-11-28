@@ -11,8 +11,10 @@
 // generated catalog compat.ts loads: packages/ai/src/providers/data/ is not
 // in git, so copy the npm build's dist/providers/data/ (both rows' models are
 // in it). Run it with an empty environment: every row expects no Cloudflare
-// credentials, so none reaches the network. A src capture; no release ships
-// 2ec55d808 yet.
+// credentials, so none reaches the network. Captured at the 1.7.0 release
+// commit fb0fe8235 over that build's node_modules and catalog data; the
+// workers-ai rows moved to deepseek-v4.1-flash-1017 when 1.7.0 retired
+// deepseek-v4-flash-0731 (same compat; the capture is otherwise unchanged).
 import path from "node:path";
 import fs from "node:fs";
 import { pathToFileURL } from "node:url";
@@ -77,12 +79,12 @@ interface Row {
 }
 
 const rows: Row[] = [
-	{ name: "workers-ai-stream", entry: "stream", provider: "cloudflare-workers-ai", modelId: "@cf/deepseek-ai/deepseek-v4-flash-0731" },
-	{ name: "workers-ai-streamSimple", entry: "streamSimple", provider: "cloudflare-workers-ai", modelId: "@cf/deepseek-ai/deepseek-v4-flash-0731", reasoning: "low" },
+	{ name: "workers-ai-stream", entry: "stream", provider: "cloudflare-workers-ai", modelId: "@cf/deepseek-ai/deepseek-v4.1-flash-1017" },
+	{ name: "workers-ai-streamSimple", entry: "streamSimple", provider: "cloudflare-workers-ai", modelId: "@cf/deepseek-ai/deepseek-v4.1-flash-1017", reasoning: "low" },
 	{ name: "ai-gateway-stream", entry: "stream", provider: "cloudflare-ai-gateway", modelId: "claude-haiku-4-5" },
 	{ name: "ai-gateway-streamSimple", entry: "streamSimple", provider: "cloudflare-ai-gateway", modelId: "claude-haiku-4-5" },
 	// A caller-built non-chat model: compatModels' requireChatProvider refuses it.
-	{ name: "workers-ai-not-chat", entry: "stream", provider: "cloudflare-workers-ai", modelId: "@cf/deepseek-ai/deepseek-v4-flash-0731", type: "image" },
+	{ name: "workers-ai-not-chat", entry: "stream", provider: "cloudflare-workers-ai", modelId: "@cf/deepseek-ai/deepseek-v4.1-flash-1017", type: "image" },
 ];
 
 const out: any = { sha, rows: [] };

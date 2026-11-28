@@ -1078,30 +1078,36 @@ func TestOpenAIOpenRouterRoutingEmptyObjectSent(t *testing.T) {
 	}
 }
 
-func TestOpenAIAntLingFallThrough(t *testing.T) {
-	// pi's ant-ling else-if only matches when an effort was requested; without
-	// one the chain falls through to the generic reasoning_effort branches.
-	model := openAIModel(func(m *ai.Model) {
-		m.ID = "ling-1t"
-		m.Provider = "ant-ling"
-		m.BaseURL = "https://api.ant-ling.com/v1"
-		m.Reasoning = true
-		m.ThinkingLevelMap = ai.ThinkingLevelMap{"off": strPtr("minimal")}
-		m.Compat = json.RawMessage(`{"supportsReasoningEffort":true}`)
-	})
-	body := mustBuildOpenAIParams(t, model, baseReq(), &OpenAIOptions{})
-	if body["reasoning_effort"] != "minimal" {
-		t.Fatalf("ant-ling without effort must reach the generic off branch, got %v", body["reasoning_effort"])
+// TestOpenAIAntLingDeepSeekToggle ports pi's "toggles Ant Ling thinking on or
+// off for every thinking level" (openai-completions-tool-choice.test.ts,
+// 9627ebab8): Ant Ling thinks by default, so every level sends
+// thinking.type "enabled" and off sends "disabled", with no reasoning or
+// reasoning_effort beside it.
+func TestOpenAIAntLingDeepSeekToggle(t *testing.T) {
+	model := ai.GetModel("ant-ling", "Ling-3.1-flash")
+	if model == nil {
+		t.Fatal("ant-ling/Ling-3.1-flash is not in the catalog")
 	}
-	if has(body, "reasoning") {
-		t.Fatalf("ant-ling without effort must not send reasoning, got %v", body["reasoning"])
+	levels := ai.GetSupportedThinkingLevels(model)
+	if fmt.Sprint(levels) != "[off high]" {
+		t.Fatalf("supported levels = %v, pi [off high]", levels)
 	}
-	// With an effort but no thinkingLevelMap entry, the ant-ling branch is
-	// taken and sends nothing (typeof effort !== "string").
-	model.ThinkingLevelMap = nil
-	body2 := mustBuildOpenAIParams(t, model, baseReq(), &OpenAIOptions{ReasoningEffort: "high"})
-	if has(body2, "reasoning") || has(body2, "reasoning_effort") {
-		t.Fatalf("ant-ling with unmapped effort must send nothing, got %v / %v", body2["reasoning"], body2["reasoning_effort"])
+	for _, level := range levels {
+		effort := string(level)
+		if effort == "off" {
+			effort = ""
+		}
+		body := mustBuildOpenAIParams(t, model, baseReq(), &OpenAIOptions{ReasoningEffort: effort})
+		want := "enabled"
+		if effort == "" {
+			want = "disabled"
+		}
+		if got := fmt.Sprint(body["thinking"]); got != fmt.Sprint(map[string]any{"type": want}) {
+			t.Errorf("%s: thinking = %s, pi {type: %s}", level, got, want)
+		}
+		if has(body, "reasoning") || has(body, "reasoning_effort") {
+			t.Errorf("%s: sent reasoning %v / reasoning_effort %v, pi neither", level, body["reasoning"], body["reasoning_effort"])
+		}
 	}
 }
 

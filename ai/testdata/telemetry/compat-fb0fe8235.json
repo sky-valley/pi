@@ -1,11 +1,11 @@
 {
-	"sha": "d2e7d8b7c",
+	"sha": "fb0fe8235",
 	"rows": [
 		{
 			"name": "workers-ai-stream",
 			"entry": "stream",
 			"provider": "cloudflare-workers-ai",
-			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"modelId": "@cf/deepseek-ai/deepseek-v4.1-flash-1017",
 			"type": null,
 			"reasoning": null,
 			"delivered": [
@@ -38,7 +38,7 @@
 					"name": "pi.ai.request",
 					"attributes": {
 						"provider": "cloudflare-workers-ai",
-						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+						"model": "@cf/deepseek-ai/deepseek-v4.1-flash-1017",
 						"api": "openai-completions",
 						"stop": "error",
 						"usage.input": 0,
@@ -74,7 +74,7 @@
 					"value": "duration",
 					"attributes": {
 						"provider": "cloudflare-workers-ai",
-						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731"
+						"model": "@cf/deepseek-ai/deepseek-v4.1-flash-1017"
 					},
 					"context": 2
 				},
@@ -87,7 +87,7 @@
 					"value": "duration",
 					"attributes": {
 						"provider": "cloudflare-workers-ai",
-						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+						"model": "@cf/deepseek-ai/deepseek-v4.1-flash-1017",
 						"stop": "error"
 					},
 					"context": 2
@@ -101,7 +101,7 @@
 					"value": 0,
 					"attributes": {
 						"provider": "cloudflare-workers-ai",
-						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+						"model": "@cf/deepseek-ai/deepseek-v4.1-flash-1017",
 						"kind": "input"
 					},
 					"context": null
@@ -115,7 +115,7 @@
 					"value": 0,
 					"attributes": {
 						"provider": "cloudflare-workers-ai",
-						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+						"model": "@cf/deepseek-ai/deepseek-v4.1-flash-1017",
 						"kind": "output"
 					},
 					"context": null
@@ -129,7 +129,7 @@
 					"value": 0,
 					"attributes": {
 						"provider": "cloudflare-workers-ai",
-						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+						"model": "@cf/deepseek-ai/deepseek-v4.1-flash-1017",
 						"kind": "cache_read"
 					},
 					"context": null
@@ -143,7 +143,7 @@
 					"value": 0,
 					"attributes": {
 						"provider": "cloudflare-workers-ai",
-						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+						"model": "@cf/deepseek-ai/deepseek-v4.1-flash-1017",
 						"kind": "cache_write"
 					},
 					"context": null
@@ -157,7 +157,7 @@
 					"value": 0,
 					"attributes": {
 						"provider": "cloudflare-workers-ai",
-						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731"
+						"model": "@cf/deepseek-ai/deepseek-v4.1-flash-1017"
 					},
 					"context": null
 				}
@@ -167,7 +167,7 @@
 			"name": "workers-ai-streamSimple",
 			"entry": "streamSimple",
 			"provider": "cloudflare-workers-ai",
-			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"modelId": "@cf/deepseek-ai/deepseek-v4.1-flash-1017",
 			"reasoning": "low",
 			"type": null,
 			"delivered": [
@@ -200,7 +200,7 @@
 					"name": "pi.ai.request",
 					"attributes": {
 						"provider": "cloudflare-workers-ai",
-						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+						"model": "@cf/deepseek-ai/deepseek-v4.1-flash-1017",
 						"api": "openai-completions",
 						"reasoning": "low",
 						"stop": "error",
@@ -237,7 +237,7 @@
 					"value": "duration",
 					"attributes": {
 						"provider": "cloudflare-workers-ai",
-						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731"
+						"model": "@cf/deepseek-ai/deepseek-v4.1-flash-1017"
 					},
 					"context": 2
 				},
@@ -250,7 +250,7 @@
 					"value": "duration",
 					"attributes": {
 						"provider": "cloudflare-workers-ai",
-						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+						"model": "@cf/deepseek-ai/deepseek-v4.1-flash-1017",
 						"stop": "error"
 					},
 					"context": 2
@@ -264,7 +264,7 @@
 					"value": 0,
 					"attributes": {
 						"provider": "cloudflare-workers-ai",
-						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+						"model": "@cf/deepseek-ai/deepseek-v4.1-flash-1017",
 						"kind": "input"
 					},
 					"context": null
@@ -278,7 +278,7 @@
 					"value": 0,
 					"attributes": {
 						"provider": "cloudflare-workers-ai",
-						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+						"model": "@cf/deepseek-ai/deepseek-v4.1-flash-1017",
 						"kind": "output"
 					},
 					"context": null
@@ -292,7 +292,7 @@
 					"value": 0,
 					"attributes": {
 						"provider": "cloudflare-workers-ai",
-						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+						"model": "@cf/deepseek-ai/deepseek-v4.1-flash-1017",
 						"kind": "cache_read"
 					},
 					"context": null
@@ -306,7 +306,7 @@
 					"value": 0,
 					"attributes": {
 						"provider": "cloudflare-workers-ai",
-						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+						"model": "@cf/deepseek-ai/deepseek-v4.1-flash-1017",
 						"kind": "cache_write"
 					},
 					"context": null
@@ -320,7 +320,7 @@
 					"value": 0,
 					"attributes": {
 						"provider": "cloudflare-workers-ai",
-						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731"
+						"model": "@cf/deepseek-ai/deepseek-v4.1-flash-1017"
 					},
 					"context": null
 				}
@@ -654,14 +654,14 @@
 			"name": "workers-ai-not-chat",
 			"entry": "stream",
 			"provider": "cloudflare-workers-ai",
-			"modelId": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+			"modelId": "@cf/deepseek-ai/deepseek-v4.1-flash-1017",
 			"type": "image",
 			"reasoning": null,
 			"delivered": [
 				"error"
 			],
 			"stopReason": "error",
-			"errorMessage": "Model cloudflare-workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731 is not a chat model",
+			"errorMessage": "Model cloudflare-workers-ai/@cf/deepseek-ai/deepseek-v4.1-flash-1017 is not a chat model",
 			"spans": [
 				{
 					"id": 1,
@@ -687,7 +687,7 @@
 					"name": "pi.ai.request",
 					"attributes": {
 						"provider": "cloudflare-workers-ai",
-						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+						"model": "@cf/deepseek-ai/deepseek-v4.1-flash-1017",
 						"api": "openai-completions",
 						"stop": "error",
 						"usage.input": 0,
@@ -706,7 +706,7 @@
 						"status": "error",
 						"error": {
 							"name": "provider_error",
-							"message": "Model cloudflare-workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731 is not a chat model"
+							"message": "Model cloudflare-workers-ai/@cf/deepseek-ai/deepseek-v4.1-flash-1017 is not a chat model"
 						}
 					},
 					"settled": true,
@@ -723,7 +723,7 @@
 					"value": "duration",
 					"attributes": {
 						"provider": "cloudflare-workers-ai",
-						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731"
+						"model": "@cf/deepseek-ai/deepseek-v4.1-flash-1017"
 					},
 					"context": 2
 				},
@@ -736,7 +736,7 @@
 					"value": "duration",
 					"attributes": {
 						"provider": "cloudflare-workers-ai",
-						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+						"model": "@cf/deepseek-ai/deepseek-v4.1-flash-1017",
 						"stop": "error"
 					},
 					"context": 2
@@ -750,7 +750,7 @@
 					"value": 0,
 					"attributes": {
 						"provider": "cloudflare-workers-ai",
-						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+						"model": "@cf/deepseek-ai/deepseek-v4.1-flash-1017",
 						"kind": "input"
 					},
 					"context": null
@@ -764,7 +764,7 @@
 					"value": 0,
 					"attributes": {
 						"provider": "cloudflare-workers-ai",
-						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+						"model": "@cf/deepseek-ai/deepseek-v4.1-flash-1017",
 						"kind": "output"
 					},
 					"context": null
@@ -778,7 +778,7 @@
 					"value": 0,
 					"attributes": {
 						"provider": "cloudflare-workers-ai",
-						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+						"model": "@cf/deepseek-ai/deepseek-v4.1-flash-1017",
 						"kind": "cache_read"
 					},
 					"context": null
@@ -792,7 +792,7 @@
 					"value": 0,
 					"attributes": {
 						"provider": "cloudflare-workers-ai",
-						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+						"model": "@cf/deepseek-ai/deepseek-v4.1-flash-1017",
 						"kind": "cache_write"
 					},
 					"context": null
@@ -806,7 +806,7 @@
 					"value": 0,
 					"attributes": {
 						"provider": "cloudflare-workers-ai",
-						"model": "@cf/deepseek-ai/deepseek-v4-flash-0731"
+						"model": "@cf/deepseek-ai/deepseek-v4.1-flash-1017"
 					},
 					"context": null
 				}

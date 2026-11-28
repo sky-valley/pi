@@ -388,12 +388,12 @@ func TestDiffDetectAntLing(t *testing.T) {
 		m.ThinkingLevelMap = ai.ThinkingLevelMap{"high": strPtr("high")}
 	})
 	c := getOpenAICompat(model)
-	// pi: ant-ling -> thinkingFormat=ant-ling, maxTokensField=max_tokens (useMaxTokens),
+	// pi (9627ebab8): ant-ling -> thinkingFormat=deepseek, maxTokensField=max_tokens (useMaxTokens),
 	// supportsReasoningEffort=false, supportsStrictMode=false (every provider's
 	// detected default since 890f92088),
 	// supportsLongCacheRetention=false.
-	if c.ThinkingFormat != "ant-ling" {
-		t.Fatalf("ant-ling thinkingFormat = %q", c.ThinkingFormat)
+	if c.ThinkingFormat != "deepseek" {
+		t.Fatalf("ant-ling thinkingFormat = %q, want deepseek", c.ThinkingFormat)
 	}
 	if c.MaxTokensField != "max_tokens" {
 		t.Fatalf("ant-ling maxTokensField = %q, want max_tokens", c.MaxTokensField)
@@ -407,13 +407,13 @@ func TestDiffDetectAntLing(t *testing.T) {
 	if c.SupportsLongCacheRetention {
 		t.Fatalf("ant-ling supportsLongCacheRetention should be false")
 	}
-	// Request shape: ant-ling sends reasoning:{effort} from thinkingLevelMap, max_tokens.
+	// Request shape: ant-ling sends DeepSeek's thinking toggle (no reasoning
+	// object), max_tokens.
 	mt := 500
 	body := mustBuildOpenAIParams(t, model, reqWithTool(),
 		&OpenAIOptions{ReasoningEffort: "high", StreamOptions: ai.StreamOptions{MaxTokens: &mt}})
-	r, ok := body["reasoning"].(map[string]any)
-	if !ok || r["effort"] != "high" {
-		t.Fatalf("ant-ling reasoning = %v, want {effort:high}", body["reasoning"])
+	if th, ok := body["thinking"].(map[string]any); !ok || th["type"] != "enabled" || has(body, "reasoning") {
+		t.Fatalf("ant-ling thinking = %v, reasoning = %v; want {type:enabled} and no reasoning", body["thinking"], body["reasoning"])
 	}
 	if v, _ := body["max_tokens"].(int); v != 500 {
 		t.Fatalf("ant-ling max_tokens = %v, want 500", body["max_tokens"])

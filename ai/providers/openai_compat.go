@@ -205,14 +205,13 @@ func detectOpenAICompat(model *ai.Model) openAICompletionsCompat {
 
 	thinkingFormat := "openai"
 	switch {
-	case isDeepSeek:
+	// pi 9627ebab8: Ant Ling takes DeepSeek's thinking toggle.
+	case isDeepSeek || isAntLing:
 		thinkingFormat = "deepseek"
 	case isZai:
 		thinkingFormat = "zai"
 	case isTogether:
 		thinkingFormat = "together"
-	case isAntLing:
-		thinkingFormat = "ant-ling"
 	case isOpenRouter:
 		thinkingFormat = "openrouter"
 	}

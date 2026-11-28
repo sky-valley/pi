@@ -1,5 +1,5 @@
 {
-	"version": "1.6.1",
+	"version": "1.7.0",
 	"rows": [
 		{
 			"api": "anthropic-messages",
@@ -11,7 +11,7 @@
 		{
 			"api": "openai-completions",
 			"provider": "ant-ling",
-			"model": "Ling-2.6-1T",
+			"model": "Ling-3.0-flash",
 			"dispatch": "Provider ant-ling has no API implementation for \"openai-completions\"",
 			"unregistered": "No API provider registered for api: openai-completions"
 		},

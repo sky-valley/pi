@@ -910,13 +910,13 @@ func TestStreamSetupTimesASetupFailureBeforeObserving(t *testing.T) {
 // streamSimple() on a built-in cloudflare-* model with no resolved key: they
 // route through compatModels, the Models runtime, so the request is observed
 // under options.telemetry and a non-chat model is refused. Every row of
-// testdata/telemetry/compat-d2e7d8b7c.json (capture-compat.mts) runs with no
+// testdata/telemetry/compat-fb0fe8235.json (capture-compat.mts) runs with no
 // Cloudflare credentials, as pi's did.
 func TestCompatCloudflareStreamsThroughModels(t *testing.T) {
 	for _, name := range []string{"CLOUDFLARE_API_KEY", "CLOUDFLARE_ACCOUNT_ID", "CLOUDFLARE_GATEWAY_ID"} {
 		t.Setenv(name, "")
 	}
-	data, err := os.ReadFile("testdata/telemetry/compat-d2e7d8b7c.json")
+	data, err := os.ReadFile("testdata/telemetry/compat-fb0fe8235.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -997,9 +997,9 @@ func TestCompatCloudflareStreamsThroughModels(t *testing.T) {
 // from (getBuiltinProviderForModel compares the registry's provider with
 // builtinApiProviderInstances).
 func TestCompatCloudflareResolvedOrOverriddenStreamsDirect(t *testing.T) {
-	model := GetModel("cloudflare-workers-ai", "@cf/deepseek-ai/deepseek-v4-flash-0731")
+	model := GetModel("cloudflare-workers-ai", "@cf/deepseek-ai/deepseek-v4.1-flash-1017")
 	if model == nil {
-		t.Fatal("cloudflare-workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731 is not in the catalog")
+		t.Fatal("cloudflare-workers-ai/@cf/deepseek-ai/deepseek-v4.1-flash-1017 is not in the catalog")
 	}
 	// direct streams a row and reports whether only the caller's span was
 	// recorded: no pi.ai.request, so the request went straight to the api

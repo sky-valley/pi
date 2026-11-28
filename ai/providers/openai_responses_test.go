@@ -1046,7 +1046,7 @@ func TestResponsesServiceTierPricing(t *testing.T) {
 
 // serviceTierCaptureFile is written by testdata/service-tier/capture.mjs, which
 // streams the published pi-ai build's openai-responses adapter.
-const serviceTierCaptureFile = "testdata/service-tier/service-tier-0.87.1.json"
+const serviceTierCaptureFile = "testdata/service-tier/service-tier-1.7.0.json"
 
 // TestResponsesServiceTierPricingMatchesPi replays each captured stream at the
 // captured rates and requires pi's exact usage.cost doubles, not a tolerance:

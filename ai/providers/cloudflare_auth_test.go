@@ -15,7 +15,7 @@ import (
 	"github.com/sky-valley/pi/ai"
 )
 
-// cloudflareAuthCapture is testdata/cloudflare-auth/cloudflare-auth-1.3.0.json
+// cloudflareAuthCapture is testdata/cloudflare-auth/cloudflare-auth-1.7.0.json
 // (capture.mjs against the npm 1.3.0 build).
 type cloudflareAuthCapture struct {
 	Version string `json:"version"`
@@ -255,7 +255,7 @@ func asJSON(t *testing.T, v any) any {
 
 func loadCloudflareAuthCapture(t *testing.T) cloudflareAuthCapture {
 	t.Helper()
-	raw, err := os.ReadFile("testdata/cloudflare-auth/cloudflare-auth-1.3.0.json")
+	raw, err := os.ReadFile("testdata/cloudflare-auth/cloudflare-auth-1.7.0.json")
 	if err != nil {
 		t.Fatal(err)
 	}

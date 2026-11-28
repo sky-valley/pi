@@ -4,7 +4,7 @@
 // oracle behind TestCloudflareAuthMatchesPi.
 //
 //   node capture.mjs <pi npm dir> <out.json>
-//   e.g. node capture.mjs .../npm-1.3.0 cloudflare-auth-1.3.0.json
+//   e.g. node capture.mjs .../npm-1.3.0 cloudflare-auth-1.7.0.json
 //
 // Every row runs under one ambient environment (CLOUDFLARE_* in process.env,
 // which pi's default auth context reads) and, for the Models rows, one stored
@@ -117,8 +117,8 @@ const optionSets = {
 };
 
 const models = [
-	["cloudflare-workers-ai", "@cf/deepseek-ai/deepseek-v4-flash-0731"],
-	["cloudflare-ai-gateway", "workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731"],
+	["cloudflare-workers-ai", "@cf/deepseek-ai/deepseek-v4.1-flash-1017"],
+	["cloudflare-ai-gateway", "workers-ai/@cf/deepseek-ai/deepseek-v4.1-flash-1017"],
 	["cloudflare-ai-gateway", "claude-haiku-4-5"],
 	["cloudflare-ai-gateway", "gpt-4.1"],
 ];

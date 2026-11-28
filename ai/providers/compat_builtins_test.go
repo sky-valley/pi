@@ -23,9 +23,9 @@ import (
 func compatCloudflareOutcome(t *testing.T) (string, []string) {
 	t.Helper()
 	setCloudflareEnv(t, nil)
-	model := ai.GetModel("cloudflare-workers-ai", "@cf/deepseek-ai/deepseek-v4-flash-0731")
+	model := ai.GetModel("cloudflare-workers-ai", "@cf/deepseek-ai/deepseek-v4.1-flash-1017")
 	if model == nil {
-		t.Fatal("cloudflare-workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731 is not in the catalog")
+		t.Fatal("cloudflare-workers-ai/@cf/deepseek-ai/deepseek-v4.1-flash-1017 is not in the catalog")
 	}
 	recorder := telemetry.NewInMemoryContext()
 	var result *ai.AssistantMessage
@@ -129,7 +129,7 @@ func TestCompatBuiltinsRecordedAgainWithoutArguments(t *testing.T) {
 		t.Errorf("after RegisterBuiltInApiProviders(): got %q with spans %v, pi %q with spans [caller pi.ai.request]", message, spans, notConfigured)
 	}
 	registered, _ := ai.GetApiProvider(ai.APIOpenAICompletions)
-	model := ai.GetModel("cloudflare-workers-ai", "@cf/deepseek-ai/deepseek-v4-flash-0731")
+	model := ai.GetModel("cloudflare-workers-ai", "@cf/deepseek-ai/deepseek-v4.1-flash-1017")
 	if got := registered.Stream(context.Background(), model, ai.TranscriptContext{}, nil).Result().ErrorMessage; got != "override" {
 		t.Errorf("registry entry answers %q, pi keeps the override (\"override\")", got)
 	}
@@ -155,7 +155,7 @@ func TestBuiltinModelsStreamThroughTheBuiltins(t *testing.T) {
 	}, "builtin-models-override-test")
 	RegisterBuiltins()
 	setCloudflareEnv(t, map[string]string{"CLOUDFLARE_API_KEY": "k", "CLOUDFLARE_ACCOUNT_ID": "a"})
-	model := ai.GetModel("cloudflare-workers-ai", "@cf/deepseek-ai/deepseek-v4-flash-0731")
+	model := ai.GetModel("cloudflare-workers-ai", "@cf/deepseek-ai/deepseek-v4.1-flash-1017")
 	const want = "https://api.cloudflare.com/client/v4/accounts/a/ai/v1/chat/completions"
 	for name, stream := range map[string]func(ai.StreamOptions) *ai.AssistantMessage{
 		"BuiltinModels": func(options ai.StreamOptions) *ai.AssistantMessage {
@@ -189,7 +189,7 @@ type unportedApisCapture struct {
 
 func loadUnportedApisCapture(t *testing.T) unportedApisCapture {
 	t.Helper()
-	data, err := os.ReadFile("testdata/unported-apis/unported-apis-1.6.1.json")
+	data, err := os.ReadFile("testdata/unported-apis/unported-apis-1.7.0.json")
 	if err != nil {
 		t.Fatal(err)
 	}

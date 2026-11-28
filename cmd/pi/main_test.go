@@ -162,7 +162,7 @@ func TestCLICloudflareRequestReachesTheAccount(t *testing.T) {
 		io.WriteString(w, "data: {\"choices\":[{\"delta\":{\"content\":\"ok\"},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n")
 	}))
 	defer server.Close()
-	catalog := ai.GetModel("cloudflare-workers-ai", "@cf/deepseek-ai/deepseek-v4-flash-0731")
+	catalog := ai.GetModel("cloudflare-workers-ai", "@cf/deepseek-ai/deepseek-v4.1-flash-1017")
 	if err := requireProviderAuth(catalog.Provider); err != nil {
 		t.Fatal(err)
 	}
