@@ -110,7 +110,22 @@ func CalculateCost(model *Model, usage *Usage) CostBreakdown {
 	longWrite := usage.CacheWrite1h
 	shortWrite := usage.CacheWrite - longWrite
 	usage.Cost.Input = float64(rateInput / 1_000_000 * float64(usage.Input))
-	usage.Cost.Output = float64(rateOutput / 1_000_000 * float64(usage.Output))
+	// Image models price image tokens at ImageOutput and the rest of output at
+	// the output rate (pi ccda1f74b). Without the provider's split, all output
+	// counts as image tokens: the image price never undercharges. The
+	// expression keeps pi's shape for every model, image rate or not:
+	// (output*text + image*images) / 1e6, which rounds differently from the
+	// old output/1e6*tokens.
+	imageRate := 0.0
+	imageTokens := 0
+	if model.Cost.ImageOutput != nil {
+		imageRate = *model.Cost.ImageOutput
+		imageTokens = usage.Output
+		if usage.ImageOutput != nil {
+			imageTokens = min(usage.Output, *usage.ImageOutput)
+		}
+	}
+	usage.Cost.Output = (float64(rateOutput*float64(usage.Output-imageTokens)) + float64(imageRate*float64(imageTokens))) / 1_000_000
 	usage.Cost.CacheRead = float64(rateCacheRead / 1_000_000 * float64(usage.CacheRead))
 	usage.Cost.CacheWrite = (float64(rateCacheWrite*float64(shortWrite)) + float64(rateInput*2*float64(longWrite))) / 1_000_000
 	usage.Cost.Total = usage.Cost.Input + usage.Cost.Output + usage.Cost.CacheRead + usage.Cost.CacheWrite

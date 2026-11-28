@@ -47,7 +47,7 @@ func TestCalculateCostAppliesInputTiers(t *testing.T) {
 
 // calculateCostCaptureFile is written by testdata/cost/capture.mjs from the
 // published pi-ai build's calculateCost and catalog.
-const calculateCostCaptureFile = "testdata/cost/calculate-cost-0.87.1.json"
+const calculateCostCaptureFile = "testdata/cost/calculate-cost-1.7.0.json"
 
 // TestCalculateCostMatchesPi prices every captured usage at the captured rates
 // and requires pi's exact doubles, not a tolerance: usage.cost is persisted in
@@ -102,6 +102,32 @@ func TestCalculateCostMatchesPi(t *testing.T) {
 			t.Errorf("row %d %s: usage.Cost = %+v, want the returned %+v", i, row.Model, usage.Cost, got)
 		}
 	}
+}
+
+// Mirrors pi models-runtime.test.ts "prices image output tokens at the image
+// rate and the rest of output at the output rate" (upstream ccda1f74b).
+func TestCalculateCostPricesImageOutputAtTheImageRate(t *testing.T) {
+	rate := 120.0
+	model := &Model{Cost: ModelCost{Input: 2, Output: 12, ImageOutput: &rate, CacheRead: 0.2, CacheWrite: 0.375}}
+	usage := func(imageOutput *int) *Usage {
+		return &Usage{Input: 10, Output: 1370, Reasoning: 250, ImageOutput: imageOutput, TotalTokens: 1380}
+	}
+	n := func(v int) *int { return &v }
+	approx := func(name string, got, want float64) {
+		t.Helper()
+		if math.Abs(got-want) > 5e-10 {
+			t.Errorf("%s = %v, pi %v", name, got, want)
+		}
+	}
+	// 1120 image tokens at $120/M and 250 reasoning tokens at $12/M, as OpenRouter bills them.
+	approx("split total", CalculateCost(model, usage(n(1120))).Total, 0.13742)
+	// Without the provider's split, all output counts as image tokens.
+	approx("unsplit output", CalculateCost(model, usage(nil)).Output, 0.1644)
+	// A count above output cannot price more tokens than were produced.
+	approx("over-count output", CalculateCost(model, usage(n(5000))).Output, 0.1644)
+
+	model.Cost.ImageOutput = nil
+	approx("no image rate output", CalculateCost(model, usage(n(1120))).Output, 0.01644)
 }
 
 // upstream models-runtime.test.ts "marks catalog-derived totals as not

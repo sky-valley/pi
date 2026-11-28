@@ -1342,6 +1342,11 @@ type ModelCost struct {
 	Output     float64 `json:"output"`
 	CacheRead  float64 `json:"cacheRead"`
 	CacheWrite float64 `json:"cacheWrite"`
+	// ImageOutput is the image output rate in USD per million tokens, for
+	// models that generate images (pi ModelCost.imageOutput, upstream
+	// ccda1f74b). Image output tokens use it and the rest of output (text and
+	// reasoning) uses Output. Nil means image tokens cost Output.
+	ImageOutput *float64 `json:"imageOutput,omitempty"`
 	// Tiers are request-wide pricing overrides (pi ModelCost.tiers). The highest
 	// matching input threshold applies to the full request.
 	Tiers []ModelCostTier `json:"tiers,omitempty"`

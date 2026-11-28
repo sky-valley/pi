@@ -2,7 +2,7 @@
 // behind TestCalculateCostMatchesPi in package ai.
 //
 //   node capture.mjs <pi npm dir> <out.json>
-//   e.g. node capture.mjs ~/.cache/pi-npm/0.87.1 calculate-cost-0.87.1.json
+//   e.g. node capture.mjs ~/.cache/pi-npm/1.7.0 calculate-cost-1.7.0.json
 //
 // The capture is from the PUBLISHED build (dist/models.js and the catalog in
 // dist/models.generated.js), which is what the goldens in this repo come from.
@@ -19,7 +19,10 @@
 //   - base-rate models from several providers, with and without 1h writes;
 //   - usages a sweep found to differ: grok-4.7 on both sides of its tier, and
 //     cacheWrite (the (short + 2x-input long) / 1e6 sum), which differs far
-//     less often than total.
+//     less often than total;
+//   - image output (upstream ccda1f74b): every IMAGE_MODELS entry with an
+//     imageOutput rate, with the provider's image-token split, without it, and
+//     with a split above output; and models-runtime.test.ts's own rates.
 // JSON.stringify prints the shortest text that round-trips a double, so Go's
 // strconv reads back the exact bits pi computed.
 import fs from "node:fs";
@@ -34,7 +37,7 @@ if (!npmDir || !outFile) {
 const pkg = path.join(npmDir, "node_modules/@earendil-works/pi-ai");
 const version = JSON.parse(fs.readFileSync(path.join(pkg, "package.json"), "utf8")).version;
 const load = (file) => import(pathToFileURL(path.join(pkg, "dist", file)).href);
-const { MODELS } = await load("models.generated.js");
+const { MODELS, IMAGE_MODELS } = await load("models.generated.js");
 const { calculateCost } = await load("models.js");
 
 // splitAt spreads `total` input-side tokens over input, cacheRead and
@@ -87,6 +90,35 @@ cases.push(
 	["amazon-bedrock", "amazon.nova-2-lite-v1:0", { input: 115328, output: 29312, cacheRead: 64608, cacheWrite: 46816, cacheWrite1h: 31298 }],
 );
 
+// Image rows: catalog image models carry imageOutput; output = text +
+// reasoning + image tokens, and imageOutput is the provider's image share.
+const imageUsages = [
+	{ input: 10, output: 1370, cacheRead: 0, cacheWrite: 0, reasoning: 250, imageOutput: 1120 },
+	{ input: 10, output: 1370, cacheRead: 0, cacheWrite: 0, reasoning: 250 },
+	{ input: 10, output: 1370, cacheRead: 0, cacheWrite: 0, reasoning: 250, imageOutput: 5000 },
+	{ input: 4182, output: 6913, cacheRead: 517, cacheWrite: 0, imageOutput: 0 },
+	{ input: 4182, output: 6913, cacheRead: 517, cacheWrite: 0, imageOutput: 5329 },
+];
+const imageCases = [];
+for (const [provider, models] of Object.entries(IMAGE_MODELS)) {
+	for (const [id, model] of Object.entries(models)) {
+		if (model.cost.imageOutput === undefined) continue;
+		for (const usage of imageUsages) imageCases.push([`${provider}/${id}`, model.cost, usage]);
+	}
+}
+// models-runtime.test.ts "prices image output tokens at the image rate".
+const testRates = { input: 2, output: 12, imageOutput: 120, cacheRead: 0.2, cacheWrite: 0.375 };
+for (const usage of imageUsages.slice(0, 3)) imageCases.push(["models-runtime.test.ts", testRates, usage]);
+const { imageOutput: _, ...withoutImageRate } = testRates;
+imageCases.push(["models-runtime.test.ts", withoutImageRate, imageUsages[0]]);
+if (imageCases.length < 20) throw new Error(`only ${imageCases.length} image rows: has IMAGE_MODELS lost imageOutput?`);
+
+const price = (label, rates, usage) => {
+	const u = { ...usage, totalTokens: 0, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } };
+	calculateCost({ cost: rates }, u);
+	return { model: label, rates, usage, cost: u.cost };
+};
+
 const rows = cases.map(([provider, id, usage]) => {
 	const model = MODELS[provider]?.[id];
 	if (!model) throw new Error(`catalog has no ${provider}/${id}`);
@@ -94,6 +126,7 @@ const rows = cases.map(([provider, id, usage]) => {
 	calculateCost(model, u);
 	return { model: `${provider}/${id}`, rates: model.cost, usage, cost: u.cost };
 });
+for (const [label, rates, usage] of imageCases) rows.push(price(label, rates, usage));
 // One row per line, so a re-capture diffs row by row.
 const body = rows.map((row) => JSON.stringify(row)).join(",\n");
 fs.writeFileSync(outFile, `{"pi-ai":${JSON.stringify(version)},"rows":[\n${body}\n]}\n`);
