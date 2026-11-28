@@ -212,16 +212,24 @@ but no Go home yet" is a Scope queue row, not a `decide`.
     ---
     <the Release body, below>
     ```
+  - **Pick the release's three changes first.** They are the three most
+    important changes since the last release, ranked by what someone using the
+    port would notice (behavior, billing, new providers or models), not by diff
+    size or commit count. A catalog refresh earns a slot only when nothing
+    weightier is left for it. The same three, in the same order, are the
+    Release's Highlights, the three posters and the tweet's three lines.
   - **The Release body.** Every tag gets a GitHub Release (since 2026-09-21: a
     bare tag notifies nobody; watchers and the repo's "Latest" badge only see
     Release objects). Body = a short plain-language header, then the
-    RELEASES.md Notes entry verbatim:
+    RELEASES.md Notes entry verbatim. The owner adds the three posters to the
+    Release by hand afterwards; the workflow never touches a Release that
+    exists, so a re-run keeps them.
 
     ```
     Tracks pi **<npm-ver>** (upstream pin `<sha>`).
 
     ## Highlights
-    - <the same three plain-language changes as the tweet>
+    - <the three changes, one plain-language line each>
 
     **Breaking:** <only if the release breaks Go API — name it and point at the migration>
 
@@ -240,31 +248,78 @@ but no Go home yet" is a Scope queue row, not a `decide`.
     Every tag from `v0.85.21` on has a Release; older tags are deliberately
     left bare — never write requests for them (it would notify watchers about
     old news).
+  - **Write the poster brief.** The owner illustrates the three changes as
+    posters with another model and attaches them to the Release and the tweet.
+    That model is already set on the style (the Go gopher and the pi mascot in
+    posters modeled on Asian subway etiquette posters), so the brief explains
+    the features and never describes style. Write it for an illustrator who
+    doesn't code: no identifiers, file names or API terms; say what a user
+    notices, before and after. Surface it with the tweet and don't commit it.
+    Shape (from the v1.7.34 brief the owner used):
+
+    ```
+    # vX.Y.Z poster brief (3 posters)
+
+    Context for all three: the app is an AI helper that talks to many AI
+    services. The gopher is the Go version of the app and the pi mascot is
+    the original app; the Go version copies what pi does. Each poster
+    explains one change in this release, framed as good manners: the gopher
+    or pi doing the right thing, sometimes shown next to the old wrong way.
+    Corner tag: "vX.Y.Z · tracking pi <npm-ver>".
+
+    ## 1. <the change, as a short plain title>
+    - The feature: <in everyday words: what happened before, what happens
+      now, and why a user cares>
+    - What to show: <one concrete everyday scene that works as the metaphor
+      (a ticket gate, a shop counter, a queue). When the change fixes
+      something, the wrong way and the right way>
+    - Headline: <a short etiquette-poster line, about 2 to 6 words, such as
+      "Please price pictures as pictures." or "One switch. On or off.">
+
+    ## 2. ...
+    ## 3. ...
+    ```
+
   - **Draft the release tweet** (we tweet on every release cut). Surface it for
-    the human to post — do NOT auto-post (publishing is the owner's action).
-    Owner's voice/format, verbatim shape:
+    the human to post, with the poster brief — do NOT auto-post (publishing is
+    the owner's action). The owner attaches the posters. Skeleton:
 
     ```
-    Gophers of pi!
+    Gophers of @pidotdev!
 
-    vX.Y.Z has dropped, tracking pi <npm-ver> 🎉
+    <version line> 🎉
 
-    What's fresh?
-    :: <high-level change 1>
-    :: <high-level change 2>
-    :: <high-level change 3>
+    <list header>:
+    :: <change 1>
+    :: <change 2>
+    :: <change 3>
 
-    Keep it real 👉 https://github.com/sky-valley/pi
+    <sign-off> 👉 https://github.com/sky-valley/pi
     ```
 
-    Rules: open with `Gophers of pi!`; name the port version and the pi npm
-    version it tracks; up to 3 high-level `:: `-prefixed changes (plain, no jargon
-    dump); link the **repo, not the release**; keep the upbeat tone.
+    Rules:
+    - Open with `Gophers of @pidotdev!`: every release tweet tags @pidotdev.
+    - **Vary the wording every release** and keep the skeleton. Write a new
+      version line, list header and sign-off rather than copying one of these,
+      which the owner has already used:
+      - version line: "v1.6.32 has dropped, on the heels of pi 1.6.0", "pi
+        1.5.1 is out and so v1.5.30 has dropped", "pi 1.5.2 has dropped and
+        you get v1.5.31", "v1.6.33 is out, following pi 1.6.1", "We now have
+        v1.7.34 to follow 1.7.0". The emoji is 🎉 or 🤖.
+      - list header: "The good stuff:", "Here's the low-down:", "This is it:",
+        "Briefly:", "The stuf:".
+      - sign-off: "Keep it real 👉", "Keep up the good work, boys 👉", "It's
+        here 👉".
+    - Name the port version and the pi npm version it tracks.
+    - Three `:: ` lines: the release's three changes in poster order, each a
+      short plain phrase of about 3 to 8 words ("Image generation is billed
+      right"). A little play is in voice ("Nuevo model catalog").
+    - Link the **repo, not the release**; keep the upbeat tone.
 - Report the **Scope queue** state (entries drained, deltas appended) alongside
   the catalog-only queue. (The durable backlog is entry 8's queued-deltas column.)
 - Report: N changes — X ported (with commits), Y n/a, Z escalated; the release
-  tag if one was cut; any test count change; any new deliberate divergence added
-  to UPSTREAM.md.
+  tag if one was cut, with its poster brief and tweet; any test count change;
+  any new deliberate divergence added to UPSTREAM.md.
 
 ## Hard rules
 - **A public Go API break that FOLLOWS upstream is not an escalation — ship it.**
