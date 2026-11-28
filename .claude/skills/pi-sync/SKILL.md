@@ -46,6 +46,33 @@ stopped.
   release, `capture.mjs --src <sha>` between releases): it pins the whole
   `defaultModelPerProvider` table, which has caused a miss twice.
 
+### In a cloud session (the daily routine, or "sync" typed into one)
+Anthropic's cloud sends every GitHub operation through a proxy that refuses
+tag pushes and branch deletions (HTTP 403) but lets a push update any branch,
+`main` included. Its environment also runs a stop hook: whenever a turn ends,
+it demands that everything be committed and pushed.
+- **Never end a turn while a subagent or background command is still
+  running.** Wait for its result. Ending the turn fires the stop hook. On
+  2026-11-28 that pushed five ported commits to `main` before either review gate
+  had reported, and on 2026-11-27 it pushed a WIP branch.
+- **Push only `main`, and only after §3 and §4 pass.** The proxy can create a
+  remote branch but not delete one, so any backup or WIP branch pushed from here
+  stays on GitHub for good (nine `sync/*` and `wip/*` branches did by 2026-11-28).
+- **Tags can't be pushed from here.** On a release-crossing cycle, do everything
+  in §5 up to the tag (the `docs/RELEASES.md` entry included) and push `main`.
+  Then hand the owner the rest as a zsh script: both tags, the env bump, and the
+  `gh release create` with the Release body embedded in a heredoc (never a
+  `--notes-file` that only exists here). Add the tweet. zsh isn't installed, so
+  check the script with `bash -n` and say it was checked that way.
+- **Two `env/daemon` failures are cloud-only, not regressions:** `TestOracle`
+  (subtests `protocol`, `not_UTF-8`, `readdir`: the stored `linux.json` oracle
+  was captured on aarch64, the cloud is x86_64, and its directory order differs)
+  and `TestAndroidBuildRunsCommandsWithoutPidfd` (the container's seccomp).
+  Confirm once that they fail the same way on the base, then move on. A live
+  `-oracle=` recapture here rewrites `linux.json` as an x86_64 capture: restore
+  it with `git checkout` and apply only the intended change (for example the
+  version substitution), as the 1.6.1 and 1.7.0 cycles did.
+
 ## 1. Triage (skill: pi-triage)
 Run pi-triage over the whole delta (subagent). Append all rows to the ledger
 in `docs/UPSTREAM.md` with their verdicts. `n/a` rows are done.
