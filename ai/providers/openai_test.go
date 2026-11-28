@@ -1090,7 +1090,7 @@ func TestOpenAIAntLingDeepSeekToggle(t *testing.T) {
 		t.Fatal("ant-ling/Ling-3.1-flash is not in the catalog")
 	}
 	levels := ai.GetSupportedThinkingLevels(model)
-	if fmt.Sprint(levels) != "[off high]" {
+	if !slices.Equal(levels, []ai.ModelThinkingLevel{"off", "high"}) {
 		t.Fatalf("supported levels = %v, pi [off high]", levels)
 	}
 	for _, level := range levels {
@@ -1103,8 +1103,8 @@ func TestOpenAIAntLingDeepSeekToggle(t *testing.T) {
 		if effort == "" {
 			want = "disabled"
 		}
-		if got := fmt.Sprint(body["thinking"]); got != fmt.Sprint(map[string]any{"type": want}) {
-			t.Errorf("%s: thinking = %s, pi {type: %s}", level, got, want)
+		if !reflect.DeepEqual(body["thinking"], map[string]any{"type": want}) {
+			t.Errorf("%s: thinking = %v, pi {type: %s}", level, body["thinking"], want)
 		}
 		if has(body, "reasoning") || has(body, "reasoning_effort") {
 			t.Errorf("%s: sent reasoning %v / reasoning_effort %v, pi neither", level, body["reasoning"], body["reasoning_effort"])
