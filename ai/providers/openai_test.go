@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"slices"
 	"strings"
 	"testing"
@@ -1107,6 +1108,38 @@ func TestOpenAIAntLingDeepSeekToggle(t *testing.T) {
 		}
 		if has(body, "reasoning") || has(body, "reasoning_effort") {
 			t.Errorf("%s: sent reasoning %v / reasoning_effort %v, pi neither", level, body["reasoning"], body["reasoning_effort"])
+		}
+	}
+}
+
+// TestOpenAIAntLingLegacyFormatIsDeepSeek ports pi's "sends identical requests
+// for the deprecated ant-ling format and deepseek" (1e7bc7213): an explicit
+// compat.thinkingFormat "ant-ling", as an older models.json carries, builds
+// the same request as the catalog's deepseek, with and without an effort.
+func TestOpenAIAntLingLegacyFormatIsDeepSeek(t *testing.T) {
+	model := ai.GetModel("ant-ling", "Ling-3.1-flash")
+	if model == nil {
+		t.Fatal("ant-ling/Ling-3.1-flash is not in the catalog")
+	}
+	var compat map[string]any
+	if err := json.Unmarshal(model.Compat, &compat); err != nil {
+		t.Fatal(err)
+	}
+	if compat["thinkingFormat"] != "deepseek" {
+		t.Fatalf("catalog thinkingFormat = %v, pi deepseek", compat["thinkingFormat"])
+	}
+	compat["thinkingFormat"] = "ant-ling"
+	raw, err := json.Marshal(compat)
+	if err != nil {
+		t.Fatal(err)
+	}
+	legacy := *model
+	legacy.Compat = raw
+	for _, effort := range []string{"", "high"} {
+		want := mustBuildOpenAIParams(t, model, baseReq(), &OpenAIOptions{ReasoningEffort: effort})
+		got := mustBuildOpenAIParams(t, &legacy, baseReq(), &OpenAIOptions{ReasoningEffort: effort})
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("effort %q: ant-ling sent %v, deepseek %v", effort, got, want)
 		}
 	}
 }

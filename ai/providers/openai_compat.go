@@ -268,6 +268,11 @@ func getOpenAICompat(model *ai.Model) openAICompletionsCompat {
 	applyCompat(o, "supportsFinishReason", &c.SupportsFinishReason)
 	applyCompat(o, "maxTokensField", &c.MaxTokensField)
 	applyCompat(o, "thinkingFormat", &c.ThinkingFormat)
+	// pi 1e7bc7213: "ant-ling" is a deprecated alias kept so existing
+	// models.json files stay valid; it resolves to the DeepSeek toggle.
+	if c.ThinkingFormat == "ant-ling" {
+		c.ThinkingFormat = "deepseek"
+	}
 	applyCompat(o, "supportsStrictMode", &c.SupportsStrictMode)
 	applyCompat(o, "supportsOpenAIGrammarTools", &c.SupportsOpenAIGrammarTools)
 	applyCompat(o, "supportsMidConvoSystemMessages", &c.SupportsMidConvoSystemMessages)
